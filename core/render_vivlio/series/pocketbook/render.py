@@ -779,19 +779,19 @@ def _line_est(txt, width_mm, size_pt):
 def _card_fit(c, M):
     """카드가 넘칠 것 같으면 미리 줄인다.
 
-    카드는 34.6×32mm 로 작고 개수가 많다(한 책에 수백 장). 지문처럼 면마다 재면
-    측정 조판이 감당이 안 된다 — 그래서 **글자 수로 줄 수를 어림**해 단계로 줄인다.
-    한 줄에 들어가는 글자 수는 7pt 에서 약 24자(실측 34.6mm − 여백 4mm).
+    카드는 34.6×22mm 로 작고 개수가 많다(한 책에 수백 장). 지문처럼 면마다 재면
+    측정 조판이 감당이 안 된다 — 그래서 **자폭으로 줄 수를 세어** 단계로 줄인다.
     """
-    # ⚠ 24자로 잡았더니 실제로는 한 줄이 더 접히는 카드가 있었다 — 상자보다
-    #   0.5mm 아래로 글이 삐져나왔다(536장 중 12장 실측). 여유를 둔다.
-    per = 21.0
+    # ⚠ 글자 수로 줄을 세면 안 된다. `= influential, groundbreaking, landmark`
+    #   는 37자라 두 줄로 보이지만 **낱말 단위로 접혀** 세 줄이 된다(실측).
+    #   플로우노트와 같은 자폭 재기로 실제 줄 수를 센다.
+    col = M["card"][2] - 2 * M["card_pad"]
     lines = 0
     for txt in (("%s %s" % (c["w"], c.get("ko", ""))).strip(),
                 ("= " + ", ".join(c.get("syn") or [])) if c.get("syn") else "",
                 ("↔ " + ", ".join(c.get("ant") or [])) if c.get("ant") else ""):
         if txt:
-            lines += max(1, int(len(txt) / per) + (1 if len(txt) % per else 0))
+            lines += _wrap_n(txt, col, M["card_size"], 0.0)
     # 마지막 줄의 내려긋기가 상자 밑선을 0.5mm 넘어선다 — 그만큼 미리 뺀다.
     room = int((M["card"][3] - 2 * M["card_pad"] - 0.6) / M["card_lead"])
     if lines <= room:
