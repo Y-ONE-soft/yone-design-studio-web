@@ -233,7 +233,11 @@ def _wcls(w):
 # 재어 둔 카드 높이에는 **카드 뒤 여백 5.4mm 가 이미 들어 있다**(다음 카드 머리까지
 # 재므로). 면의 마지막 카드는 그 여백을 쓰지 않으니 그만큼 후하게 봐 준다.
 #   판정: Σ높이 ≤ 168.8 + 5.4 = 174.2 → 여유 1.2mm 를 두고 173
-FILL_MM = 173.0
+FILL_MM = 171.0
+# PART 시작 면은 큰 헤더(마름모+밴드 30mm)가 얹혀 카드 자리가 그만큼 좁다 —
+# 실측: 카드가 46.2mm 에서 시작해 자리가 155.8mm(일반 면 168.8). 같은 용량을
+# 쓰면 마지막 한 장이 밀려 한 장짜리 면이 생긴다(이의고1 에서 2면).
+FIRST_FILL_MM = 160.0
 
 
 def _chunks(items, cap=PAGE_CAP):
@@ -257,19 +261,21 @@ def _chunks(items, cap=PAGE_CAP):
     return out
 
 
-def _need(hs, limit):
-    """높이 `hs` 를 `limit` 씩 그리디로 담으면 몇 면이 드는가."""
+def _need(hs, limit, first=None):
+    """높이 `hs` 를 담으면 몇 면이 드는가. `first` 는 첫 면만의 용량."""
+    lim = first if first is not None else limit
     n, cur = 1, 0.0
     for h in hs:
-        if cur and cur + h > limit + 1e-9:
+        if cur and cur + h > lim + 1e-9:
             n += 1
             cur = h
+            lim = limit
         else:
             cur += h
     return n
 
 
-def _pack(items, heights, fill):
+def _pack(items, heights, fill, first_fill=None):
     """**실측 높이**로 면을 나눈다 — 면 수는 최소로, 그 안에서 가장 고르게.
 
     낱말 수로 나누면(`_chunks`) 카드가 유난히 큰 낱말이 몰린 구간에서 마지막
@@ -283,22 +289,25 @@ def _pack(items, heights, fill):
     hs = [float(heights.get(it["no"]) or 0) for it in items]
     if not hs or min(hs) <= 0:
         return None                      # 잰 값이 빠졌다 — 부르는 쪽이 폴백
-    k = _need(hs, fill)
+    ff = first_fill if first_fill is not None else fill
+    k = _need(hs, fill, ff)
     lo, hi = max(hs), sum(hs)
     for _ in range(40):                  # 0.01mm 아래로 좁혀진다
         if hi - lo < 0.01:
             break
         mid = (lo + hi) / 2
-        if _need(hs, mid) <= k:
+        if _need(hs, mid, min(mid, ff)) <= k:
             hi = mid
         else:
             lo = mid
     limit = hi
     out, cur, acc = [], [], 0.0
+    lim = min(limit, ff)                 # 첫 면만 좁게
     for it, h in zip(items, hs):
-        if cur and acc + h > limit + 1e-9:
+        if cur and acc + h > lim + 1e-9:
             out.append(cur)
             cur, acc = [], 0.0
+            lim = limit
         cur.append(it)
         acc += h
     if cur:
@@ -423,7 +432,11 @@ class Renderer(VocabookRenderer):
         for gi, g in enumerate(order):
             lot = groups[g]
             cap = int(self.o.get("page_cap") or PAGE_CAP)
-            lots = _pack(lot, self.heights, self.fill) if self.heights else None
+            # 파트의 첫 구간 첫 면 = PART 시작면(큰 헤더가 자리를 먹는다)
+            ff = (float(self.o.get("page_first_fill_mm") or FIRST_FILL_MM)
+                  if gi == 0 else None)
+            lots = (_pack(lot, self.heights, self.fill, ff)
+                    if self.heights else None)
             for ci, chunk in enumerate(lots or _chunks(lot, cap)):
                 out.append(self.kicker(g, len(lot),
                                        first=(gi == 0 and ci == 0),

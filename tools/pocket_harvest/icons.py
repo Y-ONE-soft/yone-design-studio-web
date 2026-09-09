@@ -208,14 +208,17 @@ def _with_abc(svg, vb):
     rest = sorted((b for b in boxes if b is not top), key=lambda b: b[0])
     ordered = [top] + rest
     size = (sum(b[2] for b in boxes) / max(len(boxes), 1)) * 0.72
+    # ⚠ `dominant-baseline="central"` 은 조판기가 안 먹는다 — 글자가 칸 위쪽에
+    #   붙어 보였다(사용자 지적). 가운데로 내리는 몫을 **y 에 직접** 더한다.
+    dy = size * 0.35
     txt = "".join(
         '<text x="%.2f" y="%.2f" font-size="%.2f" fill="#54669F" '
         'font-family="PBJalnan,sans-serif" font-weight="700" text-anchor="middle" '
-        'dominant-baseline="central" transform="rotate(%.1f %.2f %.2f)">%s</text>'
-        % (b[0], b[1], size, b[3], b[0], b[1], ch)
+        'transform="rotate(%.1f %.2f %.2f)">%s</text>'
+        % (b[0], b[1] + dy, size, b[3], b[0], b[1] + dy, ch)
         for b, ch in zip(ordered, "ABC"))
-    # 원본은 테두리가 굵다 — 얇게 두면 색면 세 개가 붕 뜬 것처럼 보인다
-    svg = svg.replace('stroke-width=".5"', 'stroke-width="1.1"')
+    # 테두리는 얇게 — 1.1 은 5.4mm 로 줄여 앉히면 너무 굵다(사용자 지적)
+    svg = svg.replace('stroke-width=".5"', 'stroke-width="0.8"')
     return svg.replace("</svg>", txt + "</svg>"), vb
 
 
