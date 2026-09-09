@@ -203,6 +203,15 @@ def mark_head(en, head):
         end = _match_from(toks, i, words, slack)
         if end is not None:
             hits.append((toks[i].start(), toks[end].end()))
+    # 겹치면 **짧은 쪽**을 남긴다 — `the French Revolution` 의 첫 낱말 `the` 가
+    # 앞쪽 다른 `The` 에 먼저 걸려 "The turn of the French Revolution" 을 통째로
+    # 물었다(실측). 짧은 매칭이 곧 제대로 맞은 자리다.
+    hits.sort(key=lambda ab: (ab[1] - ab[0], ab[0]))
+    chosen = []
+    for a, b in hits:
+        if all(b <= x or a >= y for x, y in chosen):
+            chosen.append((a, b))
+    hits = sorted(chosen)
     for a, b in reversed(hits):          # 뒤에서부터 넣어야 자리가 안 밀린다
         en = en[:a] + "[" + en[a:b] + "]" + en[b:]
     return en
