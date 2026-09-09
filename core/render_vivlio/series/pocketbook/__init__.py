@@ -1889,7 +1889,10 @@ class PocketbookSeries(Series):
         _SPAN_CACHE.clear()          # 앞 책의 계측이 남아 있으면 안 된다
         with probe.open_pdf(pdf) as doc:
             n_pages = len(doc)
-            per = [1 if r.get("kind") == "memtest" else 2 for r in rows]
+            # ⚠ 면 배치는 **조판과 같은 셈**을 써야 한다(`page_plan`). 각자
+            #   세면 짤지문·빈 면 때문에 한 칸씩 밀려 멀쩡한 책이 떨어진다.
+            plan = prender.page_plan(rows, opt.get("folio_start", 2))
+            per = [lead + step for lead, step in plan]
             # 어휘 파트는 지문이 아니라 `rows` 에 없다 — 따로 더해 준다.
             want = start + sum(per) + int(meta.get("voca_pages") or 0)
             if n_pages != want:
@@ -1902,7 +1905,8 @@ class PocketbookSeries(Series):
             idx, lost, over, wrong = start, [], [], []
             wide_cut = []           # 넓은 주석이라 잘렸을 수 있는 지문
             mt_ink = []             # (키, 정답면인가, 그 면에 쓰인 글자색들)
-            for r, step in zip(rows, per):
+            for r, (lead, step) in zip(rows, plan):
+                idx += lead                      # 짝 맞추려 넣은 빈 면
                 if idx >= n_pages:
                     break
                 if r.get("kind") == "memtest":

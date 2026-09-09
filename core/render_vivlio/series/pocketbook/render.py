@@ -1065,6 +1065,23 @@ def memtest_page(p, M, folio, answer, category=""):
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
 
 
+def page_plan(rows, folio_start=2):
+    """지문마다 **빈 면 몇 장 뒤에 몇 면을 쓰는지** → `[(빈 면, 면 수)]`.
+
+    조판과 검수가 각자 세면 어긋난다 — 짤지문을 넣자마자 G-P3 가 24지문에서
+    엉뚱하게 울렸다(실측). 한 곳에서 세고 둘 다 이걸 본다.
+    """
+    out, folio = [], int(folio_start)
+    for r in rows:
+        if r.get("kind") == "memtest" or r.get("short"):
+            out.append((0, 1)); folio += 1
+            continue
+        lead = 1 if folio % 2 else 0     # 온전한 지문은 왼쪽 면에서 시작한다
+        folio += lead + 2
+        out.append((lead, 2))
+    return out
+
+
 def build_html(data, css_name="pocket.css"):
     # 작업대에서 지면을 눌러 그 자리를 고칠 수 있게 — **렌더 직전에 한 번**.
     # ⚠ 안 하면 클릭해도 조용히 아무 일도 안 일어난다(자리표가 없으니까).
@@ -1078,8 +1095,13 @@ def build_html(data, css_name="pocket.css"):
                      '<img src="%s" style="width:100%%;height:100%%;'
                      'object-fit:cover"></div></section>' % ESC(data["cover"]))
         folio += 1
-    for p in data["passages"]:
+    for p, (lead, _step) in zip(data["passages"],
+                               page_plan(data["passages"], folio)):
         cat = p.get("category", "")
+        for _ in range(lead):
+            pages.append('<section class="pg %s"><div class="trim">'
+                         '</div></section>' % page_kind(p))
+            folio += 1
         if p.get("kind") == "memtest":
             pg = memtest_page(p, M, folio, p.get("answer"), cat)
             if pg:
@@ -1091,12 +1113,6 @@ def build_html(data, css_name="pocket.css"):
         if p.get("short"):
             pages.append(left_page(p, M, folio)); folio += 1
             continue
-        # 온전한 지문은 **왼쪽 면에서 시작**해야 한다. 짤지문이 홀수로 놓이면
-        # 짝이 밀리므로 빈 면 한 장으로 되돌린다.
-        if folio % 2:
-            pages.append('<section class="pg %s"><div class="trim">'
-                         '</div></section>' % page_kind(p))
-            folio += 1
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat)); folio += 1
     # 어휘 파트는 **맨 뒤**다(26-1-기말 완성본과 같은 자리). 한 DAY 가 펼침면
