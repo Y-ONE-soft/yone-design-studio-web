@@ -42,18 +42,36 @@ def _lines(v):
     return [ln.strip() for ln in _t(v).split("\n") if ln.strip()]
 
 
+# 구간 이름 → (파트, 소제목). **책마다 다르다** — config `options.parts_match` 로
+# 덮는다. 아래는 이의고2 판(`교과서 - 본문 3`).
+#   이의고1 은 부교재에 '부교재' 라는 말이 아예 없다(`수능특강 Light 영어 12강
+#   Exercise 01`) — 기본 규칙만 믿었다가 부교재 256낱말이 통째로 앞 구간에
+#   흡수됐다. 접두어는 구조가 아니라 **책이 정하는 값**이라 config 에 둔다.
+DEFAULT_PARTS = (
+    ("text", r"^교과서\s*-\s*(.+)$"),
+    ("supp", r"^부교재\s*-\s*(.+)$"),
+    ("mock", r"^.*모의고사\s*-\s*(.+)$"),
+)
+_classifier = None            # build() 가 config 로 채운다
+
+
+def make_classifier(rules=None):
+    """[(파트, 정규식)] → 판정 함수. 정규식의 첫 괄호가 소제목, 없으면 줄 전체."""
+    pats = [(p, re.compile(rx)) for p, rx in (rules or DEFAULT_PARTS)]
+
+    def classify(raw):
+        raw = _t(raw)
+        for part, rx in pats:
+            m = rx.match(raw)
+            if m:
+                sub = (m.group(1) if m.groups() else "") or raw
+                return part, sub.strip()
+        return "etc", raw
+    return classify
+
+
 def classify(raw):
-    """'구간' 열 한 칸 → (part, group). 구조 판정 — 접두어만 본다."""
-    raw = _t(raw)
-    head, _, sub = raw.partition(" - ")
-    head, sub = head.strip(), sub.strip()
-    if head.startswith("교과서"):
-        return "text", sub or head
-    if head.startswith("부교재"):
-        return "supp", sub or head
-    if "모의고사" in head:
-        return "mock", sub or head
-    return "etc", raw
+    return (_classifier or make_classifier())(raw)
 
 
 def split_head(rest):
@@ -184,7 +202,9 @@ def gate(items, expect):
 
 
 def build(cfg, log=print):
+    global _classifier
     opts = cfg.section("options") or {}
+    _classifier = make_classifier(opts.get("parts_match"))
     src = cfg.manuscript("words")
     items = (parse_docx if src.lower().endswith(".docx") else parse)(src)
     counts = gate(items, opts.get("expect") or {})
