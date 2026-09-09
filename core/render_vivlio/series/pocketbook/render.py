@@ -843,14 +843,18 @@ def right_page(p, M, folio, category=""):
     if len(ch) == 3:
         w2 = (len(ch[1]), len(ch[2])) if tall else (len(ch[0]), len(ch[1]))
     boxes, conns = flow_boxes(M, len(ch), tall, w2)
-    for c, (bx, by, bw, bh) in zip(ch, boxes):
+    for n, (c, (bx, by, bw, bh)) in enumerate(zip(ch, boxes)):
         col = bw - 2 * M["fbox_pad"]
         fsc = flow_fit(c, col, bh, M)
         fst = "" if fsc == 1.0 else \
             ' style="font-size:%gpt;line-height:%gmm"' % (
                 M["flow_size"] * fsc, M["flow_lead"] * fsc)
+        # ⚠ 화살표만으로는 위 칸 둘을 가로로 읽을 여지가 남는다(사용자 지적).
+        #   머리말 앞에 **차례 번호**를 박아 흐름을 못 박는다.
         m = _FHEAD.match(c[0])
-        head = ('<div class="fbh">%s</div>' % ESC(m.group(1))) if m else ""
+        head = ('<div class="fbh"><span class="fbn">%d</span>%s</div>'
+                % (n + 1, ESC(m.group(1)))) if m else \
+               ('<div class="fbh"><span class="fbn">%d</span></div>' % (n + 1))
         body = list(c)
         if m:
             body[0] = c[0][m.end():]

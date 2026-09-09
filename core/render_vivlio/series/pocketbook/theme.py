@@ -449,7 +449,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   border:.25pt solid var(--flow-line);
   border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
 .fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);
-  line-height:__fbox_head__mm;margin:0 0 .3mm}
+  line-height:__fbox_head__mm;margin:0 0 .3mm;
+  display:flex;align-items:center;gap:1.1mm}
+.fbn{display:inline-flex;align-items:center;justify-content:center;
+  width:3.2mm;height:3.2mm;border-radius:50%;flex:none;
+  background:var(--flow-arrow);color:#fff;font-size:5.5pt;line-height:1}
 .fbi{font-family:PBDodam;font-size:__flow_size__pt;
   line-height:__flow_lead__mm;letter-spacing:__flow_track__em}
 /* 잇는 표식 — 글리프가 아니라 테두리로 그린 갈매기다 */
