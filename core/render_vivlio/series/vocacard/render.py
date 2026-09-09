@@ -54,6 +54,49 @@ def syn_line(s):
 _RE_WORD = re.compile(r"[A-Za-z][A-Za-z'\u2019\-]*")
 _BE = {"be", "is", "are", "am", "was", "were", "been", "being"}
 _SUFFIX = ("s", "es", "ed", "d", "ing", "ies", "ied")
+# `at one's disposal` → `at their disposal`
+_POSS = {"one's", "one\u2019s", "my", "your", "his", "her", "its", "our", "their",
+         "someone's", "someone\u2019s"}
+# 규칙으로 못 만드는 변화. 여기 없는 불규칙은 강조가 빠지고 `unmatched()` 가 알려준다.
+_IRREGULAR = {
+    "be": ("was", "were", "been", "being", "is", "are", "am"),
+    "become": ("became",), "begin": ("began", "begun"), "break": ("broke", "broken"),
+    "bring": ("brought",), "build": ("built",), "buy": ("bought",),
+    "catch": ("caught",), "choose": ("chose", "chosen"), "come": ("came",),
+    "cost": ("cost",), "deal": ("dealt",), "do": ("did", "done", "does"),
+    "draw": ("drew", "drawn"), "drive": ("drove", "driven"), "eat": ("ate", "eaten"),
+    "fall": ("fell", "fallen"), "feed": ("fed",), "feel": ("felt",),
+    "fight": ("fought",), "find": ("found",), "fly": ("flew", "flown"),
+    "forget": ("forgot", "forgotten"), "freeze": ("froze", "frozen"),
+    "get": ("got", "gotten"), "give": ("gave", "given"), "go": ("went", "gone"),
+    "grow": ("grew", "grown"), "hold": ("held",), "keep": ("kept",),
+    "know": ("knew", "known"), "lead": ("led",), "leave": ("left",),
+    "lose": ("lost",), "make": ("made",), "mean": ("meant",), "meet": ("met",),
+    "overcome": ("overcame",), "pay": ("paid",), "put": ("put",),
+    "read": ("read",), "rise": ("rose", "risen"), "run": ("ran",),
+    "say": ("said",), "see": ("saw", "seen"), "seek": ("sought",),
+    "sell": ("sold",), "send": ("sent",), "set": ("set",), "shake": ("shook", "shaken"),
+    "show": ("showed", "shown"), "speak": ("spoke", "spoken"), "spend": ("spent",),
+    "stand": ("stood",), "steal": ("stole", "stolen"), "take": ("took", "taken"),
+    "teach": ("taught",), "tear": ("tore", "torn"), "tell": ("told",),
+    "think": ("thought",), "throw": ("threw", "thrown"),
+    "understand": ("understood",), "wear": ("wore", "worn"),
+    "win": ("won",), "write": ("wrote", "written"),
+    # 라틴·그리스계 명사
+    "crisis": ("crises",), "analysis": ("analyses",), "basis": ("bases",),
+    "thesis": ("theses",), "criterion": ("criteria",), "phenomenon": ("phenomena",),
+    "medium": ("media",), "datum": ("data",), "stimulus": ("stimuli",),
+    "index": ("indices",), "child": ("children",), "person": ("people",),
+    "man": ("men",), "woman": ("women",), "foot": ("feet",), "tooth": ("teeth",),
+}
+
+
+def _latin_plural(w):
+    """규칙적인 라틴계 복수 — 표에 없는 낱말도 받아 준다."""
+    for suf, rep in (("is", "es"), ("us", "i"), ("um", "a"), ("on", "a"),
+                     ("ex", "ices"), ("ix", "ices")):
+        if w.endswith(suf) and len(w) > len(suf) + 2:
+            yield w[:-len(suf)] + rep
 
 
 def _stems(w):
@@ -69,15 +112,53 @@ def _stems(w):
 
 def _same_word(tok, word):
     t, w = tok.lower(), word.lower()
+    if w in _POSS:                       # one's → their·his·her …
+        return t in _POSS
     if w == "be":
         return t in _BE
     if t == w:
+        return True
+    if t in _IRREGULAR.get(w, ()):       # overcome→overcame · freeze→frozen
+        return True
+    if t in _latin_plural(w):            # crisis→crises
         return True
     if any(t == w + suf for suf in _SUFFIX):
         return True
     if len(w) >= 3 and any(t == w + w[-1] + suf for suf in ("ed", "ing")):
         return True
-    return any(t.startswith(st) for st in _stems(w))
+    if any(t.startswith(st) for st in _stems(w)):
+        return True
+    # 하이픈 복합어 — `guilt` 가 `eco-guilt` 안에 들어간 꼴
+    if "-" in t and len(w) >= 4:
+        return any(_same_word(part, word) for part in t.split("-") if part)
+    return False
+
+
+def _match_from(toks, i, words, slack):
+    """`toks[i]` 부터 표제어 낱말들을 **차례대로** 맞춘다.
+
+    사이에 낀 토큰은 통틀어 `slack` 개까지 봐준다. 다 맞으면 마지막 토큰 자리를,
+    아니면 None 을 돌려준다.
+    """
+    j, used, last = i, 0, None
+    for k, w in enumerate(words):
+        if k == 0:
+            if j >= len(toks) or not _same_word(toks[j].group(0), w):
+                return None
+            last, j = j, j + 1
+            continue
+        found = None
+        for step in range(0, slack - used + 1):
+            if j + step >= len(toks):
+                break
+            if _same_word(toks[j + step].group(0), w):
+                found = j + step
+                break
+        if found is None:
+            return None
+        used += found - j
+        last, j = found, found + 1
+    return last
 
 
 def mark_head(en, head):
@@ -91,11 +172,15 @@ def mark_head(en, head):
     if not words:
         return en
     toks = list(_RE_WORD.finditer(en))
+    # 구 표제어는 사이에 낱말이 끼어 들어온다 — `be concerned with` 가 예문에서는
+    # `were much more concerned with`. 끼어든 토큰을 몇 개까지 봐줄지(slack)는
+    # **구일 때만** 연다(한 낱말짜리는 0 — 열어 두면 엉뚱한 짝이 걸린다).
+    slack = 3 if len(words) > 1 else 0
     hits = []
     for i in range(len(toks)):
-        if all(i + k < len(toks) and _same_word(toks[i + k].group(0), w)
-               for k, w in enumerate(words)):
-            hits.append((toks[i].start(), toks[i + len(words) - 1].end()))
+        end = _match_from(toks, i, words, slack)
+        if end is not None:
+            hits.append((toks[i].start(), toks[end].end()))
     for a, b in reversed(hits):          # 뒤에서부터 넣어야 자리가 안 밀린다
         en = en[:a] + "[" + en[a:b] + "]" + en[b:]
     return en
