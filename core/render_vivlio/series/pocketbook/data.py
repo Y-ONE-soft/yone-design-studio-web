@@ -371,6 +371,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "_badge_raw": bool(p.get("_badge_raw")),
             # 기존 포켓북에서 온 지문인가 — 신규 검수 표시가 이걸 본다
             "_from_book": p.get("_from_book") or "",
+            # 모의고사 짤지문 — 오른쪽 면을 만들지 않는다
+            "short": bool(p.get("short")),
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],
