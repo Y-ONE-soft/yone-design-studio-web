@@ -644,8 +644,8 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
         # ⚠ 통 칸을 늘 오른쪽에 두면 거기 든 덩어리가 짧을 때 칸이 텅 빈다.
         #   **c1 과 c3 중 긴 쪽**이 통 칸을 갖고, 쌓이는 쪽은 두 덩어리의
         #   길이대로 나눈다(반씩 자르면 긴 덩어리만 글자가 줄었다).
-        a, b = (w2[0], w2[1]) if tall_first else (w2[0], w2[1])
-        f = min(0.68, max(0.32, a / float(a + b))) if a + b else 0.5
+        a, b = w2
+        f = min(0.70, max(0.30, a / float(a + b))) if a + b else 0.5
         ha = (h - gap) * f
         hb = h - gap - ha
         if tall_first:
@@ -841,7 +841,12 @@ def right_page(p, M, folio, category=""):
     tall = len(ch) == 3 and len(ch[0]) > len(ch[2])
     w2 = (1, 1)
     if len(ch) == 3:
-        w2 = (len(ch[1]), len(ch[2])) if tall else (len(ch[0]), len(ch[1]))
+        # ⚠ 줄 수로만 나누면 안 된다 — 상자마다 여백·머리말 딱지가 8.6mm 씩
+        #   먼저 먹는다. 그걸 안 세어 짧은 덩어리 상자가 눌리고 글자가 줄었다.
+        cwv = _fbox_size(M)[0] - 2 * M["fbox_pad"]
+        ov = 2 * M["fbox_pad"] + M["fbox_head"] + 1.2
+        pair = (ch[1], ch[2]) if tall else (ch[0], ch[1])
+        w2 = tuple(_flow_need(c, cwv, M, M["flow_size"]) + ov for c in pair)
     boxes, conns = flow_boxes(M, len(ch), tall, w2)
     for n, (c, (bx, by, bw, bh)) in enumerate(zip(ch, boxes)):
         col = bw - 2 * M["fbox_pad"]
