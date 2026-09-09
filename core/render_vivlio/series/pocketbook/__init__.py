@@ -350,7 +350,10 @@ def _letters(t):
     return "".join(c for c in (t or "").lower() if c.isalpha())
 
 
-_SHORT_NO = {18, 19, 25, 26, 27, 28, 43, 44, 45}
+# 오른쪽 면이 없는 짤지문(안내문·도표·실용문)
+_SHORT_NO = {18, 19, 25, 26, 27, 28}
+# 장문 독해 — 글이 길어 **반으로 갈라 두 면**을 다 쓴다(사용자 지시)
+_SPLIT_NO = {43, 44, 45}
 
 
 def _mark_short(rows, opt, log):
@@ -361,7 +364,8 @@ def _mark_short(rows, opt, log):
     번호는 `options.short_no` 로 갈아 끼울 수 있다.
     """
     want = set(opt.get("short_no") or _SHORT_NO)
-    n = 0
+    wide = set(opt.get("split_no") or _SPLIT_NO)
+    n = m = 0
     for r in rows:
         if r.get("kind") == "memtest":
             continue
@@ -369,11 +373,18 @@ def _mark_short(rows, opt, log):
         if "번" not in lab:
             continue
         ns = [int(x) for x in re.findall(r"\d+", lab)]
-        if ns and all(x in want for x in ns):
+        if not ns:
+            continue
+        if all(x in want for x in ns):
             r["short"] = True
             n += 1
+        elif all(x in wide for x in ns):
+            r["split"] = True
+            m += 1
     if n:
         log("■ 모의고사 짤지문 %d개 — 오른쪽 면 없이 둘씩 묶는다" % n)
+    if m:
+        log("■ 장문 %d개 — 지문을 반으로 갈라 두 면에 나눈다" % m)
 
 
 def _fill_from_store(rows, cfg, opt, log):

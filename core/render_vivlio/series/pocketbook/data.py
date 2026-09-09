@@ -373,6 +373,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "_from_book": p.get("_from_book") or "",
             # 모의고사 짤지문 — 오른쪽 면을 만들지 않는다
             "short": bool(p.get("short")),
+            # 장문 — 지문을 반으로 갈라 두 면에 나눈다
+            "split": bool(p.get("split")),
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],

@@ -1136,6 +1136,51 @@ def memtest_page(p, M, folio, answer, category=""):
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
 
 
+def split_half(p):
+    """장문 지문을 **문장 경계에서 반으로** 갈라 두 벌로 돌려준다.
+
+    글자 수가 절반에 가장 가까운 문장 끝에서 자른다. 해석도 같은 비율로
+    나눈다 — 정확히 짝지을 수는 없지만 눈으로 따라갈 만큼은 맞는다.
+    """
+    runs = p.get("passage_runs") or []
+    tot = sum(len(x.get("t") or "") for x in runs)
+    if tot < 400:
+        return [p]
+    cut, acc, best = 0, 0, None
+    for i, x in enumerate(runs):
+        acc += len(x.get("t") or "")
+        if (x.get("t") or "").rstrip().endswith((".", "?", "!", "\u201d")):
+            d = abs(acc - tot / 2)
+            if best is None or d < best:
+                best, cut = d, i + 1
+    if not cut or cut >= len(runs):
+        cut = len(runs) // 2
+    tr = p.get("translation") or ""
+    k = tr.find(" ", int(len(tr) * (sum(len(x.get("t") or "")
+                                        for x in runs[:cut]) / max(tot, 1))))
+    a = dict(p, passage_runs=runs[:cut], translation=tr[:k].strip() if k > 0 else tr,
+             illust=None, _part=1)
+    b = dict(p, passage_runs=runs[cut:], translation=tr[k:].strip() if k > 0 else "",
+             illust=None, _part=2)
+    return [a, b]
+
+
+def memo_page(M, folio, kind=""):
+    """메모 면 — 오른쪽 면이 빌 때 빈 채로 두지 않는다(사용자 지시)."""
+    fl = M["flow"]
+    return ('<section class="pg %s"><div class="trim">'
+            '<div class="flowchip" style="%s">%sMEMO</div>'
+            '<div class="flow memo" style="%s"></div>'
+            '<div class="folio r" style="%s"><b>%s</b></div>'
+            '</div></section>'
+            % (kind,
+               _box(M["flow_chip"][0], M["flow_chip"][1],
+                    M["flow_chip"][2], M["flow_chip"][3]), _svg("chip_flow"),
+               _box(fl[0], fl[1], fl[2], M["memo_h"]),
+               _box(M["margin_l"], M["folio_y"],
+                    M["page_w"] - M["margin_l"] - 15.0), folio))
+
+
 def page_plan(rows, folio_start=2):
     """지문마다 **빈 면 몇 장 뒤에 몇 면을 쓰는지** → `[(빈 면, 면 수)]`.
 
@@ -1151,6 +1196,10 @@ def page_plan(rows, folio_start=2):
         folio += lead + 2
         out.append((lead, 2))
     return out
+
+
+def _memo_kind(p):
+    return page_kind(p)
 
 
 def build_html(data, css_name="pocket.css"):
@@ -1170,8 +1219,8 @@ def build_html(data, css_name="pocket.css"):
                                page_plan(data["passages"], folio)):
         cat = p.get("category", "")
         for _ in range(lead):
-            pages.append('<section class="pg %s"><div class="trim">'
-                         '</div></section>' % page_kind(p))
+            # ⚠ 짝을 맞추려 끼우는 면은 **빈 채로 두지 않는다**(사용자 지시).
+            pages.append(memo_page(M, folio, page_kind(p)))
             folio += 1
         if p.get("kind") == "memtest":
             pg = memtest_page(p, M, folio, p.get("answer"), cat)
@@ -1183,6 +1232,10 @@ def build_html(data, css_name="pocket.css"):
         #   나란히 들어간다.
         if p.get("short"):
             pages.append(left_page(p, M, folio)); folio += 1
+            continue
+        if p.get("split"):
+            for half in split_half(p):
+                pages.append(left_page(half, M, folio)); folio += 1
             continue
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat)); folio += 1
