@@ -782,18 +782,17 @@ def _card_fit(c, M):
     카드는 34.6×22mm 로 작고 개수가 많다(한 책에 수백 장). 지문처럼 면마다 재면
     측정 조판이 감당이 안 된다 — 그래서 **자폭으로 줄 수를 세어** 단계로 줄인다.
     """
-    # ⚠ 글자 수로 줄을 세면 안 된다. `= influential, groundbreaking, landmark`
-    #   는 37자라 두 줄로 보이지만 **낱말 단위로 접혀** 세 줄이 된다(실측).
-    #   플로우노트와 같은 자폭 재기로 실제 줄 수를 센다.
-    col = M["card"][2] - 2 * M["card_pad"]
+    # ⚠ `_wrap_n` 은 플로우노트 서체(도담도담)의 자폭표라 카드에는 안 맞는다
+    #   — 그걸로 재 봤더니 넘침이 3장에서 20장으로 늘었다. 카드는 글자 수로
+    #   어림하되 **21자**로 잡는다(24자로 잡으면 낱말째 넘어가는 몫을 놓친다).
+    per = 21.0
     lines = 0
     for txt in (("%s %s" % (c["w"], c.get("ko", ""))).strip(),
                 ("= " + ", ".join(c.get("syn") or [])) if c.get("syn") else "",
                 ("↔ " + ", ".join(c.get("ant") or [])) if c.get("ant") else ""):
         if txt:
-            lines += _wrap_n(txt, col, M["card_size"], 0.0)
-    # 마지막 줄의 내려긋기가 상자 밑선을 0.5mm 넘어선다 — 그만큼 미리 뺀다.
-    room = int((M["card"][3] - 2 * M["card_pad"] - 0.6) / M["card_lead"])
+            lines += max(1, int(len(txt) / per) + (1 if len(txt) % per else 0))
+    room = int((M["card"][3] - 2 * M["card_pad"]) / M["card_lead"])
     if lines <= room:
         return ""
     sc = max(0.78, round(room / float(lines), 2))
