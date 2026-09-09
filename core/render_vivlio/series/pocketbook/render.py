@@ -622,7 +622,8 @@ def _fbox_size(M):
     return ((fl[2] - 2 * ins - gap) / 2.0, (fl[3] - 2 * ins - gap) / 2.0)
 
 
-def flow_boxes(M, n, tall_first=False, w2=(1, 1), col1=None):
+def flow_boxes(M, n, tall_first=False, w2=(1, 1), col1=None,
+               col3=False):
     """덩어리 상자 자리 → `[(x, y, w, h)]` · 잇는 표식 자리 → `[(x, y, 세로냐)]`.
 
     읽는 차례는 **세로**다 — 왼쪽 단을 위에서 아래로 읽고 오른쪽 단으로 넘어간다.
@@ -641,6 +642,13 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1), col1=None):
     cw, chh = (w - gap) / 2.0, (h - gap) / 2.0
     d = M["fconn"]
     xr, yb = x0 + cw + gap, y0 + chh + gap
+    # 3단 나란히 — 왼쪽에서 오른쪽으로만 읽는다.
+    if n == 3 and col3:
+        c3 = (w - 2 * gap) / 3.0
+        box = [(x0 + k * (c3 + gap), y0, c3, h) for k in range(3)]
+        conn = [(x0 + c3 + gap / 2 - d / 2, y0 + h / 2 - d / 2, ""),
+                (x0 + 2 * c3 + 1.5 * gap - d / 2, y0 + h / 2 - d / 2, "")]
+        return box, conn
     # 한 단 3칸 — 위에서 아래로만 읽는다. 순서를 배울 게 없어 가장 잘 읽힌다.
     if col1:
         tot = float(sum(col1)) or 1.0
@@ -894,7 +902,8 @@ def right_page(p, M, folio, category=""):
         ov = 2 * M["fbox_pad"] + M["fbox_head"] + 1.2
         pair = (ch[1], ch[2]) if tall else (ch[0], ch[1])
         w2 = tuple(_flow_need(c, cwv, M, M["flow_size"]) + ov for c in pair)
-    boxes, conns = flow_boxes(M, len(ch), tall, w2, col1)
+    boxes, conns = flow_boxes(M, len(ch), tall, w2, col1,
+                              bool(M.get("flow_col3")))
     for n, (c, (bx, by, bw, bh)) in enumerate(zip(ch, boxes)):
         col = bw - 2 * M["fbox_pad"]
         fsc, lsc = flow_fit(c, col, bh, M, not col1)

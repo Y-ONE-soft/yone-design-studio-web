@@ -54,7 +54,7 @@ class VocacardSeries(Series):
 
     # ── 낱말 카드 높이 재기 ──
     @staticmethod
-    def _card_heights(pdf, gap=5.4):
+    def _card_heights(pdf, gap=5.4, last_fudge=2.5):
         """조판된 면에서 낱말 카드 높이를 잰다 — {번호: mm}.
 
         카드 머리의 네 자리 번호(`0001`)가 카드 시작이고, 다음 번호까지가 그
@@ -81,7 +81,13 @@ class VocacardSeries(Series):
                             marks.append((ln["bbox"][1] * k, int(t)))
                 marks.sort()
                 for i, (y, no) in enumerate(marks):
-                    end = marks[i + 1][0] if i + 1 < len(marks) else ink + gap
+                    if i + 1 < len(marks):
+                        end = marks[i + 1][0]           # 다음 카드 머리까지 = 정확
+                    else:
+                        # 면의 **마지막** 카드는 다음 머리가 없어 잉크 끝까지만 잰다.
+                        # 글자 잉크는 줄 상자보다 작아 그만큼 **작게** 잡히고, 그 카드가
+                        # 든 묶음이 실제로는 면을 넘쳐 밀린다(실측: 3mm 부족).
+                        end = ink + gap + last_fudge
                     out[no] = round(end - y, 2)
         return out
 
