@@ -428,10 +428,8 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    올린다(글자까지 흐려지면 안 된다). */
 /* 모눈은 조판할 때 **팔레트 색으로 그려 낸다**(`_stage_assets`). 불투명도로
    옅게 만들지 않는다 — 적은 색이 그대로 인쇄색이라야 겨냥이 된다. */
-.flow{position:absolute;overflow:hidden;background:var(--flow-bg)}
-.flow::before{content:"";position:absolute;left:0;top:0;right:0;bottom:0;
-  background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat;
-  pointer-events:none;z-index:0}
+.flow{position:absolute;overflow:hidden;background:var(--flow-bg);
+  border-radius:2mm}
 /* ⚠ 단 감싸개는 **흐름 안에** 둬야 한다. 절대배치로 두면 높이를 안 정한 판
    (실측용 판)에서 높이가 0 이 되어 **잉크가 하나도 안 나오고 측정이 통째로
    실패한다**(`항목 52 vs 측정 면 0`). `height:100%` 는 부모가 높이를 안 주면
@@ -440,8 +438,9 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* 마인드맵 덩어리 — 모눈 판 위에 반투명 흰 상자를 얹는다.
    ⚠ 상자 안 글은 `columns` 를 쓰지 않는다. 두 단으로 흘리면 왼쪽을 다 읽고
      오른쪽으로 건너뛰어야 해 흐름이 안 보인다(그래서 갈아엎었다). */
-.fbox{position:absolute;box-sizing:border-box;
-  background:rgba(255,255,255,.82);border:.25pt solid var(--flow-line);
+.fbox{position:absolute;box-sizing:border-box;overflow:hidden;
+  background:url("img/flownote_grid.png") 0 0/100% 100% no-repeat,#fff;
+  border:.25pt solid var(--flow-line);
   border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
 .fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);
   line-height:__fbox_head__mm;margin:0 0 .3mm}

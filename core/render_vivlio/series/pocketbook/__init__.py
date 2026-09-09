@@ -1322,7 +1322,9 @@ class PocketbookSeries(Series):
             from PIL import Image, ImageDraw
         except ImportError:
             return
-        w_mm, h_mm = M["flow"][2], M["flow"][3]
+        # ⚠ 모눈은 이제 판 전체가 아니라 **덩어리 상자 한 칸**에 깔린다.
+        #   판에 깔면 상자 사이 틈으로만 비쳐 흘린 선처럼 보였다.
+        w_mm, h_mm = prender._fbox_size(M)
         px = 12.0                                   # mm 당 화소
         W, H = int(w_mm * px), int(h_mm * px)
         im = Image.new("RGB", (W, H), P.get("flow_bg", "#EAECD8"))
