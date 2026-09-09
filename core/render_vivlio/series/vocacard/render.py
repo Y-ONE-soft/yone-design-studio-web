@@ -290,6 +290,9 @@ class Renderer(VocabookRenderer):
         # 1패스에서 잰 낱말 카드 높이 {번호: mm} — 없으면 낱말 수로 나눈다
         self.heights = heights or {}
         self.fill = float((self.o.get("page_fill_mm") or FILL_MM))
+        # 예문에 강조가 안 붙은 낱말 — 빌드 끝에 알린다. 조용히 지나가면
+        # 검수자가 대신 찾아 준다(실측: 재제작본에서 6곳을 지적받았다).
+        self.no_hl = []
 
     # ── 간지 ────────────────────────────────────────────────────────────
     def sheet(self, kind):
@@ -338,8 +341,11 @@ class Renderer(VocabookRenderer):
             lab = row["label"]
             if lab == "예문":
                 en, kr = (row["lines"] + [""])[:2]
+                marked = mark_head(en, it["word"])
+                if en and "[" not in marked:
+                    self.no_hl.append((it["no"], it["word"]))
                 body = ('<div class="pair">'
-                       f'<p class="en">{ex_en(mark_head(en, it["word"]))}</p>'
+                       f'<p class="en">{ex_en(marked)}</p>'
                        + (f'<p class="kr">{ex_kr(kr)}</p>' if kr else "")
                        + "</div>")
                 cls = "r-ex"
@@ -430,4 +436,8 @@ def write(cfg, data, build_dir, sample=False, heights=None, log=None):
     if log:
         log(f"[렌더] {'견본' if sample else '전권'} "
             f"{len(text) // 1024}KB → {os.path.basename(out)}")
+        if r.no_hl:
+            head = " · ".join(f"{n}:{w}" for n, w in r.no_hl[:8])
+            log(f"[확인] 예문에 표제어 강조가 안 붙은 낱말 {len(r.no_hl)}개 — {head}"
+                + (" …" if len(r.no_hl) > 8 else ""))
     return out

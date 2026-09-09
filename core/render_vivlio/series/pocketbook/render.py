@@ -566,6 +566,93 @@ def _tight(line, col_mm, size_pt, track_em):
     return None if need < _TIGHT_FLOOR else need
 
 
+_FHEAD = re.compile(r"^\s*\[([^\]]{1,12})\]\s*")
+
+
+def flow_chunks(lines, cap=4):
+    """플로우노트를 **마인드맵 덩어리**로 나눈다 — 3개나 4개.
+
+    원고가 이미 `[도입]`·`[핵심]`·`[결론]` 같은 머리말로 흐름을 끊어 놓았다
+    (광문1 66지문 전수: 100% 가 머리말을 갖고 있고 덩어리가 2~7개).
+    그대로 쓰면 덩어리가 너무 잘아 상자가 일곱 개가 된다 — **붙어 있는 것들
+    중 가장 짧은 짝부터 합쳐** 개수를 줄인다.
+
+    글이 적으면(9줄 이하) 3덩어리, 많으면 4덩어리까지다(사용자 지시).
+    거꾸로 덩어리가 셋이 안 되는데 한 덩어리가 길면 반으로 가른다.
+    """
+    ch = []
+    for ln in lines:
+        if ch and _FHEAD.match(ln):
+            ch.append([ln])
+        elif ch:
+            ch[-1].append(ln)
+        else:
+            ch.append([ln])
+    if not ch:
+        return []
+    want = 3 if len(lines) <= 9 else cap
+    while len(ch) > want:
+        i = min(range(len(ch) - 1), key=lambda k: len(ch[k]) + len(ch[k + 1]))
+        ch[i] = ch[i] + ch.pop(i + 1)
+    while len(ch) < 3 and max(len(c) for c in ch) >= 4:
+        i = max(range(len(ch)), key=lambda k: len(ch[k]))
+        c = ch.pop(i)
+        h = (len(c) + 1) // 2
+        ch[i:i] = [c[:h], c[h:]]
+    return ch
+
+
+def _fbox_size(M):
+    """덩어리 상자 한 칸 크기 — `flow` 자리에서 바로 낸다(따로 적지 않는다)."""
+    fl, ins, gap = M["flow"], M["fbox_inset"], M["fbox_gap"]
+    return ((fl[2] - 2 * ins - gap) / 2.0, (fl[3] - 2 * ins - gap) / 2.0)
+
+
+def flow_boxes(M, n):
+    """덩어리 상자 자리 → `[(x, y, w, h)]` · 잇는 표식 자리 → `[(x, y, 세로냐)]`.
+
+    넷이면 2×2, 셋이면 위 둘 + 아래 하나(가로로 꽉). 읽는 차례는 왼→오,
+    위→아래다 — 가로로 잇는 표식은 짝 사이에, 세로 표식은 두 줄 사이 가운데.
+    """
+    fl, ins, gap = M["flow"], M["fbox_inset"], M["fbox_gap"]
+    x0, y0 = fl[0] + ins, fl[1] + ins
+    w, h = fl[2] - 2 * ins, fl[3] - 2 * ins
+    cw, chh = (w - gap) / 2.0, (h - gap) / 2.0
+    d = M["fconn"]
+    if n <= 2:
+        box = [(x0, y0, w, chh), (x0, y0 + chh + gap, w, chh)][:n]
+        conn = [(x0 + w / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True)] \
+            if n == 2 else []
+        return box, conn
+    box = [(x0, y0, cw, chh), (x0 + cw + gap, y0, cw, chh)]
+    conn = [(x0 + cw + gap / 2 - d / 2, y0 + chh / 2 - d / 2, False)]
+    if n == 3:
+        box.append((x0, y0 + chh + gap, w, chh))
+    else:
+        box.append((x0, y0 + chh + gap, cw, chh))
+        box.append((x0 + cw + gap, y0 + chh + gap, cw, chh))
+        conn.append((x0 + cw + gap / 2, y0 + chh + gap + chh / 2 - d / 2,
+                     False))
+    conn.append((x0 + w / 2 - d / 2, y0 + chh + gap / 2 - d / 2, True))
+    return box, conn
+
+
+def flow_fit(chunk, col_mm, M):
+    """이 덩어리가 상자에 안 들어가면 줄일 배율. 줄 수를 **자폭으로** 센다."""
+    room = (_fbox_size(M)[1] - 2 * M["fbox_pad"] - M["fbox_head"]) \
+        / M["flow_lead"]
+    n = 0
+    for i, ln in enumerate(chunk):
+        txt = _MD_BOLD.sub(r"\1", ln)
+        if not i:
+            txt = _FHEAD.sub("", txt)      # 머리말은 딱지로 빠진다
+        if not txt.strip():
+            continue
+        w = flow_width_mm(txt, M["flow_size"], M["flow_track"])
+        n += max(1, int(w / col_mm) + (1 if w % col_mm else 0))
+    return 1.0 if n <= room else max(0.80, round(room / n, 2))
+
+
 def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
     """플로우노트 줄들 → `<p>` 목록. 묶음 머리 앞은 띄운다.
 
@@ -670,17 +757,36 @@ def right_page(p, M, folio, category=""):
     # 플로우노트
     parts.append('<div class="flowchip" style="%s">%sFLOW NOTE</div>'
                  % (_box(fc[0], fc[1], fc[2], fc[3]), _svg("chip_flow")))
-    fsc = p.get("flow_scale", 1.0)
-    rows = flow_rows(p.get("flownote") or [], flow_col_mm(M),
-                     M["flow_size"] * fsc, M["flow_track"])
-    fst = "" if fsc == 1.0 else ";font-size:%gpt;line-height:%gmm" % (
-        M["flow_size"] * fsc, M["flow_lead"] * fsc)
-    # ⚠ 모눈 깔개를 `.flow::before` 로 두면 **단(column) 흐름에 끼어** 깔리지
-    #   않는다(불투명도가 하나도 안 먹은 것처럼 보였다). 상자와 단을 나눈다.
-    parts.append('<div class="flow" style="%s">'
-                 '<div class="flowin" style="%s">%s</div></div>'
-                 % (_box(fl[0], fl[1], fl[2], fl[3]), fst.lstrip(";"),
-                    "".join(rows)))
+    # ⚠ 예전엔 한 상자에 두 단으로 흘려 넣었다. 왼쪽 단을 다 읽고 오른쪽으로
+    #   건너뛰어야 해서 글의 **흐름**이 안 보였다(사용자 지시로 바꿈).
+    #   이제 원고의 `[머리말]` 을 경계로 3~4덩어리로 끊어 마인드맵처럼 앉힌다.
+    parts.append('<div class="flow" style="%s"></div>'
+                 % _box(fl[0], fl[1], fl[2], fl[3]))
+    ch = flow_chunks(p.get("flownote") or [])
+    boxes, conns = flow_boxes(M, len(ch))
+    cw = _fbox_size(M)[0] - 2 * M["fbox_pad"]
+    for c, (bx, by, bw, bh) in zip(ch, boxes):
+        # 아래 한 줄짜리 넓은 상자는 글 폭이 두 배다
+        col = cw if bw < M["flow"][2] - 2 * M["fbox_inset"] - 1 \
+            else bw - 2 * M["fbox_pad"]
+        fsc = flow_fit(c, col, M)
+        fst = "" if fsc == 1.0 else \
+            ' style="font-size:%gpt;line-height:%gmm"' % (
+                M["flow_size"] * fsc, M["flow_lead"] * fsc)
+        m = _FHEAD.match(c[0])
+        head = ('<div class="fbh">%s</div>' % ESC(m.group(1))) if m else ""
+        body = list(c)
+        if m:
+            body[0] = c[0][m.end():]
+        rows = flow_rows([x for x in body if x.strip()], col,
+                         M["flow_size"] * fsc, M["flow_track"])
+        parts.append('<div class="fbox" style="%s">%s<div class="fbi"%s>'
+                     '%s</div></div>'
+                     % (_box(bx, by, bw, bh), head, fst, "".join(rows)))
+    for cx, cy, down in conns:
+        parts.append('<div class="fconn%s" style="%s"><i></i></div>'
+                     % (" d" if down else "",
+                        _box(cx, cy, M["fconn"], M["fconn"])))
     # 주제 / 요약문
     parts.append('<div class="topicband" style="%s"></div>'
                  % _box(tb[0], tb[1], tb[2], tb[3]))

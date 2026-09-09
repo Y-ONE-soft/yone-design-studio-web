@@ -114,7 +114,16 @@ METRICS = {
     "folio_y": 196.5, "folio_size": 6.0,
     # 오른쪽 면
     # 플로우노트는 **8pt 가 기본**이고, 넘칠 때만 7pt 로 내린다(사용자 지시).
-    "flow": [18.0, 18.31, 115.0, 41.0], "flow_size": 9.0, "flow_lead": 4.1,
+    # 플로우노트를 마인드맵 덩어리로 바꾸면서 자리를 키웠다(41→71.2mm).
+    # 늘어난 몫은 동반의어 카드에서 났다 — 32mm 상자에 글은 중앙 11.2mm 밖에
+    # 안 들어가 20mm 가 비어 있었다(완성 PDF 536장 실측).
+    "flow": [18.0, 18.31, 115.0, 71.16],
+    "fbox_inset": 3.0,          # 덩어리 상자가 판 안쪽에서 물러나는 거리
+    "fbox_gap": 4.2,            # 상자 사이(잇는 표식이 앉을 자리)
+    "fbox_pad": 2.0,
+    "fbox_head": 4.6,           # 머리말 딱지가 먹는 높이
+    "fconn": 3.6,               # 잇는 표식 지름
+    "flow_size": 9.0, "flow_lead": 4.1,
     "flow_min_size": 8.0,           # 넘칠 때 내려가는 자리
     "flow_track": -0.05,            # 자간 (원본 문자 스타일 Tracking=-50)
     "flow_sec_gap": 2.4,            # 묶음 사이 띄움(mm) — 한눈에 갈리게
@@ -135,19 +144,19 @@ METRICS = {
     "voca_ex": 6.0, "voca_ex_lead": 2.47, "voca_ex_gap": 1.5,
     "voca_pad": 1.6, "voca_gap": 1.5,
     "voca_track": -0.025, "voca_ex_track": -0.03,
-    "topic": [18.0, 59.31, 115.0, 23.09], "topic_size": 8.0,
+    "topic": [18.0, 89.47, 115.0, 23.09], "topic_size": 8.0,
     "topic_lead": 3.5, "topic_text_x": 29.8,
-    "syn_panel": [18.09, 88.11, 114.82, 106.89],
+    "syn_panel": [18.09, 118.27, 114.82, 76.73],
     # 동반의어 제목 — 표식(A·B·C 색면)이 너무 작아 글자가 안 보인다는 지적.
     # 덮개는 **제목에 딱 붙는 폭**이라야 한다 — 넓으면 오른쪽 동그라미가 제목에서
     # 멀찍이 떨어져 선이 괜히 끊긴 것처럼 보인다(완성본 덮개 20.70~43.33).
-    "syn_title": [20.7, 84.6, 24.0, 6.2],
+    "syn_title": [20.7, 114.76, 24.0, 6.2],
     "syntitle_size": 7.0, "synmark_h": 5.4,
     "syntitle_dot": 1.05,           # 괘선이 끊기는 자리의 동그라미(mm·실측)
     "syntitle_dot_gap": 1.6,        # 제목과 동그라미 사이
     "tbadge_w": 9.6, "tbadge_gap": 1.2,
-    "card": [21.2, 90.83, 34.6, 32.0],
-    "card_gap_x": 37.25, "card_gap_y": 34.72,
+    "card": [21.2, 120.99, 34.6, 22.0],
+    "card_gap_x": 37.25, "card_gap_y": 24.72,
     "card_size": 7.0, "card_lead": 4.2, "card_pad": 2.0,
     # 암기테스트
     "memtest": [18.0, 20.4, 112.0, 174.6], "memtest_size": 9.0,
@@ -227,6 +236,8 @@ def build_css(palette=None, metrics=None, highlight=None):
         "folio": "%g" % M["folio_size"],
         "grid": "%g" % M["flow_grid"],
         "flow_size": "%g" % M["flow_size"], "flow_lead": "%g" % M["flow_lead"],
+        "fbox_pad": "%g" % M["fbox_pad"],
+        "fbox_head": "%g" % M["fbox_head"],
         "topic_size": "%g" % M["topic_size"],
         "topic_lead": "%g" % M["topic_lead"],
         "card_size": "%g" % M["card_size"], "card_lead": "%g" % M["card_lead"],
@@ -426,17 +437,30 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
    실패한다**(`항목 52 vs 측정 면 0`). `height:100%` 는 부모가 높이를 안 주면
    저절로 auto 라 실측 판에서도 자연 높이가 나온다.
    z-index 는 깔개(::before)보다 위에 서려고 준다 — 안 주면 모눈이 글을 덮는다. */
-.flowin{position:relative;z-index:1;width:100%;height:100%;
-  font-family:PBDodam;font-size:__flow_size__pt;line-height:__flow_lead__mm;
-  letter-spacing:__flow_track__em;
-  padding:2.5mm 3mm;box-sizing:border-box;columns:2;column-gap:3mm}
-.flow p{margin:0;break-inside:avoid}
-.flow p.sec{margin-top:__flow_sec_gap__mm}
+/* 마인드맵 덩어리 — 모눈 판 위에 반투명 흰 상자를 얹는다.
+   ⚠ 상자 안 글은 `columns` 를 쓰지 않는다. 두 단으로 흘리면 왼쪽을 다 읽고
+     오른쪽으로 건너뛰어야 해 흐름이 안 보인다(그래서 갈아엎었다). */
+.fbox{position:absolute;box-sizing:border-box;
+  background:rgba(255,255,255,.82);border:.25pt solid var(--flow-line);
+  border-radius:1.6mm;padding:__fbox_pad__mm;z-index:1}
+.fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);
+  line-height:__fbox_head__mm;margin:0 0 .3mm}
+.fbi{font-family:PBDodam;font-size:__flow_size__pt;
+  line-height:__flow_lead__mm;letter-spacing:__flow_track__em}
+/* 잇는 표식 — 글리프가 아니라 테두리로 그린 갈매기다 */
+.fconn{position:absolute;border-radius:50%;background:var(--flow-arrow);
+  display:flex;align-items:center;justify-content:center;z-index:2}
+.fconn i{display:block;width:1.05mm;height:1.05mm;
+  border-right:.3mm solid #fff;border-bottom:.3mm solid #fff;
+  transform:rotate(-45deg);margin-left:-.3mm}
+.fconn.d i{transform:rotate(45deg);margin:-.3mm 0 0}
+.fbi p{margin:0}
+.fbi p.sec{margin-top:__flow_sec_gap__mm}
 /* 색은 **기호에만**. 원본 문자 스타일 4종이 글자 단위로 붙어 있다. */
-.flow .sym{color:var(--flow-arrow)}
-.flow .sym2{color:var(--flow-sym2)}
-.flow .brk{color:var(--flow-brk);font-weight:600}
-.flow .par{color:var(--flow-par)}
+.fbi .sym{color:var(--flow-arrow)}
+.fbi .sym2{color:var(--flow-sym2)}
+.fbi .brk{color:var(--flow-brk);font-weight:600}
+.fbi .par{color:var(--flow-par)}
 
 /* ── 어휘 파트 ─────────────────────────────────────────────
    완성본 문단 스타일 그대로: 표제어 10pt · 뜻 7pt(행간 12) · 예문 6pt(행간 7).
