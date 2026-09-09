@@ -350,6 +350,32 @@ def _letters(t):
     return "".join(c for c in (t or "").lower() if c.isalpha())
 
 
+_SHORT_NO = {18, 19, 25, 26, 27, 28, 43, 44, 45}
+
+
+def _mark_short(rows, opt, log):
+    """모의고사 **짤지문**을 표시한다 — 오른쪽 면을 만들지 않는다.
+
+    18·19(안내문) · 25~28(도표·실용문) · 43~45(장문 독해)는 플로우노트·동반의어를
+    쓸 거리가 없다(사용자 지시). 두 개가 한 펼침면에 나란히 들어간다.
+    번호는 `options.short_no` 로 갈아 끼울 수 있다.
+    """
+    want = set(opt.get("short_no") or _SHORT_NO)
+    n = 0
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        lab = r.get("label") or ""
+        if "번" not in lab:
+            continue
+        ns = [int(x) for x in re.findall(r"\d+", lab)]
+        if ns and all(x in want for x in ns):
+            r["short"] = True
+            n += 1
+    if n:
+        log("■ 모의고사 짤지문 %d개 — 오른쪽 면 없이 둘씩 묶는다" % n)
+
+
 def _fill_from_store(rows, cfg, opt, log):
     """오른쪽 면 **창고**에서 가져온다 — 학교를 넘어 사는 자료다.
 
@@ -724,6 +750,7 @@ class PocketbookSeries(Series):
                               fill=("flownote", "topic"))
         # 창고가 **맨 마지막**이다 — 사람이 손본 자리는 아무것도 못 덮는다.
         _fill_from_store(rows, cfg, opt, log)
+        _mark_short(rows, opt, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)

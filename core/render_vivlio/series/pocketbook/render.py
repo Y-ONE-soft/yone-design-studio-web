@@ -1076,6 +1076,18 @@ def build_html(data, css_name="pocket.css"):
             if pg:
                 pages.append(pg); folio += 1
             continue
+        # ⚠ 모의고사 짤지문(18·19·25~28·43~45번)은 오른쪽 면이 없다 — 안내문·
+        #   도표라 플로우노트를 쓸 거리가 없다(사용자 지시). 두 개가 한 펼침면에
+        #   나란히 들어간다.
+        if p.get("short"):
+            pages.append(left_page(p, M, folio)); folio += 1
+            continue
+        # 온전한 지문은 **왼쪽 면에서 시작**해야 한다. 짤지문이 홀수로 놓이면
+        # 짝이 밀리므로 빈 면 한 장으로 되돌린다.
+        if folio % 2:
+            pages.append('<section class="pg %s"><div class="trim">'
+                         '</div></section>' % page_kind(p))
+            folio += 1
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat)); folio += 1
     # 어휘 파트는 **맨 뒤**다(26-1-기말 완성본과 같은 자리). 한 DAY 가 펼침면
