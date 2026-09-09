@@ -451,6 +451,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .fbh{font-family:PBJalnan;font-size:7pt;color:var(--flow-brk);
   line-height:__fbox_head__mm;margin:0 0 .3mm;
   display:flex;align-items:center;gap:1.1mm}
+.fbt{font-family:PBJalnan}
+/* 한 단 3칸 — 머리말이 첫 줄에 붙는다 */
+.fbl{color:var(--flow-brk)}
+.fbl .fbn{margin-right:1.1mm;vertical-align:-.55mm}
+.fbl .fbt{margin-right:1.4mm}
 .fbn{display:inline-flex;align-items:center;justify-content:center;
   width:3.2mm;height:3.2mm;border-radius:50%;flex:none;
   background:var(--flow-brk);color:#fff;font-size:5.5pt;line-height:1}

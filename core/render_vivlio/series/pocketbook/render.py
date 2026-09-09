@@ -615,7 +615,7 @@ def _fbox_size(M):
     return ((fl[2] - 2 * ins - gap) / 2.0, (fl[3] - 2 * ins - gap) / 2.0)
 
 
-def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
+def flow_boxes(M, n, tall_first=False, w2=(1, 1), col1=None):
     """덩어리 상자 자리 → `[(x, y, w, h)]` · 잇는 표식 자리 → `[(x, y, 세로냐)]`.
 
     읽는 차례는 **세로**다 — 왼쪽 단을 위에서 아래로 읽고 오른쪽 단으로 넘어간다.
@@ -634,6 +634,19 @@ def flow_boxes(M, n, tall_first=False, w2=(1, 1)):
     cw, chh = (w - gap) / 2.0, (h - gap) / 2.0
     d = M["fconn"]
     xr, yb = x0 + cw + gap, y0 + chh + gap
+    # 한 단 3칸 — 위에서 아래로만 읽는다. 순서를 배울 게 없어 가장 잘 읽힌다.
+    if col1:
+        tot = float(sum(col1)) or 1.0
+        room = h - 2 * gap
+        box, conn, yy = [], [], y0
+        for k, wk in enumerate(col1):
+            bh = room * wk / tot
+            box.append((x0, yy, w, bh))
+            yy += bh
+            if k < len(col1) - 1:
+                conn.append((x0 + w / 2 - d / 2, yy + gap / 2 - d / 2, "d"))
+                yy += gap
+        return box, conn
     down = lambda cx, yy: (cx + cw / 2 - d / 2, yy - d / 2, "d")
     if n <= 1:
         return [(x0, y0, w, h)][:n], []
@@ -710,7 +723,7 @@ def _flow_need(chunk, col_mm, M, size):
     return need
 
 
-def flow_fit(chunk, col_mm, box_h, M):
+def flow_fit(chunk, col_mm, box_h, M, head=True):
     """이 덩어리가 상자에 안 들어가면 줄일 배율.
 
     ⚠ 줄인 뒤에는 줄바꿈 자리가 달라져 줄 수가 도로 늘 수 있다. 한 번 셈해서
@@ -718,7 +731,8 @@ def flow_fit(chunk, col_mm, box_h, M):
     """
     # ⚠ 딱지 아래 여백(0.3mm)과 마지막 줄 글자의 내려긋기가 셈에 안 잡힌다 —
     #   그만큼 미리 뺀다. 안 빼면 7줄짜리 덩어리가 1.3mm 씩 삐져나왔다(실측).
-    room = box_h - 2 * M["fbox_pad"] - M["fbox_head"] - 1.2
+    room = box_h - 2 * M["fbox_pad"] - 1.2 \
+        - (M["fbox_head"] if head else 0.0)
     sc = 1.0
     while sc > _FLOW_FLOOR:
         if _flow_need(chunk, col_mm, M, M["flow_size"] * sc) <= room:
@@ -840,33 +854,54 @@ def right_page(p, M, folio, category=""):
                  % _box(fl[0], fl[1], fl[2], fl[3]))
     ch = flow_chunks(p.get("flownote") or [])
     # 셋이면 어느 쪽이 통 칸인지는 **덩어리 길이**가 정한다
-    tall = len(ch) == 3 and len(ch[0]) > len(ch[2])
-    w2 = (1, 1)
+    # ⚠ 한 단 3칸은 세로가 1/3 로 줄어든다. 폭이 두 배가 돼도 줄은 거의 안
+    #   줄어서(48mm 에서도 대부분 한 줄에 든다) **글이 많은 지문은 안 들어간다**.
+    #   들어가는 지문만 한 단으로 놓고, 넘치는 지문은 두 단을 그대로 쓴다 —
+    #   글자를 줄여 가며 한 단을 고집할 이유가 없다.
+    col1 = None
     if len(ch) == 3:
+        wcol = M["flow"][2] - 2 * M["fbox_inset"] - 2 * M["fbox_pad"]
+        need = [_flow_need(c, wcol, M, M["flow_size"]) + 2 * M["fbox_pad"]
+                for c in ch]
+        room = M["flow"][3] - 2 * M["fbox_inset"] - 2 * M["fbox_gap"]
+        if sum(need) <= room:
+            col1 = need
+    tall = len(ch) == 3 and not col1 and len(ch[0]) > len(ch[2])
+    w2 = (1, 1)
+    if len(ch) == 3 and not col1:
         # ⚠ 줄 수로만 나누면 안 된다 — 상자마다 여백·머리말 딱지가 8.6mm 씩
         #   먼저 먹는다. 그걸 안 세어 짧은 덩어리 상자가 눌리고 글자가 줄었다.
         cwv = _fbox_size(M)[0] - 2 * M["fbox_pad"]
         ov = 2 * M["fbox_pad"] + M["fbox_head"] + 1.2
         pair = (ch[1], ch[2]) if tall else (ch[0], ch[1])
         w2 = tuple(_flow_need(c, cwv, M, M["flow_size"]) + ov for c in pair)
-    boxes, conns = flow_boxes(M, len(ch), tall, w2)
+    boxes, conns = flow_boxes(M, len(ch), tall, w2, col1)
     for n, (c, (bx, by, bw, bh)) in enumerate(zip(ch, boxes)):
         col = bw - 2 * M["fbox_pad"]
-        fsc = flow_fit(c, col, bh, M)
+        fsc = flow_fit(c, col, bh, M, not col1)
         fst = "" if fsc == 1.0 else \
             ' style="font-size:%gpt;line-height:%gmm"' % (
                 M["flow_size"] * fsc, M["flow_lead"] * fsc)
-        # ⚠ 화살표만으로는 위 칸 둘을 가로로 읽을 여지가 남는다(사용자 지적).
+        # ⚠ 화살표만으로는 칸을 가로로 읽을 여지가 남는다(사용자 지적).
         #   머리말 앞에 **차례 번호**를 박아 흐름을 못 박는다.
         m = _FHEAD.match(c[0])
-        head = ('<div class="fbh"><span class="fbn">%d</span>%s</div>'
-                % (n + 1, ESC(m.group(1)))) if m else \
-               ('<div class="fbh"><span class="fbn">%d</span></div>' % (n + 1))
+        lab = ('<span class="fbn">%d</span>%s' % (
+            n + 1, ('<span class="fbt">%s</span>' % ESC(m.group(1)))
+            if m else ""))
         body = list(c)
         if m:
             body[0] = c[0][m.end():]
-        rows = flow_rows([x for x in body if x.strip()], col,
-                         M["flow_size"] * fsc, M["flow_track"])
+        body = [x for x in body if x.strip()]
+        if col1:
+            # 한 단은 세로가 빠듯하다 — 딱지를 따로 한 줄 쓰지 않고 첫 줄에 붙인다
+            head = ""
+            rows = flow_rows(body[1:], col, M["flow_size"] * fsc,
+                             M["flow_track"])
+            rows.insert(0, '<p class="fbl">%s%s</p>'
+                        % (lab, flow_html(body[0]) if body else ""))
+        else:
+            head = '<div class="fbh">%s</div>' % lab
+            rows = flow_rows(body, col, M["flow_size"] * fsc, M["flow_track"])
         # 모눈은 판 한 장이다 — 이 상자가 판 안에서 놓인 만큼 밀어 본다
         bg = ";background-size:%gmm %gmm;background-position:%gmm %gmm" % (
             fl[2], fl[3], -(bx - fl[0]), -(by - fl[1]))
