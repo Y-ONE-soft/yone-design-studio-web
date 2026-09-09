@@ -137,7 +137,9 @@ class VocacardSeries(Series):
 
         # ② 잰 높이로 면을 다시 나눈다. 면 마지막 카드는 어림값이라, 한 번 더
         #    조판해 그 카드들이 면 중간으로 간 자리에서 정확한 값을 얻는다.
-        meas = self._card_heights(out)
+        opts = cfg.section("options") or {}
+        meas = self._card_heights(
+            out, rough_pad=float(opts.get("rough_pad_mm", 2.0)))
         t2 = 0.0
         for round_no in (1, 2):
             if not meas:
@@ -152,7 +154,9 @@ class VocacardSeries(Series):
             t2 += cli.run_build(html_path, out, log=log)
             if round_no == 2 or not rough:
                 break
-            if not self._merge_heights(meas, self._card_heights(out)):
+            again = self._card_heights(
+                out, rough_pad=float(opts.get("rough_pad_mm", 2.0)))
+            if not self._merge_heights(meas, again):
                 break
 
         opens = paged.find_open_pages(probe.page_texts(out))
