@@ -421,10 +421,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   display:block}
 .translation{position:absolute;font-size:__trans_size__pt;
   line-height:__trans_lead__mm;color:var(--trans);
-  /* ⚠ 양끝 맞추기(justify)를 걸었더니 **한 문장짜리 문단의 첫 줄**만 낱말
-     사이가 확 벌어졌다(사용자 지적). 완성본 `한글` 단락은 왼쪽 정렬에
-     자간 -30(=-0.03em)이다 — 그대로 맞춘다. */
-  text-align:left;letter-spacing:-.03em;word-break:keep-all}
+  /* 양끝 맞추기다(완성본과 같다). ⚠ `word-break:keep-all` 을 같이 걸면
+     한글이 낱말 안에서 못 꺾여 줄이 일찍 끝나고, 그 모자란 몫을 **띄어쓰기
+     몇 곳이 다 떠안아** 첫 줄 낱말 사이가 확 벌어진다(사용자 지적). 한글은
+     글자 사이에서 꺾이게 두어야 줄이 꽉 차고 벌어짐이 안 생긴다. */
+  text-align:justify;letter-spacing:-.03em}
 .translation p{margin:0}
 /* 「주제 :」 써 보는 칸 — 완성본대로 남색 테두리에 도담도담 9pt(자간 -0.1em) */
 .tbox{position:absolute;border:.5pt solid var(--navy);
