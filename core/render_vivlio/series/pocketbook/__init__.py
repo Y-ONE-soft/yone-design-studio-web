@@ -1723,16 +1723,17 @@ class PocketbookSeries(Series):
             if got <= room:
                 continue
             need = room / got
-            # ① 행간부터 — 0.78 까지
-            r["trans_lead"] = round(max(lead0 * 0.78, lead0 * need), 2)
+            # ① 행간부터 — **글자를 지키려고 하한을 0.70 까지** 내린다.
+            #    (해석 글자가 5.07pt 까지 줄어 지적받았다 — 크기보다 행간이다.)
+            r["trans_lead"] = round(max(lead0 * 0.70, lead0 * need), 2)
             done = r["trans_lead"] / lead0
             if need < done - 1e-6:
                 # ② 자간 — 줄이 줄어드는 만큼만
-                r["trans_track"] = -0.03
-                done *= 0.97
+                r["trans_track"] = -0.045
+                done *= 0.955
             if need < done - 1e-6:
-                # ③ 그래도 모자라면 글자 크기
-                r["trans_scale"] = round(max(0.86, need / done), 3)
+                # ③ 그래도 모자랄 때만 글자 크기. 1pt 안쪽(5.9→5.3)으로 막는다.
+                r["trans_scale"] = round(max(0.90, need / done), 3)
             n += 1
         if n:
             log("■ 해석 조정 %d/%d" % (n, len(pas)))
