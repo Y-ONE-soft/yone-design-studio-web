@@ -516,7 +516,9 @@ def _fill_from_store(rows, cfg, opt, log):
     idx = pstore.index(path)
     if not idx:
         return
-    n = m = 0
+    bd = os.path.dirname(os.path.normpath(cfg.build_dir))
+    book = "/".join(bd.split(os.sep)[-2:])
+    n = m = v = 0
     for row in rows:
         if row.get("kind") == "memtest":
             continue
@@ -562,11 +564,17 @@ def _fill_from_store(rows, cfg, opt, log):
         row["_store"] = got.get("label") or ""
         if fix:
             row["_fixed"] = sorted(fixed | {"left"} if fix else fixed)
+        # 이 책에서 검수를 한 바퀴 돈 지문이면 「신규 작업분」 쪽지를 안 붙인다.
+        if book and book in (got.get("reviewed") or []):
+            row["_reviewed"] = 1
+            v += 1
         n += hit
         m += fix
     if n:
         log("■ 창고에서 오른쪽 면 %d지문 가져옴%s"
             % (n, " (사람이 손본 %d지문 포함)" % m if m else ""))
+    if v:
+        log("■ 검수를 거친 지문 %d개 — 「신규 작업분」 쪽지를 안 붙인다" % v)
 
 
 def _fill_from_pocketbook(rows, cfg, opt, log, own=(), fill=()):
@@ -2495,9 +2503,16 @@ def _mark_new(pdf, rows, voca_pages, spec, log):
     # ⚠ 예전엔 `기존 포켓북에서 왔는가` 만 봤다. 연구원이 이미 검수해서 고쳐
     #   놓은 지문도 다음 학교에서 **또 `신규`** 로 표시돼, 본 것을 또 보게
     #   된다(사용자 지적). 창고에 손본 자국(`_fixed`)이 있으면 뺀다.
+    def _seen(r):
+        # 손본 자국(`fixed`)이 있거나, 이 책에서 검수를 한 바퀴 돈 지문이다.
+        # ⚠ 자국만 보면 안 된다 — 고칠 데가 없어 그냥 통과한 지문은 자국이
+        #   안 남는다. 광문1은 84건을 반영하고도 42지문에 쪽지가 그대로
+        #   남아 있었다(사용자 지적).
+        return bool(r.get("_fixed")) or bool(r.get("_reviewed"))
+
     new = [(i, r) for i, r in enumerate(pas)
-           if not r.get("_from_book") and not r.get("_fixed")]
-    done = sum(1 for r in pas if not r.get("_from_book") and r.get("_fixed"))
+           if not r.get("_from_book") and not _seen(r)]
+    done = sum(1 for r in pas if not r.get("_from_book") and _seen(r))
     if not new:
         if done:
             log("■ 신규 작업분이 모두 검수를 거쳤다 — 표시할 것 없음")

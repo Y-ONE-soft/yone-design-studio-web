@@ -229,6 +229,35 @@ def apply(hits, write=False, log=print):
     return done, skipped
 
 
+def book_id(book):
+    """책 이름 = 폴더 두 칸(`26-2-중간/광문1`) — 창고가 쓰는 이름이다."""
+    bd = os.path.normpath(book)
+    return "/".join(bd.split(os.sep)[-2:])
+
+
+def mark_reviewed(book, write=False, log=print):
+    """그 책 지문 **전부**에 「검수 한 바퀴 돌았다」를 새긴다.
+
+    ⚠ 고친 자국(`fixed`)만 보면 안 된다. 연구원이 보고 **고칠 데가 없어서**
+      넘어간 지문에는 자국이 안 남는다 — 그러면 다음 조판에서 「신규 작업분」
+      쪽지가 또 붙어 본 것을 또 보게 된다(광문1: 84건을 반영하고도 42지문에
+      쪽지가 그대로 남았다). 검수는 *지문 단위*가 아니라 *책 단위*로 돈다.
+    """
+    n = 0
+    bid = book_id(book)
+    for r in _rows(book):
+        t = _text(r)
+        if not pstore.key_of(t):
+            continue
+        if write:
+            pstore.put(STORE, t, {}, book=bid,
+                       label=r.get("label") or "", reviewed=bid)
+        n += 1
+    log("■ %s 검수 한 바퀴 새김 — %d지문%s"
+        % (bid, n, "" if write else " (미리보기)"))
+    return n
+
+
 def main(argv):
     if len(argv) < 3:
         return print(__doc__)
@@ -238,6 +267,7 @@ def main(argv):
     n = sum(len(e) for _, e in hits)
     print("■ 주석 %d개 · 지문 %d개" % (n, len(hits)))
     done, skipped = apply(hits, write)
+    mark_reviewed(book, write)
     for pg, why, what in bad:
         print("  ⚠ %d면 %s %s" % (pg, why, what))
     print("■ %s %d곳%s%s"

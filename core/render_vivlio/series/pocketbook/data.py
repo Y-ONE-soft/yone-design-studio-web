@@ -381,6 +381,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "split": bool(p.get("split")),
             # 연구원이 이미 손본 자리 — 검수 표시를 다시 달지 않는다
             "_fixed": p.get("_fixed") or [],
+            # 이 책에서 검수를 한 바퀴 돈 지문 — 마찬가지로 다시 달지 않는다
+            "_reviewed": bool(p.get("_reviewed")),
             "passage_runs": _flatten(p.get("passage")),
             "translation": _plain(p.get("translation")),
             "flownote": p.get("flownote") or [],

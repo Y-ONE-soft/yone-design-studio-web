@@ -94,11 +94,17 @@ def load(path, text):
     return find(index(path), text)
 
 
-def put(path, text, fields, book="", label="", fixed=(), who=""):
+def put(path, text, fields, book="", label="", fixed=(), who="",
+        reviewed=""):
     """창고에 넣는다. 이미 있으면 **적힌 자리만** 갈아 끼운다.
 
     `fixed` 에 적은 자리는 사람이 손본 것으로 새겨 둔다 — 다음부터 아무것도
     그 자리를 못 덮는다.
+
+    `reviewed` 는 **그 책에서 검수를 한 바퀴 돌았다**는 자국이다(책 이름을
+    넘긴다). `fixed` 와 다르다 — `fixed` 는 *고친 자리*이고 `reviewed` 는
+    *본 적이 있다*이다. 연구원이 이미 본 지문에 「신규 작업분」 쪽지가 또
+    붙어 같은 것을 다시 보게 되던 것을 막는다(사용자 지적).
     """
     k = key_of(text)
     if not k:
@@ -126,6 +132,10 @@ def put(path, text, fields, book="", label="", fixed=(), who=""):
         was |= set(fixed)
         rec["by"] = who or rec.get("by") or ""
     rec["fixed"] = sorted(was)
+    if reviewed:
+        seen = rec.setdefault("reviewed", [])
+        if reviewed not in seen:
+            seen.append(reviewed)
     rec["at"] = time.strftime("%Y-%m-%d %H:%M")
     with open(fp, "w", encoding="utf-8") as fh:
         json.dump(rec, fh, ensure_ascii=False, indent=1)
