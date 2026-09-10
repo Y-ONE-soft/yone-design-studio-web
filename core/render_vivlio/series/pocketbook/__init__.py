@@ -507,9 +507,34 @@ def _fill_from_store(rows, cfg, opt, log):
             elif not row.get(f):
                 row[f] = got[f]
                 hit = True
+        # ── 왼쪽 면 고침 — 분석본을 안 건드리고 여기서 바로잡는다 ──
+        if got.get("passage_tail"):
+            tail = str(got["passage_tail"])
+            cur = "".join(x.get("t", "") for x in (row.get("passage") or [])
+                          for x in ((x.get("runs") or []) if isinstance(x, dict)
+                                    else []))
+            body = pdata.plain_passage(row)
+            if tail.strip() and tail.strip()[:30] not in body:
+                ps_ = row.get("passage") or []
+                if ps_:
+                    ps_[-1].setdefault("runs", []).append({"t": " " + tail})
+                    hit = fix = True
+        if got.get("translation"):
+            row["translation"] = got["translation"]
+            hit = fix = True
+        for f in (got.get("ruby_fix") or ()):
+            for para in (row.get("passage") or ()):
+                for run in (para.get("runs") or ()):
+                    if run.get("ruby") == f.get("from") \
+                            and f.get("w", "") in (run.get("t") or ""):
+                        if f.get("to"):
+                            run["ruby"] = f["to"]
+                        else:
+                            run.pop("ruby", None)
+                        hit = fix = True
         row["_store"] = got.get("label") or ""
         if fix:
-            row["_fixed"] = sorted(fixed)
+            row["_fixed"] = sorted(fixed | {"left"} if fix else fixed)
         n += hit
         m += fix
     if n:

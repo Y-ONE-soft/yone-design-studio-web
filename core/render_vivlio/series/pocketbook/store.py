@@ -50,6 +50,16 @@ def root(cfg=None, opt=None):
 
 FIELDS = ("flownote", "topic", "summary", "synonyms")
 
+# 왼쪽 면(지문·해석·성분 태그)을 **분석본을 안 고치고** 바로잡는 자리.
+#   ⚠ 창고 열쇠는 **고치기 전 지문 글**로 낸다. 그래야 분석본이 그대로인 한
+#     다음 조판에서도 같은 칸이 열려 고친 게 따라온다. 나중에 분석본이 고쳐지면
+#     글이 달라져 열쇠가 안 맞고 — 덧붙임이 두 번 먹지 않는다(저절로 풀린다).
+PATCH = (
+    "passage_tail",   # 지문 끝에 이어 붙일 글(원고에서 빠진 문장)
+    "translation",    # 해석 전체를 갈아 끼움
+    "ruby_fix",       # 성분 태그 고침 [{"w":낱말,"from":옛,"to":새}]
+)
+
 
 def index(path):
     """창고를 한 번 읽어 `[(글자열, 기록)]` 로 돌려준다.
@@ -108,7 +118,7 @@ def put(path, text, fields, book="", label="", fixed=(), who=""):
     books = rec.setdefault("books", [])
     if book and book not in books:
         books.append(book)
-    for f in FIELDS:
+    for f in FIELDS + PATCH:
         if f in fields and fields[f]:
             rec[f] = fields[f]
     was = set(rec.get("fixed") or [])
