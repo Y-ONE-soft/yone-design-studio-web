@@ -1195,8 +1195,13 @@ def split_half(p):
     if not cut or cut >= len(runs):
         cut = len(runs) // 2
     tr = p.get("translation") or ""
-    k = tr.find(" ", int(len(tr) * (sum(len(x.get("t") or "")
-                                        for x in runs[:cut]) / max(tot, 1))))
+    # ⚠ 예전엔 **띄어쓰기**에서 잘라 해석이 문장 한가운데서 면이 갈렸다
+    #   (`…파티를 떠나 그가 옷을` / `빌릴 수 있는 가게로 갔다.`, 연구원 지적).
+    #   **문장 끝**(`.`·`?`·`!`)에서 가장 가까운 자리를 고른다.
+    aim = int(len(tr) * (sum(len(x.get("t") or "")
+                             for x in runs[:cut]) / max(tot, 1)))
+    ends = [m.end() for m in re.finditer(r"[.?!\u201d]\s", tr)]
+    k = min(ends, key=lambda e: abs(e - aim)) if ends else tr.find(" ", aim)
     # ⚠ 자를 자리를 못 찾으면(`k<=0`) 예전엔 뒤쪽 해석을 **빈 채로** 뒀다 —
     #   글이 통째로 사라진다. 글은 어떤 경우에도 지우지 않는다(사용자 지시):
     #   못 자르겠으면 **앞쪽에 다 싣는다**.
