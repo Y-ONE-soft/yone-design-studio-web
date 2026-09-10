@@ -279,9 +279,12 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
         writing.append({"header": d["header"], "pairs": chunk})
         log(f"  [원고 없음 → 되수확 유지] 영작 {d['header']}")
 
-    arrange.sort(key=lambda b: order_key(b["header"]))
-    insert.sort(key=lambda b: order_key(b["header"]))
-    writing.sort(key=lambda b: order_key(b["header"]))
+    # ⚠ 차례는 **한 규칙**(`S.label_order`)으로만. 여기 있던 옛 `order_key`
+    #   는 특별 단원(`교과서SL`)을 몰라 SL 이 올포 뒤로 밀렸다 — 어법·어휘만
+    #   맞고 배열·삽입·영작이 어긋났다(광문1 실측).
+    arrange.sort(key=lambda b: S.label_order(b["header"]))
+    insert.sort(key=lambda b: S.label_order(b["header"]))
+    writing.sort(key=lambda b: S.label_order(b["header"]))
 
     out = json.loads(json.dumps(content, ensure_ascii=False))
     # 범위 글이 지문 하나만 짚었는데 원고엔 여럿 있으면 알린다.

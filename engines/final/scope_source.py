@@ -659,7 +659,8 @@ def from_yos_entries(entries, grade=0):
             t = ("print", len(tokens))
             tokens.append(t)
             detail[t] = {"book": book, "only": _ranges(rng)}
-    return {"tokens": _uniq(tokens), "detail": detail,
+    # 적힌 차례가 아니라 **책의 차례**로 (교과서→SL→강→회차→모의)
+    return {"tokens": _ordered(tokens), "detail": detail,
             "raw": " / ".join(raw), "grade": grade, "source": "yos"}
 
 
