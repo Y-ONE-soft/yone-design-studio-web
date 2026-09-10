@@ -345,8 +345,13 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
 
         # 중요어휘 — 시트가 정본이다(원고에서 유도할 수 없다).
         # 고3 은 시트에 없고 워크북 빈칸어휘에서 나오므로 그대로 둔다.
+        # 장문은 라벨이 `240941~42` 인데 시트 코드는 `240941` 이다 — 앞
+        # 여섯 자리로 맞춰 보낸다(안 맞추면 그 지문만 어휘가 빠진다).
+        codes = [b["header"][:6] for b in arrange
+                 if re.match(r"^\d{6}", b["header"])] or None
         vl, vr = ASM.vocab(content.get("school", ""), content.get("grade", ""),
-                           content.get("exam_period", ""), scope=sc, log=log)
+                           content.get("exam_period", ""), scope=sc,
+                           codes=codes, log=log)
         if vl:
             oldv = _vocab_labels(out["vol1"].get("중요어휘_왼", ""))
             newv = _vocab_labels(vl)

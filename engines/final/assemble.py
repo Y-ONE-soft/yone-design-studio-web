@@ -78,6 +78,17 @@ def grammar(scope, base, grade, log=lambda m: None):
         blocks = []
         if kind in ("teuk", "test"):
             blocks = [(b["raw"], b["text"]) for b in M.read(d, "grammar")[0]]
+        elif _fix_files(d):
+            # ⚠ 어법수정 원고가 **그 강 폴더 안에** 있으면 그것이 정본이다.
+            #   엔진의 찾기 함수는 판을 학년으로 찍어 고1 2학기가 쓰는
+            #   `독해 기본2` 를 `기본1` 에서 뒤졌다(광문1 실측: 1·6·7강 미발견,
+            #   나머지는 엉뚱한 판). 이미 찾아 둔 폴더를 믿는다.
+            for path in _fix_files(d):
+                if path in seen:
+                    continue
+                seen.add(path)
+                for blk in M.read_grammar(path):
+                    blocks.append((blk["raw"], blk["text"]))
         else:
             t = _token_of(spec)
             for path, _unit in _files_for(t, spec, base, grade, log):
@@ -101,6 +112,28 @@ def grammar(scope, base, grade, log=lambda m: None):
     headers = [h for h, _t in pairs]
     lines = [x for h, t in pairs for x in (h, t)]
     return lines, headers
+
+
+def _fix_files(folder):
+    """그 폴더(와 `… 워크북`) 안의 **어법수정 문제지**들.
+
+    이름이 방언을 탄다 — `…_어법수정_문제지.docx` 도 있고 `…_어법수정_문제.docx`
+    도 있다(올림포스 기본2 3강). 그래서 `어법수정` 이 든 docx 중 정답·해설만
+    뺀다. 파일이 없으면 빈 목록이고, 그때는 예전 길로 물러난다.
+    """
+    from engines.final import manuscript as M
+    out = []
+    for d in {folder, M.find_workbook_dir(folder)}:
+        if not d or not os.path.isdir(d):
+            continue
+        for name in sorted(os.listdir(d)):
+            n = M._nfc(name)
+            if not n.endswith(".docx") or n.startswith((".", "~")):
+                continue
+            if "어법수정" not in n or any(a in n for a in M.ANSWER_WORDS):
+                continue
+            out.append(os.path.join(d, name))
+    return out
 
 
 def _token_of(spec):
@@ -157,7 +190,7 @@ def _vocab_g3(scope, base, log=lambda m: None):
     return "\n\n".join(b[0] + "\n" + " ".join(b[1:]) for b in out)
 
 
-def vocab(school, grade, exam_period, scope=None, order=None,
+def vocab(school, grade, exam_period, scope=None, order=None, codes=None,
           log=lambda m: None):
     """중요어휘(고1·고2) — 구글시트. 돌려주는 것: (왼쪽 글, 오른쪽 글).
 
@@ -186,9 +219,14 @@ def vocab(school, grade, exam_period, scope=None, order=None,
         if order is None:
             order = sorted({("%02d" % t[1], "%02d" % t[2])
                             for t in scope["tokens"] if t[0] == "mock"})
+    # ⚠ 모의고사 어휘는 **시험범위 시트의 회차**를 보고 가져온다. 정본이
+    #   Y.OS 로 옮겨 온 뒤로 시트에 그 학교 행이 없을 수 있어(광문1 26-2-중간)
+    #   모의 18지문이 통째로 빠졌다 — 조판된 지문 코드(`240920`)를 곧장 준다.
     got = fetch_vocab_for_school(school, grade, log=log,
                                  olpo_lectures=olpo, rp_lectures=None,
                                  workbook_order=order or None,
+                                 passage_codes=codes or None,
+                                 code_order=codes or None,
                                  exam_period=exam_period) or {}
     out = []
     for t in (got.get("left_text", ""), got.get("right_text", "")):
