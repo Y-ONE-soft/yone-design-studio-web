@@ -119,7 +119,7 @@ _RE_UNIT = re.compile(r"(\d{1,2})\s*과")
 _RE_BODY = re.compile(r"본문\s*(\d{1,2})")
 
 
-def _derive_pno(p):
+def _derive_pno(p, src=""):
     """분석본 지문 → 지문번호 `YYMMNN`·학년.
 
     분석본은 회차를 **책 머리(chapter)** 에 적고 지문에는 번호만 적는다
@@ -130,7 +130,10 @@ def _derive_pno(p):
         return p
     ch = p.get("chapter") or ""
     lb = p.get("label") or ""
-    m = _RE_YM.search(ch) or _RE_YM.search(lb)
+    # ⚠ 분석본이 **책 머리에만** 회차를 적어 두는 게 아니라, 아예 안 적고
+    #   **파일 이름**(`광문1_분석본05(24년9월)_내지.idml`)에만 두는 경우가 있다.
+    #   그러면 25지문이 통째로 번호 없이 `18번` 으로 남는다(실측).
+    m = _RE_YM.search(ch) or _RE_YM.search(lb) or _RE_YM.search(src)
     n = _RE_NO.search(lb) or _RE_NO.search(ch)
     if m and n:
         p["pno"] = "%s%02d%02d" % (m.group(1), int(m.group(2)), int(n.group(1)))
@@ -367,6 +370,9 @@ def _mock_label(rows, log):
         if "모의고사" not in unit or not lab.endswith("번"):
             continue
         pno = str(r.get("pno") or r.get("no") or "").strip()
+        end = str(r.get("pno_end") or "").strip()
+        if end and re.fullmatch(r"\d{6}", pno) and re.fullmatch(r"\d{6}", end):
+            pno = "%s~%s" % (pno, end[-2:])        # 240943~45
         if re.fullmatch(r"\d{6}(?:[-~]\d{1,3})?", pno) and pno != lab:
             r["label"] = pno
             n += 1
@@ -864,8 +870,10 @@ class PocketbookSeries(Series):
                               fill=("flownote", "topic"))
         # 창고가 **맨 마지막**이다 — 사람이 손본 자리는 아무것도 못 덮는다.
         _fill_from_store(rows, cfg, opt, log)
-        _mock_label(rows, log)
+        # ⚠ 라벨을 여섯 자리로 바꾸면 `18번` 이 `240918` 이 되어 짤지문·장문
+        #   가르기(`N번` 을 본다)가 빗나간다 — 반드시 **가른 뒤에** 바꾼다.
         _mark_short(rows, opt, log)
+        _mock_label(rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)
@@ -982,8 +990,9 @@ class PocketbookSeries(Series):
         out = []
         for f in files:
             got = analysis.read_book(f)
+            base = os.path.basename(f)
             for g in got:
-                _derive_pno(g)
+                _derive_pno(g, base)
             _carry_lecture(got)
             out += got
             log("■ 분석본 %s — 지문 %d" % (os.path.basename(f), len(got)))
