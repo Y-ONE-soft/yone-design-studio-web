@@ -433,7 +433,18 @@ def harvest_book(path):
                 u["topic_ko"] = " ".join(
                     idml.plain(l).strip()
                     for l in idml.lines_of(topic_ko_p)) if topic_ko_p else ""
-                u["synonyms"] = idml.parse_synonym_cards(syn_p) if syn_p else []
+                # ⚠ 동반의어 틀이 **스프레드를 넘어 이어진** 책이 있다. 그러면
+                #   스토리 하나가 책 전체 카드(89장)를 들고 있어 그 스토리를
+                #   건드리는 지문마다 89장이 통째로 붙는다(24년9월 완성본에서
+                #   시작해 그 지문을 쓴 광문2·상일2·한영2 로 퍼졌다 — 실측 31건).
+                #   9장씩 떨어지지도 않아 기계적으로 못 나눈다.
+                #   **잘못 붙이느니 안 붙인다** — 게이트(G-P12)가 아니라 여기서
+                #   막아야 코퍼스가 오염되지 않는다.
+                cards = idml.parse_synonym_cards(syn_p) if syn_p else []
+                if len(cards) > SYN_MAX:
+                    _warn_syn(sp, len(cards))
+                    cards = []
+                u["synonyms"] = cards
             else:
                 u["flownote"], u["topic"], u["summary"] = [], "", ""
                 u["topic_ko"] = ""
@@ -452,6 +463,20 @@ def _join(recs):
             "text": "\n".join(r["text"] for r in recs),
             "x": recs[0]["x"], "y": recs[0]["y"], "short": False,
             "parts": len(recs)}
+
+
+SYN_MAX = 9              # 한 지문의 동반의어는 3×3 격자라 아홉 장이 끝이다
+_SYN_WARNED = set()
+
+
+def _warn_syn(sp, n):
+    """스프레드를 넘어 이어진 동반의어 틀 — 파일마다 한 번만 알린다."""
+    f = (sp.get("file") or sp.get("src") or "?")
+    if f in _SYN_WARNED:
+        return
+    _SYN_WARNED.add(f)
+    print("  ⚠ 동반의어 틀이 스프레드를 넘어 이어져 있다(%d장) — 어느 지문 "
+          "것인지 못 가려 버린다: %s" % (n, f))
 
 
 def _first(recs, role):
