@@ -351,6 +351,29 @@ def _letters(t):
 
 
 # 오른쪽 면이 없는 짤지문(안내문·도표·실용문)
+def _mock_label(rows, log):
+    """모의고사 라벨을 **`YYMMNN` 여섯 자리로 통일**한다(사용자 지시).
+
+    `18번` 만 적으면 **몇 년 몇 월 것인지** 안 보인다. 원고가 이미 `pno`
+    (`240918`)를 들고 있으니 그걸 라벨로 쓴다. 장문 합본은 `240943-45` 처럼
+    범위 그대로 둔다.
+    """
+    n = 0
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        unit = str(r.get("category") or r.get("unit") or "")
+        lab = str(r.get("label") or "")
+        if "모의고사" not in unit or not lab.endswith("번"):
+            continue
+        pno = str(r.get("pno") or r.get("no") or "").strip()
+        if re.fullmatch(r"\d{6}(?:[-~]\d{1,3})?", pno) and pno != lab:
+            r["label"] = pno
+            n += 1
+    if n:
+        log("■ 모의고사 라벨 %d개를 여섯 자리(YYMMNN)로 통일" % n)
+
+
 _SHORT_NO = {18, 19, 25, 26, 27, 28}
 # 장문 독해 — 글이 길어 **반으로 갈라 두 면**을 다 쓴다(사용자 지시)
 _SPLIT_NO = {43, 44, 45}
@@ -841,6 +864,7 @@ class PocketbookSeries(Series):
                               fill=("flownote", "topic"))
         # 창고가 **맨 마지막**이다 — 사람이 손본 자리는 아무것도 못 덮는다.
         _fill_from_store(rows, cfg, opt, log)
+        _mock_label(rows, log)
         _mark_short(rows, opt, log)
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")

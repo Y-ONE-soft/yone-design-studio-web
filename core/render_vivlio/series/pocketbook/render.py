@@ -1158,10 +1158,14 @@ def split_half(p):
     tr = p.get("translation") or ""
     k = tr.find(" ", int(len(tr) * (sum(len(x.get("t") or "")
                                         for x in runs[:cut]) / max(tot, 1))))
-    a = dict(p, passage_runs=runs[:cut], translation=tr[:k].strip() if k > 0 else tr,
-             illust=None, _part=1)
-    b = dict(p, passage_runs=runs[cut:], translation=tr[k:].strip() if k > 0 else "",
-             illust=None, _part=2)
+    # ⚠ 자를 자리를 못 찾으면(`k<=0`) 예전엔 뒤쪽 해석을 **빈 채로** 뒀다 —
+    #   글이 통째로 사라진다. 글은 어떤 경우에도 지우지 않는다(사용자 지시):
+    #   못 자르겠으면 **앞쪽에 다 싣는다**.
+    ta, tb = (tr[:k].strip(), tr[k:].strip()) if k > 0 else (tr, "")
+    if tr and not (ta + tb).strip():
+        ta = tr
+    a = dict(p, passage_runs=runs[:cut], translation=ta, illust=None, _part=1)
+    b = dict(p, passage_runs=runs[cut:], translation=tb, illust=None, _part=2)
     return [a, b]
 
 

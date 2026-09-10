@@ -347,7 +347,9 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
         if src is None:
             # ⚠ 지문번호로만 찾으면 **모의고사 말고는 하나도 안 붙는다**. 부교재·
             #   교과서는 번호가 없고 라벨(`1강 01`·`본문2`)뿐이다 — 라벨로 찾는다.
-            src = illust_for(p, _IDX)
+            # ⚠ 짤지문(안내문·도표)은 삽화가 **없다**. 붙이면 그 뒤 지문의
+            #   그림이 한 칸씩 밀린 것처럼 보인다(18·19번 실측, 사용자 지적).
+            src = None if p.get("short") else illust_for(p, _IDX)
         if src:
             dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
             try:
