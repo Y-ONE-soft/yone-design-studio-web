@@ -358,6 +358,10 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 .vpair .l .vcell { padding: 0 3.21mm 4.00mm 0; }
 .vpair .r .vcell { padding: 0 1.99mm 4.00mm 1.99mm; }
 .vp { text-align: justify; line-height: calc(2.3456 * var(--lead, 1)); }
+/* ⚠ 한 면을 넘치는 어휘 지문은 요약이 다음 면으로 넘어간다. `break-before:
+ *   avoid` 는 여기서 **안 먹는다** — `.vpair` 가 `display:table` 이라
+ *   표 안 분리 규칙이 다르다(실측). 완성본은 이 자리에서 요약을 통째로
+ *   잃었으니(광문2 p38/39 — p39 가 빈 면) 넘어가더라도 내용은 우리가 온전하다. */
 .vsum { margin-top: 5.60mm; }
 .vsum .hd { font: 700 8.5pt Noto; line-height: calc(2.3456 * var(--lead, 1));
             letter-spacing: 0.1em; }
