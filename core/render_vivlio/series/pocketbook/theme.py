@@ -452,8 +452,11 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
   letter-spacing:-.1em;color:var(--navy);white-space:nowrap}
 .tboxpen{position:absolute}
 .tboxpen svg{width:100%;height:100%;display:block}
+/* ⚠ `POCKET BOOK`·학교명이 너무 굵었다 — 쪽번호만 굵게, 말은 중간으로
+   (쪽번호 옆 단원 표기와 같은 무게로 맞춘다, 사용자 지적). */
 .folio{position:absolute;font-family:PBElice;font-size:__folio__pt;
-  font-weight:700}
+  font-weight:500}
+.folio b{font-weight:700}
 /* 쪽번호 **옆에 붙는 말**(단원·VOCA)은 완성본이 Medium 이다 — Bold 로 두면
    쪽번호보다 세 보인다(사용자 지적). */
 .folio span{font-weight:500}

@@ -377,7 +377,8 @@ def _mock_footer(rows, log, grade=""):
         if not m:
             continue
         g = r.get("grade") or grade or ""
-        r["category"] = ("%s %s년 %d월" % (g, m.group(1), int(m.group(2)))).strip()
+        r["category"] = ("%s %s년 %d월 모의고사"
+                         % (g, m.group(1), int(m.group(2)))).strip()
         n += 1
     if n:
         log("■ 모의고사 꼬리말 %d면에 회차 표기" % n)
@@ -1484,6 +1485,7 @@ class PocketbookSeries(Series):
                 "title": (cfg.book or {}).get("title", "포켓북"),
                 "passages": rows,
                 "metrics": dict(cfg.section("metrics") or {},
+                                school=opt.get("school", ""),
                                 **({"topic_box": 1} if want_tb else {})),
                 "folio_start": opt.get("folio_start", 2),
                 "voca": voca_pages,

@@ -308,6 +308,12 @@ def paras_html(paras, cls=""):
 
 
 # ── 지면 ──────────────────────────────────────────────────
+def _school_tail(M):
+    """왼쪽 꼬리말 `POCKET BOOK` 뒤에 붙는 **학교 이름**(사용자 지시)."""
+    sc = str(M.get("school") or "").strip()
+    return (" %s" % ESC(sc)) if sc else ""
+
+
 def left_page(p, M, folio):
     """왼쪽 면. 배치는 삽화 유무가 가른다(A/C/E) — theme.LAYOUTS."""
     L = dict(T.LAYOUTS[T.layout_for(p)])
@@ -319,7 +325,7 @@ def left_page(p, M, folio):
     tr = L["trans"]
     scale = p.get("scale", 1.0)
     parts = []
-    tag = _badge_text(p)
+    tag = "" if p.get("_part") == 2 else _badge_text(p)
     if tag and M.get("topic_box"):
         # ⚠ 「주제 :」 칸을 넣으면 한 줄짜리 긴 배지가 그 칸을 **덮는다**
         #   (`능률(민) SL2 본문2`, 사용자 지적). 광문은 배지를 세로로 세워
@@ -388,8 +394,8 @@ def left_page(p, M, folio):
                      % _box(tl[0], tl[1]))
         parts.append('<div class="tboxpen" style="%s">%s</div>'
                      % (_box(tp[0], tp[1], tp[2], tp[3]), _svg("pen")))
-    parts.append('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
-                 % (_box(12.9, M["folio_y"]), folio))
+    parts.append('<div class="folio" style="%s"><b>%s</b> POCKET BOOK%s</div>'
+                 % (_box(12.9, M["folio_y"]), folio, _school_tail(M)))
     return ('<section class="pg %s"><div class="trim">%s</div></section>'
             % (page_kind(p), "".join(parts)))
 
@@ -459,8 +465,8 @@ def voca_page(pg, M, folio, side="l"):
     body = ('<div class="voca" style="%s">%s</div>'
             % (_box(x, v[1], v[2], v[3]), "".join(ents)))
     if side == "l":
-        foot = ('<div class="folio" style="%s"><b>%s</b> POCKET BOOK</div>'
-                % (_box(12.9, M["folio_y"]), folio))
+        foot = ('<div class="folio" style="%s"><b>%s</b> POCKET BOOK%s</div>'
+                % (_box(12.9, M["folio_y"]), folio, _school_tail(M)))
     else:
         foot = ('<div class="folio r" style="%s">'
                 '<span style="color:var(--ink)">VOCA</span> <b>%s</b></div>'
@@ -851,7 +857,9 @@ def flow_rows(lines, col_mm=0.0, size_pt=9.0, track_em=-0.05):
         plain = _MD_BOLD.sub(r"\1", line)
         tr = _tight(plain, col_mm, size_pt, track_em)
         sty = [] if tr is None else ["letter-spacing:%.4fem" % tr]
-        hang = _hang_mm(plain, size_pt, track_em)
+        # ⚠ `[원인]`·`[반전]` 같은 머리말 줄까지 들여쓰면 들여쓰기 종류가 너무
+        #   많아져 어지럽다(사용자 지적) — 머리말 줄은 들여쓰지 않는다.
+        hang = 0.0 if _FHEAD.match(plain) else _hang_mm(plain, size_pt, track_em)
         if hang:
             sty.append("padding-left:%.2fmm;text-indent:-%.2fmm"
                        % (hang, hang))
@@ -882,7 +890,11 @@ def _badge_text(p):
     교재 이름을 떼어 앞에 붙인다. 라벨이 이미 강·과 번호를 들고 있으면
     단원의 번호는 빼고 **교재 이름만** 붙인다 — 안 그러면 `올림포스 1강 1강 01`.
     """
-    tag = str(p.get("no") or p.get("label") or "")
+    lab = str(p.get("label") or "")
+    # ⚠ `no`(=pno) 를 먼저 보면 `240941~42` 가 `240941` 로 잘린다. 합본 지문은
+    #   **범위 그대로** 적어야 한다(사용자 지시) — 라벨이 이미 여섯 자리면 그것.
+    tag = lab if re.fullmatch(r"\d{6}(?:[-~]\d{1,3})?", lab) \
+        else str(p.get("no") or lab or "")
     unit = str(p.get("category") or p.get("unit") or "").strip()
     if p.get("_badge_raw") or not tag or not unit or unit in ("교과서", "모의고사"):
         return tag
@@ -898,7 +910,9 @@ def _badge_text(p):
 
 def _badge_parts(p):
     """배지를 **교재명 / 지문번호** 두 도막으로. 두 줄 배지가 쓴다."""
-    tag = str(p.get("no") or p.get("label") or "")
+    tag = str(p.get("label") or p.get("no") or "")
+    if re.fullmatch(r"\d{6}(?:[-~]\d{1,3})?", tag):
+        return "모의고사", tag        # 위 칸은 갈래, 아래 칸은 지문번호
     full = _badge_text(p)
     if full != tag and full.endswith(tag):
         return full[:-len(tag)].strip(), tag
