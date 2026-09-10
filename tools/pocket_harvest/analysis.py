@@ -742,6 +742,7 @@ def _cut_extras(d):
         runs = paras[0].get("runs") or []
         nums = [i for i, r in enumerate(runs) if r.get("mark") == "snum"]
         if not nums:
+            _cut_choices(paras[0])      # 선택지 문항이 붙은 경우 먼저 떼고
             _cut_prompt(paras[0])       # 번호가 없으면 발문만 떼어 낸다(해석 쪽)
             continue
         end, seen = len(runs), 0
@@ -1039,6 +1040,39 @@ if __name__ == "__main__":
                       for pp in p["passage"] for r in pp["runs"]
                       if r["ruby"]][:6])
         print("VOCA:", p["voca"][:4], "| 문장정렬", len(p["sentences"]))
+
+
+_RE_CHOICE = re.compile(r"\s*[\u2460\u2461\u2462\u2463\u2464]")
+
+
+def _cut_choices(para):
+    """해석 끝에 붙은 **선택지 문항**(`① … ② … ③ …`)을 떼어 낸다.
+
+    ⚠ 발문만 떼던 규칙으로는 `JoyfulPiano에 관한 다음 글의 …? ① … ⑤ …` 처럼
+      선택지까지 통째로 붙은 것이 남는다(연구원 지적, 14면).
+      동그라미 번호가 **셋 이상** 나오면 그 첫 자리에서 자른다.
+    """
+    runs = para.get("runs") or []
+    txt = "".join(r.get("t", "") for r in runs)
+    hits = list(_RE_CHOICE.finditer(txt))
+    if len(hits) < 3:
+        return
+    cut = hits[0].start()
+    # 발문이 앞에 있으면 발문부터 자른다
+    m = _RE_PROMPT.search(txt[:cut])
+    if m and m.start() > 0:
+        cut = m.start()
+    if cut <= 0:
+        return
+    keep, seen = [], 0
+    for r in runs:
+        t = r.get("t", "")
+        if seen + len(t) <= cut:
+            keep.append(r)
+        elif seen < cut:
+            keep.append(dict(r, t=t[:cut - seen]))
+        seen += len(t)
+    para["runs"] = keep
 
 
 def _cut_prompt(para):
