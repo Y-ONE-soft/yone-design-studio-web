@@ -217,8 +217,52 @@ def mark_head(en, head):
     return en
 
 
+# 표제어 축소 — **글자 수가 아니라 실제 글자 폭**으로 고른다.
+#   글자 수로 재던 때: `unemployment`(12자)가 축소를 안 받아 10pt 로 26.0mm →
+#   열 폭 25.25mm 를 넘겨 `unemploymen`/`t` 로 쪼개졌고, `anaerobic respiration`
+#   은 7pt 로도 25.2mm 라 품사 배지에 딱 붙었다(둘 다 검수 지적).
+#   m·w 가 많은 낱말은 글자 수가 같아도 훨씬 넓다 — 폰트 메트릭으로 재야 맞다.
+WORD_STEPS = (10.0, 8.4, 7.0, 6.0)      # CSS 의 기본 / .long / .xlong / .xxlong
+WORD_CLASS = {8.4: " long", 7.0: " xlong", 6.0: " xxlong"}
+WORD_TRACK = -0.02                       # .w-word 의 letter-spacing(em)
+WORD_ROOM = 2.25                         # 품사 배지와 띄울 자리(mm) + 여유
+_METRICS = {}
+
+
+def _metrics(cfg):
+    """(단위/em, cmap, hmtx) — 표제어 서체(Noto 700). 못 읽으면 None."""
+    key = cfg.build_dir
+    if key not in _METRICS:
+        m, path = None, None
+        for f in cfg.get("fonts") or []:
+            if f.get("family") == "Noto" and int(f.get("weight", 400)) == 700:
+                cand = os.path.join(cfg.build_dir, "fonts",
+                                    os.path.basename(f["file"]))
+                path = cand if os.path.exists(cand) else None
+        if path:
+            try:
+                from fontTools.ttLib import TTFont
+                ft = TTFont(path, fontNumber=0, lazy=True)
+                m = (ft["head"].unitsPerEm, ft.getBestCmap(), ft["hmtx"])
+            except Exception:                    # noqa: BLE001 — 폴백이 있다
+                m = None
+        _METRICS[key] = m
+    return _METRICS[key]
+
+
+def word_width_mm(word, pt, met):
+    """표제어를 `pt` 로 찍었을 때 폭(mm). 자간(-0.02em)까지 셈에 넣는다."""
+    upem, cmap, hmtx = met
+    adv = 0
+    for ch in word:
+        g = cmap.get(ord(ch))
+        adv += hmtx[g][0] if g else upem // 2
+    em = adv / upem + WORD_TRACK * len(word)
+    return em * pt * 25.4 / 72
+
+
 def _wcls(w):
-    """표제어 길이별 축소 — 라벨 열 폭 대응(vocabook._wcls 와 동일 기준)."""
+    """표제어 길이별 축소 — 폰트를 못 읽을 때의 폴백(예전 글자 수 규칙)."""
     return " xlong" if len(w) >= 18 else (" long" if len(w) >= 13 else "")
 
 
@@ -333,6 +377,19 @@ class Renderer(VocabookRenderer):
         # 예문에 강조가 안 붙은 낱말 — 빌드 끝에 알린다. 조용히 지나가면
         # 검수자가 대신 찾아 준다(실측: 재제작본에서 6곳을 지적받았다).
         self.no_hl = []
+        self._met = _metrics(cfg)
+        # 표제어가 쓸 수 있는 폭 = 라벨 열 − 품사 배지와 띄울 자리
+        lab = float((cfg.section("metrics") or {}).get("lab_w", 25.25))
+        self.word_room = lab - float(self.o.get("word_room_mm") or WORD_ROOM)
+
+    def wcls(self, word):
+        """표제어 크기 — 폭이 자리에 들어가는 **가장 큰** 단계."""
+        if not self._met:
+            return _wcls(word)
+        for pt in WORD_STEPS:
+            if word_width_mm(word, pt, self._met) <= self.word_room:
+                return WORD_CLASS.get(pt, "")
+        return WORD_CLASS[WORD_STEPS[-1]]
 
     # ── 간지 ────────────────────────────────────────────────────────────
     def sheet(self, kind):
@@ -372,7 +429,7 @@ class Renderer(VocabookRenderer):
               f'<span class="w-rule"></span></div>')
         o = [f'<article{_refs.mark("#낱말 카드", "vc")}>{top}'
             f'<div class="w-lead">'
-            f'<div{_refs.mark("#표제어", "w-word" + _wcls(it["word"]))}>'
+            f'<div{_refs.mark("#표제어", "w-word" + self.wcls(it["word"]))}>'
             f'{esc(it["word"])}</div>'
             f'<div{_refs.mark("#뜻", "w-mean")}>'
             + (f'<span class="pos">{esc(it["pos"])}</span>' if it["pos"] else "")

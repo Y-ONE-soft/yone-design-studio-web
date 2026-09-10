@@ -186,6 +186,7 @@ em { font-style: normal; font-weight: 500; color: var(--c-hl); }
 .w-word { font: 700 10pt/12pt "Noto"; color: var(--c-ink); letter-spacing: -.02em; }
 .w-word.long  { font-size: 8.4pt; line-height: 10.4pt; }
 .w-word.xlong { font-size: 7pt; line-height: 9pt; }
+.w-word.xxlong { font-size: 6pt; line-height: 8pt; }   /* 폭이 넓은 긴 구 표제어 */
 .w-mean { font: 500 7pt/9.6pt "Noto"; color: var(--c-ink); padding-top: 2.4pt; }
 .w-mean i { font-style: normal; color: var(--sub); }
 .w-mean .ln { display: block; }                 /* 품사 단위 줄바꿈 */
