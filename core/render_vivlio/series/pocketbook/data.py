@@ -334,16 +334,18 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
         illust = None
         # ① 완성본에서 수확한 지문은 링크가 있다.
         # ② 분석본에서 온 새 지문은 링크가 없다 → 지문번호로 찾는다.
-        src = None
-        for uri in p.get("links") or ():
-            cand = _resolve_link(uri, illust_dirs)
-            if cand and os.path.splitext(cand)[1].lower() in (
-                    ".jpg", ".jpeg", ".png"):
-                src = cand
-                break
+        # ⚠ 모의고사는 **삽화정리 폴더가 정본**이다(`고1/24년 9월/21.jpg`).
+        #   분석본에 링크된 그림은 그 분석본 것이라 포켓북에 쓸 그림과 다르다 —
+        #   링크를 먼저 보다가 18지문이 전부 엉뚱한 그림으로 나갔다(연구원 지적).
+        src = None if p.get("short") else find_illust(
+            p.get("pno") or p.get("key"), p.get("grade") or grade, illust_dirs)
         if src is None:
-            src = find_illust(p.get("pno") or p.get("key"),
-                              p.get("grade") or grade, illust_dirs)
+            for uri in p.get("links") or ():
+                cand = _resolve_link(uri, illust_dirs)
+                if cand and os.path.splitext(cand)[1].lower() in (
+                        ".jpg", ".jpeg", ".png"):
+                    src = cand
+                    break
         if src is None:
             # ⚠ 지문번호로만 찾으면 **모의고사 말고는 하나도 안 붙는다**. 부교재·
             #   교과서는 번호가 없고 라벨(`1강 01`·`본문2`)뿐이다 — 라벨로 찾는다.
