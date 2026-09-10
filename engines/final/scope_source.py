@@ -836,6 +836,51 @@ def from_json(obj):
                        for x in obj.get("items", [])}}
 
 
+SCOPE_NAME = "scope.json"
+
+
+def resolve(school, exam_period, grade=0, job_dir=None, book_dir=None,
+            log=lambda m: None):
+    """시험범위 **정본 한 자리**. 조판도 검수도 여기만 부른다.
+
+    차례대로 본다:
+
+      1. `job_dir/scope.json`   — 이번 조판이 쓴 범위(통합웹 카드)
+      2. `book_dir/원고/scope.json` — 그 책이 조판될 때 쓴 범위(검수·재조판)
+      3. 구글시트                — Y.OS 가 없던 시절의 길(폴백)
+
+    ⚠ **조판과 검수가 서로 다른 범위를 보면 안 된다.** 예전에는 조판은
+      `scope.json`(Y.OS)을, 검수 스크립트는 시트를 봤다 — 시트가 늦게 고쳐진
+      학교에서 "책은 맞는데 검수가 틀렸다" 가 났다. 그래서 조판은 자기가 쓴
+      범위를 책 폴더에 남기고(`save`), 검수는 그것을 읽는다.
+    """
+    for p in ([os.path.join(job_dir, SCOPE_NAME)] if job_dir else []) + \
+             ([os.path.join(book_dir, "원고", SCOPE_NAME),
+               os.path.join(book_dir, SCOPE_NAME)] if book_dir else []):
+        if os.path.exists(p):
+            sc = from_json(json.load(open(p, encoding="utf-8")))
+            if sc.get("tokens"):
+                log("[범위] Y.OS — %s"
+                    % ", ".join(token_text(t) for t in sc["tokens"]))
+                return sc
+    sc = from_sheet(school, exam_period, grade=grade, log=log)
+    if sc and sc.get("tokens"):
+        log("[범위] ⚠ Y.OS 범위가 없어 구글시트를 봤습니다 — "
+            "`scripts/final_scope_fetch.py` 로 scope.json 을 두는 편이 맞습니다")
+    return sc
+
+
+def save(scope, book_dir, log=lambda m: None):
+    """조판이 **실제로 쓴** 범위를 책 폴더에 남긴다 — 검수가 같은 것을 본다."""
+    d = os.path.join(book_dir, "원고")
+    os.makedirs(d, exist_ok=True)
+    p = os.path.join(d, SCOPE_NAME)
+    json.dump(to_json(scope), open(p, "w", encoding="utf-8"),
+              ensure_ascii=False, indent=1)
+    log("  범위를 책 폴더에 남겼습니다 — 원고/%s" % SCOPE_NAME)
+    return p
+
+
 def from_sheet(school, exam_period, grade=0, log=lambda m: None):
     """구글시트 시험범위 → Scope. **Y.OS 가 열리면 이 함수만 갈아 끼운다.**
 

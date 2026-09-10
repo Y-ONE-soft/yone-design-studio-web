@@ -124,6 +124,16 @@ METRICS = {
     "illust": [12.88, 149.1, 59.62, 45.9],
     "trans": [74.0, 150.0, 56.0], "trans_size": 5.9, "trans_lead": 3.2,
     "folio_y": 196.5, "folio_size": 6.0,
+    # ── 귀 인덱스(오른쪽 면 바깥 모서리) ──
+    # 오른쪽 면 판면은 133mm 에서 끝나고 재단선까지 15mm 가 빈다. 거기에 파트
+    # 딱지를 물려 **책을 덮은 채로도 파트를 찾게** 한다. 뒤 파트일수록 아래로
+    # 내려가므로 옆에서 보면 계단이 된다(사용자 지시).
+    "tab_w": 9.0,          # 재단선 안쪽으로 보이는 폭
+    "tab_h": 17.0,         # 딱지 하나 높이(파트가 많으면 자동으로 준다)
+    "tab_top": 15.0,       # 첫 파트 윗변
+    "tab_bot": 191.0,      # 마지막 파트 아랫변(쪽번호 196.5 위)
+    "tab_r": 1.6,          # 안쪽 모서리 둥글기
+    "tab_size": 6.4,       # 딱지 글자
     # 오른쪽 면
     # 플로우노트는 **8pt 가 기본**이고, 넘칠 때만 7pt 로 내린다(사용자 지시).
     # 플로우노트를 마인드맵 덩어리로 바꾸면서 자리를 키웠다(41→71.2mm).
@@ -220,6 +230,40 @@ def layout_for(passage):
     return passage.get("layout") or "A"
 
 
+# ── 귀 인덱스 색 ─────────────────────────────────────────────
+# ⚠ 띠(`band_*`)와 **같은 색을 쓰지 않는다**. 딱지가 바탕에 묻혀 안 보인다
+#   (사용자 지시). 띠는 옅은 파스텔이므로 딱지는 한 단 짙게 잡는다.
+# ⚠ 무지개로 흩뿌리지 않는다. 청람 → 청록 → 올리브 → 황금 → 주황 → 자주 →
+#   보라로 **한 방향으로 도는 띠**라, 파트가 몇 개든 순서가 색으로 읽힌다.
+# ⚠ 금지색을 피한다 — 더스티 모브코럴(#DB9488)·세이지 그린(#81B98C).
+TAB_COLORS = ("#4C6BA8", "#5A93B8", "#63A9A4", "#A8B173",
+              "#C9AE6A", "#D8905C", "#BE6A86", "#8E6FB0")
+
+
+def _hex(c):
+    c = c.lstrip("#")
+    return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def tab_color(i, n, ramp=None):
+    """파트 `i`(전체 `n`개)의 딱지 색 — 색 띠 위를 고르게 걷는다."""
+    ramp = list(ramp or TAB_COLORS)
+    if n <= 1:
+        return ramp[0]
+    t = (i / float(n - 1)) * (len(ramp) - 1)
+    k = min(int(t), len(ramp) - 2)
+    f = t - k
+    a, b = _hex(ramp[k]), _hex(ramp[k + 1])
+    return "#%02X%02X%02X" % tuple(
+        round(a[j] + (b[j] - a[j]) * f) for j in range(3))
+
+
+def tab_ink(bg):
+    """딱지 글자색 — 밝은 딱지에는 먹, 짙은 딱지에는 흰 글씨."""
+    r, g, b = _hex(bg)
+    return "#2A2A2A" if (0.299 * r + 0.587 * g + 0.114 * b) > 168 else "#FFFFFF"
+
+
 def _mm(v):
     return "%gmm" % v
 
@@ -262,6 +306,7 @@ def build_css(palette=None, metrics=None, highlight=None):
         "trans_size": "%g" % M["trans_size"],
         "trans_lead": "%g" % M["trans_lead"],
         "folio": "%g" % M["folio_size"],
+        "tab_size": "%g" % M["tab_size"], "tab_r": _mm(M["tab_r"]),
         "grid": "%g" % M["flow_grid"],
         "flow_size": "%g" % M["flow_size"], "flow_lead": "%g" % M["flow_lead"],
         "fbox_pad": "%g" % M["fbox_pad"],
@@ -462,6 +507,15 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 .folio span{font-weight:500}
 .folio b{color:var(--navy)}
 .folio.r{text-align:right}
+
+/* ── 귀 인덱스 ────────────────────────────────
+   오른쪽 면 바깥 모서리에 물리는 파트 딱지. 재단선 밖까지 늘여 놓아야
+   가장자리에 흰 줄이 안 생긴다(띠와 같은 이유). 안쪽 모서리만 둥글다. */
+.stab{position:absolute;display:flex;align-items:center;justify-content:center;
+  font-family:PBElice;font-size:__tab_size__pt;font-weight:700;
+  letter-spacing:.02em;line-height:1;
+  writing-mode:vertical-rl;text-orientation:upright;
+  border-radius:__tab_r__ 0 0 __tab_r__;overflow:hidden}
 
 /* ── 오른쪽 면 ───────────────────────────────── */
 /* ⚠ 딱지가 베이지(`--band`)라 플로우 판과 따로 놀았다(사용자 지적).

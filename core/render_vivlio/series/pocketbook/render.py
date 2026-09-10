@@ -994,7 +994,60 @@ _CONN = ('<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
          '<path d="%s" fill="currentColor"/></svg>')
 
 
-def right_page(p, M, folio, category=""):
+_RE_TAB_UNIT = re.compile(r"(\d{1,2}\s*[강과課])\s*$")
+
+
+def tab_label(cat):
+    """파트 이름 → 귀 딱지에 넣을 **짧은 손잡이**.
+
+    꼬리말에 이미 온 이름(`올림포스 3강`)이 있으므로 딱지는 짧을수록 좋다.
+    9mm 폭에 세로로 세우는 글자라 넉 자를 넘기면 딱지가 길어진다.
+    """
+    c = re.sub(r"\s+", " ", str(cat or "")).strip()
+    if not c:
+        return ""
+    if "모의고사" in c:
+        return "모의고사"
+    if c.startswith("어휘"):
+        return "어휘"
+    m = _RE_TAB_UNIT.search(c)
+    if m:
+        return re.sub(r"\s+", "", m.group(1))
+    return c.split()[-1][:4]
+
+
+def part_list(passages, voca=False):
+    """책의 파트 차례 — 지문 단원이 나온 순서 그대로, 어휘 파트는 맨 뒤."""
+    out = []
+    for p in passages or ():
+        if p.get("kind") == "memtest":
+            continue
+        c = (p.get("category") or "").strip()
+        if c and c not in out:
+            out.append(c)
+    if voca:
+        out.append("어휘")
+    return out
+
+
+def side_tab(M, i, n, text):
+    """오른쪽 면 바깥 모서리의 파트 딱지 — 뒤 파트일수록 아래로 내려간다."""
+    if not text or n <= 0:
+        return ""
+    top, bot = M["tab_top"], M["tab_bot"]
+    span = bot - top
+    # 파트가 많으면 딱지를 줄여 계단이 겹치지 않게 한다.
+    h = min(M["tab_h"], span / float(n) * 0.86)
+    step = (span - h) / float(n - 1) if n > 1 else 0.0
+    y = top + i * step
+    bg = T.tab_color(i, n, M.get("tab_ramp"))
+    x = M["page_w"] - M["tab_w"]
+    return ('<div class="stab" style="%s;background:%s;color:%s">%s</div>'
+            % (_box(x, y, M["tab_w"] + M["bleed"], h), bg, T.tab_ink(bg),
+               ESC(text)))
+
+
+def right_page(p, M, folio, category="", part=(0, 0)):
     fl = M["flow"]
     fc = M["flow_chip"]
     tb = M["topic"]
@@ -1149,6 +1202,7 @@ def right_page(p, M, folio, category=""):
     parts.append('<div class="folio r" style="%s">%s</div>'
                  % (_box(M["margin_l"], M["folio_y"],
                          M["page_w"] - M["margin_l"] - 15.0), foot))
+    parts.append(side_tab(M, part[0], part[1], tab_label(category)))
     # ⚠ 띠 색은 **펼침면 단위**다. 왼쪽 면에만 주면 한 지문의 두 면이 다른
     #   색으로 나간다(사용자 지적).
     return ('<section class="pg %s"><div class="trim">%s</div></section>'
@@ -1274,6 +1328,9 @@ def build_html(data, css_name="pocket.css"):
     M.update(data.get("metrics") or {})
     pages = []
     folio = int(data.get("folio_start", 1))
+    # 귀 인덱스 — 파트 차례를 먼저 세어야 딱지가 몇 칸씩 내려갈지 정해진다.
+    order = part_list(data["passages"], bool(data.get("voca")))
+    npart = len(order)
     if data.get("cover"):
         pages.append('<section class="pg"><div class="trim">'
                      '<img src="%s" style="width:100%%;height:100%%;'
@@ -1302,7 +1359,10 @@ def build_html(data, css_name="pocket.css"):
                 pages.append(left_page(half, M, folio)); folio += 1
             continue
         pages.append(left_page(p, M, folio)); folio += 1
-        pages.append(right_page(p, M, folio, cat)); folio += 1
+        pages.append(right_page(p, M, folio, cat,
+                                (order.index(cat) if cat in order else 0,
+                                 npart)))
+        folio += 1
     # 어휘 파트는 **맨 뒤**다(26-1-기말 완성본과 같은 자리). 한 DAY 가 펼침면
     # 하나이므로 왼쪽 면부터 시작해야 짝이 맞는다.
     for i, vp in enumerate(data.get("voca") or ()):

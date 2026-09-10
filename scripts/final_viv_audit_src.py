@@ -17,7 +17,8 @@ B = "/Users/nhj/Documents/작업/Y.ONE STUDIO/조판/교재/파이널 직전보�
 SCHOOLS = [("광문2", "고2", 2), ("상일1", "고1", 1), ("명일1", "고1", 1),
            ("명일3", "고3", 3), ("광문3", "고3", 3)]
 for s, g, gn in SCHOOLS:
-    sc = S.from_sheet(s, "26-1-기말", grade=gn)
+    sc = S.resolve(s, "26-1-기말", grade=gn,
+                   book_dir=os.path.join(B, g, "26-1-기말", s))
     txt = ""
     for v in (1, 2):
         p = os.path.join(B, g, "26-1-기말", s, "Vol%d" % v, "%s_파이널(Vol%d)_내지.pdf" % (s, v))

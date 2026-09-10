@@ -130,16 +130,12 @@ class FinalVivEngine(FinalEngine):
             sys.path.insert(0, spath)
         from final_manuscript_build import build as mbuild, scratch
         g = int("".join(c for c in grade if c.isdigit()) or 0)
-        sc = None
-        sp = os.path.join(job_dir or "", "scope.json")
-        if job_dir and os.path.exists(sp):
-            sc = S.from_json(json.load(open(sp, encoding="utf-8")))
-            log("[범위] Y.OS 범위를 씁니다 — %s"
-                % ", ".join(S.token_text(t) for t in sc["tokens"]))
-        if not sc or not sc["tokens"]:
-            sc = S.from_sheet(school, period, grade=g, log=log)
+        sc = S.resolve(school, period, grade=g, job_dir=job_dir,
+                       book_dir=os.path.join(BOOK_ROOT, grade, period, school),
+                       log=log)
         if not sc or not sc["tokens"]:
             return None
+        self._scope = sc          # 조판이 끝나면 책 폴더에 남긴다(검수가 읽는다)
         return mbuild(scratch(school, grade, period), log=log, yos=sc)
 
     # ── 2단계: 원고 직독 + Vivliostyle 조판 ────────────────────────────
@@ -191,7 +187,44 @@ class FinalVivEngine(FinalEngine):
             except Exception:
                 pass
         log("완성: " + " · ".join(os.path.basename(p) for p in made))
+
+        # 이번 조판이 **실제로 쓴** 범위를 책 폴더에 남긴다 — 검수가 같은
+        # 것을 읽는다(조판은 Y.OS, 검수는 시트… 로 갈리던 자리다).
+        from engines.final import scope_source as S
+        sc = getattr(self, "_scope", None)
+        if sc:
+            try:
+                S.save(sc, base, log=log)
+            except Exception as e:                             # noqa: BLE001
+                log("[범위] 남기지 못했습니다: %s" % e)
+
+        self._review(base, job_dir, log)
         return made
+
+    # ── 3단계: 조판이 끝나면 바로 검수 ────────────────────────────────
+    def _review(self, base, job_dir, log):
+        """원고↔PDF 전수 대조(+ 눈 검수)를 조판에 이어 붙인다.
+
+        판정은 **조언**이다 — 검수가 걸렸다고 조판을 없던 일로 하지 않는다.
+        대신 무엇이 걸렸는지 로그와 `<책폴더>/review.json` 에 남긴다.
+        눈 검수(검수 에이전트)는 느리고 돈이 드니 `YONE_REVIEW_AGENT=1` 일 때만.
+        """
+        try:
+            spath = os.path.join(BASE_DIR, "scripts")
+            if spath not in sys.path:
+                sys.path.insert(0, spath)
+            from final_viv_review import review
+            r = review(base, agent=os.environ.get("YONE_REVIEW_AGENT") == "1",
+                       log=log)
+            try:
+                shutil.copy2(os.path.join(base, "review.json"),
+                             os.path.join(job_dir, "review.json"))
+            except Exception:
+                pass
+            return r
+        except Exception as e:                                 # noqa: BLE001
+            log("[검수] 건너뜀 (검수 실패가 조판을 막지 않음): %s" % e)
+            return None
 
     # ── 시험범위 → 원고 직독 ──────────────────────────────────────────
     def _read_manuscripts(self, content, log):
@@ -204,13 +237,14 @@ class FinalVivEngine(FinalEngine):
         try:
             g = int("".join(c for c in content.get("grade", "") if c.isdigit())
                     or 0)
-            sc = S.from_sheet(content.get("school", ""),
-                              content.get("exam_period", ""), grade=g, log=log)
+            sc = S.resolve(content.get("school", ""),
+                           content.get("exam_period", ""), grade=g, log=log)
             if not sc or not sc["tokens"]:
                 log("[원고직독] 시험범위를 못 읽어 되수확본으로 조판합니다")
                 return content
             log("■ 시험범위: "
                 + ", ".join(S.token_text(t) for t in sc["tokens"]))
+            self._scope = sc
             # 빌더는 `scripts/` 에 있다(명령줄로도 쓰는 자리라 여기 둔다)
             spath = os.path.join(BASE_DIR, "scripts")
             if spath not in sys.path:

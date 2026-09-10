@@ -78,20 +78,23 @@ def resolve(content, mark):
     """주석 하나 → {label, sec, from, to, why} 또는 사유가 담긴 미결."""
     text = mark["text"]
     note = mark["note"]
-    # 쪽지에 `틀린 것 → 고친 것` 이 통째로 적혀 있으면 덮은 글이 없어도 된다
+    # 쪽지에 `틀린 것 → 고친 것` 이 통째로 적혀 있으면 덮은 글이 없어도 된다.
+    # **화살표가 있을 때만 확실하다** — 그 밖의 쪽지는 고칠 글일 수도 있고
+    # "철자 확인 요망" 같은 지시일 수도 있어서, 기계가 갈라서는 안 된다.
     frm = to = None
+    sure = False
     if RE_ARROW.search(note):
         left, right = RE_ARROW.split(note, 1)
-        frm, to = left.strip(), right.strip()
+        frm, to, sure = left.strip(), right.strip(), True
     elif text:
         frm, to = text, note
     if not frm:
-        return dict(mark, why="무엇을 고칠지 못 읽었습니다", hits=[])
+        return dict(mark, why="무엇을 고칠지 못 읽었습니다", hits=[], sure=False)
 
     hits = MK.locate(content, frm)
     if not hits:
         return dict(mark, why="이 글이 어느 지문인지 못 찾았습니다",
-                    frm=frm, to=to, hits=[])
+                    frm=frm, to=to, hits=[], sure=False)
     labs = sorted({h[0] for h in hits})
     if len(labs) > 1:
         # 지문이 갈리면 사람이 봐야 한다. 같은 지문 안에서 칸만 여럿인 것은
@@ -102,9 +105,12 @@ def resolve(content, mark):
     exact = max((h[2] for h in hits), key=len)
     if to is None or to == "":
         return dict(mark, why="고칠 글이 안 적혀 있습니다", frm=exact,
-                    to=None, label=label, sec="", hits=labs)
+                    to=None, label=label, sec="", hits=labs, sure=False)
     # `sec` 을 비워 두면 그 지문이 실린 **모든 칸**에 얹힌다(같은 글이니까).
-    return dict(mark, label=label, sec="", frm=exact, to=to, why="")
+    why = "" if sure else ("쪽지가 고칠 글인지 지시인지 알 수 없습니다 "
+                           "— 맞으면 --loose")
+    return dict(mark, label=label, sec="", frm=exact, to=to, why=why,
+                sure=sure)
 
 
 def main():
@@ -115,6 +121,8 @@ def main():
     ap.add_argument("--src", default="", help="어느 책에서 온 것인지(기록용)")
     ap.add_argument("--apply", action="store_true",
                     help="바로 고칠 수 있는 것을 정오표에 쌓는다")
+    ap.add_argument("--loose", action="store_true",
+                    help="쪽지 글을 곧 고칠 글로 본다(화살표가 없어도)")
     ap.add_argument("-o", "--out", default="", help="미결 목록을 쓸 자리")
     a = ap.parse_args()
 
@@ -124,13 +132,14 @@ def main():
     for p in a.pdfs:
         for m in read_pdf(p):
             r = resolve(content, m)
-            (ready if not r["why"] else pending).append(r)
+            ok = r.get("label") and r.get("to") and (r.get("sure") or a.loose)
+            (ready if ok else pending).append(r)
 
     print("■ 주석 %d건 — 바로 고칠 수 있는 것 %d · 사람이 볼 것 %d"
           % (len(ready) + len(pending), len(ready), len(pending)))
     for r in ready:
-        print("  ✓ %-18s %-8s %s → %s"
-              % (r["label"], r["sec"], r["frm"][:34], r["to"][:34]))
+        print("  ✓ %-18s %s → %s"
+              % (r["label"], r["frm"][:34], r["to"][:34]))
     for r in pending:
         print("  · p%-3d %-10s %s\n        %s"
               % (r["page"], r["kind"], (r["note"] or r["text"])[:52], r["why"]))
