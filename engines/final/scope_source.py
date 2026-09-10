@@ -376,10 +376,15 @@ def folders(scope, base, grade=None, log=lambda m: None):
             # ⚠ 판은 학년이 아니라 **교재 이름**이 정한다 — 고1 2학기가
             #   `독해 기본2` 를 쓴다(광문1 26-2-중간). 학년으로 찍으면
             #   기본1 을 뒤져 한 지문도 못 찾는다.
+            # ⚠⚠ 그리고 올림포스는 판이 넷이다(독해기본1·2·전국연합기출·고2 기출).
+            #    이름만 보면 같은 `13강` 이 네 곳에 다 있다 — 그래서 범위가 짚은
+            #    **지문 번호**로 확정한다(`manuscript_locate.olympos`).
             book = d.get("book") or scope.get("raw", "")
             m = re.search(r"기본\s*([12])", book)
             path = L.olympos(base, t[1],
-                             book=int(m.group(1)) if m else (1 if g == 1 else 2))
+                             book=int(m.group(1)) if m else (1 if g == 1 else 2),
+                             book_name=book, want=d.get("only") or (),
+                             grade=g, log=log)
             spec = {"kind": "olpo", "unit": t[1]}
         elif kind == "rp":
             ed = "기본" if "기본" in scope["raw"] else "완성"

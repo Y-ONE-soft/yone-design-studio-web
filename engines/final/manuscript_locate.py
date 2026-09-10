@@ -122,14 +122,121 @@ def textbook_deeplearning(base, subject, publisher, lesson):
     return _pick(dl, want_num=lesson, words=("과",)) if dl else None
 
 
-def olympos(base, unit, book=1):
-    """올림포스 독해기본 N — `EBS 작업/올림포스 독해기본{book}/… M강`."""
-    root = _pick(os.path.join(base, "EBS 작업"),
-                 words=("올림포스독해기본%d" % book,))
-    # ⚠ 교재 이름에도 숫자가 있다(`올림포스 독해기본2 1강`) — 아무 숫자나
-    #   세면 **2강을 찾다 1강을 집는다**(실측). `강` 에 붙은 숫자만 센다.
-    return _pick(root, want_num=unit, words=("강",),
-                 num_unit="강") if root else None
+# ── 올림포스: **여러 판이 있다** ─────────────────────────────────────────
+#
+#   EBS 작업/올림포스 독해기본1
+#            올림포스 독해기본2
+#            올림포스 고2 기출
+#            2026 올림포스 전국연합학력평가 기출 영어독해 고1(2025.10)
+#
+# 이름만 보고 고르면 `올림포스 13강` 이 네 곳 다에 있어 **아무거나 집는다**.
+# 그래서 이름으로는 **후보를 좁히기만** 하고, 마지막은 **지문 번호로** 고른다 —
+# 시험범위가 `13강 1~5` 라고 짚었으면 그 강에 no.01~05 가 실제로 있는 판이
+# 맞는 판이다. 판마다 강별 지문 수가 다르므로 이것이 곧 내용 대조다.
+#
+# 판을 가르는 낱말. 앞의 것이 더 좁다(둘 다 걸리면 좁은 쪽이 이긴다).
+OLPO_MARKS = (
+    ("전국연합", ("전국연합", "학력평가기출", "기출문제집")),
+    ("기출", ("기출",)),
+    ("독해기본2", ("독해기본2",)),
+    ("독해기본1", ("독해기본1",)),
+    ("유형편", ("유형편",)),
+)
+
+
+def olympos_roots(base):
+    """`EBS 작업` 아래 올림포스 판 폴더 전부."""
+    root = os.path.join(base, "EBS 작업")
+    return [os.path.join(root, n) for n in _dirs(root)
+            if "올림포스" in _squash(n)]
+
+
+def _olpo_score(dir_name, book_name, grade=0):
+    """폴더 이름 ↔ 시험범위가 적은 교재 이름의 겹침. 클수록 그럴듯하다."""
+    dn, bn = _squash(dir_name), _squash(book_name)
+    score = 0
+    for _tag, words in OLPO_MARKS:
+        ind = any(w in dn for w in words)
+        inb = any(w in bn for w in words)
+        if ind and inb:
+            score += 10
+        elif ind != inb:
+            score -= 6              # 한쪽에만 있는 표지는 다른 판이라는 뜻
+    for g in (1, 2, 3):
+        if ("고%d" % g) in dn:
+            if ("고%d" % g) in bn:
+                score += 4
+            elif grade and g != grade:
+                score -= 4
+    return score
+
+
+def olympos_units(base, unit, book_name="", grade=0):
+    """`(점수, 강 폴더)` 목록 — 이름으로 매긴 순서. 내용 대조는 부르는 쪽에서."""
+    out = []
+    for root in olympos_roots(base):
+        # ⚠ 교재 이름에도 숫자가 있다(`올림포스 독해기본2 1강`) — 아무 숫자나
+        #   세면 **2강을 찾다 1강을 집는다**(실측). `강` 에 붙은 숫자만 센다.
+        d = _pick(root, want_num=unit, words=("강",), num_unit="강")
+        if d:
+            out.append((_olpo_score(os.path.basename(root), book_name, grade), d))
+    out.sort(key=lambda x: -x[0])
+    return out
+
+
+_NUM_CACHE = {}
+
+
+def passage_numbers(folder):
+    """그 강 원고에 실제로 있는 지문 번호 집합(`no.01` → 1). 못 읽으면 빈 집합."""
+    if folder in _NUM_CACHE:
+        return _NUM_CACHE[folder]
+    got = set()
+    try:
+        from engines.final import manuscript as M
+        for b in M.read(folder, "arrange")[0]:
+            key = parse_label(b.get("raw", ""))["key"]
+            n = _no(key)
+            if n:
+                got.add(int(n.split("~")[0]))
+    except Exception:                                          # noqa: BLE001
+        got = set()
+    _NUM_CACHE[folder] = got
+    return got
+
+
+def olympos(base, unit, book=1, book_name="", want=(), grade=0,
+            log=lambda m: None):
+    """올림포스 N강 원고 폴더. **이름으로 좁히고 지문 번호로 확정한다.**
+
+    `want` 는 시험범위가 짚은 지문 번호다. 그 번호를 다 갖고 있는 판만 맞다 —
+    같은 `13강` 이라도 판마다 지문이 다르므로 이것이 내용 대조가 된다.
+    번호를 안 주면(옛 호출부) 예전처럼 이름으로만 고른다.
+    """
+    name = book_name or ("올림포스 독해기본%d" % book)
+    cands = olympos_units(base, unit, name, grade)
+    if not cands:
+        return None
+    if not want:
+        return cands[0][1]
+    ok = [(sc, d) for sc, d in cands if set(want) <= passage_numbers(d)]
+    if len(ok) == 1:
+        return ok[0][1]
+    if not ok:
+        # 어느 판도 범위가 짚은 번호를 다 갖고 있지 않다 — 조용히 넘기지 않는다.
+        log("[범위] ★ 올림포스 %d강 — 범위가 짚은 지문 %s 를 가진 판이 없습니다: %s"
+            % (unit, ",".join(str(n) for n in want),
+               " / ".join("%s(원고 %s)" % (os.path.basename(os.path.dirname(d)),
+                                          ",".join(str(n) for n in
+                                                   sorted(passage_numbers(d))) or "없음")
+                          for _sc, d in cands)))
+        return cands[0][1]
+    if ok[0][0] > ok[1][0]:
+        return ok[0][1]
+    log("[범위] ★ 올림포스 %d강 — 판이 갈리지 않습니다(%s). 교재 이름을 더 적어 주세요."
+        % (unit, " / ".join(os.path.basename(os.path.dirname(d))
+                            for _sc, d in ok)))
+    return ok[0][1]
 
 
 def reading_power(base, unit, edition="완성"):
