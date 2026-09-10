@@ -384,6 +384,32 @@ def _mock_footer(rows, log, grade=""):
         log("■ 모의고사 꼬리말 %d면에 회차 표기" % n)
 
 
+def _label_keys(r, cat):
+    """저술물을 찾을 때 써 볼 이름들 — 교정 전 라벨과 교정 뒤 라벨 둘 다.
+
+    `_fix_lecture_label` 이 `1강` → `1강 분석` 으로 바꾸는데 그 교정은 저술물을
+    얹은 **뒤에** 돈다. 우리가 써 둔 이름은 교정 뒤 라벨이라 그대로 두면
+    분석 지문이 조용히 빈 채로 조판된다(광문2 실측 6지문).
+    """
+    keys, seen = [], set()
+    for k in (r.get("key"), r.get("no"), r.get("label")):
+        k = str(k or "").strip()
+        if k and k not in seen:
+            seen.add(k)
+            keys.append(k)
+    lab = str(r.get("label") or "").strip()
+    unit = str(cat or "").strip()
+    m = re.search(r"(\d{1,2})\s*강\s*$", unit)
+    if m and lab:
+        alt = "분석" if (re.fullmatch(r"\d{1,2}\s*강", lab)
+                        and unit.endswith(lab)) else lab
+        if re.fullmatch(r"\d{1,2}|분석|서술형 Practice|논술형 Practice", alt):
+            alt = "%s강 %s" % (m.group(1), alt)
+            if alt not in seen:
+                keys.append(alt)
+    return keys
+
+
 def _fix_lecture_label(rows, log):
     """부교재 **분석 지문** 라벨을 바로잡는다.
 
@@ -1126,8 +1152,15 @@ class PocketbookSeries(Series):
             cat = (r.get("category") or r.get("unit") or "").strip() or cat
             if r.get("kind") == "memtest":
                 continue
-            got = rightpage.load(r.get("key") or r.get("no") or r.get("label"),
-                                 book, cat)
+            got = None
+            # ⚠ 라벨 교정(`_fix_lecture_label`)은 **이 뒤에** 돈다. 그래서 여기
+            #   보이는 라벨은 `1강` 이고, 우리가 써 둔 이름은 교정 뒤 라벨인
+            #   `1강 분석` 이다 — 광문2에서 분석 지문 6개가 조용히 빈 채로
+            #   조판됐다. 교정 뒤 이름으로도 한 번 더 찾는다.
+            for k in _label_keys(r, cat):
+                got = rightpage.load(k, book, cat)
+                if got:
+                    break
             if not got:
                 continue
             hit = False
