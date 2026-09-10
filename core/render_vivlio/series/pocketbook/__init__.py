@@ -14,6 +14,7 @@
 """
 import json
 import re
+import unicodedata
 import os
 import shutil
 
@@ -133,6 +134,9 @@ def _derive_pno(p, src=""):
     # ⚠ 분석본이 **책 머리에만** 회차를 적어 두는 게 아니라, 아예 안 적고
     #   **파일 이름**(`광문1_분석본05(24년9월)_내지.idml`)에만 두는 경우가 있다.
     #   그러면 25지문이 통째로 번호 없이 `18번` 으로 남는다(실측).
+    # ⚠ 맥 파일 이름은 **NFD** 라 `년`·`월` 이 자모로 쪼개져 정규식이 안 걸린다.
+    #   NFC 로 맞춘 뒤에 찾는다(오늘 폴더 훑기에서도 같은 데 걸렸다).
+    src = unicodedata.normalize("NFC", src or "")
     m = _RE_YM.search(ch) or _RE_YM.search(lb) or _RE_YM.search(src)
     n = _RE_NO.search(lb) or _RE_NO.search(ch)
     if m and n:
