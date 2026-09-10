@@ -909,6 +909,9 @@ def _line_est(txt, width_mm, size_pt):
     return max(1, int(w / max(width_mm, 1.0)) + (1 if w % width_mm else 0))
 
 
+_CARD_LEAD_FLOOR = 0.70     # 7pt 글자에 2.94mm — 이 아래로는 붙는다
+
+
 def _card_fit(c, M):
     """카드가 넘칠 것 같으면 미리 줄인다.
 
@@ -928,9 +931,11 @@ def _card_fit(c, M):
     room = int((M["card"][3] - 2 * M["card_pad"]) / M["card_lead"])
     if lines <= room:
         return ""
-    sc = max(0.78, round(room / float(lines), 2))
-    return ";font-size:%gpt;line-height:%gmm" % (
-        M["card_size"] * sc, M["card_lead"] * sc)
+    # ⚠ 글자 크기는 **건드리지 않는다**(사용자 지시) — 카드마다 크기가 달라지면
+    #   잘못 들어간 것처럼 보인다. 모자란 몫은 **행간**으로만 메운다.
+    room_mm = M["card"][3] - 2 * M["card_pad"] - 0.6
+    lead = max(M["card_lead"] * _CARD_LEAD_FLOOR, room_mm / lines)
+    return ";line-height:%.2fmm" % lead
 
 
 _CONN = ('<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
