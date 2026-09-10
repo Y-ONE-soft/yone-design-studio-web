@@ -236,7 +236,7 @@ def layout_for(passage):
 # ⚠ 무지개로 흩뿌리지 않는다. 청람 → 청록 → 올리브 → 황금 → 주황 → 자주 →
 #   보라로 **한 방향으로 도는 띠**라, 파트가 몇 개든 순서가 색으로 읽힌다.
 # ⚠ 금지색을 피한다 — 더스티 모브코럴(#DB9488)·세이지 그린(#81B98C).
-TAB_COLORS = ("#4C6BA8", "#5A93B8", "#63A9A4", "#A8B173",
+TAB_COLORS = ("#4C6BA8", "#5A93B8", "#5AA6B0", "#AEB566",
               "#C9AE6A", "#D8905C", "#BE6A86", "#8E6FB0")
 
 
@@ -246,16 +246,27 @@ def _hex(c):
 
 
 def tab_color(i, n, ramp=None):
-    """파트 `i`(전체 `n`개)의 딱지 색 — 색 띠 위를 고르게 걷는다."""
+    """파트 `i`(전체 `n`개)의 딱지 색 — 색 띠 위를 고르게 걷는다.
+
+    ⚠ RGB 로 섞으면 안 된다. 주황과 자주 사이를 RGB 로 지나면 한가운데가
+      **탁한 모브코럴**(금지색 `#DB9488` 근처)로 내려앉는다. 색상환을 도는
+      일이므로 HLS 에서 **색상을 돌리고** 맑기·짙기는 그대로 잇는다.
+    """
+    import colorsys
     ramp = list(ramp or TAB_COLORS)
     if n <= 1:
         return ramp[0]
     t = (i / float(n - 1)) * (len(ramp) - 1)
     k = min(int(t), len(ramp) - 2)
     f = t - k
-    a, b = _hex(ramp[k]), _hex(ramp[k + 1])
+    a = colorsys.rgb_to_hls(*[c / 255.0 for c in _hex(ramp[k])])
+    b = colorsys.rgb_to_hls(*[c / 255.0 for c in _hex(ramp[k + 1])])
+    dh = (b[0] - a[0] + 0.5) % 1.0 - 0.5      # 가까운 쪽으로 돈다
+    h = (a[0] + dh * f) % 1.0
+    ll = a[1] + (b[1] - a[1]) * f
+    s = a[2] + (b[2] - a[2]) * f
     return "#%02X%02X%02X" % tuple(
-        round(a[j] + (b[j] - a[j]) * f) for j in range(3))
+        round(c * 255) for c in colorsys.hls_to_rgb(h, ll, s))
 
 
 def tab_ink(bg):

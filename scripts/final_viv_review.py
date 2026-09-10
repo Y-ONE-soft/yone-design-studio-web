@@ -91,7 +91,13 @@ def check_scope(scope, grade, log):
                 tk, tail = S.label_token(lab)
                 if tk is None or S._key(tk) != tok:
                     continue
-                m = S.RE_LAB_NO.search(lab[4:] if t[0] == "mock" else tail)
+                if t[0] == "mock":
+                    # 장문은 라벨이 `240941~42` — **묶음 전체**가 실린 것이다.
+                    # 앞 번호만 세면 42 가 없어진 것처럼 보인다.
+                    ns = [int(x) for x in re.findall(r"\d+", lab[4:])]
+                    got |= (set(range(ns[0], ns[-1] + 1)) if ns else set())
+                    continue
+                m = S.RE_LAB_NO.search(tail)
                 if m:
                     got.add(int(m.group(1)))
             miss = [n for n in only if n not in got]
@@ -124,11 +130,15 @@ def check_manuscript(content, txt, log):
             if norm(it)[:40] not in txt:
                 miss.append(("문장배열", b["header"], it[:40]))
     for b in content["vol1"].get("문장삽입", []):
-        g = b.get("given") or ""
-        if len(g) >= 25:
+        # 하단 문제는 `paras`(발문·주어진 문장·본문) 로 들어 있다 — 그중
+        # **주어진 문장**만 본다. 발문은 어느 지문에나 같아 대조가 안 된다.
+        for pa in b.get("paras", []):
+            t0 = (pa.get("text") or "") if isinstance(pa, dict) else str(pa)
+            if len(t0) < 25 or "고르시오" in t0 or "쓰시오" in t0:
+                continue
             tot["문장삽입"] += 1
-            if norm(g)[:40] not in txt:
-                miss.append(("문장삽입", b["header"], g[:40]))
+            if norm(t0)[:40] not in txt:
+                miss.append(("문장삽입", b["header"], t0[:40]))
     det = content["vol2"].get("영작_헤더_상세", [])
     pairs = content["vol2"].get("서술형영작", [])
     for i, h in enumerate(det):

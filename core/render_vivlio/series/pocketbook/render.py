@@ -432,7 +432,7 @@ def _hit(t, pos_only=False):
     return "".join(out)
 
 
-def voca_page(pg, M, folio, side="l"):
+def voca_page(pg, M, folio, side="l", part=(0, 0)):
     """어휘 한 면 — 26-1-기말 완성본 그대로.
 
     왼쪽 단에 **번호 · 회독칸 3개 · 표제어**, 오른쪽 단에 **뜻 · 예문 · 해석**.
@@ -474,8 +474,9 @@ def voca_page(pg, M, folio, side="l"):
                 '<span style="color:var(--ink)">VOCA</span> <b>%s</b></div>'
                 % (_box(M["margin_l"], M["folio_y"],
                         M["page_w"] - M["margin_l"] - 15.0), folio))
-    return ('<section class="pg k-voca"><div class="trim">%s%s%s</div></section>'
-            % (head, body, foot))
+    tab = side_tab(M, part[0], part[1], "어휘") if side == "r" else ""
+    return ('<section class="pg k-voca"><div class="trim">%s%s%s%s</div>'
+            '</section>' % (head, body, foot, tab))
 
 
 def page_kind(p):
@@ -1370,7 +1371,9 @@ def build_html(data, css_name="pocket.css"):
             pages.append('<section class="pg k-voca"><div class="trim">'
                          '</div></section>')
             folio += 1
-        pages.append(voca_page(vp, M, folio, "l" if folio % 2 == 0 else "r"))
+        pages.append(voca_page(vp, M, folio,
+                               "l" if folio % 2 == 0 else "r",
+                               (npart - 1, npart)))
         folio += 1
     return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
             '<title>%s</title><link rel="stylesheet" href="%s"></head><body>'
