@@ -103,7 +103,8 @@ class FinalVivEngine(FinalEngine):
         grade = self._get_meta(job_dir, "grade", "고1")
         period = self._get_meta(job_dir, "exam_period", "")
         try:
-            content = self._scratch(school, grade, period, log)
+            content = self._scratch(school, grade, period, log,
+                                    job_dir=job_dir)
             if content and content["vol1"]["문장배열"]:
                 out = os.path.join(job_dir, "content.json")
                 json.dump(content, open(out, "w", encoding="utf-8"),
@@ -116,14 +117,27 @@ class FinalVivEngine(FinalEngine):
             log("[원고직독] 실패 — 되수확 경로로 갑니다: %s" % e)
         return FinalEngine.parse(self, uploaded_files, job_dir, log)
 
-    def _scratch(self, school, grade, period, log):
+    def _scratch(self, school, grade, period, log, job_dir=None):
+        """시험범위 → 원고 직독 content.
+
+        정본은 **Y.OS** 다. 읽기 API 가 열리기 전까지는 화면에서 떠 온
+        `scope.json` 을 작업 폴더에 두면 그것을 쓴다(`final_scope_fetch.py`).
+        없으면 예전처럼 구글시트를 본다.
+        """
         from engines.final import scope_source as S
         spath = os.path.join(BASE_DIR, "scripts")
         if spath not in sys.path:
             sys.path.insert(0, spath)
         from final_manuscript_build import build as mbuild, scratch
         g = int("".join(c for c in grade if c.isdigit()) or 0)
-        sc = S.from_sheet(school, period, grade=g, log=log)
+        sc = None
+        sp = os.path.join(job_dir or "", "scope.json")
+        if job_dir and os.path.exists(sp):
+            sc = S.from_json(json.load(open(sp, encoding="utf-8")))
+            log("[범위] Y.OS 범위를 씁니다 — %s"
+                % ", ".join(S.token_text(t) for t in sc["tokens"]))
+        if not sc or not sc["tokens"]:
+            sc = S.from_sheet(school, period, grade=g, log=log)
         if not sc or not sc["tokens"]:
             return None
         return mbuild(scratch(school, grade, period), log=log, yos=sc)

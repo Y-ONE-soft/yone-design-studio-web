@@ -230,10 +230,29 @@ def vocab(school, grade, exam_period, scope=None, order=None, codes=None,
                                  exam_period=exam_period) or {}
     out = []
     for t in (got.get("left_text", ""), got.get("right_text", "")):
-        t = re.sub(r"\s*>>내용요약", "\n\n\n>>내용요약", t)
+        t = _blank_before_summary(t)
         t = re.sub("(?<=[\x21-\x7e])\\s+式\\s+(?=[\x21-\x7e])", " \u2500 ", t)
         out.append(_sort_vocab(t))
     return out[0], out[1]
+
+
+def _blank_before_summary(text):
+    """요약 표제 앞에 **빈 줄 두 개**를 둔다 — 렌더러가 그걸로 요약을 가른다.
+
+    ⚠ 표제 표기가 시트마다 다르다(`>>내용요약` · `>>   내용요약   ` ·
+      `|  내용요약  |`). 글자로 맞추면 사이 공백이 든 방언을 놓쳐 그 지문만
+      요약이 본문에 붙고, 게이트가 "요약이 일부에만 있다"며 조판을 멈춘다
+      (광문1 240924 실측). 그래서 **줄 모양**으로 본다.
+    """
+    out = []
+    for ln in (text or "").split("\n"):
+        t = ln.strip()
+        if "내용요약" in t and len(t) <= 24:
+            while out and not out[-1].strip():
+                out.pop()
+            out += ["", ""]
+        out.append(ln)
+    return "\n".join(out)
 
 
 RE_VLAB = re.compile(r"^(올포 \d+강 \S+|리딩파워 \d+강 \S+|교과서\S+ \S+|"
