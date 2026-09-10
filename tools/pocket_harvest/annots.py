@@ -98,6 +98,30 @@ def _near(slots, pt):
     return (kind, j) if d(b) < 90 else None
 
 
+def _chunks(lines):
+    """조판과 **같은 규칙**으로 덩어리를 나눈다(`render.flow_chunks`)."""
+    from core.render_vivlio.series.pocketbook import render as _r
+    ch, i, out = _r.flow_chunks(list(lines)), 0, []
+    for c in ch:
+        out.append((i, i + len(c)))
+        i += len(c)
+    return out
+
+
+def _chunk_span(lines, j):
+    for a, b in _chunks(lines):
+        if a <= j < b:
+            return a, b
+    return j, j + 1
+
+
+def _chunk_no(lines, j):
+    for k, (a, b) in enumerate(_chunks(lines), 1):
+        if a <= j < b:
+            return k
+    return 1
+
+
 def _card(txt):
     """`표제어 / 뜻 / 유의어, 유의어 / 반의어` → 카드 한 장."""
     p = [x.strip() for x in txt.split("/")]
@@ -180,9 +204,17 @@ def apply(hits, write=False, log=print):
                 if j >= len(cur):
                     skipped += 1
                     continue
+                lines = [x.strip() for x in note.splitlines() if x.strip()]
                 if note == "삭제":
                     log("  %s 플로우노트 %d줄 지움" % (lab, j + 1))
                     del cur[j]
+                elif len(lines) > 1:
+                    # ⚠ 여러 줄을 적으면 **그 덩어리를 통째로** 갈아 끼운다.
+                    #   한 줄만 적으면 그 줄만 바뀐다.
+                    a, b = _chunk_span(cur, j)
+                    log("  %s 플로우노트 %d덩어리(%d줄) 통째로 → %d줄"
+                        % (lab, _chunk_no(cur, j), b - a, len(lines)))
+                    cur[a:b] = lines
                 else:
                     log("  %s 플로우노트 %d줄 → %s" % (lab, j + 1, note[:40]))
                     cur[j] = note
