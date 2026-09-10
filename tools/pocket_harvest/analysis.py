@@ -672,6 +672,39 @@ _RE_SUMHEAD = re.compile(r"(요약|주제|정답|해설|다음 글|윗글|밑줄
                          r"[①②③④⑤]|Summary|Topic)")
 
 
+def _strip_korean_runs(d):
+    """영어 지문에 **끼어든 한글 줄**을 걸러 낸다(실용문).
+
+    안내문·도표 지문은 분석본이 영어 항목 바로 밑에 우리말을 나란히 앉혀 둔다.
+    그 줄이 영어 본문에 그대로 섞여 인쇄됐다(`- Oakwood University 컴퓨터실`,
+    `• 1등: 300달러` 등, 연구원 지적 8건).
+
+    ⚠ 지문 전체가 한글인 것(해석)까지 지우면 안 된다. **영어 지문**(한글 비율
+      20% 미만)에서, **한글이 4분의 1을 넘는 런**만 덜어 낸다.
+    """
+    paras = d.get("passage") or []
+    if not paras:
+        return
+    runs = paras[0].get("runs") or []
+    txt = "".join(r.get("t", "") for r in runs)
+    if not txt:
+        return
+    han = sum(1 for c in txt if "\uac00" <= c <= "\ud7a3")
+    if han / len(txt) >= 0.20:          # 한글 지문이면 손대지 않는다
+        return
+    keep, cut = [], 0
+    for r in runs:
+        t = r.get("t", "")
+        h = sum(1 for c in t if "\uac00" <= c <= "\ud7a3")
+        if t.strip() and h and h / len(t) > 0.25:
+            cut += 1
+            continue
+        keep.append(r)
+    if cut:
+        paras[0]["runs"] = keep
+        d.setdefault("notes", []).append("영어 지문에 섞인 한글 %d줄 걸러 냄" % cut)
+
+
 def _is_extra(tail):
     """이 꼬리가 **지문이 아니라 부속물**(요약·문제)이라는 증거가 있는가.
 
@@ -693,6 +726,7 @@ def _cut_extras(d):
     가르는 것은 **문장 번호**(`지문분석:지문 번호`)다. 진짜 지문은 문장마다
     번호가 붙어 오고, 뒤에 붙은 요약과 문제에는 하나도 없다.
     """
+    _strip_korean_runs(d)
     for key in ("passage", "translation"):
         paras = d.get(key)
         if not paras:
