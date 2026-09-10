@@ -378,6 +378,12 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     # 어디서 읽었는지 남긴다 — 이 파일만으로 다시 대조·재빌드가 된다
     out["_manuscript_sources"] = [{"dir": d, "spec": spec}
                                   for d, spec in srcs if spec]
+    # 연구원이 앞선 책에서 잡아 준 것을 얹는다 — **지문 이름과 글자로** 걸어
+    # 두었으므로 학교가 달라도 같은 지문이면 그대로 반영된다.
+    from engines.final import marks as MK
+    out["_marks"] = MK.apply(out, log=log,
+                             src="%s %s" % (content.get("school", ""),
+                                            content.get("exam_period", "")))
     return out
 
 
