@@ -126,7 +126,10 @@ def olympos(base, unit, book=1):
     """올림포스 독해기본 N — `EBS 작업/올림포스 독해기본{book}/… M강`."""
     root = _pick(os.path.join(base, "EBS 작업"),
                  words=("올림포스독해기본%d" % book,))
-    return _pick(root, want_num=unit, words=("강",)) if root else None
+    # ⚠ 교재 이름에도 숫자가 있다(`올림포스 독해기본2 1강`) — 아무 숫자나
+    #   세면 **2강을 찾다 1강을 집는다**(실측). `강` 에 붙은 숫자만 센다.
+    return _pick(root, want_num=unit, words=("강",),
+                 num_unit="강") if root else None
 
 
 def reading_power(base, unit, edition="완성"):
@@ -180,6 +183,7 @@ def suneung_teukgang(base, unit, year=2027, test=False):
     wb = _pick(root, words=("워크북",))
     if not wb:
         return None
+    # 교재 이름의 연도(`2027 수능특강 …`)에 걸리지 않게 `강` 에 붙은 숫자만
     if test:
         return _pick(wb, want_num=unit, words=("Test",))
     return _pick(wb, want_num=unit, words=("강",), avoid=("Test",))

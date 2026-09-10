@@ -102,7 +102,63 @@ def test_lesson_ranges_split_at_the_lesson_head():
     got = S.lesson_ranges(
         "Lesson 1. Bonding with Others 1~9, "
         "Lesson 2. What Keeps Us Moving Forward 1~12")
-    assert got == {1: list(range(1, 10)), 2: list(range(1, 13))}
+    assert got[1]["nums"] == list(range(1, 10))
+    assert got[2]["nums"] == list(range(1, 13))
+
+
+def test_special_lesson_is_not_a_lesson_and_page_marks_are_not_numbers():
+    """`Special Lesson 2 … p. 100 본문 1` — 실제 Y.OS 값(광문1 26-2-중간).
+
+    ⚠ `p. 100` 은 쪽 표시다. 안 떼면 100·101… 이 지문 번호로 잡혀 5지문이
+      10지문이 된다. 그리고 SL 은 `Lesson 2` 가 아니다 — 완성본 라벨도
+      번호 없이 `교과서SL 본문1` 이다.
+    """
+    got = S.lesson_ranges(
+        "Special Lesson 2. One-of-a-Kind Self p. 100 본문 1, p. 101 본문 2, "
+        "p. 102 본문 3, p. 103 본문 4, p. 104 본문 5")
+    assert list(got) == [("sl", 2)]
+    assert got[("sl", 2)]["nums"] == [1, 2, 3, 4, 5]
+
+
+def test_mock_long_passages_count_as_one():
+    """`41~42`·`43~45` 는 장문이라 **한 지문**이다(원고 라벨도 한 덩어리).
+
+    `18~40, 41~42, 43~45` = 23 + 1 + 1 = 25 — Y.OS 가 센 값과 같다.
+    """
+    nums, cnt = S.mock_ranges("18~40, 41~42, 43~45")
+    assert cnt == 25
+    assert 41 in nums and 45 in nums          # 거르기는 번호로 하므로 다 편다
+
+
+def test_named_items_are_passages_too():
+    """`수능 대비 ANALYSIS`·`논술형 Practice` 도 지문 하나씩이다."""
+    got = S.unit_ranges("Unit 01 글의 목적 01~03, 수능 대비 ANALYSIS, "
+                        "Unit 05 주제ㆍ제목 01~03, 논술형 Practice, "
+                        "서술형 Practice, 수능 대비 ANALYSIS")
+    assert [(u["no"], u["nums"], u["named"]) for u in got] == [
+        (1, [1, 2, 3], ["분석"]),
+        (5, [1, 2, 3], ["논술형", "서술형", "분석"])]
+
+
+def test_named_items_are_filtered_by_the_scope():
+    """범위가 이름으로 짚어 줬으면 그 목록을 따른다 — 1강엔 서술형이 없다."""
+    sc = S.from_yos_entries([
+        ("부교재", "올림포스 영어독해 기본2(2024.10)",
+         "Unit 01 글의 목적 01~03, 수능 대비 ANALYSIS, "
+         "Unit 05 주제ㆍ제목 01~03, 서술형 Practice, 수능 대비 ANALYSIS",
+         "9지문")], grade=1)
+    assert S.in_scope("올포 1강 분석", sc)
+    assert not S.in_scope("올포 1강 서술형", sc)
+    assert S.in_scope("올포 5강 서술형", sc)
+
+
+def test_word_book_entries_are_not_final_material():
+    """`단어`(어휘끝 …)는 파이널이 아니라 딴 교재다 — 범위에서 뺀다."""
+    sc = S.from_yos_entries([("단어", "어휘끝 고교 기본", "Unit 15~23", "9Day")],
+                            grade=1)
+    assert sc["tokens"] == []
+    assert S.count_gate([("단어", "어휘끝 고교 기본", "Unit 15~23", "9Day")],
+                        sc) == []
 
 
 def test_unit_ranges_do_not_bleed_across_the_comma():
