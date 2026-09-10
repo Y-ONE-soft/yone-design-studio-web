@@ -625,6 +625,74 @@ MIN_SCALE = 0.834       # 9pt → 7.5pt. 원본 resolveOverflow 하한과 같다
 MIN_LEAD = 14.0         # pt. 원본 하한
 
 
+_STEM_MIN = 4
+
+
+def _stem(w):
+    """어근 어림 — 굴절·파생 꼬리를 떼고 앞부분만 남긴다."""
+    h = re.sub(r"[^a-z]", "", (w or "").lower())
+    if not h:
+        return ""
+    for suf in ("ations", "ation", "ingly", "ically", "ness", "ment", "ing",
+                "ies", "ied", "ous", "ally", "ity", "ers", "est", "ed", "es",
+                "ly", "s"):
+        if len(h) - len(suf) >= _STEM_MIN and h.endswith(suf):
+            h = h[:-len(suf)]
+            break
+    return h[:max(_STEM_MIN, len(h) - 1)]
+
+
+def _card_in_passage(card, body):
+    """이 표제어가 **그 지문에 실제로 나오는가**(연구원 검수 (4)항).
+
+    숙어는 마지막 낱말로, 한 낱말은 어근으로 본다. 굴절형(`convinced`)과
+    파생형(`consistency`)을 놓치지 않으려고 꼬리를 떼고 맞댄다.
+    """
+    w = (card.get("w") or "").split()
+    if not w:
+        return True
+    return any(_stem(x) and _stem(x) in body for x in w)
+
+
+def _check_content(rows, report, log):
+    """G-P12 — **가져온 내용이 그 지문 것인가**.
+
+    ⚠ 예전 게이트는 `블록이 있는가` 만 봤다. 그래서 한 지문에 책 전체 동반의어
+      88장이 뭉쳐 들어간 것을 통과시켰다(한영2 39번 실측). 연구원 검수
+      프롬프트가 짚는 그대로 **내용이 맞는지**까지 본다.
+    """
+    over, alien, few = [], [], []
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        cs = r.get("synonyms") or []
+        if not cs:
+            continue
+        lab = r.get("key") or r.get("label") or "?"
+        if len(cs) > 9:
+            over.append((lab, len(cs)))
+            continue                      # 뭉친 건 아래 검사가 의미 없다
+        if len(cs) < 7:
+            few.append((lab, len(cs)))
+        body = re.sub(r"[^a-z]", "",
+                      pdata.plain_passage(r).lower())
+        miss = [c.get("w") for c in cs if not _card_in_passage(c, body)]
+        # 절반 넘게 안 나오면 **다른 지문 것**이 붙은 것이다
+        if len(miss) > len(cs) / 2:
+            alien.append((lab, len(miss), len(cs)))
+    if over:
+        report.fail("G-P12 동반의어가 9장을 넘는 지문 %d개 — 다른 지문 것이 "
+                    "뭉쳤다: %s" % (len(over), ", ".join(
+                        "%s(%d장)" % x for x in over[:6])))
+    if alien:
+        report.fail("G-P12 동반의어 표제어가 그 지문에 없다 %d지문: %s"
+                    % (len(alien), ", ".join(
+                        "%s(%d/%d)" % x for x in alien[:6])))
+    if few:
+        log("  G-P12 동반의어가 7장 미만인 지문 %d개 (연구원 기준 최소 7장): %s"
+            % (len(few), ", ".join("%s(%d)" % x for x in few[:8])))
+
+
 def _avail_h(r):
     """이 지문이 쓸 수 있는 세로 높이(mm).
 
@@ -2045,6 +2113,7 @@ class PocketbookSeries(Series):
         pas = [r for r in rows if r.get("kind") != "memtest"]
         self._check_source_count(cfg, opt, len(pas), report, log)
         self._check_scope(cfg, report, log)
+        _check_content(pas, report, log)
         # G-P11 — 암기 TEST 를 쓰기로 한 책인데 한 면도 안 붙었다.
         # ⚠ 이걸 안 세우면 원고 폴더가 안 잡힌 날 **면 수가 반으로 준 책이
         #   전 게이트를 통과한다**(세종1 204→106면 실측). 면 수 게이트는 남은
