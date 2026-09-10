@@ -232,7 +232,26 @@ def _glue_icon(ico, html):
     return '<span class="nb">%s%s</span>%s' % (ico, html[:cut], html[cut:])
 
 
-def runs_html(runs):
+_RE_ITEM = re.compile(r"(?<!^)(?=[\u25a1\u2022\u203b])")   # □ • ※ 앞
+
+
+def _item_breaks(html, on):
+    """실용문 항목 머리(`□`·`•`·`※`) 앞에서 줄을 바꾼다.
+
+    ⚠ 안내문·도표는 원고가 **한 문단**으로 흘러 들어와 항목 구조가 사라진다
+      (연구원 지적 4건: `□ Date and Time` 이 앞 문장에 붙어 버림). 표식이 있는
+      지문에서만, **표식 바로 앞**에 줄바꿈을 넣는다 — 일반 지문은 안 건드린다.
+    """
+    return _RE_ITEM.sub("<br>", html) if on else html
+
+
+def _is_notice(p):
+    """실용문(안내문·도표)인가 — 항목 표식이 있는 지문."""
+    t = "".join(x.get("t", "") for x in (p.get("passage_runs") or []))
+    return sum(t.count(c) for c in "\u25a1\u2022\u203b") >= 2
+
+
+def runs_html(runs, items=False):
     """형광펜은 **연속 구간**이다 — 낱말마다 칠하면 어절 사이가 비어 줄무늬가 된다."""
     out, cur_hl, buf = [], None, []
 
@@ -332,7 +351,8 @@ def left_page(p, M, folio):
                  'height:%gmm%s">%s</div>'
                  % (_refs.mark(_refs.of(p, "passage_runs"), "passage"),
                     ps[0], passage_top(M, lead), ps[2], ps[3], sc,
-                    runs_html(p["passage_runs"])))
+                    _item_breaks(runs_html(p["passage_runs"]),
+                                 _is_notice(p))))
     if L.get("rule"):
         parts.append('<div class="rule" style="%s"></div>'
                      % _box(M["margin_l"], L["rule"], ps[2]))
@@ -357,7 +377,8 @@ def left_page(p, M, folio):
             st += ";font-size:%gpt" % (M["trans_size"] * ts)
         parts.append('<div%s style="%s%s"><p>%s</p></div>'
                      % (_refs.mark(_refs.of(p, "translation"), "translation"),
-                        _box(tr[0], tr[1], tr[2]), st, ESC(p["translation"])))
+                        _box(tr[0], tr[1], tr[2]), st,
+                        _item_breaks(ESC(p["translation"]), _is_notice(p))))
     # 「주제 :」 써 보는 칸 — 광문 완성본에만 있다(`options.topic_box`).
     if M.get("topic_box"):
         tb2 = M["topicbox"]; tl = M["topicbox_lab"]; tp = M["topicbox_pen"]
