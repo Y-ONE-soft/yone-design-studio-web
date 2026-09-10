@@ -1017,6 +1017,10 @@ def tab_label(cat):
     return c.split()[-1][:4]
 
 
+def _part_of(order, npart, cat):
+    return (order.index(cat) if cat in order else 0, npart)
+
+
 def part_list(passages, voca=False):
     """책의 파트 차례 — 지문 단원이 나온 순서 그대로, 어휘 파트는 맨 뒤."""
     out = []
@@ -1210,7 +1214,7 @@ def right_page(p, M, folio, category="", part=(0, 0)):
             % (page_kind(p), "".join(parts)))
 
 
-def memtest_page(p, M, folio, answer, category=""):
+def memtest_page(p, M, folio, answer, category="", part=(0, 0)):
     mt = M["memtest"]
     runs = p.get("runs") if p.get("kind") == "memtest" else (
         (p.get("memtest") or {}).get("a" if answer else "q"))
@@ -1243,6 +1247,9 @@ def memtest_page(p, M, folio, answer, category=""):
                               M["folio_y"],
                               None if not answer
                               else M["page_w"] - M["margin_l"] - 15.0), foot))
+    # 귀 인덱스는 **오른쪽 면에만** — 암기 TEST 는 정답면이 오른쪽이다.
+    if answer:
+        parts.append(side_tab(M, part[0], part[1], tab_label(category)))
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
 
 
@@ -1284,20 +1291,21 @@ def split_half(p):
     return [a, b]
 
 
-def memo_page(M, folio, kind=""):
+def memo_page(M, folio, kind="", part=(0, 0), tab=""):
     """메모 면 — 오른쪽 면이 빌 때 빈 채로 두지 않는다(사용자 지시)."""
     fl = M["flow"]
     return ('<section class="pg %s"><div class="trim">'
             '<div class="flowchip" style="%s">%sMEMO</div>'
             '<div class="flow memo" style="%s"></div>'
             '<div class="folio r" style="%s"><b>%s</b></div>'
-            '</div></section>'
+            '%s</div></section>'
             % (kind,
                _box(M["flow_chip"][0], M["flow_chip"][1],
                     M["flow_chip"][2], M["flow_chip"][3]), _svg("chip_flow"),
                _box(fl[0], fl[1], fl[2], M["memo_h"]),
                _box(M["margin_l"], M["folio_y"],
-                    M["page_w"] - M["margin_l"] - 15.0), folio))
+                    M["page_w"] - M["margin_l"] - 15.0), folio,
+               side_tab(M, part[0], part[1], tab)))
 
 
 def page_plan(rows, folio_start=2):
@@ -1342,10 +1350,15 @@ def build_html(data, css_name="pocket.css"):
         cat = p.get("category", "")
         for _ in range(lead):
             # ⚠ 짝을 맞추려 끼우는 면은 **빈 채로 두지 않는다**(사용자 지시).
-            pages.append(memo_page(M, folio, page_kind(p)))
+            # 메모 면도 오른쪽 면이면 딱지를 단다 — 안 그러면 가장자리
+            # 계단이 그 한 장에서 끊긴다.
+            pages.append(memo_page(
+                M, folio, page_kind(p), _part_of(order, npart, cat),
+                tab_label(cat) if folio % 2 else ""))
             folio += 1
         if p.get("kind") == "memtest":
-            pg = memtest_page(p, M, folio, p.get("answer"), cat)
+            pg = memtest_page(p, M, folio, p.get("answer"), cat,
+                              _part_of(order, npart, cat))
             if pg:
                 pages.append(pg); folio += 1
             continue
@@ -1361,8 +1374,7 @@ def build_html(data, css_name="pocket.css"):
             continue
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat,
-                                (order.index(cat) if cat in order else 0,
-                                 npart)))
+                                _part_of(order, npart, cat)))
         folio += 1
     # 어휘 파트는 **맨 뒤**다(26-1-기말 완성본과 같은 자리). 한 DAY 가 펼침면
     # 하나이므로 왼쪽 면부터 시작해야 짝이 맞는다.

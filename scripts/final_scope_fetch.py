@@ -2,13 +2,26 @@
 """Y.OS 시험범위 → `scope.json` (사람 손 없이).
 
 Y.OS `/work/exam` 은 아직 읽기 API 가 없다. 그래서 **화면에서 그대로 떠 온다**.
-브라우저에 로그인된 상태에서 아래 한 줄을 콘솔에 넣으면 표가 통째로 나온다:
+브라우저에 로그인된 상태에서 아래를 콘솔에 넣으면 표가 통째로 나온다:
 
     [...document.querySelectorAll("tbody tr")].flatMap(tr => {
       const who = tr.children[0].innerText.replace(/\\n+/g, "·").trim();
-      return [...tr.children[2].querySelectorAll(":scope > div > div")]
-        .map(d => [who, ...[...d.children].map(x => x.innerText.trim())]);
+      const g = tr.children[1].querySelector('div[class*="grid-cols-"]');
+      if (!g) return [];
+      const k = [...g.children], out = [];
+      for (let i = 0; i + 2 < k.length; i += 3) {          // 구분·교재+범위·지문수
+        const box = k[i + 1];
+        out.push([who, k[i].innerText.trim(),
+                  ((box.querySelector('span') || {}).innerText || '').trim(),
+                  [...box.querySelectorAll('p')].map(p => p.innerText.trim())
+                      .join(', '),
+                  k[i + 2].innerText.trim()]);
+      }
+      return out;
     })
+
+⚠ 화면 모양은 바뀐다 — 2026-09-11 에 한 번 바뀌었다(칸이 `tr.children[2]` 에서
+  `[1]` 로, 항목이 `div > div` 에서 3칸 그리드로). 그래서 **지문수 대조**를 두었다.
 
 그 결과를 파일로 주면 여기서 **지문수 대조**까지 하고 `scope.json` 을 쓴다.
 

@@ -173,7 +173,12 @@ def run_agent(book_dir, pdfs, log):
     os.makedirs(jd, exist_ok=True)
     out = []
     for p in pdfs:
-        r = run_review_agent(jd, log, result={"pdf_path": p, "ok": True})
+        # 한 권이 넘어져도 다른 권은 본다 — fail-open.
+        try:
+            r = run_review_agent(jd, log, result={"pdf_path": p, "ok": True})
+        except Exception as e:                                 # noqa: BLE001
+            log("  ⚠ %s 눈 검수 실패: %s" % (os.path.basename(p), e))
+            r = {"verdict": "error", "error": str(e)}
         if r:
             r["pdf"] = os.path.basename(p)
             out.append(r)
