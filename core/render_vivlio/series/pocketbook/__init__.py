@@ -2269,12 +2269,16 @@ class PocketbookSeries(Series):
                    if not r.get("flownote")]
         no_ill = [r.get("key") or r.get("label") or "?" for r in pas
                   if not r.get("illust")]
-        if no_syn:
-            report.warn("G-P2 동반의어 0개 %d지문 — %s"
-                        % (len(no_syn), ", ".join(no_syn[:12])))
-        if no_flow:
-            report.warn("G-P2 플로우노트 0개 %d지문 — %s"
-                        % (len(no_flow), ", ".join(no_flow[:12])))
+        # ⚠ 예전엔 둘 다 **알림**이라 오른쪽 면이 52지문 중 40지문 비어 있는
+        #   책이 「결함 0」 으로 통과했다(광문2 실측). 몇 개 비는 건 있을 수
+        #   있지만 **절반 넘게 비면** 오른쪽 면 작업을 안 한 것이다 — 막는다.
+        half = max(1, len(pas) // 2)
+        for tag, miss in (("동반의어", no_syn), ("플로우노트", no_flow)):
+            if not miss:
+                continue
+            msg = "G-P2 %s 0개 %d/%d지문 — %s" % (
+                tag, len(miss), len(pas), ", ".join(miss[:12]))
+            (report.fail if len(miss) > half else report.warn)(msg)
         if no_ill:
             report.note("G-P5 삽화 없음 %d지문(모의고사만 필요)" % len(no_ill))
         self._write_empty_report(cfg, no_syn, no_flow, pas)
