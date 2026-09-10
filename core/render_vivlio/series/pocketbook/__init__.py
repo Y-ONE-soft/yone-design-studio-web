@@ -358,6 +358,29 @@ def _letters(t):
 
 
 # 오른쪽 면이 없는 짤지문(안내문·도표·실용문)
+def _fix_lecture_label(rows, log):
+    """부교재 **분석 지문** 라벨을 바로잡는다.
+
+    ⚠ 분석 지문 라벨이 `7강`·`8강` 처럼 **단원 이름과 똑같이** 들어오는 책이
+      있다. 그러면 배지가 `올림포스 7강` 이 되어 「분석」 이 사라진다
+      (6강은 `분석` 으로 제대로 온다 — 연구원 지적 2건).
+    """
+    n = 0
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        lab = str(r.get("label") or "").strip()
+        unit = str(r.get("category") or r.get("unit") or "").strip()
+        if not lab or not unit:
+            continue
+        # `7강` == 단원 `올림포스 7강` 의 꼬리 → 무슨 지문인지가 없다
+        if re.fullmatch(r"\d{1,2}\s*강", lab) and unit.endswith(lab):
+            r["label"] = "분석"
+            n += 1
+    if n:
+        log("■ 분석 지문 라벨 %d개를 「분석」 으로 바로잡음" % n)
+
+
 def _mock_label(rows, log):
     """모의고사 라벨을 **`YYMMNN` 여섯 자리로 통일**한다(사용자 지시).
 
@@ -893,6 +916,7 @@ class PocketbookSeries(Series):
         _fill_from_store(rows, cfg, opt, log)
         # ⚠ 라벨을 여섯 자리로 바꾸면 `18번` 이 `240918` 이 되어 짤지문·장문
         #   가르기(`N번` 을 본다)가 빗나간다 — 반드시 **가른 뒤에** 바꾼다.
+        _fix_lecture_label(rows, log)
         _mark_short(rows, opt, log)
         _mock_label(rows, log)
         rows = self._apply_memtest(cfg, opt, rows, log)

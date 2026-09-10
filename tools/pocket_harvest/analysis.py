@@ -672,6 +672,9 @@ _RE_SUMHEAD = re.compile(r"(요약|주제|정답|해설|다음 글|윗글|밑줄
                          r"[①②③④⑤]|Summary|Topic)")
 
 
+_RE_HAN2 = re.compile(r"[\uac00-\ud7a3]{2,}")
+
+
 def _strip_korean_runs(d):
     """영어 지문에 **끼어든 한글 줄**을 걸러 낸다(실용문).
 
@@ -696,7 +699,11 @@ def _strip_korean_runs(d):
     for r in runs:
         t = r.get("t", "")
         h = sum(1 for c in t if "\uac00" <= c <= "\ud7a3")
-        if t.strip() and h and h / len(t) > 0.25:
+        # ⚠ 비율만 보면 `- Oakwood University 컴퓨터실`(16%)이 살아남는다.
+        #   우리말 낱말은 **글자가 이어서** 나온다 — 두 자 이상 붙어 있으면
+        #   우리말 줄로 본다(영문 지문에 한글 낱말이 낄 이유가 없다).
+        run2 = bool(_RE_HAN2.search(t))
+        if t.strip() and h and (h / len(t) > 0.25 or run2):
             cut += 1
             continue
         keep.append(r)
