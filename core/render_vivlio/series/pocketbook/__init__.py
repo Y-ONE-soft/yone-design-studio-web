@@ -402,6 +402,14 @@ def _fix_lecture_label(rows, log):
         if re.fullmatch(r"\d{1,2}\s*강", lab) and unit.endswith(lab):
             r["label"] = "분석"
             n += 1
+            continue
+        # ⚠ 6강만 라벨이 `01` 로 와서 배지가 「올림포스 6강 / 01」 로 갈린다.
+        #   다른 강은 `7강 01` 이라 「올림포스 / 7강 01」 이다 — 줄 나뉘는 자리가
+        #   책 안에서 오락가락한다(연구원 지적, 56·58·60·62면). 강 번호를 채운다.
+        m = re.search(r"(\d{1,2})\s*강\s*$", unit)
+        if m and re.fullmatch(r"\d{1,2}|분석|서술형 Practice|논술형 Practice", lab):
+            r["label"] = "%s강 %s" % (m.group(1), lab)
+            n += 1
     if n:
         log("■ 분석 지문 라벨 %d개를 「분석」 으로 바로잡음" % n)
 
