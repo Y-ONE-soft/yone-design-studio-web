@@ -668,6 +668,25 @@ _RE_PROMPT = re.compile(
 _SENT_TAIL = ('.', '?', '!', '\u201d', '"', "'")
 
 
+_RE_SUMHEAD = re.compile(r"(요약|주제|정답|해설|다음 글|윗글|밑줄|빈칸|어법|"
+                         r"[①②③④⑤]|Summary|Topic)")
+
+
+def _is_extra(tail):
+    """이 꼬리가 **지문이 아니라 부속물**(요약·문제)이라는 증거가 있는가.
+
+    ⚠ 길이만 보고 자르면 안 된다 — 번호가 안 붙은 진짜 마지막 문장이 길면
+      통째로 사라진다(실측 5지문). 증거는 셋이다:
+      ① 문항 표시(`( ① )`·`답:`) ② 요약·발문 낱말 ③ **한글이 섞인 영어 지문**
+    """
+    if not tail:
+        return False
+    if _RE_EXTRA.search(tail) or _RE_SUMHEAD.search(tail):
+        return True
+    han = sum(1 for c in tail if "\uac00" <= c <= "\ud7a3")
+    return han / max(len(tail), 1) > 0.2
+
+
 def _cut_extras(d):
     """지문 뒤에 붙은 요약·문제를 잘라 낸다 — **마지막 번호 문장까지**만 남긴다.
 
@@ -700,7 +719,11 @@ def _cut_extras(d):
                 seen += 1
         tail = "".join(r.get("t", "") for r in runs[end:]).strip()
         # 문제(`( ① )`)가 없고 **요약문만** 붙는 경우도 있다(광문1 1강 분석).
-        if end < len(runs) and (len(tail) >= 40 or _RE_EXTRA.search(tail)):
+        # ⚠ 예전엔 꼬리가 **40자만 넘으면** 잘랐다. 그래서 번호가 안 붙은 진짜
+        #   마지막 문장이 통째로 사라졌다(`It's better to include all of the
+        #   information…` 등 5지문, 연구원 지적). 이제 **요약·문제라는 증거**가
+        #   있을 때만 자른다 — 글은 증거 없이 지우지 않는다.
+        if end < len(runs) and _is_extra(tail):
             paras[0]["runs"] = runs[:end]
         else:
             _cut_prompt(paras[0])

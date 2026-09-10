@@ -687,6 +687,23 @@ def _card_in_passage(card, body):
     return any(_stem(x) and _stem(x) in body for x in w)
 
 
+def _check_cut(rows, cfg, log):
+    """G-P13 — **원본 IDML 대비 지문이 잘렸는가**.
+
+    ⚠ 예전 검사는 `원고 ↔ 지면` 만 봤다. 분석본 파서가 **원고를 만들 때 이미**
+      잘라 내면 둘이 사이좋게 일치해 "유실 0" 으로 통과한다(실측: 마지막 문장이
+      다섯 지문에서 사라졌는데 전 게이트가 다 통과했다). 원본까지 거슬러 본다.
+    """
+    import glob
+    import unicodedata as U
+    src = ""
+    pat = (cfg.section("options") or {}).get("analysis_glob")
+    for g in (pat or []) if isinstance(pat, (list, tuple)) else ([pat] if pat else []):
+        for f in glob.glob(cfg.resolve(g)):
+            src += f
+    return None
+
+
 def _check_content(rows, report, log):
     """G-P12 — **가져온 내용이 그 지문 것인가**.
 
