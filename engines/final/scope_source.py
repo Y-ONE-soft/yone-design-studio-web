@@ -37,7 +37,7 @@ from engines.final import manuscript_locate as L
 
 # ── 모양 ────────────────────────────────────────────────────────────────
 KIND_NAMES = {
-    "lesson": "교과서", "olpo": "올림포스", "rp": "리딩파워",
+    "sl": "교과서SL", "lesson": "교과서", "olpo": "올림포스", "rp": "리딩파워",
     "teuk": "수능특강", "bare": "강", "test": "Test", "mock": "모의고사",
 }
 
@@ -46,6 +46,8 @@ def token_text(t):
     """토큰 → 사람이 읽는 한 마디."""
     if t[0] == "mock":
         return "%d년 %d월 모의고사" % (t[1], t[2])
+    if t[0] == "sl":
+        return "교과서 SL"
     if t[0] == "lesson":
         return "교과서 %d과" % t[1]
     if t[0] == "test":
@@ -67,13 +69,16 @@ def _uniq(tokens):
 # 책의 차례 — 교과서 → 강 → 회차 → 모의. 범위 글의 **적힌 순서**를 그대로
 # 따르면 안 된다: `17, 18, 21~30강` 은 범위가 먼저 풀려 21~30 이 앞에 오고,
 # 그러면 어법·어휘 섹션만 21강부터 시작해 문장배열과 어긋난다(실증: 광문3).
-_ORDER = {"lesson": 0, "olpo": 1, "rp": 1, "teuk": 1, "bare": 1,
+_ORDER = {"lesson": 0, "sl": 0, "olpo": 1, "rp": 1, "teuk": 1, "bare": 1,
           "test": 2, "mock": 3}
 
 
 def order_key(t):
     if t[0] == "mock":
         return (3, t[1], t[2])
+    # 특별 단원은 일반 과 **뒤**다(완성본 차례)
+    if t[0] == "sl":
+        return (0, 99, 0)
     return (_ORDER.get(t[0], 9), t[1] if len(t) > 1 else 0, 0)
 
 
@@ -352,7 +357,13 @@ def folders(scope, base, grade=None, log=lambda m: None):
         d = scope.get("detail", {}).get(t, {})
         kind = t[0]
         path = spec = None
-        if kind == "lesson":
+        if kind == "sl":
+            subj, pub = d.get("subject") or "", d.get("publisher") or ""
+            path = (L.textbook_sl(base, subj, pub, d.get("sl") or 1)
+                    if subj and pub else None)
+            spec = {"kind": "sl", "sl": d.get("sl"),
+                    "subject": subj, "publisher": pub}
+        elif kind == "lesson":
             subj = d.get("subject") or ""
             pub = d.get("publisher") or ""
             if subj and pub:
@@ -362,7 +373,13 @@ def folders(scope, base, grade=None, log=lambda m: None):
                 dl = (L.textbook_deeplearning(base, subj, pub, t[1])
                       if d.get("deeplearning") else None)
         elif kind == "olpo":
-            path = L.olympos(base, t[1], book=1 if g == 1 else 2)
+            # ⚠ 판은 학년이 아니라 **교재 이름**이 정한다 — 고1 2학기가
+            #   `독해 기본2` 를 쓴다(광문1 26-2-중간). 학년으로 찍으면
+            #   기본1 을 뒤져 한 지문도 못 찾는다.
+            book = d.get("book") or scope.get("raw", "")
+            m = re.search(r"기본\s*([12])", book)
+            path = L.olympos(base, t[1],
+                             book=int(m.group(1)) if m else (1 if g == 1 else 2))
             spec = {"kind": "olpo", "unit": t[1]}
         elif kind == "rp":
             ed = "기본" if "기본" in scope["raw"] else "완성"
@@ -412,6 +429,10 @@ PUBLISHERS = ("능률", "미래엔", "비상", "천재", "동아", "지학사", 
               "YBM", "다락원", "케이", "教学")
 RE_YOS_MOCK = re.compile(r"고(\d)_(\d{4})_(\d{1,2})월")
 RE_LESSON_HEAD = re.compile(r"Lesson\s*(\d+)|(\d+)\s*과")
+# `Special Lesson 2` 는 과가 아니라 **SL** 이다(완성본 라벨 `교과서SL2 …`).
+# 일반 과보다 **먼저** 걸러야 `Lesson 2` 로 잘못 읽지 않는다.
+RE_LESSON_HEAD_ANY = re.compile(
+    r"(Special\s+Lesson|SL)\s*(\d+)|Lesson\s*(\d+)|(\d+)\s*과")
 
 
 def normalize_book(name):
@@ -436,6 +457,30 @@ def normalize_book(name):
     return subj, rest
 
 
+# 모의고사 41번부터는 **장문**이다 — `41~42`·`43~45` 는 묶어서 한 지문이고
+# 원고 라벨도 `240941~42` 처럼 한 덩어리다. 번호를 다 펴면 지문 수가 부푼다.
+MOCK_LONG_FROM = 41
+
+
+def mock_ranges(text):
+    """모의고사 범위 → (걸러 낼 번호들, 지문 수).
+
+    `18~40, 41~42, 43~45` → 23 + 1 + 1 = **25지문**(Y.OS 가 센 값과 같다).
+    """
+    nums, count = [], 0
+    for chunk in (text or "").split(","):
+        c = chunk.strip()
+        if not c:
+            continue
+        got = _ranges(c)
+        if not got:
+            continue
+        nums += got
+        m = re.match(r"^\s*(\d+)\s*[~\-–]", c)
+        count += 1 if (m and int(m.group(1)) >= MOCK_LONG_FROM) else len(got)
+    return sorted(set(nums)), count
+
+
 def _ranges(text):
     """`15~18, 20~24` → [15,16,17,18,20,21,22,23,24]."""
     out = []
@@ -446,19 +491,57 @@ def _ranges(text):
     return sorted(set(out))
 
 
+# Y.OS 가 적는 항목 이름 → 파이널 라벨의 꼬리. 번호가 없는 지문들이다.
+NAMED_TAIL = (
+    ("수능 대비 ANALYSIS", "분석"), ("학평ANALYSIS", "분석"),
+    ("ANALYSIS", "분석"), ("분석", "분석"),
+    ("논술형", "논술형"), ("서술형", "서술형"),
+    ("Read More", "RM"), ("Further Reading", "FR"),
+)
+
+
+def named_tail(s):
+    """`수능 대비 ANALYSIS` → `분석`. 못 알아보면 None."""
+    t = (s or "").strip()
+    for word, tail in NAMED_TAIL:
+        if word.lower() in t.lower():
+            return tail
+    return None
+
+
+RE_PAGE_MARK = re.compile(r"p\.\s*\d+\s*")
+
+
 def lesson_ranges(text):
     """`Lesson 1. … 1~9, Lesson 2. … 1~12` → {1: [1..9], 2: [1..12]}.
 
     과 이름이 사이에 있어도 된다 — **과 머리에서 다음 과 머리까지**를
     그 과의 몫으로 본다(자리로 읽는다).
     """
-    heads = [(m.start(), int(m.group(1) or m.group(2)))
-             for m in RE_LESSON_HEAD.finditer(text or "")]
+    text = text or ""
+    heads = []
+    for m in RE_LESSON_HEAD_ANY.finditer(text):
+        sl = bool(m.group(1))
+        no = int(m.group(2) or m.group(3) or m.group(4))
+        heads.append((m.start(), m.end(), ("sl", no) if sl else no))
     out = {}
-    for i, (pos, n) in enumerate(heads):
+    for i, (pos, end0, key) in enumerate(heads):
         end = heads[i + 1][0] if i + 1 < len(heads) else len(text)
-        seg = re.sub(r"^\s*(?:Lesson\s*\d+|\d+\s*과)", "", text[pos:end])
-        out[n] = _ranges(seg)
+        seg = text[end0:end]
+        # ⚠ `p. 100` 은 **쪽 표시**지 지문 번호가 아니다. 먼저 지운다 —
+        #   안 지우면 100·101… 이 지문 번호로 잡혀 5지문이 10지문이 된다.
+        seg = RE_PAGE_MARK.sub(" ", seg)
+        nums, named = [], []
+        if "본문" in seg:
+            # `본문 1, 본문 2` 처럼 **항목 이름에 붙은 번호**만 센다
+            nums = [int(x) for x in re.findall(r"본문\s*(\d+)", seg)]
+        else:
+            nums = _ranges(seg)
+        for chunk in seg.split(","):
+            tl = named_tail(chunk)
+            if tl and tl not in named:
+                named.append(tl)
+        out[key] = {"nums": sorted(set(nums)), "named": named}
     return out
 
 
@@ -484,7 +567,14 @@ def unit_ranges(text):
             continue
         m = RE_TAIL_NUMS.search(c)
         if not m:
-            cur = None
+            # ⚠ 번호가 없는 항목도 **지문 하나**다 — `수능 대비 ANALYSIS`,
+            #   `논술형 Practice`. 그냥 흘리면 올림포스 36지문이 24지문이 된다.
+            tl = named_tail(c)
+            if tl and cur is not None:
+                if tl not in cur["named"]:
+                    cur["named"].append(tl)
+            elif not tl:
+                cur = None
             continue
         nums = _ranges(m.group(1))
         head = c[:m.start()].strip()
@@ -498,7 +588,7 @@ def unit_ranges(text):
         name = head[:head.rfind(hn[-1])]
         name = re.sub(r"\([^)]*\)", " ", name)
         name = re.sub(r"[\d.\-–~]+", " ", name).strip()
-        cur = {"name": name, "no": no, "nums": nums}
+        cur = {"name": name, "no": no, "nums": nums, "named": []}
         out.append(cur)
     # 같은 이름·번호가 두 번 나오면 합친다
     merged = {}
@@ -506,6 +596,9 @@ def unit_ranges(text):
         k = (u["name"].lower(), u["no"])
         if k in merged:
             merged[k]["nums"] = sorted(set(merged[k]["nums"] + u["nums"]))
+            for x in u["named"]:
+                if x not in merged[k]["named"]:
+                    merged[k]["named"].append(x)
         else:
             merged[k] = u
     return list(merged.values())
@@ -530,18 +623,27 @@ def from_yos_entries(entries, grade=0):
                     tokens.append(t)
                     detail[t] = sub["detail"].get(t, {})
             continue
+        if kind == "단어":
+            continue                      # 단어장은 파이널이 아니라 딴 교재다
         if kind == "교과서":
             subj, pub = normalize_book(book)
-            for n, nums in lesson_ranges(rng).items():
-                t = ("lesson", n)
+            for n, got in lesson_ranges(rng).items():
+                # 특별 단원은 라벨에 번호가 없다(`교과서SL 본문1`) — 토큰도
+                # 번호를 안 쓰고, 폴더를 찾을 번호만 따로 들고 간다.
+                t = ("sl", 0) if isinstance(n, tuple) else ("lesson", n)
                 tokens.append(t)
-                detail[t] = {"subject": subj, "publisher": pub, "only": nums}
+                detail[t] = {"subject": subj, "publisher": pub,
+                             "only": got["nums"], "named": got["named"]}
+                if isinstance(n, tuple):
+                    detail[t]["sl"] = n[1]
         elif kind == "모의고사":
             m = RE_YOS_MOCK.search(book)
             if m:
                 t = ("mock", int(m.group(2)) % 100, int(m.group(3)))
+                nums, cnt = mock_ranges(rng)
                 tokens.append(t)
-                detail[t] = {"grade": int(m.group(1)), "only": _ranges(rng)}
+                detail[t] = {"grade": int(m.group(1)), "only": nums,
+                             "count": cnt}
         elif kind == "부교재":
             k = "teuk" if "수능특강" in book else (
                 "rp" if "Reading Power" in book or "리딩파워" in book else (
@@ -552,7 +654,7 @@ def from_yos_entries(entries, grade=0):
                      else (k, u["no"]))
                 tokens.append(t)
                 detail[t] = {"book": book, "only": u["nums"],
-                             "label": u["name"] or None}
+                             "named": u["named"], "label": u["name"] or None}
         elif kind == "프린트":
             t = ("print", len(tokens))
             tokens.append(t)
@@ -574,11 +676,13 @@ def count_gate(entries, scope):
     bad = []
     for e in entries or []:
         kind = (e[0] or "").strip()
-        if kind == "직접 입력":
-            continue                      # 글이라 Y.OS 도 세지 못한다(0지문)
+        if kind in ("직접 입력", "단어"):
+            continue        # 글은 Y.OS 도 못 센다(0지문) · 단어장은 딴 교재다
         want = _ranges(e[3])[-1] if len(e) > 3 and _ranges(e[3]) else 0
         one = from_yos_entries([e], scope.get("grade") or 0)
-        got = sum(len(d.get("only") or []) for d in one["detail"].values())
+        got = sum((d.get("count") if d.get("count") is not None
+                   else len(d.get("only") or [])) + len(d.get("named") or [])
+                  for d in one["detail"].values())
         if want and got != want:
             bad.append({"book": (e[1] or "").strip(), "want": want, "got": got})
     return bad
@@ -644,6 +748,7 @@ def describe(scope):
 
 
 # ── 지문 수준 걸기 ──────────────────────────────────────────────────────
+RE_LAB_SL = re.compile(r"^교과서SL\s*(.*)$")
 RE_LAB_TB = re.compile(r"^교과서(\d+)과\s*(.*)$")
 RE_LAB_UNIT = re.compile(r"^(올포|리딩파워)\s*(\d+)강\s*(.*)$")
 RE_LAB_MOCK = re.compile(r"^(\d{2})(\d{2})(\d{2})")
@@ -653,6 +758,9 @@ RE_LAB_NO = re.compile(r"(\d+)")
 
 def label_token(label):
     """파이널 라벨 → (토큰, 꼬리). 모르면 (None, "")."""
+    m = RE_LAB_SL.match(label or "")
+    if m:
+        return ("sl", 0), m.group(1)
     m = RE_LAB_TB.match(label or "")
     if m:
         return ("lesson", int(m.group(1))), m.group(2)
@@ -688,11 +796,14 @@ def in_scope(label, scope):
         return False
     d = scope.get("detail", {}).get(t) or {}
     only, excl = d.get("only"), d.get("exclude")
-    if not only and not excl:
+    named = d.get("named")
+    if not only and not excl and named is None:
         return True
     m = RE_LAB_NO.search(tail if tok[0] != "mock" else (label or "")[4:])
     if not m:
-        return True                       # 번호 없는 꼬리 — 부속물
+        # 번호 없는 꼬리(`분석`·`서술형`·`RM`) — 범위가 이름으로 짚어 줬으면
+        # 그 목록을 따른다. 안 짚어 줬으면 부속물이라 거르지 않는다.
+        return (tail.strip() in named) if named else True
     no = int(m.group(1))
     if excl and no in excl:
         return False
@@ -758,6 +869,12 @@ def label_order(label):
     if tok is None:
         return (9, 0, 0, label)
     tail = (tail or "").strip()
+    if tok[0] == "sl":
+        n = TB_TAIL.get(tail)
+        if n is None:
+            m = RE_TAIL_NO.search(tail)
+            n = int(m.group(1)) if m else 50
+        return (0, 99, n, label)
     if tok[0] == "lesson":
         n = TB_TAIL.get(tail)
         if n is None:

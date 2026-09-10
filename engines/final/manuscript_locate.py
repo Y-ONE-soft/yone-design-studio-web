@@ -82,6 +82,28 @@ def textbook(base, subject, publisher, lesson):
                  num_unit="과")
 
 
+def textbook_sl(base, subject, publisher, no):
+    """교과서 특별 단원 — `… SL2` 처럼 과가 아니라 SL 로 적힌 폴더.
+
+    완성본 라벨은 번호 없이 `교과서SL 본문1` 이다(완성본 8권 실측).
+    """
+    root = os.path.join(base, "교과서 작업")
+    subj = _pick(root, words=(subject,)) or _pick(root, words=(subject[:3],))
+    if not subj:
+        return None
+    pub = _pick(subj, words=(publisher,)) or \
+        _pick(subj, words=(re.sub(r"[()]", "", publisher),))
+    if not pub:
+        return None
+    # ⚠ 여기는 번호가 **단위 뒤**에 온다(`SL2`) — `2과` 와 반대라 `_pick` 의
+    #   `num_unit`(숫자가 앞) 으로는 못 잡는다. 이름으로 곧장 고른다.
+    want = re.compile(r"SL\s*%d(?!\d)" % no, re.I)
+    for name in _dirs(pub):
+        if want.search(nfc(name)):
+            return os.path.join(pub, name)
+    return None
+
+
 def textbook_deeplearning(base, subject, publisher, lesson):
     """교과서 추가본문(Deep Learning) — 과 폴더 **밖**에 따로 있다.
 
@@ -249,6 +271,14 @@ def to_final_label(src, raw_label):
     lab = parse_label(raw_label) if isinstance(raw_label, str) else raw_label
     key, page = lab["key"], lab["page"]
     kind = src["kind"]
+
+    if kind == "sl":
+        # 특별 단원은 **번호를 붙이지 않는다** — `교과서SL 본문1`(완성본 실측).
+        if RE_BONMUN.match(key):
+            return "교과서SL 본문%d" % int(RE_BONMUN.match(key).group(1))
+        if "Read More" in key:
+            return "교과서SL RM"
+        return None
 
     if kind == "lesson":
         lesson = src.get("lesson")
