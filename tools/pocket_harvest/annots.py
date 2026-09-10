@@ -104,8 +104,15 @@ def _card(txt):
     if len(p) < 2 or not p[0] or not p[1]:
         return None
     def lst(i):
-        return [w.strip() for w in re.split(r"[,·]", p[i]) if w.strip()] \
-            if len(p) > i else []
+        # ⚠ 동의어 없이 **반의어만** 있는 카드가 실제로 있다(536장 중 6장:
+        #   `descend ↔ ascend`, `accessibility ↔ inaccessibility` …).
+        #   그때 가운데를 빈칸으로 두면 눈에 안 띄므로 `-`·`x` 도 받는다.
+        if len(p) <= i:
+            return []
+        t = p[i].strip()
+        if t in ("", "-", "—", "x", "X", "없음"):
+            return []
+        return [w.strip() for w in re.split(r"[,·]", t) if w.strip()]
     return {"w": p[0], "ko": p[1], "syn": lst(2), "ant": lst(3)}
 
 
