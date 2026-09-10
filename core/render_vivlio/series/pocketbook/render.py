@@ -386,7 +386,9 @@ def left_page(p, M, folio):
                         _box(tr[0], tr[1], tr[2]), st,
                         _item_breaks(ESC(p["translation"]), _is_notice(p))))
     # 「주제 :」 써 보는 칸 — 광문 완성본에만 있다(`options.topic_box`).
-    if M.get("topic_box"):
+    # ⚠ 갈라진 장문의 **뒷면**은 앞면에서 이어지는 같은 지문이다 — 배지도
+    #   주제 칸도 다시 달지 않는다(사용자 지적).
+    if M.get("topic_box") and p.get("_part") != 2:
         tb2 = M["topicbox"]; tl = M["topicbox_lab"]; tp = M["topicbox_pen"]
         parts.append('<div class="tbox" style="%s"></div>'
                      % _box(tb2[0], tb2[1], tb2[2], tb2[3]))
