@@ -618,6 +618,18 @@ def _tight(line, col_mm, size_pt, track_em):
 _FHEAD = re.compile(r"^\s*\[([^\]]{1,12})\]\s*")
 
 
+_RE_DUPMARK = re.compile(r"^(\s*)((?:[\u2192\u00b7\-=]\s*){2,})")
+
+
+def _tidy_line(ln):
+    """줄머리 표식이 겹친 것을 하나로 (`→ → 진한…` → `→ 진한…`)."""
+    m = _RE_DUPMARK.match(ln)
+    if not m:
+        return ln
+    first = m.group(2).strip()[0]
+    return "%s%s %s" % (m.group(1), first, ln[m.end():].lstrip())
+
+
 def flow_chunks(lines, cap=4):
     """플로우노트를 **마인드맵 덩어리**로 나눈다 — 3개나 4개.
 
@@ -629,6 +641,7 @@ def flow_chunks(lines, cap=4):
     글이 적으면(9줄 이하) 3덩어리, 많으면 4덩어리까지다(사용자 지시).
     거꾸로 덩어리가 셋이 안 되는데 한 덩어리가 길면 반으로 가른다.
     """
+    lines = [_tidy_line(x) for x in lines]
     ch = []
     for ln in lines:
         if ch and _FHEAD.match(ln):

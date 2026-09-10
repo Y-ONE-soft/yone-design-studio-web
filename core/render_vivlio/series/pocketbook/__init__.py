@@ -358,6 +358,31 @@ def _letters(t):
 
 
 # 오른쪽 면이 없는 짤지문(안내문·도표·실용문)
+def _mock_footer(rows, log, grade=""):
+    """모의고사 면 꼬리말에 **회차**를 붙인다.
+
+    ⚠ 교과서·부교재 면은 꼬리말이 `올림포스 3강` 처럼 출처를 말하는데 모의고사만
+      `모의고사` 뿐이라 몇 년 몇 월 것인지 안 보인다(연구원 지적, 87면).
+      지문번호(`240918`)에 회차가 들어 있으니 그걸로 만든다.
+    """
+    n = 0
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        unit = str(r.get("category") or r.get("unit") or "")
+        if unit != "모의고사":
+            continue
+        pno = str(r.get("pno") or r.get("no") or r.get("label") or "")
+        m = re.match(r"(\d{2})(\d{2})\d{2}", pno)
+        if not m:
+            continue
+        g = r.get("grade") or grade or ""
+        r["category"] = ("%s %s년 %d월" % (g, m.group(1), int(m.group(2)))).strip()
+        n += 1
+    if n:
+        log("■ 모의고사 꼬리말 %d면에 회차 표기" % n)
+
+
 def _fix_lecture_label(rows, log):
     """부교재 **분석 지문** 라벨을 바로잡는다.
 
@@ -919,6 +944,7 @@ class PocketbookSeries(Series):
         _fix_lecture_label(rows, log)
         _mark_short(rows, opt, log)
         _mock_label(rows, log)
+        _mock_footer(rows, log, (opt.get("grade") or ""))
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")
         os.makedirs(cfg.build_dir, exist_ok=True)

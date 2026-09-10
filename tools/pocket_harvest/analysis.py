@@ -675,6 +675,38 @@ _RE_SUMHEAD = re.compile(r"(요약|주제|정답|해설|다음 글|윗글|밑줄
 _RE_HAN2 = re.compile(r"[\uac00-\ud7a3]{2,}")
 
 
+_RE_TITLE = re.compile(r"\u300a[^\u300b]{1,60}\u300b")
+
+
+def _restore_title(d):
+    """실용문 **제목 줄**이 해석에서 빠진 것을 되살린다.
+
+    ⚠ 지문은 `《Concertoi Piano Lessons by Tammy Keller》` 로 시작하는데 해석에는
+      제목이 없다(연구원 지적, 56면). 분석본이 우리말 제목을 **딴 틀**에 앉혀
+      두어 해석 문단에 안 들어온 것이다. 지문에 제목이 있고 해석에 없으면,
+      그 지문 안에서 찾은 우리말 제목을 해석 앞에 붙인다.
+    """
+    ps, tr = d.get("passage") or [], d.get("translation") or []
+    if not ps or not tr:
+        return
+    ptxt = "".join(r.get("t", "") for p in ps for r in (p.get("runs") or []))
+    ttxt = "".join(r.get("t", "") for p in tr for r in (p.get("runs") or []))
+    if "\u300a" not in ptxt or "\u300a" in ttxt:
+        return
+    ko = d.get("title_ko") or ""
+    if not ko:
+        for m in _RE_TITLE.finditer(ptxt):
+            g = m.group(0)
+            if sum(1 for c in g if "\uac00" <= c <= "\ud7a3") >= 2:
+                ko = g
+                break
+    if not ko:
+        return
+    runs = tr[0].get("runs") or []
+    tr[0]["runs"] = [{"t": ko + " "}] + runs
+    d.setdefault("notes", []).append("해석에 빠진 제목 줄을 되살림")
+
+
 def _strip_korean_runs(d):
     """영어 지문에 **끼어든 한글 줄**을 걸러 낸다(실용문).
 
@@ -733,6 +765,7 @@ def _cut_extras(d):
     가르는 것은 **문장 번호**(`지문분석:지문 번호`)다. 진짜 지문은 문장마다
     번호가 붙어 오고, 뒤에 붙은 요약과 문제에는 하나도 없다.
     """
+    _restore_title(d)
     _strip_korean_runs(d)
     for key in ("passage", "translation"):
         paras = d.get(key)
