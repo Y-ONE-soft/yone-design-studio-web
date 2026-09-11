@@ -404,6 +404,10 @@ def build_css(palette=None, metrics=None, highlight=None):
         "voca_track": "%g" % M["voca_track"],
         "voca_ex_track": "%g" % M["voca_ex_track"],
         "blank": "8",
+        # ⚠ 데이터 URI 안에서 `#` 은 **조각 식별자**다 — `stroke='#EE4C9B'` 를
+        #   그대로 넣으면 URL 이 `#` 에서 끊겨 SVG 가 깨지고 물결이 **한 번도
+        #   안 찍혔다**(광문2 물결 230곳 실측). `%23` 으로 적는다.
+        "wave_url": str(tok.get("wave") or "#EE4C9B").replace("#", "%23"),
     })
     css = CSS_TMPL
     for k, v in tok.items():
@@ -528,7 +532,7 @@ html,body{margin:0;padding:0;background:#fff}
 .wave{text-decoration:none;
   background-image:url("data:image/svg+xml;utf8,\
 <svg xmlns='http://www.w3.org/2000/svg' width='6' height='3' viewBox='0 0 6 3'>\
-<path d='M0 2.2 Q1.5 0.3 3 2.2 T6 2.2' fill='none' stroke='__wave__' \
+<path d='M0 2.2 Q1.5 0.3 3 2.2 T6 2.2' fill='none' stroke='__wave_url__' \
 stroke-width='0.7' stroke-linecap='round'/></svg>");
   background-repeat:repeat-x;background-position:left calc(100% + 1.2pt);
   background-size:6px 3px;padding-bottom:1pt}
