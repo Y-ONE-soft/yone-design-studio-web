@@ -356,7 +356,8 @@ def render_type(cfg, ty, summary=None, sid=""):
 # ── PART 2 · 실전 세트 ────────────────────────────────────────────────
 def render_set(s, first=False):
     badge = '<span class="badge">광문고 기출</span>' if s["gichul"] else ""
-    out = [f'<div class="set{" first" if first else ""}"><div class="set-src">{badge}'
+    out = [f'<div class="set{" first" if first else ""}">{mkz("B%d" % s["lo"])}'
+           f'<div class="set-src">{badge}'
            f'<span class="stab">&lt;{esc(s["src"])}&gt;</span></div>']
     for h in s["hist"]:
         out.append(f'<p class="hist"><b>광문고 기출 출제 이력</b>{esc(h)}</p>')
@@ -433,7 +434,9 @@ def write(cfg, d, build_dir, log=print, memos=()):
     before("S2", 2)
     parts.append(f'<div class="sec band" id="S2">{mkz("S2")}'
                  f'{runners(cfg, 2, b.get("part2", "광문고 기출 서술형 실전문제"))}'
-                 + "".join(render_set(s, k == 0) for k, s in enumerate(p2["sets"])) + '</div>')
+                 + "".join((memo_page(cfg, 2) if f'B{s["lo"]}' in memos else '')
+                           + render_set(s, k == 0) for k, s in enumerate(p2["sets"]))
+                 + '</div>')
     before("S3", 2)
     parts.append(render_answers(cfg, d["answers"], "S3"))
     before("ART8", 3)

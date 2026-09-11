@@ -84,26 +84,35 @@ class SeseoSeries(Series):
         self._stage(cfg, bd, log)
         out = cfg.out_pdf("")
 
+        # MEMO 가 들어가는 자리는 둘이다.
+        #   ① 왼쪽 면에서 여는 절 앞의 백면(`break-before: left` 가 만든 것)
+        #   ② 한 면을 넘는 세트 앞 — 넘는 세트는 **펼침면(왼쪽 시작)** 이어야 지문과
+        #      마지막 문항이 한눈에 보인다. 오른쪽 면에서 시작하면 마지막 문항이 쪽을
+        #      넘겨 인쇄된다(검수 FAIL 6건 실측: 지문 57쪽 / 48번 58쪽).
         memos, secs, texts = set(), 0.0, []
-        for _try in range(4):
+        for _try in range(8):
             html_path = render_mod.write(cfg, d, bd, log=log, memos=memos)
             secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
             texts = probe.page_texts(out)
             blanks = probe.blank_pages(texts)
-            if not blanks:
-                break
             new = set()
             for n in blanks:
                 m = RE_TAG.search(texts[n]) if n < len(texts) else None
                 if not m:
                     raise RuntimeError(f"백면 {n}쪽 다음 면에 절 표식이 없다 — 원인 불명의 백면")
                 new.add(m.group(1))
+            if blanks:
+                log(f"  백면 {blanks} → 그 앞에 MEMO: {sorted(new - memos)}")
+            else:
+                new = self._spread_memos(texts, d)
+                if not new:
+                    break
+                log(f"  두 면 세트 {sorted(new)} → 앞에 MEMO(펼침면으로 연다)")
             if new <= memos:
-                raise RuntimeError(f"MEMO 를 넣어도 백면이 남는다: {blanks}")
-            log(f"  백면 {blanks} → 그 앞에 MEMO: {sorted(new - memos)}")
+                raise RuntimeError(f"MEMO 를 넣어도 풀리지 않는다: 백면 {blanks} / {sorted(new)}")
             memos |= new
         else:
-            raise RuntimeError("백면 정리 4회 실패")
+            raise RuntimeError("MEMO 배치 8회 실패")
 
         pages = len(texts)
         art = self._marks(texts, r'§(ART\d)§')
@@ -121,6 +130,34 @@ class SeseoSeries(Series):
                       ensure_ascii=False)
         log(f"OK  {secs:.1f}s · {pages}p (MEMO {len(memos)}) → {out}")
         return {"pdf": out, "pages": pages, "seconds": round(secs, 1), "final": res}
+
+    @staticmethod
+    def _set_spans(texts, d):
+        """세트마다 (첫 문항 번호, 시작 면, 끝 면) — §B첫§ 와 §Z끝§ 표식으로."""
+        where = {}
+        for i, t in enumerate(texts):
+            for m in re.finditer(r'§([BZ]\d+)§', t):
+                where.setdefault(m.group(1), i + 1)
+        out = []
+        for s in d["part2"]["sets"]:
+            b, z = where.get(f"B{s['lo']}"), where.get(f"Z{s['hi']}")
+            if b is not None and z is not None:
+                out.append((s["lo"], b, z))
+        return out
+
+    @classmethod
+    def _spread_memos(cls, texts, d):
+        """오른쪽 면에서 시작해 쪽을 넘기는 세트 → 앞에 MEMO 를 넣을 세트 표식들.
+
+        MEMO 한 장은 뒤 세트를 모두 한 면씩 민다. 그래서 앞에서부터 밀린 양을
+        더해 가며 한 번에 계획한다(한 장씩 고치며 다시 조판하지 않는다).
+        """
+        out, off = set(), 0
+        for lo, b, z in cls._set_spans(texts, d):
+            if z > b and (b + off) % 2 == 1:
+                out.add(f"B{lo}")
+                off += 1
+        return out
 
     @staticmethod
     def _marks(texts, pat):
@@ -169,6 +206,15 @@ class SeseoSeries(Series):
 
         self._check_pages(cfg, texts, report)
         self._check_questions(texts, d, report)
+        spans = self._set_spans(texts, d)
+        turn = [(lo, b, z) for lo, b, z in spans if z > b and b % 2 == 1]
+        long_ = [x for x in spans if x[2] > x[1]]
+        if len(spans) != len(d["part2"]["sets"]):
+            report.fail(f"세트 표식 {len(spans)} ≠ 세트 {len(d['part2']['sets'])}")
+        if turn:
+            report.fail(f"쪽을 넘겨야 이어지는 세트 {len(turn)}건(오른쪽 면 시작): {turn[:10]}")
+        report.note(f"세트 {len(spans)} · 두 면 세트 {len(long_)} (전부 펼침면)"
+                    if not turn else f"세트 {len(spans)} · 두 면 세트 {len(long_)}")
         self._check_underlines(pdf, d, report, log)
 
         info = {}
