@@ -845,8 +845,8 @@ def _check_cut(rows, cfg, report, log):
             x = z.read(n).decode("utf-8", "replace")
             t = _html.unescape("".join(re.findall(r"<Content>(.*?)</Content>",
                                                   x, re.S)))
-            if sum(1 for c in t if "\uac00" <= c <= "\ud7a3") < 30:
-                continue                      # 해석이 끼어 있는 분석 스토리만
+            if len(t) < 200:
+                continue
             # 글자 + 경계 표시만 남긴다: 한글·선택지·각주(*:)·빈칸 괄호와 밑줄
             # (`(A)`·`___`)·요약 화살표·마침표
             raw = re.sub(r"[^a-z\uac00-\ud7a3\u2460-\u2464*:()_\u2193\u2192.?!]",
@@ -856,41 +856,61 @@ def _check_cut(rows, cfg, report, log):
     # 책 전체 지문 글자 — 둘로 나눈 지문(`(1)`·`(2)`)의 뒷부분은 잘린 게 아니다
     book = "".join(re.sub(r"[^a-z]", "", pdata.plain_passage(r).lower())
                    for r in rows if r.get("kind") != "memtest")
-    cut = []
+    cut, blind, n_chk = [], [], 0
     for r in rows:
         if r.get("kind") == "memtest" or r.get("short"):
             continue
         P = re.sub(r"[^a-z]", "", pdata.plain_passage(r).lower())
         if len(P) < 200:
             continue
+        n_chk += 1
         head, tail = P[:50], P[-40:]
+        hit = None
+        # ⚠ **깨끗한 사본**에서 견준다. 문장별 해석이 끼어 있는 분석 스토리는
+        #   해석 속 영어 이름(`"괜찮아, Fiona."`·`Chandra는`)이 영어 글자 사이에
+        #   끼어들어 지문 끝이 이어서 안 잡힌다 — 그래서 진짜 잘림(광문1 2강
+        #   분석)을 조용히 놓쳤다(회귀 시험으로 발견). 발문+지문+선택지로 된
+        #   문제 스토리, 또는 분석 스토리 뒤에 붙은 문제 사본이 깨끗하다.
+        #   지문 머리가 나오는 **모든 자리**를 보고 끝까지 이어서 맞는 곳을 쓴다.
         for raw, idx, E in seqs:
             i = E.find(head)
-            if i < 0:
-                continue
-            j = i + len(P) - len(tail) if E[i:i + len(P)] == P \
-                else E.find(tail, i)
-            if j < 0:
-                continue
-            k = idx[j + len(tail) - 1] + 1
-            while k < len(raw) and raw[k] in ".?!":
-                k += 1                        # 우리 지문 자신의 마침표
-            more, ended = [], False
-            for ch in raw[k:]:
-                if "a" <= ch <= "z":
-                    more.append(ch)
-                elif ch in ".?!":
-                    ended = True              # 문장이 끝났다
+            while i >= 0 and hit is None:
+                if E[i:i + len(P)] == P:
+                    j = i + len(P) - len(tail)
                 else:
-                    break                     # 해석·선택지·각주·빈칸·화살표
-            # ⚠ 잘림으로 보는 것은 **완결된 영어 문장**이 남았고 그 글이 **책
-            #   어디에도 없을 때**뿐이다. 안 그러면 요약문 첫머리(`People with …
-            #   ____(A)`)·해석이 되받는 이름(`Sarah Thompson 드림`)·다음 문단
-            #   (`(B) …`)이 전부 잘림으로 울렸다(22권 20건 전부 헛경보, 실측).
-            got = "".join(more)
-            if len(got) >= 10 and ended and got[:30] not in book:
-                cut.append((r.get("key") or r.get("label") or "?", got[:36]))
-            break
+                    j = E.find(tail, i, i + len(P) + 300)
+                if j >= 0:
+                    hit = (raw, idx, j)
+                i = E.find(head, i + 1)
+            if hit:
+                break
+        if hit is None:
+            blind.append(r.get("key") or r.get("label") or "?")
+            continue
+        raw, idx, j = hit
+        k = idx[j + len(tail) - 1] + 1
+        while k < len(raw) and raw[k] in ".?!":
+            k += 1                            # 우리 지문 자신의 마침표
+        more, ended = [], False
+        for ch in raw[k:]:
+            if "a" <= ch <= "z":
+                more.append(ch)
+            elif ch in ".?!":
+                ended = True                  # 문장이 끝났다
+            else:
+                break                         # 해석·선택지·각주·빈칸·화살표
+        # ⚠ 잘림으로 보는 것은 **완결된 영어 문장**이 남았고 그 글이 **책
+        #   어디에도 없을 때**뿐이다. 안 그러면 요약문 첫머리(`People with …
+        #   ____(A)`)·해석이 되받는 이름(`Sarah Thompson 드림`)·다음 문단
+        #   (`(B) …`)이 전부 잘림으로 울렸다(22권 20건 전부 헛경보, 실측).
+        got = "".join(more)
+        if len(got) >= 10 and ended and got[:30] not in book:
+            cut.append((r.get("key") or r.get("label") or "?", got[:36]))
+    # 대조를 못 한 지문은 **숨기지 않는다** — 조용히 통과시킨 것이 이 게이트의
+    # 첫 번째 실패였다.
+    if blind:
+        log("  G-P13 분석본에서 깨끗한 사본을 못 찾아 대조 못 한 지문 %d/%d: %s"
+            % (len(blind), n_chk, ", ".join(blind[:10])))
     if cut:
         report.fail("G-P13 분석본 원문보다 지문이 짧다 %d지문 — 마지막 문장이 "
                     "잘렸다: %s" % (len(cut), " · ".join(
