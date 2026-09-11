@@ -34,8 +34,14 @@ INK = {
 
 CSS = """
 .cvr{position:relative;width:__media_w__;height:__media_h__;overflow:hidden;
-  background:linear-gradient(160deg,__bg_top__ 0%,__bg_bottom__ 100%);
+  background:__bg_top__;
   font-family:PBBody,sans-serif;break-after:page}
+/* ⚠ 표지에 없는 그러데이션을 지어 넣지 않는다 — 표지 짜임 그대로다. 한 색
+   표지는 평평하게, 두 색 표지(광문2)는 표지와 같은 높이에서 아래 블록이
+   시작한다. **평평한 채움**이어야 인쇄본에서 표지 CMYK 로 못 박힌다
+   (그러데이션은 ICC 로 다시 바뀌어 광문1 이 표지보다 분홍빛으로 나갔다). */
+.cvr::before{content:"";position:absolute;left:0;right:0;bottom:0;
+  top:__split__;background:__bg_bottom__}
 .cvr .in{position:absolute;left:__pad__;right:__pad__;top:0;bottom:0}
 .cvr .kicker{position:absolute;top:__kick_y__;left:0;font-size:7.5pt;
   font-weight:700;letter-spacing:.42em;color:__plum__}
@@ -195,8 +201,17 @@ def ink_from_cover(pdf):
                    default=None)
         if best and _dist(best[0], want) <= 40:
             cmyk[want] = [round(v * 100, 1) for v in best[1]]
+    split = None
     if len(fills) >= 2:                  # 위 바탕 + 아래 블록(광문2 형)
         paper, block = sorted(fills[:2], key=_lum, reverse=True)
+        # 글자가 없는 왼쪽 가장자리 세로줄을 위에서부터 훑어 블록이 시작하는
+        # 줄을 찾는다(끝까지 블록 색이 이어지는 첫 줄).
+        col = [px.pixel(max(1, px.width // 20), y)[:3] for y in range(px.height)]
+        col = ["#%02X%02X%02X" % c for c in col]
+        for y in range(px.height):
+            if all(_dist(c, block) <= 8 for c in col[y:]):
+                split = y / float(px.height)
+                break
     else:                                # 한 색 표지 — 평평하게
         paper = block = fills[0]
     return {
@@ -206,6 +221,7 @@ def ink_from_cover(pdf):
         "slate": _mix(ink, "#3A3A3A", 0.35),          # 부제·시험·명단 — 읽히게
         "rule": _mix(ink, block, 0.55),
         "cmyk": cmyk,                                 # 인쇄본에서 표지와 같은 잉크로
+        "split": split,                               # 아래 블록 시작(두 색 표지만)
     }
 
 
@@ -218,6 +234,9 @@ def _tok(css, **kw):
 def css(M, ink=None):
     """간지 CSS. 본문과 같은 판형·도련을 쓴다. `ink` 로 학교 표지 색을 덮는다."""
     bl = M["bleed"]
+    tok = dict(INK, **(ink or {}))
+    sp = tok.pop("split", None)          # 아래 블록이 시작하는 높이(0~1)
+    tok.pop("cmyk", None)                # 인쇄 고정표 — CSS 에는 안 쓴다
     return _tok(CSS,
                 media_w="%gmm" % (M["page_w"] + 2 * bl),
                 media_h="%gmm" % (M["page_h"] + 2 * bl),
@@ -235,7 +254,8 @@ def css(M, ink=None):
                 cred_y="%gmm" % (bl + 82.0),
                 cred_gap="9mm", cred_row="7mm",
                 cred_col="34mm",
-                **dict(INK, **(ink or {})))
+                split=("%.2f%%" % (sp * 100)) if sp else "100%",
+                **tok)
 
 
 def first_page(school="", term=""):
