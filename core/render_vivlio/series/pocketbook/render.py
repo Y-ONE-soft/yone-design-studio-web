@@ -1058,7 +1058,13 @@ def side_tab(M, part, palette=None):
     top, bot = M["tab_top"], M["tab_bot"]
     span = bot - top
     h = min(M["tab_h"], span / float(n) * 0.7)
-    step_y = (span - h) / float(n - 1) if n > 1 else 0.0
+    # 딱지 높이 + 틈만큼만 **조금씩** 내린다(사용자 지시). 면 끝까지 고르게 흩지
+    # 않는다 — 파트가 많아 쪽번호에 닿을 때만 간격을 좁힌다.
+    step_y = h + M.get("tab_gap", 1.0)
+    if n > 1:
+        step_y = min(step_y, (span - h) / float(n - 1))
+    else:
+        step_y = 0.0
     y = top + i * step_y
     bg = T.tab_color(kind, step, palette)
     x = M["page_w"] - M["tab_w"]
