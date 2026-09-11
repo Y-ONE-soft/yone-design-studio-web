@@ -196,6 +196,9 @@ class MySeries(Series):
 
 ## 인쇄 원고 — `bin/viv <책> print`
 
+> 납품 규약(도련 3mm·CMYK·K 단색·면수 4의 배수 등)은 `~/.claude/CLAUDE.md` "비블리오 인쇄 납품 규약"
+> 절, 구현 대응표와 아직 못 지키는 틈은 `.claude/rules/vivlio_print_spec.md`.
+
 조판 결과는 **무조건 DeviceRGB** 다(Vivliostyle/Skia 는 순수 검정도 `0 0 0 rg`).
 `core/render_vivlio/prepress.py` 가 CMYK 인쇄 원고를 만든다.
 
