@@ -376,11 +376,12 @@ def _kind_of(r):
     if ("모의고사" in unit or str(r.get("no") or r.get("pno") or "").isdigit()
             or _RE_YM_ANY.search(ch) or _RE_YM_ANY.search(lab)):
         return 2
-    if _RE_HAS_NO.search(unit) or _RE_HAS_NO.search(lab) or _RE_HAS_NO.search(ch):
-        return 1
-    # `교과서 추가 읽기 자료` — 과 번호가 없는 교과서 지문(PDF 분석본 머리말)
-    if (_RE_TB_ANY.search(unit) or _RE_TB_ANY.search(lab)
+    # `교과서 추가 읽기 자료` — 과 번호가 없는 교과서 지문(PDF 분석본 머리말).
+    #   `교과서 1과` 와 **같은 자리**(1)에 둔다 — 0 으로 두면 과 지문보다 앞에 선다.
+    if (_RE_HAS_NO.search(unit) or _RE_HAS_NO.search(lab) or _RE_HAS_NO.search(ch)
             or unit.startswith("교과서")):
+        return 1
+    if _RE_TB_ANY.search(unit) or _RE_TB_ANY.search(lab):
         return 0
     return None
 

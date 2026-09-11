@@ -180,42 +180,73 @@ _KO = None
 _KO_STRIP = re.compile(r"[^가-힣A-Za-z0-9]")
 
 
-def _ko_model(extra=""):
+def _ko_eat(text, words, inb, crs):
+    ws = [_KO_STRIP.sub("", w) for w in (text or "").split()]
+    for k, w in enumerate(ws):
+        if not _HAN.search(w):
+            continue
+        words[w] += 1
+        for x, y in zip(w, w[1:]):
+            inb[x + y] += 1
+        if k + 1 < len(ws) and ws[k + 1]:
+            crs[w[-1] + ws[k + 1][0]] += 1
+
+
+def _ko_dir_model(d):
+    """코퍼스 폴더 하나 → (어절, 어절 안 음절쌍, 띄어쓰기 너머 음절쌍).
+
+    ⚠ 코퍼스는 iCloud 폴더라 1,373개를 매번 열면 몇 분 걸린다(실측) — 파일
+      목록의 **수·최종 수정 시각**이 같으면 `_cache/ko_model.json` 을 쓴다.
+      stat 은 내용을 내려받지 않는다.
+    """
+    import json
+    fs = [e for e in os.scandir(d)
+          if e.name.endswith(".json") and not e.name.startswith("_")]
+    sig = "%d:%d" % (len(fs), int(max((e.stat().st_mtime for e in fs),
+                                      default=0)))
+    cache = os.path.join(os.path.dirname(os.path.normpath(d)), "_cache",
+                         "ko_model.json")
+    try:
+        with open(cache, encoding="utf-8") as fh:
+            c = json.load(fh)
+        if c.get("sig") == sig and c.get("dir") == os.path.normpath(d):
+            return Counter(c["words"]), Counter(c["inb"]), Counter(c["crs"])
+    except Exception:
+        pass
+    words, inb, crs = Counter(), Counter(), Counter()
+    for e in fs:
+        try:
+            with open(e.path, encoding="utf-8") as fh:
+                j = json.load(fh)
+        except Exception:
+            continue
+        for k in ("translation_text", "topic_ko"):
+            if isinstance(j.get(k), str):
+                _ko_eat(j[k], words, inb, crs)
+    try:
+        os.makedirs(os.path.dirname(cache), exist_ok=True)
+        with open(cache, "w", encoding="utf-8") as fh:
+            json.dump({"sig": sig, "dir": os.path.normpath(d), "words": words,
+                       "inb": inb, "crs": crs}, fh, ensure_ascii=False)
+    except Exception:
+        pass
+    return words, inb, crs
+
+
+def _ko_model():
     global _KO
     if _KO is None:
-        import json
         words, inb, crs = Counter(), Counter(), Counter()
-
-        def eat(text):
-            ws = [_KO_STRIP.sub("", w) for w in (text or "").split()]
-            for k, w in enumerate(ws):
-                if not _HAN.search(w):
-                    continue
-                words[w] += 1
-                for x, y in zip(w, w[1:]):
-                    inb[x + y] += 1
-                if k + 1 < len(ws) and ws[k + 1]:
-                    crs[w[-1] + ws[k + 1][0]] += 1
         dirs = list(KO_DIRS) or [os.path.join(
             os.environ.get("STUDIO") or os.path.expanduser(
                 "~/Documents/작업/Y.ONE STUDIO"), "조판", "교재", "포켓북", "_corpus")]
         for d in dirs:
-            if not os.path.isdir(d):
-                continue
-            for f in os.listdir(d):
-                if not f.endswith(".json") or f.startswith("_"):
-                    continue
-                try:
-                    with open(os.path.join(d, f), encoding="utf-8") as fh:
-                        j = json.load(fh)
-                except Exception:
-                    continue
-                for k in ("translation_text", "topic_ko"):
-                    if isinstance(j.get(k), str):
-                        eat(j[k])
-        _KO = (words, inb, crs, eat)
-    if extra:
-        _KO[3](extra)
+            if os.path.isdir(d):
+                w, i, c = _ko_dir_model(d)
+                words.update(w)
+                inb.update(i)
+                crs.update(c)
+        _KO = (words, inb, crs)
     return _KO
 
 
