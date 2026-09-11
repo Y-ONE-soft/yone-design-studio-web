@@ -1694,10 +1694,16 @@ class PocketbookSeries(Series):
             extra = 2
         body_n = prender.body_pages(rows, opt.get("folio_start", 2),
                                     len(voca_pages or []))
-        pad = (-(body_n + extra)) % 4
+        # ⚠ **4의 배수는 중철일 때만**이다. 그 밖(스프링·무선)은 짝수면 된다
+        #   (사용자 지적 — 스프링 제본인 광문1 에 MEMO 2면을 괜히 더해 164면).
+        #   포켓북은 스프링이다. `options.binding` 이 `saddle`/`중철` 일 때만 4.
+        bind = str(opt.get("binding") or "spring").strip().lower()
+        mult = 4 if bind in ("saddle", "중철") else 2
+        pad = (-(body_n + extra)) % mult
         if pad:
-            log("■ 총 %d면 → 4의 배수를 맞추려 MEMO %d면을 뒤에 더한다"
-                % (body_n + extra, pad))
+            log("■ 총 %d면 → %s — MEMO %d면을 뒤에 더한다"
+                % (body_n + extra, "중철이라 4의 배수" if mult == 4 else "짝수",
+                   pad))
 
         html = os.path.join(build_dir, "index.html")
         with open(html, "w", encoding="utf-8") as f:

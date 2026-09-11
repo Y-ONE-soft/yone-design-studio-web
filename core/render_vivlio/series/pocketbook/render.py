@@ -1313,18 +1313,46 @@ def split_half(p):
     return [a, b]
 
 
+_BORDER_MM = 0.5 * 25.4 / 72          # 상자 테두리 .5pt
+
+
+def memo_box(M):
+    """메모 면 흰 모눈 상자 → (x, y, 폭, 높이, 칸, 가로 칸 수, 세로 칸 수) mm.
+
+    판(`flow`) 안쪽으로 `fbox_inset` 만큼 물린 자리에, **칸 크기(FLOW NOTE 와
+    같은 `flow_grid`)로 딱 나눠떨어지는** 상자를 가운데 앉힌다. 한 칸이 안 되는
+    나머지는 판 여백으로 양쪽에 똑같이 나눈다 — 모눈이 네 변 모두 테두리에서
+    끝나고 가장자리에 얇은 칸이 남지 않는다.
+    """
+    fx, fy, fw, _fh = M["flow"]
+    inset, cell = M["fbox_inset"], M["flow_grid"]
+    aw, ah = fw - 2 * inset, M["memo_h"] - 2 * inset
+    cols = int((aw - 2 * _BORDER_MM) // cell)
+    rows = int((ah - 2 * _BORDER_MM) // cell)
+    bw, bh = cols * cell + 2 * _BORDER_MM, rows * cell + 2 * _BORDER_MM
+    return (fx + inset + (aw - bw) / 2.0, fy + inset + (ah - bh) / 2.0,
+            bw, bh, cell, cols, rows)
+
+
 def memo_page(M, folio, kind="", part=None, palette=None):
-    """메모 면 — 오른쪽 면이 빌 때 빈 채로 두지 않는다(사용자 지시)."""
+    """메모 면 — 오른쪽 면이 빌 때 빈 채로 두지 않는다(사용자 지시).
+
+    FLOW NOTE 면과 같은 짜임이다: 딱지와 한 몸인 베이지 판 + 판 안쪽 흰 모눈 상자.
+    """
     fl = M["flow"]
+    bx, by, bw, bh, cell, cols, rows = memo_box(M)
+    grid = "background-size:%.4fmm %.4fmm" % (cols * cell, rows * cell)
     return ('<section class="pg %s"><div class="trim">'
             '<div class="flowchip" style="%s">%sMEMO</div>'
-            '<div class="flow memo" style="%s"></div>'
+            '<div class="flow" style="%s"></div>'
+            '<div class="mbox" style="%s;%s"></div>'
             '<div class="folio r" style="%s"><b>%s</b></div>'
             '%s</div></section>'
             % (kind,
                _box(M["flow_chip"][0], M["flow_chip"][1],
                     M["flow_chip"][2], M["flow_chip"][3]), _svg("chip_flow"),
                _box(fl[0], fl[1], fl[2], M["memo_h"]),
+               _box(bx, by, bw, bh), grid,
                _box(M["margin_l"], M["folio_y"],
                     M["page_w"] - M["margin_l"] - 15.0), folio,
                side_tab(M, part, palette)))

@@ -600,10 +600,18 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 /* 모눈은 조판할 때 **팔레트 색으로 그려 낸다**(`_stage_assets`). 불투명도로
    옅게 만들지 않는다 — 적은 색이 그대로 인쇄색이라야 겨냥이 된다. */
 .flow{position:absolute;overflow:hidden;background:var(--flow-bg)}
-/* 메모 면 — 모눈만 깔린 빈 면(짝 맞추려 끼울 때) */
-.flow.memo{background:url("img/flownote_grid.png") repeat,#fff;
-  background-size:auto;border:.5pt solid var(--flow-edge);
-  border-radius:1.6mm}
+/* 메모 면 — **FLOW NOTE 면과 같은 짜임**: 딱지와 한 몸인 베이지 판(`.flow`) 위에
+   흰 모눈 상자(`.mbox`)를 판 안쪽으로 물려 앉힌다.
+   ⚠ 예전엔 판 없이 모눈 상자에 바로 둥근 테를 둘러, 딱지가 상자의 둥근 오른쪽
+     위 모서리 위에 떠서 붙지 않았다. 모눈 그림은 크기를 안 정해 원래 크기
+     (96dpi)로 깔려 **3.17배**로 커졌고, 상자 폭이 칸으로 안 나눠떨어져 오른쪽에
+     얇은 칸이 옹졸하게 남았다(사용자 지적 셋). 이제 칸은 FLOW NOTE 와 같은
+     크기, 상자는 칸 수에 딱 맞춘 크기이고 모눈 그림도 그 크기 그대로다
+     (`render.memo_box` · `_draw_grid`). */
+.mbox{position:absolute;box-sizing:border-box;overflow:hidden;
+  background:url("img/memo_grid.png") no-repeat,#fff;
+  background-origin:padding-box;background-position:0 0;
+  border:.5pt solid var(--flow-edge);border-radius:1.6mm;z-index:1}
 /* ⚠ 단 감싸개는 **흐름 안에** 둬야 한다. 절대배치로 두면 높이를 안 정한 판
    (실측용 판)에서 높이가 0 이 되어 **잉크가 하나도 안 나오고 측정이 통째로
    실패한다**(`항목 52 vs 측정 면 0`). `height:100%` 는 부모가 높이를 안 주면
