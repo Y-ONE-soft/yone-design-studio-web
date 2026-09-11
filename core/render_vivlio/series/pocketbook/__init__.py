@@ -847,9 +847,15 @@ def _check_cut(rows, cfg, report, log):
                                                   x, re.S)))
             if sum(1 for c in t if "\uac00" <= c <= "\ud7a3") < 30:
                 continue                      # 해석이 끼어 있는 분석 스토리만
-            raw = re.sub(r"[^a-z\uac00-\ud7a3\u2460-\u2464*:]", "", t.lower())
+            # 글자 + 경계 표시만 남긴다: 한글·선택지·각주(*:)·빈칸 괄호와 밑줄
+            # (`(A)`·`___`)·요약 화살표·마침표
+            raw = re.sub(r"[^a-z\uac00-\ud7a3\u2460-\u2464*:()_\u2193\u2192.?!]",
+                         "", t.lower())
             idx = [k for k, ch in enumerate(raw) if "a" <= ch <= "z"]
             seqs.append((raw, idx, "".join(raw[k] for k in idx)))
+    # 책 전체 지문 글자 — 둘로 나눈 지문(`(1)`·`(2)`)의 뒷부분은 잘린 게 아니다
+    book = "".join(re.sub(r"[^a-z]", "", pdata.plain_passage(r).lower())
+                   for r in rows if r.get("kind") != "memtest")
     cut = []
     for r in rows:
         if r.get("kind") == "memtest" or r.get("short"):
@@ -867,15 +873,23 @@ def _check_cut(rows, cfg, report, log):
             if j < 0:
                 continue
             k = idx[j + len(tail) - 1] + 1
-            more = []
+            while k < len(raw) and raw[k] in ".?!":
+                k += 1                        # 우리 지문 자신의 마침표
+            more, ended = [], False
             for ch in raw[k:]:
                 if "a" <= ch <= "z":
                     more.append(ch)
+                elif ch in ".?!":
+                    ended = True              # 문장이 끝났다
                 else:
-                    break                     # 해석·선택지·각주에서 멈춘다
-            if len(more) >= 10:
-                cut.append((r.get("key") or r.get("label") or "?",
-                            "".join(more)[:36]))
+                    break                     # 해석·선택지·각주·빈칸·화살표
+            # ⚠ 잘림으로 보는 것은 **완결된 영어 문장**이 남았고 그 글이 **책
+            #   어디에도 없을 때**뿐이다. 안 그러면 요약문 첫머리(`People with …
+            #   ____(A)`)·해석이 되받는 이름(`Sarah Thompson 드림`)·다음 문단
+            #   (`(B) …`)이 전부 잘림으로 울렸다(22권 20건 전부 헛경보, 실측).
+            got = "".join(more)
+            if len(got) >= 10 and ended and got[:30] not in book:
+                cut.append((r.get("key") or r.get("label") or "?", got[:36]))
             break
     if cut:
         report.fail("G-P13 분석본 원문보다 지문이 짧다 %d지문 — 마지막 문장이 "
