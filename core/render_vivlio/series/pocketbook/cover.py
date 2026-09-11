@@ -34,7 +34,7 @@ INK = {
 
 CSS = """
 .cvr{position:relative;width:__media_w__;height:__media_h__;overflow:hidden;
-  background:__bg_top__;
+  background:__bg__;
   font-family:PBBody,sans-serif;break-after:page}
 /* ⚠ 표지에 없는 그러데이션을 지어 넣지 않는다 — 표지 짜임 그대로다. 한 색
    표지는 평평하게, 두 색 표지(광문2)는 표지와 같은 높이에서 아래 블록이
@@ -153,6 +153,29 @@ def ink_from_cover(pdf):
     except Exception:
         return None
     W, H = pg.rect.width, pg.rect.height
+    # ── 2026 리뉴얼 표지: 큰 `2026` + `Pocket Book.` + 그러데이션 바탕 ──
+    # 간지의 원래 설계가 이 표지에서 나왔다(민트 그러데이션 · 자주 POCKET ·
+    # 녹색 세리프 = 광문1 표지). 학교마다 **색만** 표지를 따른다.
+    spans = [sp for b in pg.get_text("dict")["blocks"]
+             for ln in b.get("lines", ()) for sp in ln["spans"] if sp["text"].strip()]
+    yr = [sp for sp in spans if sp["text"].strip() == "2026" and sp["size"] > 60]
+    tt = [sp for sp in spans if sp["text"].strip().startswith("Pocket") and sp["size"] > 30]
+    if yr and tt:
+        accent, title = "#%06X" % yr[0]["color"], "#%06X" % tt[0]["color"]
+        px = pg.get_pixmap(dpi=30)
+        # 왼쪽 가장자리 — 3D 리본·사진이 닿지 않는 자리에서 위·아래 바탕을 잰다
+        at = lambda fx, fy: "#%02X%02X%02X" % px.pixel(
+            int(px.width * fx), int(px.height * fy))[:3]
+        top, bottom = at(0.03, 0.04), at(0.03, 0.82)
+        doc.close()
+        return {
+            "bg_top": top, "bg_bottom": bottom, "grad": True,
+            "plum": accent,                          # POCKET · 테두리 · 학교 = 2026 색
+            "forest": title,                         # Pocket Book. = 표지 제목 색
+            "slate": _mix(title, "#FFFFFF", 0.20),   # 부제·시험·명단
+            "rule": _mix(accent, "#FFFFFF", 0.45),   # 가는 밑줄
+            "cmyk": {}, "split": None,               # RGB 표지 — 못 박을 CMYK 없음
+        }
     # 블록이 시작하는 **높이**는 벡터에서 읽는다 — 자리는 벡터가 정확하다(틀린 건
     # 색뿐이었다). 면을 30% 넘게 덮는 색면 가운데 윗변이 면 안쪽에서 시작하는 것.
     tops = sorted(dr["rect"].y0 / H for dr in pg.get_drawings()
@@ -235,6 +258,9 @@ def css(M, ink=None):
     bl = M["bleed"]
     tok = dict(INK, **(ink or {}))
     sp = tok.pop("split", None)          # 아래 블록이 시작하는 높이(0~1)
+    # 리뉴얼 표지는 그러데이션 바탕(원래 설계), 옛 표지는 평평한 채움
+    bg = ("linear-gradient(160deg,%s 0%%,%s 100%%)" % (tok["bg_top"], tok["bg_bottom"])
+          if tok.pop("grad", False) else tok["bg_top"])
     tok.pop("cmyk", None)                # 인쇄 고정표 — CSS 에는 안 쓴다
     return _tok(CSS,
                 media_w="%gmm" % (M["page_w"] + 2 * bl),
@@ -254,6 +280,7 @@ def css(M, ink=None):
                 cred_gap="9mm", cred_row="7mm",
                 cred_col="34mm",
                 split=("%.2f%%" % (sp * 100)) if sp else "100%",
+                bg=bg,
                 **tok)
 
 

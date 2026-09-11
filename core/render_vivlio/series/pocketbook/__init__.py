@@ -1769,7 +1769,10 @@ class PocketbookSeries(Series):
         spec["append"] = [{"pdf": pdf, "page": 1}]
         return spec
 
-    COVER_DIR = "${STUDIO}/디자인/표지/포켓북"
+    # ⚠ 26-2 표지는 **2026 리뉴얼 확정본**이다. `디자인/표지/포켓북/` 은 지난 학기
+    #   표지라 거기서 색을 읽었더니 간지가 엉뚱한 색으로 나갔다(사용자 지적:
+    #   "왜 지난학기 표지로 만들고 있는 거야").
+    COVER_DIR = "${STUDIO}/디자인/표지/2026_리뉴얼_1차시안/시안A_확정/납품"
 
     @staticmethod
     def _cover_ink(cfg, opt, school, log):
