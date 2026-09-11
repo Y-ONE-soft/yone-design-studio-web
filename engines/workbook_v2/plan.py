@@ -845,7 +845,7 @@ def _s3_drop_tail_directives(pre, q_effs=("Q",)):
     return len(drop)
 
 
-def build_step3(step_data):
+def build_step3(step_data, workbook_type=""):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
     W38 — 블록 문맥 오버레이 (core.structure.block_grammar): 파서 kind
@@ -861,6 +861,7 @@ def build_step3(step_data):
     from core.structure import rules as R
     st_q = _style("STEP3", "Q")
     units = []
+    codes = []                                   # 유닛별 지문번호 코드
     warnings = []
     lbl_series = _s3_label_series(step_data)     # W66 K5 — 계열 골격
     for group in ("normal", "short"):
@@ -1094,13 +1095,47 @@ def build_step3(step_data):
                 _s3_answer_tables(unit, st_q, warnings)
                 # W67: 지문 속 빈칸(밑줄 공백)이 줄 끝에서 증발하는 것 방지
                 _s3_fix_blank_runs(unit)
+                # 빈칸 언더스코어 위에 겹친 밑줄 서식 제거 (밑줄 2줄)
+                _n_ul = _s3_drop_underscore_ul(unit)
+                if _n_ul:
+                    warnings.append("step3: 빈칸 언더스코어의 겹친 밑줄 "
+                                    "서식 %d런 해제 (밑줄 2줄 방지)" % _n_ul)
                 code = (item.get("code") or "").strip()
                 if code:
                     unit.insert(0, {"t": "{" + code + "}", "s": "$BASIC",
                                     "runs": []})
                 units.append(unit)
+                codes.append(code)
                 warnings.extend(BG.validate_sequence(eff_seq))
+    units = _s3_left_page_units(units, codes, workbook_type, warnings)
     return {"units": units, "warnings": warnings}
+
+
+def _s3_left_page_units(units, codes, workbook_type, warnings):
+    """모의고사 워크북 STEP3 — 지문 묶음마다 **왼쪽 면에서 시작**.
+
+    사용자 확정 스펙 2026-09-12: "각 지문별로 묶여서 첫 시작이 무조건 왼쪽
+    페이지에서 시작해야 된다. 오른쪽 페이지 빌 경우 오른쪽 페이지는 메모
+    페이지 넣고." 한 지문에 딸린 문제 묶음이 펼침면 단위로 떨어져야 학생이
+    지문과 문제를 같이 본다.
+
+    실행기는 `page_break: "even"` 을 StartParagraph.NEXT_EVEN_PAGE 로 옮기고,
+    그 때문에 비는 오른쪽 면은 page_cleanup(empty_master "M")이 메모 마스터로
+    채운다. 지문번호 코드({YYMMQQ})가 있는 = 지문 단위로 갈린 아이템일
+    때만 — 통짜(textbook) 한 유닛짜리 원고는 기존 동작 그대로다."""
+    if workbook_type != "모의고사":
+        return units
+    if len(units) < 2 or not all(codes):
+        return units
+    out = []
+    for i, unit in enumerate(units):
+        if i == 0:
+            out.append(unit)       # 첫 지문은 섹션 시작 자리 그대로
+            continue
+        out.append({"paras": unit, "page_break": "even"})
+    warnings.append("step3: 지문 %d묶음을 왼쪽 면 시작으로 배치 "
+                    "(빈 오른쪽 면은 메모 마스터)" % len(units))
+    return out
 
 
 # ── W77: 원고 그림(도표/그래프) 단락 ───────────────────────────────────────
@@ -1202,6 +1237,36 @@ def _s3_widen_answer_rows(unit, choice_style=None):
 _S3_NBSP = " "
 # 빈칸 최대 칸 수 — 8pt 기준 15칸 ≈ 10mm (82mm 단에서 항상 한 줄에 수용)
 _S3_BLANK_MAX = 15
+
+
+# 밑줄 문자로만 이뤄진 런 — 언더스코어·전각 언더스코어·공백·괄호 라벨.
+# "______" / "______(A)______" / "___ ___" 전부 '빈칸 그림'이지 글자가 아니다.
+_RE_S3_UL_CHAR_ONLY = re.compile(
+    r'^[\s _＿‾﹍﹎()（）\[\]A-Ea-e0-9.,·]*$')
+_RE_S3_HAS_UNDERSCORE = re.compile(r'[_＿]{2,}')
+
+
+def _s3_drop_underscore_ul(unit):
+    """빈칸 언더스코어에 걸린 **밑줄 서식**을 걷어낸다 (밑줄 2줄 차단).
+
+    사용자 지적 2026-09-12 "밑줄 2줄인 곳이 너무 많고": 원고가 빈칸을
+    언더스코어(`______`)로 그려 놓고 그 위에 밑줄 서식까지 걸어 둔다.
+    InDesign 에서는 언더스코어 글자가 그리는 선과 밑줄 서식의 선이 **따로**
+    찍혀 빈칸마다 줄이 두 개다 (고2 26년 9월 실측 52단락).
+
+    글자가 섞인 런("the p______ of")은 건드리지 않는다 — 그쪽 밑줄은
+    원고가 의도한 강조다."""
+    n = 0
+    for p in unit:
+        for r in p.get("runs") or []:
+            rt = r.get("t") or ""
+            if not r.get("ul") or not _RE_S3_HAS_UNDERSCORE.search(rt):
+                continue
+            if not _RE_S3_UL_CHAR_ONLY.match(rt):
+                continue
+            r["ul"] = False
+            n += 1
+    return n
 
 
 def _s3_fix_blank_runs(unit):
@@ -4361,6 +4426,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         elif step_key == "step1_a2":
             built = builder(step_data, ox_intro=a2_ox_intro)
         elif step_key in _CTX_BUILDERS:
+            built = builder(step_data, workbook_type=workbook_type)
+        elif step_key == "step3":
             built = builder(step_data, workbook_type=workbook_type)
         else:
             built = builder(step_data)

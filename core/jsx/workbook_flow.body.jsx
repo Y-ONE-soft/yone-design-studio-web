@@ -3019,7 +3019,9 @@ try {
             var unitObj = flow.units[u];
             var uParas = unitObj.paras || unitObj;   // dict 형식(W4) 겸용
             unitStart.push(flat.length);
-            unitPageBreak.push(unitObj.page_break ? true : false);
+            // page_break: true = NEXT_PAGE, "even" = NEXT_EVEN_PAGE
+            // (지문 묶음을 늘 왼쪽 면에서 시작 — 모의고사 워크북 STEP3).
+            unitPageBreak.push(unitObj.page_break || false);
             for (var q = 0; q < uParas.length; q++) {
                 flat.push(uParas[q]);
             }
@@ -3050,8 +3052,11 @@ try {
         var paras = story.paragraphs.everyItem().getElements();
         var isStart = {};
         for (var us = 0; us < unitStart.length; us++) {
-            // "page" = NEXT_PAGE (W4 page_break 유닛), "frame" = NEXT_FRAME
-            isStart[unitStart[us]] = unitPageBreak[us] ? "page" : "frame";
+            // "even" = NEXT_EVEN_PAGE (왼쪽 면 시작), "page" = NEXT_PAGE
+            // (W4 page_break 유닛), "frame" = NEXT_FRAME
+            isStart[unitStart[us]] = (unitPageBreak[us] === "even")
+                ? "even"
+                : (unitPageBreak[us] ? "page" : "frame");
         }
         for (var pi = 0; pi < flat.length && pi < paras.length; pi++) {
             var ps2 = styleOf(flat[pi].s);
@@ -3076,9 +3081,12 @@ try {
             }
             if (flow.break_per_unit && pi > 0 && isStart[pi]) {
                 try {
-                    paras[pi].startParagraph = (isStart[pi] === "page")
-                        ? StartParagraph.NEXT_PAGE
-                        : StartParagraph.NEXT_FRAME;
+                    paras[pi].startParagraph =
+                        (isStart[pi] === "even")
+                            ? StartParagraph.NEXT_EVEN_PAGE
+                            : (isStart[pi] === "page")
+                                ? StartParagraph.NEXT_PAGE
+                                : StartParagraph.NEXT_FRAME;
                 } catch (e) {}
             }
             var runs = flat[pi].runs;
