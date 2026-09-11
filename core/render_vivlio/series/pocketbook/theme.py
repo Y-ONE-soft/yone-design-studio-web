@@ -129,7 +129,7 @@ METRICS = {
     # 딱지를 물려 **책을 덮은 채로도 파트를 찾게** 한다. 뒤 파트일수록 아래로
     # 내려가므로 옆에서 보면 계단이 된다(사용자 지시).
     "tab_w": 9.0,          # 재단선 안쪽으로 보이는 폭
-    "tab_h": 17.0,         # 딱지 하나 높이(파트가 많으면 자동으로 준다)
+    "tab_h": 22.0,         # 딱지 하나 높이(파트가 많으면 자동으로 준다)
     "tab_top": 15.0,       # 첫 파트 윗변
     "tab_bot": 191.0,      # 마지막 파트 아랫변(쪽번호 196.5 위)
     "tab_r": 1.6,          # 안쪽 모서리 둥글기
@@ -231,13 +231,14 @@ def layout_for(passage):
 
 
 # ── 귀 인덱스 색 ─────────────────────────────────────────────
-# ⚠ 띠(`band_*`)와 **같은 색을 쓰지 않는다**. 딱지가 바탕에 묻혀 안 보인다
-#   (사용자 지시). 띠는 옅은 파스텔이므로 딱지는 한 단 짙게 잡는다.
-# ⚠ 무지개로 흩뿌리지 않는다. 청람 → 청록 → 올리브 → 황금 → 주황 → 자주 →
-#   보라로 **한 방향으로 도는 띠**라, 파트가 몇 개든 순서가 색으로 읽힌다.
-# ⚠ 금지색을 피한다 — 더스티 모브코럴(#DB9488)·세이지 그린(#81B98C).
-TAB_COLORS = ("#4C6BA8", "#5A93B8", "#5AA6B0", "#AEB566",
-              "#C9AE6A", "#D8905C", "#BE6A86", "#8E6FB0")
+# 딱지 색은 **내지 배경색(띠)에서 뽑는다**(사용자 지시). 띠가 교재 갈래를
+# 이미 말하고 있으므로 딴 색을 들이면 한 면에 갈래 표시가 둘이 된다.
+#   ⚠ 다만 **똑같이 두면 안 된다** — 바탕에 묻혀 가장자리에서 안 보인다.
+#     같은 색상을 유지한 채 한 단 짙게, 조금 맑게 내린다.
+TAB_KIND_BAND = {
+    "k-lesson": "band_lesson", "k-unit": "band_unit",
+    "k-mock": "band_mock", "k-voca": "band_voca",
+}
 
 
 def _hex(c):
@@ -245,28 +246,25 @@ def _hex(c):
     return tuple(int(c[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def tab_color(i, n, ramp=None):
-    """파트 `i`(전체 `n`개)의 딱지 색 — 색 띠 위를 고르게 걷는다.
+def deepen(bg, step=0):
+    """띠 색 → 딱지 색. 색상은 그대로, 짙기만 내리고 맑기를 올린다.
 
-    ⚠ RGB 로 섞으면 안 된다. 주황과 자주 사이를 RGB 로 지나면 한가운데가
-      **탁한 모브코럴**(금지색 `#DB9488` 근처)로 내려앉는다. 색상환을 도는
-      일이므로 HLS 에서 **색상을 돌리고** 맑기·짙기는 그대로 잇는다.
+    `step` 은 같은 갈래가 여러 파트일 때 서로 갈리라고 주는 한 칸이다.
     """
     import colorsys
-    ramp = list(ramp or TAB_COLORS)
-    if n <= 1:
-        return ramp[0]
-    t = (i / float(n - 1)) * (len(ramp) - 1)
-    k = min(int(t), len(ramp) - 2)
-    f = t - k
-    a = colorsys.rgb_to_hls(*[c / 255.0 for c in _hex(ramp[k])])
-    b = colorsys.rgb_to_hls(*[c / 255.0 for c in _hex(ramp[k + 1])])
-    dh = (b[0] - a[0] + 0.5) % 1.0 - 0.5      # 가까운 쪽으로 돈다
-    h = (a[0] + dh * f) % 1.0
-    ll = a[1] + (b[1] - a[1]) * f
-    s = a[2] + (b[2] - a[2]) * f
+    h, ll, ss = colorsys.rgb_to_hls(*[c / 255.0 for c in _hex(bg)])
+    # ⚠ 짙기만 내린다. 맑기를 크게 올리면 파스텔 띠 옆에서 형광색처럼 튄다
+    #   (1.45배로 해 봤더니 살구 띠가 주황 형광으로 갔다).
+    ll = max(0.34, min(0.74, ll * 0.71 + step * 0.06))
+    ss = max(0.0, min(1.0, ss * 1.05 if ss else 0.0))
     return "#%02X%02X%02X" % tuple(
-        round(c * 255) for c in colorsys.hls_to_rgb(h, ll, s))
+        round(c * 255) for c in colorsys.hls_to_rgb(h, ll, ss))
+
+
+def tab_color(kind, step=0, palette=None):
+    """파트 갈래 → 딱지 색. 그 갈래의 띠 색에서 바로 뽑는다."""
+    P = dict(PALETTE, **(palette or {}))
+    return deepen(P.get(TAB_KIND_BAND.get(kind, "band"), P["band"]), step)
 
 
 def tab_ink(bg):

@@ -116,6 +116,13 @@ _TOK = re.compile(r"\d+\s*[강과]|SL과|\d+[-~]\d+|\d+|분석|analysis|gateway"
                   re.I)
 
 
+def _mtime(p):
+    try:
+        return os.path.getmtime(p)
+    except OSError:
+        return 0.0
+
+
 def _key_of(stem):
     t = [x.replace(" ", "").lower() for x in _TOK.findall(stem)]
     return tuple(t[-2:]) if len(t) >= 2 else tuple(t)
@@ -139,7 +146,14 @@ def illust_index(bases):
                         ".jpg", ".jpeg", ".png"):
                     continue
                 stem = unicodedata.normalize("NFC", os.path.splitext(f)[0])
-                idx.setdefault(_key_of(stem), os.path.join(root, f))
+                # ⚠ 같은 지문에 파일이 둘이면 **나중에 놓인 것**이 이긴다.
+                #   그린이가 다시 그려 넣어도 옛 파일이 폴더에 남아 있어서,
+                #   먼저 잡힌 쪽을 쓰면 새 그림이 조용히 무시된다(광문1 7강
+                #   분석 등 7건, 사용자 지적).
+                k, full = _key_of(stem), os.path.join(root, f)
+                old = idx.get(k)
+                if old is None or _mtime(full) > _mtime(old):
+                    idx[k] = full
             if idx:
                 out.append((unicodedata.normalize(
                     "NFC", os.path.relpath(root, base)), idx))
@@ -167,7 +181,12 @@ def illust_for(row, index):
             keys = [("%s-%s" % (a, b),), ("%s~%s" % (a, b),)] if b else []
             keys += [(a,), (a.zfill(2),)]
     elif m:                                   # 부교재 — `1강 01` · `1강 분석`
-        u = "%s강" % int(m.group(1))
+        un = int(m.group(1))
+        u = "%s강" % un
+        # ⚠ 파일 이름 규칙이 한 폴더 안에서도 섞인다 — `올독기2 7강 분석` 과
+        #   `Unit 07 분석` 이 같은 지문이다(다시 그린 쪽이 새 규칙). 강 번호를
+        #   **세 가지 표기로** 다 찾아 본다.
+        us = [u, "%02d" % un, str(un)]
         # ⚠ 꼬리는 **라벨에서** 떼야 한다. 단원(`올림포스 1강`)에서 잰 자리로
         #   라벨을 자르면 엉뚱한 데를 잘라 번호를 통째로 잃는다.
         ml = _RE_L_UNIT.search(lab)
@@ -175,12 +194,13 @@ def illust_for(row, index):
         # 라벨이 `7강` 처럼 **강만** 있으면 그 단원의 분석 지문이다(분석본02 실측:
         # `7강, 1번, 2번, 3번, …` 에서 맨 앞이 분석이다).
         if "분석" in lab or "분석" in tail or not tail.strip():
-            keys = [(u, "분석"), (u, "analysis")]
+            keys = [(x, t) for x in us for t in ("분석", "analysis")]
         else:
             n = _RE_L_NO.search(tail)
             if n:
                 v = int(n.group(1))
-                keys = [(u, str(v)), (u, "%02d" % v)]
+                keys = [(x, t) for x in us
+                        for t in (str(v), "%02d" % v)]
         want = unit.split()[0] if unit.split() else None
     else:                                     # 교과서 — `본문2` → `SL과 02`
         # ⚠ 라벨의 **첫 숫자**를 쓰면 안 된다. `능률(민) SL2 본문1` 에서는
@@ -195,16 +215,23 @@ def illust_for(row, index):
             v = int(n.group(1))
             keys = [(les, "%02d" % v), (les, str(v))]
         want = "교과서"
+    # ⚠ 후보를 **하나 찾고 끝내면 안 된다**. 한 지문에 옛 파일과 다시 그린
+    #   파일이 같이 있으면 먼저 걸린 쪽(대개 옛것)이 나간다 — 걸리는 것을 다
+    #   모아 **가장 나중에 놓인 것**을 쓴다.
+    def _pick(idx):
+        got = {idx[k] for k in keys if k in idx}
+        return max(got, key=_mtime) if got else None
+
     for folder, idx in index:
         if want and want not in folder and want != "교과서":
             continue
-        for k in keys:
-            if k in idx:
-                return idx[k]
+        got = _pick(idx)
+        if got:
+            return got
     for folder, idx in index:                 # 폴더를 못 좁히면 전체에서
-        for k in keys:
-            if k in idx:
-                return idx[k]
+        got = _pick(idx)
+        if got:
+            return got
     return None
 
 

@@ -432,7 +432,7 @@ def _hit(t, pos_only=False):
     return "".join(out)
 
 
-def voca_page(pg, M, folio, side="l", part=(0, 0)):
+def voca_page(pg, M, folio, side="l", part=None, palette=None):
     """어휘 한 면 — 26-1-기말 완성본 그대로.
 
     왼쪽 단에 **번호 · 회독칸 3개 · 표제어**, 오른쪽 단에 **뜻 · 예문 · 해석**.
@@ -474,7 +474,7 @@ def voca_page(pg, M, folio, side="l", part=(0, 0)):
                 '<span style="color:var(--ink)">VOCA</span> <b>%s</b></div>'
                 % (_box(M["margin_l"], M["folio_y"],
                         M["page_w"] - M["margin_l"] - 15.0), folio))
-    tab = side_tab(M, part[0], part[1], "어휘") if side == "r" else ""
+    tab = side_tab(M, part, palette) if side == "r" else ""
     return ('<section class="pg k-voca"><div class="trim">%s%s%s%s</div>'
             '</section>' % (head, body, foot, tab))
 
@@ -995,64 +995,79 @@ _CONN = ('<svg viewBox="0 0 100 100" preserveAspectRatio="none">'
          '<path d="%s" fill="currentColor"/></svg>')
 
 
-_RE_TAB_UNIT = re.compile(r"(\d{1,2}\s*[강과課])\s*$")
+# 파트 = **교재 단위**다(사용자 지시). 강마다 딱지를 달면 계단이 잘게 쪼개져
+# 덮은 채로 찾는다는 귀 인덱스의 구실을 못 한다 — `올림포스 1강`~`8강` 은
+# 딱지 하나(`올림포스`)로 잇는다.
+_RE_TAB_TAIL = re.compile(r"\s*\d{1,2}\s*[강과]\s*$")
+_RE_TAB_UNITNO = re.compile(r"\s*(?:Unit|Lesson|Day)\s*\d{1,2}\s*$", re.I)
 
 
-def tab_label(cat):
-    """파트 이름 → 귀 딱지에 넣을 **짧은 손잡이**.
-
-    꼬리말에 이미 온 이름(`올림포스 3강`)이 있으므로 딱지는 짧을수록 좋다.
-    9mm 폭에 세로로 세우는 글자라 넉 자를 넘기면 딱지가 길어진다.
-    """
+def tab_part(cat, kind=""):
+    """지문 단원 → (딱지 이름, 갈래). 갈래가 딱지 색을 정한다."""
     c = re.sub(r"\s+", " ", str(cat or "")).strip()
     if not c:
-        return ""
-    if "모의고사" in c:
-        return "모의고사"
+        return ("", "")
     if c.startswith("어휘"):
-        return "어휘"
-    m = _RE_TAB_UNIT.search(c)
-    if m:
-        return re.sub(r"\s+", "", m.group(1))
-    return c.split()[-1][:4]
-
-
-def _part_of(order, npart, cat):
-    return (order.index(cat) if cat in order else 0, npart)
+        return ("어휘", "k-voca")
+    if "모의고사" in c:
+        return ("모의고사", "k-mock")
+    # ⚠ 갈래는 **띠와 같은 잣대**(`page_kind`)로 가른다. 여기서 따로 `N과` 를
+    #   보면 `교과서 3과` 가 부교재로 새 버린다(실측).
+    if kind == "k-mock":
+        return ("모의고사", "k-mock")
+    if kind == "k-unit" or (not kind and _RE_TAB_UNITNO.search(c)):
+        name = _RE_TAB_UNITNO.sub("", _RE_TAB_TAIL.sub("", c)).strip()
+        return (name or c, "k-unit")
+    # 교과서는 책마다 이름이 다르다(`능률(민) SL2`·`비상(홍)`). 가장자리에서는
+    # 그 이름보다 **갈래**가 눈에 들어와야 한다(사용자 지시).
+    return ("교과서", "k-lesson")
 
 
 def part_list(passages, voca=False):
-    """책의 파트 차례 — 지문 단원이 나온 순서 그대로, 어휘 파트는 맨 뒤."""
+    """책의 파트 차례 → [(딱지 이름, 갈래)]. 나온 순서 그대로, 어휘는 맨 뒤."""
     out = []
     for p in passages or ():
         if p.get("kind") == "memtest":
             continue
         c = (p.get("category") or "").strip()
-        if c and c not in out:
-            out.append(c)
+        if not c:
+            continue
+        it = tab_part(c, page_kind(p))
+        if it[0] and it not in out:
+            out.append(it)
     if voca:
-        out.append("어휘")
+        out.append(("어휘", "k-voca"))
     return out
 
 
-def side_tab(M, i, n, text):
+def _part_of(order, cat, kind=""):
+    """지문 → (몇째 파트, 파트 수, 딱지 이름, 갈래, 같은 갈래 안 몇째)."""
+    it = tab_part(cat, kind)
+    i = order.index(it) if it in order else 0
+    same = [j for j, x in enumerate(order) if x[1] == it[1]]
+    return (i, len(order), it[0], it[1], same.index(i) if i in same else 0)
+
+
+def side_tab(M, part, palette=None):
     """오른쪽 면 바깥 모서리의 파트 딱지 — 뒤 파트일수록 아래로 내려간다."""
+    if not part or len(part) < 5:
+        return ""
+    i, n, text, kind, step = part
     if not text or n <= 0:
         return ""
     top, bot = M["tab_top"], M["tab_bot"]
     span = bot - top
-    # 파트가 많으면 딱지를 줄여 계단이 겹치지 않게 한다.
-    h = min(M["tab_h"], span / float(n) * 0.86)
-    step = (span - h) / float(n - 1) if n > 1 else 0.0
-    y = top + i * step
-    bg = T.tab_color(i, n, M.get("tab_ramp"))
+    h = min(M["tab_h"], span / float(n) * 0.7)
+    step_y = (span - h) / float(n - 1) if n > 1 else 0.0
+    y = top + i * step_y
+    bg = T.tab_color(kind, step, palette)
     x = M["page_w"] - M["tab_w"]
     return ('<div class="stab" style="%s;background:%s;color:%s">%s</div>'
             % (_box(x, y, M["tab_w"] + M["bleed"], h), bg, T.tab_ink(bg),
                ESC(text)))
 
 
-def right_page(p, M, folio, category="", part=(0, 0)):
+def right_page(p, M, folio, category="", part=None, palette=None):
     fl = M["flow"]
     fc = M["flow_chip"]
     tb = M["topic"]
@@ -1207,14 +1222,15 @@ def right_page(p, M, folio, category="", part=(0, 0)):
     parts.append('<div class="folio r" style="%s">%s</div>'
                  % (_box(M["margin_l"], M["folio_y"],
                          M["page_w"] - M["margin_l"] - 15.0), foot))
-    parts.append(side_tab(M, part[0], part[1], tab_label(category)))
+    parts.append(side_tab(M, part, palette))
     # ⚠ 띠 색은 **펼침면 단위**다. 왼쪽 면에만 주면 한 지문의 두 면이 다른
     #   색으로 나간다(사용자 지적).
     return ('<section class="pg %s"><div class="trim">%s</div></section>'
             % (page_kind(p), "".join(parts)))
 
 
-def memtest_page(p, M, folio, answer, category="", part=(0, 0)):
+def memtest_page(p, M, folio, answer, category="", part=None,
+                 palette=None):
     mt = M["memtest"]
     runs = p.get("runs") if p.get("kind") == "memtest" else (
         (p.get("memtest") or {}).get("a" if answer else "q"))
@@ -1249,7 +1265,7 @@ def memtest_page(p, M, folio, answer, category="", part=(0, 0)):
                               else M["page_w"] - M["margin_l"] - 15.0), foot))
     # 귀 인덱스는 **오른쪽 면에만** — 암기 TEST 는 정답면이 오른쪽이다.
     if answer:
-        parts.append(side_tab(M, part[0], part[1], tab_label(category)))
+        parts.append(side_tab(M, part, palette))
     return '<section class="pg"><div class="trim">%s</div></section>' % "".join(parts)
 
 
@@ -1291,7 +1307,7 @@ def split_half(p):
     return [a, b]
 
 
-def memo_page(M, folio, kind="", part=(0, 0), tab=""):
+def memo_page(M, folio, kind="", part=None, palette=None):
     """메모 면 — 오른쪽 면이 빌 때 빈 채로 두지 않는다(사용자 지시)."""
     fl = M["flow"]
     return ('<section class="pg %s"><div class="trim">'
@@ -1305,7 +1321,7 @@ def memo_page(M, folio, kind="", part=(0, 0), tab=""):
                _box(fl[0], fl[1], fl[2], M["memo_h"]),
                _box(M["margin_l"], M["folio_y"],
                     M["page_w"] - M["margin_l"] - 15.0), folio,
-               side_tab(M, part[0], part[1], tab)))
+               side_tab(M, part, palette)))
 
 
 def page_plan(rows, folio_start=2):
@@ -1339,7 +1355,7 @@ def build_html(data, css_name="pocket.css"):
     folio = int(data.get("folio_start", 1))
     # 귀 인덱스 — 파트 차례를 먼저 세어야 딱지가 몇 칸씩 내려갈지 정해진다.
     order = part_list(data["passages"], bool(data.get("voca")))
-    npart = len(order)
+    pal = data.get("palette") or None
     if data.get("cover"):
         pages.append('<section class="pg"><div class="trim">'
                      '<img src="%s" style="width:100%%;height:100%%;'
@@ -1353,12 +1369,13 @@ def build_html(data, css_name="pocket.css"):
             # 메모 면도 오른쪽 면이면 딱지를 단다 — 안 그러면 가장자리
             # 계단이 그 한 장에서 끊긴다.
             pages.append(memo_page(
-                M, folio, page_kind(p), _part_of(order, npart, cat),
-                tab_label(cat) if folio % 2 else ""))
+                M, folio, page_kind(p),
+                _part_of(order, cat, page_kind(p)) if folio % 2 else None,
+                pal))
             folio += 1
         if p.get("kind") == "memtest":
             pg = memtest_page(p, M, folio, p.get("answer"), cat,
-                              _part_of(order, npart, cat))
+                              _part_of(order, cat, page_kind(p)), pal)
             if pg:
                 pages.append(pg); folio += 1
             continue
@@ -1374,7 +1391,7 @@ def build_html(data, css_name="pocket.css"):
             continue
         pages.append(left_page(p, M, folio)); folio += 1
         pages.append(right_page(p, M, folio, cat,
-                                _part_of(order, npart, cat)))
+                                _part_of(order, cat, page_kind(p)), pal))
         folio += 1
     # 어휘 파트는 **맨 뒤**다(26-1-기말 완성본과 같은 자리). 한 DAY 가 펼침면
     # 하나이므로 왼쪽 면부터 시작해야 짝이 맞는다.
@@ -1385,7 +1402,7 @@ def build_html(data, css_name="pocket.css"):
             folio += 1
         pages.append(voca_page(vp, M, folio,
                                "l" if folio % 2 == 0 else "r",
-                               (npart - 1, npart)))
+                               _part_of(order, "어휘", "k-voca"), pal))
         folio += 1
     return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
             '<title>%s</title><link rel="stylesheet" href="%s"></head><body>'

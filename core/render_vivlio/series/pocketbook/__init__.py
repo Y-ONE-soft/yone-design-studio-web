@@ -1529,6 +1529,9 @@ class PocketbookSeries(Series):
                                 school=opt.get("school", ""),
                                 **({"topic_box": 1} if want_tb else {})),
                 "folio_start": opt.get("folio_start", 2),
+                # 귀 인덱스 색은 띠 색에서 뽑는다 — 책이 띠를 갈아 끼우면
+                # 딱지도 따라가야 한다.
+                "palette": cfg.section("palette") or {},
                 "voca": voca_pages,
                 "cover": None}))
         # ⚠ 자리표를 **파일로 내지 않으면** 지면에 표가 찍혀도 작업대는 그것을
