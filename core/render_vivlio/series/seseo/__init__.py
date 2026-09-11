@@ -33,7 +33,7 @@ CMYK = {
 }
 
 RE_TAG = re.compile(r'§((?:S|T|P|ART)\d+)§')
-MAX_FIT = 3
+MAX_FIT = 4
 FRAME = {"inner": 23.0, "outer": 26.0, "width": 167.0, "top": 22.0, "bottom": 278.5}
 
 

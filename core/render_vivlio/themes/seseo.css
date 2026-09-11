@@ -329,6 +329,12 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .set.fit3 { --qgap: 4.4mm; --lgap: 1.8mm; }
 .set.fit3 .qbody { margin-top: 1.6mm; }
 .set.fit3 .cbox, .set.fit3 .diag, .set.fit3 .bogi { margin-top: 1.8mm; }
+/* ④ 마지막 수단 — 3단계로도 넘칠 때만. 두 면으로 벌리느니 한 면에(사용자 우선순위) */
+.set.fit4 { --qgap: 3.2mm; --lgap: 1.2mm; }
+.set.fit4 .pbox .cham > div, .set.fit4 .cbox, .set.fit4 .ql { line-height: 11.8pt; }
+.set.fit4 .qbody { margin-top: 1.1mm; }
+.set.fit4 .cbox, .set.fit4 .diag, .set.fit4 .bogi { margin-top: 1.3mm; }
+.set.fit4 .cbox, .set.fit4 .diag { padding-top: 1.2mm; padding-bottom: 1.3mm; }
 
 /* ============================================================ 정답 및 해설 */
 .ans { column-count: 2; column-gap: 5mm; column-fill: auto; }

@@ -361,7 +361,7 @@ def render_type(cfg, ty, summary=None, sid=""):
 
 # ── PART 2 · 실전 세트 ────────────────────────────────────────────────
 def render_set(s, first=False, fit=0, gap=None):
-    """fit = 한 면에 넣으려고 조인 단계(0~3) · gap = 면 아래 남는 자리의 몫
+    """fit = 한 면에 넣으려고 조인 단계(0~4) · gap = 면 아래 남는 자리의 몫
     {"q": 문항 사이에 더할 mm, "l": 소문항 줄 사이에 더할 mm}."""
     badge = '<span class="badge">광문고 기출</span>' if s["gichul"] else ""
     cls = "set" + (" first" if first else "") + "".join(f" fit{k}" for k in range(1, fit + 1))
