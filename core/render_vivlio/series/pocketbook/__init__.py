@@ -1887,6 +1887,21 @@ class PocketbookSeries(Series):
         out = os.path.join(build_dir, "img", "flownote_grid.png")
         os.makedirs(os.path.dirname(out), exist_ok=True)
         im.save(out)
+        # 메모 면 모눈 — **상자 안쪽 크기 그대로**, 칸은 FLOW NOTE 와 같다.
+        # 줄은 0칸째부터 마지막 칸 끝까지 긋는다(양 끝 줄은 테두리와 겹친다).
+        # ⚠ 판 크기 모눈을 돌려 쓰며 크기를 안 정했더니 3.17배로 커지고 오른쪽에
+        #   얇은 칸이 남았다(사용자 지적).
+        _x, _y, _w, _h, cell, cols, rows = prender.memo_box(M)
+        MW, MH = int(round(cols * cell * px)), int(round(rows * cell * px))
+        mm_ = Image.new("RGB", (MW, MH), P.get("flow_box", "#FFFFFF"))
+        md = ImageDraw.Draw(mm_)
+        for i in range(cols + 1):
+            xx = min(MW - 1, int(round(i * cell * px)))
+            md.line([(xx, 0), (xx, MH)], fill=line, width=1)
+        for j in range(rows + 1):
+            yy = min(MH - 1, int(round(j * cell * px)))
+            md.line([(0, yy), (MW, yy)], fill=line, width=1)
+        mm_.save(os.path.join(build_dir, "img", "memo_grid.png"))
 
     @staticmethod
     def _stage_assets(build_dir):
