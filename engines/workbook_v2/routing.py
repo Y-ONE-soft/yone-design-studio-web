@@ -31,7 +31,8 @@ _DIR = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_DIR, "routing_rules.json"), encoding="utf-8") as _f:
     _RULES = json.load(_f)
 
-MS_EXTS = (".docx", ".hwp", ".hwpx")
+# PDF 는 Step3 원고로만 받는다 (2026-09-12 — core/extract/pdf.py)
+MS_EXTS = (".docx", ".hwp", ".hwpx", ".pdf")
 
 # 의도된 제외 (데이터룰 — routing_rules.json)
 RE_ANSWER_TOKEN = re.compile("|".join(_RULES["answer_tokens"]))
@@ -66,7 +67,7 @@ _RE_QNUM_FLEX = re.compile(r"(\d+)(?:\s*[~∼～\-]\s*(\d+))?\s*번")
 RE_VARIANT_POOL = re.compile(
     r"변형\s*문(?:제|항)|\d문제|(?<![~∼\-\d고])\d{2,}\s+문제")
 # v1 _parse_step3_folder의 소비 규칙과 동일 (파서 1470행 — 'N번.<ext>')
-RE_STRICT_S3_FILE = re.compile(r"(\d+(?:~\d+)?)번\s*\.(?:hwpx?|docx)", re.I)
+RE_STRICT_S3_FILE = re.compile(r"(\d+(?:~\d+)?)번\s*\.(?:hwpx?|docx|pdf)", re.I)
 # 마더텅형 'N강 M번 [YYMMQQ]' — v1 폴백 분기가 그대로 소비
 _RE_MOTHERTONGUE = re.compile(r"\d+\s*강\s*(\d+)(?:~\d+)?\s*번")
 
@@ -93,6 +94,10 @@ def route_step3(fname_nfc):
     coll = _collapsed(fname_nfc)
     if _RE_STEP12_PREFIX.match(coll):
         return False
+    # PDF 는 Step3 전용 — 이름에 스텝3·N번·변형문제 토큰이 없어도 Step3
+    # ('영어1 동아(박) 5과 - 예상 문제 A.pdf'). Step1/2 는 hwp/docx 만 파싱한다.
+    if os.path.splitext(fname_nfc)[1].lower() == ".pdf":
+        return True
     return bool(
         _RE_STEP3_TOKEN.search(coll)
         or RE_QNUM.search(fname_nfc)
@@ -135,6 +140,13 @@ def extract_question_span(fname_nfc):
     if m.group(2):
         span += "~" + str(int(m.group(2)))
     return span
+
+
+def pdf_routes_to_step3(fname_nfc):
+    """v1 엔진 업로드 라우팅용 — PDF 원고면 Step3 (정답/답지류·스텝1/2 접두 제외)."""
+    fname_nfc = _nfc(fname_nfc)
+    return (os.path.splitext(fname_nfc)[1].lower() == ".pdf"
+            and route_step3(fname_nfc))
 
 
 def canonical_step3_filename(fname_nfc):
@@ -223,6 +235,9 @@ def _manuscript_texts(path):
                                              _hwp_extract_paragraphs)
         if path.lower().endswith(".docx"):
             paras = _docx_extract_paragraphs(path, False)
+        elif path.lower().endswith(".pdf"):
+            from core.extract.pdf import _pdf_extract_paragraphs
+            paras = _pdf_extract_paragraphs(path, False)
         else:
             paras = _hwp_extract_paragraphs(path, False)
     except Exception:                                          # noqa: BLE001
@@ -343,6 +358,8 @@ def reconcile_step3(step3_dir, st3, log, *, number_matching=False,
     if not step3_dir or not os.path.isdir(step3_dir):
         return stats
     st3 = st3 or {}
+    # 파서가 '편집 원고 우선·정답본·판독 불가'로 뺀 PDF — 의도된 제외
+    excluded_pdfs = {_nfc(n) for n in (st3.get("excluded_pdfs") or [])}
     items = list(st3.get("normal") or []) + list(st3.get("short") or [])
     consumed_keys = set()
     consumed_files = set()
@@ -377,6 +394,11 @@ def reconcile_step3(step3_dir, st3, log, *, number_matching=False,
         fn = _nfc(f)
         if fn in consumed_files:
             stats["consumed"] += 1
+            continue
+        if fn in excluded_pdfs:
+            stats["excluded"].append(fn)
+            log(f"[라우팅] Step3 PDF 의도된 제외 (파서 로그의 'step3 PDF 제외' "
+                f"이유 참조): {fn}")
             continue
         reason = _is_intended_exclusion(fn)
         if reason:

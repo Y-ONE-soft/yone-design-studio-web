@@ -75,9 +75,9 @@ class EbsWorkbookBasicV2Engine(WorkbookSuppV2Engine):
         계약이되 기본값이 '리딩파워 / N강'."""
         return {"slots": [
             {"key": "manuscripts",
-             "label": "추가 원고 파일 (선택 — 단원 폴더에 없는 파일)",
+             "label": "추가 원고 파일 (선택 — 단원 폴더에 없는 파일 · PDF는 Step3만)",
              "required": False, "multiple": True,
-             "accept": ".docx,.hwp,.hwpx"},
+             "accept": ".docx,.hwp,.hwpx,.pdf"},
             {"key": "filename_stem",
              "label": "파일명 (워크북 뒤 — 미입력 시 '(리딩파워N강)')",
              "type": "text", "required": False},

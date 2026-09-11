@@ -385,7 +385,8 @@ def _parse_step3_from_files(step3_dir, log):
     items = []
     for fname_raw in sorted(os.listdir(step3_dir)):
         fname = unicodedata.normalize("NFC", fname_raw)
-        if not (fname.endswith(".hwp") or fname.endswith(".hwpx") or fname.endswith(".docx")):
+        if not (fname.endswith(".hwp") or fname.endswith(".hwpx") or fname.endswith(".docx")
+                or fname.lower().endswith(".pdf")):
             continue
         # 다양한 번호 패턴
         m = re.search(r'(\d+)\s*강\s*(\d+)(?:~(\d+))?\s*번(?:\s*(\d{6}))?', fname)
@@ -406,6 +407,9 @@ def _parse_step3_from_files(step3_dir, log):
         try:
             if fpath.lower().endswith(".docx"):
                 paras = _docx_extract_paragraphs(fpath, True)
+            elif fpath.lower().endswith(".pdf"):
+                from core.extract.pdf import _pdf_extract_paragraphs
+                paras = _pdf_extract_paragraphs(fpath, True)
             else:
                 paras = _hwp_extract_paragraphs(fpath, True, exclude_footnotes=True)
         except Exception as e:

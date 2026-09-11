@@ -78,10 +78,10 @@ class WorkbookSeroV2Engine(BaseEngine):
             "slots": [
                 {
                     "key": "manuscripts",
-                    "label": "원고 파일 (Step1~3 전체)",
+                    "label": "원고 파일 (Step1~3 전체 · PDF는 Step3만)",
                     "required": True,
                     "multiple": True,
-                    "accept": ".docx,.hwp,.hwpx",
+                    "accept": ".docx,.hwp,.hwpx,.pdf",
                 },
             ]
         }

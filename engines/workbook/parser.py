@@ -47,6 +47,11 @@ from core.extract.extractors import (  # Phase 1: 추출 계층 core 이동 (동
     _RE_SRC_BAR,
     _hwp_extract_paragraphs,
 )
+from core.extract.pdf import (  # PDF Step3 원고 (사용자 지시 2026-09-12)
+    _pdf_extract_paragraphs,
+    PdfTextUnreadable,
+    content_words as _pdf_content_words,
+)
 
 
 # ── 원고 공통 전처리 ────────────────────────────────────────────────────────
@@ -2795,6 +2800,113 @@ def _strip_step3_tail_answers(paras):
     return out
 
 
+# ── PDF Step3 원고 (사용자 지시 2026-09-12) ─────────────────────────────────
+# PDF 는 Step3 원고로만 받는다. 추출은 core/extract/pdf.py — docx/hwp 와 같은
+# 단락·밑줄 모양으로 낸다. 같은 파싱 안에서 한 PDF 를 여러 번(제외 판정·
+# 흡수 두 곳·본 경로) 읽으므로 캐시한다.
+_S3_PDF_CACHE = {}
+_S3_PDF_EXCL_CACHE = {}
+_RE_S3_ANSWER_NAME = re.compile(r"정답|해설|답지|답안")
+_S3_EDIT_EXTS = (".docx", ".hwp", ".hwpx")
+
+
+def _is_pdf_name(name):
+    return _nfc(name or "").lower().endswith(".pdf")
+
+
+def _step3_pdf_paragraphs(fpath, extract_underline=True, image_dir=None,
+                          log=None):
+    """PDF Step3 원고 → 단락. 읽을 수 없으면 PdfTextUnreadable(이유 포함)."""
+    try:
+        st = os.stat(fpath)
+        key = (os.path.abspath(fpath), st.st_mtime, st.st_size,
+               bool(extract_underline), image_dir or "")
+    except OSError:
+        key = None
+    if key is not None and key in _S3_PDF_CACHE:
+        return json.loads(_S3_PDF_CACHE[key])
+    paras = _pdf_extract_paragraphs(fpath, extract_underline,
+                                    exclude_footnotes=True,
+                                    image_dir=image_dir, log=log)
+    if key is not None:
+        _S3_PDF_CACHE[key] = json.dumps(paras, ensure_ascii=False)
+    return paras
+
+
+def _step3_pdf_exclusions(step3_dir, log=None):
+    """Step3 폴더의 PDF 중 조판에 쓰지 않을 것 → {원래 파일명: 이유}.
+
+    PDF 는 편집 원고(hwp/hwpx/docx)의 인쇄본인 경우가 많다 — 수특라이트 12강
+    Step3 는 같은 이름의 hwp+pdf, 교과서 Step3 는 업체 PDF 옆에 그걸 옮긴
+    docx 가 있다(2026-09-12 실측). 둘 다 읽으면 문항이 두 번 들어간다.
+      · 정답/해설본 PDF — 제외 (문제 원고가 아님)
+      · 같은 폴더 편집 원고와 내용 낱말이 80% 이상 겹치는 PDF — 제외 (편집 원고 우선)
+      · 글자 정보를 읽을 수 없는데 편집 원고가 함께 있는 PDF — 제외
+    편집 원고가 없는 폴더의 PDF 는 그대로 쓴다. 판정은 파일 이름이 아니라
+    내용 겹침(구조)으로 한다 — 업체 PDF 와 옮긴 docx 는 이름이 전혀 다르다."""
+    try:
+        names = sorted(os.listdir(step3_dir))
+    except OSError:
+        return {}
+    pdfs = [n for n in names
+            if _is_pdf_name(n) and not n.startswith((".", "~$"))]
+    if not pdfs:
+        return {}
+    sig = []
+    for n in names:
+        try:
+            sig.append((n, os.path.getmtime(os.path.join(step3_dir, n))))
+        except OSError:
+            sig.append((n, 0))
+    key = (os.path.abspath(step3_dir), tuple(sig))
+    if key in _S3_PDF_EXCL_CACHE:
+        return _S3_PDF_EXCL_CACHE[key]
+    excl = {}
+    for n in pdfs:
+        if _RE_S3_ANSWER_NAME.search(_nfc(n)):
+            excl[n] = "정답/해설본 — 문제 원고가 아님"
+    rest = [n for n in pdfs if n not in excl]
+    srcs = [n for n in names
+            if os.path.splitext(n)[1].lower() in _S3_EDIT_EXTS
+            and not n.startswith((".", "~$"))]
+    if rest and srcs:
+        words = set()
+        for n in srcs:
+            fp = os.path.join(step3_dir, n)
+            try:
+                if n.lower().endswith(".docx"):
+                    ps = _docx_extract_paragraphs(fp, False)
+                else:
+                    ps = _hwp_extract_paragraphs(fp, False,
+                                                 exclude_footnotes=True)
+            except Exception:                                  # noqa: BLE001
+                continue
+            words |= _pdf_content_words(
+                ((p.get("text") if isinstance(p, dict) else str(p)) or "")
+                for p in ps)
+        for n in rest:
+            fp = os.path.join(step3_dir, n)
+            try:
+                pw = _pdf_content_words(
+                    p.get("text", "") for p in _step3_pdf_paragraphs(fp, False))
+            except PdfTextUnreadable:
+                excl[n] = ("PDF 글자 정보를 읽을 수 없음 — 같은 폴더의 편집 "
+                           "원고(hwp/docx)를 쓴다")
+                continue
+            if not pw:
+                excl[n] = "PDF 에 원고 글자가 없음"
+                continue
+            cov = len(pw & words) / len(pw)
+            if cov >= 0.8:
+                excl[n] = (f"같은 폴더의 hwp/docx 원고와 내용 낱말 {cov:.0%} "
+                           f"겹침 — 편집 원고 우선")
+    if log:
+        for n, why in excl.items():
+            log(f"[파서] step3 PDF 제외: {_nfc(n)} — {why}")
+    _S3_PDF_EXCL_CACHE[key] = excl
+    return excl
+
+
 def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
                      extract_underline=True, short_items=None, image_dir=None):
     """회차 표기가 **파일 안 헤더**나 **파일명**에 있는 Step3 원고를 흡수한다.
@@ -2835,7 +2947,9 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
             continue
         fname = _nfc(raw)
         ext = os.path.splitext(fname)[1].lower()
-        if ext not in (".docx", ".hwp", ".hwpx"):
+        if ext not in (".docx", ".hwp", ".hwpx", ".pdf"):
+            continue
+        if ext == ".pdf" and raw in _step3_pdf_exclusions(step3_dir):
             continue
         # 파일명 방언은 **이미 다른 코드로 쓰인 파일도** 봐야 한다 — 보충
         # 폴더는 회차가 섞여 있어 "36번" 파일이 여러 개고, 폴더 연·월 기준
@@ -2849,6 +2963,9 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
         try:
             if ext == ".docx":
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
+            elif ext == ".pdf":
+                paras = _step3_pdf_paragraphs(fpath, extract_underline,
+                                              image_dir)
             else:
                 paras = _hwp_extract_paragraphs(
                     fpath, extract_underline, exclude_footnotes=True,
@@ -2925,6 +3042,8 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
             elif ext in (".hwp", ".hwpx"):
                 paras = _hwp_extract_paragraphs(fpath, True,
                                                 image_dir=image_dir)
+            elif ext == ".pdf" and raw not in _step3_pdf_exclusions(step3_dir):
+                paras = _step3_pdf_paragraphs(fpath, True, image_dir)
             else:
                 continue
         except Exception:
@@ -2975,16 +3094,24 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     mm = str(month).zfill(2)
 
     # 파일 목록 수집 (NFD→NFC 정규화 필수)
+    # PDF 원고 — 정답본·편집 원고와 중복인 것은 제외 (로그 남김)
+    pdf_excl = _step3_pdf_exclusions(step3_dir, log)
     files = {}
     for fname_raw in os.listdir(step3_dir):
         fname = _nfc(fname_raw)
-        if not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
+        is_pdf = _is_pdf_name(fname)
+        if not is_pdf and not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
+            continue
+        if is_pdf and fname_raw in pdf_excl:
             continue
         # "고1 25년 9월 20번.hwp" 또는 "고1 25년 9월 41~42번.docx"
         # "번" 뒤 공백 허용 (예: "18번 .hwpx" 사용자 입력 오타 대응)
-        m = re.search(r'(\d+(?:~\d+)?)번\s*\.(?:hwpx?|docx)', fname, re.I)
+        m = re.search(r'(\d+(?:~\d+)?)번\s*\.(?:hwpx?|docx|pdf)', fname, re.I)
         if m:
             num_str = m.group(1)
+            prev = files.get(num_str)
+            if is_pdf and prev and not _is_pdf_name(prev):
+                continue    # 같은 번호의 편집 원고(hwp/docx)가 있으면 PDF 는 안 쓴다
             files[num_str] = os.path.join(step3_dir, fname_raw)  # 원본 경로 사용
 
     normal_items = []
@@ -3019,6 +3146,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
 
         if fpath.lower().endswith('.docx'):
             paras = _docx_extract_paragraphs(fpath, extract_underline)
+        elif _is_pdf_name(fpath):
+            paras = _step3_pdf_paragraphs(fpath, extract_underline, image_dir,
+                                          log)
         else:
             paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                             exclude_footnotes=step3_exclude_footnotes,
@@ -3099,7 +3229,8 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     if not normal_items and not short_items:
         for fname_raw in sorted(os.listdir(step3_dir)):
             fname = _nfc(fname_raw)
-            if not (fname.endswith('.hwp') or fname.endswith('.hwpx') or fname.endswith('.docx')):
+            if not (fname.endswith('.hwp') or fname.endswith('.hwpx') or fname.endswith('.docx')
+                    or (_is_pdf_name(fname) and fname_raw not in pdf_excl)):
                 continue
             m = re.search(r'(\d+)\s*강\s*(\d+)(?:~(\d+))?\s*번(?:\s*(\d{6}))?', fname)
             if not m:
@@ -3110,6 +3241,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             fpath = os.path.join(step3_dir, fname_raw)
             if fpath.lower().endswith('.docx'):
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
+            elif _is_pdf_name(fpath):
+                paras = _step3_pdf_paragraphs(fpath, extract_underline, None,
+                                              log)
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes,
@@ -3151,9 +3285,12 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         candidate_files = []
         for fname_raw in sorted(os.listdir(step3_dir)):
             fname = _nfc(fname_raw)
-            if not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
+            if _is_pdf_name(fname):
+                if fname_raw in pdf_excl:
+                    continue    # 정답본·편집 원고와 중복 (위에서 로그)
+            elif not fname.endswith('.hwp') and not fname.endswith('.hwpx') and not fname.endswith('.docx'):
                 continue
-            if _had_number_matching and re.search(r'\d+번\.(?:hwpx?|docx)', fname, re.I):
+            if _had_number_matching and re.search(r'\d+번\.(?:hwpx?|docx|pdf)', fname, re.I):
                 continue  # 번호 매칭으로 이미 처리 대상이었던 파일
             if fname_raw.startswith('.'):
                 continue
@@ -3168,6 +3305,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             fpath = os.path.join(step3_dir, fname_raw)
             if fpath.lower().endswith('.docx'):
                 paras = _docx_extract_paragraphs(fpath, extract_underline)
+            elif _is_pdf_name(fpath):
+                paras = _step3_pdf_paragraphs(fpath, extract_underline,
+                                              image_dir, log)
             else:
                 paras = _hwp_extract_paragraphs(fpath, extract_underline,
                                                 exclude_footnotes=step3_exclude_footnotes,
@@ -3209,7 +3349,11 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     # additive 필드 — 기존 JSX는 모르는 키를 무시하므로 v1 경로 무영향.
     # 판정 실패 시 주석 없이 통과 (fail-open: 조판을 막지 않는다).
     _annotate_step3_kinds(normal_items + short_items, log)
-    return {"normal": normal_items, "short": short_items}
+    out = {"normal": normal_items, "short": short_items}
+    if pdf_excl:
+        # 쌍방 대조(reconcile_step3)·미사용 원고 게이트가 '의도된 제외'로 읽는다
+        out["excluded_pdfs"] = sorted(_nfc(n) for n in pdf_excl)
+    return out
 
 
 def _annotate_step3_kinds(items, log=None):

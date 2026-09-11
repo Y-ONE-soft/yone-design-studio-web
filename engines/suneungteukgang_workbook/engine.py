@@ -9,6 +9,8 @@ from core.paths import resolve_config
 from engines.workbook.parser import parse_manuscript_folder
 from engines.final.extractor import _gdrive_safe_copy
 
+from engines.workbook_v2.routing import pdf_routes_to_step3 as _pdf_step3
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 # JSX는 워크북 엔진의 run.jsx 공유 (동일한 STEP 처리 로직)
@@ -84,10 +86,10 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
             "slots": [
                 {
                     "key": "manuscripts",
-                    "label": "추가 원고 파일 (선택)",
+                    "label": "추가 원고 파일 (선택 · PDF는 Step3만)",
                     "required": False,
                     "multiple": True,
-                    "accept": ".docx,.hwp,.hwpx",
+                    "accept": ".docx,.hwp,.hwpx,.pdf",
                 },
             ]
         }
@@ -327,7 +329,7 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
                             if name2.startswith(".") or not os.path.isfile(src2):
                                 continue
                             ext2 = os.path.splitext(name2)[1].lower()
-                            if ext2 in (".docx", ".hwp", ".hwpx"):
+                            if ext2 in (".docx", ".hwp", ".hwpx", ".pdf"):
                                 if _is_answer_or_explanation(name2):
                                     continue
                                 _safe_copy(src2, os.path.join(step3_dir, name2))
@@ -347,6 +349,7 @@ class SuneungteukgangWorkbookEngine(BaseEngine):
                     (_is_step3_name(fname_nfc) and not _is_answer_or_explanation(fname_nfc))
                     or "번.hwp" in fname_nfc or "번.hwpx" in fname_nfc
                     or "번.docx" in fname_nfc
+                    or _pdf_step3(fname_nfc)   # PDF 는 Step3 원고로만 (2026-09-12)
                 )
                 if is_step3:
                     dest = os.path.join(step3_dir, fname)

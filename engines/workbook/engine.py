@@ -8,6 +8,8 @@ from core.base import BaseEngine, safe_copy_indd, safe_copy
 from core.paths import resolve_config
 from engines.workbook.parser import parse_manuscript_folder
 
+from engines.workbook_v2.routing import pdf_routes_to_step3 as _pdf_step3
+
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _CONFIG_PATH = os.path.join(_DIR, "config.json")
 _JSX_TEMPLATE = os.path.join(_DIR, "jsx", "run.jsx")
@@ -51,10 +53,10 @@ class WorkbookEngine(BaseEngine):
             "slots": [
                 {
                     "key": "manuscripts",
-                    "label": "원고 파일 (Step1~3 전체)",
+                    "label": "원고 파일 (Step1~3 전체 · PDF는 Step3만)",
                     "required": True,
                     "multiple": True,
-                    "accept": ".docx,.hwp,.hwpx",
+                    "accept": ".docx,.hwp,.hwpx,.pdf",
                 },
             ]
         }
@@ -89,7 +91,8 @@ class WorkbookEngine(BaseEngine):
                 #   2) "N번" 또는 "N~N번" 패턴 포함 (예: "20번", "41~42번", "15강 1번")
                 is_step3 = (
                     bool(re.search(r'(?:스텝|step)[\s_-]*3(?!\d)', fname_nfc, re.I)) or
-                    bool(re.search(r'\d+(?:\s*~\s*\d+)?\s*번', fname_nfc))
+                    bool(re.search(r'\d+(?:\s*~\s*\d+)?\s*번', fname_nfc)) or
+                    _pdf_step3(fname_nfc)   # PDF 는 Step3 원고로만 (2026-09-12)
                 )
                 if is_step3:
                     dest = os.path.join(step3_dir, fname_nfc)

@@ -56,6 +56,7 @@ _OK_RANGES = (
     (0x3000, 0x303F), (0x3200, 0x32FF),      # CJK 문장부호·괄호 문자
     (0x4E00, 0x9FFF),                        # 한자
     (0xFF00, 0xFFEF),                        # 전각
+    (0xFE00, 0xFE0F), (0x1F000, 0x1FAFF),    # 변이 선택자·이모지(날씨 아이콘 등)
 )
 
 
@@ -589,10 +590,16 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                         subs.append(c)
                     elif c["c"] == " " and not c.get("syn"):
                         real_sp += 1
+        n_all = sum(len(ln["chars"]) for pg in pages for ln in pg["lines"])
         if subs:
-            rel = statistics.median((c["x1"] - c["x0"]) / (c["size"] or 1)
-                                    for c in subs)
-            if rel < 0.45 and real_sp < 0.2 * len(subs):
+            rels = [(c["x1"] - c["x0"]) / (c["size"] or 1) for c in subs]
+            rel = statistics.median(rels)
+            # 공백이라면 폭이 한 가지다 (동아 100% 균일 vs 깨진 YBM 76% —
+            # 여러 글리프가 한데 뭉개진 것). 비율도 공백다워야 한다(≤30%).
+            uniform = sum(1 for w in rels
+                          if abs(w - rel) <= 0.15 * max(rel, 0.05)) / len(rels)
+            if (rel < 0.45 and uniform >= 0.9 and real_sp < 0.2 * len(subs)
+                    and len(subs) <= 0.3 * max(1, n_all)):
                 for c in subs:
                     c["c"] = " "
                 for pg in pages:

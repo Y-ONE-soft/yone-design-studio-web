@@ -597,9 +597,9 @@ def _is_struct_header_candidate(paras, i):
 _HEADER_STEPS = ("step1_c2", "step2_c1", "step2_b1", "step2_a1", "step1_c1")
 
 # ── G9: 미사용 업로드 원고 (W13) ─────────────────────────────────────────────
-_MS_EXTS = (".docx", ".hwp", ".hwpx")
+_MS_EXTS = (".docx", ".hwp", ".hwpx", ".pdf")   # PDF = Step3 원고 (2026-09-12)
 _RE_ANSWERISH = re.compile(r"정답|답지|답안|해설|answer", re.I)
-_RE_S3_NUMFILE = re.compile(r"\d+(?:\s*~\s*\d+)?\s*번\s*\.(?:hwpx?|docx)",
+_RE_S3_NUMFILE = re.compile(r"\d+(?:\s*~\s*\d+)?\s*번\s*\.(?:hwpx?|docx|pdf)",
                             re.I)
 _RE_VARIANT = re.compile(r"변형\s*문제")
 
@@ -630,6 +630,9 @@ def find_unused_uploads(content, uploads_dir):
                   for n in ((content or {}).get("superseded_manuscripts")
                             or [])}
     st3 = steps.get("step3") or {}
+    if isinstance(st3, dict):
+        # 파서가 뺀 PDF(편집 원고와 중복·정답본·판독 불가) — 의도된 제외
+        superseded |= {_norm_fname(n) for n in (st3.get("excluded_pdfs") or [])}
     st3_items = ((st3.get("normal") or []) + (st3.get("short") or [])
                  if isinstance(st3, dict) else [])
     st3_textbook = any(it.get("question_num") == "textbook"
@@ -882,6 +885,9 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                         raw = hwpx_extract_paragraphs(fp)
                     elif low.endswith(".hwp"):
                         raw = hwp_extract_paragraphs(fp)
+                    elif low.endswith(".pdf"):
+                        from core.extract.pdf import _pdf_extract_paragraphs
+                        raw = _pdf_extract_paragraphs(fp, False)
                     else:
                         continue
                 except Exception:                            # noqa: BLE001
