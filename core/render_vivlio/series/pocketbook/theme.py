@@ -519,8 +519,13 @@ stroke-width='0.7' stroke-linecap='round'/></svg>");
 
 /* ── 귀 인덱스 ────────────────────────────────
    오른쪽 면 바깥 모서리에 물리는 파트 딱지. 재단선 밖까지 늘여 놓아야
-   가장자리에 흰 줄이 안 생긴다(띠와 같은 이유). 안쪽 모서리만 둥글다. */
+   가장자리에 흰 줄이 안 생긴다(띠와 같은 이유). 안쪽 모서리만 둥글다.
+   ⚠ 글자는 **재단 뒤에 남는 자리**의 한가운데에 와야 한다. 색면 전체를
+     기준으로 가운데 맞춤을 하면 도련 3mm 의 절반인 1.5mm 만큼 오른쪽으로
+     쏠려 보인다(사용자 지적, 실측 148.0mm vs 보이는 한가운데 146.5mm).
+     오른쪽에 도련만큼 안쪽 여백을 주어 **보이는 폭 안에서** 가운데 맞춘다. */
 .stab{position:absolute;display:flex;align-items:center;justify-content:center;
+  box-sizing:border-box;padding-right:__bleed__;
   font-family:PBElice;font-size:__tab_size__pt;font-weight:700;
   letter-spacing:.02em;line-height:1;
   writing-mode:vertical-rl;text-orientation:upright;
