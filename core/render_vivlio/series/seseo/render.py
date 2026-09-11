@@ -133,9 +133,20 @@ DARROW = ('<div class="darrow"><svg viewBox="0 0 10 12" xmlns="http://www.w3.org
 
 
 # ── 머리(러닝) ─────────────────────────────────────────────────────────
-def _svg_hd(body):
+def _svg_hd(body, texts=""):
+    """머리 한 벌 = 도형(SVG) + 글자(HTML).
+
+    ⚠ 글자를 SVG `<text>` 로 두면 **웹서체를 안 탄다**(Vivliostyle 실측 — 가나초콜릿이
+      시스템 고딕으로 대체됐다). 글자는 HTML 로 얹고 `.hd` 안에서만 절대 위치를 준다
+      (러닝 요소 자체에는 position 을 주지 않는다).
+    """
     return ('<div class="hd"><svg viewBox="0 0 216 31.5" xmlns="http://www.w3.org/2000/svg">'
-            f'{body}</svg></div>')
+            f'{body}</svg>{texts}</div>')
+
+
+def _ht(cls, left, top, text, right=None):
+    pos = f"right:{right}mm" if right is not None else f"left:{left}mm"
+    return f'<span class="ht {cls}" style="{pos};top:{top}mm">{esc(text)}</span>'
 
 
 def band(part, title):
@@ -148,15 +159,13 @@ def band(part, title):
         f'<rect x="26.8" y="12.5" width="143.53" height="13.5" rx="6.75" fill="{p["pill"]}"/>'
         '<path d="M61.3 12.74H163.55A6.5 6.5 0 0 1 163.55 25.74H61.3Z" fill="#fff"/>'
         f'<path d="M31.8 27V12.3Q31.8 11.6 32.5 11.6H41.84Q42.54 11.6 42.54 12.3V27Z" '
-        f'fill="{p["tab"]}"/>'
-        '<text x="33.19" y="18.75" font-family="Elice" font-weight="700" font-size="4.586" '
-        'fill="#ffd67d">PA</text>'
-        '<text x="33.46" y="23.69" font-family="Elice" font-weight="700" font-size="4.586" '
-        'fill="#ffd67d">RT</text>'
-        f'<text x="46.33" y="23.05" font-family="Elice" font-weight="500" font-size="7.761" '
-        f'fill="#fff">{no}</text>'
-        f'<text x="66.13" y="21.2" font-family="Elice" font-weight="500" font-size="4.939" '
-        f'fill="#231f20">{esc(title)}</text>')
+        f'fill="{p["tab"]}"/>',
+        _ht("h-pa", 33.19, BAND_Y["pa"], "PA") + _ht("h-pa", 33.46, BAND_Y["rt"], "RT")
+        + _ht("h-no", 46.33, BAND_Y["no"], no) + _ht("h-ti", 66.13, BAND_Y["ti"], title))
+
+
+# 머리 글자 윗변(mm, 줄높이 1) — 정본 글자 중심에 맞춰 잰 값
+BAND_Y = {"pa": 14.88, "rt": 19.82, "no": 16.14, "ti": 17.09, "logo": 16.82}
 
 
 def curve(part, side, label=""):
@@ -169,10 +178,8 @@ def curve(part, side, label=""):
             f'stroke-width=".42"/>'
             f'<circle cx="{x0}" cy="20.09" r="1.14" fill="{p["dot"]}"/>'
             f'<circle cx="{x1}" cy="20.09" r="1.14" fill="{p["dot"]}"/>')
-    if label:
-        body += (f'<text x="191.4" y="19.55" text-anchor="end" font-family="Ghana" '
-                 f'font-size="3.528" fill="#3c75ba">{esc(label)}</text>')
-    return _svg_hd(body)
+    texts = _ht("h-logo", 0, BAND_Y["logo"], label, right=24.6) if label else ""
+    return _svg_hd(body, texts)
 
 
 def runners(cfg, part, title, with_band=True):

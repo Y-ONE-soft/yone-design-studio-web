@@ -50,7 +50,6 @@ from core.extract.extractors import (  # Phase 1: 추출 계층 core 이동 (동
 from core.extract.pdf import (  # PDF Step3 원고 (사용자 지시 2026-09-12)
     _pdf_extract_paragraphs,
     PdfTextUnreadable,
-    content_words as _pdf_content_words,
 )
 
 
@@ -2833,17 +2832,38 @@ def _step3_pdf_paragraphs(fpath, extract_underline=True, image_dir=None,
     return paras
 
 
+_RE_S3_KEY_LESSON = re.compile(r"(\d+)\s*강\s*(\d+(?:\s*~\s*\d+)?)\s*번")
+_RE_S3_KEY_NUM = re.compile(r"(\d+(?:\s*~\s*\d+)?)\s*번")
+
+
+def _s3_name_key(name):
+    """파일 이름의 문항 번호 열쇠 — ('강', 1, '3') · ('번', '20') · None."""
+    n = _nfc(name or "")
+    m = _RE_S3_KEY_LESSON.search(n)
+    if m:
+        return ("강", m.group(1), re.sub(r"\s+", "", m.group(2)))
+    m = _RE_S3_KEY_NUM.search(n)
+    if m:
+        return ("번", re.sub(r"\s+", "", m.group(1)))
+    return None
+
+
 def _step3_pdf_exclusions(step3_dir, log=None):
     """Step3 폴더의 PDF 중 조판에 쓰지 않을 것 → {원래 파일명: 이유}.
 
-    PDF 는 편집 원고(hwp/hwpx/docx)의 인쇄본인 경우가 많다 — 수특라이트 12강
-    Step3 는 같은 이름의 hwp+pdf, 교과서 Step3 는 업체 PDF 옆에 그걸 옮긴
-    docx 가 있다(2026-09-12 실측). 둘 다 읽으면 문항이 두 번 들어간다.
+    PDF 는 편집 원고(hwp/hwpx/docx)의 인쇄본이거나 참고본인 경우가 많다
+    (2026-09-12 GDrive Step3 폴더 44개 실측): 같은 이름의 hwp+pdf 짝
+    (수특라이트 12강·능률(민) 4과·명일여고1 '1강 1번'), 업체 원본 PDF 에서
+    문항을 골라 만든 hwp 옆의 원본 PDF(배재고 '너른터'), 조판본 .indd 를 뽑은
+    PDF(서문여고). 둘 다 읽으면 문항이 두 번 들어간다. 그래서
       · 정답/해설본 PDF — 제외 (문제 원고가 아님)
-      · 같은 폴더 편집 원고와 내용 낱말이 80% 이상 겹치는 PDF — 제외 (편집 원고 우선)
-      · 글자 정보를 읽을 수 없는데 편집 원고가 함께 있는 PDF — 제외
-    편집 원고가 없는 폴더의 PDF 는 그대로 쓴다. 판정은 파일 이름이 아니라
-    내용 겹침(구조)으로 한다 — 업체 PDF 와 옮긴 docx 는 이름이 전혀 다르다."""
+      · 같은 이름의 편집 원고가 있는 PDF — 제외 (그 원고의 인쇄본)
+      · 문항 번호('N번'·'N강 M번')가 같은 편집 원고가 있는 PDF — 제외
+      · 번호 없는 PDF 인데 폴더에 편집 원고가 있으면 — 제외 (참고본)
+    편집 원고가 없는 폴더의 PDF 와, 편집 원고와 번호가 겹치지 않는 번호
+    PDF 만 쓴다. 내용 겹침(낱말 80%)으로 가르던 첫 판은 '업체 원본에서
+    골라 만든 hwp' 옆 원본 PDF 를 못 걸렀다(원본 쪽이 더 많다) — 파일
+    목록만으로 판정하고 PDF 는 열지 않는다(깨진 참고본 PDF 로 멈추지 않게)."""
     try:
         names = sorted(os.listdir(step3_dir))
     except OSError:
@@ -2861,45 +2881,25 @@ def _step3_pdf_exclusions(step3_dir, log=None):
     key = (os.path.abspath(step3_dir), tuple(sig))
     if key in _S3_PDF_EXCL_CACHE:
         return _S3_PDF_EXCL_CACHE[key]
-    excl = {}
-    for n in pdfs:
-        if _RE_S3_ANSWER_NAME.search(_nfc(n)):
-            excl[n] = "정답/해설본 — 문제 원고가 아님"
-    rest = [n for n in pdfs if n not in excl]
     srcs = [n for n in names
             if os.path.splitext(n)[1].lower() in _S3_EDIT_EXTS
             and not n.startswith((".", "~$"))]
-    if rest and srcs:
-        words = set()
-        for n in srcs:
-            fp = os.path.join(step3_dir, n)
-            try:
-                if n.lower().endswith(".docx"):
-                    ps = _docx_extract_paragraphs(fp, False)
-                else:
-                    ps = _hwp_extract_paragraphs(fp, False,
-                                                 exclude_footnotes=True)
-            except Exception:                                  # noqa: BLE001
-                continue
-            words |= _pdf_content_words(
-                ((p.get("text") if isinstance(p, dict) else str(p)) or "")
-                for p in ps)
-        for n in rest:
-            fp = os.path.join(step3_dir, n)
-            try:
-                pw = _pdf_content_words(
-                    p.get("text", "") for p in _step3_pdf_paragraphs(fp, False))
-            except PdfTextUnreadable:
-                excl[n] = ("PDF 글자 정보를 읽을 수 없음 — 같은 폴더의 편집 "
-                           "원고(hwp/docx)를 쓴다")
-                continue
-            if not pw:
-                excl[n] = "PDF 에 원고 글자가 없음"
-                continue
-            cov = len(pw & words) / len(pw)
-            if cov >= 0.8:
-                excl[n] = (f"같은 폴더의 hwp/docx 원고와 내용 낱말 {cov:.0%} "
-                           f"겹침 — 편집 원고 우선")
+    src_stems = {os.path.splitext(_nfc(n))[0].strip().lower() for n in srcs}
+    src_keys = {_s3_name_key(n) for n in srcs} - {None}
+    excl = {}
+    for n in pdfs:
+        nn = _nfc(n)
+        stem = os.path.splitext(nn)[0].strip().lower()
+        nkey = _s3_name_key(nn)
+        if _RE_S3_ANSWER_NAME.search(nn):
+            excl[n] = "정답/해설본 — 문제 원고가 아님"
+        elif stem in src_stems:
+            excl[n] = "같은 이름의 편집 원고(hwp/docx)가 있음 — 그 원고의 인쇄본"
+        elif nkey and nkey in src_keys:
+            excl[n] = "같은 문항 번호의 편집 원고가 있음 — 편집 원고 우선"
+        elif not nkey and srcs:
+            excl[n] = ("번호 없는 PDF — 같은 폴더에 편집 원고(hwp/docx)가 있어 "
+                       "참고본으로 봄. PDF 로 조판하려면 편집 원고 없이 넣을 것")
     if log:
         for n, why in excl.items():
             log(f"[파서] step3 PDF 제외: {_nfc(n)} — {why}")

@@ -14,7 +14,7 @@ fitz = pytest.importorskip("fitz")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.extract.pdf import (_pdf_extract_paragraphs, PdfTextUnreadable,  # noqa: E402
-                              _glue, _check_readable)
+                              _glue, _check_readable, _breaks)
 
 KO = "korea"          # PyMuPDF 내장 한글 글꼴
 
@@ -167,7 +167,7 @@ def test_parser_prefers_edit_source_and_skips_answer_pdf(tmp_path):
         lines += [f"{i}. What is the main idea A{i}?", LOREM,
                   "① option one", "② option two", "③ option three"]
     _docx(str(s3 / "변형문제.docx"), lines)
-    _pool_pdf(str(s3 / "업체 변형문제 인쇄본.pdf"))       # 이름이 달라도 내용이 같다
+    _pool_pdf(str(s3 / "업체 변형문제 인쇄본.pdf"))       # 번호 없는 PDF = 참고본
     _pool_pdf(str(s3 / "변형문제 정답지.pdf"), tag="Z")
     logs = []
     st3 = _parse_step3_folder(str(s3), 0, 0, 0, [], [], {}, log=logs.append)
@@ -215,3 +215,40 @@ def test_gate_counts_excluded_pdf_as_expected(tmp_path):
     expected, suspicious = find_unused_uploads(content, str(up))
     assert "업체 인쇄본.pdf" in expected
     assert suspicious == []
+
+
+def test_parser_pdf_twins_by_name_and_number(tmp_path):
+    # 명일여고1 '1강 1번.hwpx' + '1강 1번.pdf' 짝 실측 — 같은 이름·같은 번호는
+    # 편집 원고만, 편집 원고가 없는 번호('1강 3번.pdf')는 PDF 로 읽는다
+    from engines.workbook.parser import _parse_step3_folder
+    s3 = tmp_path / "Step3"
+    s3.mkdir()
+    _docx(str(s3 / "1강 1번.docx"), ["다음 글의 요지로 가장 적절한 것은?",
+                                    "DOCX " + LOREM, "① a", "② b"])
+    _pool_pdf(str(s3 / "1강 1번.pdf"), n=1, tag="TWIN")
+    _pool_pdf(str(s3 / "1강 3번.pdf"), n=1, tag="ONLY")
+    logs = []
+    st3 = _parse_step3_folder(str(s3), 0, 0, 0, [], [], {}, log=logs.append)
+    text = " ".join(p["text"] for it in st3["normal"] for p in it["paragraphs"])
+    assert "DOCX" in text and "ONLY1" in text and "TWIN1" not in text
+    assert st3["excluded_pdfs"] == ["1강 1번.pdf"]
+
+
+def _line(text, x0=40.0, x1=285.0, base=100.0, size=9.0):
+    chars = [{"c": c, "x0": x0 + i * 4.0, "x1": x0 + i * 4.0 + 4.0, "ul": False}
+             for i, c in enumerate(text)]
+    return {"text": text, "chars": chars, "x0": x0, "x1": x1, "base": base,
+            "size": size, "_colkey": (0, "L")}
+
+
+def test_prompt_ends_at_instruction_even_when_line_is_full():
+    # 명일3 수특 추가문제 실측 — 발문 끝줄이 단 끝까지 차서 우리말 줄이 붙었다
+    prev = _line("모두 사용하여 영작하시오.", x1=284.0)
+    cur = _line("부부는 서로 공감하려는 동기가 매우 높다;", base=113.0)
+    assert _breaks(prev, cur, 285.0, 13.0, "1", 2, para_is_q=True)[0]
+    # 발문이 아닌 한글 단락은 단 끝까지 찼으면 이어진다
+    assert not _breaks(prev, cur, 285.0, 13.0, "부", 2, para_is_q=False)[0]
+    # 발문 안 문장 중간 줄바꿈은 이어진다
+    mid = _line("12. 다음 글의 밑줄 친 우리말과 같은 뜻이 되도록", x1=284.0)
+    nxt = _line("<보기>에 주어진 단어만을 모두 사용하여", base=113.0)
+    assert not _breaks(mid, nxt, 285.0, 13.0, "1", 1, para_is_q=True)[0]

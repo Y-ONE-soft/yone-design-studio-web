@@ -98,7 +98,10 @@ def _dedup_versions(files, log=None):
         base = unicodedata.normalize("NFC", os.path.basename(f))
         m = _RE_VER.search(base)
         school = os.path.basename(os.path.dirname(f))
-        key = (school, m.group(1).replace(" ", "") if m else base)
+        # IDML 과 PDF 는 서로의 판본이 아니다 — 같은 번호라도 글이 다를 수 있다
+        #   (둘 사이는 `_pdf_sources` 가 글로 가른다)
+        key = (school, m.group(1).replace(" ", "") if m else base,
+               os.path.splitext(base)[1].lower())
         groups.setdefault(key, []).append(f)
     out, dropped = [], []
     for key, fs in sorted(groups.items()):
@@ -130,22 +133,59 @@ def _pdf_sources(files, log=None):
         m = _RE_VER.search(base)
         return (os.path.basename(os.path.dirname(f)),
                 m.group(1).replace(" ", "") if m else None)
-    have = set(key(f) for f in files if f.lower().endswith(".idml"))
+    have = {}
+    for f in files:
+        if f.lower().endswith(".idml"):
+            have.setdefault(key(f), []).append(f)
     out = []
     for f in files:
         if not f.lower().endswith(".pdf"):
             out.append(f)
             continue
         k = key(f)
-        if k[1] is None or k in have:
-            continue          # 분석본 번호 없는 PDF(표지 등) · IDML 이 있는 판
-        if analysis_pdf.is_code_typeset(f):
-            out.append(f)
-        elif log:
-            log("  ⚠ %s — 인디자인 PDF 뿐, IDML 이 없다 → 이 분석본 지문을 못 "
-                "읽는다(IDML 내보내기 필요)"
-                % unicodedata.normalize("NFC", os.path.basename(f)))
+        name = unicodedata.normalize("NFC", os.path.basename(f))
+        if k[1] is None:
+            continue          # 분석본 번호가 없는 PDF(표지 등)
+        if not analysis_pdf.is_code_typeset(f):
+            if k not in have and log:
+                log("  ⚠ %s — 인디자인 PDF 뿐, IDML 이 없다 → 이 분석본 지문을 못 "
+                    "읽는다(IDML 내보내기 필요)" % name)
+            continue
+        # ⚠ **번호가 같다고 같은 분석본이 아니다.** 명일2 는 공유 폴더의 05 가
+        #   `추가 읽기자료`(PDF), 인디자인 폴더의 05 가 `25년10월` 이다(실측).
+        #   번호로 가르면 IDML 이 들어오는 순간 PDF 지문이 조용히 빠진다 —
+        #   PDF 지문 머리가 그 IDML 글에 **실제로 있을 때만** IDML 에 양보한다.
+        if k in have and _same_analysis(f, have[k]):
+            if log:
+                log("  [판본] %s — 같은 분석본의 IDML 이 있어 IDML 을 쓴다" % name)
+            continue
+        out.append(f)
     return out
+
+
+def _same_analysis(pdf, idmls):
+    """PDF 의 지문 머리(영어 60자)가 전부 그 IDML 글에 있으면 같은 분석본이다."""
+    import zipfile
+    import html as _html
+    import analysis_pdf
+
+    def letters(s):
+        return re.sub(r"[^a-z]", "", (s or "").lower())
+    heads = [h for h in (letters(t)[:60] for t in analysis_pdf.clean_texts(pdf))
+             if len(h) >= 40]
+    if not heads:
+        return False
+    for f in idmls:
+        try:
+            z = zipfile.ZipFile(f)
+        except Exception:
+            continue
+        txt = "".join(letters(_html.unescape("".join(re.findall(
+            r"<Content>(.*?)</Content>", z.read(n).decode("utf-8", "replace"),
+            re.S)))) for n in z.namelist() if n.startswith("Stories/"))
+        if all(h in txt for h in heads):
+            return True
+    return False
 
 
 # 고교 영어 **과목명**(교육과정이 정한 이름). 코드 조판 분석본은 머리말에 과목명을

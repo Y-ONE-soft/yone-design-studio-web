@@ -443,6 +443,8 @@ _RE_PARA_HEAD = re.compile(
 _RE_QHEAD = re.compile(r"^\s*\d{1,3}\s*[.)]\s*[가-힣\[(<“\"]")
 # 선지 번호만 — ⓐ~ⓔ 는 빈칸·어법 지문 **안** 표지로 줄 머리에 자주 걸린다
 _CIRCLED = set("①②③④⑤⑥⑦⑧⑨⑩")
+# 한글 지시문 발문의 끝 — '것은?' · '영작하시오.' · '쓰시오.2)' (각주번호 포함)
+_RE_PROMPT_END = re.compile(r"[가-힣][?.]\)?\s*(?:\d{1,3}\))?\s*$")
 _RE_TERMINAL = re.compile(
     r"[.?!…。:;\]\)>》〉】」』\"'”’](?:\s*\d{1,3}\))?\s*$")
 
@@ -461,7 +463,8 @@ def _first_word_width(ln):
     return ch[j - 1]["x1"] - ch[i]["x0"]
 
 
-def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1):
+def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1,
+            para_is_q=False):
     """(끊나?, 빈 줄 간격 때문인가?)
 
     para_first: 지금 짓고 있는 단락의 첫 글자 — 선지(①) 단락 뒤에 선지가
@@ -472,6 +475,12 @@ def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1):
     if not ptxt or not ctxt:
         return True, False
     if _RE_QHEAD.match(ctxt):
+        return True, False
+    # 번호+한글 지시문으로 시작한 발문은 지시문이 끝나면(…것은? / …하시오.)
+    # 거기서 끝난다. 발문 끝줄이 우연히 단 끝까지 차면 다음 줄(우리말 뜻·
+    # 지문)이 발문에 붙던 문제 — 명일3 수특 추가문제 36곳 실측. 발문이 줄을
+    # 넘길 때는 문장 중간에서 넘어가므로 문장 끝에서 끊는 것은 안전하다.
+    if para_is_q and _RE_PROMPT_END.search(ptxt):
         return True, False
     if ctxt[0] in _CIRCLED and para_first in _CIRCLED and para_lines <= 3:
         return True, False
@@ -797,10 +806,11 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                     prev = ln
                     continue
                 first = next((c["c"] for c in cur if not c["c"].isspace()), "")
+                head = "".join(c["c"] for c in cur[:24])
                 brk, blank = _breaks(prev, ln,
                                      edges.get(prev["_colkey"], prev["x1"]),
                                      pitches.get(prev["_colkey"], 12.0), first,
-                                     cur_lines)
+                                     cur_lines, bool(_RE_QHEAD.match(head)))
                 if brk:
                     flush()
                     if blank:
@@ -829,19 +839,3 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
         return paras
     finally:
         doc.close()
-
-
-def pdf_content_words(pdf_path):
-    """중복 판정용 내용 낱말 집합 (영어 4자+ 소문자 · 한글 2자+).
-    읽을 수 없으면 PdfTextUnreadable."""
-    paras = _pdf_extract_paragraphs(pdf_path, False, exclude_footnotes=True)
-    return content_words(p.get("text", "") for p in paras)
-
-
-def content_words(texts):
-    out = set()
-    for t in texts:
-        t = unicodedata.normalize("NFC", t or "")
-        out.update(w.lower() for w in re.findall(r"[A-Za-z]{4,}", t))
-        out.update(re.findall(r"[가-힣]{2,}", t))
-    return out
