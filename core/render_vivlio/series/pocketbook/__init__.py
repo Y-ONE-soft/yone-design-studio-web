@@ -802,24 +802,136 @@ def _card_in_passage(card, body):
     return any(_stem(x) and _stem(x) in body for x in w)
 
 
-def _check_cut(rows, cfg, log):
-    """G-P13 — **원본 IDML 대비 지문이 잘렸는가**.
+def _check_cut(rows, cfg, report, log):
+    """G-P13 — **분석본 원문 대비 지문이 잘렸는가**.
 
     ⚠ 예전 검사는 `원고 ↔ 지면` 만 봤다. 분석본 파서가 **원고를 만들 때 이미**
       잘라 내면 둘이 사이좋게 일치해 "유실 0" 으로 통과한다(실측: 마지막 문장이
-      다섯 지문에서 사라졌는데 전 게이트가 다 통과했다). 원본까지 거슬러 본다.
+      다섯 지문에서 사라졌는데 전 게이트가 다 통과했다).
+    ⚠ 이 게이트는 한동안 **빈 껍데기**였다(경로만 모으고 `return None`, 부르는
+      곳도 없었다). 그래서 광문1 2강 분석의 `I've got your back.` 이 2차 검수까지
+      빠진 채 나갔다(연구원 지적). 있다고 믿은 그물이 없었던 것이 진짜 원인이다.
+
+    분석본의 **문장별 해석이 끼어 있는 스토리**를 원본으로 삼는다. 그 스토리에서
+    우리 지문의 마지막 글자 뒤로 **한글(그 문장의 해석)이 나오기 전까지** 영어가
+    더 있으면, 그것은 마지막 번호 문장의 나머지다 — 잘린 것이다. 요약·문제는
+    마지막 해석 **뒤에** 오므로 여기에 걸리지 않는다. 각주(`*word: 뜻`)는 `*`·`:`
+    에서 멈춰 제외한다.
     """
-    import glob
-    import unicodedata as U
-    src = ""
-    pat = (cfg.section("options") or {}).get("analysis_glob")
-    for g in (pat or []) if isinstance(pat, (list, tuple)) else ([pat] if pat else []):
-        for f in glob.glob(cfg.resolve(g)):
-            src += f
-    return None
+    import zipfile
+    import html as _html
+    opt = cfg.section("options") or {}
+    srcs = cfg.resolve(opt.get("analysis") or [])
+    if isinstance(srcs, str):
+        srcs = [srcs]
+    files = []
+    for s_ in srcs or ():
+        if s_ and os.path.isdir(s_):
+            files += [os.path.join(s_, f) for f in os.listdir(s_)
+                      if f.lower().endswith(".idml")]
+        elif s_ and str(s_).lower().endswith(".idml") and os.path.exists(s_):
+            files.append(s_)
+    if not files:
+        return
+    seqs = []
+    for f in files:
+        try:
+            z = zipfile.ZipFile(f)
+        except Exception:
+            continue
+        for n in z.namelist():
+            if not n.startswith("Stories/"):
+                continue
+            x = z.read(n).decode("utf-8", "replace")
+            t = _html.unescape("".join(re.findall(r"<Content>(.*?)</Content>",
+                                                  x, re.S)))
+            if sum(1 for c in t if "\uac00" <= c <= "\ud7a3") < 30:
+                continue                      # 해석이 끼어 있는 분석 스토리만
+            raw = re.sub(r"[^a-z\uac00-\ud7a3\u2460-\u2464*:]", "", t.lower())
+            idx = [k for k, ch in enumerate(raw) if "a" <= ch <= "z"]
+            seqs.append((raw, idx, "".join(raw[k] for k in idx)))
+    cut = []
+    for r in rows:
+        if r.get("kind") == "memtest" or r.get("short"):
+            continue
+        P = re.sub(r"[^a-z]", "", pdata.plain_passage(r).lower())
+        if len(P) < 200:
+            continue
+        head, tail = P[:50], P[-40:]
+        for raw, idx, E in seqs:
+            i = E.find(head)
+            if i < 0:
+                continue
+            j = i + len(P) - len(tail) if E[i:i + len(P)] == P \
+                else E.find(tail, i)
+            if j < 0:
+                continue
+            k = idx[j + len(tail) - 1] + 1
+            more = []
+            for ch in raw[k:]:
+                if "a" <= ch <= "z":
+                    more.append(ch)
+                else:
+                    break                     # 해석·선택지·각주에서 멈춘다
+            if len(more) >= 10:
+                cut.append((r.get("key") or r.get("label") or "?",
+                            "".join(more)[:36]))
+            break
+    if cut:
+        report.fail("G-P13 분석본 원문보다 지문이 짧다 %d지문 — 마지막 문장이 "
+                    "잘렸다: %s" % (len(cut), " · ".join(
+                        "%s(…%s)" % x for x in cut[:8])))
+    else:
+        log("  G-P13 분석본 원문 대조 — 잘린 지문 없음")
 
 
-def _check_content(rows, report, log):
+_KS2350 = None
+_HAN_WORD = re.compile("[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f"
+                       "\ua960-\ua97f\uaa60-\uaaff\ud7b0-\ud7ff]+")
+
+
+def _check_hangul(rows, report, log):
+    """G-P14 — **있을 수 없는 한글 글자**가 인쇄되는가.
+
+    ⚠ 교재팀이 인디자인에 친 오타(한글 입력기 조합 실수)가 완성본 → 코퍼스 →
+      창고로 옮겨 가 **학교를 넘어 번졌다**: `뛚렷한`(뚜렷한)·`쪻아내다`(쫓아내다)
+      ·`펽창`(팽창)·`꿐꫼`(꽁꽁) 등 12종 17파일(2차 검수 연구원 지적으로 발견).
+      KS X 1001 2,350자 밖의 음절은 실제 낱말에 거의 안 쓰인다 — 코퍼스 전체에서
+      걸린 것이 **전부 오타**였다. 한글 사이에 낀 비한글 조각(`꫼` U+AAFC)도 잡는다.
+    ⚠ 표준 음절로 된 오타(`엉촉`)는 이 게이트로 못 잡는다 — 사람 검수 몫이다.
+    """
+    global _KS2350
+    if _KS2350 is None:
+        _KS2350 = set(bytes([a, b]).decode("euc-kr")
+                      for a in range(0xB0, 0xC9) for b in range(0xA1, 0xFF))
+    bad = []
+    for r in rows:
+        if r.get("kind") == "memtest":
+            continue
+        lab = r.get("key") or r.get("label") or "?"
+        fields = [("주제", r.get("topic")), ("요약문", r.get("summary")),
+                  ("해석", r.get("translation"))]
+        fields += [("플로우", x) for x in (r.get("flownote") or ())]
+        fields += [("동반의어", "%s %s" % (c.get("w", ""), c.get("ko", "")))
+                   for c in (r.get("synonyms") or ())]
+        for name, t in fields:
+            t = str(t or "")
+            for m in _HAN_WORD.finditer(t):
+                w = m.group(0)
+                if any(not ("\uac00" <= ch <= "\ud7a3") or ch not in _KS2350
+                       for ch in w):
+                    bad.append("%s %s «%s»" % (lab, name,
+                               t[max(0, m.start() - 6):m.end() + 6]))
+    if bad:
+        report.fail("G-P14 있을 수 없는 한글 %d곳 — 입력 오타가 그대로 인쇄된다: %s"
+                    % (len(bad), " · ".join(bad[:8])))
+    else:
+        log("  G-P14 한글 글자 — 이상 없음")
+
+
+def _check_content(rows, report, log)
+        _check_hangul(rows, report, log)
+        _check_cut(rows, cfg, report, log):
     """G-P12 — **가져온 내용이 그 지문 것인가**.
 
     ⚠ 예전 게이트는 `블록이 있는가` 만 봤다. 그래서 한 지문에 책 전체 동반의어
