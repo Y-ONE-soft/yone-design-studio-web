@@ -361,14 +361,12 @@ def render_type(cfg, ty, summary=None, sid=""):
 
 # ── PART 2 · 실전 세트 ────────────────────────────────────────────────
 def render_set(s, first=False, fit=0, gap=None):
-    """fit = 한 면에 넣으려고 조인 단계(0~4) · gap = 면 아래 남는 자리의 몫
-    {"q": 문항 사이에 더할 mm, "l": 소문항 줄 사이에 더할 mm}."""
+    """fit = 한 면에 넣으려고 조인 단계(0~4) · gap = 면 아래 남는 자리의 몫 —
+    {"q": {문항번호: 문항 앞에 더할 mm}, "l": {문항번호: 소문항 줄 사이에 더할 mm}}."""
     badge = '<span class="badge">광문고 기출</span>' if s["gichul"] else ""
     cls = "set" + (" first" if first else "") + "".join(f" fit{k}" for k in range(1, fit + 1))
     g = gap or {}
-    sty = (f' style="--xg:{g.get("q", 0):.1f}mm;--xl:{g.get("l", 0):.1f}mm"'
-           if g.get("q") or g.get("l") else "")
-    out = [f'<div class="{cls}"{sty}>{mkz("B%d" % s["lo"])}'
+    out = [f'<div class="{cls}">{mkz("B%d" % s["lo"])}'
            f'<div class="set-src">{badge}'
            f'<span class="stab">&lt;{esc(s["src"])}&gt;</span></div>']
     for h in s["hist"]:
@@ -380,7 +378,9 @@ def render_set(s, first=False, fit=0, gap=None):
         out.append(f'<div class="pbox"><div class="cham"><div>{lab}{passage_html(p["r"])}'
                    '</div></div></div>')
     for q in s["qs"]:
-        out.append(f'<div class="q">{mkz("Q%d" % q["no"])}<div class="q-h"><span class="qn">{q["no"]:02d}</span>'
+        xg, xl = g.get("q", {}).get(q["no"], 0), g.get("l", {}).get(q["no"], 0)
+        sty = f' style="--xg:{xg:.1f}mm;--xl:{xl:.1f}mm"' if xg or xl else ""
+        out.append(f'<div class="q"{sty}>{mkz("Q%d" % q["no"])}<div class="q-h"><span class="qn">{q["no"]:02d}</span>'
                    f'<p class="qs">{stem_html(q["stem"])}</p></div>'
                    f'<div class="qbody">{qbody(q["blocks"])}</div>{mkz("Z%d" % q["no"])}</div>')
     out.append('</div>')

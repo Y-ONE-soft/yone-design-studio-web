@@ -93,7 +93,7 @@ class SeseoSeries(Series):
         #   ③ 백면: 왼쪽 면에서 여는 절 앞의 백면은 MEMO 로(어느 단계에서든).
         #   ④ 여백: 한 면 세트의 아래 빈자리를 문항 사이에 나눈다(면 수는 안 바뀐다).
         memos, fit, gaps = set(), {}, {}
-        phase, secs, texts, longs = "fit", 0.0, [], set()
+        phase, secs, texts, before = "fit", 0.0, [], {}
         for _try in range(16):
             html_path = render_mod.write(cfg, d, bd, log=log, memos=memos, fit=fit, gaps=gaps)
             secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
@@ -135,21 +135,21 @@ class SeseoSeries(Series):
                     log(f"  두 면 세트 {sorted(new)} → 앞에 MEMO(펼침면으로 연다)")
                     memos = {m for m in memos if m.startswith("B")} | new
                     continue
-                phase, longs = "gap", set(over)
-                gaps = self._gap_plan(out, d, longs)
+                phase, before = "gap", self._qpos(out)
+                gaps = self._gap_plan(out, d)
                 if gaps:
-                    qs = [g["q"] for g in gaps.values()]
+                    qv = [v for g in gaps.values() for v in g["q"].values()] or [0]
+                    lv = [v for g in gaps.values() for v in g["l"].values()] or [0]
                     log(f"  아래 여백을 문항 사이에 나눔 {len(gaps)}세트 "
-                        f"(문항 사이 +{min(qs)}~{max(qs)}mm · 소문항 줄 사이 최대 "
-                        f"+{max(g['l'] for g in gaps.values())}mm)")
+                        f"(문항 앞 +{min(qv)}~{max(qv)}mm · 소문항 줄 사이 최대 +{max(lv)}mm)")
                     continue
                 break
-            bad = [lo for lo in over if lo not in longs]
-            if not bad:
+            moved = self._moved_sets(out, d, before)
+            if not moved:
                 break
-            for lo in bad:
+            for lo in moved:
                 gaps.pop(lo, None)
-            log(f"  여백 때문에 넘친 세트 {bad} → 그 세트는 여백 없이")
+            log(f"  여백 때문에 문항이 옮겨 간 세트 {moved} → 그 세트는 여백 없이")
         else:
             raise RuntimeError("면 계획 16회 실패")
 
@@ -185,38 +185,69 @@ class SeseoSeries(Series):
         return out
 
     @staticmethod
-    def _gap_plan(pdf, d, longs, safety=4.0, cap_q=22.0, cap_l=6.0):
-        """한 면 세트의 아래 빈자리(마지막 문항 끝 §Z§ ~ 판면 아래)를 나눈다.
-
-        사용자 지시 "면 아래 공간이 남으면 문제끼리 간격을 넓혀라". 먼저 문항 사이
-        (지문→1번, 1→2, 2→3)에 최대 22mm 씩, 그래도 남으면 소문항 (a)(b)(c) 줄 사이에
-        최대 6mm 씩(답 쓸 자리). 처음엔 문항당 12mm 로 막아서 60mm 넘게 빈 면이
-        19면 남았다(검수 FAIL).
-        """
+    def _qpos(pdf):
+        """문항 머리(§Qn§)·끝(§Zn§) 표식 → {("Q"|"Z", n): (면, 윗변 mm, 아랫변 mm)}."""
         import fitz
         pos = {}
         doc = fitz.open(pdf)
         for i, pg in enumerate(doc):
             for w in pg.get_text("words"):
-                m = re.search(r'§Z(\d+)§', w[4])
+                m = re.search(r'§([QZ])(\d+)§', w[4])
                 if m:
-                    pos.setdefault(int(m.group(1)), (i + 1, w[3] * 25.4 / 72))
+                    pos.setdefault((m.group(1), int(m.group(2))),
+                                   (i + 1, w[1] * 25.4 / 72, w[3] * 25.4 / 72))
         doc.close()
+        return pos
+
+    @classmethod
+    def _gap_plan(cls, pdf, d, safety=4.0, cap_q=32.0, cap_l=8.0):
+        """세트가 앉은 **면마다** 아래 빈자리(그 면 마지막 문항 끝 ~ 판면 아래)를 나눈다.
+
+        사용자 지시 "면 아래 공간이 남으면 문제끼리 간격을 넓혀라". 먼저 그 면 문항들
+        앞 간격(지문→1번, 1→2 …)에 최대 32mm 씩, 남으면 소문항 (a)(b)(c) 줄 사이에
+        최대 8mm 씩(답 쓸 자리). 두 면 세트도 면마다 따로 — 둘째 면 맨 위 문항의
+        앞 간격은 쪽 나눔에서 잘리므로 나눔에서 뺀다.
+        (문항당 12mm 로 막았을 때 60mm 넘게 빈 면 19개, 두 면 세트 둘째 면 137mm 빈 채 — 검수 FAIL)
+        """
+        pos = cls._qpos(pdf)
         out = {}
         for s in d["part2"]["sets"]:
-            z = pos.get(s["hi"])
-            if s["lo"] in longs or not z:
+            qs = [q for q in s["qs"] if ("Q", q["no"]) in pos and ("Z", q["no"]) in pos]
+            if len(qs) != len(s["qs"]):
                 continue
-            free = FRAME["bottom"] - z[1] - safety
-            if free < 3:
-                continue
-            nq = len(s["qs"])
-            per_q = min(free / nq, cap_q)
-            rest = free - per_q * nq
-            nl = sum(max(0, sum(1 for b in q["blocks"] if b["t"] == "line") - 1)
-                     for q in s["qs"])
-            per_l = min(rest / nl, cap_l) if nl and rest > 1 else 0.0
-            out[s["lo"]] = {"q": round(per_q, 1), "l": round(per_l, 1)}
+            first_pg = pos[("Q", qs[0]["no"])][0]
+            plan = {"q": {}, "l": {}}
+            for pg in sorted({pos[("Q", q["no"])][0] for q in qs}):
+                on = [q for q in qs if pos[("Q", q["no"])][0] == pg]
+                free = FRAME["bottom"] - max(pos[("Z", q["no"])][2] for q in on) - safety
+                if free < 3:
+                    continue
+                gq = on if pg == first_pg else on[1:]
+                per_q = min(free / len(gq), cap_q) if gq else 0.0
+                rest = free - per_q * len(gq)
+                nl = sum(max(0, sum(1 for b in q["blocks"] if b["t"] == "line") - 1) for q in on)
+                per_l = min(rest / nl, cap_l) if nl and rest > 1 else 0.0
+                for q in gq:
+                    plan["q"][q["no"]] = round(per_q, 1)
+                for q in on:
+                    if per_l:
+                        plan["l"][q["no"]] = round(per_l, 1)
+            if plan["q"] or plan["l"]:
+                out[s["lo"]] = plan
+        return out
+
+    @classmethod
+    def _moved_sets(cls, pdf, d, before):
+        """여백을 넣은 뒤 문항이 다른 면으로 옮겨 간 세트 — 그 세트는 여백을 뺀다."""
+        pos = cls._qpos(pdf)
+        out = []
+        for s in d["part2"]["sets"]:
+            for q in s["qs"]:
+                a, b = before.get(("Q", q["no"])), pos.get(("Q", q["no"]))
+                za, zb = before.get(("Z", q["no"])), pos.get(("Z", q["no"]))
+                if not a or not b or a[0] != b[0] or not za or not zb or za[0] != zb[0]:
+                    out.append(s["lo"])
+                    break
         return out
 
     @classmethod
