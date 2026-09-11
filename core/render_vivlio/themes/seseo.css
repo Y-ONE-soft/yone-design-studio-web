@@ -94,6 +94,8 @@ body {
   font: 400 9pt/13pt Noto, sans-serif; color: var(--ink);
   line-break: strict; word-break: keep-all; overflow-wrap: anywhere;
   orphans: 2; widows: 2;
+  /* fi·fl 합자는 인쇄본(gs 통과)에서 글자층이 'ö' 로 깨진다(검수 실측 13곳) */
+  font-variant-ligatures: no-common-ligatures;
 }
 p { margin: 0; }
 b { font-weight: 700; }
