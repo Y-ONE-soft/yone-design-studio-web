@@ -189,19 +189,23 @@ def _group_lines(spans):
         chars = _line_chars(ln)
         if not chars:
             continue
-        text = "".join(c["c"] for c in chars)
-        if not text.strip():
-            # 공백뿐인 줄 — 밑줄 빈칸일 수 있어 글자는 보존하되 경계 판단에서는 약하게
-            pass
-        # 줄 크기 = 글자 수로 가중한 대표 크기 (첨자·각주번호 영향 배제)
-        sizes = [c["size"] for c in chars if not c["c"].isspace()] or [ln["size"]]
-        out.append({"chars": chars, "text": text,
-                    "x0": min(c["x0"] for c in chars if not c["c"].isspace())
-                    if text.strip() else chars[0]["x0"],
-                    "x1": max(c["x1"] for c in chars if not c["c"].isspace())
-                    if text.strip() else chars[-1]["x1"],
-                    "base": ln["base"], "size": statistics.median(sizes)})
+        rec = {"chars": chars, "base": ln["base"], "size": ln["size"]}
+        _finish_line(rec)
+        out.append(rec)
     return out
+
+
+def _finish_line(rec):
+    """글자 목록에서 줄의 글·좌우 끝·대표 크기를 (다시) 계산한다."""
+    chars = rec["chars"]
+    text = "".join(c["c"] for c in chars)
+    solid = [c for c in chars if not c["c"].isspace()]
+    rec["text"] = text
+    rec["x0"] = min(c["x0"] for c in solid) if solid else chars[0]["x0"]
+    rec["x1"] = max(c["x1"] for c in solid) if solid else chars[-1]["x1"]
+    # 줄 크기 = 글자 수로 가중한 대표 크기 (첨자·각주번호 영향 배제)
+    rec["size"] = statistics.median([c["size"] for c in solid]) if solid \
+        else rec["size"]
 
 
 def _line_chars(ln):
@@ -267,6 +271,24 @@ def _margin_key(text):
     return re.sub(r"\d+", "#", re.sub(r"\s+", "", unicodedata.normalize("NFC", text)))
 
 
+def _margin_pieces(ln):
+    """큰 간격(1.5em 초과)으로 떨어진 덩어리들의 키 — 한 쪽에서는 세 조각
+    ('너른터' · '- 1 -' · 'nernter.com')으로, 다른 쪽(1단 쪽)에서는 한 줄로
+    합쳐져 나오는 꼬리말을 같은 것으로 보기 위해."""
+    pieces, cur, last = [], [], None
+    for c in ln["chars"]:
+        if c["c"].isspace():
+            continue
+        if last is not None and c["x0"] - last["x1"] > 1.5 * max(c["size"], 1):
+            pieces.append("".join(cur))
+            cur = []
+        cur.append(c["c"])
+        last = c
+    if cur:
+        pieces.append("".join(cur))
+    return [_margin_key(p) for p in pieces if p.strip()]
+
+
 def _drop_margins(pages):
     """pages: [{"h": H, "lines": [...]}] — 머리말/꼬리말 줄 제거 (제자리)."""
     npg = len(pages)
@@ -279,6 +301,8 @@ def _drop_margins(pages):
             ln["_zone"] = zone
             if zone and ln["text"].strip():
                 seen.setdefault((zone, _margin_key(ln["text"])), set()).add(pi)
+                for pk in _margin_pieces(ln):
+                    seen.setdefault((zone, pk), set()).add(pi)
     need = max(2, int(math.ceil(0.3 * npg)))
     dropped = 0
     for pg in pages:
@@ -288,7 +312,12 @@ def _drop_margins(pages):
             if z and ln["text"].strip():
                 key = _margin_key(ln["text"])
                 reps = len(seen.get((z, key), ()))
-                if (npg >= 2 and reps >= need) or _RE_PAGENO.match(key):
+
+                def _rep(k):
+                    return ((npg >= 2 and len(seen.get((z, k), ())) >= need)
+                            or _RE_PAGENO.match(k))
+                pieces = _margin_pieces(ln)
+                if _rep(key) or (len(pieces) >= 2 and all(_rep(k) for k in pieces)):
                     dropped += 1
                     continue
             keep.append(ln)
@@ -399,12 +428,22 @@ def _breaks(prev, cur, prev_edge, pitch):
     return False, False
 
 
-def _glue(prev_chars, cur_chars):
-    """앞 단락 끝과 다음 줄 사이에 넣을 글자 (없으면 None)."""
+def _is_hangul(c):
+    return "가" <= c <= "힣"
+
+
+def _glue(prev_chars, cur_chars, hangul_joined=False):
+    """앞 단락 끝과 다음 줄 사이에 넣을 글자 (없으면 None).
+
+    hangul_joined: 이 문서는 어절에서 줄을 바꿀 때 줄 끝에 공백 글리프를
+        남긴다(한컴 PDF 실측 63% vs 크롬 0%). 그런 문서에서 한글-한글 사이에
+        공백이 없으면 **글자 단위 줄바꿈**이므로 붙인다 ('새로' + '운' → '새로운')."""
     if not prev_chars or not cur_chars:
         return None
     a, b = prev_chars[-1]["c"], cur_chars[0]["c"]
     if a.isspace() or b.isspace():
+        return None
+    if hangul_joined and _is_hangul(a) and _is_hangul(b):
         return None
     if (a in "-‐" and len(prev_chars) >= 2 and prev_chars[-2]["c"].isalpha()
             and b.islower()):
@@ -470,10 +509,13 @@ def _cut_endnotes(paras, log=None, label=""):
         if len(set(hits)) < max(2, int(0.5 * len(rs))):
             continue
         cut = k
-        # 바로 앞의 짧은 표제('Answer Keys', '정답 및 해설')도 함께
+        # 바로 앞의 짧은 표제('Answer Keys', 'EBS … 정답')도 함께. 답란 줄
+        # ('ⓓ ⓔ')·빈 단락에서는 멈춘다 — 마지막 문항의 일부다.
         for _ in range(2):
             t = paras[cut - 1]["text"].strip() if cut > 0 else ""
-            if t and len(t) <= 25 and not re.search(r"[.?!]$", t):
+            letters = len(re.findall(r"[A-Za-z가-힣]", t))
+            if (t and len(t) <= 30 and letters >= 2 and not _RE_HEAD.match(t)
+                    and not re.search(r"[.?!]$", t)):
                 cut -= 1
             else:
                 break
@@ -521,8 +563,6 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                 F = [s for s in spans if s not in L and s not in R]
                 lines = _group_lines(L) + _group_lines(R) + _group_lines(F)
             _apply_underlines(lines, segs)
-            for ln in lines:
-                all_chars.extend(c["c"] for c in ln["chars"])
             imgs = []
             for bi, b in enumerate(images):
                 x0, y0, x1, y1 = b["bbox"]
@@ -534,6 +574,44 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                              "x0": x0, "x1": x1, "base": y0, "y1": y1})
             pages.append({"h": H, "w": W, "split": split, "lines": lines,
                           "imgs": imgs})
+
+        # ── 공백 대체 글리프 ────────────────────────────────────────────────
+        # 공백 글리프에 유니코드 대응이 없는 글꼴은 공백을 U+FFFD/제어문자로
+        # 낸다(동아(박) 예상문제 실측: 폭 2.8pt 한 가지, 진짜 공백 0개).
+        # 폭이 좁고 진짜 공백이 거의 없을 때만 공백으로 되돌린다 — 글자
+        # 자체가 깨진 PDF 는 이 조건을 못 맞추고 아래 검사에서 멈춘다.
+        subs, real_sp = [], 0
+        for pg in pages:
+            for ln in pg["lines"]:
+                for c in ln["chars"]:
+                    o = ord(c["c"][0])
+                    if c["c"] == "\ufffd" or o < 0x20:
+                        subs.append(c)
+                    elif c["c"] == " " and not c.get("syn"):
+                        real_sp += 1
+        if subs:
+            rel = statistics.median((c["x1"] - c["x0"]) / (c["size"] or 1)
+                                    for c in subs)
+            if rel < 0.45 and real_sp < 0.2 * len(subs):
+                for c in subs:
+                    c["c"] = " "
+                for pg in pages:
+                    for ln in pg["lines"]:
+                        _finish_line(ln)
+                if callable(log):
+                    log(f"[PDF] {label}: 공백 글리프 {len(subs)}개가 대체 문자로 "
+                        f"들어 있어 공백으로 복원")
+        for pg in pages:
+            for ln in pg["lines"]:
+                all_chars.extend(c["c"] for c in ln["chars"])
+        # 줄 끝 공백 관행 — 한글 글자 단위 줄바꿈 판정용 (_glue)
+        n_lines = n_trail = 0
+        for pg in pages:
+            for ln in pg["lines"]:
+                if ln["text"].strip():
+                    n_lines += 1
+                    n_trail += ln["chars"][-1]["c"].isspace()
+        hangul_joined = n_lines > 0 and n_trail / n_lines >= 0.3
 
         # ── 읽을 수 있는 PDF 인가 ───────────────────────────────────────────
         nonspace = [c for c in all_chars if not c.isspace()]
@@ -636,7 +714,7 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                         paras.append({"text": "", "runs": [{"t": "", "ul": False}]})
                     cur = list(ln["chars"])
                 else:
-                    g = _glue(cur, ln["chars"])
+                    g = _glue(cur, ln["chars"], hangul_joined)
                     if g:
                         cur.append(g)
                     cur.extend(ln["chars"])
