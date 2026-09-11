@@ -141,8 +141,8 @@ def test_prefer_latest_variant_skips_lock_and_used_files(tmp_path):
     a = tmp_path / "Step1 C2 빈칸어휘 정답지.docx"
     b = tmp_path / "Step1 C2 빈칸어휘 정답지(개정).docx"
     lock = tmp_path / "~$ep1 C2 빈칸어휘 정답지(개정).docx"
-    for p in (a, b, lock):
-        p.write_bytes(b"x")
+    for i, p in enumerate((a, b, lock)):
+        p.write_bytes(b"x%d" % i)     # 서로 다른 내용 — 같은 바이트는 사본으로 본다
     now = time.time()
     _touch(str(a), now - 100)
     _touch(str(b), now - 10)
@@ -166,3 +166,16 @@ def test_gate_treats_superseded_as_expected_unused(tmp_path):
     expected, suspicious = find_unused_uploads(content, str(up))
     assert "Step1 A1 어휘선택.docx" in expected
     assert suspicious == []
+
+
+def test_byte_identical_upload_copy_is_not_a_variant(tmp_path):
+    # 업로드 원본 'manuscripts_X' 와 엔진 사본 'X' — 같은 파일이다
+    a = tmp_path / "Step1 C2 빈칸어휘 정답지.docx"
+    _make_docx(str(a), _NEW)
+    b = tmp_path / "manuscripts_Step1 C2 빈칸어휘 정답지.docx"
+    b.write_bytes(a.read_bytes())
+    logs = []
+    data = parse_manuscript_folder(str(tmp_path), _CFG, 1, 25, 9, logs.append)
+    assert data["steps"]["step1_c2"]["filename"] == a.name
+    assert "superseded_manuscripts" not in data
+    assert not any("같은 단계 원고" in l for l in logs)

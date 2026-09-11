@@ -3907,6 +3907,19 @@ def _prefer_latest_variant(manuscript_dir, chosen_path, used_files, log=None,
         except OSError:
             continue
         fam.append((fp, mt))
+    # 바이트가 같은 사본은 변형본이 아니다 — 업로드 폴더에는 원래 업로드본
+    # ('manuscripts_X')과 엔진이 만든 사본('X')이 함께 있다(W67). 이 둘을
+    # '같은 단계 원고 2개'로 세면 모든 업로드 잡이 스텝마다 오해를 부르는
+    # 로그를 남긴다(2026-09-12 고1 26년 9월 E2E 실측).
+    def _md5(fp):
+        try:
+            with open(fp, "rb") as f:
+                return hashlib.md5(f.read()).hexdigest()
+        except OSError:
+            return None
+    ch_md5 = _md5(chosen_path)
+    fam = [(fp, mt) for fp, mt in fam
+           if _n(fp) == chosen_n or ch_md5 is None or _md5(fp) != ch_md5]
     if len(fam) <= 1 or not any(_n(fp) == chosen_n for fp, _ in fam):
         return chosen_path, []
     newest = max(mt for _, mt in fam)

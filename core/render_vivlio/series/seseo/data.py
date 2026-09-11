@@ -225,6 +225,13 @@ BOGI = ('<보기>', '〈보기〉')
 SUMMARY = ('〈요약문〉', '<요약문>')
 
 
+def setsrc(t):
+    """세트 출처 `<…>` 인가 — `<보기>`·`<요약문>` 도 꺾쇠라 따로 뺀다."""
+    if t in BOGI or t in SUMMARY:
+        return None
+    return RE_SETSRC.match(t)
+
+
 def is_passage(t):
     """영문 지문 단락인가 — 길고, 라틴 문자가 대부분."""
     if len(t) < 60:
@@ -395,7 +402,7 @@ def parse_part2(paras, bad):
         if i < n:
             ty['wrong_title'] = L[i]
             i += 1
-        while i < n and not RE_TYPE.match(L[i]) and not RE_SETSRC.match(L[i]):
+        while i < n and not RE_TYPE.match(L[i]) and not setsrc(L[i]):
             ty['wrong'].append(L[i])
             i += 1
         if len(ty['steps']) != 3:
@@ -407,7 +414,7 @@ def parse_part2(paras, bad):
 
     sets, qno = [], 0
     while i < n:
-        m = RE_SETSRC.match(L[i])
+        m = setsrc(L[i])
         if not m:
             bad.append(('P2', '세트 밖 단락', L[i][:60]))
             i += 1
@@ -442,7 +449,7 @@ def parse_part2(paras, bad):
             stem, tag = split_stem(mq.group(2).strip())
             i += 1
             body = []
-            while (i < n and not RE_SETSRC.match(L[i])
+            while (i < n and not setsrc(L[i])
                    and not (RE_Q.match(L[i]) and int(RE_Q.match(L[i]).group(1)) == qno + 1)):
                 body.append(L[i])
                 i += 1
