@@ -360,11 +360,14 @@ def render_type(cfg, ty, summary=None, sid=""):
 
 
 # ── PART 2 · 실전 세트 ────────────────────────────────────────────────
-def render_set(s, first=False, fit=0, gap=0.0):
-    """fit = 한 면에 넣으려고 조인 단계(0~3) · gap = 면 아래 남는 자리를 문항 사이에 나눈 값(mm)."""
+def render_set(s, first=False, fit=0, gap=None):
+    """fit = 한 면에 넣으려고 조인 단계(0~3) · gap = 면 아래 남는 자리의 몫
+    {"q": 문항 사이에 더할 mm, "l": 소문항 줄 사이에 더할 mm}."""
     badge = '<span class="badge">광문고 기출</span>' if s["gichul"] else ""
     cls = "set" + (" first" if first else "") + "".join(f" fit{k}" for k in range(1, fit + 1))
-    sty = f' style="--xg:{gap:.1f}mm"' if gap else ""
+    g = gap or {}
+    sty = (f' style="--xg:{g.get("q", 0):.1f}mm;--xl:{g.get("l", 0):.1f}mm"'
+           if g.get("q") or g.get("l") else "")
     out = [f'<div class="{cls}"{sty}>{mkz("B%d" % s["lo"])}'
            f'<div class="set-src">{badge}'
            f'<span class="stab">&lt;{esc(s["src"])}&gt;</span></div>']
@@ -403,8 +406,8 @@ def render_answers(cfg, sets, sid):
                    f'{esc(s["src"])}</div>')
         for x in s["items"]:
             exp = RE_MARK.sub(r'<span class="m">(\1)</span>', esc(x["exp"]))
-            out.append(f'<div class="aitem"><div class="ano">{x["no"]:02d}</div>'
-                       f'<div class="aline">{answer_lines(x["ans"])}</div>'
+            out.append(f'<div class="aitem"><div class="ahd"><div class="ano">{x["no"]:02d}</div>'
+                       f'<div class="aline">{answer_lines(x["ans"])}</div></div>'
                        f'<p class="aexp"><span class="alab">해설</span>{exp}</p></div>')
         out.append(f'<p class="trans"><span class="alab">지문 해석</span>'
                    f'{esc(s["trans"])}</p>')
@@ -445,7 +448,7 @@ def write(cfg, d, build_dir, log=print, memos=(), fit=None, gaps=None):
                  f'{runners(cfg, 2, b.get("part2", "광문고 기출 서술형 실전문제"))}'
                  + "".join((memo_page(cfg, 2) if f'B{s["lo"]}' in memos else '')
                            + render_set(s, k == 0, (fit or {}).get(s["lo"], 0),
-                                        (gaps or {}).get(s["lo"], 0.0))
+                                        (gaps or {}).get(s["lo"]))
                            for k, s in enumerate(p2["sets"]))
                  + '</div>')
     before("S3", 2)

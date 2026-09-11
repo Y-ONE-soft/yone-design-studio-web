@@ -138,8 +138,10 @@ class SeseoSeries(Series):
                 phase, longs = "gap", set(over)
                 gaps = self._gap_plan(out, d, longs)
                 if gaps:
+                    qs = [g["q"] for g in gaps.values()]
                     log(f"  아래 여백을 문항 사이에 나눔 {len(gaps)}세트 "
-                        f"(문항당 {min(gaps.values())}~{max(gaps.values())}mm)")
+                        f"(문항 사이 +{min(qs)}~{max(qs)}mm · 소문항 줄 사이 최대 "
+                        f"+{max(g['l'] for g in gaps.values())}mm)")
                     continue
                 break
             bad = [lo for lo in over if lo not in longs]
@@ -183,8 +185,14 @@ class SeseoSeries(Series):
         return out
 
     @staticmethod
-    def _gap_plan(pdf, d, longs, safety=4.0, cap=12.0):
-        """한 면 세트의 아래 빈자리(마지막 문항 끝 §Z§ ~ 판면 아래)를 문항 수로 나눈 몫."""
+    def _gap_plan(pdf, d, longs, safety=4.0, cap_q=22.0, cap_l=6.0):
+        """한 면 세트의 아래 빈자리(마지막 문항 끝 §Z§ ~ 판면 아래)를 나눈다.
+
+        사용자 지시 "면 아래 공간이 남으면 문제끼리 간격을 넓혀라". 먼저 문항 사이
+        (지문→1번, 1→2, 2→3)에 최대 22mm 씩, 그래도 남으면 소문항 (a)(b)(c) 줄 사이에
+        최대 6mm 씩(답 쓸 자리). 처음엔 문항당 12mm 로 막아서 60mm 넘게 빈 면이
+        19면 남았다(검수 FAIL).
+        """
         import fitz
         pos = {}
         doc = fitz.open(pdf)
@@ -199,9 +207,16 @@ class SeseoSeries(Series):
             z = pos.get(s["hi"])
             if s["lo"] in longs or not z:
                 continue
-            per = min((FRAME["bottom"] - z[1] - safety) / len(s["qs"]), cap)
-            if per >= 1.0:
-                out[s["lo"]] = round(per, 1)
+            free = FRAME["bottom"] - z[1] - safety
+            if free < 3:
+                continue
+            nq = len(s["qs"])
+            per_q = min(free / nq, cap_q)
+            rest = free - per_q * nq
+            nl = sum(max(0, sum(1 for b in q["blocks"] if b["t"] == "line") - 1)
+                     for q in s["qs"])
+            per_l = min(rest / nl, cap_l) if nl and rest > 1 else 0.0
+            out[s["lo"]] = {"q": round(per_q, 1), "l": round(per_l, 1)}
         return out
 
     @classmethod

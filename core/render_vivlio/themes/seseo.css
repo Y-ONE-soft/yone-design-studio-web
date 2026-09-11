@@ -288,7 +288,8 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .qs { font: 500 10pt/14pt Noto; text-align: justify; }
 .qs .tg { font: 400 8.5pt/1 Pre; color: var(--k70); }
 .qbody { margin-top: 2.2mm; }
-.ql { margin-top: var(--lgap, 2.8mm); padding-left: 5.4mm; text-indent: -5.4mm;
+/* 소문항 사이 = 기본(--lgap) + 남는 자리 몫(--xl) — 답 쓸 자리가 넉넉해진다 */
+.ql { margin-top: calc(var(--lgap, 2.8mm) + var(--xl, 0mm)); padding-left: 5.4mm; text-indent: -5.4mm;
       font: 400 9pt/14pt Noto; }
 .ql:first-child { margin-top: 0; }
 .ql .sm { color: var(--dusk-dp); font-weight: 500; }
@@ -314,17 +315,20 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .darrow svg { display: block; width: 2.8mm; height: 3mm; margin: 0 auto; }
 .dgap { height: 1.4mm; }
 
-/* 한 면에 넣기 위한 조임 단계 — 한 면을 넘는 세트에만, 빌드가 단계를 올린다 */
-.set.fit1 { --qgap: 3.6mm; --lgap: 1.4mm; }
-.set.fit1 .qbody { margin-top: 1.3mm; }
-.set.fit1 .cbox, .set.fit1 .diag, .set.fit1 .bogi { margin-top: 1.5mm; }
-.set.fit1 .cbox, .set.fit1 .diag { padding-top: 1.3mm; padding-bottom: 1.4mm; }
-.set.fit2 .pbox .cham > div, .set.fit2 .cbox, .set.fit2 .ql, .set.fit2 .qs { line-height: 12.6pt; }
-.set.fit2 .dstep { line-height: 11pt; }
-.set.fit2 .darrow { height: 2.4mm; }
-.set.fit3 .pbox .cham > div, .set.fit3 .cbox, .set.fit3 .ql { font-size: 8.5pt; line-height: 12pt; }
-.set.fit3 .qs { font-size: 9.5pt; line-height: 12.8pt; }
-.set.fit3 .dstep { font-size: 8.2pt; }
+/* 한 면에 넣기 위한 조임 단계 — 한 면을 넘는 세트에만, 빌드가 단계를 올린다.
+   읽기에 가장 덜 해로운 것부터: ① 행간·도식 ② 글자 크기 ③ 문항 사이 간격(마지막, 조금만).
+   (간격부터 줄였더니 문항 사이가 3mm 로 붙어 답답했다 — 검수 지적) */
+.set.fit1 .pbox .cham > div, .set.fit1 .cbox, .set.fit1 .ql, .set.fit1 .qs { line-height: 12.8pt; }
+.set.fit1 .dstep { line-height: 11pt; padding-top: .4mm; padding-bottom: .4mm; }
+.set.fit1 .darrow { height: 2.3mm; }
+.set.fit1 .darrow svg { height: 2.3mm; }
+.set.fit1 .diag { padding-top: 1.6mm; padding-bottom: 1.8mm; }
+.set.fit2 .pbox .cham > div, .set.fit2 .cbox, .set.fit2 .ql { font-size: 8.5pt; line-height: 12.2pt; }
+.set.fit2 .qs { font-size: 9.5pt; line-height: 13pt; }
+.set.fit2 .dstep { font-size: 8.2pt; }
+.set.fit3 { --qgap: 4.4mm; --lgap: 1.8mm; }
+.set.fit3 .qbody { margin-top: 1.6mm; }
+.set.fit3 .cbox, .set.fit3 .diag, .set.fit3 .bogi { margin-top: 1.8mm; }
 
 /* ============================================================ 정답 및 해설 */
 .ans { column-count: 2; column-gap: 5mm; column-fill: auto; }
@@ -334,6 +338,7 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .ahead:first-child { margin-top: 0; }
 .ahead .rg { color: var(--coral-dp); font-weight: 600; margin-right: 1.2mm; }
 .aitem { padding: 2mm 0 3mm; border-bottom: .5pt solid var(--dusk-lt); }
+.ahd { break-inside: avoid; }   /* 번호와 정답 줄은 단·쪽이 바뀌어도 함께 */
 .ano { font: 700 15pt/1 Pre; color: var(--dusk-dp); margin-bottom: 1.7mm; break-after: avoid; }
 .aline { font: 400 8pt/11.5pt Noto; color: var(--k80); break-after: avoid; }
 .aline .m, .aexp .m { font: 600 8pt/1 Pre; }
