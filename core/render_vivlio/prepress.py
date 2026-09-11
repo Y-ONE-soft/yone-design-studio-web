@@ -530,15 +530,25 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
     #   조용히 틀린다(광문1: `대`→`눀` 328곳, 2차 검수본까지 그대로). 다르면 그
     #   파일을 `_불량` 으로 떼어 내고 멈춘다 — 최신처럼 보이는 불량본을 남기지 않는다.
     a_, b_ = _hangul_bag(src), _hangul_bag(dst)
-    diff = {ch: (a_[ch], b_[ch]) for ch in set(a_) | set(b_) if a_[ch] != b_[ch]}
-    if diff:
+    # ⚠ **늘어난 글자**만 결함이다 — 조판본에 없던 글자가 생겼으면 바뀐 것이다
+    #   (`대`→`눀`, `밀`→`묀`, `영`→`씁`: 모두 딱 0x100 차). **줄기만 한** 글자는
+    #   보이지 않는 글자를 걷어 낸 것일 수 있어(상일보카 `지` 477→475) 알리기만
+    #   한다 — 남의 계열 인쇄를 괜히 막지 않는다.
+    grew = {ch: (a_[ch], b_[ch]) for ch in b_ if b_[ch] > a_[ch]}
+    shrank = {ch: (a_[ch], b_[ch]) for ch in a_ if b_[ch] < a_[ch]}
+    show = lambda d: " ".join("%s %d→%d" % (ch, x, y) for ch, (x, y)
+                              in sorted(d.items(), key=lambda kv: -abs(kv[1][0] - kv[1][1]))[:8])
+    if grew:
         bad = dst[:-4] + "_불량.pdf"
         os.replace(dst, bad)
-        show = " ".join("%s %d→%d" % (ch, x, y) for ch, (x, y)
-                        in sorted(diff.items(), key=lambda kv: -abs(kv[1][0] - kv[1][1]))[:8])
-        raise RuntimeError(f"인쇄본 글자층이 조판본과 다르다({len(diff)}자: {show}) — "
-                           f"납품 금지, {os.path.basename(bad)} 로 떼어 냄")
-    log("[인쇄] 글자층 대조 — 조판본과 같음(한글 %d자)" % sum(a_.values()))
+        raise RuntimeError(f"인쇄본 글자층에 조판본에 없던 글자가 생겼다({len(grew)}자: "
+                           f"{show(grew)} / 줄어든 것: {show(shrank)}) — 납품 금지, "
+                           f"{os.path.basename(bad)} 로 떼어 냄")
+    if shrank:
+        log("[인쇄] ⚠ 글자층에서 줄어든 글자 %d종(바뀐 글자는 없음): %s"
+            % (len(shrank), show(shrank)))
+    else:
+        log("[인쇄] 글자층 대조 — 조판본과 같음(한글 %d자)" % sum(a_.values()))
     return {"pdf": dst, "pages": pages, "gray_ops": n, "profile": icc}
 
 
