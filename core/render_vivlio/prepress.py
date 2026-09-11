@@ -427,6 +427,49 @@ def fix_tounicode(doc, log=None):
     return total
 
 
+def _lift_notes(doc):
+    """검수 쪽지(Text 주석)를 떼어 둔다 → [(면, 자리, 내용, 제목, 색, 아이콘)].
+
+    ⚠ Ghostscript 는 쪽지 모양을 **10배로** 다시 그린다(5.6mm → 56.4mm, 광문2
+      인쇄본 실측). 커진 빨간 상자가 귀 딱지와 본문을 덮어 뷰어에서 검수하는
+      사람이 못 본다. 그래서 쪽지는 Ghostscript 에 **아예 안 보이게** 떼었다가
+      변환 뒤에 원래 그대로 다시 붙인다(`_restore_notes`).
+    """
+    import fitz
+    out = []
+    for pg in doc:
+        keep = []
+        for a in pg.annots() or []:
+            if a.type[0] != fitz.PDF_ANNOT_TEXT:
+                continue
+            nm = doc.xref_get_key(a.xref, "Name")
+            out.append((pg.number, fitz.Rect(a.rect), a.info.get("content", ""),
+                        a.info.get("title", ""), (a.colors or {}).get("stroke"),
+                        (nm[1] or "/Note").lstrip("/") if nm and nm[0] != "null" else "Note"))
+            keep.append(a)
+        for a in keep:
+            pg.delete_annot(a)
+    return out
+
+
+def _restore_notes(doc, notes, log=None):
+    """떼어 둔 쪽지를 변환된 문서에 원래 자리·크기·내용·색 그대로 붙인다."""
+    import fitz
+    for pno, r, content, title, stroke, icon in notes:
+        if pno >= doc.page_count:
+            continue
+        a = doc[pno].add_text_annot(fitz.Point(r.x0, r.y0), content, icon=icon)
+        if stroke:
+            a.set_colors(stroke=stroke)
+        a.set_info(title=title)
+        a.update()
+    got = sum(1 for pg in doc for a in (pg.annots() or [])
+              if a.type[0] == fitz.PDF_ANNOT_TEXT)
+    if notes:
+        (log or print)(f"[인쇄] 검수 쪽지 {len(notes)}개를 변환 밖으로 옮겨 원래 크기로 다시 붙임"
+                       + ("" if got == len(notes) else f" — ⚠ 붙은 것 {got}개"))
+
+
 def _hangul_bag(path):
     """PDF 글자층의 한글 음절 개수표 — 인쇄본이 글자를 바꿨는지 대조용."""
     import collections
@@ -485,6 +528,7 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
     # ① 무채색 → DeviceGray
     tmp_gray = dst + ".gray.pdf"
     doc = fitz.open(src)
+    notes = _lift_notes(doc)          # Ghostscript 가 10배로 키운다 — 떼어 둔다
     fix_tounicode(doc, log=log)
     n = neutralize(doc, gray_map, log=log, cmyk_map=cmyk_map)
     n += neutralize_patterns(doc, gray_map, log=log, cmyk_map=cmyk_map)
@@ -513,6 +557,7 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
         # ⚠ Ghostscript 는 TrimBox/BleedBox 를 흘려버린다 → 마지막에 다시 찍는다
         from core.render_vivlio import bleed as bleed_mod
         doc = fitz.open(tmp_cmyk)
+        _restore_notes(doc, notes, log)
         stamp_boxes(doc, bleed)
         tmp = dst + ".tmp"
         doc.save(tmp, garbage=3, deflate=True)
