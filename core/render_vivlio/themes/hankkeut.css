@@ -1,0 +1,224 @@
+/* 한끝 계열(hankkeut) — 한영고 특강 교재 문제형 내지. 첫 책 = 한서끝(2026-09-11).
+ *
+ * A4 + 도련 3mm = 216×303mm, 좌표는 전부 미디어(도련 포함) 기준.
+ * `@page` 판면·머리 괘선·칸 높이는 치수(config.metrics)에서 굽는 build/page.css 에 있다.
+ * 여기는 부품 모양만.
+ *
+ * 디자인 근거 = 표지(한문끝 일러스트 실측): 돌·종이 톤 바탕, 굵은+가는 이중 괘선에 세로
+ * 꺾쇠, 명조 격자 글자. 내지는 그 괘선 모티프를 머리에 이어 받고 차분하게 둔다.
+ * 색 = 파트마다 주색(구조) + 보조색(내용 강조) + 공통색(바탕·괘선) 3계층 — palette.py.
+ *
+ * 규칙: 글리프를 머리 기호로 쓰지 않는다(배지·색면·괘선) · 좌우 머리는 넣는 것이 다르다
+ * (왼=파트, 오른=책) · 흰 글자는 deep 위에만 · 9pt 미만 글자와 얇은 선은 K 회색 ·
+ * 밑줄 문자(_)는 한 글자도 인쇄하지 않는다(칸·선은 상자 테두리로).
+ */
+
+@font-face { font-family: Minion; src: url(fonts/MinionPro-Regular.otf); }
+@font-face { font-family: Minion; font-weight: 700; src: url(fonts/MinionPro-Bold.otf); }
+@font-face { font-family: Minion; font-style: italic; src: url(fonts/MinionPro-It.otf); }
+@font-face { font-family: Pre; font-weight: 400; src: url(fonts/Pretendard-Regular.otf); }
+@font-face { font-family: Pre; font-weight: 500; src: url(fonts/Pretendard-Medium.otf); }
+@font-face { font-family: Pre; font-weight: 600; src: url(fonts/Pretendard-SemiBold.otf); }
+@font-face { font-family: Pre; font-weight: 700; src: url(fonts/Pretendard-Bold.otf); }
+@font-face { font-family: Maru; font-weight: 300; src: url(fonts/MaruBuri-Light.otf); }
+@font-face { font-family: Maru; font-weight: 400; src: url(fonts/MaruBuri-Regular.otf); }
+@font-face { font-family: Maru; font-weight: 600; src: url(fonts/MaruBuri-SemiBold.otf); }
+@font-face { font-family: Maru; font-weight: 700; src: url(fonts/MaruBuri-Bold.otf); }
+@font-face { font-family: Gm; font-weight: 300; src: url(fonts/GmarketSansLight.otf); }
+@font-face { font-family: Gm; font-weight: 500; src: url(fonts/GmarketSansMedium.otf); }
+@font-face { font-family: Gm; font-weight: 700; src: url(fonts/GmarketSansBold.otf); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font: 9.8pt/5.05mm Minion, Pre, serif; color: var(--ink); }
+body { widows: 1; orphans: 1; }
+b { font-weight: 700; }
+/* 조판 표식 — 2패스·검수가 면을 찾는 자리표. 도련 안(재단 때 잘린다) */
+.mk { position: absolute; left: 0.3mm; top: 0.3mm; font: 1pt/1 Pre; color: #fff;
+      white-space: nowrap; }
+
+/* ------------------------------------------------------------------ 면 종류 */
+.front, .back, .divl, .divr { position: relative; overflow: hidden; break-before: page; }
+body > section:first-child { break-before: auto; }
+.front { page: front; } .back { page: back; }
+.divl { page: divl; }   .divr { page: divr; }
+.part { page: body; break-before: page; }
+.memo { page: memo; break-before: page; position: relative; }
+
+/* 돌·종이 바탕(표지) — 불투명 그러데이션만(투명도는 인쇄 변환에서 탈이 난다).
+   선반·바닥 띠는 재단선에 닿으므로 도련까지 그린다. */
+.paper {
+  background:
+    linear-gradient(#b1ac9f, #9f998c) no-repeat 0 286.8mm / 216mm 16.2mm,
+    linear-gradient(#d8d5cc, #d8d5cc) no-repeat 0 286.5mm / 216mm 0.35mm,
+    linear-gradient(#ebe9e3, #f2f1ec 55%, #e8e6df) no-repeat 0 257.6mm / 216mm 28.9mm,
+    radial-gradient(closest-side, #efede8, #e5e2da) no-repeat -24mm -40mm / 264mm 320mm,
+    #e5e2da;
+}
+
+/* 표지 모티프 부품 */
+.rl, .rl2, .tk, .sl { position: absolute; background: var(--ink); }
+.rl  { height: 0.35mm; }
+.rl2 { height: 0.28mm; }
+.tk  { width: 0.35mm; }
+.sl  { width: 5.2mm; height: 0.25mm; transform: rotate(-45deg); }
+.logo { position: absolute; height: auto; }
+
+/* ------------------------------------------------------------------ 앞 간지 */
+.front .cg { position: absolute; font: 300 25pt/1 Maru; color: var(--ink); }
+.front .cg.ac { font-weight: 700; }
+.cv-ed { position: absolute; width: 130mm; }
+.cv-ed .e1 { font: 600 12pt/6.4mm Maru; }
+.cv-ed .e2 { font: 500 8pt/5mm Pre; color: var(--k70); margin-bottom: 4.6mm; }
+.cv-parts { border-collapse: collapse; }
+.cv-parts td { height: 8mm; vertical-align: middle; border-bottom: 0.3pt solid var(--k30);
+               white-space: nowrap; }
+.cv-parts .bar { width: 5.6mm; }
+.cv-parts .bar i { display: inline-block; width: 2.4mm; height: 4.6mm; background: var(--main);
+                   vertical-align: middle; }
+.cv-parts .no { font: 700 7.6pt/1 Gm; color: var(--k70); padding-right: 3.6mm;
+                letter-spacing: 0.05em; }
+.cv-parts .t { font: 600 10.5pt/1 Maru; padding-right: 9mm; }
+.cv-parts .r { font: 500 8pt/1 Gm; color: var(--k60); }
+.cv-wm { position: absolute; font: 700 53.2pt/1 Maru; white-space: nowrap; }
+
+/* ------------------------------------------------------------------ 뒤 간지 */
+.bk-tl, .bk-wm, .bk-colo { position: absolute; left: 0; width: 216mm; text-align: center; }
+.bk-tl p { font: 600 15.7pt/7.97mm Maru; }
+.bk-wm { font: 700 44pt/1 Maru; }
+.bk-colo { font: 400 7.4pt/1 Pre; color: var(--k60); letter-spacing: 0.02em; }
+
+/* ------------------------------------------------------------------ 파트 간지 */
+.dl-part { position: absolute; font: 400 12pt/1 Maru; letter-spacing: 0.5em; color: var(--k70); }
+.dl-no   { position: absolute; font: 300 118pt/1 Maru; color: var(--deep); letter-spacing: -0.02em; }
+.dl-t    { position: absolute; font: 600 27pt/1.2 Maru; white-space: nowrap; }
+.dl-en   { position: absolute; font: 500 7.6pt/1 Pre; letter-spacing: 0.32em; color: var(--k60);
+           white-space: nowrap; }
+.dl-bar  { position: absolute; width: 24mm; height: 1.4mm; background: var(--main); }
+.dl-foot { position: absolute; font: 400 8.2pt/1 Pre; color: var(--k70); white-space: pre; }
+.dl-foot b { font: 700 9.5pt/1 Gm; color: var(--ink); margin-right: 3mm; }
+.dl-wm   { position: absolute; font: 700 13pt/1 Maru; white-space: nowrap; }
+
+.divr { background: #fff; }
+.dr-field { position: absolute; left: 0; top: 0; width: 216mm; background: var(--main); }
+.dr-head, .dr-body { position: absolute; }
+.dr-head .k { font: 700 9pt/1 Gm; letter-spacing: 0.14em; color: var(--ink); }
+.dr-head .t { font: 600 21pt/1.25 Maru; margin-top: 3mm; }
+.dr-head .chips { margin-top: 4.6mm; }
+.chip { display: inline-block; background: #fff; border-radius: 3mm; padding: 1.3mm 3mm 1.1mm;
+        margin-right: 2mm; font: 600 8.2pt/1 Pre; }
+.chip b { font: 700 8.2pt/1 Gm; margin-left: 1.8mm; }
+.dr-h { font: 600 11pt/1 Maru; padding-bottom: 2.6mm; border-bottom: 0.6pt solid var(--ink); }
+.dr-h span { font: 400 7.4pt/1 Pre; color: var(--k60); margin-left: 3mm; }
+.toc { width: 100%; border-collapse: collapse; }
+.toc td { height: 7mm; border-bottom: 0.3pt solid var(--k20); vertical-align: middle; }
+.toc td.g { width: 7mm; border-bottom: 0; }
+.toc td.n { width: 15mm; font: 700 9.5pt/1 Gm; color: var(--deep); }
+.toc td.s { font: 400 7.6pt/1 Pre; color: var(--k60); white-space: nowrap; }
+.toc td.s b { font: 600 8.4pt/1 Pre; color: var(--ink); margin-right: 1.8mm; }
+.toc.dense td { height: 5.6mm; }
+.intro { margin-top: 11mm; background: var(--subtint); padding: 5mm 6mm 5.4mm;
+         border-top: 0.75pt solid var(--submid); }
+.intro .ih { font: 600 11pt/1 Maru; margin-bottom: 2.6mm; }
+.intro .il { font: 400 8.8pt/5.4mm Pre; color: var(--k80); padding-left: 7mm; position: relative;
+             margin-top: 1.6mm; }
+.intro .inum { position: absolute; left: 0; top: 0.6mm; width: 4.2mm; height: 4.2mm;
+               border-radius: 50%; background: var(--sub); font: 700 7.2pt/4.3mm Gm;
+               text-align: center; color: var(--ink); }
+
+/* ------------------------------------------------------------------ 머리 · 꼬리 */
+.hdrL { position: running(hdrL); }
+.hdrR { position: running(hdrR); }
+.footL { position: running(footL); }
+.footR { position: running(footR); }
+.hdrL, .hdrR { padding-bottom: 12.4mm; white-space: nowrap; }
+.hdrL { padding-left: 3.4mm; text-align: left; }
+.hdrR { text-align: right; }
+.hdrL .pb { font: 700 7.4pt/1 Gm; color: #fff; background: var(--deep);
+            padding: 0.95mm 2.1mm 0.75mm; border-radius: 0.8mm; letter-spacing: 0.06em; }
+.hdrL .pt { font: 600 10.5pt/1 Maru; margin-left: 2.6mm; }
+.hdrR .ed { font: 500 7.3pt/1 Pre; color: var(--k60); margin-right: 3.2mm; }
+.hdrR .wm { font: 700 11.5pt/1 Maru; letter-spacing: 0.02em; }
+.footL, .footR { padding-top: 5.8mm; white-space: nowrap; font: 500 7.2pt/1 Pre;
+                 color: var(--k60); }
+.footL { text-align: left; }
+.footR { text-align: right; }
+.footL .pg, .footR .pg { font: 700 10pt/1 Gm; color: var(--deep); }
+.footL .pg::before, .footR .pg::before { content: counter(page); }
+.bar { display: inline-block; width: 0; height: 2.6mm; border-left: 0.3pt solid var(--k30);
+       margin: 0 2.6mm; vertical-align: -0.35mm; }
+
+/* ------------------------------------------------------------------ 칸 */
+.pg { position: relative; break-after: page; }
+.part > .pg:last-child { break-after: auto; }
+.pg.over { height: auto !important; }
+.slot { position: relative; }
+.slot.full { height: auto !important; }
+.sep { position: relative; }
+.sep::before { content: ""; position: absolute; left: 0; right: 0;
+               border-top: 0.3pt solid var(--k30); }
+
+/* ------------------------------------------------------------------ 덩어리 */
+.unit { position: relative; }
+.unit .mk { top: auto; left: 0; bottom: 0; }
+.uhead { display: table; width: 100%; margin-bottom: 2.2mm; }
+.uhead > div { display: table-cell; vertical-align: bottom; }
+.uhead .c2 { text-align: right; white-space: nowrap; padding-left: 4mm; }
+.rng { font: 700 8pt/1 Gm; color: var(--ink); background: var(--main);
+       padding: 1mm 2.2mm 0.8mm; border-radius: 0.8mm; margin-right: 2.4mm; }
+.uh { font: 600 9.4pt/5mm Pre; }
+.src { font: 400 7.2pt/1 Pre; color: var(--k60); }
+.src b { font-weight: 600; color: var(--k80); margin-right: 1.4mm; }
+
+.q { position: relative; padding-left: 9.5mm; }
+.q + .q { margin-top: 4.4mm; }
+.pbox + .q, .unit > .note + .q { margin-top: 3.4mm; }
+.stem { font: 500 9.4pt/5.1mm Pre; letter-spacing: -0.01em; }
+.stem .no { position: absolute; left: 0; top: -0.25mm; font: 700 13pt/5.1mm Gm;
+            color: var(--deep); letter-spacing: -0.02em; }
+.stem .tag { font: 400 7.2pt/1 Pre; color: var(--k60); margin-left: 1.2mm; white-space: nowrap; }
+.note { font: 400 7.9pt/4.4mm Pre; color: var(--k70); margin-top: 0.6mm; }
+
+.pbox { margin-top: 2.4mm; background: var(--ivory); padding: 3.1mm 3.8mm 3.3mm;
+        text-align: justify; }
+.pbox p { font: 9.8pt/5.05mm Minion, Pre; }
+.pbox p + p { margin-top: 1mm; }
+.sn { font: 700 7.2pt/1 Pre; color: var(--ink); background: var(--soft);
+      padding: 0.35mm 0.8mm 0.25mm; border-radius: 0.7mm; margin-right: 0.9mm; }
+
+.cond { display: table; width: 100%; margin-top: 2.2mm; background: var(--ivory2);
+        padding: 1.8mm 3mm; }
+.cond .cl, .cond .ci { display: table-cell; vertical-align: top; }
+.cond .cl { width: 11.5mm; padding-top: 0.2mm; }
+.cond .cl span { font: 700 7.6pt/1 Pre; background: #fff; padding: 0.8mm 1.6mm 0.6mm;
+                 border-radius: 0.7mm; }
+.cond .ci p { font: 400 8.2pt/4.6mm Pre; color: var(--k80); }
+
+.summary { margin-top: 2.4mm; background: var(--subtint); border: 0.6pt solid var(--submid);
+           border-radius: 1mm; padding: 2.6mm 3.8mm; }
+.summary p { font: 9.8pt/6mm Minion, Pre; text-align: justify; }
+.lb { white-space: nowrap; }
+.lb .l1 { font-weight: 700; margin-right: 0.35mm; }
+.lb .u { display: inline-block; width: 2.3mm; height: 0.62em;
+         border-bottom: 0.5pt solid var(--ink); margin: 0 0.42mm; }
+.ab { font: 700 8.4pt/1 Pre; margin-right: 0.8mm; }
+.cnt { font: 400 7pt/1 Pre; color: var(--k60); margin-left: 0.8mm; }
+
+.pieces { width: 100%; border-collapse: collapse; margin-top: 2.4mm; }
+.pieces td { border: 0.3pt solid var(--k30); padding: 1.4mm 2mm 1.3mm 1.6mm;
+             font: 9.3pt/4.6mm Minion, Pre; vertical-align: middle; }
+.pieces .pn { display: inline-block; width: 3.9mm; height: 3.9mm; border-radius: 50%;
+              background: var(--sub); font: 700 7pt/3.95mm Gm; text-align: center;
+              margin-right: 1.5mm; }
+
+.ans { margin-top: 3mm; }
+.ans p { font: 500 9pt/7mm Pre; white-space: nowrap; }
+.alab { font: 700 7.6pt/1 Gm; color: #fff; background: var(--deep); padding: 0.95mm 2mm 0.75mm;
+        border-radius: 0.8mm; margin-right: 2.4mm; }
+.ul { display: inline-block; height: 0.8em; border-bottom: 0.5pt solid var(--ink); }
+.ul.s { width: 18mm; } .ul.m { width: 40mm; } .ul.l { width: 90mm; }
+.ul.tgt { width: 58mm; }
+.pgap { display: inline-block; width: 6mm; }
+.agap { display: inline-block; width: 10mm; }
+
+/* ------------------------------------------------------------------ MEMO */
+.memo .ml i { display: block; height: 9.4mm; border-bottom: 0.3pt solid var(--k20); }

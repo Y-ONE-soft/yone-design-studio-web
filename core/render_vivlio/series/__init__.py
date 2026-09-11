@@ -74,6 +74,11 @@ def _middle():
     return MiddleSeries()
 
 
+def _hankkeut():
+    from core.render_vivlio.series.hankkeut import HankkeutSeries
+    return HankkeutSeries()
+
+
 register("vocabook", _vocabook)
 register("vocaunit", _vocaunit)
 register("vocacard", _vocacard)
@@ -84,3 +89,4 @@ register("whitebook", _whitebook)
 register("pocketbook", _pocketbook)
 register("final", _final)
 register("workbook", _workbook)
+register("hankkeut", _hankkeut)
