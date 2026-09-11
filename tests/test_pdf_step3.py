@@ -14,7 +14,8 @@ fitz = pytest.importorskip("fitz")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.extract.pdf import (_pdf_extract_paragraphs, PdfTextUnreadable,  # noqa: E402
-                              _glue, _check_readable, _breaks)
+                              _glue, _check_readable, _breaks,
+                              _strip_lead_bullet, _trim_superscript_ref)
 
 KO = "korea"          # PyMuPDF 내장 한글 글꼴
 
@@ -271,3 +272,27 @@ def test_two_sentence_prompt_and_inline_choice_brackets():
     s1 = _line("[서답형 1~2] 다음 글을 읽고 물음에 답하시오.", x1=284.0)
     s2 = _line("Located in the historic city of Ningbo, China,", base=113.0)
     assert _breaks(s1, s2, 285.0, 13.0, "[", 1, para_is_q=True)[0]
+
+
+def _chs(text, size=10.0, tail_size=None, tail=0):
+    out = [{"c": c, "size": size, "ul": False} for c in text]
+    if tail_size:
+        for c in out[-tail:]:
+            c["size"] = tail_size
+    return out
+
+
+def test_superscript_ref_and_bullet_glyph_trimmed():
+    txt = lambda cs: "".join(c["c"] for c in cs)
+    # 첨자 각주번호(7.6pt)는 떼고, 본문 크기 '(단어 2개)'·'5)' 는 둔다
+    body, ref = _trim_superscript_ref(_chs("가장 적절한 것은?12)", tail_size=7.6, tail=3))
+    assert txt(body) == "가장 적절한 것은?" and ref == 12      # 번호는 미주 판정용으로 남긴다
+    body, ref = _trim_superscript_ref(_chs("변형할 것)12)", tail_size=7.6, tail=3))
+    assert txt(body) == "변형할 것)" and ref == 12
+    body, ref = _trim_superscript_ref(_chs("본문 속 번호 5)"))
+    assert txt(body) == "본문 속 번호 5)" and ref is None
+    # hwp 글머리표가 글자로 찍힌 것(∎, 기호 글꼴 사용자 영역)은 떼고 ■ 는 둔다
+    assert txt(_strip_lead_bullet(_chs("∎ 다음 글을 읽고 물음에 답하시오."))) \
+        == "다음 글을 읽고 물음에 답하시오."
+    assert txt(_strip_lead_bullet(_chs("\uf076 다음 글을 읽고"))) == "다음 글을 읽고"
+    assert txt(_strip_lead_bullet(_chs("■ 어휘 정리"))) == "■ 어휘 정리"

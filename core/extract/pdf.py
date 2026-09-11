@@ -530,6 +530,56 @@ def _glue(prev_chars, cur_chars, hangul_joined=False):
     return {"c": " ", "ul": prev_chars[-1]["ul"] and cur_chars[0]["ul"]}
 
 
+# 글머리표 글리프 — hwp/docx 에서는 문단 번호 속성(글자 아님)인데 PDF 에서는
+# 글자로 찍힌다('∎ 다음 글을 읽고 …', 기호 글꼴 '\uf076'). 원고에서 뜻을
+# 갖는 표지(■ ● ※ ▶ ◆ 등)는 건드리지 않는다.
+_BULLET_GLYPHS = set("∎▪▫•◦‣⁃●")  # '●'는 아래에서 다시 제외
+_BULLET_GLYPHS.discard("●")
+
+
+def _is_bullet_glyph(c):
+    return c in _BULLET_GLYPHS or 0xE000 <= ord(c[0]) <= 0xF8FF
+
+
+def _strip_lead_bullet(chars):
+    """단락 첫머리 글머리표 글리프 1개(+뒤 공백)를 뗀다."""
+    i = 0
+    while i < len(chars) and chars[i]["c"].isspace():
+        i += 1
+    if i < len(chars) and _is_bullet_glyph(chars[i]["c"]):
+        j = i + 1
+        while j < len(chars) and chars[j]["c"].isspace() and not chars[j]["ul"]:
+            j += 1
+        if j < len(chars):           # 글머리표만 있는 단락은 그대로 둔다
+            return chars[j:]
+    return chars
+
+
+def _trim_superscript_ref(chars):
+    """단락 끝 첨자 각주번호('것은?1)', '…할 것)12)')를 뗀다 — 본문 글자
+    크기의 85% 미만인 숫자+')' 일 때만(구조 판정). hwp 원고는 각주를
+    추출 단계에서 빼므로 같은 모양이 된다.
+    → (글자 목록, 뗀 번호 또는 None) — 번호는 미주 구간 판정(_cut_endnotes)이
+    쓴다. 먼저 떼고 잊으면 미주 구간을 못 알아본다(수특라이트 12강 실측)."""
+    k = len(chars)
+    while k > 0 and chars[k - 1]["c"].isspace():
+        k -= 1
+    if k < 3 or chars[k - 1]["c"] != ")":
+        return chars, None
+    j = k - 1
+    while j > 0 and chars[j - 1]["c"].isdigit():
+        j -= 1
+    if j == k - 1 or k - 1 - j > 3:
+        return chars, None
+    body = [c["size"] for c in chars[:j] if c["c"].isalpha() and "size" in c]
+    tail = [c.get("size") for c in chars[j:k]]
+    if not body or any(t is None for t in tail):
+        return chars, None
+    if max(tail) < 0.85 * statistics.median(body):
+        return chars[:j], int("".join(c["c"] for c in chars[j:k - 1]))
+    return chars, None
+
+
 def _chars_to_para(chars):
     """글자 목록 → {"text", "runs"} (공백 정리 — 밑줄 공백은 보존)."""
     # 앞뒤 공백 제거
@@ -590,8 +640,10 @@ def _cut_endnotes(paras, log=None, label=""):
     first_ref_idx = None
     for i, p in enumerate(paras):
         m = _RE_REF_TAIL.search(p["text"])
-        if m:
-            refs.append(int(m.group(2)))
+        n = p.get("_ref") if p.get("_ref") is not None else (
+            int(m.group(2)) if m else None)
+        if n is not None:
+            refs.append(n)
             if first_ref_idx is None:
                 first_ref_idx = i
     rs = set(refs)
@@ -781,7 +833,10 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
 
         def flush():
             if cur:
-                p = _chars_to_para(cur)
+                body, ref = _trim_superscript_ref(_strip_lead_bullet(cur))
+                p = _chars_to_para(body)
+                if ref is not None:
+                    p["_ref"] = ref
                 if p["text"].strip() or any(r["ul"] for r in p["runs"]):
                     paras.append(p)
 
@@ -836,6 +891,8 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
 
         if exclude_footnotes:
             paras = _cut_endnotes(paras, log, label)
+        for p in paras:
+            p.pop("_ref", None)
         paras = _normalize_circled_numbers(paras)
         if callable(log):
             ul_runs = sum(1 for p in paras for r in p.get("runs") or [] if r["ul"])

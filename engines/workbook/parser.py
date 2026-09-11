@@ -2823,13 +2823,24 @@ def _step3_pdf_paragraphs(fpath, extract_underline=True, image_dir=None,
     except OSError:
         key = None
     if key is not None and key in _S3_PDF_CACHE:
-        return json.loads(_S3_PDF_CACHE[key])
-    paras = _pdf_extract_paragraphs(fpath, extract_underline,
-                                    exclude_footnotes=True,
-                                    image_dir=image_dir, log=log)
-    if key is not None:
-        _S3_PDF_CACHE[key] = json.dumps(paras, ensure_ascii=False)
-    return paras
+        ent = _S3_PDF_CACHE[key]
+    else:
+        lines = []
+        paras = _pdf_extract_paragraphs(fpath, extract_underline,
+                                        exclude_footnotes=True,
+                                        image_dir=image_dir, log=lines.append)
+        ent = {"paras": json.dumps(paras, ensure_ascii=False),
+               "logs": lines, "told": set()}
+        if key is not None:
+            _S3_PDF_CACHE[key] = ent
+    # 추출 요약('[PDF] … 미주 제외 · 공백 복원')은 로그를 받는 첫 호출에서
+    # 한 번 내보낸다 — 첫 추출이 로그 없는 경로(흡수 함수)에서 일어나도
+    # 잡 로그에 남도록 (같은 잡에서 두 번 찍지 않게 로그 함수별로 기억).
+    if callable(log) and id(log) not in ent["told"]:
+        ent["told"].add(id(log))
+        for line in ent["logs"]:
+            log(line)
+    return json.loads(ent["paras"])
 
 
 _RE_S3_KEY_LESSON = re.compile(r"(\d+)\s*강\s*(\d+(?:\s*~\s*\d+)?)\s*번")

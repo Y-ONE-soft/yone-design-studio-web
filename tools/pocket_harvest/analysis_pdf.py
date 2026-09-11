@@ -115,7 +115,12 @@ def _images(page):
                 pm = fitz.Pixmap(fitz.csRGB, pm)
             if pm.width and pm.height:
                 rgb = tuple(pm.pixel(pm.width // 2, pm.height // 2)[:3])
-                wavy = _is_wavy(pm)
+                # ⚠ 물결 모양은 **소프트 마스크**에 있다 — 색 그림은 통짜 분홍이라
+                #   색만 보면 곧은 밑줄로 읽힌다(`confirming` 실측).
+                if b.get("mask"):
+                    wavy = _is_wavy(fitz.Pixmap(b["mask"]), mask=True)
+                else:
+                    wavy = _is_wavy(pm)
         except Exception:
             rgb = None
         out.append({"x0": x0, "y0": y0, "x1": x1, "y1": y1, "rgb": rgb,
@@ -123,24 +128,31 @@ def _images(page):
     return out
 
 
-def _is_wavy(pm):
+def _is_wavy(pm, mask=False):
     """밑줄 그림이 **물결**인가 — 칠해진 픽셀의 높이가 열마다 오르내리면 물결.
 
     Y.OS 마커는 물결(`~…~`)과 곧은 밑줄(`_…_` 병렬)이 따로다. 곧은 밑줄을
-    물결로 옮기면 다른 표시가 된다.
+    물결로 옮기면 다른 표시가 된다. `mask` 면 한 채널 덮임 값(0~255)을 본다.
     """
     if pm.height < 3 or pm.width < 6:
         return False
+
+    def inked(x, y):
+        px = pm.pixel(x, y)
+        if mask:
+            return px[0] > 120
+        return (sum(px[:3]) < 3 * 235
+                and (not pm.alpha or px[-1] > 60))
     ys = []
     for x in range(0, pm.width, max(1, pm.width // 40)):
-        col = [y for y in range(pm.height)
-               if sum(pm.pixel(x, y)[:3]) < 3 * 235
-               and (not pm.alpha or pm.pixel(x, y)[-1] > 60)]
+        col = [y for y in range(pm.height) if inked(x, y)]
         if col:
             ys.append(sum(col) / float(len(col)))
     if len(ys) < 4:
         return False
-    return max(ys) - min(ys) > 0.25 * pm.height
+    # 곧은 밑줄은 열마다 높이가 **거의 같다**(오르내림 ≈ 0). 물결은 7px 높이
+    # 그림에서 1.5px 쯤 오르내린다(`confirming` 실측) — 1px 이면 물결로 본다.
+    return max(ys) - min(ys) > max(0.8, 0.12 * pm.height)
 
 
 def _lines(cs, tol=1.2):
@@ -678,7 +690,9 @@ def _summary_page(page, cs):
     # 핵심기출 — 요약 아래 왼쪽 상자. 영어가 대부분인 줄이 이어진 곳이 사본이다.
     last = order[-1][1]
     mid = page.rect.width * 0.5
-    ex = [l for l in lines if l["oy"] > last["oy"] + 20 and l["x1"] < mid + 10]
+    # 왼쪽 상자 = **왼쪽 반에서 시작하는** 줄. 끝으로 가르면 지문 줄(끝 313.8)이
+    # 면 가운데(297.6)를 넘어 사본이 통째로 빠졌다(실측).
+    ex = [l for l in lines if l["oy"] > last["oy"] + 20 and l["x0"] < mid]
     # 기출 영역은 VOCA 머리 전까지
     head = _voca_header(lines)
     if head is not None:
@@ -705,10 +719,20 @@ def _summary_page(page, cs):
                 continue
             if any(c["color"] == head["color"] for c in l["cs"]):
                 continue
+            # 칸 글은 머리 글자보다 **3.5pt 왼쪽**에서 시작한다(실측) — 글자마다
+            # 칸을 고르면 `fascinated 매 | 료된` 처럼 칸 경계에서 낱말이 쪼개진다.
+            # 먼저 **덩이**(큰 틈으로 끊은 글)로 묶고, 덩이 머리로 칸을 고른다.
             cells = [[] for _ in cols]
+            segs, prev = [], None
             for c in l["cs"]:
-                k = max([i for i, x in enumerate(cols) if x - 3 <= c["x0"]] or [0])
-                cells[k].append(c)
+                if (prev is None or c["x0"] - prev["x1"] > 1.5 * c["size"]):
+                    segs.append([])
+                segs[-1].append(c)
+                prev = c
+            for sg in segs:
+                x0 = sg[0]["x0"]
+                k = max([i for i, x in enumerate(cols) if x - 8 <= x0] or [0])
+                cells[k].extend(sg)
             txt = [_text(x) for x in cells]
             for i in range(0, len(cols) - 1, 2):
                 w, ko = txt[i], txt[i + 1]
