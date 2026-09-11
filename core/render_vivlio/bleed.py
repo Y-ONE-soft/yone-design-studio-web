@@ -23,23 +23,54 @@ def _fitz():
 def stamp_trimbox(doc, bleed=3.0, trim=None, log=None):
     """전 면에 TrimBox 지정. trim=(x0,y0,x1,y1) mm 를 주면 그 값으로,
     아니면 MediaBox 에서 사방 `bleed` mm 를 들인 사각형으로."""
-    fitz = _fitz()
+    _fitz()
     n = 0
     for pg in doc:
-        mb = pg.mediabox
-        if trim:
-            r = fitz.Rect(mb.x0 + trim[0] * PT, mb.y0 + trim[1] * PT,
-                          mb.x0 + trim[2] * PT, mb.y0 + trim[3] * PT)
+        mb = _raw_box(doc, pg)
+        if mb is None:                    # MediaBox 를 못 읽으면 건드리지 않는다
+            (log or print)("[경고] MediaBox 를 못 읽어 TrimBox 를 건너뛴다")
+            break
+        x0, y0, x1, y1 = mb
+        if trim:                          # trim=(왼, 위, 오른, 아래) mm
+            r = (x0 + trim[0] * PT, y1 - trim[3] * PT,
+                 x0 + trim[2] * PT, y1 - trim[1] * PT)
         else:
-            r = fitz.Rect(mb.x0 + bleed * PT, mb.y0 + bleed * PT,
-                          mb.x1 - bleed * PT, mb.y1 - bleed * PT)
+            r = (x0 + bleed * PT, y0 + bleed * PT,
+                 x1 - bleed * PT, y1 - bleed * PT)
         try:
-            pg.set_trimbox(r)
+            doc.xref_set_key(pg.xref, "TrimBox",
+                             "[%.6f %.6f %.6f %.6f]" % r)
             n += 1
         except Exception as e:            # noqa: BLE001 — 원인을 보고 멈춘다
             (log or print)(f"[경고] TrimBox 설정 실패({n + 1}쪽): {e}")
             break
     return n
+
+
+def _raw_box(doc, pg, key="MediaBox"):
+    """페이지의 **PDF 원본 좌표계** 상자. 없으면 부모(Pages)에서 물려받는다.
+
+    ⚠ PyMuPDF 의 `pg.mediabox` 는 원점을 0 으로 눕힌 좌표라 그 값으로 TrimBox
+      를 쓰면 **MediaBox 원점이 0 이 아닌 PDF 에서 어긋난다**. 크로미움이 내는
+      포켓북이 그랬다 — MediaBox 가 `[0 .67646 …]` 으로 시작해 재단선이
+      0.24mm 아래로 밀렸다(실측, 사용자 지적으로 발견).
+    """
+    seen = set()
+    xref = pg.xref
+    while xref and xref not in seen:
+        seen.add(xref)
+        got = doc.xref_get_key(xref, key)
+        if got and got[0] != "null" and got[1]:
+            try:
+                v = [float(t) for t in got[1].strip("[] ").split()]
+                if len(v) == 4:
+                    return (min(v[0], v[2]), min(v[1], v[3]),
+                            max(v[0], v[2]), max(v[1], v[3]))
+            except ValueError:
+                pass
+        par = doc.xref_get_key(xref, "Parent")
+        xref = int(par[1].split()[0]) if par and par[0] == "xref" else 0
+    return None
 
 
 # ── 아트워크(간지·MEMO) 삽입 ─────────────────────────────────────────────
