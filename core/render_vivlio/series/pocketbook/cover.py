@@ -163,10 +163,18 @@ def ink_from_cover(pdf):
     if yr and tt:
         accent, title = "#%06X" % yr[0]["color"], "#%06X" % tt[0]["color"]
         px = pg.get_pixmap(dpi=30)
-        # 왼쪽 가장자리 — 3D 리본·사진이 닿지 않는 자리에서 위·아래 바탕을 잰다
-        at = lambda fx, fy: "#%02X%02X%02X" % px.pixel(
+        # 바탕 = 표지 아래쪽 왼편(3D 리본·사진·로고가 닿지 않는 자리)에서 가장
+        # 흔한 색. 위는 그 색을 흰색 쪽으로 1/3 옅게 — **처음 승인된 간지**가
+        # 그렇게 생겼다(광문1: 표지 민트 #CDEAE0 → 간지 #CFEADF 아래 · #DFF2E8 위).
+        # ⚠ 왼쪽 가장자리 위·아래를 그대로 쟀더니 표지 그러데이션의 **짙은 끝**만
+        #   잡혀 거꾸로 된 짙은 간지가 나왔다(#C5EADB→#D0EAE3).
+        from collections import Counter
+        strip = Counter("#%02X%02X%02X" % px.pixel(
             int(px.width * fx), int(px.height * fy))[:3]
-        top, bottom = at(0.03, 0.04), at(0.03, 0.82)
+            for fx in (0.02, 0.03, 0.04, 0.05)
+            for fy in [0.60 + 0.02 * i for i in range(20)])
+        bottom = strip.most_common(1)[0][0]
+        top = _mix(bottom, "#FFFFFF", 0.33)
         doc.close()
         return {
             "bg_top": top, "bg_bottom": bottom, "grad": True,
