@@ -29,12 +29,12 @@ from core.render_vivlio import stage
 
 # ── 부(部)별 색 — 정본 실측(화면색). CMYK 는 계열 print_defaults 에서 못 박는다 ──
 PAL = {
-    1: {"band": "#fff3b7", "pill": "#fdc172", "tab": "#3f65af", "shadow": "#5b5b72",
-        "arc": "#569cd4", "dot": "#fec866"},
-    2: {"band": "#c9ebfc", "pill": "#64a2d8", "tab": "#3c75ba", "shadow": "#5b5b72",
-        "arc": "#ffd67d", "dot": "#569cd4"},
-    3: {"band": "#c4cdd7", "pill": "#a5b3c0", "tab": "#3c75ba", "shadow": "#2a458a",
-        "arc": "#ffd67d", "dot": "#569cd4"},
+    1: {"band": "#ffe4b9", "pill": "#f8a57e", "tab": "#5b579f", "shadow": "#824f8c",
+        "arc": "#f58e7d", "dot": "#a4a8d5"},
+    2: {"band": "#dbddef", "pill": "#959ecf", "tab": "#5b579f", "shadow": "#824f8c",
+        "arc": "#a4a8d5", "dot": "#f58e7d"},
+    3: {"band": "#f5dada", "pill": "#daa0af", "tab": "#824f8c", "shadow": "#5b579f",
+        "arc": "#f6a0b0", "dot": "#a4a8d5"},
 }
 PART_NO = {1: 1, 2: 2, 3: 2}         # 정답 및 해설도 PART 02 의 절이다
 
@@ -89,33 +89,33 @@ def _svg(body, vb="0 0 24 24"):
 
 ICON = {
     # 4줄 요약 — 메모지
-    "note": _svg('<rect x="4" y="3" width="16" height="18" rx="2.6" fill="#e6f3fc" '
-                 'stroke="#0075bf" stroke-width="1.7"/>'
-                 '<path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="#0075bf" stroke-width="1.7" '
+    "note": _svg('<rect x="4" y="3" width="16" height="18" rx="2.6" fill="#fee5db" '
+                 'stroke="#e35a4d" stroke-width="1.7"/>'
+                 '<path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="#e35a4d" stroke-width="1.7" '
                  'stroke-linecap="round"/>'),
     # 3단계 프로세스 — 전구
     "bulb": _svg('<path d="M12 2.6a6.6 6.6 0 0 0-3.9 11.9c.7.5 1.1 1.3 1.1 2.1v.6h5.6v-.6'
-                 'c0-.8.4-1.6 1.1-2.1A6.6 6.6 0 0 0 12 2.6z" fill="#ffd67d" stroke="#e8a93a" '
-                 'stroke-width="1.2"/><path d="M10.4 12.4 12 9.8l1.6 2.6" fill="none" '
-                 'stroke="#e8a93a" stroke-width="1.1" stroke-linecap="round" '
+                 'c0-.8.4-1.6 1.1-2.1A6.6 6.6 0 0 0 12 2.6z" fill="#ffe9a4" stroke="#fcbb6e" '
+                 'stroke-width="1.3"/><path d="M10.4 12.4 12 9.8l1.6 2.6" fill="none" '
+                 'stroke="#f58e7d" stroke-width="1.1" stroke-linecap="round" '
                  'stroke-linejoin="round"/><rect x="9.2" y="17.9" width="5.6" height="1.7" '
-                 'rx=".8" fill="#8c98a6"/><rect x="9.9" y="20.2" width="4.2" height="1.6" '
-                 'rx=".8" fill="#8c98a6"/>'),
+                 'rx=".8" fill="#a4a8d5"/><rect x="9.9" y="20.2" width="4.2" height="1.6" '
+                 'rx=".8" fill="#a4a8d5"/>'),
     # 필승법 — 불꽃
     "flame": _svg('<path d="M12.4 2.2c.4 3-1.6 4.6-3.2 6.4C7.6 10.4 6 12.3 6 15.1 6 18.9 8.7 '
                   '21.8 12 21.8s6-2.7 6-6.5c0-2.7-1.3-4.4-2.5-5.9-.1 1.3-.7 2.3-1.6 2.9'
-                  '.3-3.7-.3-6.8-1.5-9.3z" fill="#ff7a45"/><path d="M12.2 11.4c.2 1.6-.7 '
+                  '.3-3.7-.3-6.8-1.5-9.3z" fill="#f58e7d"/><path d="M12.2 11.4c.2 1.6-.7 '
                   '2.5-1.5 3.4-.7.8-1.3 1.7-1.3 2.9 0 1.7 1.2 3 2.7 3s2.8-1.3 2.8-3c0-1.3-.6'
-                  '-2.1-1.2-2.8-.1.7-.4 1.1-.8 1.4.1-1.9-.1-3.5-.7-4.9z" fill="#ffd67d"/>'),
+                  '-2.1-1.2-2.8-.1.7-.4 1.1-.8 1.4.1-1.9-.1-3.5-.7-4.9z" fill="#ffe9a4"/>'),
     # 해설 — 돋보기
-    "lens": _svg('<circle cx="10.2" cy="10.2" r="6.2" fill="#e6f3fc" stroke="#0075bf" '
-                 'stroke-width="1.9"/><path d="M14.8 14.8l5.6 5.6" stroke="#0075bf" '
+    "lens": _svg('<circle cx="10.2" cy="10.2" r="6.2" fill="#fff" stroke="#5b579f" '
+                 'stroke-width="1.9"/><path d="M14.8 14.8l5.6 5.6" stroke="#5b579f" '
                  'stroke-width="2.6" stroke-linecap="round"/><path d="M7.2 9a3.4 3.4 0 0 1 '
-                 '2.6-2.4" fill="none" stroke="#fff" stroke-width="1.4" '
+                 '2.6-2.4" fill="none" stroke="#a4a8d5" stroke-width="1.4" '
                  'stroke-linecap="round"/>'),
     # 오답 주의 — 말풍선
     "warn": _svg('<path d="M4 5.6A2.6 2.6 0 0 1 6.6 3h10.8A2.6 2.6 0 0 1 20 5.6v8.2a2.6 2.6 '
-                 '0 0 1-2.6 2.6H11l-4.4 4v-4A2.6 2.6 0 0 1 4 13.8z" fill="#61c1ed"/>'
+                 '0 0 1-2.6 2.6H11l-4.4 4v-4A2.6 2.6 0 0 1 4 13.8z" fill="#e35a4d"/>'
                  '<path d="M12 6.6v4.6" stroke="#fff" stroke-width="2.1" '
                  'stroke-linecap="round"/><circle cx="12" cy="13.6" r="1.15" fill="#fff"/>'),
 }
@@ -123,13 +123,13 @@ ICON = {
 PEN = ('<span class="pen"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
        '<rect x="2" y="2" width="20" height="20" fill="#fff"/>'
        '<path d="M15.6 3.8l4.6 4.6L9.1 19.5 3.4 20.6l1.1-5.7z" fill="#fff" '
-       'stroke="#61c1ed" stroke-width="1.35" stroke-linejoin="round"/>'
-       '<path d="M13.4 6l4.6 4.6M4.5 14.9l4.6 4.6" stroke="#61c1ed" stroke-width="1.35"/>'
+       'stroke="#a4a8d5" stroke-width="1.35" stroke-linejoin="round"/>'
+       '<path d="M13.4 6l4.6 4.6M4.5 14.9l4.6 4.6" stroke="#a4a8d5" stroke-width="1.35"/>'
        '</svg></span>')
 
 DARROW = ('<div class="darrow"><svg viewBox="0 0 10 12" xmlns="http://www.w3.org/2000/svg">'
-          '<path d="M5 1v8.2M1.6 6.2 5 9.8l3.4-3.6" fill="none" stroke="#61c1ed" '
-          'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>')
+          '<path d="M5 1v8.2M1.6 6.2 5 9.8l3.4-3.6" fill="none" stroke="#f58e7d" '
+          'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>')
 
 
 # ── 머리(러닝) ─────────────────────────────────────────────────────────
@@ -266,12 +266,17 @@ def grammar_html(r):
     return inl(r)
 
 
+def sub_line(r):
+    """소문항 줄 — 앞의 (a) 기호에 색을 준다(읽는 기준점)."""
+    return re.sub(r'^\(([a-h])\)', r'<span class="sm">(\1)</span>', inl(r))
+
+
 def qbody(blocks, main_box="cbox"):
     out = []
     for b in blocks:
         t = b["t"]
         if t == "line":
-            out.append(f'<p class="ql">{inl(b["r"])}</p>')
+            out.append(f'<p class="ql">{sub_line(b["r"])}</p>')
         elif t == "summary":
             out.append(f'<div class="cbox"><span class="bl">〈요약문〉</span>'
                        f'{inl(b["r"])}</div>')
@@ -324,14 +329,14 @@ def render_type(cfg, ty, summary=None, sid=""):
     out.append(f'<div class="tbar"><span class="dot">&gt;</span>{esc(ty["kind"])}</div>')
     out.append("".join(f'<p class="tdesc">{esc(d)}</p>' for d in ty["desc"]))
     steps = "".join(
-        f'<div class="step"><div class="step-h"><span class="pill">STEP {s["no"]}</span>'
+        f'<div class="step s{s["no"]}"><div class="step-h"><span class="pill">STEP {s["no"]}</span>'
         f'{esc(s["title"])}</div><div class="cham"><div>'
         + "".join(f'<p>{esc(x)}</p>' for x in s["body"]) + '</div></div></div>'
         for s in ty["steps"])
     out.append(f'<div class="proc"><div class="proc-t">{ICON["bulb"]}{esc(ty["proc"])}</div>'
                f'{steps}</div>')
-    out.append(f'<div class="tip-t">{ICON["flame"]}{esc(ty["tip_title"])}</div>')
-    out.append("".join(f'<p class="tip">{esc(t)}</p>' for t in ty["tip"]))
+    out.append(f'<div class="note tipn"><div class="nt">{ICON["flame"]}{esc(ty["tip_title"])}'
+               '</div>' + "".join(f'<p class="tip">{esc(t)}</p>' for t in ty["tip"]) + '</div>')
 
     pid = f'P{ty["no"]}'
     prob = [f'<div class="prob" id="{pid}">{mkz(pid)}'
@@ -340,11 +345,12 @@ def render_type(cfg, ty, summary=None, sid=""):
     if ty["tag"]:
         prob.append(f'<div class="xtag-row"><span class="xtag">{esc(ty["tag"])}</span></div>')
     prob.append(f'<div class="qbody">{qbody(ty["blocks"], main_box="pbox2")}</div>')
-    prob.append(f'<div class="exp-t">{ICON["lens"]}{esc(ty["exp_title"])}</div>'
-                '<div class="exp">' + "".join(exp_para(t) for t in ty["exp"]) + '</div>')
-    prob.append(f'<div class="wrong-t">{ICON["warn"]}{esc(ty["wrong_title"])}</div>'
-                '<ul class="wrong">' + "".join(f'<li>{esc(w)}</li>' for w in ty["wrong"])
-                + '</ul>')
+    prob.append(f'<div class="note expn"><div class="nt">{ICON["lens"]}{esc(ty["exp_title"])}'
+                '</div><div class="exp">' + "".join(exp_para(t) for t in ty["exp"])
+                + '</div></div>')
+    prob.append(f'<div class="wbx"><div class="wrong-t">{ICON["warn"]}{esc(ty["wrong_title"])}'
+                '</div><ul class="wrong">' + "".join(f'<li>{esc(w)}</li>' for w in ty["wrong"])
+                + '</ul></div>')
     prob.append(f'<p class="pans"><span class="lab">[연습 {ty["no"]:02d} 정답]</span>'
                 f'{answer_inline(ty["answer"])}</p>')
     prob.append('</div>')
@@ -354,9 +360,12 @@ def render_type(cfg, ty, summary=None, sid=""):
 
 
 # ── PART 2 · 실전 세트 ────────────────────────────────────────────────
-def render_set(s, first=False):
+def render_set(s, first=False, fit=0, gap=0.0):
+    """fit = 한 면에 넣으려고 조인 단계(0~3) · gap = 면 아래 남는 자리를 문항 사이에 나눈 값(mm)."""
     badge = '<span class="badge">광문고 기출</span>' if s["gichul"] else ""
-    out = [f'<div class="set{" first" if first else ""}">{mkz("B%d" % s["lo"])}'
+    cls = "set" + (" first" if first else "") + "".join(f" fit{k}" for k in range(1, fit + 1))
+    sty = f' style="--xg:{gap:.1f}mm"' if gap else ""
+    out = [f'<div class="{cls}"{sty}>{mkz("B%d" % s["lo"])}'
            f'<div class="set-src">{badge}'
            f'<span class="stab">&lt;{esc(s["src"])}&gt;</span></div>']
     for h in s["hist"]:
@@ -404,7 +413,7 @@ def render_answers(cfg, sets, sid):
 
 
 # ── 조립 ──────────────────────────────────────────────────────────────
-def write(cfg, d, build_dir, log=print, memos=()):
+def write(cfg, d, build_dir, log=print, memos=(), fit=None, gaps=None):
     """memos = MEMO 면을 앞에 끼울 요소 id 들(§표식§ 이름)."""
     memos = set(memos or ())
     b = cfg.book
@@ -435,7 +444,9 @@ def write(cfg, d, build_dir, log=print, memos=()):
     parts.append(f'<div class="sec band" id="S2">{mkz("S2")}'
                  f'{runners(cfg, 2, b.get("part2", "광문고 기출 서술형 실전문제"))}'
                  + "".join((memo_page(cfg, 2) if f'B{s["lo"]}' in memos else '')
-                           + render_set(s, k == 0) for k, s in enumerate(p2["sets"]))
+                           + render_set(s, k == 0, (fit or {}).get(s["lo"], 0),
+                                        (gaps or {}).get(s["lo"], 0.0))
+                           for k, s in enumerate(p2["sets"]))
                  + '</div>')
     before("S3", 2)
     parts.append(render_answers(cfg, d["answers"], "S3"))
@@ -449,5 +460,6 @@ def write(cfg, d, build_dir, log=print, memos=()):
     path = os.path.join(build_dir, "index.html")
     with open(path, "w", encoding="utf-8") as f:
         f.write(doc)
-    log(f"  HTML {len(doc):,}자 · MEMO {sorted(memos) or '없음'} → {path}")
+    log(f"  HTML {len(doc):,}자 · MEMO {sorted(memos) or '없음'} · 조임 {fit or '없음'} · "
+        f"여백 {len(gaps or {})}세트")
     return path

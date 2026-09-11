@@ -132,6 +132,12 @@ def _run_html(r):
         cls.append("wave")
     inner = ESC(r["t"])
     if r.get("ruby"):
+        # ⚠ 주석 낱말(`.w`)은 inline-block 이고 높이가 **줄 간격 전체**라, 물결을
+        #   그 상자에 칠하면 글자 밑이 아니라 **주석 줄을 긋는다**(실측:
+        #   `confirming` 물결이 `동명사1` 위로). 물결은 글자만 감싼 안쪽 상자에.
+        if "wave" in cls:
+            cls.remove("wave")
+            inner = '<span class="wave">%s</span>' % inner
         tags = [(r.get("slot") or "dn", r["ruby"])]
         if r.get("ruby2"):                  # 주석 아랫줄(분석본 PDF 실측)
             tags.append(("dn2", r["ruby2"]))
