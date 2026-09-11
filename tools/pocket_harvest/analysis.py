@@ -778,12 +778,22 @@ def _cut_extras(d):
             _cut_choices(paras[0])      # 선택지 문항이 붙은 경우 먼저 떼고
             _cut_prompt(paras[0])       # 번호가 없으면 발문만 떼어 낸다(해석 쪽)
             continue
-        end, seen = len(runs), 0
+        end, seen, first = len(runs), 0, None
         for j in range(nums[-1] + 1, len(runs)):
             t = runs[j].get("t", "")
             if t.rstrip().endswith(_SENT_TAIL):
-                end = j + 1
-                break
+                # ⚠ **번호 한 개에 문장이 둘 이상**일 수 있다(`"No problem,
+                #   Fiona. I've got your back."`). 첫 마침표에서 끊었더니 뒤
+                #   문장이 꼬리(요약·문제)에 딸려 통째로 잘렸다 — 광문1 2강
+                #   분석, 2차 검수 연구원 지적. 경계는 **줄이 끝나는 자리**다
+                #   (줄바꿈은 단독 공백 런으로 남는다). 줄 끝을 못 찾으면 첫
+                #   마침표로 되돌아간다.
+                if first is None:
+                    first = j + 1
+                if j + 1 >= len(runs) or not runs[j + 1].get("t", "").strip():
+                    end = j + 1
+                    break
+                continue
             # ⚠ 마지막 문장이 마침표로 안 끝나는 글도 있다(`Warm regards, Becky
             #   Bloom`). 그럴 땐 **빈 런 다음에 긴 글이 오는 자리**가 경계다.
             if seen and not t.strip() and j + 1 < len(runs) \
@@ -792,6 +802,9 @@ def _cut_extras(d):
                 break
             if t.strip():
                 seen += 1
+        else:
+            if first is not None:
+                end = first
         tail = "".join(r.get("t", "") for r in runs[end:]).strip()
         # 문제(`( ① )`)가 없고 **요약문만** 붙는 경우도 있다(광문1 1강 분석).
         # ⚠ 예전엔 꼬리가 **40자만 넘으면** 잘랐다. 그래서 번호가 안 붙은 진짜
@@ -800,10 +813,13 @@ def _cut_extras(d):
         #   있을 때만 자른다 — 글은 증거 없이 지우지 않는다.
         if end < len(runs) and _is_extra(tail):
             paras[0]["runs"] = runs[:end]
+            # ⚠ 예전엔 이 기록이 **안 자른 쪽(else)** 에 붙어 있었다 — 정작 자를
+            #   때는 아무 흔적이 없어 잘림이 검수에서 안 보였다.
+            d.setdefault("notes", []).append(
+                "지문 뒤 요약·문제 %d런을 잘라 냄: %s"
+                % (len(runs) - end, tail[:40]))
         else:
             _cut_prompt(paras[0])
-            d.setdefault("notes", []).append(
-                "지문 뒤 요약·문제 %d런을 잘라 냄" % (len(runs) - end))
 
 
 def _has_snum(p):
