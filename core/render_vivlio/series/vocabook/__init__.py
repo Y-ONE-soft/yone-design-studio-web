@@ -50,6 +50,21 @@ class VocabookSeries(Series):
     }
 
     # ── ① 원고 → data.json ──
+    # ── 인쇄 원고(CMYK) 기본값 — 규약: 항상 인쇄용 ──
+    # 팔레트 이름으로 적는다(`palette.ink/gray/label`). K 값은 포켓북·완성본
+    # 실측과 같은 hex 를 같은 값으로(#58595b K70 · #a7a9ac K40). 옛 팔레트
+    # (#6d6e71 품사 K70 · #939598 발음기호 K50)는 prepress 바닥표가 이미 안다.
+    PRINT_GRAY = {"ink": 1.0, "gray": 0.7, "label": 0.4}
+    PRINT_GRAY_DEFAULT_HEX = {"ink": "#231f20", "gray": "#58595b",
+                              "label": "#a7a9ac"}
+
+    def print_defaults(self, cfg):
+        from core.render_vivlio import prepress
+        P = dict(self.PRINT_GRAY_DEFAULT_HEX, **(cfg.section("palette") or {}))
+        gray = {str(P[k]).lower(): v for k, v in self.PRINT_GRAY.items()
+                if isinstance(P.get(k), str)}
+        return prepress.default_print(gray_map=gray)
+
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)
 

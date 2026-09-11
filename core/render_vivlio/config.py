@@ -142,7 +142,8 @@ class BookConfig(object):
     @property
     def page(self):
         p = dict(self.data.get("page") or {})
-        p.setdefault("bleed", 0.0)
+        # 규약: 도련 사방 3mm 가 기본이다(인쇄 납품). 화면용은 config 에 0 을 적는다.
+        p.setdefault("bleed", 3.0)
         p.setdefault("margin", [0, 0, 0])
         p["media_w"] = p["width"] + 2 * p["bleed"]
         p["media_h"] = p["height"] + 2 * p["bleed"]

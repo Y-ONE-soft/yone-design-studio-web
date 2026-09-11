@@ -244,7 +244,15 @@ class VivlioBookEngine(BaseEngine):
         # 인쇄 원고 절이 있는 책은 같이 만든다 (안 하면 조용히 옛 색으로 남는다)
         cfg = json.load(open(os.path.join(book_dir, "config.json"),
                              encoding="utf-8"))
-        if cfg.get("print"):
+        # ⚠ 원본 config 의 `print` 키만 보면 **계열 기본값을 쓰는 책**(포켓북
+        #   22권 — config 에 print 절이 없다)이 작업대에서 RGB 로만 나간다.
+        #   `bin/viv all` 과 같은 판정(`book._print_section`)을 쓴다.
+        try:
+            from core.render_vivlio import book as _vbook
+            want_print = bool(_vbook._print_section(_vbook.load(book_dir)))
+        except Exception:
+            want_print = bool(cfg.get("print"))
+        if want_print:
             log("[인쇄 원고] CMYK 변환 …")
             _viv([book_dir, "print"], log)
         pdf = self._find_pdf(book_dir, cfg)

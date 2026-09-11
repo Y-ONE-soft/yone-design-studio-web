@@ -164,6 +164,28 @@ class MiddleSeries(Series):
         return self._paths(key, vol)["data"]
 
     # ── ① 원고 → data ──
+    # ── 인쇄 원고(CMYK) 기본값 — 규약: 항상 인쇄용 ──
+    # automation/press.py 의 GRAY_MAP 과 같은 표(`palette.COMMON` 의 무채색).
+    # 미색(#FAF6EF)·파트 tint 는 넣지 않는다 — 넣으면 따뜻한 기가 빠져 회색이 된다.
+    # ⚠ press.py 는 gs 를 안 쓴다("글리프↔유니코드 85곳 깨짐" 실측). 이 계열도
+    #   공용 prepress(gs) 로 내되, 결과의 텍스트 추출이 깨지는지 확인한다.
+    PRINT_GRAY = {
+        "#232833": 1.00,   # 본문 먹        K100
+        "#4a515f": 0.72,   # 한글 해석      K72
+        "#5a6270": 0.63,   # 빈칸 밑줄      K63
+        "#6b7280": 0.55,   # 품사 배지 글자 K55
+        "#8b93a2": 0.42,   # 보조 글자      K42
+        "#cdd4de": 0.17,   # 진한 괘선      K17
+        "#e3e7ed": 0.10,   # 얇은 괘선      K10
+        "#edeff3": 0.07,   # 품사 배지 바탕 K7
+        "#f3f4f6": 0.05,   # 연그레이 바탕  K5
+        "#f6f8fa": 0.03,   # 중립 바탕      K3
+    }
+
+    def print_defaults(self, cfg):
+        from core.render_vivlio import prepress
+        return prepress.default_print(gray_map=self.PRINT_GRAY)
+
     def gen_data(self, cfg, log):
         key, vol = self._pick(cfg)
         _run("extract.py", key, vol, log, bookdir=cfg.root)

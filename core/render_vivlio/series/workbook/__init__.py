@@ -70,6 +70,23 @@ class WorkbookSeries(Series):
         "q3": "실전 발문", "p3": "실전 지문", "ch3": "실전 선지",
     }
 
+    # ── 인쇄 원고(CMYK) 기본값 — 규약: 항상 인쇄용 ──
+    # `themes/workbook.css` 의 무채색(실측 팔레트). 쪽번호 #3b4247 은 살짝 푸른
+    # 짙은 회색이지만 글자라 K 단색(0.85)으로 내린다. `.bend`·`.setmark` 등
+    # 당겨붙이기 표식(#fffff7~#fffffe)은 흰 바탕 위 흰 표식이라 K0 으로 지운다.
+    PRINT_GRAY = {
+        "#231f20": 1.0,      # --ink 본문 먹
+        "#3b4247": 0.85,     # --folio-no 쪽번호
+        "#58595b": 0.7,      # --kr-gray 한글 해석
+        "#eff0f0": 0.06,
+        "#fffff7": 0.0, "#fffff9": 0.0, "#fffffb": 0.0,
+        "#fffffc": 0.0, "#fffffd": 0.0, "#fffffe": 0.0,
+    }
+
+    def print_defaults(self, cfg):
+        from core.render_vivlio import prepress
+        return prepress.default_print(gray_map=self.PRINT_GRAY)
+
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)
 

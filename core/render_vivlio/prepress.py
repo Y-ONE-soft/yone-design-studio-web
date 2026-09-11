@@ -42,6 +42,22 @@ PROFILE_DIRS = ("/Library/Application Support/Adobe/Color/Profiles/Recommended",
 DEFAULT_PROFILES = ("JapanColor2001Coated.icc", "USWebCoatedSWOP.icc",
                     "CoatedFOGRA39.icc")
 
+def default_print(gray_map=None, cmyk_map=None):
+    """계열이 따로 표를 주지 않을 때의 `print` 절 — **인쇄 납품 규약의 바닥값**.
+
+    규약(~/.claude/CLAUDE.md "비블리오 인쇄 납품 규약"): 별도 말이 없으면 모든
+    조판은 인쇄용이다. 그래서 어떤 책이든 `print` 절이 없어도 이 표로 CMYK 를
+    만든다. 계열은 `Series.print_defaults` 로 자기 팔레트의 무채색을 얹는다.
+    """
+    gray = {"#000000": 1.0, "#ffffff": 0.0}
+    gray.update(DEFAULT_GRAY_MAP)
+    gray.update({str(k).lower(): v for k, v in (gray_map or {}).items()})
+    return {"out": "_인쇄", "profile": DEFAULT_PROFILES[0],
+            "gray_map": gray,
+            "cmyk_map": {str(k).lower(): list(v)
+                         for k, v in (cmyk_map or {}).items()}}
+
+
 _RE_RG = re.compile(rb"(?<![\w.])(\d*\.?\d+)\s+(\d*\.?\d+)\s+(\d*\.?\d+)\s+(rg|RG)(?![A-Za-z])")
 
 

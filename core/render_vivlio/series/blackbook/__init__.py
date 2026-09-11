@@ -41,6 +41,22 @@ class BlackbookSeries(Series):
     render_opts = {"nomeasure": True}
 
     # ── ① 원고 → data.json ──
+    # ── 인쇄 원고(CMYK) 기본값 — 규약: 항상 인쇄용 ──
+    # 팔레트 **이름**으로 적는다(책이 `palette.ink` 등을 덮어써도 따라간다).
+    # K 값은 화면 밝기 L 에서 K≈1-L^1.25 (완성본 실측 계열과 같은 곡선) 로 잡고
+    # 0.05 단위로 맺었다. 유채색(gold·syn·ant·pgnum…)은 ICC 변환을 탄다 —
+    # 1권 완성본과 대조해 못 박아야 할 색이 생기면 책 config `print.cmyk_map` 에.
+    PRINT_GRAY = {"ink": 1.0, "gray": 0.8, "box": 0.55, "band": 0.5}
+    PRINT_GRAY_DEFAULT_HEX = {"ink": "#231f20", "gray": "#404041",
+                              "box": "#808285", "band": "#939598"}
+
+    def print_defaults(self, cfg):
+        from core.render_vivlio import prepress
+        P = dict(self.PRINT_GRAY_DEFAULT_HEX, **(cfg.section("palette") or {}))
+        gray = {str(P[k]).lower(): v for k, v in self.PRINT_GRAY.items()
+                if isinstance(P.get(k), str)}
+        return prepress.default_print(gray_map=gray)
+
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)
 

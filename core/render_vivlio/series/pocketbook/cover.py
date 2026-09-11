@@ -73,14 +73,84 @@ CREDITS = [
 ]
 
 
+def _hex3(c):
+    return "#%02X%02X%02X" % tuple(round(max(0.0, min(1.0, x)) * 255)
+                                   for x in c[:3])
+
+
+def _rgb(h):
+    h = h.lstrip("#")
+    return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def _mix(a, b, t):
+    """a 에서 b 쪽으로 t 만큼(0~1)."""
+    x, y = _rgb(a), _rgb(b)
+    return "#%02X%02X%02X" % tuple(round(x[i] + (y[i] - x[i]) * t)
+                                   for i in range(3))
+
+
+def _lum(h):
+    r, g, b = _rgb(h)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def ink_from_cover(pdf):
+    """**그 학교 표지 PDF** 에서 간지 색을 뽑는다 → `INK` 꼴 dict, 못 읽으면 None.
+
+    간지는 표지를 따라 학교마다 색이 달라야 한다(사용자 지적 — 광문1·2 가
+    같은 민트로 나갔다). 색표를 따로 적으면 표지를 고칠 때마다 두 벌이 어긋나므로
+    **표지 벡터에서 바로 읽는다**. 표지는 전부 같은 짜임이다(2026-06 리뉴얼
+    15권 실측: 벡터 15개·이미지 0) — 면을 덮는 색면(바탕/아래 블록) + 큰 제목
+    글자 한 색.
+    """
+    try:
+        import fitz
+        doc = fitz.open(pdf)
+        pg = doc[0]
+    except Exception:
+        return None
+    page_a = pg.rect.width * pg.rect.height
+    area, title = {}, {}
+    for dr in pg.get_drawings():
+        c = dr.get("fill")
+        if c and len(c) >= 3:
+            h = _hex3(c)
+            area[h] = area.get(h, 0.0) + dr["rect"].width * dr["rect"].height
+    for b in pg.get_text("dict")["blocks"]:
+        for ln in b.get("lines", ()):
+            for sp in ln["spans"]:
+                if sp["text"].strip() and sp["size"] > 18:
+                    h = "#%06X" % sp["color"]
+                    title[h] = title.get(h, 0) + len(sp["text"])
+    doc.close()
+    fills = [h for h, a in sorted(area.items(), key=lambda x: -x[1])
+             if a / page_a > 0.02]
+    if not fills or not title:
+        return None
+    ink = max(title, key=title.get)
+    if len(fills) >= 2:                  # 위 바탕 + 아래 블록(광문2 형)
+        paper, block = sorted(fills[:2], key=_lum, reverse=True)
+    else:                                # 한 색 표지
+        block = fills[0]
+        paper = _mix(block, "#FFFFFF", 0.35)
+    return {
+        "bg_top": paper, "bg_bottom": block,
+        "plum": ink,                                  # POCKET · 테두리 · 학교
+        "forest": ink,                                # Pocket Book.
+        "slate": _mix(ink, "#3A3A3A", 0.35),          # 부제·시험·명단 — 읽히게
+        "rule": _mix(ink, block, 0.55),
+    }
+
+
 def _tok(css, **kw):
     for k, v in kw.items():
         css = css.replace("__%s__" % k, str(v))
     return css
 
 
-def css(M):
-    """간지 CSS. 본문과 같은 판형·도련을 쓴다."""
+def css(M, ink=None):
+    """간지 CSS. 본문과 같은 판형·도련을 쓴다. `ink` 로 학교 표지 색을 덮는다."""
     bl = M["bleed"]
     return _tok(CSS,
                 media_w="%gmm" % (M["page_w"] + 2 * bl),
@@ -99,7 +169,7 @@ def css(M):
                 cred_y="%gmm" % (bl + 82.0),
                 cred_gap="9mm", cred_row="7mm",
                 cred_col="34mm",
-                **INK)
+                **dict(INK, **(ink or {})))
 
 
 def first_page(school="", term=""):

@@ -33,6 +33,16 @@ class Series(object):
     def verify(self, cfg, log, report):
         return report
 
+    # ── ⑤ 인쇄 원고(CMYK) 기본값 ──
+    # 규약: **별도 말이 없으면 모든 조판은 인쇄 납품용**이다. 그래서 어느 계열이든
+    # `print` 절 없이도 CMYK 인쇄본이 나온다. 계열은 자기 팔레트의 무채색을
+    # `gray_map` 에 얹어 돌려준다(본문 먹이 ICC 를 타면 4도 리치블랙 — 7~9pt
+    # 글자가 핀 어긋남으로 뭉갠다). 책 config 의 `print` 절은 이 위에 칸 단위로
+    # 덮이고, `"print": false` 또는 `{"off": true}` 로만 끈다.
+    def print_defaults(self, cfg):
+        from core.render_vivlio import prepress
+        return prepress.default_print()
+
     # 미리보기(render/watch)에서 build() 에 얹을 옵션. 무거운 계측 패스처럼
     # "지면을 보는 데는 필요 없고 느리기만 한" 것을 끄는 자리다.
     render_opts = {}

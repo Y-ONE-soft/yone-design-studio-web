@@ -303,9 +303,16 @@ def _print_section(cfg):
     ⚠ 책마다 적게 두면 한 곳만 빠져도 그 책은 RGB 로 나간다(포켓북 22곳).
       계열이 `print_defaults(cfg)` 를 주면 그걸 바탕으로 깐다. 색 표
       (`gray_map`·`cmyk_map`)는 통째로 갈지 않고 **칸 단위로** 덮는다.
-      책에서 `"print": {"off": true}` 로 끌 수 있다.
+
+    **규약(2026-09-11): 별도 말이 없으면 모든 조판은 인쇄 납품용.** 그래서
+    `print` 절이 없어도 항상 켜져 있다(계열 기본값 → 없으면 `Series.print_defaults`
+    의 바닥값). 끄는 길은 두 가지뿐 — `"print": false` 또는 `{"off": true}`
+    (사용자가 "이건 인쇄용 아니야"라고 한 책).
     """
-    own = dict(cfg.section("print") or {})
+    raw = cfg.get("print")
+    if raw is False:
+        return {}
+    own = dict(raw or {}) if isinstance(raw, dict) else {}
     if own.get("off"):
         return {}
     base = {}
@@ -315,6 +322,9 @@ def _print_section(cfg):
             base = dict(f(cfg) or {})
         except Exception:           # 기본값이 깨져도 책 설정은 살린다
             base = {}
+    if not base:
+        from core.render_vivlio import prepress
+        base = prepress.default_print()
     out = dict(base)
     for k, v in own.items():
         if k in ("gray_map", "cmyk_map") and isinstance(v, dict):
@@ -500,7 +510,8 @@ def main(argv=None):
 
     if "all" in steps:
         # ⚠ 인쇄본을 빼면 조판본만 갱신돼 **인쇄 원고가 조용히 뒤처진다**
-        #    (실제로 겪음). `print` 절이 있는 책은 all 에 포함한다.
+        #    (실제로 겪음). 규약상 인쇄본은 **항상** 만든다 — `print: false` 인
+        #    책(화면용이라고 따로 말한 것)만 빠진다.
         steps = ["data", "build"] + (["print"] if _print_section(cfg) else []) + ["verify"]
     if "watch" in steps:
         # 미리보기는 다른 단계와 섞지 않는다 — 끝나지 않는 명령이다.
