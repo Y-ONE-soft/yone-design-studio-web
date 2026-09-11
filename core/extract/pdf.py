@@ -117,9 +117,13 @@ def _read_page(page, want_ul, want_img):
                                   "ul": False})
                 if not chars:
                     continue
+                solid = [c for c in chars if not c["c"].isspace()] or chars
                 spans.append({"chars": chars,
                               "x0": min(c["x0"] for c in chars),
                               "x1": max(c["x1"] for c in chars),
+                              # 단 배정용 — 공백을 뺀 실제 글자 범위
+                              "sx0": min(c["x0"] for c in solid),
+                              "sx1": max(c["x1"] for c in solid),
                               "base": s.get("origin", (0, chars[0]["base"]))[1],
                               "size": size})
     segs = _underline_segments(page) if want_ul else []
@@ -643,9 +647,15 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
             else:
                 # 단마다 따로 줄을 짓는다 — 같은 높이의 좌·우 단 글자가
                 # 한 줄로 섞이지 않게. 가로지르는 줄(F)은 따로.
-                L = [s for s in spans if s["x1"] <= split + 1]
-                R = [s for s in spans if s["x0"] >= split - 1]
-                F = [s for s in spans if s not in L and s not in R]
+                # 배정은 공백을 뺀 글자 범위로 (+3pt 여유) — 밑줄 빈칸 공백이
+                # 가운데 띠로 뻗은 조각(' That is,    ')을 '가로지르는 줄'로
+                # 잘못 보면 그 줄이 띠 경계가 되어 앞뒤 순서가 갈라진다
+                # (수특라이트 12강 13쪽 실측).
+                L = [s for s in spans if s["sx1"] <= split + 3]
+                R = [s for s in spans if s["sx0"] >= split - 3
+                     and s["sx1"] > split + 3]
+                F = [s for s in spans if s["sx0"] < split - 3
+                     and s["sx1"] > split + 3]
                 lines = _group_lines(L) + _group_lines(R) + _group_lines(F)
             _apply_underlines(lines, segs)
             for ln in lines:

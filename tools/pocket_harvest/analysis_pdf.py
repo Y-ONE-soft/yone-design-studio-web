@@ -225,22 +225,34 @@ def _tokens(line_cs):
     return out
 
 
+_RUBY_TOL = 1.5          # 주석 가운데 ↔ 낱말 가운데 허용 어긋남(pt)
+
+
 def _attach_ruby(toks, label, notes):
-    """주석 하나 → 가운데가 맞는 낱말 구간(1~6 조각). 가장 가까운 구간을 쓴다."""
+    """주석 하나 → 가운데가 맞는 낱말 구간. **낱말 수가 적은 것**부터 본다.
+
+    ⚠ 오차가 가장 작은 구간을 고르면 안 된다. `zero` 밑 `V1` 의 가운데가
+      넉 낱말 구간 `likely zero in on` 의 가운데와도 **정확히** 같아서(249.0)
+      그쪽이 이겼다(실측). 허용 오차 안이면 낱말 하나를 먼저 쓴다.
+    ⚠ 분석본은 붙은 문장부호까지 받침으로 잡는다(`graduating,` 가운데 = 주석
+      가운데). 가운데는 문장부호를 넣어 재고, 루비는 낱말에만 건다.
+    """
     cx = (label["x0"] + label["x1"]) / 2.0
     best = None
     n = len(toks)
     for i in range(n):
         if not _ALNUM.search(toks[i]["t"]):
             continue
-        for j in range(i, min(n, i + 6)):
-            if not _ALNUM.search(toks[j]["t"]):
-                continue
+        for j in range(i, min(n, i + 8)):
+            # 뒤에 붙은 문장부호(띄어쓰기 없이)까지는 받침에 넣어 잰다
+            if not _ALNUM.search(toks[j]["t"]) and toks[j]["sp"]:
+                break
             a, b = toks[i]["x0"], toks[j]["x1"]
             if not (a - 1.0 <= cx <= b + 1.0):
                 continue
             d = abs((a + b) / 2.0 - cx)
-            key = (round(d, 1), j - i)
+            words = sum(1 for t in toks[i:j + 1] if _ALNUM.search(t["t"]))
+            key = (0 if d <= _RUBY_TOL else 1, words, d)
             if best is None or key < best[0]:
                 best = (key, i, j)
     if best is None:                       # 빈칸 밑 주석 — 가장 가까운 낱말
@@ -248,9 +260,11 @@ def _attach_ruby(toks, label, notes):
         if not cand:
             return None
         k = min(cand, key=lambda k: abs((toks[k]["x0"] + toks[k]["x1"]) / 2 - cx))
-        best = ((99, 0), k, k)
-    (d, _w), i, j = best
-    if d > 2.0:
+        best = ((1, 1, 99.0), k, k)
+    (tier, _w, d), i, j = best
+    while j > i and not _ALNUM.search(toks[j]["t"]):
+        j -= 1                             # 루비는 낱말까지만
+    if tier:
         notes.append("주석 '%s' 가운데가 낱말과 %.1fpt 어긋남" % (label["t"], d))
     return i, j
 
@@ -278,8 +292,9 @@ def _analysis_page(page, cs, imgs, notes):
         return None
     col_l = min(c["x0"] for c in body)
     col_r = max(c["x1"] for c in body)
-    title_ko = _text([c for c in cs if c["y1"] < H * 0.12 and c["size"] < 14
-                      and c["x0"] > head_x1 and c["color"] != _WHITE])
+    # 한글 제목은 머리 띠 **안**에서만 — 띠 밑 옆 단(GRAMMAR POINT)이 섞인다
+    title_ko = _text([c for c in cs if c["y1"] <= head_y1 + 4 and c["size"] < 14
+                      and c["x0"] > head_x1 and c["color"] != _WHITE]) if big else ""
 
     side = [c for c in reg if c["x0"] > col_r + 6]
     main = [c for c in reg if c["x1"] <= col_r + 6]
@@ -319,11 +334,19 @@ def _analysis_page(page, cs, imgs, notes):
                 elif ih > 0.3 and t["oy"] - 0.3 * bs <= im["y0"] <= t["oy"] + 0.6 * bs:
                     t["wave"] = True
 
-    # 주석 → 낱말
-    for lab_line in _lines(labels_cs):
+    # 주석 → 낱말. 한 본문 줄 밑에 주석 줄이 둘이면 두 번째는 **아랫줄**(dn2)
+    #   — `zero` 밑 `V1` 아래에 `this variability` 가 한 줄 더 온다(실측).
+    lab_lines = _lines(labels_cs)
+    first_row = {}
+    for lab_line in lab_lines:
+        b = above(lab_line["oy"])
+        if b is not None:
+            first_row.setdefault(id(b), lab_line["oy"])
+    for lab_line in lab_lines:
         b = above(lab_line["oy"])
         if b is None:
             continue
+        row2 = lab_line["oy"] - first_row[id(b)] > 0.4 * bs
         # 한 주석 = 한 span. 같은 span 안이라도 멀리 떨어지면 나눈다.
         groups = []
         for c in lab_line["cs"]:
@@ -344,10 +367,16 @@ def _analysis_page(page, cs, imgs, notes):
                 continue
             i, j = hit
             tk = b["toks"][i]
-            if tk.get("ruby_end") is not None or tk["ruby"]:
-                # 같은 낱말에 주석이 두 줄 — 한 줄로 잇는다(두 번째가 아래)
+            if row2:
+                if tk.get("ruby2"):
+                    tk["ruby2"] += " " + g["t"]
+                else:
+                    tk["ruby2"] = g["t"]
+                continue
+            if tk["ruby"]:
+                # 같은 낱말 같은 줄에 주석이 둘 — 떨어져 있던 것을 잇는다
                 tk["ruby"] = tk["ruby"] + " " + g["t"]
-                notes.append("주석 두 줄 '%s' 을 한 줄로 이음" % tk["ruby"])
+                notes.append("주석 둘을 한 낱말에 이음 '%s'" % tk["ruby"])
             else:
                 tk["ruby"] = g["t"]
                 tk["ruby_end"] = j
@@ -425,10 +454,13 @@ def _runs_of(lines):
                 for q, x in enumerate(grp):
                     text += ((" " if q and x["sp"] else "") + x["t"])
                 if len(marks) <= 1:
-                    runs.append({"t": text, "style": "", "mark": grp[0]["mark"]
-                                 if _ALNUM.search(grp[0]["t"]) else None,
-                                 "hl": t["hl"], "ruby": t["ruby"], "slot": "dn",
-                                 "wave": any(x["wave"] for x in grp)})
+                    m0 = grp[0]["mark"] if _ALNUM.search(grp[0]["t"]) else None
+                    r = {"t": text, "style": "",
+                         "mark": m0 if m0 in ("blue", "red") else None,
+                         "hl": t["hl"], "ruby": t["ruby"], "slot": "dn",
+                         "wave": any(x["wave"] for x in grp)}
+                    _put_row2(r, t)
+                    runs.append(r)
                     prev_tok = grp[-1]
                     k = j + 1
                     continue
@@ -452,9 +484,21 @@ def _runs_of(lines):
 
 def _run(t):
     m = t["mark"] if t["mark"] in ("blue", "red") else None
-    return {"t": t["t"], "style": "", "mark": m, "hl": t["hl"],
-            "ruby": t["ruby"], "slot": "dn" if t["ruby"] else None,
-            "wave": bool(t["wave"])}
+    r = {"t": t["t"], "style": "", "mark": m, "hl": t["hl"],
+         "ruby": t["ruby"], "slot": "dn" if t["ruby"] else None,
+         "wave": bool(t["wave"])}
+    _put_row2(r, t)
+    return r
+
+
+def _put_row2(r, t):
+    """아랫줄 주석. 윗줄이 없으면 그 자리(루비)에 `dn2` 로, 있으면 `ruby2` 로."""
+    if not t.get("ruby2"):
+        return
+    if r.get("ruby"):
+        r["ruby2"] = t["ruby2"]
+    else:
+        r["ruby"], r["slot"] = t["ruby2"], "dn2"
 
 
 # ── 정리 면(주제·요약·기출·VOCA) ─────────────────────────────
@@ -573,6 +617,14 @@ def read_book(path):
     for page in doc:
         cs = _chars(page)
         notes = []
+        # 정리 면을 **먼저** 가린다 — 기출 상자의 깨끗한 지문 사본(7.5pt 영어)이
+        # 분석 면처럼 보여 본문 뒤에 통째로 붙었다(실측).
+        s = _summary_page(page, cs)
+        if s:
+            if cur is not None and cur["sum"] is None:
+                cur["sum"] = s
+                cur["pages"].append(str(page.number + 1))
+            continue
         a = _analysis_page(page, cs, _images(page), notes)
         if a:
             if cur is None or (a["head"] and a["head"] != cur["head"]):
@@ -584,11 +636,6 @@ def read_book(path):
             cur["grammar"] += a["grammar"]
             cur["pages"].append(str(a["page"]))
             cur["notes"] += notes
-            continue
-        s = _summary_page(page, cs)
-        if s and cur is not None and cur["sum"] is None:
-            cur["sum"] = s
-            cur["pages"].append(str(page.number + 1))
     return [_build(u, base) for u in units if u["sents"]]
 
 
