@@ -76,6 +76,11 @@ def mk(tag):
     return f'<span class="mk">§{tag}§</span>'
 
 
+def mkz(tag):
+    """흐름 속 자리표시 — 높이 0 짜리 블록(줄을 만들지 않는다)."""
+    return f'<div class="mkz">§{tag}§</div>'
+
+
 # ── 아이콘 (24 단위 viewBox · 정본의 이모지 자리) ────────────────────────
 def _svg(body, vb="0 0 24 24"):
     return (f'<span class="ic"><svg viewBox="{vb}" xmlns="http://www.w3.org/2000/svg">'
@@ -148,7 +153,7 @@ def band(part, title):
         'fill="#ffd67d">PA</text>'
         '<text x="33.46" y="23.69" font-family="Elice" font-weight="700" font-size="4.586" '
         'fill="#ffd67d">RT</text>'
-        f'<text x="46.33" y="22.75" font-family="Elice" font-weight="500" font-size="7.761" '
+        f'<text x="46.33" y="23.05" font-family="Elice" font-weight="500" font-size="7.761" '
         f'fill="#fff">{no}</text>'
         f'<text x="66.13" y="21.2" font-family="Elice" font-weight="500" font-size="4.939" '
         f'fill="#231f20">{esc(title)}</text>')
@@ -294,7 +299,7 @@ def answer_inline(a):
 
 def render_type(cfg, ty, summary=None, sid=""):
     title = f'대표유형 {ty["no"]:02d} : {ty["title"]}'
-    out = [f'<div class="sec band" id="{sid}">{mk(sid)}{runners(cfg, 2, title)}']
+    out = [f'<div class="sec band" id="{sid}">{mkz(sid)}{runners(cfg, 2, title)}']
     if summary:
         items = "".join(f'<p class="sum-i"><span class="hl">{esc(s)}</span></p>'
                         for s in summary["items"])
@@ -313,7 +318,7 @@ def render_type(cfg, ty, summary=None, sid=""):
     out.append("".join(f'<p class="tip">{esc(t)}</p>' for t in ty["tip"]))
 
     pid = f'P{ty["no"]}'
-    prob = [f'<div class="prob" id="{pid}">{mk(pid)}'
+    prob = [f'<div class="prob" id="{pid}">{mkz(pid)}'
             f'<div class="prob-h"><span class="no">연습 {ty["no"]:02d}</span>'
             f'{stem_html(ty["stem"])}</div>']
     if ty["tag"]:
@@ -333,9 +338,9 @@ def render_type(cfg, ty, summary=None, sid=""):
 
 
 # ── PART 2 · 실전 세트 ────────────────────────────────────────────────
-def render_set(s):
+def render_set(s, first=False):
     badge = '<span class="badge">광문고 기출</span>' if s["gichul"] else ""
-    out = [f'<div class="set"><div class="set-src">{badge}'
+    out = [f'<div class="set{" first" if first else ""}"><div class="set-src">{badge}'
            f'<span class="stab">&lt;{esc(s["src"])}&gt;</span></div>']
     for h in s["hist"]:
         out.append(f'<p class="hist"><b>광문고 기출 출제 이력</b>{esc(h)}</p>')
@@ -346,9 +351,9 @@ def render_set(s):
         out.append(f'<div class="pbox"><div class="cham"><div>{lab}{passage_html(p["r"])}'
                    '</div></div></div>')
     for q in s["qs"]:
-        out.append(f'<div class="q"><div class="q-h"><span class="qn">{q["no"]:02d}</span>'
+        out.append(f'<div class="q">{mkz("Q%d" % q["no"])}<div class="q-h"><span class="qn">{q["no"]:02d}</span>'
                    f'<p class="qs">{stem_html(q["stem"])}</p></div>'
-                   f'<div class="qbody">{qbody(q["blocks"])}</div></div>')
+                   f'<div class="qbody">{qbody(q["blocks"])}</div>{mkz("Z%d" % q["no"])}</div>')
     out.append('</div>')
     return "".join(out)
 
@@ -365,7 +370,7 @@ def answer_lines(a):
 
 def render_answers(cfg, sets, sid):
     title = cfg.book.get("answers", "정답 및 해설")
-    out = [f'<div class="sec band" id="{sid}">{mk(sid)}{runners(cfg, 3, title)}'
+    out = [f'<div class="sec band" id="{sid}">{mkz(sid)}{runners(cfg, 3, title)}'
            '<div class="ans">']
     for s in sets:
         out.append(f'<div class="ahead"><span class="rg">{s["lo"]}~{s["hi"]}</span>'
@@ -393,7 +398,7 @@ def write(cfg, d, build_dir, log=print, memos=()):
             parts.append(memo_page(cfg, part))
 
     parts += [art(1), art(2), art(3), art(4), art(5)]
-    parts.append(f'<div class="sec band" id="S1">{mk("S1")}'
+    parts.append(f'<div class="sec band" id="S1">{mkz("S1")}'
                  f'{runners(cfg, 1, b.get("part1", "세희T PICK 중요문장"))}'
                  f'{render_part1(cfg, d["part1"])}</div>')
     before("ART6", 1)
@@ -410,9 +415,9 @@ def write(cfg, d, build_dir, log=print, memos=()):
                                     memo_page(cfg, 2) + f'<div class="prob" id="{pid}">', 1)
         parts.append(html_t)
     before("S2", 2)
-    parts.append(f'<div class="sec band" id="S2">{mk("S2")}'
+    parts.append(f'<div class="sec band" id="S2">{mkz("S2")}'
                  f'{runners(cfg, 2, b.get("part2", "광문고 기출 서술형 실전문제"))}'
-                 + "".join(render_set(s) for s in p2["sets"]) + '</div>')
+                 + "".join(render_set(s, k == 0) for k, s in enumerate(p2["sets"])) + '</div>')
     before("S3", 2)
     parts.append(render_answers(cfg, d["answers"], "S3"))
     before("ART8", 3)

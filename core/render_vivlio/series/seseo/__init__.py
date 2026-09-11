@@ -160,8 +160,11 @@ class SeseoSeries(Series):
         d = data_mod.load(cfg)
         texts = probe.page_texts(pdf)
 
+        # 대조는 **머리·꼬리를 걷어낸 본문**으로 — 쪽·단이 바뀌는 자리에서 러닝 글자가
+        # 끼어들어 한 문장이 끊긴다(실측: 182번 해설이 "…자리라 세/서/특/필 필승법 …").
+        body = [self._strip_running(cfg, t) for t in texts]
         seq = self._sequence(d)
-        gate.check_sequence(texts, seq, report)
+        gate.check_sequence(body, seq, report)
         report.note(f"대조 항목 {len(seq):,}건")
 
         self._check_pages(cfg, texts, report)
@@ -252,27 +255,37 @@ class SeseoSeries(Series):
         report.note(f"면 구성 {n}면 · 절 머리 {len([k for k in where if not k.startswith('ART')])}")
 
     @staticmethod
+    def _strip_running(cfg, t):
+        b = cfg.book
+        drop = {b.get("wordmark", "세/서/특/필"), "MEMO", "PA", "RT", "|",
+                b.get("running", ""), b.get("part1", ""), b.get("part2", ""),
+                b.get("answers", "")}
+        out = []
+        for ln in t.split("\n"):
+            s = ln.strip()
+            if (not s or s in drop or re.match(r'^0\d$', s) or s.startswith("필승법 PART.")
+                    or re.match(r'^\d{1,3}$', s) or re.match(r'^대표유형 \d+ : ', s)
+                    or re.match(r'^§\w+§$', s)):
+                continue
+            out.append(s)
+        return "\n".join(out)
+
+    @staticmethod
     def _check_questions(texts, d, report):
-        """세트는 새 면에서 열고, 문항은 쪽을 넘기지 않는다(글자 위치로)."""
-        split = []
-        for s in d["part2"]["sets"]:
-            for q in s["qs"]:
-                head = frag(q["stem"], 24)
-                blocks = q["blocks"]
-                tail = frag(blocks[-1].get("r", "") if blocks and blocks[-1]["t"] != "diagram"
-                            else (blocks[-1]["steps"][-1] if blocks else ""), 24)
-                if not head or not tail:
-                    continue
-                pa = next((i for i, t in enumerate(texts)
-                           if probe.norm(head) in probe.norm(t)
-                           and f"{q['no']:02d}" in t), None)
-                pb = next((i for i, t in enumerate(texts[pa or 0:], pa or 0)
-                           if probe.norm(tail) in probe.norm(t)), None)
-                if pa is not None and pb is not None and pa != pb:
-                    split.append((q["no"], pa + 1, pb + 1))
+        """문항은 쪽을 넘기지 않는다 — 문항 머리(§Qn§)와 끝(§Zn§) 표식이 같은 면인가."""
+        head, tail = {}, {}
+        for i, t in enumerate(texts):
+            for m in re.finditer(r'§([QZ])(\d+)§', t):
+                (head if m.group(1) == "Q" else tail).setdefault(int(m.group(2)), i + 1)
+        nos = [q["no"] for s in d["part2"]["sets"] for q in s["qs"]]
+        miss = [n for n in nos if n not in head or n not in tail]
+        split = [(n, head[n], tail[n]) for n in nos
+                 if n in head and n in tail and head[n] != tail[n]]
+        if miss:
+            report.fail(f"문항 표식 없음 {len(miss)}건: {miss[:10]}")
         if split:
             report.fail(f"문항이 쪽을 넘어간다 {len(split)}건: {split[:10]}")
-        report.note(f"문항 쪽넘김 검사 {sum(len(s['qs']) for s in d['part2']['sets'])}문항")
+        report.note(f"문항 쪽넘김 검사 {len(nos)}문항 · 넘김 {len(split)}")
 
     @staticmethod
     def _check_underlines(pdf, d, report, log):

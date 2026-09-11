@@ -102,6 +102,9 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 
 /* 자리표시(§…§) — 글자는 PDF 에 남되 보이지 않는다 */
 .mk { color: transparent; font: 1pt/1 Pre; }
+/* 흐름 속 자리표시 — 높이 0. 인라인으로 두면 본문 줄 높이(13pt)짜리 줄이 생겨
+   절 첫 요소가 4mm 내려간다(정본 대조로 실측) */
+.mkz { height: 0; overflow: visible; color: transparent; font: 1pt/0 Pre; }
 
 /* ------------------------------------------------------------- 머리·꼬리 */
 .rhL { position: running(rhL); }
@@ -114,11 +117,12 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .hd svg { display: block; width: 216mm; height: 31.5mm; }
 
 .ft { display: flex; align-items: baseline; padding-top: 3.9mm; white-space: nowrap; }
-.ftL { margin-left: -1mm; }
-.ftR { justify-content: flex-end; margin-right: -1mm; }
+/* 러닝 요소는 마진 박스 안에서 내용 폭으로 줄어든다 — 폭을 못 박아야 오른쪽 정렬이 된다 */
+.ftL { margin-left: -1mm; width: 168mm; }
+.ftR { justify-content: flex-end; width: 168mm; }
 .ft .pn { font: 500 8pt/1 Noto; color: var(--navy); }
 .ft .pn::before { content: counter(page); }
-.ft .bar { font: 300 8pt/1 Pre; color: var(--deep); margin: 0 1.2mm; }
+.ft .bar { font: 300 8pt/1 Pre; color: var(--deep); margin: 0 2mm 0 1.4mm; }
 .ft .run { font: 500 6pt/1 Elice; color: var(--ink); }
 .ft .wm { font: 700 6pt/1 Elice; color: var(--blue); margin-left: .9mm; }
 .ft .sect { font: 500 7pt/1 Noto; color: var(--ink); letter-spacing: -.01em; }
@@ -195,10 +199,14 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .step-h .pill { flex: none; margin: 0 1.3mm 0 1mm; padding: 0 1.3mm; height: 4.1mm;
                 line-height: 4.2mm; border-radius: 1.1mm; background: var(--sky);
                 color: #fff; font: 600 9pt/4.2mm Pre; }
-.cham { background: var(--sky2); padding: .265mm; margin-top: 1.1mm;
-        clip-path: polygon(0 0, calc(100% - 2.2mm) 0, 100% 2.2mm, 100% 100%, 0 100%); }
-.cham > div { background: #fff; padding: 1.2mm 3mm 1.3mm;
-        clip-path: polygon(0 0, calc(100% - 2.08mm) 0, 100% 2.08mm, 100% 100%, 0 100%); }
+/* 모서리 따낸 상자 — clip-path 를 쓰면 상자 안 글자가 PDF 에서 뒤 레이어로 밀려
+   **읽는 순서가 어긋난다**(대조 게이트 1,082건 실측). 테두리는 그대로 두고, 오른쪽
+   위 모서리에 흰 삼각형+사선을 얹은 float 로 따낸다(float 는 테두리 위에 칠해진다). */
+.cham { margin-top: 1.1mm; border: .75pt solid var(--sky2); background: #fff; }
+.cham::before { content: ""; float: right; width: 2.3mm; height: 2.3mm;
+        margin: -.27mm -.27mm 0 .6mm;
+        background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 23 23'><path d='M0 0H23V23Z' fill='white'/><path d='M0 0L23 23' stroke='%23b2ddf6' stroke-width='2.65'/></svg>") no-repeat 0 0 / 100% 100%; }
+.cham > div { padding: 1.2mm 3mm 1.3mm; }
 
 .tip-t { margin-top: 8.2mm; font: 700 12pt/1.3 Elice; color: var(--tip);
          break-after: avoid; }
@@ -232,7 +240,7 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 
 /* ============================================================ PART 2 · 실전 세트 */
 .set { break-before: page; }
-.sec > .set:first-of-type { break-before: auto; }
+.set.first { break-before: auto; }
 .set-src { display: flex; justify-content: flex-end; align-items: flex-end;
            border-bottom: .75pt solid var(--gray2); }
 .stab { height: 5.8mm; padding: 0 1.4mm; margin-right: 2.5mm; background: var(--gray);
