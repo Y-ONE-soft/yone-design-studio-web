@@ -297,7 +297,13 @@ def runs_html(runs, items=False):
             out.append("<br>")
             cur_hl = None
             continue
-        hl = grp[0].get("hl") if grp[0].get("mark") == "hl" else None
+        # 인디자인 분석본은 색 글자와 형광펜이 **따로**(mark='hl')다. 코드 조판
+        # 분석본(PDF)은 **파랑 글자 + 노랑 형광펜**이 한 낱말에 같이 온다
+        # (`had established`) — mark 가 색이고 hl 이 따로 있으면 그것도 칠한다.
+        # IDML 런은 mark='hl' 이 아니면 hl 이 비어 있어 달라지지 않는다.
+        m0 = grp[0].get("mark")
+        hl = grp[0].get("hl") if (m0 == "hl" or m0 in (None, "blue", "red")) \
+            else None
         if hl != cur_hl:
             flush()
             cur_hl = hl
@@ -917,6 +923,12 @@ def _badge_text(p):
     head = _BOOK_SHORT.get(head, head)
     if not head or head in tag:
         return tag
+    # 단원 **꼬리**와 라벨 **머리**가 겹치면 한 번만 쓴다 — `교과서 추가 읽기
+    # 자료` + `추가 읽기 자료 (1)` 이 `…자료 추가 읽기 자료 (1)` 로 두 번 찍혔다.
+    hw, tw = head.split(), tag.split()
+    for k in range(min(len(hw), len(tw)), 0, -1):
+        if hw[-k:] == tw[:k]:
+            return " ".join(hw[:-k] + tw)
     return "%s %s" % (head, tag)
 
 
