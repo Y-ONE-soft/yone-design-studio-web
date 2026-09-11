@@ -140,7 +140,6 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .grp { display: flex; align-items: center; height: 8.6mm; margin: 0 1mm 7.4mm;
        background: var(--sky5); border-radius: 4.3mm; font: 500 11pt/1 Pre;
        break-after: avoid; }
-.grp + .unit .src, .unit:first-child .src { margin-top: 0; }
 .dot { flex: none; display: flex; align-items: center; justify-content: center;
        width: 8.4mm; height: 8.4mm; border-radius: 50%; background: var(--sky);
        margin-left: 3.6mm; margin-right: 1.4mm;
@@ -148,13 +147,14 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .grp .k { color: var(--deep); margin-right: 1.6mm; }
 .sec > .grp ~ .grp { margin-top: 9mm; }
 
-.unit { break-inside: avoid; }
-.src { display: inline-block; margin: 7mm 0 0 1mm; padding: 0 2.2mm 0 1.5mm;
-       height: 5.5mm; line-height: 5.6mm; background: var(--src);
-       border-left: .7mm solid var(--sky); font: 500 9pt/5.6mm Elice; color: var(--k90); }
-.src + .sent { margin-top: 2.7mm; }
-.sent { break-inside: avoid; }
-.sent + .sent, .pt + .sent { margin-top: 6mm; }
+/* 출처 막대는 뒤 문장과 떨어지지 않는다. 간격은 앞 요소에 따라(a-*) 정본 실측값 */
+.srcw { margin: 7.5mm 0 0 1mm; break-after: avoid; }
+.srcw.first { margin-top: 0; }
+.src { display: inline-block; padding: 0 2.2mm 0 1.5mm; height: 5.5mm;
+       background: var(--src); border-left: .7mm solid var(--sky);
+       font: 500 9pt/5.6mm Elice; color: var(--k90); }
+.sent { break-inside: avoid; margin-top: 5mm; }
+.sent.a-src { margin-top: 2.7mm; }
 .en { background: var(--beige); padding: 1.3mm 3mm; font: 400 10pt/14pt Myr;
       text-align: justify; }
 .ko { padding: .6mm 3mm 0; font: 400 9pt/13pt Noto; }
@@ -164,7 +164,7 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .pen svg { display: block; width: 100%; height: 100%; }
 
 .pt { break-inside: avoid; margin-top: 3.4mm; }
-.sent + .pt { margin-top: 6.2mm; }
+.pt.a-sent { margin-top: 6.2mm; }
 .plab { display: inline-block; margin-left: 2.5mm; padding: 0 1.6mm; height: 4.65mm;
         background: var(--sky3); border-radius: 1mm; font: 400 11pt/4.8mm Pre; }
 .pat { margin: 1.7mm 0 0 3mm; font: 500 9pt/13pt Elice; color: var(--deep); }
@@ -271,6 +271,8 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .dstep { background: #fff; border: .5pt solid var(--sky2); border-radius: 1.2mm;
          padding: .8mm 2.6mm; font: 400 9pt/13pt Noto; }
 .darrow { height: 3.4mm; padding-left: 5mm; }
+.dgap { height: 1.3mm; }
+.q { break-inside: avoid; }
 .darrow svg { display: block; width: 3mm; height: 3.4mm; }
 
 /* ============================================================ 정답 및 해설 */

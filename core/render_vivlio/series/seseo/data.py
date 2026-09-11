@@ -297,19 +297,23 @@ def parse_qbody(stem, lines, bad, where, allow_passage=False):
             i += 2
             continue
         if kind == 'diagram' and RE_BRACKET.match(t):
-            steps = []
+            # 도식은 두 꼴이다 — 흐름(둘째 줄부터 `→` 로 시작)과 항목표(줄 안에
+            # `항목 → 값`). 제목부터 <보기> 전까지가 모두 도식 칸이다.
+            raw = []
             i += 1
             while i < len(lines):
                 s = lines[i]
                 if s in BOGI or s in SUMMARY or RE_LAB.match(s):
                     break
-                m2 = RE_ARROW.match(s)
-                if steps and not m2:
-                    break
-                steps.append((m2.group(1) if m2 else s).strip())
+                raw.append(s)
                 i += 1
+            flow = len(raw) > 1 and all(RE_ARROW.match(s) for s in raw[1:])
+            steps = [(RE_ARROW.match(s).group(1) if RE_ARROW.match(s) else s).strip()
+                     for s in raw]
+            if not steps:
+                bad.append((where, '도식 칸 없음', t))
             blocks.append({'t': 'diagram', 'title': RE_BRACKET.match(t).group(1).strip(),
-                           'steps': steps})
+                           'steps': steps, 'flow': flow})
             continue
         if RE_SUB.match(t):
             blocks.append({'t': 'line', 'r': t})

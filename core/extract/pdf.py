@@ -68,6 +68,24 @@ def _ok_char(c):
     return False
 
 
+def _check_readable(all_chars, label, img_pages=0, n_pages=1):
+    """글자 정보를 믿고 읽을 수 있는가 — 아니면 이유를 밝혀 PdfTextUnreadable."""
+    nonspace = [c for c in all_chars if not c.isspace()]
+    if len(nonspace) < 30 * max(1, n_pages) * 0.2 and img_pages:
+        raise PdfTextUnreadable(
+            f"글자 정보가 없는 PDF(스캔본으로 보임): {label} — 한글 OCR 이 "
+            f"설치돼 있지 않아 읽을 수 없습니다. 한글/워드 원본으로 올려 주세요.")
+    if nonspace:
+        ok = sum(1 for c in nonspace if _ok_char(c)) / len(nonspace)
+        if ok < 0.95:
+            bad = sorted({c for c in nonspace if not _ok_char(c)})[:8]
+            raise PdfTextUnreadable(
+                f"PDF 의 글자 정보가 깨져 있습니다: {label} (정상 글자 "
+                f"{ok:.0%}, 깨진 예 {''.join(bad)!r}) — 글꼴 대응표가 없는 "
+                f"재출력본입니다. 한글/워드 원본으로 올리거나 원본에서 "
+                f"PDF 를 다시 저장해 주세요.")
+
+
 # ── 페이지 읽기 ──────────────────────────────────────────────────────────────
 
 def _read_page(page, want_ul, want_img):
@@ -148,7 +166,7 @@ def _column_split(spans, width, height=None):
         body.append({"x0": min(c["x0"] for c in solid),
                      "x1": max(c["x1"] for c in solid),
                      "chars": solid})
-    if len(body) < 12:
+    if len(body) < 6:
         return None
     n = int(math.ceil(width)) + 2
     occ = [0] * n
@@ -398,7 +416,10 @@ def _col_right_edges(pages):
             if col == "F":
                 edges[(pi, col)] = page_max[pi]
             elif len(v) >= 3:
-                edges[(pi, col)] = q90(v)
+                # 문서 전체 같은 단의 오른쪽 끝보다 작게 잡지 않는다 — 짧은 줄만
+                # 있는 쪽(정답 쪽·선지만 있는 쪽)에서 그 쪽 줄끼리 재면 모든
+                # 줄이 '끝까지 찼다'로 읽혀 한 단락으로 이어진다.
+                edges[(pi, col)] = max(q90(v), doc.get(col, 0))
             else:
                 edges[(pi, col)] = doc.get(col, page_max[pi])
     return edges
@@ -686,20 +707,7 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
         hangul_joined = n_lines > 0 and n_trail / n_lines >= 0.3
 
         # ── 읽을 수 있는 PDF 인가 ───────────────────────────────────────────
-        nonspace = [c for c in all_chars if not c.isspace()]
-        if len(nonspace) < 30 * max(1, doc.page_count) * 0.2 and img_pages:
-            raise PdfTextUnreadable(
-                f"글자 정보가 없는 PDF(스캔본으로 보임): {label} — 한글 OCR 이 "
-                f"설치돼 있지 않아 읽을 수 없습니다. 한글/워드 원본으로 올려 주세요.")
-        if nonspace:
-            ok = sum(1 for c in nonspace if _ok_char(c)) / len(nonspace)
-            if ok < 0.95:
-                bad = sorted({c for c in nonspace if not _ok_char(c)})[:8]
-                raise PdfTextUnreadable(
-                    f"PDF 의 글자 정보가 깨져 있습니다: {label} (정상 글자 "
-                    f"{ok:.0%}, 깨진 예 {''.join(bad)!r}) — 글꼴 대응표가 없는 "
-                    f"재출력본입니다. 한글/워드 원본으로 올리거나 원본에서 "
-                    f"PDF 를 다시 저장해 주세요.")
+        _check_readable(all_chars, label, img_pages, doc.page_count)
 
         dropped = _drop_margins(pages)
 

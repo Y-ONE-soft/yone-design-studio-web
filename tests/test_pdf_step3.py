@@ -14,7 +14,7 @@ fitz = pytest.importorskip("fitz")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.extract.pdf import (_pdf_extract_paragraphs, PdfTextUnreadable,  # noqa: E402
-                              _glue)
+                              _glue, _check_readable)
 
 KO = "korea"          # PyMuPDF 내장 한글 글꼴
 
@@ -64,7 +64,7 @@ def test_paragraph_breaks_by_reflow_and_choices(tmp_path):
     pg = _page(doc)
     body = ("1. What is the main idea of the passage?\n" + LOREM + "\n"
             "① to explain the rules\n② to ask parents\n③ to inform readers\n")
-    _box(pg, (40, 80, 285, 600), body, align=0)
+    _box(pg, (40, 80, 285, 600), body, align=0, font=KO)     # ① 글리프가 있는 글꼴
     t = _texts(_pdf_extract_paragraphs(_save(doc, tmp_path)))
     assert t[0].startswith("1. What is")
     assert t[1].startswith("The stock market") and t[1].endswith("period.")
@@ -78,9 +78,10 @@ def test_underline_segments_but_not_box_borders(tmp_path):
     _box(pg, (50, 100, 280, 300), LOREM)
     # 상자 테두리 (글자보다 넓게 뻗는다) — 밑줄이 아니다
     pg.draw_rect(fitz.Rect(44, 94, 286, 180), color=(0, 0, 0), width=0.3)
-    hit = pg.search_for("very important")[0]
-    y = hit.y1 - 0.2 * 9 + 1.0
-    pg.draw_line((hit.x0, y), (hit.x1, y), color=(0, 0, 0), width=0.4)
+    hits = pg.search_for("very important")      # 양끝정렬이면 낱말마다 조각
+    x0, x1 = min(h.x0 for h in hits), max(h.x1 for h in hits)
+    y = hits[0].y1 - 0.2 * 9 + 1.0
+    pg.draw_line((x0, y), (x1, y), color=(0, 0, 0), width=0.4)
     paras = _pdf_extract_paragraphs(_save(doc, tmp_path), extract_underline=True)
     ul = "".join(r["t"] for p in paras for r in p["runs"] if r["ul"])
     assert ul.strip() == "very important"
@@ -93,8 +94,8 @@ def test_endnote_section_cut_and_refs_removed(tmp_path):
     _box(pg, (40, 80, 555, 700), body, align=0)
     pg2 = _page(doc)
     _box(pg2, (40, 80, 555, 400),
-         "Answer Keys\n1) ③ because of the reason\n2) ① since the text says so\n"
-         "3) ⑤ the last one\n", align=0)
+         "Answer Keys\n1) because of the reason\n2) since the text says so\n"
+         "3) the last one\n", align=0)
     logs = []
     t = _texts(_pdf_extract_paragraphs(_save(doc, tmp_path), log=logs.append))
     assert not any("Answer" in x or x.startswith(("1)", "2)", "3)")) for x in t)
@@ -102,12 +103,15 @@ def test_endnote_section_cut_and_refs_removed(tmp_path):
     assert any("미주" in l for l in logs)
 
 
-def test_garbled_text_layer_refused(tmp_path):
-    doc = fitz.open()
-    pg = _page(doc)
-    _box(pg, (40, 80, 555, 700), ("ாாௌ ௌாா ழழ ஞஞ " * 60), font=KO)
+def test_garbled_text_layer_refused():
+    # Ghostscript 재출력본 실측 모양 — 공백이 'ா', 한글이 엉뚱한 문자
+    good = list("다음 글의 제목으로 가장 적절한 것은? The stock market " * 20)
+    _check_readable(good, "ok.pdf")                       # 통과
+    bad = list("Howாdoாcompaniesாuseாtheாstockாmarket௕ ݟԼ/ݟ஍ " * 20)
     with pytest.raises(PdfTextUnreadable):
-        _pdf_extract_paragraphs(_save(doc, tmp_path))
+        _check_readable(bad, "ybm.pdf")
+    with pytest.raises(PdfTextUnreadable):                # 스캔본: 글자 없음 + 그림
+        _check_readable([], "scan.pdf", img_pages=3, n_pages=3)
 
 
 def test_hangul_char_wrap_glue():
