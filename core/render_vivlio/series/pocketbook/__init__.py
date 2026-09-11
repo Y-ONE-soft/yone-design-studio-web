@@ -113,6 +113,63 @@ def _dedup_versions(files, log=None):
     return sorted(out)
 
 
+def _pdf_sources(files, log=None):
+    """분석본 목록의 PDF 를 가린다 — **같은 분석본의 IDML 이 있으면 IDML 이 이긴다.**
+
+    코드 조판(크롬 → pdf-lib) 분석본은 IDML 이 없고 PDF 뿐이다(명일2 분석본05).
+    그 PDF 는 `analysis_pdf` 로 읽는다. 인디자인이 만든 PDF 는 읽지 않는다 —
+    원본(IDML)을 내보내야 한다. 그런데 IDML 이 없으면 **지문이 통째로 빠지므로**
+    조용히 넘기지 않고 로그에 남긴다(명일2 분석본04 실측: PDF 만 있었다).
+    """
+    import unicodedata
+    PocketbookSeries._tools()
+    import analysis_pdf
+
+    def key(f):
+        base = unicodedata.normalize("NFC", os.path.basename(f))
+        m = _RE_VER.search(base)
+        return (os.path.basename(os.path.dirname(f)),
+                m.group(1).replace(" ", "") if m else None)
+    have = set(key(f) for f in files if f.lower().endswith(".idml"))
+    out = []
+    for f in files:
+        if not f.lower().endswith(".pdf"):
+            out.append(f)
+            continue
+        k = key(f)
+        if k[1] is None or k in have:
+            continue          # 분석본 번호 없는 PDF(표지 등) · IDML 이 있는 판
+        if analysis_pdf.is_code_typeset(f):
+            out.append(f)
+        elif log:
+            log("  ⚠ %s — 인디자인 PDF 뿐, IDML 이 없다 → 이 분석본 지문을 못 "
+                "읽는다(IDML 내보내기 필요)"
+                % unicodedata.normalize("NFC", os.path.basename(f)))
+    return out
+
+
+# 고교 영어 **과목명**(교육과정이 정한 이름). 코드 조판 분석본은 머리말에 과목명을
+# 적는다(`영어 독해와 작문 추가 읽기 자료 (1)`) — 과목명으로 시작하면 교과서 갈래다.
+# 이게 없으면 번호도 강·과도 없는 지문이라 앞 지문(모의고사)의 갈래를 따라간다.
+_RE_SUBJECT = re.compile(
+    r"^\s*(공통\s*영어\s*[12]|영어\s*독해와\s*작문|영어\s*발표와\s*토론|"
+    r"영어\s*회화|심화\s*영어(?:\s*독해와\s*작문|\s*회화)?|영미\s*문학\s*읽기|"
+    r"직무\s*영어|실생활\s*영어\s*회화|세계\s*문화와\s*영어|"
+    r"영어\s*(?:I{1,2}|[12]))(?![가-힣A-Za-z])\s*(.*)$")
+
+
+def _subject_unit(g):
+    """PDF 분석본 머리말의 과목명 → 단원 `교과서 추가 읽기 자료`·라벨 `추가 읽기 자료 (1)`."""
+    m = _RE_SUBJECT.match(g.get("chapter") or "")
+    if not m or g.get("pno"):
+        return g
+    rest = m.group(2).strip() or m.group(1).strip()
+    num = (g.get("labels") or {}).get("number") or ""
+    g["label"] = ("%s (%s)" % (rest, num)) if num else rest
+    g.setdefault("unit", "교과서 %s" % rest)
+    return g
+
+
 _RE_YM = re.compile(r"(\d{2})\s*년\s*(\d{1,2})\s*월")
 _RE_NO = re.compile(r"(\d{1,2})\s*[-~]?\s*(\d{1,2})?\s*번")
 _RE_GR = re.compile(r"고\s*([123])")
@@ -321,7 +378,9 @@ def _kind_of(r):
         return 2
     if _RE_HAS_NO.search(unit) or _RE_HAS_NO.search(lab) or _RE_HAS_NO.search(ch):
         return 1
-    if _RE_TB_ANY.search(unit) or _RE_TB_ANY.search(lab):
+    # `교과서 추가 읽기 자료` — 과 번호가 없는 교과서 지문(PDF 분석본 머리말)
+    if (_RE_TB_ANY.search(unit) or _RE_TB_ANY.search(lab)
+            or unit.startswith("교과서")):
         return 0
     return None
 
@@ -828,23 +887,33 @@ def _check_cut(rows, cfg, report, log):
     for s_ in srcs or ():
         if s_ and os.path.isdir(s_):
             files += [os.path.join(s_, f) for f in os.listdir(s_)
-                      if f.lower().endswith(".idml")]
-        elif s_ and str(s_).lower().endswith(".idml") and os.path.exists(s_):
+                      if f.lower().endswith((".idml", ".pdf"))]
+        elif (s_ and str(s_).lower().endswith((".idml", ".pdf"))
+              and os.path.exists(s_)):
             files.append(s_)
+    # PDF 분석본은 코드 조판본만(같은 분석본 IDML 이 있으면 IDML). 그 PDF 의
+    # 깨끗한 사본은 핵심기출 상자다(발문 + 지문 + 선택지).
+    files = _pdf_sources(files)
     if not files:
         return
     seqs = []
     for f in files:
-        try:
-            z = zipfile.ZipFile(f)
-        except Exception:
-            continue
-        for n in z.namelist():
-            if not n.startswith("Stories/"):
+        if f.lower().endswith(".pdf"):
+            import analysis_pdf
+            texts = analysis_pdf.clean_texts(f)
+        else:
+            try:
+                z = zipfile.ZipFile(f)
+            except Exception:
                 continue
-            x = z.read(n).decode("utf-8", "replace")
-            t = _html.unescape("".join(re.findall(r"<Content>(.*?)</Content>",
-                                                  x, re.S)))
+            texts = []
+            for n in z.namelist():
+                if not n.startswith("Stories/"):
+                    continue
+                x = z.read(n).decode("utf-8", "replace")
+                texts.append(_html.unescape("".join(
+                    re.findall(r"<Content>(.*?)</Content>", x, re.S))))
+        for t in texts:
             if len(t) < 200:
                 continue
             # 글자 + 경계 표시만 남긴다: 한글·선택지·각주(*:)·빈칸 괄호와 밑줄
@@ -1261,17 +1330,28 @@ class PocketbookSeries(Series):
             if os.path.isdir(sfile):
                 for root, _d, fs in os.walk(sfile):
                     files += [os.path.join(root, f) for f in sorted(fs)
-                              if f.lower().endswith(".idml")]
+                              if f.lower().endswith((".idml", ".pdf"))]
             elif os.path.exists(sfile):
                 files.append(sfile)
         if not files:
             return []
-        files = _dedup_versions(files, log)
         self._tools()
+        files = _dedup_versions(_pdf_sources(files, log), log)
         import analysis
+        import analysis_pdf
+        analysis_pdf.KO_DIRS[:] = [cfg.resolve(
+            opt.get("corpus") or "${STUDIO}/조판/교재/포켓북/_corpus")]
         out = []
         for f in files:
-            got = analysis.read_book(f)
+            if f.lower().endswith(".pdf"):
+                got = [_subject_unit(g) for g in analysis_pdf.read_book(f)]
+                for g in got:
+                    if g["source"].get("clean_match") is False:
+                        log("  ⚠ %s — 핵심기출 사본과 글자가 다르다: %s"
+                            % (g.get("label"),
+                               "; ".join(g["source"]["notes"][-2:])))
+            else:
+                got = analysis.read_book(f)
             base = os.path.basename(f)
             for g in got:
                 _derive_pno(g, base)
@@ -2628,19 +2708,23 @@ class PocketbookSeries(Series):
             if os.path.isdir(sfile):
                 for root, _d, fs in os.walk(sfile):
                     files += [os.path.join(root, f) for f in sorted(fs)
-                              if f.lower().endswith(".idml")]
+                              if f.lower().endswith((".idml", ".pdf"))]
             elif os.path.exists(sfile):
                 files.append(sfile)
         if not files:
             return
-        files = _dedup_versions(files)
         self._tools()
+        files = _dedup_versions(_pdf_sources(files))
         try:
             import regress
+            import analysis_pdf
         except ImportError:
             return
         try:
-            n_src = sum(regress.source_passage_spreads(f) for f in files)
+            # PDF 는 읽기(read_book)와 **따로** 센다 — 머리말 수(G-P9 취지)
+            n_src = sum(analysis_pdf.source_count(f)
+                        if f.lower().endswith(".pdf")
+                        else regress.source_passage_spreads(f) for f in files)
         except Exception as e:
             log("  [G-P9 건너뜀] 원본 계수 실패: %s" % str(e)[:80])
             return
