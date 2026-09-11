@@ -62,7 +62,10 @@ def esc(s):
 
 
 RE_SN = re.compile(r'\[\((\d{1,2})\)\]')                   # 지문 문장 번호 [(1)]
-RE_LB = re.compile(r'\b([A-Za-z])((?:\s_)+)(?![_A-Za-z])')  # 첫 글자 + 글자 칸 h _ _ _
+# 요약문 빈칸 한 벌 = `(A) h _ _ _ _ (9자)` — 라벨·첫 글자·칸·글자 수를 **한 덩어리**로
+# 묶어 줄이 갈리지 않게 한다(글자 수만 다음 줄로 떨어졌다).
+RE_LB = re.compile(r'(?:\(([A-E])\)\s*)?\b([A-Za-z])((?:\s_)+)(?![_A-Za-z])'
+                   r'(?:\s*\(\s*(\d{1,2})\s*자\s*\))?')
 RE_CNT = re.compile(r'\((\d{1,2})\s*자\)')
 RE_AB = re.compile(r'\(([A-E])\)')
 RE_US = re.compile(r'_{3,}')
@@ -81,11 +84,14 @@ def fx(t, ctx):
         t = RE_SN.sub(lambda m: f'<span class="sn">({m.group(1)})</span>', t)
         t = RE_US.sub(lambda m: _ul(len(m.group(0)), 'passage'), t)
     elif ctx == 'summary':
-        t = RE_LB.sub(lambda m: ('<span class="lb"><span class="l1">' + m.group(1)
-                                 + '</span>' + '<span class="u"></span>' * m.group(2).count('_')
-                                 + '</span>'), t)
+        t = RE_LB.sub(lambda m: (
+            '<span class="lb">'
+            + (f'<b class="ab">({m.group(1)})</b>' if m.group(1) else '')
+            + f'<span class="l1">{m.group(2)}</span>'
+            + '<span class="u"></span>' * m.group(3).count('_')
+            + (f'<span class="cnt">{m.group(4)}자</span>' if m.group(4) else '')
+            + '</span>'), t)
         t = RE_CNT.sub(lambda m: f'<span class="cnt">{m.group(1)}자</span>', t)
-        t = RE_AB.sub(lambda m: f'<b class="ab">({m.group(1)})</b>', t)
     elif ctx == 'ans':
         t = re.sub(r'^답\s*[:：]\s*', '<span class="alab">답</span>', t)
         t = re.sub(r'\(\s*\)', '(<span class="pgap"></span>)', t)
@@ -110,6 +116,11 @@ def inl(x, ctx='plain'):
             t = f'<i>{t}</i>'
         return t
     return ''.join(inl(i, ctx) for i in x)
+
+
+def wordmark(s):
+    """`한.서.끝.` → 글자 + 네모 점. 수정 표지의 점은 마침표가 아니라 **네모 도형**이다."""
+    return ''.join('<i class="dot"></i>' if ch == '.' else esc(ch) for ch in s or '')
 
 
 def src_split(s):
@@ -274,8 +285,9 @@ def front_html(cfg, data, m):
                  f'<td class="no">PART {P["no"]:02d}</td><td class="t">{esc(P["title"])}</td>'
                  f'<td class="r">{lo:02d} – {hi:02d}</td></tr>')
     o.append('</table></div>')
-    o.append(f'<div class="cv-wm" style="right:{16.1 + b:.2f}mm;top:{244.1 + b - 2.1:.2f}mm">'
-             f'{esc(cfg.book.get("wordmark", ""))}</div>')
+    # 수정 표지 실측: 마지막 네모 점의 오른쪽 끝 = 재단선 기준 191.26mm
+    o.append(f'<div class="cv-wm" style="right:{210 - 191.26 + b:.2f}mm;top:{244.1 + b - 2.1:.2f}mm">'
+             f'{wordmark(cfg.book.get("wordmark", ""))}</div>')
     o.append(f'<i class="rl" style="left:{62.4 + b:.2f}mm;top:{274.6 + b:.2f}mm;width:128.3mm"></i>')
     o.append(f'<img class="logo" src="assets/logo_books.svg" '
              f'style="left:{20 + b:.2f}mm;top:{269.1 + b:.2f}mm;width:34.2mm">')
