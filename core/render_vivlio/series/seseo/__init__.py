@@ -20,19 +20,20 @@ from core.render_vivlio.series.seseo import render as render_mod
 # ── 인쇄색 — 정본 PDF 의 k 연산자 값을 그대로(ICC 를 안 탄다) ──────────
 GRAY = {"#231f20": 1.0, "#404041": 0.9, "#58595b": 0.8, "#6d6e71": 0.7, "#ffffff": 0.0}
 CMYK = {
-    "#3c75ba": [79, 52, 0, 0], "#005ead": [100, 67, 0, 0], "#1787c8": [80, 37.6, 0, 0],
-    "#61c1ed": [55, 6, 0, 0], "#2a458a": [89, 75, 0, 21], "#dde9f7": [11.6, 4, 0, 0],
-    "#f6f5ec": [0, 0, 4.4, 3.6], "#b2ddf6": [27.5, 3, 0, 0], "#4791ce": [70, 32.9, 0, 0],
-    "#f8f8f1": [0, 0, 3.3, 2.7], "#e8ecf0": [3.6, 1.4, 0.6, 4.6], "#a5b3c0": [18, 7, 3, 23],
-    "#0075bf": [100, 47, 0, 0], "#c8da2b": [26, 0, 100, 0], "#c9ebfc": [19, 0, 0, 0],
-    "#d0e9f9": [16.5, 1.8, 0, 0], "#f1f5d5": [5.2, 0, 20, 0], "#f0eedf": [0, 0, 7.7, 6.3],
-    "#dff0fb": [11, 1.2, 0, 0], "#6588c5": [63.2, 41.6, 0, 0], "#fff3b7": [0, 3, 34, 0],
-    "#fdc172": [0, 27, 63, 0], "#3f65af": [82, 64, 0, 0], "#5b5b72": [29.4, 27.6, 0, 60],
-    "#569cd4": [64, 27.6, 0, 0], "#fec866": [0, 23, 70, 0], "#64a2d8": [59, 25, 0, 0],
-    "#c4cdd7": [10.8, 4.2, 1.8, 13.8],
+    # 가을 노을 하늘(2026-09-12) — 화면색은 이 CMYK 를 PyMuPDF 로 변환한 값이다
+    "#a4a8d5": [35, 30, 0, 0], "#c2c6e4": [22, 18, 0, 0], "#e3e3f2": [9, 8, 0, 0],
+    "#5b579f": [72, 72, 0, 6], "#824f8c": [52, 78, 10, 8],
+    "#f58e7d": [0, 55, 45, 0], "#fee5db": [0, 11, 10, 0], "#e35a4d": [0, 78, 68, 6],
+    "#fcbb6e": [0, 30, 64, 0], "#ffecce": [0, 7, 20, 0],
+    "#f6a0b0": [0, 46, 14, 0], "#fdeaec": [0, 9, 3, 0], "#cb4f70": [12, 82, 35, 6],
+    "#ffe9a4": [0, 7, 42, 0], "#fff6e7": [0, 3, 9, 0],
+    "#ffe4b9": [0, 10, 30, 0], "#f8a57e": [0, 42, 50, 0], "#dbddef": [12, 10, 0, 0],
+    "#959ecf": [42, 34, 0, 0], "#f5dada": [0, 14, 6, 3], "#daa0af": [8, 40, 14, 4],
+    "#ffda87": [0, 14, 55, 0],
 }
 
 RE_TAG = re.compile(r'§((?:S|T|P|ART)\d+)§')
+MAX_FIT = 3
 FRAME = {"inner": 23.0, "outer": 26.0, "width": 167.0, "top": 22.0, "bottom": 278.5}
 
 
@@ -84,35 +85,71 @@ class SeseoSeries(Series):
         self._stage(cfg, bd, log)
         out = cfg.out_pdf("")
 
-        # MEMO 가 들어가는 자리는 둘이다.
-        #   ① 왼쪽 면에서 여는 절 앞의 백면(`break-before: left` 가 만든 것)
-        #   ② 한 면을 넘는 세트 앞 — 넘는 세트는 **펼침면(왼쪽 시작)** 이어야 지문과
-        #      마지막 문항이 한눈에 보인다. 오른쪽 면에서 시작하면 마지막 문항이 쪽을
-        #      넘겨 인쇄된다(검수 FAIL 6건 실측: 지문 57쪽 / 48번 58쪽).
-        memos, secs, texts = set(), 0.0, []
-        for _try in range(8):
-            html_path = render_mod.write(cfg, d, bd, log=log, memos=memos)
+        # 면 계획 — 단계마다 다시 조판한다.
+        #   ① 조임: 한 면을 넘는 세트는 간격→행간→글자 순으로 최대 3단계 조여 한 면에
+        #      넣는다("묶인 문제는 최대한 한 면에" — 사용자 지시). 3단계로도 안 들어가면
+        #      원래 간격으로 되돌려 두 면으로 둔다.
+        #   ② 펼침: 두 면 세트는 왼쪽 면에서 연다(앞에 MEMO) — 쪽을 넘기지 않게.
+        #   ③ 백면: 왼쪽 면에서 여는 절 앞의 백면은 MEMO 로(어느 단계에서든).
+        #   ④ 여백: 한 면 세트의 아래 빈자리를 문항 사이에 나눈다(면 수는 안 바뀐다).
+        memos, fit, gaps = set(), {}, {}
+        phase, secs, texts, longs = "fit", 0.0, [], set()
+        for _try in range(16):
+            html_path = render_mod.write(cfg, d, bd, log=log, memos=memos, fit=fit, gaps=gaps)
             secs = cli.run_build(html_path, out, log=log, extra=["-f", "pdf"])
             texts = probe.page_texts(out)
             blanks = probe.blank_pages(texts)
-            new = set()
-            for n in blanks:
-                m = RE_TAG.search(texts[n]) if n < len(texts) else None
-                if not m:
-                    raise RuntimeError(f"백면 {n}쪽 다음 면에 절 표식이 없다 — 원인 불명의 백면")
-                new.add(m.group(1))
             if blanks:
-                log(f"  백면 {blanks} → 그 앞에 MEMO: {sorted(new - memos)}")
-            else:
+                new = set()
+                for n in blanks:
+                    m = RE_TAG.search(texts[n]) if n < len(texts) else None
+                    if not m:
+                        raise RuntimeError(f"백면 {n}쪽 다음 면에 절 표식이 없다 — 원인 불명의 백면")
+                    new.add(m.group(1))
+                # 이미 MEMO 가 있는 자리 앞이 비었다면 그 MEMO 가 오히려 면을 밀었다
+                # (앞 단계에서 면 수가 바뀌어 짝이 뒤집힌 것) — 빼면 풀린다.
+                log(f"  백면 {blanks} → MEMO 넣음 {sorted(new - memos)} · 뺌 {sorted(new & memos)}")
+                memos ^= new
+                continue
+            over = [lo for lo, b, z in self._set_spans(texts, d) if z > b]
+            if phase == "fit":
+                grow = [lo for lo in over if fit.get(lo, 0) < MAX_FIT]
+                if grow:
+                    for lo in grow:
+                        fit[lo] = fit.get(lo, 0) + 1
+                    memos = {m for m in memos if m.startswith("B")}   # 면 수가 바뀐다 → 백면 MEMO 다시
+                    log(f"  한 면을 넘는 세트 {grow} → 조임 {[fit[lo] for lo in grow]}단계")
+                    continue
+                phase = "spread"
+                if over:
+                    for lo in over:
+                        fit.pop(lo, None)
+                    memos = {m for m in memos if m.startswith("B")}
+                    log(f"  {MAX_FIT}단계로도 넘는 세트 {over} → 원래 간격으로 두 면(펼침면)")
+                    continue
+            if phase == "spread":
                 new = self._spread_memos(texts, d)
-                if not new:
-                    break
-                log(f"  두 면 세트 {sorted(new)} → 앞에 MEMO(펼침면으로 연다)")
-            if new <= memos:
-                raise RuntimeError(f"MEMO 를 넣어도 풀리지 않는다: 백면 {blanks} / {sorted(new)}")
-            memos |= new
+                if new:
+                    if new <= memos:
+                        raise RuntimeError(f"MEMO 를 넣어도 풀리지 않는다: {sorted(new)}")
+                    log(f"  두 면 세트 {sorted(new)} → 앞에 MEMO(펼침면으로 연다)")
+                    memos = {m for m in memos if m.startswith("B")} | new
+                    continue
+                phase, longs = "gap", set(over)
+                gaps = self._gap_plan(out, d, longs)
+                if gaps:
+                    log(f"  아래 여백을 문항 사이에 나눔 {len(gaps)}세트 "
+                        f"(문항당 {min(gaps.values())}~{max(gaps.values())}mm)")
+                    continue
+                break
+            bad = [lo for lo in over if lo not in longs]
+            if not bad:
+                break
+            for lo in bad:
+                gaps.pop(lo, None)
+            log(f"  여백 때문에 넘친 세트 {bad} → 그 세트는 여백 없이")
         else:
-            raise RuntimeError("MEMO 배치 8회 실패")
+            raise RuntimeError("면 계획 16회 실패")
 
         pages = len(texts)
         art = self._marks(texts, r'§(ART\d)§')
@@ -143,6 +180,28 @@ class SeseoSeries(Series):
             b, z = where.get(f"B{s['lo']}"), where.get(f"Z{s['hi']}")
             if b is not None and z is not None:
                 out.append((s["lo"], b, z))
+        return out
+
+    @staticmethod
+    def _gap_plan(pdf, d, longs, safety=4.0, cap=12.0):
+        """한 면 세트의 아래 빈자리(마지막 문항 끝 §Z§ ~ 판면 아래)를 문항 수로 나눈 몫."""
+        import fitz
+        pos = {}
+        doc = fitz.open(pdf)
+        for i, pg in enumerate(doc):
+            for w in pg.get_text("words"):
+                m = re.search(r'§Z(\d+)§', w[4])
+                if m:
+                    pos.setdefault(int(m.group(1)), (i + 1, w[3] * 25.4 / 72))
+        doc.close()
+        out = {}
+        for s in d["part2"]["sets"]:
+            z = pos.get(s["hi"])
+            if s["lo"] in longs or not z:
+                continue
+            per = min((FRAME["bottom"] - z[1] - safety) / len(s["qs"]), cap)
+            if per >= 1.0:
+                out[s["lo"]] = round(per, 1)
         return out
 
     @classmethod

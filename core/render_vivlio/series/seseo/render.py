@@ -278,7 +278,7 @@ def qbody(blocks, main_box="cbox"):
         if t == "line":
             out.append(f'<p class="ql">{sub_line(b["r"])}</p>')
         elif t == "summary":
-            out.append(f'<div class="cbox"><span class="bl">〈요약문〉</span>'
+            out.append(f'<div class="cbox sum"><span class="bl">〈요약문〉</span>'
                        f'{inl(b["r"])}</div>')
         elif t == "grammar":
             out.append(f'<div class="{main_box}">{grammar_html(b["r"])}</div>')
@@ -288,7 +288,7 @@ def qbody(blocks, main_box="cbox"):
             out.append(f'<div class="bogi"><div class="bl">&lt;보기&gt;</div>'
                        f'<div class="bw">{esc(b["r"])}</div></div>')
         elif t == "case":
-            out.append(f'<div class="cbox"><span class="bl">[{esc(b["label"])}]</span>'
+            out.append(f'<div class="cbox case"><span class="bl">[{esc(b["label"])}]</span>'
                        f'{inl(b["r"])}</div>')
         elif t == "diagram":
             sep = DARROW if b.get("flow", True) else '<div class="dgap"></div>'
