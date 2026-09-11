@@ -257,6 +257,15 @@ def passage_html(r):
     return inl(r)
 
 
+def grammar_html(r):
+    """어법 지문(밑줄 조각) — 안내문 제목 ⟪…⟫ 은 지문 상자와 같이 굵게."""
+    if r and isinstance(r[0], str):
+        m = RE_NOTICE.match(r[0])
+        if m:
+            return f'<b>{esc(m.group(1))}</b> ' + inl([r[0][m.end():]] + list(r[1:]))
+    return inl(r)
+
+
 def qbody(blocks, main_box="cbox"):
     out = []
     for b in blocks:
@@ -267,7 +276,7 @@ def qbody(blocks, main_box="cbox"):
             out.append(f'<div class="cbox"><span class="bl">〈요약문〉</span>'
                        f'{inl(b["r"])}</div>')
         elif t == "grammar":
-            out.append(f'<div class="{main_box}">{inl(b["r"])}</div>')
+            out.append(f'<div class="{main_box}">{grammar_html(b["r"])}</div>')
         elif t == "passage":
             out.append(f'<div class="{main_box}">{passage_html(b["r"])}</div>')
         elif t == "bogi":
