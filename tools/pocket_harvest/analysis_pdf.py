@@ -108,17 +108,39 @@ def _images(page):
         if b.get("type") != 1:
             continue
         x0, y0, x1, y1 = b["bbox"]
-        rgb = None
+        rgb, wavy = None, False
         try:
             pm = fitz.Pixmap(b["image"])
             if pm.colorspace and pm.colorspace.n != 3:
                 pm = fitz.Pixmap(fitz.csRGB, pm)
             if pm.width and pm.height:
                 rgb = tuple(pm.pixel(pm.width // 2, pm.height // 2)[:3])
+                wavy = _is_wavy(pm)
         except Exception:
             rgb = None
-        out.append({"x0": x0, "y0": y0, "x1": x1, "y1": y1, "rgb": rgb})
+        out.append({"x0": x0, "y0": y0, "x1": x1, "y1": y1, "rgb": rgb,
+                    "wavy": wavy})
     return out
+
+
+def _is_wavy(pm):
+    """밑줄 그림이 **물결**인가 — 칠해진 픽셀의 높이가 열마다 오르내리면 물결.
+
+    Y.OS 마커는 물결(`~…~`)과 곧은 밑줄(`_…_` 병렬)이 따로다. 곧은 밑줄을
+    물결로 옮기면 다른 표시가 된다.
+    """
+    if pm.height < 3 or pm.width < 6:
+        return False
+    ys = []
+    for x in range(0, pm.width, max(1, pm.width // 40)):
+        col = [y for y in range(pm.height)
+               if sum(pm.pixel(x, y)[:3]) < 3 * 235
+               and (not pm.alpha or pm.pixel(x, y)[-1] > 60)]
+        if col:
+            ys.append(sum(col) / float(len(col)))
+    if len(ys) < 4:
+        return False
+    return max(ys) - min(ys) > 0.25 * pm.height
 
 
 def _lines(cs, tol=1.2):
@@ -252,7 +274,7 @@ def _ko_model():
 
 def _join_ko(lines, notes=None):
     """해석 줄 → 글. 한글끼리 만나는 줄 경계만 판정하고 나머지는 띄운다."""
-    words, inb, crs, _eat = _ko_model()
+    words, inb, crs = _ko_model()
     out = ""
     for t in lines:
         t = t.strip()
@@ -450,7 +472,11 @@ def _analysis_page(page, cs, imgs, notes):
                     if ov >= 0.5 * th:
                         t["hl"] = _hl_of(im["rgb"]) or t["hl"]
                 elif ih > 0.3 and t["oy"] - 0.3 * bs <= im["y0"] <= t["oy"] + 0.6 * bs:
-                    t["wave"] = True
+                    if im.get("wavy"):
+                        t["wave"] = True
+                    elif "밑줄" not in " ".join(notes[-1:]):
+                        notes.append("곧은 밑줄(병렬 표시) '%s' — 포켓북에 없는 "
+                                     "표시라 옮기지 않음" % t["t"])
 
     # 주석 → 낱말. 한 본문 줄 밑에 주석 줄이 둘이면 두 번째는 **아랫줄**(dn2)
     #   — `zero` 밑 `V1` 아래에 `this variability` 가 한 줄 더 온다(실측).

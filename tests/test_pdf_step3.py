@@ -252,3 +252,22 @@ def test_prompt_ends_at_instruction_even_when_line_is_full():
     mid = _line("12. 다음 글의 밑줄 친 우리말과 같은 뜻이 되도록", x1=284.0)
     nxt = _line("<보기>에 주어진 단어만을 모두 사용하여", base=113.0)
     assert not _breaks(mid, nxt, 285.0, 13.0, "1", 1, para_is_q=True)[0]
+
+
+def test_two_sentence_prompt_and_inline_choice_brackets():
+    # '…요약하고자 한다.' 는 발문 안 — 끊지 않는다 (지시형 어미에서만 끝)
+    a = _line("19. 다음 글의 내용을 한 문장으로 요약하고자 한다.", x1=284.0)
+    b = _line("빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?", base=113.0)
+    assert not _breaks(a, b, 285.0, 13.0, "1", 1, para_is_q=True)[0]
+    c = _line("Hunters in the Ache tribe, living in the jungle,", base=126.0)
+    assert _breaks(b, c, 285.0, 13.0, "1", 2, para_is_q=True)[0]
+    # 지문 속 괄호 선택형이 줄 머리에 걸려도 지문은 이어진다
+    p1 = _line("volunteers matched couples with 5)", x1=284.0)
+    p2 = _line("6)[matching / matched] pairs at the same ages.", base=113.0)
+    assert not _breaks(p1, p2, 285.0, 13.0, "M", 3)[0]
+    p3 = _line("[striking / strikingly], the more similar people", base=113.0)
+    assert not _breaks(p1, p3, 285.0, 13.0, "M", 3)[0]
+    # 세트 안내('[서답형 1~2] … 답하시오.') 뒤 지문은 끊는다
+    s1 = _line("[서답형 1~2] 다음 글을 읽고 물음에 답하시오.", x1=284.0)
+    s2 = _line("Located in the historic city of Ningbo, China,", base=113.0)
+    assert _breaks(s1, s2, 285.0, 13.0, "[", 1, para_is_q=True)[0]

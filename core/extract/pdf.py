@@ -440,11 +440,14 @@ _RE_HEAD = re.compile(
 _RE_PARA_HEAD = re.compile(
     r"^\s*(?:\[|<|〈|《|【|\*|※|▶|■|□|◆|◇|○|●|Q\s*\.)")
 # 번호 + 한글 지시문 — 영어 지문 속에서 줄 머리에 올 수 없는 모양 (항상 끊는다)
-_RE_QHEAD = re.compile(r"^\s*\d{1,3}\s*[.)]\s*[가-힣\[(<“\"]")
+# 숫자+마침표 뒤 30자 안에 한글 두 글자 — '12. 다음 글의…', '3. (A), (B)의 각…'.
+# 'N)' 는 지문 속 번호(괄호 선택형 '6)[matching / matched]')·미주라 뺀다.
+_RE_QHEAD = re.compile(r"^\s*\d{1,3}\s*\.\s*\S.{0,30}?[가-힣]{2}")
 # 선지 번호만 — ⓐ~ⓔ 는 빈칸·어법 지문 **안** 표지로 줄 머리에 자주 걸린다
 _CIRCLED = set("①②③④⑤⑥⑦⑧⑨⑩")
 # 한글 지시문 발문의 끝 — '것은?' · '영작하시오.' · '쓰시오.2)' (각주번호 포함)
-_RE_PROMPT_END = re.compile(r"[가-힣][?.]\)?\s*(?:\d{1,3}\))?\s*$")
+# 지시형 어미로만 — '…요약하고자 한다.' 같은 서술문 마침표는 발문 안이다
+_RE_PROMPT_END = re.compile(r"(?:[가-힣]\s*\?|시오\.)\)?\s*(?:\d{1,3}\))?\s*$")
 _RE_TERMINAL = re.compile(
     r"[.?!…。:;\]\)>》〉】」』\"'”’](?:\s*\d{1,3}\))?\s*$")
 
@@ -465,6 +468,8 @@ def _first_word_width(ln):
 
 def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1,
             para_is_q=False):
+    """para_is_q: 지금 단락이 한글 지시문 단락인가(번호 발문·'[서답형 1~2]
+    다음 글을 읽고 …' 세트 안내 등 — 한글이 글자의 30% 이상)."""
     """(끊나?, 빈 줄 간격 때문인가?)
 
     para_first: 지금 짓고 있는 단락의 첫 글자 — 선지(①) 단락 뒤에 선지가
@@ -493,7 +498,8 @@ def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1,
     big = max(prev["size"], cur["size"])
     if abs(prev["size"] - cur["size"]) > 0.18 * big:
         return True, False
-    if _RE_PARA_HEAD.match(ctxt) and _RE_TERMINAL.search(ptxt):
+    if (_RE_PARA_HEAD.match(ctxt) and _RE_TERMINAL.search(ptxt)
+            and not re.match(r"\[[^\]]*/", ctxt)):     # '[a / b]' 는 지문 속 선택형
         return True, False
     room = prev_edge - prev["x1"]
     if room > _first_word_width(cur) + 0.35 * prev["size"] + 1.0:
@@ -806,11 +812,13 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                     prev = ln
                     continue
                 first = next((c["c"] for c in cur if not c["c"].isspace()), "")
-                head = "".join(c["c"] for c in cur[:24])
+                letters = [c["c"] for c in cur if c["c"].isalpha()]
+                korean = bool(letters) and (
+                    sum(1 for c in letters if _is_hangul(c)) / len(letters) >= 0.3)
                 brk, blank = _breaks(prev, ln,
                                      edges.get(prev["_colkey"], prev["x1"]),
                                      pitches.get(prev["_colkey"], 12.0), first,
-                                     cur_lines, bool(_RE_QHEAD.match(head)))
+                                     cur_lines, korean)
                 if brk:
                     flush()
                     if blank:
