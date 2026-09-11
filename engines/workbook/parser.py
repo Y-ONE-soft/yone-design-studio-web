@@ -2744,6 +2744,22 @@ _RE_STEP3_MULTI_HEAD = re.compile(
     r"^\s*(?:\d{1,2}\s*강|[^\d\n]*?)\s*(\d{1,3})\s*번\s*[–\-—~]\s*"
     r"고\s*(\d)\s*(\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,3})\s*번")
 
+# 회차 통합 Step3 원고 방언 ② — 지문 구분 헤더가 **"QQ번 · 지문 제목"**
+# (실측 2026-09-12 '고2 26년 9월 변형문제.docx', 사용자 지적 "모의고사인데
+# 스텝3에 지문번호는 왜 안 넣었어"):
+#   "18번 · 브로슈어 인쇄 견적 문의 이메일"
+#   "41~42번 · 선택 설계와 알고리즘 (장문)"
+# 회차(YY·MM)가 헤더에 없어 위 두 방언에 안 걸리고, 파일명에도 문항번호가
+# 없어 파일명 매칭에도 안 걸린다 → 345문항이 question_num="textbook" **단일
+# 통짜**로 흘러 지문 경계가 사라졌다. 경계가 없으니 지문번호 `{YYMMQQ}`
+# (plan.build_step3 의 code 삽입)도, 지문 단위 페이지 나눔도 전부 무력화.
+# 회차는 폴더 연·월(job 의 year/month)에서 받는다.
+_RE_STEP3_DOTTED_HEAD = re.compile(
+    r"^\s*(\d{1,3})\s*(?:[~〜～]\s*(\d{1,3})\s*)?번\s*[·・ㆍ•]\s*(\S.*)$")
+# 이 방언은 회차를 스스로 못 읽어 검증이 약하다 — 한 파일에 **여러 개**가
+# 규칙적으로 있을 때만 지문 헤더로 본다 (본문 한 줄의 우연 매칭 차단).
+_S3_DOTTED_HEAD_MIN = 3
+
 
 # 회차 통합 Step3 원고 헤더 방언 — "2021년_고1_9월_인천광역시 교육청_학력평가_36번"
 # 한 파일에 36·37번이 같이 들어 있고, 같은 헤더가 변형문제마다 반복된다
@@ -3033,8 +3049,11 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
 
 
 def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
-                        image_dir=None):
-    """한 파일에 지문 여러 개가 든 Step3 원고를 헤더로 잘라 항목화."""
+                        image_dir=None, yy=None, mm=None):
+    """한 파일에 지문 여러 개가 든 Step3 원고를 헤더로 잘라 항목화.
+
+    yy/mm: 폴더 회차(2자리). 헤더가 회차를 갖지 않는 방언
+    (_RE_STEP3_DOTTED_HEAD)에서 지문번호 코드 YYMMQQ 를 만드는 데 쓴다."""
     import unicodedata
     used = {unicodedata.normalize("NFC", p) for p in (used_files or {}).values()}
     have = {str(it.get("code") or "") for it in normal_items}
@@ -3065,23 +3084,49 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
             m = _RE_STEP3_MULTI_HEAD.match(t.strip())
             if m:
                 heads.append((i, m))
+        dotted = False
+        if not heads and yy and mm:
+            # 방언 ② — "QQ번 · 제목". 회차는 폴더 연·월에서 온다.
+            for i, p in enumerate(paras or []):
+                t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
+                m = _RE_STEP3_DOTTED_HEAD.match(t.strip())
+                if m:
+                    heads.append((i, m))
+            if len(heads) < _S3_DOTTED_HEAD_MIN:
+                heads = []
+            else:
+                dotted = True
         if not heads:
             continue
         for k, (i, m) in enumerate(heads):
             end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
-            code = "%s%02d%02d" % (m.group(3), int(m.group(4)),
-                                   int(m.group(5)))
+            if dotted:
+                # 장문 묶음("41~42번")은 앞 번호가 지문번호 — 세로 완성본·
+                # 가로 병합이 쓰는 대표 코드 관행과 같다.
+                q_num = m.group(1)
+                code = "%s%s%02d" % (yy, mm, int(q_num))
+                label = m.group(3).strip()
+            else:
+                q_num = m.group(5)
+                code = "%s%02d%02d" % (m.group(3), int(m.group(4)),
+                                       int(q_num))
+                label = "마더텅 %s번" % m.group(1)
             if code in have:
                 continue
             have.add(code)
             normal_items.append({
-                "question_num": m.group(5),
+                "question_num": q_num,
                 "code": code,
                 "paragraphs": paras[i + 1:end],   # 헤더 줄 제외
             })
             if log:
-                log("[파서] step3: 복수지문 파일 '%s' → %s (마더텅 %s번)"
-                    % (_nfc(raw), code, m.group(1)))
+                log("[파서] step3: 복수지문 파일 '%s' → %s (%s)"
+                    % (_nfc(raw), code, label))
+        if dotted and log:
+            log("[파서] step3: 회차 통합 원고 '%s' 를 지문 %d개로 분할 "
+                "(헤더 'QQ번 · 제목'). 첫 헤더 앞 표제·안내·목차 %d줄은 "
+                "지문에 속하지 않아 제외" % (_nfc(raw), len(heads),
+                                             heads[0][0]))
 
 
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
@@ -3227,7 +3272,9 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
     # 안에 "11강 20번 – 고1 16년 11월 31번" 헤더로 지문 2개가 이어져 있어
     # 파일명 규칙(고1 25년 9월 20번.hwp) 기반 탐색으로는 0개가 나온다.
     _absorb_step3_multi(step3_dir, files, normal_items, log,
-                        image_dir=image_dir)
+                        image_dir=image_dir,
+                        yy=(None if _no_round else yy),
+                        mm=(None if _no_round else mm))
 
     # 회차 표기가 파일 안 헤더/파일명에만 있는 원고 (폴더 연·월로는 코드를
     # 못 만드는 경우) — 보충 폴더와 회차 통합 원고.
@@ -3368,7 +3415,13 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
 
 
 def _annotate_step3_kinds(items, log=None):
-    """core.structure 판정 결과를 단락 dict에 kind/q_code로 병기."""
+    """core.structure 판정 결과를 단락 dict에 kind/q_code로 병기.
+
+    blank_fill_answer: 괄호 기입란형 줄("(1) 어색한 곳 (____) → 올바르게
+    고치기 (____)")을 답란(AnsL)으로. 2026-09-12 사용자 지적 "답란에 답란
+    단락스타일 없고" — 이런 줄이 UNKNOWN 으로 남아 지문 스타일로 인쇄됐다
+    (고2 26년 9월 실측 128줄 중 서술형 답란 다수). Step3 는 '발문 + 지문 +
+    답 쓰는 자리'가 전부인 섹션이라 기입 줄은 답란이 관행이다."""
     try:
         from core.structure import classify_paragraphs
     except Exception as e:
@@ -3376,7 +3429,8 @@ def _annotate_step3_kinds(items, log=None):
         return
     for item in items:
         try:
-            results = classify_paragraphs(item.get("paragraphs", []))
+            results = classify_paragraphs(item.get("paragraphs", []),
+                                          {"blank_fill_answer": True})
         except Exception as e:
             msg = f"[구조] 단락종류 주석 실패({item.get('question_num')}): {e}"
             _LOG.warning(msg)

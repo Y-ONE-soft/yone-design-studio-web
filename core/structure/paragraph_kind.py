@@ -369,6 +369,21 @@ def classify_paragraphs(paras, opts=None):
                 item["kind"] = "P-CONTEXT"
                 continue
 
+        # 화살표 요약문 — "→ Rather than relying on (A) ____, writers …".
+        # 원고 관행은 화살표가 **단독 줄**이고 다음 줄이 요약문이지만
+        # (plan._s3_arrow_para 가 그 형태를 배경 처리한다), 화살표와 요약문이
+        # 한 줄로 오는 원고가 있다. 그러면 어느 경로도 안 걸려 요약문이 지문
+        # 스타일로 인쇄된다 (실측 2026-09-12 고2 26년 9월 — 사용자 지적
+        # "요약문제인데 요약문에 배경 단락스타일 안 입혀져있고").
+        # 서술형 요약은 뒤에 선지도 답란도 없어 W85 판정(nxt 검사)도 못 쓴다 —
+        # 자리(지문 뒤)와 형태(화살표 + 인라인 (A)/(B) 빈칸)로 확정한다.
+        if (R.SUMMARY_ARROW_LEAD.match(item["text"] or "")
+                and prev_meaning and prev_meaning["kind"] in ("P", "P-CONTEXT")
+                and BG.is_summary_blank_form(
+                    R.SUMMARY_ARROW_LEAD.sub("", item["text"] or "").strip())):
+            item["kind"] = "P-CONTEXT"
+            continue
+
         if kind != "P":
             continue
 
