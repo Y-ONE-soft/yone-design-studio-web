@@ -304,8 +304,9 @@ def back_html(cfg, m):
          f'<div class="bk-wm" style="top:{122.2 + b - 1.6:.2f}mm">{esc(cfg.book.get("title", ""))}</div>']
     if cov.get('colophon'):
         o.append(f'<div class="bk-colo" style="top:{240 + b:.2f}mm">{esc(cov["colophon"])}</div>')
+    # 수정 표지 실측(뒤표지 = 재단선 기준 x 81.5~123.0, y 264.6~272.6) — 남색 로고
     o.append(f'<img class="logo" src="assets/logo_gakin.svg" '
-             f'style="left:{86.5 + b:.2f}mm;top:{262.2 + b:.2f}mm;width:37mm">')
+             f'style="left:{81.5 + b:.2f}mm;top:{264.6 + b:.2f}mm;width:41.5mm">')
     o.append('</section>')
     return ''.join(o)
 
@@ -329,7 +330,7 @@ def divl_html(cfg, P, m):
     o.append(f'<div class="dl-foot" style="left:{x:.2f}mm;top:{268 + b:.2f}mm">'
              f'<b>{lo:02d} – {hi:02d}</b>문항 {nq}  ·  지문 {len(P["units"])}</div>')
     o.append(f'<div class="dl-wm" style="right:{m["inner"] + b:.2f}mm;top:{266.4 + b:.2f}mm">'
-             f'{esc(cfg.book.get("wordmark", ""))}</div>')
+             f'{wordmark(cfg.book.get("wordmark", ""))}</div>')
     o.append('</section>')
     return ''.join(o)
 
@@ -385,7 +386,7 @@ def body_html(cfg, P, pages):
          f'<div class="hdrL p{n}"><span class="pb">PART {n:02d}</span>'
          f'<span class="pt">{esc(P["title"])}</span></div>',
          f'<div class="hdrR p{n}"><span class="ed">{esc(bk.get("header", ""))}</span>'
-         f'<span class="wm">{esc(bk.get("wordmark", ""))}</span></div>',
+         f'<span class="wm">{wordmark(bk.get("wordmark", ""))}</span></div>',
          f'<div class="footL p{n}"><span class="pg"></span><span class="bar"></span>'
          f'<span class="ft">{esc(bk.get("footer", ""))}</span></div>',
          f'<div class="footR p{n}"><span class="ft">PART {n:02d}&#8195;{esc(P["title"])}</span>'

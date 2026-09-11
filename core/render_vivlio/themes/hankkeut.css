@@ -62,6 +62,10 @@ body > section:first-child { break-before: auto; }
 .tk  { width: 0.35mm; }
 .sl  { width: 5.2mm; height: 0.25mm; transform: rotate(-45deg); }
 .logo { position: absolute; height: auto; }
+/* 워드마크의 점 = 네모 도형(수정 표지 실측 2.64mm @ 53.2pt ≈ 0.14em) */
+.dot { display: inline-block; width: 0.14em; height: 0.14em; background: currentColor;
+       margin: 0 0.07em 0 0.09em; vertical-align: -0.03em; }
+.cv-wm .dot:last-child, .dl-wm .dot:last-child, .wm .dot:last-child { margin-right: 0; }
 
 /* ------------------------------------------------------------------ 앞 간지 */
 .front .cg { position: absolute; font: 300 25pt/1 Maru; color: var(--ink); }
@@ -195,7 +199,9 @@ body > section:first-child { break-before: auto; }
 
 .summary { margin-top: 2.4mm; background: var(--subtint); border: 0.6pt solid var(--submid);
            border-radius: 1mm; padding: 2.6mm 3.8mm; }
-.summary p { font: 9.8pt/6mm Minion, Pre; text-align: justify; }
+/* 요약문은 왼쪽 맞춤 — 빈칸 한 벌(라벨·첫 글자·칸·글자 수)이 안 끊기는 덩어리라
+   양쪽 맞춤이면 앞 줄 낱말 사이가 크게 벌어진다(초안 1번 요약문에서 실측). */
+.summary p { font: 9.8pt/6mm Minion, Pre; text-align: left; }
 .lb { white-space: nowrap; }
 .lb .l1 { font-weight: 700; margin-right: 0.35mm; }
 .lb .u { display: inline-block; width: 2.3mm; height: 0.62em;
