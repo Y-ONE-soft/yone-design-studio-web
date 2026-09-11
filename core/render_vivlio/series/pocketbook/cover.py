@@ -153,6 +153,11 @@ def ink_from_cover(pdf):
     except Exception:
         return None
     W, H = pg.rect.width, pg.rect.height
+    # 블록이 시작하는 **높이**는 벡터에서 읽는다 — 자리는 벡터가 정확하다(틀린 건
+    # 색뿐이었다). 면을 30% 넘게 덮는 색면 가운데 윗변이 면 안쪽에서 시작하는 것.
+    tops = sorted(dr["rect"].y0 / H for dr in pg.get_drawings()
+                  if dr["rect"].width * dr["rect"].height > 0.3 * W * H
+                  and 0.05 < dr["rect"].y0 / H < 0.95)
     # ① 바탕 — 그려진 면에서 넓게 차지한 색
     px = pg.get_pixmap(dpi=24)
     from collections import Counter
@@ -204,14 +209,8 @@ def ink_from_cover(pdf):
     split = None
     if len(fills) >= 2:                  # 위 바탕 + 아래 블록(광문2 형)
         paper, block = sorted(fills[:2], key=_lum, reverse=True)
-        # 글자가 없는 왼쪽 가장자리 세로줄을 위에서부터 훑어 블록이 시작하는
-        # 줄을 찾는다(끝까지 블록 색이 이어지는 첫 줄).
-        col = [px.pixel(max(1, px.width // 20), y)[:3] for y in range(px.height)]
-        col = ["#%02X%02X%02X" % c for c in col]
-        for y in range(px.height):
-            if all(_dist(c, block) <= 8 for c in col[y:]):
-                split = y / float(px.height)
-                break
+        # ⚠ 그린 모양의 세로줄로 재려 했더니 아래쪽 로고에 걸려 못 찾았다(광문2).
+        split = tops[0] if tops else None
     else:                                # 한 색 표지 — 평평하게
         paper = block = fills[0]
     return {
