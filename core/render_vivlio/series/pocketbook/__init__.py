@@ -1592,7 +1592,18 @@ class PocketbookSeries(Series):
 
         책이 팔레트를 덮어쓰면 그 색으로 풀어 준다(`theme.print_defaults`).
         """
-        return ptheme.print_defaults(cfg.section("palette"))
+        pd = ptheme.print_defaults(cfg.section("palette"))
+        # 간지는 **표지와 같은 잉크**로 찍는다 — 화면색을 ICC 로 다시 바꾸면
+        # 표지보다 분홍·짙게 나간다(광문1 실측). 표지의 CMYK 를 그대로 못 박는다.
+        try:
+            opt = cfg.section("options") or {}
+            ink = self._cover_ink(cfg, opt, opt.get("school") or "",
+                                  lambda *a: None)
+            for h, v in ((ink or {}).get("cmyk") or {}).items():
+                pd["cmyk_map"].setdefault(h.lower(), list(v))
+        except Exception:
+            pass
+        return pd
 
     def gen_theme(self, cfg, log):
         css = ptheme.build_css(cfg.section("palette"),

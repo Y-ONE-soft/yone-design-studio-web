@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 """포켓북 **간지**(첫 면 · 마지막 면) — 표지 느낌으로, 간단하게.
 
 표지(`디자인/표지/2026_리뉴얼_…/광문1_포켓북_표지.pdf`)를 그대로 베끼지 않는다.
@@ -95,14 +96,49 @@ def _lum(h):
     return 0.299 * r + 0.587 * g + 0.114 * b
 
 
+def _cmyk_ops(page):
+    """면 내용에 쓰인 채움 CMYK 값(0~1) — 나온 차례대로, 겹치지 않게."""
+    raw = page.read_contents().decode("latin-1", "replace")
+    out = []
+    for m in re.finditer(r"(?<![\w.])([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)"
+                         r"\s+k(?![A-Za-z])", raw):
+        v = tuple(float(x) for x in m.groups())
+        if v not in out:
+            out.append(v)
+    return out
+
+
+def _shown(vals):
+    """CMYK 값들 → 표지를 그릴 때와 **같은 방식**으로 그린 화면색(sRGB)."""
+    import fitz
+    if not vals:
+        return []
+    doc = fitz.open()
+    pg = doc.new_page(width=10, height=10 * len(vals))
+    for i, v in enumerate(vals):
+        pg.draw_rect(fitz.Rect(0, 10 * i, 10, 10 * i + 10), color=None, fill=v)
+    px = pg.get_pixmap(dpi=72)
+    return ["#%02X%02X%02X" % px.pixel(5, 10 * i + 5)[:3] for i in range(len(vals))]
+
+
+def _dist(a, b):
+    x, y = _rgb(a), _rgb(b)
+    return max(abs(x[i] - y[i]) for i in range(3))
+
+
 def ink_from_cover(pdf):
     """**그 학교 표지 PDF** 에서 간지 색을 뽑는다 → `INK` 꼴 dict, 못 읽으면 None.
 
     간지는 표지를 따라 학교마다 색이 달라야 한다(사용자 지적 — 광문1·2 가
     같은 민트로 나갔다). 색표를 따로 적으면 표지를 고칠 때마다 두 벌이 어긋나므로
-    **표지 벡터에서 바로 읽는다**. 표지는 전부 같은 짜임이다(2026-06 리뉴얼
-    15권 실측: 벡터 15개·이미지 0) — 면을 덮는 색면(바탕/아래 블록) + 큰 제목
-    글자 한 색.
+    표지에서 바로 읽는다.
+
+    ⚠ **벡터 값을 그대로 쓰면 안 된다.** 표지는 CMYK 다(`0 .114 .169 .071 k`).
+      PyMuPDF 가 돌려주는 채움값은 그걸 거칠게 RGB 로 바꾼 것이라(`#ECD4C2`)
+      실제 보이는 색(`#F1E0CD`)보다 분홍빛이 돈다 — 간지가 표지와 달라졌다
+      (사용자 지적). 그래서 **그린 모양에서** 바탕·제목 색을 읽고, 그 색을 낸
+      표지의 **CMYK 연산을 그대로** 짝지어 둔다(인쇄본에서 같은 잉크로 찍으려고).
+    ⚠ 한 색 표지는 **평평하게** 둔다. 없는 그러데이션을 지어 넣지 않는다.
     """
     try:
         import fitz
@@ -110,36 +146,66 @@ def ink_from_cover(pdf):
         pg = doc[0]
     except Exception:
         return None
-    page_a = pg.rect.width * pg.rect.height
-    area, title = {}, {}
-    for dr in pg.get_drawings():
-        c = dr.get("fill")
-        if c and len(c) >= 3:
-            h = _hex3(c)
-            area[h] = area.get(h, 0.0) + dr["rect"].width * dr["rect"].height
-    for b in pg.get_text("dict")["blocks"]:
-        for ln in b.get("lines", ()):
-            for sp in ln["spans"]:
-                if sp["text"].strip() and sp["size"] > 18:
-                    h = "#%06X" % sp["color"]
-                    title[h] = title.get(h, 0) + len(sp["text"])
-    doc.close()
-    fills = [h for h, a in sorted(area.items(), key=lambda x: -x[1])
-             if a / page_a > 0.02]
-    if not fills or not title:
+    W, H = pg.rect.width, pg.rect.height
+    # ① 바탕 — 그려진 면에서 넓게 차지한 색
+    px = pg.get_pixmap(dpi=24)
+    from collections import Counter
+    cnt = Counter("#%02X%02X%02X" % px.pixel(x, y)[:3]
+                  for y in range(px.height) for x in range(px.width))
+    tot = px.width * px.height
+    fills = []
+    for h, n in cnt.most_common(12):
+        if n / tot < 0.12:
+            break
+        if all(_dist(h, f) > 6 for f in fills):
+            fills.append(h)
+    if not fills:
+        doc.close()
         return None
-    ink = max(title, key=title.get)
+    # ② 제목 — 큰 글자 자리를 곱게 그려 바탕이 아닌 가장 흔한 색
+    boxes = [fitz.Rect(sp["bbox"]) for b in pg.get_text("dict")["blocks"]
+             for ln in b.get("lines", ()) for sp in ln["spans"]
+             if sp["text"].strip() and sp["size"] > 18]
+    ink = None
+    if boxes:
+        clip = boxes[0]
+        for r in boxes[1:]:
+            clip |= r
+        tp = pg.get_pixmap(dpi=150, clip=clip)
+        tc = Counter("#%02X%02X%02X" % tp.pixel(x, y)[:3]
+                     for y in range(tp.height) for x in range(tp.width))
+        for h, _n in tc.most_common(40):
+            if all(_dist(h, f) > 40 for f in fills):
+                ink = h
+                break
+    ops = _cmyk_ops(pg)
+    doc.close()
+    if not ink:
+        return None
+    # ③ 보이는 색 ↔ 표지의 CMYK 연산 짝짓기 — **가장 가까운 것**.
+    # ⚠ 새 면에 그려 본 CMYK 색은 표지를 그린 색과 몇 단계 어긋난다(투명 그룹·
+    #   겹침 설정 차이) — 6 이내로 묶었더니 광문1·상일1·강동2 가 하나도 안
+    #   짝지어졌다. 표지의 CMYK 연산은 몇 개뿐이고 서로 멀리 떨어져 있어(바탕 ·
+    #   제목 · 부제 · 로고) 가장 가까운 것이 곧 그 색이다. 40 넘게 멀면 버린다.
+    # 열쇠는 **보이는 색**이다 — 간지가 화면에 그리는 바로 그 색이라 인쇄 고정표가 걸린다.
+    shown = _shown(ops)
+    cmyk = {}
+    for want in fills + [ink]:
+        best = min(zip(shown, ops), key=lambda so: _dist(so[0], want),
+                   default=None)
+        if best and _dist(best[0], want) <= 40:
+            cmyk[want] = [round(v * 100, 1) for v in best[1]]
     if len(fills) >= 2:                  # 위 바탕 + 아래 블록(광문2 형)
         paper, block = sorted(fills[:2], key=_lum, reverse=True)
-    else:                                # 한 색 표지
-        block = fills[0]
-        paper = _mix(block, "#FFFFFF", 0.35)
+    else:                                # 한 색 표지 — 평평하게
+        paper = block = fills[0]
     return {
         "bg_top": paper, "bg_bottom": block,
         "plum": ink,                                  # POCKET · 테두리 · 학교
         "forest": ink,                                # Pocket Book.
         "slate": _mix(ink, "#3A3A3A", 0.35),          # 부제·시험·명단 — 읽히게
         "rule": _mix(ink, block, 0.55),
+        "cmyk": cmyk,                                 # 인쇄본에서 표지와 같은 잉크로
     }
 
 
