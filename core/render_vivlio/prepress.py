@@ -352,6 +352,95 @@ def strip_invisible(doc, log=None):
     return n
 
 
+_RE_BFR_BLK = re.compile(rb"(\d+)\s+beginbfrange(.*?)endbfrange", re.S)
+_RE_BFR_ENT = re.compile(
+    rb"<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*(<[0-9A-Fa-f]+>|\[[^\]]*\])")
+
+
+def _split_bfrange(cm):
+    """ToUnicode CMap 의 `bfrange` 중 **목적 끝 바이트가 FF 를 넘는 것**을 쪼갠다.
+
+    PDF 규격: bfrange 는 목적 글자의 **끝 바이트만** 올린다. 크로미움은
+    `<8E> <8F> <B2FF>` 처럼 끝 바이트가 넘치는 범위를 쓴다 — MuPDF 는 올림을
+    받아 주어 `대`(B300)로 읽지만, 규격대로 읽는 Ghostscript 는 `눀`(B200)으로
+    읽고 인쇄본에 그렇게 박는다(광문1 인쇄본 `대` 422자 중 328자, `밀`→`묀`).
+    Returns (새 CMap, 쪼갠 범위 수).
+    """
+    n = 0
+
+    def one_block(mo):
+        nonlocal n
+        ents = []
+        for lo, hi, dst in _RE_BFR_ENT.findall(mo.group(2)):
+            if dst.startswith(b"["):          # 배열 꼴은 그대로 둔다
+                ents.append(b"<%s> <%s> %s" % (lo, hi, dst))
+                continue
+            a, b, v = int(lo, 16), int(hi, 16), int(dst[1:-1], 16)
+            w, dw = len(lo), len(dst) - 2
+            fmt = lambda x, y, z: (b"<%0*X> <%0*X> <%0*X>" % (w, x, w, y, dw, z))
+            last = v & 0xFF
+            if last + (b - a) <= 0xFF:
+                ents.append(fmt(a, b, v))
+                continue
+            n += 1
+            while a <= b:                       # 끝 바이트가 FF 에 닿는 자리마다 자른다
+                span = min(b - a, 0xFF - (v & 0xFF))
+                ents.append(fmt(a, a + span, v))
+                a, v = a + span + 1, v + span + 1
+        out = []
+        for i in range(0, len(ents), 100):     # 규격: 한 블록에 100개까지
+            chunk = ents[i:i + 100]
+            out.append(b"%d beginbfrange\n%s\nendbfrange"
+                       % (len(chunk), b"\n".join(chunk)))
+        return b"\n".join(out) if out else mo.group(0)
+
+    return _RE_BFR_BLK.sub(one_block, cm), n
+
+
+def fix_tounicode(doc, log=None):
+    """문서의 ToUnicode 전부에서 넘치는 bfrange 를 쪼갠다 → 고친 범위 수.
+
+    ⚠ **Ghostscript 에 넘기기 전에** 해야 한다. 넘긴 뒤에는 이미 틀린 글자로
+      굳어 있다(Ghostscript 가 자기 CMap 을 새로 쓴다).
+    """
+    done, total = set(), 0
+    for x in range(1, doc.xref_length()):
+        try:
+            o = doc.xref_object(x, compressed=True) or ""
+        except Exception:
+            continue
+        m = re.search(r"/ToUnicode\s+(\d+)\s+0\s+R", o)
+        if not m or int(m.group(1)) in done:
+            continue
+        sx = int(m.group(1))
+        done.add(sx)
+        try:
+            cm = doc.xref_stream(sx)
+        except Exception:
+            continue
+        new, k = _split_bfrange(cm)
+        if k:
+            doc.update_stream(sx, new)
+            total += k
+    if total:
+        (log or print)(f"[인쇄] 글자층 수리 — 끝 바이트가 넘치는 ToUnicode 범위 {total}개를 쪼갬")
+    return total
+
+
+def _hangul_bag(path):
+    """PDF 글자층의 한글 음절 개수표 — 인쇄본이 글자를 바꿨는지 대조용."""
+    import collections
+    import fitz
+    c = collections.Counter()
+    d = fitz.open(path)
+    try:
+        for pg in d:
+            c.update(ch for ch in pg.get_text() if "\uac00" <= ch <= "\ud7a3")
+    finally:
+        d.close()
+    return c
+
+
 def run_gs(src, dst, profile=None, log=None, timeout=900):
     """Ghostscript 로 CMYK 변환(고품질 인쇄). DeviceGray 는 건드리지 않는다."""
     gs = shutil.which("gs")
@@ -396,6 +485,7 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
     # ① 무채색 → DeviceGray
     tmp_gray = dst + ".gray.pdf"
     doc = fitz.open(src)
+    fix_tounicode(doc, log=log)
     n = neutralize(doc, gray_map, log=log, cmyk_map=cmyk_map)
     n += neutralize_patterns(doc, gray_map, log=log, cmyk_map=cmyk_map)
     n += pin_flat_images(doc, cmyk_map=cmyk_map, gray_map=gray_map, log=log)
@@ -435,6 +525,20 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
                 os.remove(f)
     log(f"[인쇄] {pages}p · CMYK({os.path.basename(icc) if icc else '기본'}) · "
         f"도련 {bleed}mm → {os.path.basename(dst)}")
+    # ⚠ **인쇄본 글자층은 조판본과 한 글자도 달라서는 안 된다.** 변환이 글자를
+    #   바꿔도 인쇄 모양은 멀쩡해 눈으로는 안 보이고, 검색·복사·검수 주석 회수만
+    #   조용히 틀린다(광문1: `대`→`눀` 328곳, 2차 검수본까지 그대로). 다르면 그
+    #   파일을 `_불량` 으로 떼어 내고 멈춘다 — 최신처럼 보이는 불량본을 남기지 않는다.
+    a_, b_ = _hangul_bag(src), _hangul_bag(dst)
+    diff = {ch: (a_[ch], b_[ch]) for ch in set(a_) | set(b_) if a_[ch] != b_[ch]}
+    if diff:
+        bad = dst[:-4] + "_불량.pdf"
+        os.replace(dst, bad)
+        show = " ".join("%s %d→%d" % (ch, x, y) for ch, (x, y)
+                        in sorted(diff.items(), key=lambda kv: -abs(kv[1][0] - kv[1][1]))[:8])
+        raise RuntimeError(f"인쇄본 글자층이 조판본과 다르다({len(diff)}자: {show}) — "
+                           f"납품 금지, {os.path.basename(bad)} 로 떼어 냄")
+    log("[인쇄] 글자층 대조 — 조판본과 같음(한글 %d자)" % sum(a_.values()))
     return {"pdf": dst, "pages": pages, "gray_ops": n, "profile": icc}
 
 
