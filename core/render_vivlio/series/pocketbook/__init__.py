@@ -929,9 +929,7 @@ def _check_hangul(rows, report, log):
         log("  G-P14 한글 글자 — 이상 없음")
 
 
-def _check_content(rows, report, log)
-        _check_hangul(rows, report, log)
-        _check_cut(rows, cfg, report, log):
+def _check_content(rows, report, log):
     """G-P12 — **가져온 내용이 그 지문 것인가**.
 
     ⚠ 예전 게이트는 `블록이 있는가` 만 봤다. 그래서 한 지문에 책 전체 동반의어
@@ -2471,6 +2469,8 @@ class PocketbookSeries(Series):
         self._check_source_count(cfg, opt, len(pas), report, log)
         self._check_scope(cfg, report, log)
         _check_content(pas, report, log)
+        _check_hangul(pas, report, log)
+        _check_cut(pas, cfg, report, log)
         # G-P11 — 암기 TEST 를 쓰기로 한 책인데 한 면도 안 붙었다.
         # ⚠ 이걸 안 세우면 원고 폴더가 안 잡힌 날 **면 수가 반으로 준 책이
         #   전 게이트를 통과한다**(세종1 204→106면 실측). 면 수 게이트는 남은
