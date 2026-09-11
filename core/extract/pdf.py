@@ -131,10 +131,23 @@ def _underline_segments(page):
 
 # ── 단 나누기 ────────────────────────────────────────────────────────────────
 
-def _column_split(spans, width):
-    """2단 조판이면 가운데 빈 띠의 x 좌표, 아니면 None."""
-    body = [s for s in spans
-            if "".join(c["c"] for c in s["chars"]).strip()]
+def _column_split(spans, width, height=None):
+    """2단 조판이면 가운데 빈 띠의 x 좌표, 아니면 None.
+
+    머리말·꼬리말 영역(쪽 위 10%·아래 8%) 조각은 빼고, 조각 폭은 공백을
+    뺀 실제 글자 범위로 잰다 — 가운데 쪽번호·머리말, 줄 끝 공백이 단 밖으로
+    뻗은 조각('was       ')이 가운데 띠를 막아 2단 쪽을 1단으로 읽고 좌우
+    단 글자를 한 줄로 섞던 문제(수특라이트 12강 21쪽 실측)."""
+    body = []
+    for s in spans:
+        solid = [c for c in s["chars"] if not c["c"].isspace()]
+        if not solid:
+            continue
+        if height and not (0.10 * height <= s["base"] <= 0.92 * height):
+            continue
+        body.append({"x0": min(c["x0"] for c in solid),
+                     "x1": max(c["x1"] for c in solid),
+                     "chars": solid})
     if len(body) < 12:
         return None
     n = int(math.ceil(width)) + 2
@@ -200,13 +213,19 @@ def _finish_line(rec):
     """글자 목록에서 줄의 글·좌우 끝·대표 크기를 (다시) 계산한다."""
     chars = rec["chars"]
     text = "".join(c["c"] for c in chars)
-    solid = [c for c in chars if not c["c"].isspace()]
+    # 밑줄 친 공백(빈칸)은 지면에 보이는 글자다 — 줄 끝 계산에 넣는다.
+    # 빼면 빈칸이 줄 머리/끝에 걸린 지문이 '앞줄 끝에 자리가 남았다'로
+    # 읽혀 두 단락으로 갈라진다(수특라이트 12강 실측).
+    solid = [c for c in chars if not c["c"].isspace() or c.get("ul")]
     rec["text"] = text
     rec["x0"] = min(c["x0"] for c in solid) if solid else chars[0]["x0"]
     rec["x1"] = max(c["x1"] for c in solid) if solid else chars[-1]["x1"]
-    # 줄 크기 = 글자 수로 가중한 대표 크기 (첨자·각주번호 영향 배제)
-    rec["size"] = statistics.median([c["size"] for c in solid]) if solid \
-        else rec["size"]
+    # 줄 크기 = 한글·영문 글자의 대표 크기. 숫자·문장부호를 넣으면 '오.47)'
+    # 처럼 첨자 각주번호가 섞인 짧은 줄이 6pt 로 재져 글자 크기가 바뀐
+    # 것으로 오판된다(수특라이트 12강 '쓰시|오.' 분리 실측).
+    letters = [c["size"] for c in chars if c["c"].isalpha()]
+    pool = letters or [c["size"] for c in solid]
+    rec["size"] = statistics.median(pool) if pool else rec["size"]
 
 
 def _line_chars(ln):
@@ -390,27 +409,45 @@ def _col_right_edges(pages):
 _RE_HEAD = re.compile(
     r"^\s*(?:[①-⑳ⓐ-ⓩ❶-❿⑴-⒇]|\d{1,3}\s*[.)]\s|\(\s*[A-Ea-e가-하]\s*\)"
     r"|\[|<|〈|《|【|\*|※|▶|■|□|◆|◇|○|●|Q\s*\.|[A-E]\s*\.\s)")
+# 앞줄이 문장으로 끝났을 때 끊는 머리 — 지문 **안**에도 흔히 오는 원문자
+# (ⓐ While…)·(A)/(B) 표지·'3. ' 는 뺀다(줄 머리에 걸려도 지문이 이어진다).
+# 원문자 선지는 _CIRCLED(선지 뒤 선지)로, 발문 번호는 _RE_QHEAD 로 따로 본다.
+_RE_PARA_HEAD = re.compile(
+    r"^\s*(?:\[|<|〈|《|【|\*|※|▶|■|□|◆|◇|○|●|Q\s*\.)")
+# 번호 + 한글 지시문 — 영어 지문 속에서 줄 머리에 올 수 없는 모양 (항상 끊는다)
+_RE_QHEAD = re.compile(r"^\s*\d{1,3}\s*[.)]\s*[가-힣\[(<“\"]")
+_CIRCLED = set("①②③④⑤⑥⑦⑧⑨⑩ⓐⓑⓒⓓⓔ")
 _RE_TERMINAL = re.compile(
     r"[.?!…。:;\]\)>》〉】」』\"'”’](?:\s*\d{1,3}\))?\s*$")
 
 
 def _first_word_width(ln):
     ch = ln["chars"]
+    blank = lambda c: c["c"].isspace() and not c.get("ul")
     i = 0
-    while i < len(ch) and ch[i]["c"].isspace():
+    while i < len(ch) and blank(ch[i]):
         i += 1
     j = i
-    while j < len(ch) and not ch[j]["c"].isspace():
+    while j < len(ch) and not blank(ch[j]):
         j += 1
     if j <= i:
         return 0.0
     return ch[j - 1]["x1"] - ch[i]["x0"]
 
 
-def _breaks(prev, cur, prev_edge, pitch):
-    """(끊나?, 빈 줄 간격 때문인가?)"""
+def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1):
+    """(끊나?, 빈 줄 간격 때문인가?)
+
+    para_first: 지금 짓고 있는 단락의 첫 글자 — 선지(①) 단락 뒤에 선지가
+        오면 끊는다. 앞 선지 줄이 우연히 단 끝까지 차서(마침표 없음)
+        '자리 없음 → 이어짐'으로 읽히는 것을 막는다. 지문 속 '① [minimal]'
+        이 줄 머리에 걸린 경우는 앞 단락이 지문이라 끊지 않는다."""
     ptxt, ctxt = prev["text"].rstrip(), cur["text"].lstrip()
     if not ptxt or not ctxt:
+        return True, False
+    if _RE_QHEAD.match(ctxt):
+        return True, False
+    if ctxt[0] in _CIRCLED and para_first in _CIRCLED and para_lines <= 3:
         return True, False
     if prev.get("_colkey") == cur.get("_colkey"):
         gap = cur["base"] - prev["base"]
@@ -421,7 +458,7 @@ def _breaks(prev, cur, prev_edge, pitch):
     big = max(prev["size"], cur["size"])
     if abs(prev["size"] - cur["size"]) > 0.18 * big:
         return True, False
-    if _RE_HEAD.match(ctxt) and _RE_TERMINAL.search(ptxt):
+    if _RE_PARA_HEAD.match(ctxt) and _RE_TERMINAL.search(ptxt):
         return True, False
     room = prev_edge - prev["x1"]
     if room > _first_word_width(cur) + 0.35 * prev["size"] + 1.0:
@@ -487,6 +524,26 @@ _RE_REF_TAIL = re.compile(r"[?.!…\"”’)\]』」](\s*)(\d{1,3})\)\s*$")
 _RE_NOTE_HEAD = re.compile(r"^\s*(\d{1,3})\)\s*\S")
 
 
+def _trim_tail(p, n):
+    """단락 끝 n 글자를 지운다 (runs 도 함께)."""
+    if n <= 0:
+        return
+    p["text"] = p["text"][:-n].rstrip()
+    runs = p.get("runs") or []
+    while n > 0 and runs:
+        r = runs[-1]
+        if len(r["t"]) <= n:
+            n -= len(r["t"])
+            runs.pop()
+        else:
+            r["t"] = r["t"][:-n]
+            n = 0
+    if runs:
+        runs[-1]["t"] = runs[-1]["t"].rstrip() if not runs[-1]["ul"] else runs[-1]["t"]
+    p["runs"] = runs or [{"t": "", "ul": False}]
+    p["text"] = "".join(r["t"] for r in p["runs"])
+
+
 def _cut_endnotes(paras, log=None, label=""):
     refs = []
     first_ref_idx = None
@@ -524,7 +581,12 @@ def _cut_endnotes(paras, log=None, label=""):
             log(f"[PDF] {label}: 끝의 미주(정답 해설) 구간 {len(paras) - cut}단락 "
                 f"제외 — 본문 각주번호 {len(rs)}개와 같은 번호 순열 "
                 f"(hwp 원고의 각주/미주 제외와 같은 처리)")
-        return paras[:cut]
+        kept = paras[:cut]
+        for p in kept:
+            m = _RE_REF_TAIL.search(p["text"])
+            if m and int(m.group(2)) in rs:
+                _trim_tail(p, len(p["text"]) - m.start(1))
+        return kept
     return paras
 
 
@@ -552,7 +614,7 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
             if not spans and page.get_images():
                 img_pages += 1
             W, H = page.rect.width, page.rect.height
-            split = _column_split(spans, W)
+            split = _column_split(spans, W, H)
             lines = []
             if split is None:
                 lines = _group_lines(spans)
@@ -564,6 +626,8 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                 F = [s for s in spans if s not in L and s not in R]
                 lines = _group_lines(L) + _group_lines(R) + _group_lines(F)
             _apply_underlines(lines, segs)
+            for ln in lines:
+                _finish_line(ln)
             imgs = []
             for bi, b in enumerate(images):
                 x0, y0, x1, y1 = b["bbox"]
@@ -678,7 +742,7 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                 placed_imgs += 1
 
         # ── 단락 짓기 ───────────────────────────────────────────────────────
-        paras, cur, prev = [], None, None
+        paras, cur, prev, cur_lines = [], None, None, 0
         stem = re.sub(r"[^\w가-힣]+", "_", os.path.splitext(label)[0])[:40]
 
         def flush():
@@ -710,17 +774,22 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                     continue
                 if prev is None:
                     cur = list(ln["chars"])
+                    cur_lines = 1
                     prev = ln
                     continue
+                first = next((c["c"] for c in cur if not c["c"].isspace()), "")
                 brk, blank = _breaks(prev, ln,
                                      edges.get(prev["_colkey"], prev["x1"]),
-                                     pitches.get(prev["_colkey"], 12.0))
+                                     pitches.get(prev["_colkey"], 12.0), first,
+                                     cur_lines)
                 if brk:
                     flush()
                     if blank:
                         paras.append({"text": "", "runs": [{"t": "", "ul": False}]})
                     cur = list(ln["chars"])
+                    cur_lines = 1
                 else:
+                    cur_lines += 1
                     g = _glue(cur, ln["chars"], hangul_joined)
                     if g:
                         cur.append(g)
