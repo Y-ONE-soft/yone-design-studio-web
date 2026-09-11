@@ -126,19 +126,28 @@ def _run_html(r):
     m = r.get("mark")
     if m in _MARK_CLS:
         cls.append(_MARK_CLS[m])
+    # 코드 조판 분석본(PDF)은 **색 글자에 물결**이 함께 온다(`confirming` 파랑 +
+    # 물결). mark 는 하나뿐이라 물결은 따로 싣는다.
+    if r.get("wave") and "wave" not in cls:
+        cls.append("wave")
     inner = ESC(r["t"])
     if r.get("ruby"):
-        slot = r.get("slot") or "dn"
-        st = _ruby_fit(r["ruby"])
-        k = _RIDX[0]
-        _RIDX[0] += 1
-        if MARK_RUBY:                       # 번호를 색으로 새긴다(측정용)
-            st += ";color:rgb(2,%d,%d)" % (k // 256, k % 256)
-        elif _RDX.get(k):
-            st += ";margin-left:%.2fmm" % (-_RDX[k])
-        inner = '<span class="w%s">%s<i class="%s"%s>%s</i></span>' % (
-            (" " + " ".join(cls)) if cls else "", inner, slot,
-            (' style="%s"' % st.lstrip(";")) if st else "", ESC(r["ruby"]))
+        tags = [(r.get("slot") or "dn", r["ruby"])]
+        if r.get("ruby2"):                  # 주석 아랫줄(분석본 PDF 실측)
+            tags.append(("dn2", r["ruby2"]))
+        its = []
+        for slot, rb in tags:
+            st = _ruby_fit(rb)
+            k = _RIDX[0]
+            _RIDX[0] += 1
+            if MARK_RUBY:                   # 번호를 색으로 새긴다(측정용)
+                st += ";color:rgb(2,%d,%d)" % (k // 256, k % 256)
+            elif _RDX.get(k):
+                st += ";margin-left:%.2fmm" % (-_RDX[k])
+            its.append('<i class="%s"%s>%s</i>' % (
+                slot, (' style="%s"' % st.lstrip(";")) if st else "", ESC(rb)))
+        inner = '<span class="w%s">%s%s</span>' % (
+            (" " + " ".join(cls)) if cls else "", inner, "".join(its))
         return inner
     if cls:
         return '<span class="%s">%s</span>' % (" ".join(cls), inner)

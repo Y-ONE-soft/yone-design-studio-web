@@ -516,6 +516,8 @@ html,body{margin:0;padding:0;background:#fff}
   white-space:nowrap;font-style:normal}
 .passage i.up{bottom:calc(50% + var(--up-dy))}
 .passage i.dn{top:calc(50% + var(--dn-dy))}
+/* 주석 아랫줄 — 한 낱말 밑에 주석이 두 줄로 온 분석본(PDF)만 쓴다 */
+.passage i.dn2{top:calc(50% + var(--dn-dy) + __anno_size__pt)}
 /* 물결 밑줄 — 원본은 `영어 지문 물결`(Wavy 1.5pt, offset 2, CMYK 0/85/0/0).
    currentColor 로 두면 글자색을 따라가 검은 물결이 되고, 두께를 안 주면
    브라우저 기본값이라 굵은 점선처럼 보인다. */

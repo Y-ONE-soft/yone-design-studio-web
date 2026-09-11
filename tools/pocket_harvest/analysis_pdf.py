@@ -167,6 +167,93 @@ def _join_lines(texts):
     return out
 
 
+# ── 한글 줄 잇기 ─────────────────────────────────────────────
+# 해석은 **낱말 한가운데서** 줄이 바뀐다(`관심을 기 / 울이는`·`일자 / 리를`).
+# 줄 끝에 띄어쓰기 글리프가 안 남아서 PDF 만으로는 `그는 / 이해하기`(띄움)와
+# 가를 수 없다(줄 끝 x 도 두 경우가 겹친다 — 실측). 그래서 **우리 코퍼스의
+# 해석 글**에서 어느 쪽이 실제로 쓰였는지 본다:
+#   ① 어절 빈도 — `기울이는` 이 있고 `기`·`울이는` 이 따로는 드물면 붙인다.
+#   ② ①이 비기면 경계 음절쌍 — 그 두 음절이 어절 **안**에서 더 자주 붙어
+#      나오는가, 띄어쓰기 **너머**로 더 자주 나오는가.
+KO_DIRS = []                 # 포켓북이 코퍼스 폴더를 넣어 준다
+_KO = None
+_KO_STRIP = re.compile(r"[^가-힣A-Za-z0-9]")
+
+
+def _ko_model(extra=""):
+    global _KO
+    if _KO is None:
+        import json
+        words, inb, crs = Counter(), Counter(), Counter()
+
+        def eat(text):
+            ws = [_KO_STRIP.sub("", w) for w in (text or "").split()]
+            for k, w in enumerate(ws):
+                if not _HAN.search(w):
+                    continue
+                words[w] += 1
+                for x, y in zip(w, w[1:]):
+                    inb[x + y] += 1
+                if k + 1 < len(ws) and ws[k + 1]:
+                    crs[w[-1] + ws[k + 1][0]] += 1
+        dirs = list(KO_DIRS) or [os.path.join(
+            os.environ.get("STUDIO") or os.path.expanduser(
+                "~/Documents/작업/Y.ONE STUDIO"), "조판", "교재", "포켓북", "_corpus")]
+        for d in dirs:
+            if not os.path.isdir(d):
+                continue
+            for f in os.listdir(d):
+                if not f.endswith(".json") or f.startswith("_"):
+                    continue
+                try:
+                    with open(os.path.join(d, f), encoding="utf-8") as fh:
+                        j = json.load(fh)
+                except Exception:
+                    continue
+                for k in ("translation_text", "topic_ko"):
+                    if isinstance(j.get(k), str):
+                        eat(j[k])
+        _KO = (words, inb, crs, eat)
+    if extra:
+        _KO[3](extra)
+    return _KO
+
+
+def _join_ko(lines, notes=None):
+    """해석 줄 → 글. 한글끼리 만나는 줄 경계만 판정하고 나머지는 띄운다."""
+    words, inb, crs, _eat = _ko_model()
+    out = ""
+    for t in lines:
+        t = t.strip()
+        if not t:
+            continue
+        if not out:
+            out = t
+            continue
+        a = out.split(" ")[-1]
+        b = t.split(" ")[0]
+        a0, b0 = _KO_STRIP.sub("", a), _KO_STRIP.sub("", b)
+        if (not a0 or not b0 or a != a0 + a[len(a0):] or not _HAN.match(a0[-1])
+                or not _HAN.match(b0[0]) or a[-1:] != a0[-1:]
+                or b[:1] != b0[:1]):
+            out += " " + t                # 문장부호가 끼면 띄운다
+            continue
+        joined = words.get(a0 + b0, 0)
+        sep = min(words.get(a0, 0), words.get(b0, 0))
+        if joined != sep:
+            glue = joined > sep
+            how = "어절"
+        else:
+            pair = a0[-1] + b0[0]
+            glue = inb.get(pair, 0) > crs.get(pair, 0)
+            how = "음절쌍 %d:%d" % (inb.get(pair, 0), crs.get(pair, 0))
+        if notes is not None and how != "어절":
+            notes.append("줄 경계 '%s|%s' → %s (%s)"
+                         % (a0, b0, "붙임" if glue else "띄움", how))
+        out += t if glue else " " + t
+    return out
+
+
 # ── 색 → 뜻 ─────────────────────────────────────────────────
 def _mark_of(color):
     """글자색 → blue/red/None. 무채색(먹·회색)은 None. 모르는 색은 'other'."""
@@ -405,7 +492,8 @@ def _analysis_page(page, cs, imgs, notes):
             continue
         runs = _runs_of(s["lines"])
         en = "".join(r["t"] for r in runs).strip()
-        out.append({"runs": runs, "en": _sq(en), "ko": _sq(" ".join(s["ko"]))})
+        out.append({"runs": runs, "en": _sq(en),
+                    "ko": _sq(_join_ko(s["ko"], notes))})
 
     # GRAMMAR POINT — 옆 단. 머리표(작은 색 글자 `*`)가 항목 머리다.
     grammar = []
@@ -418,7 +506,7 @@ def _analysis_page(page, cs, imgs, notes):
         for k, bl in enumerate(bullets):
             lo = bl["oy"] - 2.5
             hi = bullets[k + 1]["oy"] - 2.5 if k + 1 < len(bullets) else foot
-            txt = _join_lines([_text(l["cs"]) for l in tl if lo <= l["oy"] < hi])
+            txt = _join_ko([_text(l["cs"]) for l in tl if lo <= l["oy"] < hi])
             if txt:
                 grammar.append(txt)
     return {"head": head, "title_ko": title_ko, "sents": out,
