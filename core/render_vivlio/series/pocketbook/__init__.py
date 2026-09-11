@@ -1443,6 +1443,13 @@ class PocketbookSeries(Series):
         return os.path.join(cfg.build_dir, self.STUDIO_DATA)
 
     # ── ② 테마 ──
+    def print_defaults(self, cfg):
+        """인쇄 원고(CMYK) 기본값 — 학교마다 `print` 절을 적지 않아도 된다.
+
+        책이 팔레트를 덮어쓰면 그 색으로 풀어 준다(`theme.print_defaults`).
+        """
+        return ptheme.print_defaults(cfg.section("palette"))
+
     def gen_theme(self, cfg, log):
         css = ptheme.build_css(cfg.section("palette"),
                                cfg.section("metrics"),

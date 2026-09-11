@@ -279,6 +279,45 @@ def tab_ink(bg):
     return "#2A2A2A" if (0.299 * r + 0.587 * g + 0.114 * b) > 215 else "#FFFFFF"
 
 
+# ── 인쇄 원고(CMYK) 기본값 ──────────────────────────────────
+# 포켓북은 22개 학교가 **같은 팔레트**를 쓴다. 책마다 config 에 `print` 절을
+# 적게 두면 한 곳만 빠져도 그 학교는 RGB 로 나간다(사용자 지적: "rgb로 인쇄를
+# 뽑는 사람이 어딨어"). 계열 기본값으로 두고, 책 config 의 `print` 절이 있으면
+# 그 위에 칸 단위로 덮는다(`book._print_section`).
+# ⚠ hex 가 아니라 **팔레트 이름**으로 적는다 — 책이 팔레트를 덮어써도 따라간다.
+PRINT_GRAY = {                 # 무채색 → K 1도 (완성본 실측)
+    "ink": 1.0,                # 본문 먹 K100 — ICC 로 가면 C68M68Y65K74 리치블랙
+    "trans": 0.7,              # 해석 K70
+    "anno": 0.4,               # 구문분석 주석·번호 K40
+}
+PRINT_CMYK = {                 # 원본 IDML CMYK — 완성 CMYK 납품본(상일2)에서 같은 값 확인
+    "topic_chip": (66, 52, 0, 19), "navy": (66, 52, 0, 19),
+    "blue": (88, 66, 0, 23), "red": (15, 100, 100, 0),
+    "flow_brk": (100, 59, 0, 0), "flow_par": (75, 5, 52, 0),
+    "flow_arrow": (2, 48, 73, 0), "flow_sym2": (41, 59, 73, 52),
+    "sum_chip": (0, 32, 48, 9), "wave": (0, 85, 0, 0),
+    "voca_hit": (10, 85, 57, 0), "syn_ant": (0, 83, 39, 6),
+    "chip": (48, 33, 0, 0), "band_lesson": (32, 0, 4, 14),
+    "band_mock": (2, 3, 8, 6), "mt_a_bg": (11, 3, 0, 4),
+}
+
+
+def print_defaults(palette=None):
+    """계열 기본 `print` 절 — 팔레트 이름을 지금 팔레트의 hex 로 풀어 준다."""
+    P = dict(PALETTE, **(palette or {}))
+    gray = {"#000000": 1.0, "#ffffff": 0.0}
+    for k, v in PRINT_GRAY.items():
+        if P.get(k):
+            gray[str(P[k]).lower()] = v
+    cmyk = {}
+    for k, v in PRINT_CMYK.items():
+        h = str(P.get(k) or "").lower()
+        if h and h not in gray:
+            cmyk[h] = list(v)
+    return {"out": "_인쇄", "profile": "JapanColor2001Coated.icc",
+            "gray_map": gray, "cmyk_map": cmyk}
+
+
 def _mm(v):
     return "%gmm" % v
 

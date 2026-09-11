@@ -297,6 +297,33 @@ def render(cfg, log=print, **opts):
     return _series(cfg).render_only(cfg, log, **opts)
 
 
+def _print_section(cfg):
+    """`print` 절 = **계열 기본값** 위에 책 config 를 덮은 것.
+
+    ⚠ 책마다 적게 두면 한 곳만 빠져도 그 책은 RGB 로 나간다(포켓북 22곳).
+      계열이 `print_defaults(cfg)` 를 주면 그걸 바탕으로 깐다. 색 표
+      (`gray_map`·`cmyk_map`)는 통째로 갈지 않고 **칸 단위로** 덮는다.
+      책에서 `"print": {"off": true}` 로 끌 수 있다.
+    """
+    own = dict(cfg.section("print") or {})
+    if own.get("off"):
+        return {}
+    base = {}
+    f = getattr(_series(cfg), "print_defaults", None)
+    if f:
+        try:
+            base = dict(f(cfg) or {})
+        except Exception:           # 기본값이 깨져도 책 설정은 살린다
+            base = {}
+    out = dict(base)
+    for k, v in own.items():
+        if k in ("gray_map", "cmyk_map") and isinstance(v, dict):
+            out[k] = dict(base.get(k) or {}, **v)
+        else:
+            out[k] = v
+    return out
+
+
 def print_pdf(cfg, log=print, **opts):
     """RGB 조판본 → CMYK 인쇄 원고. 계열과 무관해 백엔드가 직접 한다.
 
@@ -306,7 +333,7 @@ def print_pdf(cfg, log=print, **opts):
       cmyk_map 화면색 → 고정 CMYK(이전 판과 색을 정확히 맞춰야 하는 것만)
     """
     from core.render_vivlio import prepress
-    pc = cfg.section("print") or {}
+    pc = _print_section(cfg)
     src = cfg.out_pdf(pc.get("suffix", cfg.section("verify").get("suffix", "")))
     if not os.path.exists(src):
         raise FileNotFoundError(f"조판본 없음: {src} — 먼저 build")
@@ -366,7 +393,7 @@ def verify(cfg, log=print, pdf=None, **opts):
 
 def _check_print_fresh(cfg, src, report):
     """인쇄 원고가 조판본보다 오래됐는가 — 조용히 뒤처지면 옛 색으로 납품된다."""
-    pc = cfg.section("print") or {}
+    pc = _print_section(cfg)
     if not pc:
         return
     out = cfg.out_pdf(pc.get("out", "_인쇄"))
@@ -474,7 +501,7 @@ def main(argv=None):
     if "all" in steps:
         # ⚠ 인쇄본을 빼면 조판본만 갱신돼 **인쇄 원고가 조용히 뒤처진다**
         #    (실제로 겪음). `print` 절이 있는 책은 all 에 포함한다.
-        steps = ["data", "build"] + (["print"] if cfg.get("print") else []) + ["verify"]
+        steps = ["data", "build"] + (["print"] if _print_section(cfg) else []) + ["verify"]
     if "watch" in steps:
         # 미리보기는 다른 단계와 섞지 않는다 — 끝나지 않는 명령이다.
         from core.render_vivlio import watch as watch_mod
