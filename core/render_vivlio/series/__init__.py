@@ -90,3 +90,11 @@ register("pocketbook", _pocketbook)
 register("final", _final)
 register("workbook", _workbook)
 register("hankkeut", _hankkeut)
+
+
+def _seseo():
+    from core.render_vivlio.series.seseo import SeseoSeries
+    return SeseoSeries()
+
+
+register("seseo", _seseo)
