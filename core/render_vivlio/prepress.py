@@ -470,6 +470,32 @@ def _restore_notes(doc, notes, log=None):
                        + ("" if got == len(notes) else f" — ⚠ 붙은 것 {got}개"))
 
 
+def add_output_intent(doc, icc_path):
+    """인쇄본에 **출력 의도**(쓴 ICC 프로파일)를 박는다.
+
+    ⚠ 표지 PDF 는 `Japan Color 2001 Coated` 출력 의도를 달고 있고 우리 인쇄본은
+      없었다. 그래서 **같은 CMYK 잉크**인데도 화면에서는 표지는 Japan Color 로,
+      인쇄본은 기본 변환으로 그려져 간지가 표지와 달라 보였다(광문2 표지 CMYK
+      세 개를 그대로 쓰고도 화면 차 12). 인쇄본은 실제로 이 프로파일로 변환한
+      것이므로 그 사실을 적어 둔다 — 인쇄소가 이미 받는 표지 파일과 같은 방식.
+    """
+    if not icc_path or not os.path.exists(icc_path):
+        return False
+    base = os.path.splitext(os.path.basename(icc_path))[0]
+    name = re.sub(r"(?<=[a-z])(?=[A-Z0-9])|(?<=[0-9])(?=[A-Z])", " ", base)
+    x = doc.get_new_xref()
+    doc.update_object(x, "<< /N 4 >>")
+    with open(icc_path, "rb") as f:
+        doc.update_stream(x, f.read())
+    oi = doc.get_new_xref()
+    doc.update_object(oi, "<< /Type /OutputIntent /S /GTS_PDFX "
+                          "/OutputConditionIdentifier (%s) /Info (%s) "
+                          "/RegistryName (http://www.color.org) "
+                          "/DestOutputProfile %d 0 R >>" % (name, name, x))
+    doc.xref_set_key(doc.pdf_catalog(), "OutputIntents", "[%d 0 R]" % oi)
+    return True
+
+
 def _hangul_bag(path):
     """PDF 글자층의 한글 음절 개수표 — 인쇄본이 글자를 바꿨는지 대조용."""
     import collections
@@ -559,6 +585,8 @@ def make(src, dst, bleed=3.0, profile=None, gray_map=None, log=None,
         doc = fitz.open(tmp_cmyk)
         _restore_notes(doc, notes, log)
         stamp_boxes(doc, bleed)
+        if add_output_intent(doc, icc):
+            log(f"[인쇄] 출력 의도 박음 — {os.path.basename(icc)}(표지와 같은 조건)")
         tmp = dst + ".tmp"
         doc.save(tmp, garbage=3, deflate=True)
         pages = doc.page_count
