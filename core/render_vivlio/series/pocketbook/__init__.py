@@ -1527,6 +1527,23 @@ class PocketbookSeries(Series):
             cfg.section("metrics")
             log("■ 「주제 :」 써 보는 칸 넣음(광문)")
 
+        # ⚠ 인쇄 규약: 총 면수 **4의 배수**, 마지막 면은 왼쪽. 모자라면 MEMO 면으로
+        #   채운다 — 빈 면은 안 된다(사용자 지시). 간지(앞 끼움·뒤 붙임)도 센다.
+        #   광문1 이 162면(4의 배수 아님)으로 나갔다.
+        if opt.get("cover") == "keep":
+            fs_ = cfg.finish_spec() or {}
+            extra = sum(1 for it in (fs_.get("inserts") or ())
+                        if it.get("mode") == "insert") \
+                + len(fs_.get("append") or ())
+        else:
+            extra = 2
+        body_n = prender.body_pages(rows, opt.get("folio_start", 2),
+                                    len(voca_pages or []))
+        pad = (-(body_n + extra)) % 4
+        if pad:
+            log("■ 총 %d면 → 4의 배수를 맞추려 MEMO %d면을 뒤에 더한다"
+                % (body_n + extra, pad))
+
         html = os.path.join(build_dir, "index.html")
         with open(html, "w", encoding="utf-8") as f:
             f.write(prender.build_html({
@@ -1539,6 +1556,7 @@ class PocketbookSeries(Series):
                 # 귀 인덱스 색은 띠 색에서 뽑는다 — 책이 띠를 갈아 끼우면
                 # 딱지도 따라가야 한다.
                 "palette": cfg.section("palette") or {},
+                "pad_pages": pad,
                 "voca": voca_pages,
                 "cover": None}))
         # ⚠ 자리표를 **파일로 내지 않으면** 지면에 표가 찍혀도 작업대는 그것을
@@ -1557,7 +1575,8 @@ class PocketbookSeries(Series):
         with open(os.path.join(build_dir, "_build.json"), "w",
                   encoding="utf-8") as f:
             json.dump({"voca_pages": len(voca_pages or []),
-                       "memtest_dropped": mt_dropped}, f)
+                       "memtest_dropped": mt_dropped,
+                       "pad_pages": pad}, f)
         out = cfg.out_pdf()
         cli.run_build(html, out, log=log)
         # 마감(표지 삽입) 전 상태를 남긴다 — 검수는 **우리가 조판한 면만** 본다.
@@ -1595,6 +1614,41 @@ class PocketbookSeries(Series):
         spec["append"] = [{"pdf": pdf, "page": 1}]
         return spec
 
+    COVER_DIR = "${STUDIO}/디자인/표지/포켓북"
+
+    @staticmethod
+    def _cover_ink(cfg, opt, school, log):
+        """간지 색 = **그 학교 표지**에서 읽은 색(`cover.ink_from_cover`).
+
+        ⚠ 예전엔 전 학교가 같은 민트였다 — 광문1·2 간지가 똑같이 나갔다(사용자
+          지적). 표지를 못 찾으면 **알린다**. 조용히 기본색으로 굽지 않는다.
+        ⚠ 폴더 이름은 macOS 에서 NFD 다 — 글자 그대로 붙여 찾으면 못 찾는다.
+        """
+        import unicodedata as _u
+        from core.render_vivlio.series.pocketbook import cover as pcover
+
+        def _one(p):
+            return (p[0] if p else "") if isinstance(p, (list, tuple)) else p
+        cand = []
+        if opt.get("cover_pdf"):
+            cand.append(_one(cfg.resolve(opt["cover_pdf"])))
+        d = _one(cfg.resolve(opt.get("cover_dir")
+                             or PocketbookSeries.COVER_DIR))
+        if d and os.path.isdir(d) and school:
+            want = _u.normalize("NFC", "%s_포켓북_표지.pdf" % school)
+            cand += [os.path.join(d, f) for f in os.listdir(d)
+                     if _u.normalize("NFC", f) == want]
+        for p in cand:
+            if p and os.path.exists(p):
+                ink = pcover.ink_from_cover(p)
+                if ink:
+                    log("■ 간지 색 = %s 표지 (바탕 %s · 글자 %s)"
+                        % (school, ink["bg_bottom"], ink["forest"]))
+                    return ink
+        log("■ [경고] %s 표지를 못 찾아 간지를 기본색으로 굽는다 — "
+            "options.cover_pdf 로 표지를 지정할 것" % (school or "?"))
+        return None
+
     def gen_cover(self, cfg, build_dir, log):
         """간지 두 면(첫 면·마지막 면)을 굽는다 → PDF 경로."""
         from core.render_vivlio.series.pocketbook import cover as pcover
@@ -1602,6 +1656,7 @@ class PocketbookSeries(Series):
         M = dict(ptheme.METRICS, **(cfg.section("metrics") or {}))
         school = opt.get("school") or ""
         term = pcover.term_text(opt.get("term") or self._term_of(cfg))
+        ink = self._cover_ink(cfg, opt, school, log)
         html = os.path.join(build_dir, "_cover.html")
         with open(html, "w", encoding="utf-8") as f:
             f.write('<!doctype html><html><head><meta charset="utf-8">'
@@ -1616,7 +1671,7 @@ class PocketbookSeries(Series):
                     '%s</style></head><body>%s%s</body></html>'
                     % (M["page_w"] + 2 * M["bleed"],
                        M["page_h"] + 2 * M["bleed"],
-                       pcover.css(M),
+                       pcover.css(M, ink),
                        pcover.first_page(school, term),
                        pcover.last_page(school, term)))
         out = os.path.join(build_dir, "_cover.pdf")
@@ -2184,7 +2239,7 @@ class PocketbookSeries(Series):
             nv = int(meta.get("voca_pages") or 0)
             fs0 = int(opt.get("folio_start", 2))
             gap = 1 if (nv and (fs0 + sum(per)) % 2) else 0
-            want = start + sum(per) + gap + nv
+            want = start + sum(per) + gap + nv + int(meta.get("pad_pages") or 0)
             if n_pages != want:
                 report.fail("G-P1 면 수 %d ≠ 예상 %d (지문 %d개%s)"
                             % (n_pages, want, len(rows),

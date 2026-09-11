@@ -1324,6 +1324,17 @@ def memo_page(M, folio, kind="", part=None, palette=None):
                side_tab(M, part, palette)))
 
 
+def body_pages(rows, folio_start=2, nv=0):
+    """본문 면 수(간지 빼고) — **G-P1 과 같은 셈**이다.
+
+    조판과 검수가 각자 세면 어긋난다(`page_plan` 머리 주석). 어휘는 왼쪽 면부터
+    시작하므로 앞이 홀수로 끝나면 빈 면이 한 장 낀다.
+    """
+    per = [lead + step for lead, step in page_plan(rows, folio_start)]
+    gap = 1 if (nv and (int(folio_start) + sum(per)) % 2) else 0
+    return sum(per) + gap + int(nv)
+
+
 def page_plan(rows, folio_start=2):
     """지문마다 **빈 면 몇 장 뒤에 몇 면을 쓰는지** → `[(빈 면, 면 수)]`.
 
@@ -1404,6 +1415,19 @@ def build_html(data, css_name="pocket.css"):
                                "l" if folio % 2 == 0 else "r",
                                _part_of(order, "어휘", "k-voca"), pal))
         folio += 1
+    # 인쇄 규약 — 총 면수 4의 배수. 모자란 면은 **MEMO 면**(빈 면 금지, 사용자
+    # 지시). 오른쪽 면이면 귀 딱지도 단다(마지막 파트).
+    pad = int(data.get("pad_pages") or 0)
+    if pad:
+        last = next((q for q in reversed(data["passages"])
+                     if q.get("kind") != "memtest"), {})
+        kind = "k-voca" if data.get("voca") else page_kind(last)
+        cat = "어휘" if data.get("voca") else (last.get("category") or "")
+        for _ in range(pad):
+            pages.append(memo_page(
+                M, folio, kind,
+                _part_of(order, cat, kind) if folio % 2 else None, pal))
+            folio += 1
     return ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
             '<title>%s</title><link rel="stylesheet" href="%s"></head><body>'
             '%s</body></html>'
