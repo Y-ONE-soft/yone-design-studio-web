@@ -296,3 +296,27 @@ def test_superscript_ref_and_bullet_glyph_trimmed():
         == "다음 글을 읽고 물음에 답하시오."
     assert txt(_strip_lead_bullet(_chs("\uf076 다음 글을 읽고"))) == "다음 글을 읽고"
     assert txt(_strip_lead_bullet(_chs("■ 어휘 정리"))) == "■ 어휘 정리"
+
+
+def test_wide_space_blank_is_kept():
+    """밑줄 없이 전각 공백으로 만든 빈칸(너른터 원고) — 칸이 사라지면 답 쓸 자리가 없다.
+
+    합성 PDF 로는 재현이 안 된다(글상자가 공백을 지운다) — 글자 자료로 못박는다.
+    """
+    from core.extract.pdf import _line_chars, _chars_to_para
+    mk = lambda c, x0, x1, sz=9.0: {"c": c, "x0": x0, "x1": x1, "base": 100.0,
+                                    "size": sz, "ul": False}
+    # 'to' 다음 40pt 빈 자리 → 빈칸, 그 뒤 '.' (원고 실측 모양)
+    span = {"base": 100.0, "size": 9.0, "spans": [{"chars": [
+        mk("t", 10, 15), mk("o", 15, 20), mk(".", 60, 63), mk("I", 63, 69)]}]}
+    chars = _line_chars(span)
+    blanks = [c for c in chars if c.get("blank")]
+    assert len(blanks) >= 4, [c["c"] for c in chars]
+    p = _chars_to_para(chars)
+    assert p["text"].startswith("to") and "  " in p["text"], repr(p["text"])
+    # 줄 끝이 빈칸이면 단락을 끊지 않는다
+    prev = {"text": "to    ", "chars": chars, "x0": 10, "x1": 63, "base": 100.0,
+            "size": 9.0, "_colkey": (0, "S")}
+    cur = {"text": "Instead of the park", "chars": [mk("I", 10, 16)],
+           "x0": 10, "x1": 100, "base": 113.0, "size": 9.0, "_colkey": (0, "S")}
+    assert _breaks(prev, cur, 300.0, 13.0) == (False, False)

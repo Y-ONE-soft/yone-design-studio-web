@@ -263,10 +263,19 @@ def _line_chars(ln):
             gap = c["x0"] - p["x1"]
             if (gap > 0.25 * max(c["size"], p["size"])
                     and not p["c"].isspace() and not c["c"].isspace()):
-                out.append({"c": " ", "x0": p["x1"], "x1": c["x0"],
-                            "base": c["base"], "size": c["size"],
-                            "ul": False, "syn": True})
-        out.append(dict(c))
+                # 넓은 간격은 **빈칸**이다 — 한 칸으로 줄이면 답 쓰는 자리가
+                # 사라진다(너른터 원고는 밑줄 없는 전각 공백 다발로 빈칸을 만든다).
+                sz = max(c["size"], p["size"])
+                n = 1 if gap < 1.5 * sz else min(30, int(round(gap / (0.3 * sz))))
+                for k in range(n):
+                    out.append({"c": " ", "x0": p["x1"], "x1": c["x0"],
+                                "base": c["base"], "size": c["size"],
+                                "ul": False, "syn": True,
+                                "blank": n > 1})
+        cc = dict(c)
+        if cc["c"].isspace() and (cc["x1"] - cc["x0"]) >= 0.5 * cc["size"]:
+            cc["blank"] = True          # 전각·전각급 공백 = 빈칸 조각
+        out.append(cc)
     return out
 
 
@@ -501,6 +510,8 @@ def _breaks(prev, cur, prev_edge, pitch, para_first="", para_lines=1,
     if (_RE_PARA_HEAD.match(ctxt) and _RE_TERMINAL.search(ptxt)
             and not re.match(r"\[[^\]]*/", ctxt)):     # '[a / b]' 는 지문 속 선택형
         return True, False
+    if prev["chars"] and prev["chars"][-1].get("blank"):
+        return False, False     # 앞줄이 빈칸으로 끝남 — 지문이 이어진다
     room = prev_edge - prev["x1"]
     if room > _first_word_width(cur) + 0.35 * prev["size"] + 1.0:
         return True, False
@@ -593,10 +604,14 @@ def _chars_to_para(chars):
     for c in chars[i:j]:
         t, ul = c["c"], bool(c["ul"])
         if t.isspace() and not ul:
-            if prev_space:
+            if c.get("blank"):
+                t = " "                 # 빈칸은 칸 수를 살린다(접지 않음)
+                prev_space = False
+            elif prev_space:
                 continue
-            t = " "
-            prev_space = True
+            else:
+                t = " "
+                prev_space = True
         else:
             prev_space = False
         if runs and runs[-1]["ul"] == ul:
