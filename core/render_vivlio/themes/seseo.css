@@ -52,6 +52,7 @@
   --dusk: #a4a8d5;       /* C35 M30         선·동그라미 */
   --dusk-mid: #c2c6e4;   /* C22 M18         상자 테두리 */
   --dusk-lt: #e3e3f2;    /* C9  M8          옅은 바탕 */
+  --dusk-xl: #eff0f8;    /* C5  M4          더 옅은 바탕 — 해설 카드(사용자 지시) */
   --dusk-dp: #5b579f;    /* C72 M72 K6      짙은 글자 · 쪽번호 */
   --plum: #824f8c;       /* C52 M78 Y10 K8  구문 */
   /* 노을(코랄·살구·장미) */
@@ -226,7 +227,7 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .tipn::before { background: var(--apricot); }
 .tipn .nt { color: var(--coral-dp); border-bottom: .6pt dashed var(--rose); }
 .tip { font: 400 9pt/14.5pt Noto; text-align: justify; }
-.expn { background: var(--dusk-lt); margin-top: 8mm; }
+.expn { background: var(--dusk-xl); margin-top: 8mm; }
 .expn::before { background: var(--rose); }
 .expn .nt { color: var(--dusk-dp); border-bottom: .6pt dashed var(--dusk); }
 .exp p { text-align: justify; line-height: 14pt; }
