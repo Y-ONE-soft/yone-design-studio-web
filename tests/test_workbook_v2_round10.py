@@ -31,12 +31,14 @@ def test_pua_print_table_entries_are_single_char():
     assert PUA_PRINT_TABLE, "매핑 테이블이 비어 있음"
     for cp, repl in PUA_PRINT_TABLE.items():
         assert isinstance(repl, str) and len(repl) == 1, hex(cp)
-    # 실증 코드 5종 등재 (근거 없는 확대 금지 — 추가는 문맥 실증 필수)
+    # 실증 코드 6종 등재 (근거 없는 확대 금지 — 추가는 문맥 실증 필수)
     assert set(PUA_PRINT_TABLE) == {0xF0852, 0xF0853, 0xF0036, 0xF003B,
-                                    0xF0EA}
+                                    0xF0EA, 0xF080F}
     assert PUA_PRINT_TABLE[0xF0852] == "“"
     assert PUA_PRINT_TABLE[0xF0853] == "”"
     assert PUA_PRINT_TABLE[0xF003B] == "⇩"
+    # 범위 붙임표 (아잉카 원고 "Ages 7□12" — 같은 회차 업체 원고는 "7-12")
+    assert PUA_PRINT_TABLE[0xF080F] == "-"
 
 
 def test_apply_pua_print_map_preserves_runs_and_source():
