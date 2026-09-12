@@ -422,7 +422,10 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .d2 .band   { background: url(assets/grad_d2_L.png) no-repeat 0 0 / 216mm 190mm; }
 .d2.r .band { background: url(assets/grad_d2_R.png) no-repeat 0 0 / 216mm 190mm; }
 .div .st { left: 0; top: 0; width: 216mm; height: 190mm; object-fit: cover; opacity: .75; }
-.div.r .st, .toc.art:not(.left) .cl { transform: scaleX(-1); }
+/* 오른쪽 면은 좌우 반전 — 같은 그림이 펼침면에 그대로 반복되지 않게.
+   별은 6% 키워 반전해, 접히는 자리의 별이 좌우로 겹쳐 보이지 않게 한다(검수 지적). */
+.div.r .st { transform: scaleX(-1) scale(1.06); }
+.toc.art:not(.left) .cl { transform: scaleX(-1); }
 .div-mark { position: absolute; left: 26mm; top: 62mm; color: #fff; }
 .dv-1 { display: block; font: 500 15pt/1 Elice; letter-spacing: .16em; opacity: .95; }
 .dv-2 { display: block; margin-top: 5mm; font: 400 27pt/1 Ghana; letter-spacing: .08em; }
