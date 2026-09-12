@@ -92,10 +92,20 @@ try {
                     var cells = [];
                     var chs = pObj.characters;
                     cells.push(String(Math.round(chs[0].horizontalOffset * 100) / 100));
-                    for (var cxi = 0; cxi < txt.length - 1 && cxi < 150; cxi++) {
+                    // 이모지(별면 문자)는 JS 문자열에서 서로게이트 **2**
+                    // 코드유닛이지만 InDesign characters 에서는 **1글자**다
+                    // (실측 "A🌧B": JS 4 / ID 3). 코드유닛 인덱스를 그대로
+                    // chs[] 에 쓰면 이모지 수만큼 어긋난 글자를 재어 엉뚱한
+                    // 열 편차가 잡힌다 (2026-09-12 이모지 선지 critical 실증).
+                    var ci = 0;               // InDesign 글자 인덱스
+                    for (var cxi = 0; cxi < txt.length - 1 && ci < 150; ) {
                         if (txt.charAt(cxi) == "\t") {
-                            cells.push(String(Math.round(chs[cxi + 1].horizontalOffset * 100) / 100));
+                            cells.push(String(Math.round(chs[ci + 1].horizontalOffset * 100) / 100));
                         }
+                        var _cc = txt.charCodeAt(cxi);
+                        cxi += (_cc >= 0xD800 && _cc <= 0xDBFF
+                                && cxi + 1 < txt.length) ? 2 : 1;
+                        ci += 1;
                     }
                     cxj = ",\"cx\":[" + cells.join(",") + "]";
                 } catch (e) { cxj = ""; }
