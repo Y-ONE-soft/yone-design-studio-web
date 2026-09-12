@@ -369,10 +369,16 @@ def _drop_margins(pages):
     seen = {}
     for pi, pg in enumerate(pages):
         H = pg["h"]
+        top_base = min((l["base"] for l in pg["lines"]), default=0.0)
         for ln in pg["lines"]:
-            # 띠는 좁게 — 이 원고는 머리말이 3.9%, 발문이 7.4% 다. 넓게 잡고
-            # 기준을 낮추면 여러 쪽에 되풀이되는 **발문**이 지워진다.
-            zone = ("top" if ln["base"] < 0.06 * H
+            # 띠를 숫자 하나로 못 박을 수 없다 — 머리말 기준선이 원고마다
+            # 3.9%(너른터)·6.5%(아잉카)고, 발문은 7.4% 에 온다. 넓게 잡으면
+            # 되풀이되는 **발문**이 지워지고, 좁게 잡으면 머리말이 남는다.
+            # 그래서 '위 7% 안' 또는 '그 쪽에서 가장 위에 있는 줄(12% 안)'을
+            # 후보로 본다 — 머리말이 있는 쪽에서 발문은 가장 위가 아니다.
+            zone = ("top" if (ln["base"] < 0.07 * H
+                              or (ln["base"] <= top_base + 2
+                                  and ln["base"] < 0.12 * H))
                     else "bot" if ln["base"] > 0.94 * H else None)
             ln["_zone"] = zone
             if zone and ln["text"].strip():
