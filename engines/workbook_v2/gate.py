@@ -2459,9 +2459,28 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                     break
             return name
 
+        # 문제 범위는 **지문 묶음(유닛) 경계**에서 자른다 — 지문번호 단락
+        # ({YYMMQQ} → 인쇄는 6자리 숫자)이 다음 유닛의 시작이다. 안 자르면
+        # 지문 마지막 문제가 '다음 지문 첫 면'까지 뻗어, 지문 묶음이 새 왼쪽
+        # 면에서 시작하는 것만으로 스프레드 초과로 오판된다 (2026-09-12
+        # 실증: 경고 23건 전부 이 오판 — 실행기도 같은 이유로 멀쩡한 문제를
+        # 다음 장으로 밀어 단 하나를 비웠다).
+        unit_starts = [i for i, p in enumerate(ps)
+                       if re.fullmatch(r"\{?\d{6}\}?",
+                                       (p.get("t") or "").strip())]
+
+        def _unit_end(si, ei, _us=unit_starts):
+            for u in _us:
+                if u > si:
+                    return min(ei, u - 1)
+            return ei
+
         for bi, si in enumerate(bounds):
             ei = (bounds[bi + 1] - 1 if bi + 1 < len(bounds)
                   else len(ps) - 1)
+            ei = _unit_end(si, ei)
+            if ei < si:
+                continue
             sp = _pg_of(offs[si])
             ep = _pg_of(offs[ei] + max(0, len(ps[ei].get("t", "")) - 1))
             if sp is None or ep is None:
