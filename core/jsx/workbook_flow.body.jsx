@@ -1739,12 +1739,21 @@ function enforceQuestionKeep(doc, flowStories, op) {
         var iter = 0;
         var noFix = {};
         var limit = starts.length * 2 + 10;
-        while (iter < limit) {
+        // W88: 한 건 밀 때마다 시작점 0번부터 전부 다시 검사하던 것을 **민
+        // 지점부터 이어서** 검사하도록 바꾼다. 밀기는 그 단락과 뒤쪽만 아래로
+        // 옮기므로 앞선 시작점의 프레임/페이지 기하는 변하지 않는다(끝쪽에
+        // 붙는 확장 페이지도 앞 페이지의 documentOffset·좌우를 안 바꾼다) —
+        // 앞을 다시 볼 이유가 없다. 실측 f7960153: 검사 1건 ≈ 50ms, 512개
+        // 시작점 × 밀기 74건 → 이 단계에만 18분. 재개식은 총 1패스.
+        var k = 0;
+        while (iter < limit && k < starts.length) {
             iter++;
             try { story.recompose(); } catch (e0) {}
             var paras = story.paragraphs.everyItem().getElements();
             var hit = -1;
-            for (var k = 0; k < starts.length; k++) {
+            // k 는 라운드를 넘어 이어진다(초기화하지 않는다). 민 뒤에는 같은
+            // k 를 한 번 다시 보고(밀기로 해소됐는지 확인) 다음으로 넘어간다.
+            for (; k < starts.length; k++) {
                 if ((k + 1) % 40 === 0) {
                     wlog("문제단위킵 검사 진행: " + step + " "
                          + (k + 1) + "/" + starts.length);
@@ -2036,12 +2045,20 @@ function enforceStemKeep(doc, flowStories, op) {
         var iter = 0;
         var noFix = {};
         var limit = starts.length + 10;
-        while (iter < limit) {
+        // W88: 한 건 밀 때마다 시작점 0번부터 전부 다시 검사하던 것을 **민
+        // 지점부터 이어서** 검사하도록 바꾼다. 밀기는 그 단락과 뒤쪽만 아래로
+        // 옮기므로 앞선 시작점의 프레임/페이지 기하는 변하지 않는다(끝쪽에
+        // 붙는 확장 페이지도 앞 페이지의 documentOffset·좌우를 안 바꾼다) —
+        // 앞을 다시 볼 이유가 없다. 실측 f7960153: 검사 1건 ≈ 50ms, 512개
+        // 시작점 × 밀기 74건 → 이 단계에만 18분. 재개식은 총 1패스.
+        // (여기선 민 단락에 noFix 를 걸어 두므로 같은 k 재방문은 즉시 스킵된다.)
+        var k = 0;
+        while (iter < limit && k < starts.length) {
             iter++;
             try { story.recompose(); } catch (e0) {}
             var paras = story.paragraphs.everyItem().getElements();
             var hit = -1;
-            for (var k = 0; k < starts.length; k++) {
+            for (; k < starts.length; k++) {
                 if ((k + 1) % 40 === 0) {
                     wlog("발문고아 검사 진행: " + step + " " + (k + 1)
                          + "/" + starts.length);
