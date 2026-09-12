@@ -2467,6 +2467,41 @@ function dropStandalonePrompts(doc, flowStories) {
 // 탭스톱을 부여 — 손 결과와 같은 기하를 결정적으로 재현한다. 헤더 행은
 // 각 열 중앙에 라벨이 오도록 자체 스톱/들여쓰기 부여. 그리드로 프레임을
 // 넘치면 비그리드 최소 간격으로 폴백, 그래도 넘치면 [경고].
+// ── 이모지 인쇄 (plan.emoji_font — 사용자 지시 2026-09-12) ─────────────────
+// 내지 본문 폰트에 이모지 글리프가 없어 □ 로 찍히던 선지를 원고 그대로
+// 인쇄한다. 글자는 그대로 두고 **그 글자에만** 이모지 폰트를 물린다
+// (변형 선택자는 플랜이 이미 뗐다). 열 정렬 전에 돌려야 폭이 맞는다.
+function applyEmojiFont(doc, op) {
+    if (!op || !op.chars || !op.chars.length) { return; }
+    var font = null;
+    try {
+        font = app.fonts.itemByName(op.font);
+        font.name;                    // 강제 평가 (없으면 예외)
+    } catch (e) { font = null; }
+    if (!font) {
+        wlog("[경고] 이모지 폰트 없음 — " + op.font
+             + " (이모지가 □ 로 인쇄될 수 있음)");
+        return;
+    }
+    var n = 0;
+    app.findTextPreferences = NothingEnum.NOTHING;
+    app.changeTextPreferences = NothingEnum.NOTHING;
+    for (var i = 0; i < op.chars.length; i++) {
+        try {
+            app.findTextPreferences.findWhat = op.chars[i];
+            var found = doc.findText();
+            for (var k = 0; k < found.length; k++) {
+                try { found[k].appliedFont = font; n++; } catch (e2) {}
+            }
+        } catch (e3) {}
+    }
+    app.findTextPreferences = NothingEnum.NOTHING;
+    app.changeTextPreferences = NothingEnum.NOTHING;
+    wlog("이모지 폰트 적용: " + n + "곳 / 글자 " + op.chars.length
+         + "종 (" + op.font + ")");
+}
+
+
 function _applyChoiceTabsOnce(doc, flowStories, op) {
     try { doc.recompose(); } catch (eRecomposeAll) {}
     var grid = op.grid || 12.7;
@@ -3560,6 +3595,11 @@ try {
         app.doScript(function () { fixBlankOverflow(doc, plan.blank_fit); },
                      ScriptLanguage.JAVASCRIPT, undefined,
                      UndoModes.ENTIRE_SCRIPT, "wb_v2 blank_fit");
+    }
+    if (plan.emoji_font) {
+        app.doScript(function () { applyEmojiFont(doc, plan.emoji_font); },
+                     ScriptLanguage.JAVASCRIPT, undefined,
+                     UndoModes.ENTIRE_SCRIPT, "wb_v2 emoji_font");
     }
     if (plan.choice_tabs) {
         // W40 결함 1 — 다열 선지 열 정렬 (탭스톱 자동 적용)

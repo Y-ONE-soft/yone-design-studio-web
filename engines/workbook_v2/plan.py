@@ -869,8 +869,18 @@ def build_step3(step_data, workbook_type=""):
     codes = []                                   # 유닛별 지문번호 코드
     warnings = []
     lbl_series = _s3_label_series(step_data)     # W66 K5 — 계열 골격
-    for group in ("normal", "short"):
-        for item in step_data.get(group, []) or []:
+    # 지문 묶음은 **문항번호 순서**로 (사용자 지시 2026-09-12 "18번 문제
+    # 앞으로 옮겨"). 짤지문(18·19·25~28·43~45)을 뒤에 몰아 넣으면 책이
+    # 20번부터 시작해 회차 순서와 어긋난다. 지문번호 코드(YYMMQQ)가 전부
+    # 있을 때만 정렬하고, 없으면(통짜 textbook 항목 등) 원래 순서를 지킨다.
+    _all_items = [it for g in ("normal", "short")
+                  for it in (step_data.get(g) or [])]
+    if len(_all_items) > 1 and all(
+            re.fullmatch(r"\d{6}", str(it.get("code") or ""))
+            for it in _all_items):
+        _all_items.sort(key=lambda it: int(str(it["code"])[-2:]))
+    for group in ("_sorted",):
+        for item in _all_items:
             arrow_pending = False
             in_cond = False          # W38: <조건> 블록 열림 상태
             cond_no = 1              # 다음 조건 항목 번호 기대값
@@ -4645,6 +4655,56 @@ def _multi_choice_grid_rows(rows):
             out |= set(run)
         run = []
     return out
+
+
+# ── 이모지 인쇄 (사용자 지시 2026-09-12 "이모지 선지 옮겨와") ───────────────
+# 원고 선지에 날씨 이모지가 들어 있는데(26년 9월 고1 28번 "🌧️ → ⛈️ → 🌪️")
+# 내지 본문 폰트(Noto Sans CJK KR)에 글리프가 없어 □ 로 찍히고, 폭이 어긋나
+# 다열 선지 열 정렬까지 critical 이 됐다. 글자를 바꾸지 않고 **그 글자에만**
+# 이모지 폰트를 물린다. 변형 선택자(U+FE0F)는 이모지 폰트에도 글리프가 없어
+# 그 자체가 □ 로 찍히므로 인쇄 전에 뗀다 — 표시 힌트라 내용이 아니다
+# (InDesign 실측: Noto Color Emoji SVG 는 색 이모지를 벡터로 심는다).
+_RE_VAR_SEL = re.compile("[\ufe0e\ufe0f]")
+EMOJI_FONT = "Noto Color Emoji SVG"
+
+
+def _is_astral_emoji(ch):
+    return 0x1F000 <= ord(ch) <= 0x1FAFF
+
+
+def emoji_font_op(plan, font=EMOJI_FONT):
+    """유닛 단락에서 변형 선택자를 떼고, 이모지 글자 목록을 계약으로 낸다.
+
+    이모지 판정은 표기가 아니라 구조로 — 별면(U+1F000~1FAFF) 문자이거나
+    **변형 선택자가 뒤에 붙은** 문자(원고가 '이모지로 보이라'고 지정한 것).
+    ✓·★ 처럼 선택자 없이 쓰는 기호는 건드리지 않는다.
+
+    반환: {"font": ..., "chars": [...]} 또는 None (in-place 로 선택자 제거).
+    """
+    chars = set()
+    for fl in plan.get("flows", []):
+        for u in fl.get("units", []):
+            for p in unit_paras(u):
+                t = p.get("t") or ""
+                if not t:
+                    continue
+                for i, ch in enumerate(t):
+                    if _RE_VAR_SEL.match(ch):
+                        prev = t[i - 1] if i else ""
+                        if prev and not prev.isspace():
+                            chars.add(prev)
+                    elif _is_astral_emoji(ch):
+                        chars.add(ch)
+                if _RE_VAR_SEL.search(t):
+                    p["t"] = _RE_VAR_SEL.sub("", t)
+                    if p.get("runs"):
+                        p["runs"] = [
+                            dict(r, t=_RE_VAR_SEL.sub("", r["t"]))
+                            if isinstance(r.get("t"), str) else r
+                            for r in p["runs"]]
+    if not chars:
+        return None
+    return {"font": font, "chars": sorted(chars)}
 
 
 def normalize_choice_tabs(plan, steps=("step3",)):

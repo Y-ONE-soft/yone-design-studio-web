@@ -381,7 +381,8 @@ class WorkbookV2Engine(BaseEngine):
                                               ensure_step3_kinds,
                                               question_keep_op,
                                               choice_tabs_op,
-                                              normalize_choice_tabs)
+                                              normalize_choice_tabs,
+                                              emoji_font_op)
 
         cfg = self._load_cfg()
         grade = self._read_meta(job_dir, "grade", 1)
@@ -440,6 +441,11 @@ class WorkbookV2Engine(BaseEngine):
         nz = normalize_choice_tabs(plan)
         if nz:
             log(f"[v2] 선지탭정규화: {nz}단락 (연속탭/선행공백 접기)")
+        ef = emoji_font_op(plan)
+        if ef:
+            plan["emoji_font"] = ef
+            log("[v2] 이모지 인쇄: " + "".join(ef["chars"])
+                + f" ({len(ef['chars'])}자) → 폰트 " + ef["font"])
         ct = choice_tabs_op(plan)
         if ct:
             plan["choice_tabs"] = ct
