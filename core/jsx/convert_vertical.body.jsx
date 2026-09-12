@@ -1327,6 +1327,11 @@ try {
                 wlog("STEP4.5 라운드 " + round + ": 스레드 " + todo.length + "개");
                 var progress = 0;
                 for (var ii = 0; ii < todo.length; ii++) {
+                    // 진행 로그 필수 — 스레드 하나가 수 분씩 걸린다. 로그가
+                    // 30분 무갱신이면 러너가 스톨로 판정해 후처리가 통째로
+                    // 빠진다(STEP4.4 주석 참조).
+                    wlog("STEP4.5: 스레드 " + (ii + 1) + "/" + todo.length +
+                         " 분리 (라운드 " + round + ")");
                     var res = _splitStoryById(todo[ii]);
                     if (res === "ok") { _splitCount++; progress++; }
                     else if (res === "skip") { _skipIds[todo[ii]] = true; }
