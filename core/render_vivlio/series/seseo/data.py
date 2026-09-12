@@ -741,7 +741,8 @@ def build(cfg, log=print):
     for s in p2.get('sets', []):
         for q in s['qs']:
             for b in q['blocks']:
-                if (b['t'] != 'grammar'          # 어법 밑줄은 해설에서 따로 되짚는다
+                # 어법(해설에서 따로 되짚는다)·보기 상자(통째로 밑줄이라 뜻 없음)는 뺀다
+                if (b['t'] not in ('grammar', 'bogi')
                         and isinstance(b.get('r'), str) and b['r'] in ul_of):
                     b['r'] = _mark_spans(b['r'], ul_of[b['r']])
 
