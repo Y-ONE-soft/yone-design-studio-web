@@ -85,10 +85,15 @@ def read_paras(path):
             continue
         # 밑줄 친 꼬리(제시어 목록)를 떼어 `<보기>` 로 돌린다 — 광문2 원고
         k = len(segs)
+        # 끝의 마침표·쉼표는 밑줄 밖에 있다 — 먼저 건너뛴 뒤 밑줄 런을 되짚는다
+        while k and not segs[k - 1][3] and segs[k - 1][0].strip() in ('', '.', ',', '·'):
+            k -= 1
+        end = k
         while k and segs[k - 1][3]:
             k -= 1
         tail = ''.join(x[0] for x in segs[k:]).strip()
-        if k and tail.count(' / ') >= 2 and len(''.join(x[0] for x in segs[:k]).strip()) > 40:
+        if (k and k < end and tail.count(' / ') >= 2
+                and len(''.join(x[0] for x in segs[:k]).strip()) > 40):
             for part in (segs[:k], [('<보기>', False, '', False)], segs[k:]):
                 _emit(out, part)
             continue
