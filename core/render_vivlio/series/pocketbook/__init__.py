@@ -1391,6 +1391,14 @@ class PocketbookSeries(Series):
                         log("  ⚠ %s — 핵심기출 사본과 글자가 다르다: %s"
                             % (g.get("label"),
                                "; ".join(g["source"]["notes"][-2:])))
+                # 분석본 오른쪽 면(NOTE 상자·동반의어 칸)은 **있는 판도 있고
+                # 빈 판도 있다**. 들어왔으면 그게 정본이라 우리가 다시 쓰지
+                # 않는다 — 몇 지문이 들어왔는지 남겨 둔다.
+                fl = sum(1 for g in got if g.get("flownote"))
+                sy = sum(1 for g in got if g.get("synonyms"))
+                if fl or sy:
+                    log("  오른쪽 면도 읽었다 — 플로우노트 %d지문 · 동반의어 %d지문"
+                        % (fl, sy))
             else:
                 got = analysis.read_book(f)
             base = os.path.basename(f)

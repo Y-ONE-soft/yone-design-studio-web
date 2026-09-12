@@ -1,0 +1,89 @@
+@meta
+title: 모의고사
+source: 고1 25년 9월 21번
+subject: Importance of opening routines in class
+layout: base
+
+@sent
+#1
+en: Many atoms in your body are nearly as old as the universe itself.
+ko: 당신의 몸에 있는 많은 원자는 거의 우주 자체만큼이나 오래되었다.
+
+#2
+en: When you breathe, for example, only some of the atoms that you inhale are exhaled in your next breath.
+ko: 당신이 숨을 쉴 때, 예를 들어, 당신이 들이마신 원자 중 일부만이 당신의 다음 숨에 내뱉어진다.
+
+#3
+en: The remaining atoms are taken into your body to become part of you, and they later leave your body by various means.
+ko: 남아있는 원자는 당신의 몸으로 들어가 당신의 일부가 되고, 이후 그것들은 다양한 방법으로 당신의 몸을 떠난다.
+
+#4
+en: You don't "own" the atoms that make up your body; you borrow them.
+ko: 당신은 당신의 몸을 구성하는 원자를 '소유'하지 않는다. 당신은 그것들을 빌린다.
+
+#5
+en: We all share from the same atom pool because atoms forever travel around, within, and among us.
+ko: 원자는 영원히 우리 주변과 내부, 그리고 우리 사이를 이동하기 때문에 우린 모두는 같은 원자풀로부터 공유한다.
+
+#6
+en: Atoms cycle from person to person as we breathe and as our sweat is evaporated.
+ko: 원자는 우리가 숨을 쉬고 땀이 증발하면서 사람에서 사람으로 순환한다.
+
+#7
+en: We recycle atoms on a grand scale.
+ko: 우리는 거대한 규모로 원자를 재순환시킨다.
+
+#8
+en: The origin of the lightest atoms goes back to the origin of the universe, and most heavier atoms are older than the Sun and Earth.
+ko: 가장 가벼운 원자의 기원은 우주의 기원으로 거슬러 올라가며, 대부분의 더 무거운 원자는 태양과 지구보다 오래되었다.
+
+#9
+en: There are atoms in your body that have existed since the first moments of time, recycling throughout the universe among limitless forms, both nonliving and living.
+ko: 태초부터 존재해 온 원자가 당신의 몸에 있으며 제한 없는 형태, 즉 비생물체와 생물체 가운데 우주 전체에 걸쳐 재순환한다.
+
+@topic
+en: Importance of opening routines in class
+sum: Teachers should use the first few minutes of class to set the right tone and help students mentally shift toward
+
+@key
+q: ë¤ì ê¸ì ì ëª©ì¼ë¡ ê°ì¥ ì ì í ê²ì?
+p: Many atoms in your body are nearly as old as the universe itself.
+p: When you breathe, for example, only some of the atoms that you inhale are exhaled in your next breath.
+p: The remaining atoms are taken into your body to become part of you, and they later leave your body by various means.
+p: You don't "own" the atoms that make up your body; you borrow them.
+p: We all share from the same atom pool because atoms forever travel around, within, and among us.
+p: Atoms cycle from person to person as we breathe and as our sweat is evaporated.
+p: We recycle atoms on a grand scale.
+p: The origin of the lightest atoms goes back to the origin of the universe, and most heavier atoms are older than the Sun and Earth.
+p: There are atoms in your body that have existed since the first moments of time, recycling throughout the universe among limitless forms, both nonliving and living.
+c: Be the Teacher Ahead of the Rest | Open Your Class with a Relaxing Activity | The Power of the First Ten Minutes in Class | Why Daily Routines Are Important for Students | Focus on Your Students’ Learning Needs in Class
+
+@voca
+inefficient = 비효율적인 | 형 | efficient | wasteful
+the rest of ~ = ~의 나머지
+overlook = 간과하다 | 동 | notice | ignore
+be prepared for ~ = ~에 대한 준비가 되다
+potential = 잠재적인 | 형 | actual | possible
+routine = 루틴
+pressing = 긴급한 | 형 | trivial | urgent
+brief = 짧은
+demand = 요구, 부담
+mental = 정신적인
+disappear = 사라지다 | 동 | appear | vanish
+emotional = 감정적인
+It's no wonder (that)+완전한 절 = ~은 놀랄 일이 아니다, ~은 당연하다
+transition = 변화 | 명 |  | shift
+reason = 이유
+last = 지난
+on time = 제시간에
+subject = 과목
+get ~ off to a start = 출발을 하게 하다
+focus on ~ = ~에 집중하다
+choose = 선택하다
+material = 자료
+waste = 낭비하다
+in summary = 요약하자면, 요컨대
+set = 설정하다
+establish = 설정하다, 확립하다 | 동 | abolish | found
+tone = 분위기
+effective = 효과적인 | 형 | useless | potent

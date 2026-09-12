@@ -715,7 +715,7 @@ def _summary_page(page, cs):
 
     if head is not None:
         got["voca"], got["syn"] = _voca_table(lines, head)
-    got["flow"] = _flow_note(cs, foot)
+    got["flow"] = _flow_note(page, cs, foot)
     return got
 
 
@@ -837,10 +837,12 @@ def _voca_table(lines, head):
             if len(_HAN.findall(w)) > len(_HAN.findall(ko)) and ko:
                 w, ko = ko, w
             voca.append({"w": w, "ko": ko})
-            if "syn" in s or "ant" in s:
-                syn.append({"w": w, "ko": ko,
-                            "syn": _syn_list(cell(s, "syn")),
-                            "ant": _syn_list(cell(s, "ant"))})
+            sy, an = _syn_list(cell(s, "syn")), _syn_list(cell(s, "ant"))
+            # 유의어·반의어가 **실제로 적힌 줄만** 동반의어 카드다. 칸이 있다고
+            # 다 카드로 세면 빈 카드가 한 면을 메운다 — 완성본 실측도
+            # 지문당 8~9장이고 어휘표는 27낱말이다(`rightpage.py` 규격).
+            if sy or an:
+                syn.append({"w": w, "ko": ko, "syn": sy, "ant": an})
     return voca, syn
 
 
@@ -855,31 +857,72 @@ _RE_BLOCKLAB = re.compile(
 _ARROWS = ("›", ">", "→", "»", "▶", "⟩")
 
 
-def _flow_note(cs, foot):
+def _label_bits(lines):
+    """줄 → 이름표 후보 조각.
+
+    ⚠ 줄로 잡으면 안 된다 — 두 단으로 앉은 `핵심기출문제`(x88)와 `FLOW NOTE`
+    (x354)는 **기준선이 같아** 한 줄로 묶이고, 그 줄 글자는
+    `핵심기출문제 FLOW NOTE` 가 되어 어느 이름표에도 안 걸린다(실측).
+    """
+    out = []
+    for ln in lines:
+        segs, prev = [], None
+        for c in ln["cs"]:
+            if prev is None or c["x0"] - prev["x1"] > 3.0 * c["size"]:
+                segs.append([])
+            segs[-1].append(c)
+            prev = c
+        for sg in segs:
+            out.append({"oy": ln["oy"], "x0": sg[0]["x0"], "x1": sg[-1]["x1"],
+                        "t": _norm(_text(sg))})
+    return out
+
+
+def _flow_box(page, lab):
+    """NOTE 이름표를 품는 **그려진 네모** — 그게 상자다.
+
+    단 가운데로 어림하면 옆 단 글이 딸려 온다(명일2 `[정답] : ②` 가 x283 인데
+    이름표는 x360 이다). 네모가 없는 판(테두리·바탕이 없는 상자)만 이름표에서
+    어림한다.
+    """
+    best = None
+    for dr in page.get_drawings():
+        r = dr["rect"]
+        if r.width < 40 or r.height < 20:
+            continue
+        if not (lab["oy"] - 2 <= r.y0 <= lab["oy"] + 60):
+            continue
+        if not (r.x0 - 2 <= lab["x0"] and lab["x1"] <= r.x1 + 2):
+            continue
+        if best is None or r.get_area() < best.get_area():
+            best = r
+    return best
+
+
+def _flow_note(page, cs, foot):
     """오른쪽 면 NOTE 상자의 글 → 줄 목록(빈 상자면 []).
 
-    상자 경계는 **이름표로** 잡는다. 같은 높이에 다른 이름표가 있으면 두 단이니
-    그 단 앞까지가 오른쪽 끝이고(`핵심기출문제 | NOTE`), 아래 첫 이름표가
-    바닥이다(기출 포인트·VOCA). 좌표를 박아 두면 디자인이 바뀌는 순간
-    기출 상자 글을 플로우노트로 읽는다.
+    분석본마다 **빈 상자도 있고 글이 든 상자도 있다.** 빈 상자는 학생이 쓰는
+    자리(추가 읽기 자료가 그랬다)고, 글이 들어 있으면 그게 포켓북 플로우노트의
+    정본이다 — 우리가 다시 쓰지 않고 그걸 가져온다.
     """
-    lines = _lines(cs)
-    labs = [(ln, _norm(_text(ln["cs"]))) for ln in lines]
-    lab = next((ln for ln, t in labs if _RE_FLOWLAB.match(t)), None)
+    bits = _label_bits(_lines(cs))
+    lab = next((b for b in bits if _RE_FLOWLAB.match(b["t"])), None)
     if lab is None:
         return []
-    others = [ln for ln, t in labs if ln is not lab and _RE_BLOCKLAB.match(t)]
-    x0, x1, bot = lab["x0"] - 4, max(ln["x1"] for ln in lines) + 2, foot
-    for b in others:
-        if abs(b["oy"] - lab["oy"]) <= 8 and b["x0"] > lab["x0"] + 40:
-            x1 = min(x1, b["x0"] - 4)
-    for b in others:
-        if lab["oy"] + 8 < b["oy"] < bot and b["x0"] < x1:
-            bot = b["oy"]
-    box = [ln for ln in _lines([c for c in cs if c["color"] != _WHITE])
-           if lab["oy"] + 1 < ln["oy"] < bot - 1 and x0 <= ln["x0"] < x1]
+    box = _flow_box(page, lab)
+    if box is not None:
+        x0, x1, top, bot = box.x0 + 1, box.x1 + 1, box.y0 - 1, box.y1 + 1
+    else:
+        x0, x1, top, bot = lab["x0"] - 30, page.rect.width, lab["oy"] + 1, foot
+        for b in bits:
+            if _RE_BLOCKLAB.match(b["t"]) and lab["oy"] + 8 < b["oy"] < bot \
+                    and b["x0"] < x1:
+                bot = b["oy"]
+    ink = [c for c in cs if c["color"] != _WHITE and c["oy"] > lab["oy"] + 1
+           and x0 <= c["x0"] and c["x1"] <= x1 and top < c["oy"] < bot]
     out, base = [], None
-    for ln in box:
+    for ln in _lines(ink):
         # 가로 흐름 판(강동 2024)은 상자 넷이 나란히 놓이고 사이에 화살표가 있다.
         # 한 줄에 큰 틈으로 떨어진 덩이가 둘 이상이면 `→` 로 이어 한 줄로 읽는다.
         segs, prev = [], None
@@ -888,11 +931,12 @@ def _flow_note(cs, foot):
                 segs.append([])
             segs[-1].append(c)
             prev = c
-        parts = [t for t in (_text(s) for s in segs) if t and t not in _ARROWS]
+        parts = [t for t in (_text(sg) for sg in segs)
+                 if t and t not in _ARROWS]
         t = " → ".join(parts)
         if not t:
             continue
-        # 접힌 줄 — 첫 줄보다 눈에 띄게 들어간 줄은 앞 줄의 이어짐이다
+        # 접힌 줄 — 앞 줄보다 눈에 띄게 들어간 줄은 그 줄의 이어짐이다
         if out and base is not None and ln["x0"] > base + 4:
             out[-1] = _join_lines([out[-1], t])
         else:
