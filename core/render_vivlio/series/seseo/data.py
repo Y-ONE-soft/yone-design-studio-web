@@ -684,13 +684,15 @@ def build(cfg, log=print):
     for ty in p2.get('types', []):
         exp = ' '.join(ty['exp']) + ' ' + ty['answer']
         for b in ty['blocks']:
-            if b['t'] == 'grammar':
+            if b['t'] == 'grammar' and '밑줄' in ty['stem']:
                 b['r'] = underline(b['r'], exp, None, ul)
     for s in p2.get('sets', []):
         orig = ' '.join(p['r'] for p in s['passages'])
         for q in s['qs']:
             for b in q['blocks']:
-                if b['t'] == 'grammar':
+                # ⚠ 어법 문항은 두 꼴이다 — `밑줄 친 부분`(구를 밑줄)과
+                #   `①~⑤ 중 … 문장을`(문장에 번호만). 뒤엣것은 밑줄이 없다.
+                if b['t'] == 'grammar' and '밑줄' in q['stem']:
                     b['r'] = underline(b['r'], exp_of.get(q.get('num', q['no']), ''), orig, ul)
     how = {}
     for _m, _t, h in ul:

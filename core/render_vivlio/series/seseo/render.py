@@ -359,8 +359,13 @@ def qbody(blocks, main_box="cbox"):
         elif t == "passage":
             out.append(f'<div class="{main_box}">{passage_html(b["r"])}</div>')
         elif t == "bogi":
-            out.append(f'<div class="bogi"><div class="bl">&lt;보기&gt;</div>'
+            lab = b.get("lab", "보기")
+            out.append(f'<div class="bogi"><div class="bl">&lt;{esc(lab)}&gt;</div>'
                        f'<div class="bw">{esc(b["r"])}</div></div>')
+        elif t == "same":                      # ※ 지문은 위와 동일 (광문2)
+            out.append(f'<p class="same">※ {esc(b["r"])}</p>')
+        elif t == "ans":                       # (  ) ____ → ____ · → ____ 답란
+            out.append(f'<p class="ansl">{esc(b["r"])}</p>')
         elif t == "case":
             out.append(f'<div class="cbox case"><span class="bl">[{esc(b["label"])}]</span>'
                        f'{inl(b["r"])}</div>')
@@ -454,7 +459,9 @@ def render_set(s, first=False, fit=0, gap=None):
     for q in s["qs"]:
         xg, xl = g.get("q", {}).get(q["no"], 0), g.get("l", {}).get(q["no"], 0)
         sty = f' style="--xg:{xg:.1f}mm;--xl:{xl:.1f}mm"' if xg or xl else ""
-        out.append(f'<div class="q"{sty}>{mkz("Q%d" % q["no"])}<div class="q-h"><span class="qn">{q["no"]:02d}</span>'
+        lab = q.get("lab") or str(q["no"])
+        lab = f'{int(lab):02d}' if lab.isdigit() else lab
+        out.append(f'<div class="q"{sty}>{mkz("Q%d" % q["no"])}<div class="q-h"><span class="qn">{lab}</span>'
                    f'<p class="qs">{stem_html(q["stem"])}</p></div>'
                    f'<div class="qbody">{qbody(q["blocks"])}</div>{mkz("Z%d" % q["no"])}</div>')
     out.append('</div>')

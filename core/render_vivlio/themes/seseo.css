@@ -451,4 +451,11 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .cr-logos .m-gakin { width: 30mm; height: 7.5mm; }
 
 /* 합자 끄기 — 모든 `font:` 줄임 속성 뒤에서 이긴다 */
+
+/* ── 광문2(고2) 원고 방언 ─────────────────────────────────────────────
+ * `※ 지문은 위와 동일` 안내와 `(  ) ____ → ____` 답란. 광문1 원고에는 없다. */
+.same { margin-top: 1.4mm; font: 400 8.2pt/1.45 Noto; color: var(--k70); }
+.ansl { margin-top: 2.4mm; font: 400 9.5pt/1.8 Noto; color: var(--k80);
+        letter-spacing: -.02em; }
+
 *, *::before, *::after { font-variant-ligatures: no-common-ligatures !important; }

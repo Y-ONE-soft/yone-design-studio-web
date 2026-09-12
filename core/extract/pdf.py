@@ -533,6 +533,21 @@ def _cells_of(parts, sizes):
     return cells
 
 
+def _empty_band(runs):
+    """글자 덩어리 목록에서 가장 넓은 '모든 줄이 비운' 세로 띠 (x0, x1)."""
+    iv = sorted(runs)
+    if not iv:
+        return None
+    merged = [list(iv[0])]
+    for a, b in iv[1:]:
+        if a <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], b)
+        else:
+            merged.append([a, b])
+    gaps = [(merged[k][1], merged[k + 1][0]) for k in range(len(merged) - 1)]
+    return max(gaps, key=lambda g: g[1] - g[0]) if gaps else None
+
+
 def _cell_grid(lines):
     """한 단 안의 '칸이 감기는 2열 표'를 찾아 칸 순서(행 우선)로 다시 잇는다.
 
@@ -542,53 +557,28 @@ def _cell_grid(lines):
     전부 한 줄인 배치(2열 선지 등)는 기준선 묶음이 이미 맞으므로 건드리지
     않는다 — 감기는 칸이 있을 때만 다시 잇는다.
 
-    반환: 바뀐 줄 목록(칸 첫 줄에 `_cellstart`) 또는 None.
+    반환: 바뀐 줄 목록(칸 첫 줄에 `_cellstart`, 칸 오른쪽 끝 `_edge`) 또는 None.
     """
-    if len(lines) < 4:
+    n = len(lines)
+    if n < 4:
         return None
     runs = [_line_runs(ln) for ln in lines]
-    cands = []
-    for rs in runs:
-        for k in range(len(rs) - 1):
-            lo, hi = rs[k][1], rs[k + 1][0]
-            if hi - lo >= 3.0:
-                cands.append((lo, hi))
+    # 잇단 줄들이 **함께** 비워 둔 띠가 이어지는 가장 긴 구간
     best = None
-    for lo, hi in cands:
-        m = (lo + hi) / 2.0
-        # 띠는 구간 안 **모든** 줄에서 비어 있어야 한다 — 가운뎃점만 보면
-        # 한 칸 안의 낱말 사이('Reason    for')도 열 사이로 읽힌다
-        ok = []
-        for rs in runs:
-            if not rs:
-                ok.append(True)
-            elif max(b for _, b in rs) <= lo or min(a for a, _ in rs) >= hi:
-                ok.append(True)
-            else:
-                ok.append(any(rs[k][1] <= lo and rs[k + 1][0] >= hi
-                              for k in range(len(rs) - 1)))
-        # 띠를 사이에 둔 줄들이 잇달아 있는 가장 긴 구간
-        src = next((i for i, (rs, o) in enumerate(zip(runs, ok))
-                    if o and rs and min(a for a, _ in rs) < m
-                    and max(b for _, b in rs) > m), None)
-        if src is None:
-            continue
-        i = src
-        while i > 0 and ok[i - 1]:
-            i -= 1
-        j = src
-        while j + 1 < len(ok) and ok[j + 1]:
-            j += 1
-        if j - i + 1 >= 4 and (best is None or (j - i) > (best[1] - best[0])):
-            best = (i, j, lo, hi)
+    for i in range(n - 3):
+        occ, band, j = [], None, i
+        while j < n:
+            trial = occ + runs[j]
+            b = _empty_band(trial)
+            if b is None or b[1] - b[0] < 3.0:
+                break
+            occ, band, j = trial, b, j + 1
+        if j - i >= 4 and band and (best is None or j - i > best[1] - best[0]):
+            best = (i, j - 1, band[0], band[1])
     if best is None:
         return None
     i, j, lo, hi = best
     region = lines[i:j + 1]
-    # 실제 빈 띠로 좁힌다 — 후보는 어느 한 줄의 간격이라 열 경계보다 넓다
-    xs = [r for ln in region for r in _line_runs(ln)]
-    lo = max([b for _, b in xs if b <= lo] or [lo])
-    hi = min([a for a, _ in xs if a >= hi] or [hi])
     mid = (lo + hi) / 2.0
     left, right = [], []
     for ln in region:
@@ -606,7 +596,7 @@ def _cell_grid(lines):
     # 감기는 칸이 없으면 기준선 묶음이 이미 맞다 — 손대지 않는다
     if not any(len(c) >= 2 for c in lc + rc):
         return None
-    cells = ([("L", c) for c in lc] + [("R", c) for c in rc])
+    cells = [("L", c) for c in lc] + [("R", c) for c in rc]
     cells.sort(key=lambda t: (min(l["base"] for l in t[1]),
                               0 if t[0] == "L" else 1))
     rows, used = [], None

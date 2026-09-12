@@ -320,3 +320,40 @@ def test_wide_space_blank_is_kept():
     cur = {"text": "Instead of the park", "chars": [mk("I", 10, 16)],
            "x0": 10, "x1": 100, "base": 113.0, "size": 9.0, "_colkey": (0, "S")}
     assert _breaks(prev, cur, 300.0, 13.0) == (False, False)
+
+
+def test_table_cells_read_row_major_when_a_cell_wraps(tmp_path):
+    """표는 줄이 아니라 칸 단위로 읽는다 — 왼쪽 칸이 두 줄로 감기면
+    기준선 묶음이 오른쪽 칸 글과 엇갈린다(2026년 9월 고1 변형문제 15번)."""
+    doc = fitz.open()
+    pg = _page(doc)
+    pg.insert_text((40, 100), "다음 표의 내용과 일치하지 않는 것은?",
+                   fontsize=9, fontname=KO)
+    for y, t in ((120, "Item"), (150, "Day"), (180, "Original"),
+                 (192, "Destination"), (222, "New"), (234, "Destination")):
+        pg.insert_text((60, y), t, fontsize=9)
+    for y, t in ((120, "Information"), (150, "Friday"),
+                 (186, "Dreamland Amusement Park"),
+                 (228, "City Science Museum")):
+        pg.insert_text((200, y), t, fontsize=9)
+    t = _texts(_pdf_extract_paragraphs(_save(doc, tmp_path)))
+    assert t[0].startswith("다음 표의")
+    assert t[1:] == ["Item", "Information", "Day", "Friday",
+                     "Original Destination", "Dreamland Amusement Park",
+                     "New Destination", "City Science Museum"]
+
+
+def test_single_line_two_column_choices_stay_on_one_line(tmp_path):
+    """칸이 전부 한 줄인 2열 배치(2열 선지)는 기준선 묶음이 이미 맞다 —
+    칸 재배열이 끼어들어 선지를 쪼개면 안 된다."""
+    doc = fitz.open()
+    pg = _page(doc)
+    for y, l, r in ((300, "① (A) - (C) - (B)", "② (B) - (A) - (C)"),
+                    (320, "③ (B) - (C) - (A)", "④ (C) - (A) - (B)"),
+                    (340, "⑤ (C) - (B) - (A)", None)):
+        pg.insert_text((60, y), l, fontsize=9, fontname=KO)
+        if r:
+            pg.insert_text((200, y), r, fontsize=9, fontname=KO)
+    t = _texts(_pdf_extract_paragraphs(_save(doc, tmp_path)))
+    assert len(t) == 3, t
+    assert "①" in t[0] and "②" in t[0], t
