@@ -78,6 +78,37 @@ function isMasterNone(page) {
     return (n === "[없음]" || n === "[None]" || n === "none" || n === "");
 }
 
+// ── 지문 코드 동일성 (2026-09-12) ─────────────────────────────────────────
+// 같은 지문인데 구간마다 표기가 다르다. 26년 9월 고2 실측:
+//   A/C 구간 = `[41~42]` (장문 2문항을 묶어 한 지문으로 낸다)
+//   실전 구간 = `{260941}` → 코드 "41"
+// 엄격 비교(`===`)로는 이 둘이 어긋나 실전 6면이 제 사이클에 못 붙고 문서
+// 뒤로 남는다. 그러면 그 사이클은 슬롯만 남은 10p 가 되어 **후처리(cv_finish)
+// 가 게이트에서 멈춘다** — 세로 내지 마스터(A~E)가 통째로 적용되지 않는
+// 실원인이었다. 번호가 하나라도 겹치면 같은 지문으로 본다(지문 번호는 회차
+// 안에서 유일하므로 오매칭 위험이 없다).
+function _codeNums(c) {
+    var out = [];
+    if (c === null || c === undefined) { return out; }
+    var parts = String(c).split("~");
+    for (var i = 0; i < parts.length; i++) {
+        var n = parseInt(parts[i], 10);
+        if (!isNaN(n)) { out.push(n); }
+    }
+    return out;
+}
+function _sameCode(a, b) {
+    if (a === null || b === null || a === undefined || b === undefined) { return false; }
+    if (String(a) === String(b)) { return true; }
+    var na = _codeNums(a), nb = _codeNums(b);
+    for (var i = 0; i < na.length; i++) {
+        for (var j = 0; j < nb.length; j++) {
+            if (na[i] === nb[j]) { return true; }
+        }
+    }
+    return false;
+}
+
 // ── STEP11 STEP3(실전) 지문별 재스레드 헬퍼 (2026-09-12) ────────────────────
 // STEP4.5는 재배치를 위해 STEP3 관통 스토리를 프레임 단위로 쪼갠다(26년 9월
 // 고2: 13스토리 → 438조각). 재배치가 끝나면 그 조각을 **지문 단위로** 다시
@@ -712,7 +743,7 @@ try {
         var omK = -1;
         if (omCode !== null) {
             for (var ci0 = 0; ci0 < canonNums.length; ci0++) {
-                if (canonNums[ci0] === omCode) { omK = ci0; break; }
+                if (_sameCode(canonNums[ci0], omCode)) { omK = ci0; break; }
             }
         }
         if (omK >= 0 && !_omUsed[omK]) {
@@ -754,7 +785,7 @@ try {
         if (anum !== null) {
             var kk = -1;
             for (var ci = 0; ci < canonNums.length; ci++) {
-                if (canonNums[ci] === anum) { kk = ci; break; }
+                if (_sameCode(canonNums[ci], anum)) { kk = ci; break; }
             }
             arrK = kk; arrSeq = 0;
         }
@@ -902,7 +933,7 @@ try {
             try { if (pMaster) { np4.appliedMaster = pMaster; } } catch (e) {}
             var k4 = -1;
             for (var ck4 = 0; ck4 < canonNums.length; ck4++) {
-                if (canonNums[ck4] === marks[sx].code && !used4[ck4]) {
+                if (_sameCode(canonNums[ck4], marks[sx].code) && !used4[ck4]) {
                     k4 = ck4; break;
                 }
             }
