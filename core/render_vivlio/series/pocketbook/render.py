@@ -187,10 +187,10 @@ def _cluster(runs):
             groups.append([dict(r, t="\u00a0")])
             groups.append(None)
             continue
-        # \u26a0 \uc8fc\uc11d\uc774 **\uc5ec\ub7ec \ub0b1\ub9d0**\uc5d0 \uac78\ub9ac\uba74(`no matter how` + `\ubd80\uc811`) \uc544\ub798\uc5d0\uc11c
-        #   \uacf5\ubc31\uc73c\ub85c \ucabc\uac24 \ub54c \uc870\uac01\ub9c8\ub2e4 \uc8fc\uc11d\uc774 \ub530\ub77c\uac00 **\ub0b1\ub9d0 \uc218\ub9cc\ud07c \ucc0d\ud614\ub2e4**
-        #   (\uad11\ubb382 40\uacf3 \uc2e4\uce21: \ubd80\uc811 \ubd80\uc811 \ubd80\uc811). \ud55c \ub369\uc774\ub85c \uc138\uc6b0\uace0 \uc548\uc758 \uacf5\ubc31\uc740
-        #   NBSP \ub85c \u2014 \uc778\ub514\uc790\uc778\ub3c4 \ub8e8\ube44 \ubc1b\uce68 \uc548\uc5d0\uc11c\ub294 \uc904\uc744 \uc548 \ubc14\uafbc\ub2e4.
+        # ⚠ 주석이 **여러 낱말**에 걸리면(`no matter how` + `부접`) 아래에서
+        #   공백으로 쪼갤 때 조각마다 주석이 따라가 **낱말 수만큼 찍혔다**
+        #   (광문2 40곳 실측: 부접 부접 부접). 한 덩이로 세우고 안의 공백은
+        #   NBSP 로 — 인디자인도 루비 받침 안에서는 줄을 안 바꾼다.
         core = t.strip(" ")
         if r.get("ruby") and " " in core:
             if t[:1] == " ":
