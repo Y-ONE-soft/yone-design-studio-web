@@ -186,6 +186,10 @@ def _base_kind(text, opts=None):
     bt = R.norm_brackets(text)
     if BG.SUM_MARKER.match(bt):
         return "Sum", None
+    # 마커 + 내용 한 줄 ("[제목] Attention Literacy: From (A) __ to (C) __")
+    # — 그 줄 자체가 요약/제목 블록이므로 배경(P-CONTEXT)으로 간다.
+    if BG.SUM_INLINE.match(bt):
+        return "P-CONTEXT", None
     bk = _box_kind(bt)
     if bk:
         return bk, None
@@ -421,9 +425,25 @@ def classify_paragraphs(paras, opts=None):
         # 발문 → 지문 → 요약문 → 선지 순서면 요약문이 지문 스타일로 인쇄됐다.
         # 자리(지문과 선지 사이)와 형태(한글 없는 한 문장 + 인라인 (A)/(B)
         # 빈칸, 길이 상한)로 판정한다 — 재인쇄된 긴 지문은 형태에서 걸린다.
+        # 뒤에 선지도 답란도 없는 **서술형 요약**은 nxt 신호를 못 쓴다 —
+        # 답란은 원고에 없고 조판이 나중에 만든다(plan._s3_insert_answer_space).
+        # 그 경우 발문이 요약을 지시했다는 것이 자리 신호를 대신한다
+        # (사용자 지적 2026-09-12 "요약 문제면 요약문에 배경 입혀야 된다고").
+        _sum_q = "요약" in (last_q_text or "")
         _sum_t = (item["text"] or "").strip()
-        if (prev_meaning and prev_meaning["kind"] in ("P", "P-CONTEXT")
-                and nxt and nxt["kind"] in ("C", "Ans", "AnsL")
+        _sum_place = (prev_meaning
+                      and prev_meaning["kind"] in ("P", "P-CONTEXT")
+                      and nxt and nxt["kind"] in ("C", "Ans", "AnsL"))
+        if not _sum_place and _sum_q:
+            # 지문 끝 서명·출처 줄(UNKNOWN)이 요약문 바로 앞에 오면
+            # prev_meaning 이 P 가 아니다 — 발문 이후 지문이 지나갔는지로 본다.
+            for _j in range(i - 1, -1, -1):
+                if out[_j]["kind"] in ("Q", "Q-INTRO"):
+                    break
+                if out[_j]["kind"] in ("P", "P-CONTEXT"):
+                    _sum_place = True
+                    break
+        if (_sum_place
                 and len(_sum_t) >= 30 and len(_sum_t.split()) >= 6
                 and BG.is_summary_blank_form(_sum_t)):
             # 길이/낱말 하한 — 두 열 선지 머리("(A)   (B)")도 형태 판정을

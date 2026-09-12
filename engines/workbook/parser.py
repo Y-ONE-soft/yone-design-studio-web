@@ -3048,6 +3048,33 @@ def _absorb_step3_ym(step3_dir, used_files, normal_items, log=None,
         it.pop("_ym_absorb", None)
 
 
+def _normalize_step3_file(paras, fname_nfc, log=None, image_dir=None):
+    """회차 통합 Step3 원고 1파일 정규화 — 통짜(textbook) 경로와 같은 순서.
+
+    지문 헤더로 자르기 **전에** 돌린다. 자른 뒤 지문별로 돌리면 머리 블록
+    제거(_strip_step3_rights_and_title)가 각 지문의 첫 줄을 워크시트 잔재로
+    오인할 수 있다 — 파일 단위가 이 함수들의 전제다.
+
+    2026-09-12 실측(사용자 지적 "서답형 필요 없어"): 분할 경로가 이 정규화를
+    통째로 건너뛰어 원고의 유형 섹션 라벨('서 답 형')이 지문 스타일로
+    인쇄됐다. 줄 되붙임·각주 번호·표형 선지 병합도 전부 미적용이었다."""
+    paras = _strip_step3_decorative_images(paras, fname_nfc, log)
+    paras = _strip_step3_leading_junk(paras)
+    paras = _strip_step3_trailing_junk(paras)
+    paras = _normalize_step3_manuscript(paras, log=log)
+    paras = _strip_step3_item_numbers(paras)
+    paras = _merge_step3_split_choice_numbers(paras)
+    paras = _strip_step3_answers(paras)
+    paras = _strip_step3_type_tags(paras)
+    paras = _add_step3_choice_numbers(paras)
+    paras = _normalize_step3_lines(paras, log)
+    paras = _strip_step3_book_markers(paras)
+    paras = _fix_step3_order_label_position(paras)
+    paras = _merge_step3_ab_pairs(paras)
+    paras = _merge_step3_column_table(paras)
+    return paras
+
+
 def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
                         image_dir=None, yy=None, mm=None):
     """한 파일에 지문 여러 개가 든 Step3 원고를 헤더로 잘라 항목화.
@@ -3087,15 +3114,32 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
         dotted = False
         if not heads and yy and mm:
             # 방언 ② — "QQ번 · 제목". 회차는 폴더 연·월에서 온다.
-            for i, p in enumerate(paras or []):
-                t = (p.get("text") if isinstance(p, dict) else str(p)) or ""
-                m = _RE_STEP3_DOTTED_HEAD.match(t.strip())
-                if m:
-                    heads.append((i, m))
+            def _dotted_heads(rows):
+                out = []
+                for i, p in enumerate(rows or []):
+                    t = (p.get("text") if isinstance(p, dict)
+                         else str(p)) or ""
+                    m = _RE_STEP3_DOTTED_HEAD.match(t.strip())
+                    if m:
+                        out.append((i, m))
+                return out
+            heads = _dotted_heads(paras)
             if len(heads) < _S3_DOTTED_HEAD_MIN:
                 heads = []
             else:
                 dotted = True
+                # 자르기 전에 통짜 경로와 같은 원고 정규화를 태운다 (헤더는
+                # 숫자를 포함해 유형 라벨 제거에 걸리지 않는다 — 실측 25/25
+                # 생존). 자른 뒤에 돌리면 머리 블록 제거가 지문 첫 줄을 먹는다.
+                paras = _normalize_step3_file(paras, _nfc(raw), log, image_dir)
+                heads = _dotted_heads(paras)
+                if len(heads) < _S3_DOTTED_HEAD_MIN:
+                    if log:
+                        log("[파서] ⚠️ step3: 정규화 후 지문 헤더가 %d개로 "
+                            "줄었다 — 분할 취소(통짜 경로로 넘김)"
+                            % len(heads))
+                    heads = []
+                    dotted = False
         if not heads:
             continue
         for k, (i, m) in enumerate(heads):
