@@ -365,7 +365,7 @@ def qbody(blocks, main_box="cbox"):
             out.append(f'<div class="bogi"><div class="bl">&lt;{esc(lab)}&gt;</div>'
                        f'<div class="bw">{esc(b["r"])}</div></div>')
         elif t == "same":                      # ※ 지문은 위와 동일 (광문2)
-            out.append(f'<p class="same">※ {esc(b["r"])}</p>')
+            out.append(f'<p class="same">{esc(b["r"])}</p>')
         elif t == "ans":                       # (  ) ____ → ____ · → ____ 답란
             # `(   )` 안의 여러 칸은 HTML 에서 한 칸으로 줄어 번호 쓸 자리가 없어진다
             txt = re.sub(r" {2,}", lambda m: "&nbsp;" * len(m.group(0)), esc(b["r"]))

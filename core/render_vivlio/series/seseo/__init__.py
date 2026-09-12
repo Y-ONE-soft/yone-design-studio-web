@@ -391,12 +391,21 @@ class SeseoSeries(Series):
         drop = {b.get("wordmark", "세/서/특/필"), "MEMO", "PA", "RT", "|",
                 b.get("running", ""), b.get("part1", ""), b.get("part2", ""),
                 b.get("answers", "")}
+        # ⚠ 꼬리말은 한 줄로 붙어 나오기도 한다("2026 광문고2 서술형 특강세/서/특/필").
+        #   그대로 두면 쪽을 넘어가는 문장 사이에 끼어들어 **멀쩡한 글이 누락으로 잡힌다**
+        #   (광문2 100번 해설 실측). 공백을 지운 꼴로 견주고, 러닝으로 시작하면 버린다.
+        nrm = lambda x: re.sub(r'\s+', '', x)          # noqa: E731
+        dropn = {nrm(x) for x in drop if x}
+        run = nrm(b.get("running", ""))
         out = []
         for ln in t.split("\n"):
             s = ln.strip()
-            if (not s or s in drop or re.match(r'^0\d$', s) or s.startswith("필승법 PART.")
-                    or re.match(r'^\d{1,3}$', s) or re.match(r'^대표유형 \d+ : ', s)
-                    or re.match(r'^§\w+§$', s)):
+            sn = nrm(s)
+            if (not s or s in drop or sn in dropn or re.match(r'^0\d$', s)
+                    or s.startswith("필승법 PART.")
+                    or (run and sn.startswith(run))
+                    or re.match(r'^\|?\d{1,3}\|?$', sn)
+                    or re.match(r'^대표유형 \d+ : ', s) or re.match(r'^§\w+§$', s)):
                 continue
             out.append(s)
         return "\n".join(out)
