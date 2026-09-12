@@ -102,13 +102,19 @@ def read_paras(path):
 
 
 def _emit(out, segs):
-    text = ''.join(s[0] for s in segs).replace(' ', ' ').strip()
+    raw = ''.join(s[0] for s in segs).replace(' ', ' ')
+    text = raw.strip()
     if not text:
         return
-    colors = {}
-    for t, _b, c, _u in segs:
+    colors, spans, pos = {}, [], 0
+    off = len(raw) - len(raw.lstrip())          # strip 으로 밀린 만큼
+    for t, _b, c, u in segs:
         colors[c] = colors.get(c, 0) + len(t.strip())
-    out.append({'text': text, 'segs': segs,
+        n = len(t.replace(' ', ' '))
+        if u and t.strip():
+            spans.append((max(0, pos - off), max(0, pos + n - off)))
+        pos += n
+    out.append({'text': text, 'segs': segs, 'u': spans,
                 'color': max(colors, key=colors.get) if colors else ''})
 
 
@@ -650,6 +656,22 @@ def _diff_n(text, start, limit, orig):
     return 0
 
 
+def _mark_spans(text, spans):
+    """(시작, 끝) 구간을 밑줄 조각으로 — `[문자열 | {"t":…, "u":1}]`."""
+    out, pos = [], 0
+    for a, b in spans:
+        a, b = max(pos, a), min(len(text), b)
+        if b <= a:
+            continue
+        if pos < a:
+            out.append(text[pos:a])
+        out.append({'t': text[a:b], 'u': 1})
+        pos = b
+    if pos < len(text):
+        out.append(text[pos:])
+    return out or text
+
+
 def underline(text, exp, orig=None, report=None):
     """어법 지문 → 서식 조각(밑줄). report 에 (표식, 밑줄, 방법) 을 쌓는다."""
     out, pos = [], 0
@@ -695,7 +717,8 @@ def _nfc(s):
 def build(cfg, log=print):
     bad = []
     p1 = parse_part1(read_paras(cfg.manuscript('part1')), bad)
-    p2 = parse_part2(read_paras(cfg.manuscript('part2')), bad)
+    p2paras = read_paras(cfg.manuscript('part2'))
+    p2 = parse_part2(p2paras, bad)
     an = parse_answers(read_paras(cfg.manuscript('answers')), bad)
 
     # 정답 ↔ 문항 대조
@@ -712,6 +735,16 @@ def build(cfg, log=print):
                 if _nfc(re.sub(r'\s', '', s['src'])) != _nfc(re.sub(r'\s', '', a['src']))]
 
     # 어법 밑줄 — 해설에서 되짚는다
+    # 원고에 밑줄로 표시된 자리(광문2 배열영작의 제시어가 지문 **가운데** 있는 꼴)를
+    # 지면에도 밑줄로 옮긴다. 지문 끝에 붙은 것은 read_paras 가 이미 <보기> 로 뺐다.
+    ul_of = {p['text']: p['u'] for p in p2paras if p.get('u')}
+    for s in p2.get('sets', []):
+        for q in s['qs']:
+            for b in q['blocks']:
+                if (b['t'] != 'grammar'          # 어법 밑줄은 해설에서 따로 되짚는다
+                        and isinstance(b.get('r'), str) and b['r'] in ul_of):
+                    b['r'] = _mark_spans(b['r'], ul_of[b['r']])
+
     exp_of = {x['no']: x['exp'] for s in an['sets'] for x in s['items']}
     ul = []
     for ty in p2.get('types', []):
