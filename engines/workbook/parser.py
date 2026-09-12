@@ -3332,7 +3332,7 @@ def _split_step3_combined(paras, yy, mm, normal_questions, short_questions,
             f"{q1}~{q2}" if q2 else str(q1))
         item = {"question_num": file_key,
                 "code": f"{yy}{mm}{str(q1).zfill(2)}",
-                "paragraphs": body}
+                "paragraphs": _normalize_step3_choice_tabs(body)}
         if any(n in norm_set for n in nums):
             normal_items.append(item)
         elif any(n in short_set for n in nums):
@@ -3508,7 +3508,6 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         # 5지선다 자동번호(①②③④⑤) 텍스트화 — hwp AutoNumbering 누락 보완
         paras = _add_step3_choice_numbers(paras)
         paras = _normalize_step3_lines(paras, log)                        # W83
-        paras = _normalize_step3_choice_tabs(paras, log)
         # 책 헤더("2027년 수능특강 ...") + [Gateway] 묶음 마커 제거
         # ※ _add_step3_choice_numbers의 passage_above 판정이 [Gateway]를 참조하므로
         #   반드시 그 호출 *후*에 실행해야 함
@@ -3669,7 +3668,6 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _strip_step3_type_tags(paras)
             paras = _add_step3_choice_numbers(paras)
             paras = _normalize_step3_lines(paras, log)                    # W83
-            paras = _normalize_step3_choice_tabs(paras, log)
             paras = _strip_step3_book_markers(paras)
             paras = _fix_step3_order_label_position(paras)
             paras = _merge_step3_ab_pairs(paras)
