@@ -916,9 +916,17 @@ try {
             try { pMaster = proto4.parentPage.appliedMaster; } catch (e) {}
         } catch (e) {}
         // 섹션별 새 페이지 + 프레임 + 범위 복제
+        // ⚠ 진행 로그를 반드시 남길 것 — 이 루프는 실측 30분을 넘길 수 있고
+        //   (26년 9월 고2), 로그가 30분 무갱신이면 러너가 "스톨"로 판정해
+        //   작업을 보류한다. 그러면 JSX 는 InDesign 안에서 계속 돌아 문서는
+        //   저장되지만 **후처리(cv_finish)가 통째로 빠진다** — 세로 내지
+        //   마스터가 적용되지 않은 산출물이 나오는 실원인이었다.
+        wlog("STEP4.4: arrange 재배분 시작 — 섹션 " + marks.length + "개");
         var used4 = {};
         var anchorPg4 = origPages[origPages.length - 1];
         for (var sx = 0; sx < marks.length; sx++) {
+            wlog("STEP4.4: 섹션 " + (sx + 1) + "/" + marks.length +
+                 " (코드 " + marks[sx].code + ")");
             var sStart = marks[sx].pos;
             var sEnd = (sx + 1 < marks.length) ? (marks[sx + 1].pos - 1)
                                                : (atxt.length - 1);
