@@ -3114,11 +3114,17 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
             if code in have:
                 continue
             have.add(code)
-            normal_items.append({
+            entry = {
                 "question_num": q_num,
                 "code": code,
                 "paragraphs": paras[i + 1:end],   # 헤더 줄 제외
-            })
+            }
+            if dotted:
+                # 쌍방 대조(routing.reconcile_step3)에 '이 파일이 소비됐다'는
+                # 신호. 파일명에 문항 번호가 없는 회차 통합 원고라 파일명
+                # 기준 대조 말고는 소비를 증명할 길이 없다.
+                entry["filename"] = _nfc(raw)
+            normal_items.append(entry)
             if log:
                 log("[파서] step3: 복수지문 파일 '%s' → %s (%s)"
                     % (_nfc(raw), code, label))
