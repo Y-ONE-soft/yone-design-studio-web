@@ -2361,6 +2361,13 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
         font_locs[str(e.get("n") or "")] = e.get("loc") or ""
     if style_fonts and font_locs:
         from core.fontcov import font_covers
+        # 이모지 계약(plan.emoji_font) 글자는 단락 스타일 폰트가 아니라
+        # **그 글자에만** 물린 이모지 폰트로 찍힌다 — 스타일 폰트 기준
+        # cmap 검사에서 빼지 않으면 정상 출력이 미지원으로 잡힌다
+        # (2026-09-12 실증: ⛈·❄ 가 Noto Color Emoji SVG 로 나오는데
+        # 스타일 폰트 Noto Sans CJK KR 로 지목됐다). 폰트 자체가 없으면
+        # 실행기가 [경고] 를 남긴다.
+        _emoji_chars = set((plan.get("emoji_font") or {}).get("chars") or [])
         uncov = {}
         for story in dump.get("stories", []):
             for p in story.get("paragraphs", []):
@@ -2369,7 +2376,8 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                          if 0x2000 <= ord(ch) <= 0x2BFF
                          and not _is_pua(ch)
                          and ch not in SUBSCRIPT_PRINT_TABLE
-                         and ch not in GLYPH_PRINT_TABLE}
+                         and ch not in GLYPH_PRINT_TABLE
+                         and ch not in _emoji_chars}
                 if not risky:
                     continue
                 sname = p.get("s") or ""

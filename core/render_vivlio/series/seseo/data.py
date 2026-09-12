@@ -47,7 +47,12 @@ def _on(el):
 
 
 def read_paras(path):
-    """본문 단락을 순서대로 — [{text, segs:[(글자, 굵게, 색)], color}]."""
+    """본문 단락을 순서대로 — [{text, segs:[(글자, 굵게, 색)], color}].
+
+    ⚠ 광문2(고2) 원고의 **배열영작 제시어**는 지문 단락 끝에 밑줄로 붙어 있다
+      ("… to reach us. a chance of understanding / as they were …"). 그대로 두면
+      지문 문장처럼 읽힌다 — 밑줄 친 꼬리를 떼어 `<보기>` 상자로 돌린다.
+    """
     with zipfile.ZipFile(path) as z:
         root = ET.fromstring(z.read('word/document.xml'))
     body = root.find(W + 'body')
@@ -58,9 +63,10 @@ def read_paras(path):
         segs = []
         for r in p.iter(W + 'r'):
             rp = r.find(W + 'rPr')
-            b, color = False, ''
+            b, color, u = False, '', False
             if rp is not None:
                 b = _on(rp.find(W + 'b'))
+                u = rp.find(W + 'u') is not None
                 ce = rp.find(W + 'color')
                 if ce is not None:
                     color = (ce.get(W + 'val') or '').upper()
@@ -73,22 +79,38 @@ def read_paras(path):
                 elif ch.tag in (W + 'br', W + 'cr'):
                     t += ' '
             if t:
-                segs.append((t, b, color))
+                segs.append((t, b, color, u))
         text = ''.join(s[0] for s in segs).replace(' ', ' ').strip()
         if not text:
             continue
-        colors = {}
-        for t, _b, c in segs:
-            colors[c] = colors.get(c, 0) + len(t.strip())
-        out.append({'text': text, 'segs': segs,
-                    'color': max(colors, key=colors.get) if colors else ''})
+        # 밑줄 친 꼬리(제시어 목록)를 떼어 `<보기>` 로 돌린다 — 광문2 원고
+        k = len(segs)
+        while k and segs[k - 1][3]:
+            k -= 1
+        tail = ''.join(x[0] for x in segs[k:]).strip()
+        if k and tail.count(' / ') >= 2 and len(''.join(x[0] for x in segs[:k]).strip()) > 40:
+            for part in (segs[:k], [('<보기>', False, '', False)], segs[k:]):
+                _emit(out, part)
+            continue
+        _emit(out, segs)
     return out
+
+
+def _emit(out, segs):
+    text = ''.join(s[0] for s in segs).replace(' ', ' ').strip()
+    if not text:
+        return
+    colors = {}
+    for t, _b, c, _u in segs:
+        colors[c] = colors.get(c, 0) + len(t.strip())
+    out.append({'text': text, 'segs': segs,
+                'color': max(colors, key=colors.get) if colors else ''})
 
 
 def rich(p):
     """단락 → 서식 조각. 굵게만 옮긴다(색은 원고 사정이고 조판 색은 테마가 정한다)."""
     out = []
-    for t, b, _c in p['segs']:
+    for t, b, _c, _u in p['segs']:
         t = t.replace(' ', ' ')
         f = {'b': 1} if b else {}
         if out and isinstance(out[-1], dict) and {k: v for k, v in out[-1].items()
@@ -202,11 +224,11 @@ def parse_part1(paras, bad):
     for g in out:
         if g['t'] != 'group':
             continue
-        if g['kind'] == '올림포스' and g['nos']:
+        # 강 번호가 있는 묶음(올림포스·수능특강 Light)은 **범위**로 — 종류 이름을
+        # 그대로 되풀이하면 띠가 "수능특강 Light 수능특강 Light" 가 된다
+        if g['nos']:
             lo, hi = min(g['nos']), max(g['nos'])
             g['rest'] = f'{lo}강' if lo == hi else f'{lo}강 ~ {hi}강'
-        elif g['kind']:
-            g['rest'] = g['key']
         else:
             g['rest'] = g['key']
         del g['nos']
