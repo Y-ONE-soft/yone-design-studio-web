@@ -1465,6 +1465,54 @@ def _is_step3_head_junk(text):
     return bool(len(t) <= 80 and _RE_S3_POLITE_END.search(t))
 
 
+def _is_step3_content_line(text):
+    """실전문제의 실질 콘텐츠 줄인가 — 세트 안내·발문·선지·문항 번호·지문 문장."""
+    from core.structure import rules as R
+    t = (text or "").strip()
+    if not t:
+        return False
+    if any(r.search(t) for r in R.Q_INTRO_FALLBACK):
+        return True
+    if R.C_START.match(t) or _RE_S3_ITEM_HEAD.match(t):
+        return True
+    if (R.Q_HEAD_HINT.search(t[:R.Q_HEAD_WINDOW])
+            and any(r.search(t) for r in R.Q_FALLBACK_PATTERNS)):
+        return True
+    # 지문 문장 — 길고 종결부호로 끝난다
+    return bool(len(t) > 80 and _RE_S3_SENT_END.search(t))
+
+
+def _strip_step3_front_matter(paras, log=None):
+    """원고 앞머리(표지·학습 플랜 표·기획/검수 크레딧) 통째 제거.
+
+    아잉카 Step 01 원고(2026-09-12 사용자 지시 '이걸로 다시 조판') 앞에는
+    학습 플랜 표와 크레딧이 31줄 붙어 있다. 머리 블록 걷기
+    (_strip_step3_rights_and_title)는 '문항 구성 (총 334문항)' 처럼 괄호로
+    끝나는 표 칸을 종결부호 규칙 때문에 본문으로 보고 멈춰, 나머지가 실전문제
+    첫 지면에 그대로 인쇄된다.
+
+    **첫 콘텐츠 줄**(세트 안내·발문·선지·문항 번호·긴 지문 문장) 앞을 통째로
+    뗀다. 두 조건이 다 맞을 때만 — ① 그 앞이 여섯 줄 이상이고 ② 그 앞에
+    지문다운 줄(긴 로마자 문장)이 하나도 없을 때. 지문이나 짧은 지문 라벨로
+    시작하는 원고는 그대로 둔다.
+    """
+    first = next((k for k, p in enumerate(paras)
+                  if _is_step3_content_line(_s3_text(p))), None)
+    if first is None or first < 6:
+        return paras
+    for p in paras[:first]:
+        t = _s3_text(p).strip()
+        if not t or len(t) <= 25:
+            continue
+        letters = [c for c in t if c.isalpha()]
+        ko = sum(1 for c in letters if '가' <= c <= '힣')
+        if letters and ko / len(letters) < 0.3:
+            return paras          # 로마자 본문이 섞여 있다 — 앞머리가 아니다
+    if callable(log):
+        log(f"[파서] step3 원고 앞머리(표지·플랜·크레딧) 제거: {first}줄")
+    return paras[first:]
+
+
 def _strip_step3_rights_and_title(paras, log=None):
     """원고 워크시트 잔재 1단계 — 권리 고지 + 문서 **머리 블록**.
 
@@ -2165,6 +2213,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     지우는 함수보다 반드시 먼저 불러야 한다.
     """
     paras = _strip_step3_rights_and_title(paras, log)
+    paras = _strip_step3_front_matter(paras, log)
     paras = _strip_step3_generated_item_meta(paras, log)
     paras = _strip_step3_practice_set_header(paras, log)
     paras = _split_step3_inline_cond_marker(paras, log)
