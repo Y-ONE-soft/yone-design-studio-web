@@ -1928,6 +1928,41 @@ def _fill_step3_summary_blanks(paras, log=None):
     return paras
 
 
+# 조건 항목 꼬리에 요약문이 이어붙은 단락 (실측 2026-09-12 고2 26년 9월):
+#   "② 본문에서 쓰인 단어를 있는 그대로 사용할 것. (어형 변화불가)
+#    Organizational exclusion can have a ______(A) impact …"
+# 원고가 표 셀을 합치며 붙인 것으로, 그대로 두면 **요약문이 조건 상자 안에**
+# 인쇄된다. 한국어 조건 종결("…할 것." / "…불가)") 뒤에 영문 문장이 시작되는
+# 자리에서 자른다 — 조건 항목은 한국어, 요약문은 영어라 경계가 분명하다.
+_RE_S3_COND_TAIL_EN = re.compile(
+    r'^(.*?(?:할\s*것\.|쓸\s*것\.|불가\s*\)|가능\s*\)))\s+'
+    r'([A-Z][A-Za-z][^\n]{20,})$')
+
+
+def _split_step3_cond_tail_summary(paras, log=None):
+    """조건 항목 + 이어붙은 요약문을 두 단락으로 (runs 보존)."""
+    out = []
+    n = 0
+    for p in paras:
+        t = _s3_text(p)
+        m = _RE_S3_COND_TAIL_EN.match(t) if t else None
+        if not m or "_" not in m.group(2):
+            out.append(p)
+            continue
+        head, tail = m.group(1), m.group(2)
+        runs = p.get("runs") if isinstance(p, dict) else None
+        hi = t.index(head)
+        ti = t.index(tail, hi + len(head))
+        out.append({"text": head,
+                    "runs": _slice_runs(runs, t, hi, hi + len(head))})
+        out.append({"text": tail,
+                    "runs": _slice_runs(runs, t, ti, ti + len(tail))})
+        n += 1
+    if n and callable(log):
+        log("[파서] step3: 조건 항목에 이어붙은 요약문 %d건 분리" % n)
+    return out
+
+
 def _split_step3_inline_cond_marker(paras, log=None):
     """'＜조건＞ 조건 문구' 한 줄 → '＜조건＞' + '조건 문구' 두 줄로 분리.
 
@@ -2133,6 +2168,7 @@ def _normalize_step3_manuscript(paras, item_num=None, log=None):
     paras = _strip_step3_generated_item_meta(paras, log)
     paras = _strip_step3_practice_set_header(paras, log)
     paras = _split_step3_inline_cond_marker(paras, log)
+    paras = _split_step3_cond_tail_summary(paras, log)
     paras = _fill_step3_summary_blanks(paras, log)
     paras = _strip_step3_variant_type_tag(paras, item_num, log)
     paras = _strip_step3_section_markers(paras, log)

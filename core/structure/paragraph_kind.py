@@ -655,6 +655,55 @@ def classify_paragraphs(paras, opts=None):
                 continue
             break
 
+    # 쪼개진 요약문 묶기 (사용자 지적 2026-09-12 "요약 문제면 요약문에 배경
+    # 단락스타일 입혀야 된다고"). 요약문은 원고에서 표 셀·줄바꿈 때문에 두세
+    # 단락으로 갈라져 오고, 그러면 조각 하나하나는 '(A)와 (B)가 다 있는 한
+    # 문장'이 아니라 형태 판정(is_summary_blank_form)을 통과하지 못한다.
+    # 요약형 발문 블록 안에서 **인라인 빈칸을 가진 줄**을 앵커로 잡고, 문장이
+    # 아직 끝나지 않은 이웃 줄까지 한 덩어리로 배경 처리한다.
+    for i, item in enumerate(out):
+        if item["kind"] not in ("Q", "Q-INTRO"):
+            continue
+        if "요약" not in (item["text"] or ""):
+            continue
+        end = len(out)
+        for j in range(i + 1, len(out)):
+            if out[j]["kind"] in ("Q", "Q-INTRO"):
+                end = j
+                break
+
+        def _cand(j):
+            """요약문 조각 후보인가 — 선지(원문자)와 마커류는 제외."""
+            k = out[j]["kind"]
+            if k in ("P", "UNKNOWN", "P-CONTEXT"):
+                return True
+            # `(A) ______ his own lyrics …` 처럼 괄호 라벨로 시작하는 요약문
+            # 조각이 선지로 오분류돼 있다 — 요약형 선지는 항상 원문자다.
+            return k == "C" and not _RE_CHOICE_LEAD.match(out[j]["text"] or "")
+
+        idxs = [j for j in range(i + 1, end)
+                if _cand(j) and out[j]["text"]
+                and R.SUMMARY_INLINE_BLANK.search(out[j]["text"])]
+        if not idxs:
+            continue
+        s, e = min(idxs), max(idxs)
+        # 앞뒤로 '문장이 안 끝난' 이웃까지 (지문은 마침표로 끝나 걸리지 않는다)
+        guard = 0
+        while (s - 1 > i and guard < 2 and _cand(s - 1)
+               and (out[s - 1]["text"] or "")
+               and not R.P_SENTENCE_END.search(out[s - 1]["text"])):
+            s -= 1
+            guard += 1
+        guard = 0
+        while (e + 1 < end and guard < 2 and _cand(e + 1)
+               and (out[e]["text"] or "")
+               and not R.P_SENTENCE_END.search(out[e]["text"])):
+            e += 1
+            guard += 1
+        for j in range(s, e + 1):
+            if _cand(j) and out[j]["text"]:
+                out[j]["kind"] = "P-CONTEXT"
+
     # 답란 줄바꿈 연속 (W68 — 2026-08-21 비상(홍) 2과 실증, 사용자 지적
     # "다음 글을 읽고 아래에 지문이 없고 서술형 답란이 혼입"): 서술형 답란이
     # 여러 줄로 접히면 2번째 줄부터는 밑줄 사이에 영문 어구가 껴 있어

@@ -383,6 +383,9 @@ BOX_INLINE = re.compile(
     r'^\s*(?:<\s*보\s*기\s*[A-Z0-9]?\s*>|\[\s*보\s*기\s*[A-Z0-9]?\s*\])'
     r'\s*[^가-힣\s]')  # '<보기>의 …' 한글 지시문 제외 (조건 항목)
 
+# 요약문 조각의 인라인 빈칸 — "(A)______" / "______(A)______" / "____ both"
+SUMMARY_INLINE_BLANK = re.compile(r'[_＿]{3,}')
+
 # ── 요약문 머리 화살표 ("→ Rather than …" / "⇩ The writer …") ────────────────
 # 단독 줄 화살표(plan._s3_arrow_para)와 같은 표기가 요약문과 한 줄로 온다.
 SUMMARY_ARROW_LEAD = re.compile(r'^[\s ]*[→⇒⇨➡▶►⬇⇩↓↘⇓]+[\s ]*')
