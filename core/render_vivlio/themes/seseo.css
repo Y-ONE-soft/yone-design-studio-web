@@ -390,24 +390,26 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .wm-slash { font: 400 19pt/1 Ghana; color: rgba(255,255,255,.7); margin: 0 1.2mm 2mm 1.4mm; }
 .wm-small { font: 500 10pt/1 Noto; color: rgba(255,255,255,.95); margin-bottom: 2.4mm; }
 .front-foot { position: absolute; left: 23mm; bottom: 23mm; display: flex; align-items: center;
-              color: #fff; font: 500 8.5pt/1 Noto; }
+              color: #a05f6a; font: 500 8.5pt/1 Noto; }
 .front-foot .msk { width: 7.4mm; height: 7.4mm; margin-right: 3mm; }
 
 /* ② 목차 펼침 — 크림 종이에 구름 */
 .paper { position: absolute; inset: 0;
          background: linear-gradient(180deg, #fff7e8 0%, #ffeed8 58%, #ffe5c6 100%); }
 .toc .cl, .credit .cl { left: 0; bottom: 0; width: 216mm; opacity: .9; }
-.toc-head { position: absolute; left: 26mm; top: 42mm; color: #e35a4d; }
+.toc-head { position: absolute; left: 26mm; top: 52mm; color: #e35a4d; }
 .toc-head .msk { width: 13mm; height: 13mm; margin-bottom: 4mm; }
 .toc-title { font: 400 30pt/1 Ghana; color: #5b579f; letter-spacing: .03em; }
-.toc-list { position: absolute; left: 26mm; right: 23mm; top: 52mm; }
-.toc-row { display: flex; align-items: center; margin-bottom: 10mm; }
+.toc-sub { margin-top: 4mm; font: 500 9pt/1.5 Noto; color: #a05f6a; }
+.toc-list { position: absolute; left: 26mm; right: 23mm; top: 60mm; }
+.toc-row { display: flex; align-items: center; padding-bottom: 6mm; margin-bottom: 6mm;
+           border-bottom: .4pt solid rgba(160,95,106,.28); }
 .toc-no { flex: none; height: 7.8mm; padding: 0 3.4mm; margin-right: 4.5mm; border-radius: 3.9mm;
           color: #fff; font: 700 9pt/8mm Elice; letter-spacing: .04em; }
 .toc-no.p1 { background: #f58e7d; }
 .toc-no.p2 { background: #8d8fc6; }
 .toc-t { font: 500 13pt/1.35 Elice; color: #443f74; }
-.toc-foot { position: absolute; right: 23mm; bottom: 21mm; font: 400 8pt/1 Noto; color: #a2907f; }
+.toc-foot { position: absolute; right: 23mm; bottom: 21mm; font: 500 8pt/1 Noto; color: #a05f6a; }
 
 /* ③ 파트 간지 2면 펼침 — 위 하늘 띠, 아래 크림. 왼쪽이 열고 오른쪽이 닫는다 */
 .div { background: #fffaf2; }
@@ -421,10 +423,10 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .d2.r .band { background: linear-gradient(118deg, #8f8cc6 0%, #b0a6dc 28%, #efa08f 76%,
               #ffc78e 100%); }
 .div .st { left: 0; top: 0; width: 216mm; height: 190mm; object-fit: cover; opacity: .75; }
-.div-mark { position: absolute; left: 26mm; top: 54mm; color: #fff; }
-.dv-1 { display: block; font: 500 13pt/1 Elice; letter-spacing: .14em; opacity: .95; }
-.dv-2 { display: block; margin-top: 4.5mm; font: 400 19pt/1 Ghana; letter-spacing: .08em; }
-.dv-3 { display: block; margin-top: 1.5mm; font: 400 54pt/1 Ghana; }
+.div-mark { position: absolute; left: 26mm; top: 62mm; color: #fff; }
+.dv-1 { display: block; font: 500 15pt/1 Elice; letter-spacing: .16em; opacity: .95; }
+.dv-2 { display: block; margin-top: 5mm; font: 400 27pt/1 Ghana; letter-spacing: .08em; }
+.dv-3 { display: block; margin-top: 2mm; font: 400 82pt/1 Ghana; }
 .div-title { position: absolute; right: 23mm; top: 202mm; font: 500 20pt/1.25 Elice;
              color: #5b579f; }
 .div-rule { position: absolute; right: 23mm; top: 216mm; width: 118mm; height: .5mm;
@@ -434,8 +436,8 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .cr-mid { position: absolute; left: 0; right: 0; top: 116mm; text-align: center; color: #e35a4d; }
 .cr-mid .m-crest { width: 14mm; height: 14mm; margin: 0 auto; }
 .cr-mid .m-script { width: 96mm; height: 13.5mm; margin: 6mm auto 0; color: #cb4f70; }
-.cr-line { position: absolute; left: 0; right: 0; top: 176mm; text-align: center;
-           font: 400 8.5pt/1 Noto; color: #a2907f; }
+.cr-line { position: absolute; left: 0; right: 0; top: 178mm; text-align: center;
+           font: 500 8.5pt/1 Noto; color: #a05f6a; }
 .cr-logos { position: absolute; left: 0; right: 0; bottom: 25mm; display: flex;
             justify-content: center; align-items: center; color: #8a7a8e; }
 .cr-logos .m-sehui { width: 35mm; height: 6.6mm; margin-right: 16mm; }

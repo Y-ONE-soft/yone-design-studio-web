@@ -252,7 +252,9 @@ def toc_pages(cfg):
     left = art_page("TOC1", "toc", 
                     '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
                     '<div class="toc-head"><i class="msk m-crest"></i>'
-                    '<div class="toc-title">CONTENTS</div></div>', left=True)
+                    '<div class="toc-title">CONTENTS</div>'
+                    f'<div class="toc-sub">{esc(b.get("school", ""))} '
+                    f'{esc(b.get("period", ""))}<br>서술형 특별 필승법</div></div>', left=True)
     right = art_page("TOC2", "toc",
                      '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
                      f'<div class="toc-list">{items}</div>'
