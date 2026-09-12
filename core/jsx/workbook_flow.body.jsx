@@ -447,6 +447,18 @@ var TBL_INSET = 1;
 //  autoGrow 결과값이다. 아래 insertAnswerTable 주석 참조)
 var _tblSwatch = undefined;
 var _answerTableIds = [];      // 삽입한 답표 id — 저장 직전 서식 재확정용
+// 유닛 왼쪽면 브레이크(page_break "even")를 건 단락 — {step: {단락index: true}}.
+// 지문 묶음은 무조건 왼쪽 면에서 시작해야 한다(모의고사 워크북 사용자 스펙)
+// → 밀기/완화 op(question_keep·stem_keep)이 이 단락의 startParagraph 를
+// 건드리면 그 계약이 깨진다. 실측 2026-09-12: 25지문 중 22개가 오른쪽 면에서
+// 시작(코드 단락 전부 NEXT_PAGE 로 덮여 있었다).
+var _evenBreakParas = {};
+
+// 이 단락이 '유닛 왼쪽면 브레이크' 단락인가 — 밀기/완화 대상에서 제외.
+function isEvenBreakPara(step, idx) {
+    var m = _evenBreakParas[step];
+    return !!(m && m[idx]);
+}
 
 function answerTableSwatch(doc) {
     if (_tblSwatch !== undefined) { return _tblSwatch; }
@@ -1732,6 +1744,7 @@ function enforceQuestionKeep(doc, flowStories, op) {
                 }
                 var si = starts[k];
                 if (si <= 0 || si >= paras.length || noFix[si]) { continue; }
+                if (isEvenBreakPara(step, si)) { continue; }   // 왼쪽면 계약
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
@@ -1853,6 +1866,7 @@ function relaxStemKeep(doc, flowStories, op) {
                      + (k + 1) + "/" + starts.length);
             }
             var si = starts[k];
+            if (isEvenBreakPara(step, si)) { continue; }   // 왼쪽면 계약
             try { story.recompose(); } catch (e0) {}
             var paras = story.paragraphs.everyItem().getElements();
             if (si <= 0 || si >= paras.length) { continue; }
@@ -1916,6 +1930,7 @@ function relaxQuestionKeep(doc, flowStories, op) {
                      + (k + 1) + "/" + starts.length);
             }
             var si = starts[k];
+            if (isEvenBreakPara(step, si)) { continue; }   // 왼쪽면 계약
             try { story.recompose(); } catch (e0) {}
             var paras = story.paragraphs.everyItem().getElements();
             if (si <= 0 || si >= paras.length) { continue; }
@@ -2026,6 +2041,7 @@ function enforceStemKeep(doc, flowStories, op) {
                 }
                 var si = starts[k];
                 if (si <= 0 || si >= paras.length || noFix[si]) { continue; }
+                if (isEvenBreakPara(step, si)) { continue; }   // 왼쪽면 계약
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
@@ -2953,7 +2969,6 @@ function enforceUnitEvenBreaks(doc, flowStories, plan) {
             try { story.recompose(); } catch (e3) {}
             // 왼쪽으로 밀린 만큼 스토리 끝이 넘칠 수 있다 — 즉시 확장
             expandStoryOverflow(doc, flow.step + " 왼쪽면 브레이크", story);
-            reassignEmptyStep3Pages(doc, story, "M");
         }
     }
     if (total > 0) {
@@ -3149,7 +3164,13 @@ try {
                             : (isStart[pi] === "page")
                                 ? StartParagraph.NEXT_PAGE
                                 : StartParagraph.NEXT_FRAME;
-                    if (isStart[pi] === "even") { brkEven++; }
+                    if (isStart[pi] === "even") {
+                        brkEven++;
+                        if (!_evenBreakParas[flow.step]) {
+                            _evenBreakParas[flow.step] = {};
+                        }
+                        _evenBreakParas[flow.step][pi] = true;
+                    }
                 } catch (e) { brkFail++; }
             }
             var runs = flat[pi].runs;
@@ -3358,6 +3379,14 @@ try {
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 page_cleanup");
     }
+    // 유닛 왼쪽면 브레이크 확정 — **question_keep 앞**. 뒤에 두면 밀기가
+    // 잡아 놓은 스프레드 걸침을 되밀어 44건이 새로 생긴다(v2_6 실증).
+    // 앞에 두고 밀기/완화가 이 단락을 건드리지 않게 보호(isEvenBreakPara)
+    // 하면, 지문은 왼쪽에서 시작하고 그 안의 문제 걸침은 밀기가 해소한다.
+    app.doScript(function () {
+        enforceUnitEvenBreaks(doc, flowStories, plan);
+    }, ScriptLanguage.JAVASCRIPT, undefined,
+       UndoModes.ENTIRE_SCRIPT, "wb_v2 even_breaks");
     if (plan.question_keep && plan.question_keep.flows) {
         // W23 r13 F4 — 반드시 page_cleanup 이후 (삭제 전에 밀면 push로 빈
         // 페이지가 생기고 정리가 그 페이지를 지우며 좌우가 되밀리는 순환).
@@ -3412,14 +3441,19 @@ try {
                 alignPartFillers(doc);
             }
             normalizeStep3ContentMasters(doc, flowStories);
+            // 밀기로 새로 빈 오른쪽 면이 생긴다 — 메모(M) 마스터로.
+            // 지문이 늘 왼쪽에서 시작하는 배치의 짝 (사용자 스펙).
+            for (var _fk in flowStories) {
+                if (!_evenBreakParas[_fk]) { continue; }
+                reassignEmptyStep3Pages(doc, flowStories[_fk].story,
+                                        (typeof plan.page_cleanup === "object"
+                                         && plan.page_cleanup.empty_master)
+                                            ? plan.page_cleanup.empty_master
+                                            : "M");
+            }
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 question_keep");
     }
-    // 왼쪽면 브레이크 재확정 — 밀기/완화가 끝난 뒤 (순서 의존 제거)
-    app.doScript(function () {
-        enforceUnitEvenBreaks(doc, flowStories, plan);
-    }, ScriptLanguage.JAVASCRIPT, undefined,
-       UndoModes.ENTIRE_SCRIPT, "wb_v2 even_breaks");
     if (plan.page_cleanup && (typeof plan.page_cleanup === "object")) {
         // W40 결함 8: 호출 조건을 empty==="delete" 에서 page_cleanup 전반으로
         // 넓힌다. 본가(모의고사)는 empty_master:"M" 모드라 이 op 가 한 번도
