@@ -460,6 +460,21 @@ function isEvenBreakPara(step, idx) {
     return !!(m && m[idx]);
 }
 
+// 문제 범위의 끝(ei)을 **유닛 경계 앞**에서 자른다. 문제 시작 목록(starts)
+// 에는 유닛 머리의 지문번호 단락이 없어, 지문 마지막 문제의 범위가 다음
+// 지문의 지문번호 단락(왼쪽 면으로 밀려간 단락)까지 뻗는다 — 그러면 멀쩡한
+// 문제가 '스프레드 초과'로 오판된다 (v2_7 실측 경고 24건 = 지문 25개에
+// 하나씩). 범위를 유닛 안으로 가두면 판정이 실제 지면과 맞는다.
+function clampToUnitEnd(step, si, ei) {
+    var m = _evenBreakParas[step];
+    if (!m) { return ei; }
+    for (var key in m) {
+        var v = parseInt(key, 10);
+        if (v > si && v <= ei) { ei = v - 1; }
+    }
+    return ei;
+}
+
 function answerTableSwatch(doc) {
     if (_tblSwatch !== undefined) { return _tblSwatch; }
     _tblSwatch = null;
@@ -1748,6 +1763,7 @@ function enforceQuestionKeep(doc, flowStories, op) {
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
+                ei = clampToUnitEnd(step, si, ei);
                 var sf = null, ef = null;
                 try { sf = paras[si].parentTextFrames[0]; } catch (e1) {}
                 try {
@@ -1808,11 +1824,12 @@ function enforceQuestionKeep(doc, flowStories, op) {
 // (v2_5 실증: 50번 조건박스 아래·80번 지문 아래 단 하단 대공백 —
 // 사용자 재재지적). 시험 완화 후 고아 조건(발문고아)·스프레드 걸침이
 // 재발하면 복원한다.
-function _stemOrphanAt(paras, starts, k, minLines) {
+function _stemOrphanAt(paras, starts, k, minLines, step) {
     var si = starts[k];
     if (si <= 0 || si >= paras.length) { return false; }
     var ei = (k + 1 < starts.length && starts[k + 1] <= paras.length)
         ? starts[k + 1] - 1 : paras.length - 1;
+    ei = clampToUnitEnd(step, si, ei);
     var stemOnly = (ei <= si);
     var stem = paras[si];
     var f = null;
@@ -1878,13 +1895,14 @@ function relaxStemKeep(doc, flowStories, op) {
                 story.recompose();
             } catch (e2) { continue; }
             paras = story.paragraphs.everyItem().getElements();
-            var bad = _stemOrphanAt(paras, starts, k, minLines);
+            var bad = _stemOrphanAt(paras, starts, k, minLines, step);
             if (!bad) {
                 // 스프레드 걸침 재발 검사 (당겨진 시작이 오른쪽 페이지로
                 // 올라가며 문항이 다음 장에 걸칠 수 있다)
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
+                ei = clampToUnitEnd(step, si, ei);
                 try {
                     var sf = paras[si].parentTextFrames[0];
                     var efs = paras[ei].parentTextFrames;
@@ -1945,6 +1963,7 @@ function relaxQuestionKeep(doc, flowStories, op) {
             paras = story.paragraphs.everyItem().getElements();
             var ei = (k + 1 < starts.length && starts[k + 1] <= paras.length)
                 ? starts[k + 1] - 1 : paras.length - 1;
+            ei = clampToUnitEnd(step, si, ei);
             var bad = false;
             try {
                 var sf = paras[si].parentTextFrames[0];
@@ -2045,6 +2064,7 @@ function enforceStemKeep(doc, flowStories, op) {
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
+                ei = clampToUnitEnd(step, si, ei);
                 // W40 r2 — 발문 단독(뒤따르는 답란/본문 단락 0개. 원고에
                 // 답란이 빠진 문항)도 프레임 최하단이면 고아다. 기존 계약은
                 // ei<=si 를 통째로 건너뛰어 이 케이스를 못 밀었다.
