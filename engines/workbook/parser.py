@@ -3349,6 +3349,111 @@ def _split_step3_combined(paras, yy, mm, normal_questions, short_questions,
     return normal_items, short_items
 
 
+# 업체 변형문제 문제지의 지문번호 — 발문 꼬리의 원본 모의고사 문항번호
+# ("… 가장 적절한 것은? [18]" / "[41~42]"). 지문 코드가 없는 원고(PDF·docx)의
+# 지문 경계이자 지문번호다 (2026년 9월 고1: 발문 272개 중 254개가 달고 있다).
+_RE_S3_QNUM_TAG = re.compile(
+    r'\[\s*(\d{1,3})(?:\s*[~\-]\s*(\d{1,3}))?\s*\]\s*$')
+_RE_S3_Q_NUMBERED = re.compile(r'^\s*\d{1,3}\s*[.)]\s*\S')
+
+
+def _step3_items_from_spans(paras, spans, yy, mm, normal_questions,
+                            short_questions, num_to_combined, log=None,
+                            label=""):
+    """[(시작, 끝, 첫번호, 끝번호)] → 지문별 항목 (워크북 문항 집합으로 걸러).
+
+    항목 모양은 지문별 파일 경로(_process_question)와 같다 —
+    {question_num, code=YYMMQQ, paragraphs}. plan 이 유닛 머리에 `{code}` 를
+    얹어 지문번호를 인쇄하고, 지문 묶음마다 왼쪽 면에서 시작한다.
+    """
+    norm_set = {int(q) for q in (normal_questions or [])}
+    short_set = {int(q) for q in (short_questions or [])}
+    normal_items, short_items, skipped = [], [], []
+    for start, end, q1, q2 in spans:
+        body = paras[start:end]
+        if not any(_s3_text(p) for p in body):
+            continue
+        nums = list(range(q1, (q2 or q1) + 1))
+        file_key = num_to_combined.get(q1) or (
+            f"{q1}~{q2}" if q2 else str(q1))
+        item = {"question_num": file_key,
+                "code": f"{yy}{mm}{str(q1).zfill(2)}",
+                "paragraphs": _normalize_step3_choice_tabs(body)}
+        if any(n in norm_set for n in nums):
+            normal_items.append(item)
+        elif any(n in short_set for n in nums):
+            short_items.append(item)
+        else:
+            skipped.append(file_key)
+    if not normal_items and not short_items:
+        return None
+    if callable(log):
+        log(f"[파서] step3 {label}: 일반 {len(normal_items)}개 / 짤지문 "
+            f"{len(short_items)}개"
+            + (f" / 워크북 범위 밖 {len(skipped)}개 제외: "
+               f"{', '.join(skipped)}" if skipped else ""))
+    return normal_items, short_items
+
+
+def _split_step3_by_question_tags(paras, yy, mm, normal_questions,
+                                  short_questions, num_to_combined, log=None):
+    """발문 꼬리의 원본 문항번호 태그로 지문별 항목 만들기.
+
+    사용자 지시 2026-09-12: "원고에 따라서가 아니라 모의고사 지문이면
+    지문번호가 들어가야 해." 업체 문제지(PDF)는 지문 코드가 없지만 발문마다
+    `[18]`·`[41~42]` 로 원본 문항번호를 달고 온다 — 번호가 바뀌는 자리가
+    지문 경계다. 태그 없는 발문은 앞 지문에 딸린다(읽는 순서 그대로).
+
+    반환: (normal_items, short_items) 또는 None.
+    """
+    want = {int(q) for q in (normal_questions or [])} \
+        | {int(q) for q in (short_questions or [])}
+    if not want:
+        return None
+    heads = []                      # (index, first_num, last_num)
+    cur = None
+    for i, p in enumerate(paras):
+        t = _s3_text(p)
+        if not t or not _RE_S3_Q_NUMBERED.match(t):
+            continue
+        m = _RE_S3_QNUM_TAG.search(t)
+        if not m:
+            continue
+        q1 = int(m.group(1))
+        q2 = int(m.group(2)) if m.group(2) else None
+        if q1 not in want:
+            return None             # 이 회차 문항 집합이 아니다 — 손대지 않음
+        if cur is not None and q1 < cur:
+            return None             # 번호가 되돌아간다(유형별 변형 여러 벌)
+        if cur is None or q1 != cur:
+            heads.append((i, q1, q2))
+            cur = q1
+    if len(heads) < 3:
+        return None
+    spans = []
+    for k, (idx, q1, q2) in enumerate(heads):
+        start = idx
+        # 바로 앞의 세트 안내문("[291-292] 다음 글을 읽고 물음에 답하시오.")은
+        # 이 지문 몫이다
+        j = idx - 1
+        while j >= 0 and not _s3_text(paras[j]):
+            j -= 1
+        if j >= 0 and _RE_S3_SET_INTRO.search(_s3_text(paras[j])) \
+                and (k == 0 or j > heads[k - 1][0]):
+            start = j
+        end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
+        if k + 1 < len(heads):
+            j2 = heads[k + 1][0] - 1
+            while j2 > idx and not _s3_text(paras[j2]):
+                j2 -= 1
+            if j2 > idx and _RE_S3_SET_INTRO.search(_s3_text(paras[j2])):
+                end = j2
+        spans.append((start, end, q1, q2))
+    return _step3_items_from_spans(
+        paras, spans, yy, mm, normal_questions, short_questions,
+        num_to_combined, log, "발문 문항번호 태그로 지문별 분할")
+
+
 _RE_S3_CHOICE_LEAD = re.compile(r'^[\s\u00a0]*[①-⑮]')
 
 
@@ -3674,10 +3779,15 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _merge_step3_column_table(paras)
             _warn_step3_content_loss(_raw_words, paras, _nfc(fname_raw), log)
             # 회차 전체가 한 파일인 원고 — 지문 코드로 지문별 유닛 분할
-            split = (_split_step3_combined(
-                paras, yy, mm, normal_questions, short_questions,
-                num_to_combined, log)
-                if (normal_questions or short_questions) else None)
+            split = None
+            if normal_questions or short_questions:
+                split = _split_step3_combined(
+                    paras, yy, mm, normal_questions, short_questions,
+                    num_to_combined, log)
+                if not split:
+                    split = _split_step3_by_question_tags(
+                        paras, yy, mm, normal_questions, short_questions,
+                        num_to_combined, log)
             if split:
                 for it in split[0]:
                     it["filename"] = _nfc(fname_raw)
