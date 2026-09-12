@@ -225,7 +225,8 @@ RE_TAG = re.compile(r'\s*\[\s*(\d{4}\s*년[^\[\]]*)\]\s*')
 RE_TYPE = re.compile(r'^대표유형\s*(\d+)\s*[:：]\s*(.+)$')
 RE_STEP = re.compile(r'^Step\s*(\d+)\s*[.．]\s*(.+)$', re.I)
 RE_EMOJI = re.compile(r'^[\U0001F300-\U0001FAFF☀-➿️]+\s*')
-BOGI = ('<보기>', '〈보기〉')
+# 광문2(고2) 원고는 영어 발문 문항에서 보기 상자를 `< Word Bank >` 로 쓴다
+BOGI = ('<보기>', '〈보기〉', '<WordBank>', '〈WordBank〉')
 SUMMARY = ('〈요약문〉', '<요약문>')
 
 
@@ -254,6 +255,14 @@ def is_passage(t):
 def qkind(stem):
     if '밑줄' in stem and '고치' in stem:
         return 'grammar'
+    # 광문2(고2) 방언 — `다음 ①~⑤ 중, 어법상 틀린 곳이 있는 문장을 …`
+    if '어법' in stem and ('틀린' in stem or '고치' in stem):
+        return 'grammar'
+    # 배열영작 — 주어진 낱말을 모두 써서 문장을 완성
+    if '주어진 단어' in stem and '완성' in stem:
+        return 'arrange'
+    if 'Word Bank' in stem or 'ONE word from the passage' in stem:
+        return 'fill'
     if '요약' in stem:
         return 'summary'
     if '도식' in stem:
@@ -313,7 +322,8 @@ def parse_qbody(stem, lines, bad, where, allow_passage=False):
             if nxt is None:
                 bad.append((where, '<보기> 몸체 없음', t))
                 break
-            blocks.append({'t': 'bogi', 'r': nxt})
+            blocks.append({'t': 'bogi', 'r': nxt,
+                           'lab': t.strip().strip('<>〈〉').strip() or '보기'})
             i += 2
             continue
         m = RE_LAB.match(t)
@@ -559,7 +569,13 @@ def parse_answers(paras, bad):
 
 # ---------------------------------------------------------------- 밑줄 되짚기
 
-RE_MARK = re.compile(r'\(([a-h])\)\s+')
+# 표식 두 꼴 — 광문1 `(a) `, 광문2 `①`(뒤 공백 없음)
+RE_MARK = re.compile(r'\(([a-h])\)\s+|([\u2460-\u2473])\s*')
+RE_MARKANY = r'\([a-h]\)|[\u2460-\u2473]'
+
+
+def mark_key(m):
+    return m.group(1) or m.group(2)
 _PUNCT = ',.;:!?"\'“”‘’)('
 
 
@@ -567,11 +583,12 @@ def _clean(w):
     return w.strip(_PUNCT)
 
 
-def _exp_segment(exp, letter):
-    """해설에서 `(letter)` 부분만 — 다음 `(x)` 표식 전까지."""
+def _exp_segment(exp, mark):
+    """해설에서 그 표식 부분만 — 다음 표식 전까지. 표식은 `(a)` 또는 `①`."""
+    pat = r'\(' + mark + r'\)' if mark.isalpha() else re.escape(mark)
     segs = []
-    for m in re.finditer(r'\(' + letter + r'\)', exp):
-        nxt = re.search(r'\([a-h]\)', exp[m.end():])
+    for m in re.finditer(pat, exp):
+        nxt = re.search(RE_MARKANY, exp[m.end():])
         segs.append(exp[m.end(): m.end() + (nxt.start() if nxt else len(exp))])
     return ' '.join(segs)
 
@@ -610,7 +627,7 @@ def underline(text, exp, orig=None, report=None):
         words = list(re.finditer(r'\S+', text[start:limit]))
         if not words:
             continue
-        seg = _exp_segment(exp or '', m.group(1))
+        seg = _exp_segment(exp or '', mark_key(m))
         best = 0
         for cnt in range(1, min(6, len(words)) + 1):
             phrase = ' '.join(_clean(w.group(0)) for w in words[:cnt])
@@ -649,10 +666,11 @@ def build(cfg, log=print):
     an = parse_answers(read_paras(cfg.manuscript('answers')), bad)
 
     # 정답 ↔ 문항 대조
-    q_all = [q['no'] for s in p2.get('sets', []) for q in s['qs']]
+    # 하위 번호(1-1·1-2)는 정답지에서 한 줄로 묶인다 — **인쇄 번호**로 견준다
+    q_all = sorted({q['num'] for s in p2.get('sets', []) for q in s['qs']})
     a_all = [x['no'] for s in an['sets'] for x in s['items']]
     if q_all != a_all:
-        bad.append(('정답', f'문항 {len(q_all)}개 ≠ 정답 {len(a_all)}개', ''))
+        bad.append(('정답', f'문항 번호 {len(q_all)}개 ≠ 정답 {len(a_all)}개', ''))
     ranges_q = [(s['lo'], s['hi']) for s in p2.get('sets', [])]
     ranges_a = [(s['lo'], s['hi']) for s in an['sets']]
     if ranges_q != ranges_a:
@@ -673,7 +691,7 @@ def build(cfg, log=print):
         for q in s['qs']:
             for b in q['blocks']:
                 if b['t'] == 'grammar':
-                    b['r'] = underline(b['r'], exp_of.get(q['no'], ''), orig, ul)
+                    b['r'] = underline(b['r'], exp_of.get(q.get('num', q['no']), ''), orig, ul)
     how = {}
     for _m, _t, h in ul:
         how[h] = how.get(h, 0) + 1

@@ -477,6 +477,183 @@ def _col_right_edges(pages):
     return edges
 
 
+# ── 표 칸 ────────────────────────────────────────────────────────────────────
+
+def _line_runs(ln, gap_em=1.2):
+    """줄의 글자 덩어리 [(x0, x1)] — gap_em em 넘게 벌어진 곳에서 쪼갠다."""
+    em = max(ln["size"], 1) * gap_em
+    runs, s, last = [], None, None
+    for c in ln["chars"]:
+        if c["c"].isspace() and not c.get("ul"):
+            continue
+        if last is None:
+            s = c["x0"]
+        elif c["x0"] - last["x1"] > em:
+            runs.append((s, last["x1"]))
+            s = c["x0"]
+        last = c
+    if last is not None:
+        runs.append((s, last["x1"]))
+    return runs
+
+
+def _cut_line(ln, m):
+    """줄을 x=m 에서 잘라 (왼쪽 줄, 오른쪽 줄) — 글자 가운데로 가른다."""
+    out = []
+    for a, b in ((None, m), (m, None)):
+        chars = [c for c in ln["chars"]
+                 if (a is None or (c["x0"] + c["x1"]) / 2 >= a)
+                 and (b is None or (c["x0"] + c["x1"]) / 2 <= b)]
+        if not [c for c in chars if not c["c"].isspace() or c.get("ul")]:
+            out.append(None)
+            continue
+        rec = dict(ln)
+        rec["chars"] = chars
+        _finish_line(rec)
+        out.append(rec)
+    return out[0], out[1]
+
+
+def _cells_of(parts, sizes):
+    """한 열의 줄들 → 칸 목록. 칸 경계 = 줄 간격이 칸 안 간격보다 뚜렷히 큰 곳."""
+    parts = sorted(parts, key=lambda l: l["base"])
+    gaps = [b["base"] - a["base"] for a, b in zip(parts, parts[1:])]
+    med_sz = statistics.median(sizes) if sizes else 10.0
+    inner = [g for g in gaps if 0 < g < 1.8 * med_sz]
+    pitch = statistics.median(inner) if inner else 1.3 * med_sz
+    cells, cur = [], [parts[0]] if parts else []
+    for g, ln in zip(gaps, parts[1:]):
+        if g > 1.45 * pitch:
+            cells.append(cur)
+            cur = [ln]
+        else:
+            cur.append(ln)
+    if cur:
+        cells.append(cur)
+    return cells
+
+
+def _cell_grid(lines):
+    """한 단 안의 '칸이 감기는 2열 표'를 찾아 칸 순서(행 우선)로 다시 잇는다.
+
+    표의 단위는 줄이 아니라 칸이다 — 왼쪽 칸이 두 줄로 감기면 기준선으로 모은
+    줄이 오른쪽 칸 글과 엇갈려 표가 뒤섞인다(2026년 9월 고1 변형문제 15번
+    '표의 내용과 일치' 실측: 'Dreamland Amusement Park Destination'). 칸이
+    전부 한 줄인 배치(2열 선지 등)는 기준선 묶음이 이미 맞으므로 건드리지
+    않는다 — 감기는 칸이 있을 때만 다시 잇는다.
+
+    반환: 바뀐 줄 목록(칸 첫 줄에 `_cellstart`) 또는 None.
+    """
+    if len(lines) < 4:
+        return None
+    runs = [_line_runs(ln) for ln in lines]
+    cands = []
+    for rs in runs:
+        for k in range(len(rs) - 1):
+            lo, hi = rs[k][1], rs[k + 1][0]
+            if hi - lo >= 3.0:
+                cands.append((lo, hi))
+    best = None
+    for lo, hi in cands:
+        m = (lo + hi) / 2.0
+        # 띠는 구간 안 **모든** 줄에서 비어 있어야 한다 — 가운뎃점만 보면
+        # 한 칸 안의 낱말 사이('Reason    for')도 열 사이로 읽힌다
+        ok = []
+        for rs in runs:
+            if not rs:
+                ok.append(True)
+            elif max(b for _, b in rs) <= lo or min(a for a, _ in rs) >= hi:
+                ok.append(True)
+            else:
+                ok.append(any(rs[k][1] <= lo and rs[k + 1][0] >= hi
+                              for k in range(len(rs) - 1)))
+        # 띠를 사이에 둔 줄들이 잇달아 있는 가장 긴 구간
+        src = next((i for i, (rs, o) in enumerate(zip(runs, ok))
+                    if o and rs and min(a for a, _ in rs) < m
+                    and max(b for _, b in rs) > m), None)
+        if src is None:
+            continue
+        i = src
+        while i > 0 and ok[i - 1]:
+            i -= 1
+        j = src
+        while j + 1 < len(ok) and ok[j + 1]:
+            j += 1
+        if j - i + 1 >= 4 and (best is None or (j - i) > (best[1] - best[0])):
+            best = (i, j, lo, hi)
+    if best is None:
+        return None
+    i, j, lo, hi = best
+    region = lines[i:j + 1]
+    # 실제 빈 띠로 좁힌다 — 후보는 어느 한 줄의 간격이라 열 경계보다 넓다
+    xs = [r for ln in region for r in _line_runs(ln)]
+    lo = max([b for _, b in xs if b <= lo] or [lo])
+    hi = min([a for a, _ in xs if a >= hi] or [hi])
+    mid = (lo + hi) / 2.0
+    left, right = [], []
+    for ln in region:
+        a, b = _cut_line(ln, mid)
+        if a is not None:
+            left.append(a)
+        if b is not None:
+            right.append(b)
+    if len(left) < 2 or len(right) < 2:
+        return None
+    sizes = [ln["size"] for ln in region]
+    lc, rc = _cells_of(left, sizes), _cells_of(right, sizes)
+    if len(lc) < 2 or len(rc) < 2 or len(lc) + len(rc) < 6:
+        return None
+    # 감기는 칸이 없으면 기준선 묶음이 이미 맞다 — 손대지 않는다
+    if not any(len(c) >= 2 for c in lc + rc):
+        return None
+    cells = ([("L", c) for c in lc] + [("R", c) for c in rc])
+    cells.sort(key=lambda t: (min(l["base"] for l in t[1]),
+                              0 if t[0] == "L" else 1))
+    rows, used = [], None
+    for side, cl in cells:
+        top = min(l["base"] - l["size"] for l in cl)
+        bot = max(l["base"] for l in cl)
+        if (rows and side not in used and top <= rows[-1][1]
+                and bot >= rows[-1][0]):
+            rows[-1][0] = min(rows[-1][0], top)
+            rows[-1][1] = max(rows[-1][1], bot)
+            rows[-1][2].append((side, cl))
+            used.add(side)
+        else:
+            rows.append([top, bot, [(side, cl)]])
+            used = {side}
+    if len(rows) < 3:
+        return None
+    # 칸 안에서 줄이 이어지는지는 **칸의** 오른쪽 끝으로 잰다 — 단 끝으로
+    # 재면 짧은 칸이 늘 '자리가 남았다'가 되어 감긴 줄이 갈라진다
+    r_edge = max([ln["x1"] for ln in right] or [hi])
+    out = list(lines[:i])
+    for _, _, rcells in rows:
+        for side, cl in sorted(rcells, key=lambda t: 0 if t[0] == "L" else 1):
+            for k, ln in enumerate(sorted(cl, key=lambda l: l["base"])):
+                ln["_edge"] = lo if side == "L" else r_edge
+                if k == 0:
+                    ln["_cellstart"] = True
+                out.append(ln)
+    out.extend(lines[j + 1:])
+    return out
+
+
+def _regroup_cells(seq):
+    """읽는 순서에서 같은 단이 잇달은 구간마다 표 칸 재배열을 시도한다."""
+    out, k = [], 0
+    while k < len(seq):
+        col = seq[k][0]
+        j = k
+        while j + 1 < len(seq) and seq[j + 1][0] == col:
+            j += 1
+        block = [ln for _, ln in seq[k:j + 1]]
+        new = _cell_grid(block) if col != "F" else None
+        out.extend((col, ln) for ln in (new if new else block))
+        k = j + 1
+    return out
+
+
 # ── 단락 경계 ────────────────────────────────────────────────────────────────
 
 _RE_HEAD = re.compile(
@@ -850,7 +1027,8 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
 
         # ── 읽는 순서 + 단 오른쪽 끝 ────────────────────────────────────────
         for pi, pg in enumerate(pages):
-            pg["seq"] = _page_sequence(pg["lines"], pg["split"])
+            pg["seq"] = _regroup_cells(_page_sequence(pg["lines"],
+                                                      pg["split"]))
             for col, ln in pg["seq"]:
                 ln["_colkey"] = (pi, col)
         edges = _col_right_edges(pages)
@@ -921,6 +1099,13 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                         _LOG.warning("[PDF] 그림 추출 실패(%s, %s): %s",
                                      im["key"], label, e)
                     continue
+                if ln.get("_cellstart") and prev is not None:
+                    # 표 칸이 바뀌는 자리 — 칸은 늘 따로 단락이다
+                    flush()
+                    cur = list(ln["chars"])
+                    cur_lines = 1
+                    prev = ln
+                    continue
                 if prev is None:
                     cur = list(ln["chars"])
                     cur_lines = 1
@@ -931,7 +1116,8 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                 korean = bool(letters) and (
                     sum(1 for c in letters if _is_hangul(c)) / len(letters) >= 0.3)
                 brk, blank = _breaks(prev, ln,
-                                     edges.get(prev["_colkey"], prev["x1"]),
+                                     prev.get("_edge") or edges.get(
+                                         prev["_colkey"], prev["x1"]),
                                      pitches.get(prev["_colkey"], 12.0), first,
                                      cur_lines, korean)
                 if brk:
