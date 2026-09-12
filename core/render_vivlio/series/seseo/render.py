@@ -1,25 +1,25 @@
 """세서특필 렌더러 — data.json → build/index.html.
 
-## 면 구성 (정본 26-1 기말과 같은 순서)
+## 면 구성
 
-    1  표지 속(정본 면)          §ART1§
-    2·3 CONTENTS 펼침(정본 면)   §ART2§ §ART3§
-    4·5 PART 1 간지(정본 면)     §ART4§ §ART5§
-    6~ PART 1 세희T PICK 중요문장          ← 왼쪽 면에서 연다
-       (MEMO)
-    PART 2 간지(정본 면)         §ART6§ §ART7§ ← 왼쪽 면
-    대표유형 01~NN (설명 = 왼쪽 면, 연습 = 오른쪽 면)
-    광문고 기출 서술형 실전문제 (세트마다 새 면)
-    정답 및 해설 (2단)
-    뒤표지 속(정본 면)           §ART8§       ← 왼쪽 면 = 마지막 면(짝수)
+    1      앞 간지(직접 그림)            §FRONT§   ← 오른쪽 면
+    2·3    CONTENTS 펼침                §TOC1§ §TOC2§
+    4·5    PART 1 간지 펼침              §DL1§ §DR1§  ← 왼쪽 면에서 열어 오른쪽에서 닫음
+    6~     PART 1 세희T PICK 중요문장               ← 왼쪽 면에서 연다
+    …      PART 2 간지 펼침              §DL2§ §DR2§
+           대표유형 01~NN (설명 = 왼쪽 면, 연습 = 오른쪽 면)
+           광문고 기출 서술형 실전문제 (세트마다 새 면)
+           정답 및 해설 (2단)
+    끝     크레딧 간지                   §BACK§    ← 왼쪽 면 = 마지막 면(짝수)
 
-정본 면 자리는 빈 면에 표식만 심어 두고, 조판이 끝난 뒤 `finish.inserts` 가
-정본 PDF 의 면으로 바꿔 끼운다. 쪽번호가 실제 면 번호와 맞도록 자리를 먼저 차지한다.
+간지는 26-1 표지(광문1_세서특필02_표지)의 노을 하늘·달·구름·유성·워드마크를 가져와
+본문 노을 팔레트로 맞춰 **직접 그린다**(2026-09-12 사용자 지시 "새로 그려").
+예전에는 정본 내지의 면을 그대로 끼워 넣었다(`finish.inserts`) — 그 판 색(노랑·파랑)이
+본문과 어긋나 폐기.
 
 ## 절은 왼쪽 면에서 연다
-`break-before: left` 가 만든 백면은 1패스에서 찾아, 2패스에서 그 자리에 **MEMO 면**을
-넣는다(정본 p.93 과 같은 방식). 어느 절 앞이 비었는지는 백면 **다음 면**의 표식
-(§S…§ / §P…§ / §ART…§)으로 안다.
+`break-before: left` 가 만든 백면은 그 앞에 **MEMO 면**을 넣어 없앤다(정본 p.93 방식).
+어느 절 앞이 비었는지는 백면 **다음 면**의 표식으로 안다.
 """
 import html
 import os
@@ -239,8 +239,8 @@ def front_page(cfg):
         '<div class="sky sky-front"></div>'
         '<img class="moon" src="assets/moon_clouds.png" alt="">'
         + wordmark_stack()
-        + f'<div class="front-foot"><img class="crest" src="assets/crest.png" alt="">'
-        f'<span>{esc(b.get("header", "2026 광문고 1학년 2학기 중간고사 서술형 대비"))}</span></div>')
+        + f'<div class="front-foot"><i class="msk m-crest"></i>'
+        f'<span>{esc(b.get("header", ""))}</span></div>')
 
 
 def toc_pages(cfg):
@@ -251,7 +251,7 @@ def toc_pages(cfg):
         f'<span class="toc-t">{esc(t)}</span></div>' for no, t, c in rows)
     left = art_page("TOC1", "toc", 
                     '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
-                    '<div class="toc-head"><img class="crest" src="assets/crest.png" alt="">'
+                    '<div class="toc-head"><i class="msk m-crest"></i>'
                     '<div class="toc-title">CONTENTS</div></div>', left=True)
     right = art_page("TOC2", "toc",
                      '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
@@ -279,11 +279,10 @@ def credit_page(cfg):
     return art_page(
         "BACK", "credit",
         '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
-        '<div class="cr-mid"><img class="crest" src="assets/crest.png" alt="">'
-        '<img class="script" src="assets/script.png" alt="Make You Say English"></div>'
+        '<div class="cr-mid"><i class="msk m-crest"></i><i class="msk m-script"></i></div>'
         f'<div class="cr-line">{esc(b.get("header", ""))}</div>'
-        '<div class="cr-logos"><img src="assets/logo_sehui.png" alt="세희영어연구소">'
-        '<img src="assets/logo_gakin.png" alt="각인Books"></div>', left=True)
+        '<div class="cr-logos"><i class="msk m-sehui"></i><i class="msk m-gakin"></i></div>',
+        left=True)
 
 
 # ── PART 1 ─────────────────────────────────────────────────────────────

@@ -32,7 +32,10 @@ CMYK = {
     "#ffda87": [0, 14, 55, 0],
 }
 
-RE_TAG = re.compile(r'§((?:S|T|P|ART)\d+)§')
+RE_TAG = re.compile(r'§((?:S|T|P)\d+|FRONT|TOC\d|DL\d|DR\d|BACK)§')
+# 간지(직접 그린 전면 디자인 면) — 표식 → 어느 쪽 면이어야 하는가(True = 왼쪽/짝수)
+ART_SIDE = {"FRONT": False, "TOC1": True, "TOC2": False, "DL1": True, "DR1": False,
+            "DL2": True, "DR2": False, "BACK": True}
 MAX_FIT = 4
 FRAME = {"inner": 23.0, "outer": 26.0, "width": 167.0, "top": 22.0, "bottom": 278.5}
 
@@ -154,16 +157,15 @@ class SeseoSeries(Series):
             raise RuntimeError("면 계획 16회 실패")
 
         pages = len(texts)
-        art = self._marks(texts, r'§(ART\d)§')
+        art = self._marks(texts, r'§(FRONT|TOC\d|DL\d|DR\d|BACK)§')
         errs = [f"{k} {p}쪽" for k, p in art.items()
-                if (int(k[3:]) % 2 == 0) != (p % 2 == 0)]
-        if art.get("ART8") != pages or pages % 2:
-            errs.append(f"뒤표지 속 {art.get('ART8')}쪽 / 전체 {pages}쪽")
-        if len(art) != 8 or errs:
-            raise RuntimeError(f"정본 면 자리가 어긋났다: {art} {errs}")
+                if ART_SIDE.get(k) is not None and ART_SIDE[k] != (p % 2 == 0)]
+        if art.get("BACK") != pages or pages % 2:
+            errs.append(f"크레딧 {art.get('BACK')}쪽 / 전체 {pages}쪽")
+        if len(art) != len(ART_SIDE) or errs:
+            raise RuntimeError(f"간지 자리가 어긋났다: {art} {errs}")
 
         res = bleed_mod.finish(out, cfg.finish_spec(), log)
-        self._label_art(out, art, log)
         with open(os.path.join(bd, "pages.json"), "w", encoding="utf-8") as f:
             json.dump({"art": art, "memos": sorted(memos), "pages": pages}, f,
                       ensure_ascii=False)
@@ -272,30 +274,6 @@ class SeseoSeries(Series):
                 out.setdefault(m.group(1), i + 1)
         return out
 
-    @staticmethod
-    def _label_art(pdf, art, log):
-        """글자 없는 정본 면(표지 속·뒤표지 속)에 보이지 않는 표식을 남긴다.
-
-        빈 면 게이트는 **글자**로 빈 면을 가린다. 그림뿐인 정본 면이 백면으로 잡히지
-        않도록, 그 면이 어느 자리인지 알려 주는 투명 글자(렌더 모드 3)를 얹는다.
-        """
-        import fitz
-        doc = fitz.open(pdf)
-        n = 0
-        for tag, p in art.items():
-            pg = doc[p - 1]
-            if not pg.get_text().strip():
-                pg.insert_text((20, 20), f"§{tag}§", fontsize=2, render_mode=3)
-                n += 1
-        if n:
-            tmp = pdf + ".tmp"
-            doc.save(tmp, garbage=3, deflate=True)
-            doc.close()
-            os.replace(tmp, pdf)
-        else:
-            doc.close()
-        log(f"  정본 면 표식 {n}면")
-
     # ── 검수 ──
     def verify(self, cfg, log, report):
         pdf = cfg.out_pdf((cfg.section("verify") or {}).get("suffix", ""))
@@ -391,19 +369,20 @@ class SeseoSeries(Series):
             errs.append(f"총 {n}면 — 짝수가 아니다(마지막 면은 왼쪽)")
         where = {}
         for i, t in enumerate(texts):
-            for m in re.finditer(r'§((?:S|T|P|ART)\d+)§', t):
+            for m in re.finditer(r'§((?:S|T|P)\d+|FRONT|TOC\d|DL\d|DR\d|BACK)§', t):
                 where.setdefault(m.group(1), i + 1)
         for k, p in where.items():
-            want_left = k.startswith(("S", "T")) or (k.startswith("ART") and int(k[3:]) % 2 == 0)
-            if k.startswith("P"):
-                want_left = False
+            want_left = ART_SIDE.get(k)
+            if want_left is None:                      # 절(S·T) 은 왼쪽, 연습(P) 은 오른쪽
+                want_left = not k.startswith("P")
             if (p % 2 == 0) != want_left:
                 errs.append(f"{k} 가 {'왼' if want_left else '오른'}쪽 면이 아니다({p}쪽)")
-        if where.get("ART8") != n:
-            errs.append(f"뒤표지 속이 마지막 면이 아니다({where.get('ART8')}/{n})")
+        if where.get("BACK") != n:
+            errs.append(f"크레딧 면이 마지막이 아니다({where.get('BACK')}/{n})")
         for e in errs:
             report.fail(e)
-        report.note(f"면 구성 {n}면 · 절 머리 {len([k for k in where if not k.startswith('ART')])}")
+        report.note(f"면 구성 {n}면 · 간지 {len([k for k in where if k in ART_SIDE])} · "
+                    f"절 머리 {len([k for k in where if k not in ART_SIDE])}")
 
     @staticmethod
     def _strip_running(cfg, t):

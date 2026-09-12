@@ -685,5 +685,6 @@ def build(cfg, log=print):
 
 
 def load(cfg):
-    with open(cfg.path('data.json'), encoding='utf-8') as f:
-        return json.load(f)
+    """data.json + 편집 이력(정오표). 원고를 다시 뽑아도 고친 글자가 살아남는다."""
+    from core.render_vivlio import edits
+    return edits.load_data(cfg)

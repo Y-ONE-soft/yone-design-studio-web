@@ -416,7 +416,7 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
             #cfa3c8 86%, #9a9ad0 100%); }
 .d1.r .band { background: linear-gradient(118deg, #f2a08f 0%, #d9a3c6 40%, #a7a3d8 76%,
               #8a8cc4 100%); }
-.d2 .band { background: linear-gradient(118deg, #f6a0b0 0%, #db9fc2 32%, #ab a6da 62%,
+.d2 .band { background: linear-gradient(118deg, #f6a0b0 0%, #db9fc2 32%, #aba6da 62%,
             #8a86c2 100%); }
 .d2.r .band { background: linear-gradient(118deg, #8f8cc6 0%, #b0a6dc 28%, #efa08f 76%,
               #ffc78e 100%); }
