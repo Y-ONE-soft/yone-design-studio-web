@@ -3264,6 +3264,136 @@ def _absorb_step3_multi(step3_dir, used_files, normal_items, log=None,
                                              heads[0][0]))
 
 
+# 아잉카 회차 통합 원고의 지문 머리 — "[202609H1_18목적추론_변형]"
+# (시험 코드 YYYYMM + 학년 + 문항번호). 지문별 파일("고1 26년 9월 20번.hwp")
+# 대신 한 파일에 회차 전체가 오는 원고를 지문 단위로 가르는 앵커다.
+_RE_S3_MOCK_CODE = re.compile(
+    r'^\[\s*(\d{4})(\d{2})\s*(?:[A-Za-z]\d{0,2})?\s*[_\-]\s*'
+    r'(\d{1,3})(?:\s*[~-]\s*(\d{1,3}))?')
+_RE_S3_SET_INTRO = re.compile(r'글을\s*읽고|물음에\s*답')
+
+
+def _split_step3_combined(paras, yy, mm, normal_questions, short_questions,
+                          num_to_combined, log=None):
+    """회차 전체가 한 파일인 Step3 원고 → 지문별 항목.
+
+    모의고사 Step3 관행은 지문별 파일("고1 26년 9월 20번.hwp")이고, 조판은
+    지문마다 유닛을 만들어 `{YYMMQQ}` 지문번호를 얹는다(plan `code`).
+    아잉카 변형문제 원고는 25지문이 한 파일에 들어와 파일명 번호 매칭이
+    실패했고, 통짜 1유닛이 되어 지문번호도 지문별 묶음도 사라졌다
+    (사용자 지적 2026-09-12 "스텝3 지문별로 {260920} 이렇게 들어가고
+    지문별로 묶여야지"). 지문 머리의 시험 코드를 앵커로 갈라 같은 모양의
+    항목을 만든다 — 코드 줄 자체는 출력에서 뺀다(편집용 표기).
+
+    반환: (normal_items, short_items) 또는 None (앵커 2개 미만).
+    """
+    heads = []
+    for i, p in enumerate(paras):
+        m = _RE_S3_MOCK_CODE.match(_s3_text(p))
+        if m:
+            heads.append((i, m))
+    if len(heads) < 2:
+        return None
+    norm_set = {int(q) for q in (normal_questions or [])}
+    short_set = {int(q) for q in (short_questions or [])}
+    normal_items, short_items, skipped = [], [], []
+    for k, (idx, m) in enumerate(heads):
+        # 세트 안내문("※ 다음 글을 읽고, 물음에 답하시오.")은 지문의 일부다
+        start = idx
+        j = idx - 1
+        while j >= 0 and not _s3_text(paras[j]):
+            j -= 1
+        if j >= 0 and _RE_S3_SET_INTRO.search(_s3_text(paras[j])) \
+                and (k == 0 or j > heads[k - 1][0]):
+            start = j
+        end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
+        # 다음 지문의 안내문은 그쪽 몫
+        if k + 1 < len(heads):
+            j2 = heads[k + 1][0] - 1
+            while j2 > idx and not _s3_text(paras[j2]):
+                j2 -= 1
+            if j2 > idx and _RE_S3_SET_INTRO.search(_s3_text(paras[j2])):
+                end = j2
+        body = [p for n, p in enumerate(paras[start:end], start)
+                if n != idx]          # 코드 줄 제거
+        q1 = int(m.group(3))
+        q2 = int(m.group(4)) if m.group(4) else None
+        nums = list(range(q1, (q2 or q1) + 1))
+        file_key = num_to_combined.get(q1) or (
+            f"{q1}~{q2}" if q2 else str(q1))
+        item = {"question_num": file_key,
+                "code": f"{yy}{mm}{str(q1).zfill(2)}",
+                "paragraphs": body}
+        if any(n in norm_set for n in nums):
+            normal_items.append(item)
+        elif any(n in short_set for n in nums):
+            short_items.append(item)
+        else:
+            skipped.append(file_key)
+    if not normal_items and not short_items:
+        return None
+    if callable(log):
+        log(f"[파서] step3 회차 통합 원고 지문별 분할: 일반 "
+            f"{len(normal_items)}개 / 짤지문 {len(short_items)}개"
+            + (f" / 워크북 범위 밖 {len(skipped)}개 제외: "
+               f"{', '.join(skipped)}" if skipped else ""))
+    return normal_items, short_items
+
+
+_RE_S3_CHOICE_LEAD = re.compile(r'^[\s\u00a0]*[①-⑮]')
+
+
+def _normalize_step3_choice_tabs(paras, log=None):
+    """선지·열 머리 줄의 탭을 한 칸씩으로 (선행 탭 제거).
+
+    원고가 이중 탭·선행 탭으로 눈대중 정렬한 줄은 행마다 셀 수가 달라
+    (같은 문항에서 2개/3개/4개) 조판 열정렬이 열을 어긋나게 잡는다
+    (사용자 지적 2026-09-12 "선지 헤더 정렬이 틀어졌어"). 셀 경계를
+    한 칸 탭으로 통일해 행마다 같은 열 수가 되게 한다."""
+    from core.structure import rules as R
+    fixed = 0
+    for p in paras:
+        if not isinstance(p, dict):
+            continue
+        t = p.get("text") or ""
+        if "\t" not in t:
+            continue
+        if not (_RE_S3_CHOICE_LEAD.match(t) or R.choice_header_marks(t)):
+            continue
+        keep, prev_tab, seen = [], False, False
+        for c in t:
+            if c == "\t":
+                if prev_tab or not seen:
+                    keep.append(False)      # 이중 탭·선행 탭
+                    continue
+                prev_tab = True
+                keep.append(True)
+                continue
+            if not seen and c.isspace():
+                keep.append(False)          # 선행 공백
+                continue
+            seen = True
+            prev_tab = False
+            keep.append(True)
+        if all(keep):
+            continue
+        runs = p.get("runs") or []
+        if runs and "".join(r.get("t", "") for r in runs) == t:
+            out, pos = [], 0
+            for r in runs:
+                rt = "".join(ch for n, ch in enumerate(r["t"], pos)
+                             if keep[n])
+                pos += len(r["t"])
+                if rt:
+                    out.append({**r, "t": rt})
+            p["runs"] = out
+        p["text"] = "".join(c for c, k in zip(t, keep) if k)
+        fixed += 1
+    if fixed and callable(log):
+        log(f"[파서] step3 선지 탭 정규화: {fixed}줄")
+    return paras
+
+
 def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
                         short_questions, combined_questions, extract_underline=True,
                         step3_exclude_footnotes=True, log=None, image_dir=None):
@@ -3365,6 +3495,7 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
         # 5지선다 자동번호(①②③④⑤) 텍스트화 — hwp AutoNumbering 누락 보완
         paras = _add_step3_choice_numbers(paras)
         paras = _normalize_step3_lines(paras, log)                        # W83
+        paras = _normalize_step3_choice_tabs(paras, log)
         # 책 헤더("2027년 수능특강 ...") + [Gateway] 묶음 마커 제거
         # ※ _add_step3_choice_numbers의 passage_above 판정이 [Gateway]를 참조하므로
         #   반드시 그 호출 *후*에 실행해야 함
@@ -3525,11 +3656,25 @@ def _parse_step3_folder(step3_dir, grade, year, month, normal_questions,
             paras = _strip_step3_type_tags(paras)
             paras = _add_step3_choice_numbers(paras)
             paras = _normalize_step3_lines(paras, log)                    # W83
+            paras = _normalize_step3_choice_tabs(paras, log)
             paras = _strip_step3_book_markers(paras)
             paras = _fix_step3_order_label_position(paras)
             paras = _merge_step3_ab_pairs(paras)
             paras = _merge_step3_column_table(paras)
             _warn_step3_content_loss(_raw_words, paras, _nfc(fname_raw), log)
+            # 회차 전체가 한 파일인 원고 — 지문 코드로 지문별 유닛 분할
+            split = (_split_step3_combined(
+                paras, yy, mm, normal_questions, short_questions,
+                num_to_combined, log)
+                if (normal_questions or short_questions) else None)
+            if split:
+                for it in split[0]:
+                    it["filename"] = _nfc(fname_raw)
+                    normal_items.append(it)
+                for it in split[1]:
+                    it["filename"] = _nfc(fname_raw)
+                    short_items.append(it)
+                continue
             textbook_paras.extend(paras)
         if textbook_paras:
             normal_items.append({

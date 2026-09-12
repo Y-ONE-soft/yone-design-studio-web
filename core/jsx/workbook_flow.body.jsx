@@ -2181,9 +2181,26 @@ function normalizeStep3ContentMasters(doc, flowStories) {
         var pages = [];
         try { pages = storyPagesInOrder(rec.story); } catch (e0) { continue; }
         if (pages.length < 2) { continue; }
+        // 최빈값은 **내용이 실린 페이지**에서만 센다. 빈 꼬리 페이지는
+        // page_cleanup이 일부러 M(메모)으로 바꿔 두므로, 전체에서 세면
+        // 원고가 짧을 때 M이 다수가 되어 내용 페이지를 전부 메모 마스터로
+        // 뒤집는다 (2026-09-12 사용자 지적 "마스터가 왜 다 메모 페이지로
+        // 들어간 거야?" — 아잉카 Step3 17쪽 대 빈 페이지 70쪽 실측).
+        var hasC = [];
+        for (var pc = 0; pc < pages.length; pc++) {
+            var cFound = false;
+            try {
+                var cfs = framesOfStoryOnPage(rec.story, pages[pc]);
+                for (var cf = 0; cf < cfs.length; cf++) {
+                    if (!isBlankFrameContent(cfs[cf])) { cFound = true; break; }
+                }
+            } catch (eC) {}
+            hasC.push(cFound);
+        }
         var counts = {};
         var best = null;
         for (var pi = 0; pi < pages.length; pi++) {
+            if (!hasC[pi]) { continue; }
             var mn = "";
             try {
                 mn = pages[pi].appliedMaster ? pages[pi].appliedMaster.name : "";
@@ -2201,14 +2218,7 @@ function normalizeStep3ContentMasters(doc, flowStories) {
             } catch (e2) {}
             if (mn2 === best) { continue; }
             // 내용이 실린 페이지만 (빈 꼬리 페이지는 page_cleanup 소관)
-            var hasContent = false;
-            try {
-                var pfs = framesOfStoryOnPage(rec.story, pages[pj]);
-                for (var fi = 0; fi < pfs.length; fi++) {
-                    if (!isBlankFrameContent(pfs[fi])) { hasContent = true; break; }
-                }
-            } catch (e3) {}
-            if (!hasContent) { continue; }
+            if (!hasC[pj]) { continue; }
             try {
                 pages[pj].appliedMaster = doc.masterSpreads.itemByName(best);
                 fixed++;
