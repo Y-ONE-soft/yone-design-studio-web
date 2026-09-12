@@ -381,8 +381,10 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .m-gakin { -webkit-mask-image: url(assets/logo_gakin.png); mask-image: url(assets/logo_gakin.png); }
 
 /* ① 앞 간지 — 해질녘 하늘 + 달·구름, 표지의 세/서/특/필 쌓기 */
-.sky-front { background: linear-gradient(208deg, #58539c 0%, #8d8fc6 17%, #c9a2c4 35%,
-             #f4a094 53%, #f9b487 69%, #ffd79a 85%, #fff1d6 100%); }
+/* 하늘·종이 그라데이션은 **미리 구운 300dpi 그림**이다(참고/make_art.py).
+   CSS 그라데이션으로 두면 ① 인쇄 변환이 22dpi 이미지로 굳히고 ② 펼침면 가운데에서
+   좌우 색이 끊긴다(둘 다 검수 실측). 펼침은 한 장으로 굽고 반으로 잘라 쓴다. */
+.sky-front { background: url(assets/grad_front.png) no-repeat 0 0 / 216mm 303mm; }
 .front .moon { left: 0; top: 0; width: 216mm; height: 303mm; object-fit: cover; opacity: .9; }
 .wm-stack { position: absolute; left: 22mm; top: 44mm; }
 .wm-row { display: flex; align-items: flex-end; margin-bottom: 4.5mm; }
@@ -395,7 +397,7 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 
 /* ② 목차 펼침 — 크림 종이에 구름 */
 .paper { position: absolute; inset: 0;
-         background: linear-gradient(180deg, #fff7e8 0%, #ffeed8 58%, #ffe5c6 100%); }
+         background: url(assets/grad_paper.png) no-repeat 0 0 / 216mm 303mm; }
 .toc .cl, .credit .cl { left: 0; bottom: 0; width: 216mm; opacity: .9; }
 .toc-head { position: absolute; left: 26mm; top: 52mm; color: #e35a4d; }
 .toc-head .msk { width: 13mm; height: 13mm; margin-bottom: 4mm; }
@@ -414,23 +416,20 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 /* ③ 파트 간지 2면 펼침 — 위 하늘 띠, 아래 크림. 왼쪽이 열고 오른쪽이 닫는다 */
 .div { background: #fffaf2; }
 .div .band { inset: 0 0 auto 0; height: 190mm; }
-.d1 .band { background: linear-gradient(118deg, #ffd79a 0%, #f9b487 32%, #f4a094 60%,
-            #cfa3c8 86%, #9a9ad0 100%); }
-.d1.r .band { background: linear-gradient(118deg, #f2a08f 0%, #d9a3c6 40%, #a7a3d8 76%,
-              #8a8cc4 100%); }
-.d2 .band { background: linear-gradient(118deg, #f6a0b0 0%, #db9fc2 32%, #aba6da 62%,
-            #8a86c2 100%); }
-.d2.r .band { background: linear-gradient(118deg, #8f8cc6 0%, #b0a6dc 28%, #efa08f 76%,
-              #ffc78e 100%); }
+.d1 .band   { background: url(assets/grad_d1_L.png) no-repeat 0 0 / 216mm 190mm; }
+.d1.r .band { background: url(assets/grad_d1_R.png) no-repeat 0 0 / 216mm 190mm; }
+.d2 .band   { background: url(assets/grad_d2_L.png) no-repeat 0 0 / 216mm 190mm; }
+.d2.r .band { background: url(assets/grad_d2_R.png) no-repeat 0 0 / 216mm 190mm; }
 .div .st { left: 0; top: 0; width: 216mm; height: 190mm; object-fit: cover; opacity: .75; }
+.div.r .st, .toc.art:not(.left) .cl { transform: scaleX(-1); }
 .div-mark { position: absolute; left: 26mm; top: 62mm; color: #fff; }
 .dv-1 { display: block; font: 500 15pt/1 Elice; letter-spacing: .16em; opacity: .95; }
 .dv-2 { display: block; margin-top: 5mm; font: 400 27pt/1 Ghana; letter-spacing: .08em; }
 .dv-3 { display: block; margin-top: 2mm; font: 400 82pt/1 Ghana; }
 .div-title { position: absolute; right: 23mm; top: 202mm; font: 500 20pt/1.25 Elice;
              color: #5b579f; }
-.div-rule { position: absolute; right: 23mm; top: 216mm; width: 118mm; height: .5mm;
-            background: linear-gradient(90deg, rgba(245,142,125,0), #f58e7d); }
+.div-rule { position: absolute; right: 23mm; top: 216mm; width: 74mm; height: .5mm;
+            background: #f58e7d; }
 
 /* ④ 크레딧 — 심볼 + Make You Say English + 로고 */
 .cr-mid { position: absolute; left: 0; right: 0; top: 116mm; text-align: center; color: #e35a4d; }
