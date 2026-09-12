@@ -2123,6 +2123,24 @@ function enforceStemKeep(doc, flowStories, op) {
                 break;
             }
             if (hit < 0) { break; }
+            // W88 교정: 발문 밀기(NEXT_FRAME)는 **그 프레임의 꼬리를 잘라내므로**
+            // 같은 프레임 안 앞쪽 발문이 새로 프레임 마지막 내용이 되어 고아가
+            // 될 수 있다(f7960153 기준본 115건 vs 무되감기 91건 — 24건 누락).
+            // 영향 범위는 딱 프레임 f 안이므로, 0번이 아니라 **f 안의 첫
+            // 시작점**까지만 되감아 다시 본다. 밀린 단락은 noFix 라 재밀기 없음.
+            var kBack = k;
+            try {
+                var fid = f.id;
+                while (kBack > 0) {
+                    var pj = starts[kBack - 1];
+                    if (pj < 0 || pj >= paras.length) { break; }
+                    var pf = null;
+                    try { pf = paras[pj].parentTextFrames[0]; } catch (eB1) {}
+                    if (!pf || pf.id !== fid) { break; }
+                    kBack--;
+                }
+            } catch (eB2) { kBack = 0; }   // 판정 불가하면 안전하게 전체 재검
+            k = kBack;
             try {
                 paras[hit].startParagraph = StartParagraph.NEXT_FRAME;
                 pushed++;
