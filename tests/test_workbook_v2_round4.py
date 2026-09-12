@@ -133,7 +133,9 @@ def test_round4_c05_golden_plan_has_no_pua():
              for p in (u["paras"] if isinstance(u, dict) else u)]
     assert not any(any(_is_pua(ch) for ch in p.get("t", ""))
                    for p in paras), "PUA 화살표 잔존"
-    assert len(fl["units"]) == 25          # 유닛 수 무변 (W13 가드와 일치)
+    # 2026-09-12: 짤지문은 별도 플로우(step3_short) — 합계는 그대로 25
+    fs = next(f for f in plan["flows"] if f["step"] == "step3_short")
+    assert len(fl["units"]) + len(fs["units"]) == 25
     assert sum(1 for p in paras if "배경" in (p.get("s") or "")) >= 18
 
 

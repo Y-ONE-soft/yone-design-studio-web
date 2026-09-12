@@ -139,9 +139,17 @@ def test_r10c22_plan_anchor():
     txt = json.dumps(plan, ensure_ascii=False)
     assert not any(_is_pua(ch) for ch in txt)
     fl = [f for f in plan["flows"] if f["step"] == "step3"][0]
-    paras = [p for u in fl["units"]
+    # 배경 단락 수는 실전문제 + 짤지문 두 플로우 합계로 센다
+    paras = [p for f in plan["flows"]
+             if f["step"].startswith("step3")
+             for u in f["units"]
              for p in (u["paras"] if isinstance(u, dict) else u)]
-    assert len(fl["units"]) == 25           # E2E 실측 (18 normal + 7 short)
+    # 2026-09-12 사용자 확정 스펙: 모의고사 짤지문(18·19·25~28·43~45)은
+    # **별도 스토리**(간지 뒤 짤지문 섹션) — step3 18 + step3_short 7.
+    assert len(fl["units"]) == 18
+    fs = next(f for f in plan["flows"] if f["step"] == "step3_short")
+    assert len(fs["units"]) == 7
+    assert fs["target"]["split_after_marker"] == "짤지문"
     # 28 → 27 (W40 결함 4): short[3] 괄호 어법 선택형 재인쇄 지문 1개
     # 배경 → 지문 강등 (지문 배경 오적용 수리)
     assert sum(1 for p in paras if "배경" in (p.get("s") or "")) == 27

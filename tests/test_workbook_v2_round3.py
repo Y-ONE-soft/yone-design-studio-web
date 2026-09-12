@@ -343,7 +343,8 @@ def test_round3_c05_golden_g9_and_step3():
     plan = steps_to_plan(c["steps"], workbook_type="모의고사")
     assert not plan["unsupported"]
     by_step = {fl["step"]: len(fl["units"]) for fl in plan["flows"]}
-    assert by_step["step3"] == 25
+    # 2026-09-12: 짤지문 7묶음은 step3_short(별도 스토리)로 간다
+    assert by_step["step3"] == 18 and by_step["step3_short"] == 7
     assert by_step["step2_a1"] == 18 and by_step["step2_a1_btm"] == 18
 
 
