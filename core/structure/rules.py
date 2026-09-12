@@ -200,7 +200,10 @@ C_AB_HEADER = re.compile(r'^\(A\)(?:\s{2,}|\t)')                # (A)  (B)  (C) 
 #   ① 열 라벨과 공백'만'으로 이뤄진 줄 (라벨 2개 이상)
 #   ② 바로 다음 유의 단락이 같은 열 수의 원문자 선지
 # 두 조건이 같이 성립할 때만 헤더 — 뒤에 기입 줄이 오면 답란(AnsL) 그대로다.
-COL_MARK_TOKEN = re.compile(r'\([A-Za-z0-9]{1,2}\)|[ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
+# 라벨 표기는 원고마다 다르다 — (A)/(a)/(1) 뿐 아니라 (ㄱ)(ㄴ)(ㄷ)·(가)(나)
+# 도 쓴다(아잉카 Step 01 원고 실측, 열 머리 8줄이 UNKNOWN→지문 스타일).
+COL_MARK_TOKEN = re.compile(
+    r'\(\s*(?:[A-Za-z0-9]{1,2}|[ㄱ-ㅎ]|[가-힣])\s*\)|[ⓐ-ⓩⒶ-Ⓩ㉠-㉭]')
 _COL_CHOICE_LEAD = re.compile(r'^[\s\u00a0]*[①-⑮][\s\u00a0]*')
 _COL_SPLIT = re.compile(r'\t+|[ \u00a0\u3000]{2,}')
 COL_MARK_ROW_MAX_LEN = 80
