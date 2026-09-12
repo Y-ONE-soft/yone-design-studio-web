@@ -1785,6 +1785,25 @@ function spreadIdOf(doc, pg) {
     return -1;
 }
 
+// 문제 범위의 끝을 **유닛(지문 묶음) 경계**에서 자른다.
+// 다음 문제 시작(starts[k+1])까지로 잡으면 지문 마지막 문제의 범위가 **다음
+// 지문의 지문번호 단락**까지 뻗어, 다음 지문이 새 왼쪽 면에서 시작하는 것만으로
+// '한 문제가 스프레드를 넘었다'로 오판된다 — 그 오판이 멀쩡한 문제를 다음 장으로
+// 밀어 단 하나를 통째로 비운다 (2026-09-12 사용자 지적 "97번이 충분히 96번
+// 아래에 들어갈 자리가 있는데 왜 다음 페이지로 넘어간 거야?" — 97번 335pt 대
+// 남은 공간 483pt 실측). v2_8 때 이 절단을 시도했다 되돌린 기록이 있으나
+// 그때는 지문 묶음 왼쪽 면 시작 계약이 없었다 — 이제 다음 유닛은 늘 새 면에서
+// 시작하므로 유닛 안에서만 보는 것이 맞다.
+function unitEndIndex(rec, si, fallback) {
+    var us = (rec && rec.unitStart) || null;
+    if (!us || !us.length) { return fallback; }
+    for (var ui = 0; ui < us.length; ui++) {
+        if (us[ui] > si) { return Math.min(fallback, us[ui] - 1); }
+    }
+    return fallback;
+}
+
+
 function enforceQuestionKeep(doc, flowStories, op) {
     var flowsCfg = (op && op.flows) || {};
     var totalPushed = 0;
@@ -1824,6 +1843,7 @@ function enforceQuestionKeep(doc, flowStories, op) {
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
+              ei = unitEndIndex(rec, si, ei);
                 var sf = null, ef = null;
                 try { sf = paras[si].parentTextFrames[0]; } catch (e1) {}
                 try {
@@ -1961,6 +1981,7 @@ function relaxStemKeep(doc, flowStories, op) {
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
+              ei = unitEndIndex(rec, si, ei);
                 try {
                     var sf = paras[si].parentTextFrames[0];
                     var efs = paras[ei].parentTextFrames;
@@ -2021,6 +2042,7 @@ function relaxQuestionKeep(doc, flowStories, op) {
             paras = story.paragraphs.everyItem().getElements();
             var ei = (k + 1 < starts.length && starts[k + 1] <= paras.length)
                 ? starts[k + 1] - 1 : paras.length - 1;
+            ei = unitEndIndex(rec, si, ei);
             var bad = false;
             try {
                 var sf = paras[si].parentTextFrames[0];
@@ -2129,6 +2151,7 @@ function enforceStemKeep(doc, flowStories, op) {
                 var ei = (k + 1 < starts.length
                           && starts[k + 1] <= paras.length)
                     ? starts[k + 1] - 1 : paras.length - 1;
+              ei = unitEndIndex(rec, si, ei);
                 // W40 r2 — 발문 단독(뒤따르는 답란/본문 단락 0개. 원고에
                 // 답란이 빠진 문항)도 프레임 최하단이면 고아다. 기존 계약은
                 // ei<=si 를 통째로 건너뛰어 이 케이스를 못 밀었다.
