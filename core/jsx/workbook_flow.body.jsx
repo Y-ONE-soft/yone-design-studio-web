@@ -3630,11 +3630,11 @@ try {
                      + ") / 재밀기 " + (kkPQ + kkPS + kkPQ2));
                 if (kkRQ + kkRS + kkPQ + kkPS + kkPQ2 === 0) { break; }
             }
-            if (plan.page_cleanup
-                    && (typeof plan.page_cleanup === "object")
-                    && plan.page_cleanup.empty === "delete") {
-                alignPartFillers(doc);
-            }
+            // 밀기/완화로 뒤 간지 정렬이 바뀐다 — delete 모드든 M 마스터
+            // 모드든 여기서 다시 맞춘다 (멱등: 라벨이 왼쪽일 때만 채움 1장.
+            // 2026-09-12 실측: 본가 모의고사에서 짤지문 간지가 p266 왼쪽
+            // 면으로 밀려 게이트 [파트경계] 경고).
+            alignPartFillers(doc);
             normalizeStep3ContentMasters(doc, flowStories);
             // 밀기로 새로 빈 오른쪽 면이 생긴다 — 메모(M) 마스터로.
             // 지문이 늘 왼쪽에서 시작하는 배치의 짝 (사용자 스펙).
