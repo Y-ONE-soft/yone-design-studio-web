@@ -212,7 +212,11 @@ def parse_part1(paras, bad):
 RE_SETSRC = re.compile(r'^<\s*([^<>]+?)\s*>\s*(<\s*광문고\s*기출\s*>)?\s*$')
 RE_HIST = re.compile(r'^↳\s*광문고\s*기출\s*출제\s*이력\s*[:：]\s*(.+)$')
 RE_RANGE = re.compile(r'^\[\s*(\d+)\s*~\s*(\d+)\s*\]\s*(.+)$')
-RE_Q = re.compile(r'^(\d{1,3})\.\s+(.+)$')
+RE_Q = re.compile(r'^(\d{1,3})(?:\s*[-–]\s*(\d{1,2}))?\s*[.．]\s+(.+)$')
+# 광문2(고2) 원고 방언 — 한 지문에 딸린 문항이 `1-1.` `1-2.` 로 갈린다.
+# 정답지는 base 번호 하나로 묶어 준다(`1. (A)… / (C)…`).
+RE_SAME = re.compile(r'^※\s*지문은\s*위와\s*동일')
+RE_ANSLINE = re.compile(r'^(\(\s*\)|→|[ⓐ-ⓩ])\s*_{3,}')
 RE_SUB = re.compile(r'^\(([a-h])\)\s')
 RE_LAB = re.compile(r'^\[([A-Z])\]$')
 RE_BRACKET = re.compile(r'^\[(.+)\]$')
@@ -225,9 +229,15 @@ BOGI = ('<보기>', '〈보기〉')
 SUMMARY = ('〈요약문〉', '<요약문>')
 
 
+def tagword(t):
+    """표식 단락을 사이 공백 없이 — 광문2 원고는 `< 보 기 >` 처럼 벌려 쓴다."""
+    return re.sub(r'\s+', '', t)
+
+
 def setsrc(t):
-    """세트 출처 `<…>` 인가 — `<보기>`·`<요약문>` 도 꺾쇠라 따로 뺀다."""
-    if t in BOGI or t in SUMMARY:
+    """세트 출처 `<…>` 인가 — `<보기>`·`<요약문>` 도 꺾쇠라 따로 뺀다.
+    광문2 원고는 `< 보 기 >` 로 벌려 쓰므로 공백을 지운 꼴로 견준다."""
+    if tagword(t) in BOGI or tagword(t) in SUMMARY:
         return None
     return RE_SETSRC.match(t)
 
@@ -267,6 +277,15 @@ def split_stem(stem):
     return re.sub(r'\s{2,}', ' ', stem), tag
 
 
+def qnext(t, base):
+    """다음 문항 머리인가 — 인쇄 번호가 base+1 이거나, base 의 하위 번호(1-2)."""
+    m = RE_Q.match(t)
+    if not m:
+        return False
+    num = int(m.group(1))
+    return num == base + 1 or (num == base and m.group(2))
+
+
 def parse_qbody(stem, lines, bad, where, allow_passage=False):
     """문항 몸체 → 블록 목록."""
     kind = qkind(stem)
@@ -274,14 +293,23 @@ def parse_qbody(stem, lines, bad, where, allow_passage=False):
     while i < len(lines):
         t = lines[i]
         nxt = lines[i + 1] if i + 1 < len(lines) else None
-        if t in SUMMARY:
+        w = tagword(t)
+        if RE_SAME.match(t):                     # ※ 지문은 위와 동일 (광문2)
+            blocks.append({'t': 'same', 'r': t.lstrip('※').strip()})
+            i += 1
+            continue
+        if RE_ANSLINE.match(t):                  # (   ) ____ → ____ / → ____
+            blocks.append({'t': 'ans', 'r': t})
+            i += 1
+            continue
+        if w in SUMMARY:
             if nxt is None:
                 bad.append((where, '요약문 몸체 없음', t))
                 break
             blocks.append({'t': 'summary', 'label': '요약문', 'r': nxt})
             i += 2
             continue
-        if t in BOGI:
+        if w in BOGI:
             if nxt is None:
                 bad.append((where, '<보기> 몸체 없음', t))
                 break
@@ -303,7 +331,7 @@ def parse_qbody(stem, lines, bad, where, allow_passage=False):
             i += 1
             while i < len(lines):
                 s = lines[i]
-                if s in BOGI or s in SUMMARY or RE_LAB.match(s):
+                if tagword(s) in BOGI or tagword(s) in SUMMARY or RE_LAB.match(s):
                     break
                 raw.append(s)
                 i += 1
@@ -416,7 +444,7 @@ def parse_part2(paras, bad):
                 bad.append((where, f'{k} 없음', ''))
         types.append(ty)
 
-    sets, qno = [], 0
+    sets, qno, lastnum = [], 0, 0
     while i < n:
         m = setsrc(L[i])
         if not m:
@@ -436,8 +464,12 @@ def parse_part2(paras, bad):
             continue
         s['lo'], s['hi'], s['lead'] = int(mr.group(1)), int(mr.group(2)), mr.group(3).strip()
         i += 1
+        # 광문2 원고는 **발문이 지문보다 먼저** 온다 — 그러면 지문이 문항 몸체로
+        # 들어오므로 그때만 허용한다(광문1은 지문이 앞이라 지금 그대로 엄격하다).
+        qallow = bool(i < n and qnext(L[i], lastnum))
         label = None
-        while i < n and not (RE_Q.match(L[i]) and int(RE_Q.match(L[i]).group(1)) == qno + 1):
+        base = lastnum          # 직전 문항의 인쇄 번호(하위 번호 잇기용)
+        while i < n and not qnext(L[i], base):
             t = L[i]
             if RE_LAB.match(t):
                 label = RE_LAB.match(t).group(1)
@@ -447,22 +479,27 @@ def parse_part2(paras, bad):
             else:
                 bad.append((where, '지문 자리의 모르는 단락', t[:60]))
             i += 1
-        while i < n and RE_Q.match(L[i]) and int(RE_Q.match(L[i]).group(1)) == qno + 1:
+        while i < n and qnext(L[i], base):
             mq = RE_Q.match(L[i])
+            num = int(mq.group(1))
+            sub = int(mq.group(2)) if mq.group(2) else None
+            base = lastnum = num
             qno += 1
-            stem, tag = split_stem(mq.group(2).strip())
+            stem, tag = split_stem(mq.group(3).strip())
             i += 1
             body = []
-            while (i < n and not setsrc(L[i])
-                   and not (RE_Q.match(L[i]) and int(RE_Q.match(L[i]).group(1)) == qno + 1)):
+            while i < n and not setsrc(L[i]) and not qnext(L[i], base):
                 body.append(L[i])
                 i += 1
-            kind, blocks = parse_qbody(stem, body, bad, f'{qno}번')
-            s['qs'].append({'no': qno, 'stem': stem, 'tag': tag, 'kind': kind,
-                            'blocks': blocks})
-        if not s['passages']:
+            lab = f'{num}-{sub}' if sub else f'{num}'
+            kind, blocks = parse_qbody(stem, body, bad, f'{lab}번',
+                                       allow_passage=qallow)
+            s['qs'].append({'no': qno, 'num': num, 'sub': sub, 'lab': lab,
+                            'stem': stem, 'tag': tag, 'kind': kind, 'blocks': blocks})
+        if not s['passages'] and not any(
+                b['t'] in ('passage', 'case') for q in s['qs'] for b in q['blocks']):
             bad.append((where, '지문 없음', ''))
-        got = [q['no'] for q in s['qs']]
+        got = sorted({q['num'] for q in s['qs']})
         if got != list(range(s['lo'], s['hi'] + 1)):
             bad.append((where, f"문항 {got} ≠ 범위 {s['lo']}~{s['hi']}", ''))
         sets.append(s)
