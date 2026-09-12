@@ -118,8 +118,8 @@ def test_garbled_text_layer_refused():
 def test_hangul_char_wrap_glue():
     ch = lambda s: [{"c": c, "ul": False} for c in s]
     # 줄 끝 공백 관행 문서: 한글-한글 사이 공백 없음 → 글자 단위 줄바꿈
-    assert _glue(ch("쓰시"), ch("오."), hangul_joined=True) is None
-    assert _glue(ch("쓰시"), ch("오."), hangul_joined=False)["c"] == " "
+    assert _glue(ch("쓰시"), ch("오.")) is None           # 한글은 붙여 쓴다
+    assert _glue(ch("찾아 "), ch("쓰시오")) is None         # 줄 끝 공백은 그대로
     assert _glue(ch("well-"), ch("being")) is None
     assert _glue(ch("is a"), ch("waste"))["c"] == " "
 
@@ -315,7 +315,7 @@ def test_wide_space_blank_is_kept():
     p = _chars_to_para(chars)
     assert p["text"].startswith("to") and "  " in p["text"], repr(p["text"])
     # 줄 끝이 빈칸이면 단락을 끊지 않는다
-    prev = {"text": "to    ", "chars": chars, "x0": 10, "x1": 63, "base": 100.0,
+    prev = {"text": "to    ", "chars": chars[:6], "x0": 10, "x1": 20, "base": 100.0,
             "size": 9.0, "_colkey": (0, "S")}
     cur = {"text": "Instead of the park", "chars": [mk("I", 10, 16)],
            "x0": 10, "x1": 100, "base": 113.0, "size": 9.0, "_colkey": (0, "S")}

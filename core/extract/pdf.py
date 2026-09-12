@@ -250,6 +250,13 @@ def _finish_line(rec):
     rec["size"] = statistics.median(pool) if pool else rec["size"]
 
 
+_RE_CJK = re.compile(r"[가-힣ㄱ-ㅎㅏ-ㅣ\u4E00-\u9FFF\u3040-\u30FF]")
+
+
+def _is_cjk(ch):
+    return bool(_RE_CJK.match(ch or ""))
+
+
 def _line_chars(ln):
     chars = sorted((c for s in ln["spans"] for c in s["chars"]),
                    key=lambda c: (c["x0"], c["x1"]))
@@ -261,7 +268,10 @@ def _line_chars(ln):
             if c["c"] == p["c"] and abs(c["x0"] - p["x0"]) < 0.5:
                 continue
             gap = c["x0"] - p["x1"]
-            if (gap > 0.25 * max(c["size"], p["size"])
+            # 문턱 0.45em(한글·한자 옆은 0.6em) — 낮으면 낱말 사이가 아닌 자리에
+            # 공백이 끼어 '[정답] :' 처럼 표기가 깨지고 답란 판정이 실패한다.
+            need = 0.6 if (_is_cjk(p["c"]) or _is_cjk(c["c"])) else 0.45
+            if (gap > need * max(c["size"], p["size"])
                     and not p["c"].isspace() and not c["c"].isspace()):
                 # 넓은 간격은 **빈칸**이다 — 한 칸으로 줄이면 답 쓰는 자리가
                 # 사라진다(너른터 원고는 밑줄 없는 전각 공백 다발로 빈칸을 만든다).
@@ -272,10 +282,21 @@ def _line_chars(ln):
                                 "base": c["base"], "size": c["size"],
                                 "ul": False, "syn": True,
                                 "blank": n > 1})
-        cc = dict(c)
-        if cc["c"].isspace() and (cc["x1"] - cc["x0"]) >= 0.5 * cc["size"]:
-            cc["blank"] = True          # 전각·전각급 공백 = 빈칸 조각
-        out.append(cc)
+        out.append(dict(c))
+    # 공백 덩어리의 **폭**이 1.5em 이상이면 그 덩어리 전체가 빈칸이다
+    # (너른터 원고는 전각 공백 2.9pt + 보통 공백 5.2pt 를 섞어 빈칸을 만든다)
+    i = 0
+    while i < len(out):
+        if not out[i]["c"].isspace():
+            i += 1
+            continue
+        j = i
+        while j < len(out) and out[j]["c"].isspace():
+            j += 1
+        if out[j - 1]["x1"] - out[i]["x0"] >= 1.5 * out[i]["size"]:
+            for k in range(i, j):
+                out[k]["blank"] = True
+        i = j
     return out
 
 
@@ -347,14 +368,18 @@ def _drop_margins(pages):
     for pi, pg in enumerate(pages):
         H = pg["h"]
         for ln in pg["lines"]:
-            zone = ("top" if ln["base"] < 0.10 * H
-                    else "bot" if ln["base"] > 0.92 * H else None)
+            # 띠는 좁게 — 이 원고는 머리말이 3.9%, 발문이 7.4% 다. 넓게 잡고
+            # 기준을 낮추면 여러 쪽에 되풀이되는 **발문**이 지워진다.
+            zone = ("top" if ln["base"] < 0.06 * H
+                    else "bot" if ln["base"] > 0.94 * H else None)
             ln["_zone"] = zone
             if zone and ln["text"].strip():
                 seen.setdefault((zone, _margin_key(ln["text"])), set()).add(pi)
                 for pk in _margin_pieces(ln):
                     seen.setdefault((zone, pk), set()).add(pi)
-    need = max(2, int(math.ceil(0.3 * npg)))
+    # 머리말이 쪽마다 다르게 쪼개지기도 한다(같은 머리말이 61쪽은 한 줄,
+    # 23쪽은 '년9월 고1모의고사' + ' 2026' 두 조각) — 기준을 15% 로.
+    need = max(2, int(math.ceil(0.15 * npg)))
     dropped = 0
     for pg in pages:
         keep = []
@@ -522,18 +547,19 @@ def _is_hangul(c):
     return "가" <= c <= "힣"
 
 
-def _glue(prev_chars, cur_chars, hangul_joined=False):
+def _glue(prev_chars, cur_chars):
     """앞 단락 끝과 다음 줄 사이에 넣을 글자 (없으면 None).
 
-    hangul_joined: 이 문서는 어절에서 줄을 바꿀 때 줄 끝에 공백 글리프를
-        남긴다(한컴 PDF 실측 63% vs 크롬 0%). 그런 문서에서 한글-한글 사이에
-        공백이 없으면 **글자 단위 줄바꿈**이므로 붙인다 ('새로' + '운' → '새로운')."""
+    한글은 줄 끝에서 **글자 단위로** 끊긴다(한컴·크롬 모두). 공백을 넣으면
+    '찾아 쓰시 오'·'적절하지 않 은' 처럼 낱말이 쪼개져 발문·답란 판정이
+    무너지고 조건 상자 범위까지 잘못 잡힌다(2026-09-12 너른터 원고 실측).
+    어절에서 끊긴 경우에는 줄 끝에 공백 글리프가 남아 아래 isspace 가 잡는다."""
     if not prev_chars or not cur_chars:
         return None
     a, b = prev_chars[-1]["c"], cur_chars[0]["c"]
     if a.isspace() or b.isspace():
         return None
-    if hangul_joined and _is_hangul(a) and _is_hangul(b):
+    if _is_hangul(a) and _is_hangul(b):
         return None
     if (a in "-‐" and len(prev_chars) >= 2 and prev_chars[-2]["c"].isalpha()
             and b.islower()):
@@ -601,19 +627,24 @@ def _chars_to_para(chars):
         j -= 1
     runs = []
     prev_space = False
+    blank_len = 0
     for c in chars[i:j]:
         t, ul = c["c"], bool(c["ul"])
-        if t.isspace() and not ul:
-            if c.get("blank"):
-                t = " "                 # 빈칸은 칸 수를 살린다(접지 않음)
+        if t.isspace():
+            t = " "                     # 전각·비분리 공백 → 보통 공백으로
+            #   (그대로 두면 조판의 빈칸 길이 규칙이 못 잡아 상자를 넘친다)
+            if c.get("blank") or ul:
+                blank_len += 1
+                if blank_len > 20:      # 답 쓰는 자리 상한
+                    continue
                 prev_space = False
             elif prev_space:
                 continue
             else:
-                t = " "
                 prev_space = True
         else:
             prev_space = False
+            blank_len = 0
         if runs and runs[-1]["ul"] == ul:
             runs[-1]["t"] += t
         else:
@@ -796,7 +827,7 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                 if ln["text"].strip():
                     n_lines += 1
                     n_trail += ln["chars"][-1]["c"].isspace()
-        hangul_joined = n_lines > 0 and n_trail / n_lines >= 0.3
+
 
         # ── 읽을 수 있는 PDF 인가 ───────────────────────────────────────────
         _check_readable(all_chars, label, img_pages, doc.page_count)
@@ -897,7 +928,7 @@ def _pdf_extract_paragraphs(pdf_path, extract_underline=False,
                     cur_lines = 1
                 else:
                     cur_lines += 1
-                    g = _glue(cur, ln["chars"], hangul_joined)
+                    g = _glue(cur, ln["chars"])
                     if g:
                         cur.append(g)
                     cur.extend(ln["chars"])
