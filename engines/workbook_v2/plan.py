@@ -850,7 +850,7 @@ def _s3_drop_tail_directives(pre, q_effs=("Q",)):
     return len(drop)
 
 
-def build_step3(step_data, workbook_type=""):
+def build_step3(step_data, workbook_type="", only=None, left_page=True):
     """step3 데이터 {normal:[{question_num, paragraphs}], short:[...]} → 유닛.
 
     W38 — 블록 문맥 오버레이 (core.structure.block_grammar): 파서 kind
@@ -869,11 +869,13 @@ def build_step3(step_data, workbook_type=""):
     codes = []                                   # 유닛별 지문번호 코드
     warnings = []
     lbl_series = _s3_label_series(step_data)     # W66 K5 — 계열 골격
-    # 지문 묶음은 **문항번호 순서**로 (사용자 지시 2026-09-12 "18번 문제
-    # 앞으로 옮겨"). 짤지문(18·19·25~28·43~45)을 뒤에 몰아 넣으면 책이
-    # 20번부터 시작해 회차 순서와 어긋난다. 지문번호 코드(YYMMQQ)가 전부
-    # 있을 때만 정렬하고, 없으면(통짜 textbook 항목 등) 원래 순서를 지킨다.
-    _all_items = [it for g in ("normal", "short")
+    # 지문 묶음은 **문항번호 순서**로 (사용자 지시 2026-09-12). 지문번호
+    # 코드(YYMMQQ)가 전부 있을 때만 정렬하고, 없으면(통짜 textbook 항목
+    # 등) 원래 순서를 지킨다. `only` 로 일반/짤지문 그룹을 따로 뽑는다 —
+    # 모의고사 워크북은 짤지문(18·19·25~28·43~45)이 **별도 스토리**(간지
+    # 뒤 짤지문 섹션)로 가야 한다 (사용자 지시 "스토리 자체가 따로 있어야").
+    _groups = ("normal", "short") if only is None else (only,)
+    _all_items = [it for g in _groups
                   for it in (step_data.get(g) or [])]
     if len(_all_items) > 1 and all(
             re.fullmatch(r"\d{6}", str(it.get("code") or ""))
@@ -1122,7 +1124,8 @@ def build_step3(step_data, workbook_type=""):
                 units.append(unit)
                 codes.append(code)
                 warnings.extend(BG.validate_sequence(eff_seq))
-    units = _s3_left_page_units(units, codes, workbook_type, warnings)
+    if left_page:
+        units = _s3_left_page_units(units, codes, workbook_type, warnings)
     return {"units": units, "warnings": warnings}
 
 
@@ -4443,7 +4446,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         elif step_key in _CTX_BUILDERS:
             built = builder(step_data, workbook_type=workbook_type)
         elif step_key == "step3":
-            built = builder(step_data, workbook_type=workbook_type)
+            built = builder(step_data, workbook_type=workbook_type,
+                            only="normal")
         else:
             built = builder(step_data)
         # W30 후속 — 빌더가 소비하고 남은 ❮❯ 잔존을 등가 글리프로 치환
@@ -4456,6 +4460,25 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         if built.get("ul_style"):
             flow["ul_style"] = built["ul_style"]
         flows.append(flow)
+        # 모의고사 워크북 짤지문(18·19·25~28·43~45) — 간지 뒤 **별도 스토리**.
+        # 템플릿은 실전문제와 짤지문 구역이 한 스토리로 엮여 있어(실측: 같은
+        # 스토리 554181이 p188~261 + p264~275), 실행기가 짤지문 마커 다음
+        # 프레임을 언스레드해 스토리를 가른다(v1 splitStep3ShortStory 이식).
+        if step_key == "step3" and (step_data.get("short") or []):
+            b2 = builder(step_data, workbook_type=workbook_type,
+                         only="short", left_page=False)
+            apply_glyph_print_map_units(b2["units"])
+            warnings.extend(b2.get("warnings") or [])
+            if b2["units"]:
+                f2 = {"step": "step3_short",
+                      "target": {"split_after_marker": "짤지문",
+                                 "from_master": target.get("master") or "O"},
+                      "break_per_unit": True, "units": b2["units"]}
+                if b2.get("ul_style"):
+                    f2["ul_style"] = b2["ul_style"]
+                flows.append(f2)
+                warnings.append("step3 짤지문 %d묶음을 별도 스토리(짤지문 "
+                                "섹션)로 배치" % len(b2["units"]))
     # 전 스텝 공통 최종 패스 — 내용 없이 괄호쌍만 남은 단락 제거.
     # 원고가 채울 자리를 표시하다 비워둔 잔재라 어느 스텝에서도 내용이
     # 아니다 (2026-08-25 SL1 step2_c2: "()" 1줄이 완제품에 인쇄).
@@ -4532,7 +4555,7 @@ def _s3_own_passage_floor(flat, q_styles):
     return statistics.median(base) * _S3_OWN_PASSAGE_RATIO
 
 
-def question_keep_op(plan, steps=("step3",)):
+def question_keep_op(plan, steps=("step3", "step3_short")):
     """W23 r13 (F4) — 문제 단위 펼침면 킵 op 계산 (실행기/게이트 공용 계약).
 
     사용자 확정 스펙: 한 문제(발문+지문+선지 전체)가 왼쪽→오른쪽 페이지로
@@ -4707,7 +4730,7 @@ def emoji_font_op(plan, font=EMOJI_FONT):
     return {"font": font, "chars": sorted(chars)}
 
 
-def normalize_choice_tabs(plan, steps=("step3",)):
+def normalize_choice_tabs(plan, steps=("step3", "step3_short")):
     """W40 결함 1b — 다열 선지 행의 탭 구분자 정규화 (탭스톱 적용 전 필수).
 
     원고는 기본 12.7mm 그리드에서 긴 항목이 다음 스톱으로 밀리는 걸 사람이
@@ -4767,7 +4790,7 @@ def normalize_choice_tabs(plan, steps=("step3",)):
     return n
 
 
-def choice_tabs_op(plan, steps=("step3",)):
+def choice_tabs_op(plan, steps=("step3", "step3_short")):
     """W40 결함 1 — 다열 선지 열 정렬 op 계산 (실행기 applyChoiceTabs 계약).
 
     실행기는 있었는데 플랜 쪽 계약 생성부가 없어 계약 미발행 상태였고,

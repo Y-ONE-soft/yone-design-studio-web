@@ -30,6 +30,60 @@ function readJSONFile(path) {
 }
 
 // 마스터 prefix 페이지들의 메인 스토리 (v1 findMainStoryOnMaster 의미론)
+// ── 짤지문 스토리 분리 (v1 splitStep3ShortStory 이식) ──────────────────────
+// 모의고사 내지는 실전문제 구역과 짤지문 구역이 **한 스토리**로 엮여 있다
+// (실측 [원본]워크북(모의고사)_내지: 같은 스토리가 p188~261 + 간지(p262~263)
+// 뒤 p264~275). 사용자 확정 스펙 2026-09-12: "모의고사니까 18,19,25~28,
+// 43~45번이 짤지문으로 따로 가야 돼 — 스토리 자체가 따로 있어야 된다."
+// 짤지문 마커 페이지 **다음** 페이지의 프레임을 앞 프레임에서 떼어(unthread)
+// 별도 스토리로 만든다. 마커가 없거나 그 자리에 해당 스토리 프레임이 없으면
+// null (EBS/수능특강 등 다른 내지는 기존 동작 유지).
+function splitShortStory(doc, marker, masterPrefix) {
+    var main = mainStoryOnMaster(doc, masterPrefix || "O");
+    if (!main) { return null; }
+    var markerPage = null;
+    for (var p = 0; p < doc.pages.length && !markerPage; p++) {
+        var tfs = doc.pages[p].textFrames;
+        for (var t = 0; t < tfs.length; t++) {
+            var c = "";
+            try { c = String(tfs[t].contents); } catch (e) { continue; }
+            if (c.indexOf(marker) >= 0) { markerPage = doc.pages[p]; break; }
+        }
+    }
+    if (!markerPage) {
+        wlog("[경고] 짤지문 마커('" + marker + "') 페이지 없음 — 분리 생략");
+        return null;
+    }
+    var off = markerPage.documentOffset;
+    if (off + 1 >= doc.pages.length) { return null; }
+    var nextPage = doc.pages[off + 1];
+    var conts = main.textContainers;
+    var splitFrame = null;
+    for (var cc = 0; cc < conts.length; cc++) {
+        try {
+            if (conts[cc].parentPage === nextPage) {
+                splitFrame = conts[cc];
+                break;
+            }
+        } catch (e2) {}
+    }
+    if (!splitFrame) {
+        wlog("[경고] 짤지문 첫 프레임 없음 (p" + nextPage.name
+             + ") — 분리 생략");
+        return null;
+    }
+    try {
+        splitFrame.previousTextFrame = NothingEnum.NOTHING;
+    } catch (e3) {
+        wlog("[경고] 짤지문 스토리 분리 실패: " + e3);
+        return null;
+    }
+    wlog("짤지문 스토리 분리: p" + nextPage.name + " 부터 (프레임 "
+         + splitFrame.parentStory.textContainers.length + "개)");
+    return splitFrame.parentStory;
+}
+
+
 function mainStoryOnMaster(doc, prefix) {
     var votes = {};
     var byId = {};
@@ -1172,6 +1226,7 @@ function cleanupPages(doc, flowStories, op) {
     // 1) 보호 경계 계산
     var cleanStart = -1;      // 첫 콘텐츠 섹션 페이지 offset
     var step3Story = null;
+    var step3Stories = [];          // 마스터 구역 스토리 전부 (짤지문 포함)
     var step3Start = doc.pages.length;
     for (var step in flowStories) {
         var rec = flowStories[step];
@@ -1180,6 +1235,7 @@ function cleanupPages(doc, flowStories, op) {
         var first = pages[0].documentOffset;
         if (rec.isMaster) {
             step3Story = rec.story;
+            step3Stories.push(rec.story);
             if (first < step3Start) { step3Start = first; }
         } else if (cleanStart < 0 || first < cleanStart) {
             cleanStart = first;
@@ -1406,7 +1462,11 @@ function cleanupPages(doc, flowStories, op) {
     // 3) STEP3 영역 — 빈 페이지 M 마스터 재할당 (v1 adjustStep3Pages 파리티,
     //    delete 모드에선 위에서 삭제 완료 — 재할당 생략)
     if (!step3Story || deleteEmpty) { return; }
-    reassignEmptyStep3Pages(doc, step3Story, op.empty_master || "M");
+    // 실전문제 + 짤지문 두 스토리 모두 (짤지문은 별도 스토리다)
+    for (var rs = 0; rs < step3Stories.length; rs++) {
+        reassignEmptyStep3Pages(doc, step3Stories[rs],
+                                op.empty_master || "M");
+    }
 }
 
 // STEP3 영역의 '내용 없는 페이지'에 메모(M) 마스터를 입힌다.
@@ -2364,7 +2424,11 @@ function isEmptyMasterName(doc, name) {
 // 인쇄됐다. 프레임 열거를 allPageItems(그룹 내부 포함)로 넓히고, 판정을
 // 프레임 수가 아니라 '간지 프레임 구조'(단락 2+ / 첫 단락 한글 / 2행이
 // 기수 표기(YY년 M월·N강·N과·Unit N) 또는 후보 유일)로 바꾼다.
-var RE_DIVIDER_LINE2 = /^\s*(?:\d+\s*년\s*\d+\s*월|\d+\s*강|\d+\s*과|Unit\s*\.?\s*\d*)\s*$/i;
+// 2행 뒤에 구역 이름이 붙은 간지도 있다("26년 3월 **짤지문**" — 모의고사
+// 내지 짤지문 간지 실측). 그 꼬리는 회차와 무관한 구역 이름이라
+// 갱신할 때 그대로 살린다 (2026-09-12: 이 줄이 안 걸려 짤지문 간지가
+// '고2 모의고사 / 26년 3월' 잔재로 인쇄됐다).
+var RE_DIVIDER_LINE2 = /^\s*(?:\d+\s*년\s*\d+\s*월|\d+\s*강|\d+\s*과|Unit\s*\.?\s*\d*)(\s+\S{1,12})?\s*$/i;
 
 function updateDividerPages(doc, line1, line2) {
     var n = 0;
@@ -2391,12 +2455,14 @@ function updateDividerPages(doc, line1, line2) {
             }
             continue;
         }
+        var _m2 = String(segs[1]).match(RE_DIVIDER_LINE2);
+        var _sfx = (_m2 && _m2[1]) ? _m2[1] : "";   // ' 짤지문' 등 구역 이름
         try {
             var cps = st.paragraphs;
             if (cps.length >= 2) {
                 // 단락 2개형 (모의고사 원본 내지)
                 cps[0].contents = line1 + "\r";
-                cps[1].contents = line2 + "\r";
+                cps[1].contents = line2 + _sfx + "\r";
             } else {
                 // 강제 줄바꿈 1단락형 (수특라이트 커스텀 내지 실측) —
                 // 행별 문자 범위 교체 (서식 보존)
@@ -2409,7 +2475,7 @@ function updateDividerPages(doc, line1, line2) {
                 var tail = t1.replace(/[\r\n]+$/, "");
                 if (b1 >= 0 && b1 + 1 <= tail.length - 1) {
                     st.characters.itemByRange(b1 + 1, tail.length - 1)
-                        .contents = line2;
+                        .contents = line2 + _sfx;
                 }
             }
             n++;
@@ -3167,7 +3233,9 @@ try {
     function processFlow(flow) {
         var tgt = flow.target || {};
         var story = null;
-        if (tgt.master) {
+        if (tgt.split_after_marker) {
+            story = _shortStories[tgt.split_after_marker] || null;
+        } else if (tgt.master) {
             story = mainStoryOnMaster(doc, tgt.master);
         } else if (tgt.marker) {
             story = storyByMarker(doc, tgt.marker, tgt.page, tgt.rank, tgt.pos);
@@ -3205,7 +3273,9 @@ try {
         // c13 실증: 지문이 페이지를 넘치면 '스토리 k번째 페이지 = k번째
         // 지문' 가정이 깨져 오갱신/잔존 발생). 아이콘은 앵커/기존 단락
         // 재사용이라 단락 인덱스를 바꾸지 않는다.
-        flowStories[flow.step] = { story: story, isMaster: !!tgt.master,
+        flowStories[flow.step] = { story: story,
+                                   isMaster: !!(tgt.master
+                                                || tgt.split_after_marker),
                                    unitStart: unitStart.slice(0),
                                    masterPair: tgt.master_pair || null };
         wlog(flow.step + ": " + flat.length + "단락 배치 (유닛 " + flow.units.length + ")");
@@ -3412,6 +3482,17 @@ try {
         }
         var safety = expandStoryOverflow(doc, flow.step, story);
         if (safety > 0) { wlog(flow.step + ": 오버플로우 페이지 +" + safety); }
+    }
+
+    // 짤지문 스토리는 **본문을 붓기 전에** 갈라야 한다 — 나중에 가르면
+    // 실전문제 내용이 이미 짤지문 구역까지 흘러 들어가 있다.
+    var _shortStories = {};
+    for (var fs = 0; fs < plan.flows.length; fs++) {
+        var _t = plan.flows[fs].target || {};
+        if (!_t.split_after_marker
+                || _shortStories[_t.split_after_marker]) { continue; }
+        var _ss = splitShortStory(doc, _t.split_after_marker, _t.from_master);
+        if (_ss) { _shortStories[_t.split_after_marker] = _ss; }
     }
 
     for (var fi2 = 0; fi2 < plan.flows.length; fi2++) {
