@@ -1359,8 +1359,12 @@ class PocketbookSeries(Series):
     def _from_analysis(self, cfg, opt, log):
         """`options.analysis` 의 분석본 IDML → 새 지문.
 
-        코퍼스에 없는 **이번 학기 신규 지문**이 들어오는 자리다. 분석본에는
-        플로우노트·동반의어가 없으므로 비어서 들어오고, 원고(hwpx)가 채운다.
+        코퍼스에 없는 **이번 학기 신규 지문**이 들어오는 자리다. 인디자인
+        분석본(IDML)에는 플로우노트·동반의어가 없어 비어서 들어오고 원고(hwpx)가
+        채우지만, 코드 조판 분석본(PDF)은 오른쪽 면이 **있는 판도 있다** —
+        NOTE 상자에 글이 있거나 어휘표에 유의어·반의어 칸이 있으면 그걸 읽어
+        온다(`analysis_pdf._flow_note`·`_voca_table`). 교재팀이 쓴 것이 정본이라
+        뒤의 어느 단계도 그걸 덮지 않는다(`_fill_from` 은 빈 곳만 채운다).
         둘 다 없으면 G-P2 가 목록으로 알려 준다.
         """
         srcs = cfg.resolve(opt.get("analysis") or [])
