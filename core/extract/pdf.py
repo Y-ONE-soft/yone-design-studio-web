@@ -351,7 +351,9 @@ def _margin_pieces(ln):
     for c in ln["chars"]:
         if c["c"].isspace():
             continue
-        if last is not None and c["x0"] - last["x1"] > 1.5 * max(c["size"], 1):
+        # 1.0em — 낱말 사이(0.3em)보다 충분히 넓고, 머리말 두 덩어리가
+        # 가깝게 붙은 쪽(1단 마지막 쪽 실측 1.2em)도 쪼갠다
+        if last is not None and c["x0"] - last["x1"] > 1.0 * max(c["size"], 1):
             pieces.append("".join(cur))
             cur = []
         cur.append(c["c"])
@@ -393,7 +395,13 @@ def _drop_margins(pages):
                     return ((npg >= 2 and len(seen.get((z, k), ())) >= need)
                             or _RE_PAGENO.match(k))
                 pieces = _margin_pieces(ln)
-                if _rep(key) or (len(pieces) >= 2 and all(_rep(k) for k in pieces)):
+                # 조각이 붙어 한 줄로 나온 쪽 — 되풀이되는 머리말 열쇠를
+                # **품고 있으면** 그 줄도 머리말이다 (85쪽 실측)
+                inside = any(rk and len(rk) >= 6 and rk != key and rk in key
+                             and len(pv) >= need
+                             for (zz, rk), pv in seen.items() if zz == z)
+                if (_rep(key) or inside
+                        or (len(pieces) >= 2 and all(_rep(k) for k in pieces))):
                     dropped += 1
                     continue
             keep.append(ln)

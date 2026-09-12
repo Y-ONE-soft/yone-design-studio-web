@@ -166,6 +166,9 @@ def _base_kind(text, opts=None):
     # 같은 ▶ 답란이 보기/지문 스타일로 갈라짐).
     if R.ANS_UL_ROW.match(text):
         return "AnsL", None
+    # 표기만 있는 빈 답란 ('[정답] :') — 2026-09-12 PDF 원고 실증
+    if R.ANS_LABEL_ROW.match(text):
+        return "AnsL", None
     # 2026-08-25: 한 줄에 마커+기입란이 여러 쌍("ⓐ ____  ⓑ ____")인 답란.
     # 기존 답란 정규식은 마커 1개짜리만 봐서 UNKNOWN 으로 남고, 앞의 <보기>
     # 마커 전파에 흡수돼 보기 스타일로 인쇄됐다.
