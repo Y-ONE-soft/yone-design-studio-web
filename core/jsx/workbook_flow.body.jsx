@@ -1621,6 +1621,7 @@ function alignPartFillers(doc) {
     if (inserted > 0) {
         wlog("파트 경계 채움 페이지: " + inserted + "개 삽입 (M 마스터)");
     }
+    return inserted;
 }
 // [W22 파트경계 유틸 끝]
 
@@ -3634,7 +3635,17 @@ try {
             // 모드든 여기서 다시 맞춘다 (멱등: 라벨이 왼쪽일 때만 채움 1장.
             // 2026-09-12 실측: 본가 모의고사에서 짤지문 간지가 p266 왼쪽
             // 면으로 밀려 게이트 [파트경계] 경고).
-            alignPartFillers(doc);
+            // ⚠ 채움 1장을 넣으면 **그 뒤 스토리(짤지문)의 좌우가 뒤집혀**
+            // 새 스프레드 걸침이 생긴다 (v2_25 실증 critical 3건) —
+            // 삽입했으면 문제단위킵을 한 번 더 돌려 해소한다.
+            if (alignPartFillers(doc) > 0) {
+                enforceQuestionKeep(doc, flowStories, plan.question_keep);
+                if (plan.question_keep.stem_keep) {
+                    enforceStemKeep(doc, flowStories, plan.question_keep);
+                    enforceQuestionKeep(doc, flowStories,
+                                        plan.question_keep);
+                }
+            }
             normalizeStep3ContentMasters(doc, flowStories);
             // 밀기로 새로 빈 오른쪽 면이 생긴다 — 메모(M) 마스터로.
             // 지문이 늘 왼쪽에서 시작하는 배치의 짝 (사용자 스펙).
