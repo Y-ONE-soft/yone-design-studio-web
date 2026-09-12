@@ -3294,6 +3294,15 @@ def _split_step3_combined(paras, yy, mm, normal_questions, short_questions,
             heads.append((i, m))
     if len(heads) < 2:
         return None
+    # 같은 문항번호가 되풀이되는 원고(유형별 변형 8벌씩 — 고2 25년 6월
+    # 211문제 아잉카 실측 183줄/25번호)는 '지문 하나 = 코드 하나'가 아니다.
+    # 그 관행의 묶음 규칙은 확정된 바 없으니 손대지 않고 통짜로 넘긴다.
+    firsts = [int(m.group(3)) for _, m in heads]
+    if len(set(firsts)) != len(firsts):
+        if callable(log):
+            log(f"[파서] step3 지문 코드 {len(heads)}개 중 문항번호 중복 — "
+                f"유형별 변형 모음으로 보고 지문별 분할 생략")
+        return None
     norm_set = {int(q) for q in (normal_questions or [])}
     short_set = {int(q) for q in (short_questions or [])}
     normal_items, short_items, skipped = [], [], []
@@ -3360,19 +3369,23 @@ def _normalize_step3_choice_tabs(paras, log=None):
             continue
         if not (_RE_S3_CHOICE_LEAD.match(t) or R.choice_header_marks(t)):
             continue
-        keep, prev_tab, seen = [], False, False
-        for c in t:
+        # 선행 공백은 **탭이 섞인 경우에만** 벗긴다 — 공백만으로 눈대중
+        # 정렬한 기존 원고(EBS 리딩파워 골든 '   (A)   (B) \t   (C)')의
+        # 출력을 바꾸지 않기 위해서다.
+        lead = len(t) - len(t.lstrip(" \t\u00a0"))
+        drop_lead = "\t" in t[:lead]
+        keep, prev_tab = [], False
+        for i, c in enumerate(t):
+            if i < lead:
+                keep.append(not drop_lead)
+                continue
             if c == "\t":
-                if prev_tab or not seen:
-                    keep.append(False)      # 이중 탭·선행 탭
+                if prev_tab:
+                    keep.append(False)      # 이중 탭
                     continue
                 prev_tab = True
                 keep.append(True)
                 continue
-            if not seen and c.isspace():
-                keep.append(False)          # 선행 공백
-                continue
-            seen = True
             prev_tab = False
             keep.append(True)
         if all(keep):
