@@ -673,13 +673,21 @@ def classify_paragraphs(paras, opts=None):
                 break
 
         def _cand(j):
-            """요약문 조각 후보인가 — 선지(원문자)와 마커류는 제외."""
+            """요약문 조각 후보인가 — 선지(원문자)·열 머리·마커류는 제외.
+
+            두 열 선지 머리("      (A)        (B)")는 빈칸 형태를 그대로
+            통과하므로 **낱말**로 가른다 — 요약문 조각에는 영어 낱말이 있고
+            열 머리에는 라벨밖에 없다 (W85 test_two_column_choice_header)."""
             k = out[j]["kind"]
+            t = out[j]["text"] or ""
+            if len(re.findall(r"[A-Za-z]{2,}",
+                              re.sub(r"\([A-E]\)", " ", t))) < 2:
+                return False
             if k in ("P", "UNKNOWN", "P-CONTEXT"):
                 return True
             # `(A) ______ his own lyrics …` 처럼 괄호 라벨로 시작하는 요약문
             # 조각이 선지로 오분류돼 있다 — 요약형 선지는 항상 원문자다.
-            return k == "C" and not _RE_CHOICE_LEAD.match(out[j]["text"] or "")
+            return k == "C" and not _RE_CHOICE_LEAD.match(t)
 
         idxs = [j for j in range(i + 1, end)
                 if _cand(j) and out[j]["text"]
