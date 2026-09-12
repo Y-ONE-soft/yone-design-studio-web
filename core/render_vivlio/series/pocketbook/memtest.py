@@ -604,7 +604,11 @@ def attach(rows, sources, log=None, place="auto", cache=None):
             text = _row_text(row)
             e = find(entries, text)
             if e is None:
-                miss.append(row.get("key") or row.get("label") or "?")
+                # ⚠ 짤지문(18·19·25~28)과 장문(43~45)은 **리뷰테스트 원고가
+                #   원래 없다**(사용자 지시). 빠진 게 아니라 없는 것이라
+                #   「없음」 목록에 올리면 멀쩡한 책이 매번 운다.
+                if not (row.get("short") or row.get("split")):
+                    miss.append(row.get("key") or row.get("label") or "?")
                 continue
             body, no = render(cut(e["parts"], text), no)
             pages = _pages(row, body)
