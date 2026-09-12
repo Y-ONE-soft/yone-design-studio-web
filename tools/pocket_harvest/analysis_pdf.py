@@ -730,9 +730,14 @@ def _voca_header(lines):
         if len(cols) != 1:
             continue
         col = cols.pop()
-        if _mark_of(col) is not None or col in (_WHITE, 0x231F20, 0):
+        # ⚠ 머리글 색이 **구문분석 표시 색과 겹친다** — 강동 2024 머리글은 파랑
+        #   `#557abc` 라 `_mark_of` 로 걸러 내면 표를 통째로 못 읽는다. 먹·흰색만
+        #   빼고, 진짜 판정은 아래 **이름**으로 한다.
+        if col in (_WHITE, 0x231F20, 0):
             continue
-        if max(c["size"] for c in l["cs"]) > 6.5:
+        # ⚠ 크기로 가르면 안 된다 — 명일2 머리글은 5.9pt(본문 7)인데 강동 2024
+        #   머리글은 9pt(본문 7)다. **이름**이 가장 믿을 만한 표시다.
+        if max(c["size"] for c in l["cs"]) > 12:
             continue
         cells, prev = [], None
         for c in l["cs"]:
@@ -742,9 +747,11 @@ def _voca_header(lines):
                 cells.append([])
             cells[-1].append(c)
             prev = c
-        if len(cells) >= 4:
+        names = [_text(g) for g in cells]
+        known = sum(1 for n in names if _norm(n) in _VOCA_HEAD)
+        if len(cells) >= 4 and known >= 2:
             return {"oy": l["oy"], "cols": [g[0]["x0"] for g in cells],
-                    "names": [_text(g) for g in cells], "color": col}
+                    "names": names, "color": col}
     return None
 
 
