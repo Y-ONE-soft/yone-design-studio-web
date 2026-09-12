@@ -593,6 +593,22 @@ class ConvertToVerticalEngine(BaseEngine):
             warnings.append("⚠️ 변환 결과 JSON 없음 — 구조 게이트 축소 판정")
         num_problems = stats.get("num_problems")
 
+        # STEP11 재스레드 — 지문 묶음이 전부 한 스토리로 이어졌는가.
+        # 안 이어진 묶음이 남으면 그 지문의 문항 자동번호가 조각마다 1부터
+        # 재시작해 지면에서 번호가 중복된다(SPEC §5.4).
+        rj_groups = stats.get("rejoin_groups")
+        if rj_groups is not None:
+            rj_done = (stats.get("rejoin_joined") or 0) + (stats.get("rejoin_already") or 0)
+            rj_skip = stats.get("rejoin_skipped") or 0
+            log(f"[검수] STEP3 재스레드: 지문 {rj_groups}개 중 {rj_done}개 결합"
+                + (f", 건너뜀 {rj_skip}" if rj_skip else ""))
+            if rj_groups == 0:
+                warnings.append("⚠️ STEP3 지문 앵커 미검출 — 재스레드가 돌지 않았다")
+            elif rj_done < rj_groups:
+                warnings.append(
+                    f"⚠️ STEP3 재스레드 미완 {rj_groups - rj_done}지문 — "
+                    "그 지문은 문항 자동번호가 조각마다 재시작한다")
+
         # 원본/출력 dump 대조
         src_dump = dump_indd(settings["source_local"],
                              os.path.join(job_dir, "source_dump.json"),
