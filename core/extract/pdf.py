@@ -533,8 +533,8 @@ def _cells_of(parts, sizes):
     return cells
 
 
-def _empty_band(runs):
-    """글자 덩어리 목록에서 가장 넓은 '모든 줄이 비운' 세로 띠 (x0, x1)."""
+def _empty_bands(runs):
+    """글자 덩어리 목록에서 '모든 줄이 비운' 세로 띠들 (넓은 순)."""
     iv = sorted(runs)
     if not iv:
         return None
@@ -545,7 +545,13 @@ def _empty_band(runs):
         else:
             merged.append([a, b])
     gaps = [(merged[k][1], merged[k + 1][0]) for k in range(len(merged) - 1)]
-    return max(gaps, key=lambda g: g[1] - g[0]) if gaps else None
+    return sorted(gaps, key=lambda g: g[0] - g[1])
+
+
+def _empty_band(runs):
+    """가장 넓은 빈 띠 하나."""
+    b = _empty_bands(runs)
+    return b[0] if b else None
 
 
 def _cell_grid(lines):
@@ -579,6 +585,11 @@ def _cell_grid(lines):
         return None
     i, j, lo, hi = best
     region = lines[i:j + 1]
+    # 열이 셋 이상인 배치(정답 어휘 3열 목록 등)는 두 열로 가를 수 없다 —
+    # 비슷한 폭의 빈 띠가 둘 이상이면 손대지 않는다
+    bands = _empty_bands([r for ln in region for r in _line_runs(ln)])
+    if sum(1 for a, b in bands if b - a >= 0.6 * (hi - lo)) > 1:
+        return None
     mid = (lo + hi) / 2.0
     left, right = [], []
     for ln in region:
