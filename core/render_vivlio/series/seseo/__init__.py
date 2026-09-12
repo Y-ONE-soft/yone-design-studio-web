@@ -78,8 +78,33 @@ class SeseoSeries(Series):
         stage.stage_theme(bd, cfg.resolve(theme) if str(theme).endswith(".css") else theme,
                           log)
         stage.stage_book_assets(cfg, bd)
-        stage.write_css(bd, "knobs.css")
         stage.stage_overrides(cfg, bd)
+        stage.write_css(bd, "knobs.css", self._gen_css(cfg, bd))
+
+    @staticmethod
+    def _gen_css(cfg, bd):
+        """책 팔레트로 **값을 박아 넣어야 하는** 규칙만 만들어 낸다.
+
+        · 모서리 사선은 SVG data-URI 라 CSS 변수를 못 읽는다(검수 지적: 광문2 에
+          광문1 라벤더 #c2c6e4 가 9곳 남았다).
+        · 목차 행 밑줄은 반투명이라 토큰 하나로는 안 된다.
+        둘 다 여기서 지금 책의 색으로 다시 쓴다. knobs.css 는 theme.css 뒤에 실린다.
+        """
+        css = [open(os.path.join(bd, "theme.css"), encoding="utf-8").read()]
+        ov = os.path.join(bd, "overrides.css")
+        if os.path.exists(ov):
+            css.append(open(ov, encoding="utf-8").read())
+        tok = {}
+        for text in css:                       # 뒤에 온 것이 이긴다
+            tok.update(dict(re.findall(r'(--[\w-]+)\s*:\s*(#[0-9a-fA-F]{6})', text)))
+        mid = tok.get("--dusk-mid", "#c2c6e4")
+        mauve = tok.get("--mauve", "#a05f6a")
+        svg = ("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' "
+               "viewBox='0 0 23 23'><path d='M0 0H23V23Z' fill='white'/>"
+               "<path d='M0 0L23 23' stroke='%23" + mid[1:] + "' stroke-width='2.65'/></svg>")
+        return (f'/* 팔레트에서 만든 규칙 — 손대지 말 것(계열이 매 빌드 다시 쓴다) */\n'
+                f'.cham::before {{ background: url("{svg}") no-repeat 0 0 / 100% 100%; }}\n'
+                f'.toc-row {{ border-bottom: .4pt solid {mauve}47; }}\n')
 
     # ── 조판 ──
     def build(self, cfg, log, sample=False, **_):

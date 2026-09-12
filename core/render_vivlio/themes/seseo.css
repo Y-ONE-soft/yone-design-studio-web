@@ -230,6 +230,8 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .cham { margin-top: 1.1mm; border: .75pt solid var(--dusk-mid); background: #fff; }
 .cham::before { content: ""; float: right; width: 2.3mm; height: 2.3mm;
         margin: -.27mm -.27mm 0 .6mm;
+        /* data-URI 는 CSS 변수를 못 읽는다 — **계열이 knobs.css 에 책 색으로 다시 쓴다**
+           (여기 값은 기본 팔레트용 대비책). 안 그러면 다른 팔레트 책에 이 색이 남는다. */
         background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 23 23'><path d='M0 0H23V23Z' fill='white'/><path d='M0 0L23 23' stroke='%23c2c6e4' stroke-width='2.65'/></svg>") no-repeat 0 0 / 100% 100%; }
 .cham > div { padding: 1.3mm 3mm 1.4mm; line-height: 14pt; }
 
@@ -424,7 +426,8 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
 .toc-sub { margin-top: 4mm; font: 500 9pt/1.5 Noto; color: var(--mauve); }
 .toc-list { position: absolute; left: 26mm; right: 23mm; top: 60mm; }
 .toc-row { display: flex; align-items: center; padding-bottom: 6mm; margin-bottom: 6mm;
-           border-bottom: .4pt solid rgba(160,95,106,.28); }
+           /* = --mauve 28% — knobs.css 가 책 색으로 다시 쓴다 */
+           border-bottom: .4pt solid #a05f6a47; }
 .toc-no { flex: none; height: 7.8mm; padding: 0 3.4mm; margin-right: 4.5mm; border-radius: 3.9mm;
           color: #fff; font: 700 9pt/8mm Elice; letter-spacing: .04em; }
 .toc-no.p1 { background: var(--coral); }
