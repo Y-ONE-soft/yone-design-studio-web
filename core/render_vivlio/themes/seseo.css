@@ -356,5 +356,90 @@ u { text-decoration: underline 0.3mm; text-underline-offset: 0.7mm;
          border-radius: 1mm; font: 400 7.5pt/11pt Noto; color: var(--k70); text-align: justify; }
 .trans .alab { font: 600 7.5pt/1 Pre; color: var(--dusk-dp); margin-right: 1.4mm; }
 
+/* ============================================================ 간지(전면 디자인 면)
+ * 규약: 1면 앞 간지 · 파트 사이 2면 펼침 · 마지막 크레딧 1면. 표지(26-1 광문1 세서특필02)의
+ * 노을 하늘·보름달·구름·유성·워드마크를 가져와 본문 노을 팔레트에 맞춘다.
+ * 색면은 도련까지(면 전체), 글자는 재단선에서 20mm 안쪽. 판면·넘침 검사에서는 뺀다.
+ */
+@page art { margin: 0; }
+@page art:left  { margin: 0; @top-left { content: none; } @bottom-left { content: none; } }
+@page art:right { margin: 0; @top-left { content: none; } @bottom-left { content: none; } }
+.art { page: art; break-before: page; position: relative; width: 216mm; height: 303mm;
+       overflow: hidden; background: #fff; }
+.art.left { break-before: left; }
+.art .mk { position: absolute; left: 2mm; top: 2mm; }
+.art img { position: absolute; }
+.sky { position: absolute; inset: 0; }
+/* 마크(심볼·스크립트·로고) — 원본 아트를 마스크로 얹어 색을 팔레트에 맞춘다 */
+.msk { display: block; background-color: currentColor;
+       -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+       -webkit-mask-size: contain; mask-size: contain;
+       -webkit-mask-position: center; mask-position: center; }
+.m-crest { -webkit-mask-image: url(assets/crest.png); mask-image: url(assets/crest.png); }
+.m-script { -webkit-mask-image: url(assets/script.png); mask-image: url(assets/script.png); }
+.m-sehui { -webkit-mask-image: url(assets/logo_sehui.png); mask-image: url(assets/logo_sehui.png); }
+.m-gakin { -webkit-mask-image: url(assets/logo_gakin.png); mask-image: url(assets/logo_gakin.png); }
+
+/* ① 앞 간지 — 해질녘 하늘 + 달·구름, 표지의 세/서/특/필 쌓기 */
+.sky-front { background: linear-gradient(208deg, #58539c 0%, #8d8fc6 17%, #c9a2c4 35%,
+             #f4a094 53%, #f9b487 69%, #ffd79a 85%, #fff1d6 100%); }
+.front .moon { left: 0; top: 0; width: 216mm; height: 303mm; object-fit: cover; opacity: .9; }
+.wm-stack { position: absolute; left: 22mm; top: 44mm; }
+.wm-row { display: flex; align-items: flex-end; margin-bottom: 4.5mm; }
+.wm-big { font: 400 40pt/1 Ghana; color: #fff; }
+.wm-slash { font: 400 19pt/1 Ghana; color: rgba(255,255,255,.7); margin: 0 1.2mm 2mm 1.4mm; }
+.wm-small { font: 500 10pt/1 Noto; color: rgba(255,255,255,.95); margin-bottom: 2.4mm; }
+.front-foot { position: absolute; left: 23mm; bottom: 23mm; display: flex; align-items: center;
+              color: #fff; font: 500 8.5pt/1 Noto; }
+.front-foot .msk { width: 7.4mm; height: 7.4mm; margin-right: 3mm; }
+
+/* ② 목차 펼침 — 크림 종이에 구름 */
+.paper { position: absolute; inset: 0;
+         background: linear-gradient(180deg, #fff7e8 0%, #ffeed8 58%, #ffe5c6 100%); }
+.toc .cl, .credit .cl { left: 0; bottom: 0; width: 216mm; opacity: .9; }
+.toc-head { position: absolute; left: 26mm; top: 42mm; color: #e35a4d; }
+.toc-head .msk { width: 13mm; height: 13mm; margin-bottom: 4mm; }
+.toc-title { font: 400 30pt/1 Ghana; color: #5b579f; letter-spacing: .03em; }
+.toc-list { position: absolute; left: 26mm; right: 23mm; top: 52mm; }
+.toc-row { display: flex; align-items: center; margin-bottom: 10mm; }
+.toc-no { flex: none; height: 7.8mm; padding: 0 3.4mm; margin-right: 4.5mm; border-radius: 3.9mm;
+          color: #fff; font: 700 9pt/8mm Elice; letter-spacing: .04em; }
+.toc-no.p1 { background: #f58e7d; }
+.toc-no.p2 { background: #8d8fc6; }
+.toc-t { font: 500 13pt/1.35 Elice; color: #443f74; }
+.toc-foot { position: absolute; right: 23mm; bottom: 21mm; font: 400 8pt/1 Noto; color: #a2907f; }
+
+/* ③ 파트 간지 2면 펼침 — 위 하늘 띠, 아래 크림. 왼쪽이 열고 오른쪽이 닫는다 */
+.div { background: #fffaf2; }
+.div .band { inset: 0 0 auto 0; height: 190mm; }
+.d1 .band { background: linear-gradient(118deg, #ffd79a 0%, #f9b487 32%, #f4a094 60%,
+            #cfa3c8 86%, #9a9ad0 100%); }
+.d1.r .band { background: linear-gradient(118deg, #f2a08f 0%, #d9a3c6 40%, #a7a3d8 76%,
+              #8a8cc4 100%); }
+.d2 .band { background: linear-gradient(118deg, #f6a0b0 0%, #db9fc2 32%, #ab a6da 62%,
+            #8a86c2 100%); }
+.d2.r .band { background: linear-gradient(118deg, #8f8cc6 0%, #b0a6dc 28%, #efa08f 76%,
+              #ffc78e 100%); }
+.div .st { left: 0; top: 0; width: 216mm; height: 190mm; object-fit: cover; opacity: .75; }
+.div-mark { position: absolute; left: 26mm; top: 54mm; color: #fff; }
+.dv-1 { display: block; font: 500 13pt/1 Elice; letter-spacing: .14em; opacity: .95; }
+.dv-2 { display: block; margin-top: 4.5mm; font: 400 19pt/1 Ghana; letter-spacing: .08em; }
+.dv-3 { display: block; margin-top: 1.5mm; font: 400 54pt/1 Ghana; }
+.div-title { position: absolute; right: 23mm; top: 202mm; font: 500 20pt/1.25 Elice;
+             color: #5b579f; }
+.div-rule { position: absolute; right: 23mm; top: 216mm; width: 118mm; height: .5mm;
+            background: linear-gradient(90deg, rgba(245,142,125,0), #f58e7d); }
+
+/* ④ 크레딧 — 심볼 + Make You Say English + 로고 */
+.cr-mid { position: absolute; left: 0; right: 0; top: 116mm; text-align: center; color: #e35a4d; }
+.cr-mid .m-crest { width: 14mm; height: 14mm; margin: 0 auto; }
+.cr-mid .m-script { width: 96mm; height: 13.5mm; margin: 6mm auto 0; color: #cb4f70; }
+.cr-line { position: absolute; left: 0; right: 0; top: 176mm; text-align: center;
+           font: 400 8.5pt/1 Noto; color: #a2907f; }
+.cr-logos { position: absolute; left: 0; right: 0; bottom: 25mm; display: flex;
+            justify-content: center; align-items: center; color: #8a7a8e; }
+.cr-logos .m-sehui { width: 35mm; height: 6.6mm; margin-right: 16mm; }
+.cr-logos .m-gakin { width: 30mm; height: 7.5mm; }
+
 /* 합자 끄기 — 모든 `font:` 줄임 속성 뒤에서 이긴다 */
 *, *::before, *::after { font-variant-ligatures: no-common-ligatures !important; }

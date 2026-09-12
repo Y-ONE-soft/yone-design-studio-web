@@ -209,8 +209,81 @@ def memo_page(cfg, part):
             f'<div class="rhR">{curve(part, "R", cfg.book.get("wordmark", "세/서/특/필"))}</div>')
 
 
-def art(n, left=False):
-    return f'<div class="art{" left" if left else ""}">{mk(f"ART{n}")}</div>'
+def art_page(tag, cls, body, left=False):
+    """간지 한 면 — 재단선 바깥까지 색이 차는 전면 디자인 면.
+
+    규약(2026-09-12): 1면 = 앞 간지 1P · 마지막 면 = 크레딧 1P · 파트 사이 = 2P 펼침면
+    (왼쪽 면에서 열어 오른쪽 면에서 닫는다). 표지(26-1 광문1_세서특필02_표지)의
+    노을 하늘·달·구름·유성·워드마크를 가져와 본문 노을 팔레트와 맞춘다.
+    """
+    return (f'<div class="art {cls}{" left" if left else ""}">'
+            f'{mk(tag)}{body}</div>')
+
+
+def wordmark_stack(sub=True):
+    """표지의 세/서/특/필 쌓기 — 큰 글자(가나초콜릿) + 빗금 + 작은 풀이말."""
+    rows = [("세", "희쌤과 함께하는", 0), ("서", "술형", 14), ("특", "별", 4), ("필", "승법", 18)]
+    out = []
+    for big, small, indent in rows:
+        out.append(f'<div class="wm-row" style="margin-left:{indent}mm">'
+                   f'<span class="wm-big">{big}</span>'
+                   f'<span class="wm-slash">/</span>'
+                   f'<span class="wm-small">{esc(small)}</span></div>')
+    return '<div class="wm-stack">' + "".join(out) + '</div>'
+
+
+def front_page(cfg):
+    b = cfg.book
+    return art_page(
+        "FRONT", "front",
+        '<div class="sky sky-front"></div>'
+        '<img class="moon" src="assets/moon_clouds.png" alt="">'
+        + wordmark_stack()
+        + f'<div class="front-foot"><img class="crest" src="assets/crest.png" alt="">'
+        f'<span>{esc(b.get("header", "2026 광문고 1학년 2학기 중간고사 서술형 대비"))}</span></div>')
+
+
+def toc_pages(cfg):
+    b = cfg.book
+    rows = [("01", b.get("part1", ""), "p1"), ("02", b.get("part2", ""), "p2")]
+    items = "".join(
+        f'<div class="toc-row"><span class="toc-no {c}">PART {no}</span>'
+        f'<span class="toc-t">{esc(t)}</span></div>' for no, t, c in rows)
+    left = art_page("TOC1", "toc", 
+                    '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
+                    '<div class="toc-head"><img class="crest" src="assets/crest.png" alt="">'
+                    '<div class="toc-title">CONTENTS</div></div>', left=True)
+    right = art_page("TOC2", "toc",
+                     '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
+                     f'<div class="toc-list">{items}</div>'
+                     f'<div class="toc-foot">{esc(b.get("header", ""))}</div>')
+    return left + right
+
+
+def divider(cfg, no, title, tone):
+    """파트 간지 2P 펼침 — 왼쪽 면에서 열어 오른쪽 면에서 닫는다."""
+    left = art_page(f"DL{no}", f"div d{tone}",
+                    f'<div class="sky band"></div><img class="st" src="assets/stars.png" alt="">'
+                    f'<div class="div-mark"><span class="dv-1">필승법</span>'
+                    f'<span class="dv-2">PART</span><span class="dv-3">{no:02d}</span></div>',
+                    left=True)
+    right = art_page(f"DR{no}", f"div d{tone} r",
+                     f'<div class="sky band"></div><img class="st" src="assets/stars.png" alt="">'
+                     f'<div class="div-title">{esc(title)}</div>'
+                     f'<div class="div-rule"></div>')
+    return left + right
+
+
+def credit_page(cfg):
+    b = cfg.book
+    return art_page(
+        "BACK", "credit",
+        '<div class="paper"></div><img class="cl" src="assets/clouds.png" alt="">'
+        '<div class="cr-mid"><img class="crest" src="assets/crest.png" alt="">'
+        '<img class="script" src="assets/script.png" alt="Make You Say English"></div>'
+        f'<div class="cr-line">{esc(b.get("header", ""))}</div>'
+        '<div class="cr-logos"><img src="assets/logo_sehui.png" alt="세희영어연구소">'
+        '<img src="assets/logo_gakin.png" alt="각인Books"></div>', left=True)
 
 
 # ── PART 1 ─────────────────────────────────────────────────────────────
@@ -426,12 +499,12 @@ def write(cfg, d, build_dir, log=print, memos=(), fit=None, gaps=None):
         if tag in memos:
             parts.append(memo_page(cfg, part))
 
-    parts += [art(1), art(2), art(3), art(4), art(5)]
+    parts += [front_page(cfg), toc_pages(cfg), divider(cfg, 1, b.get("part1", ""), 1)]
     parts.append(f'<div class="sec band" id="S1">{mkz("S1")}'
                  f'{runners(cfg, 1, b.get("part1", "세희T PICK 중요문장"))}'
                  f'{render_part1(cfg, d["part1"])}</div>')
-    before("ART6", 1)
-    parts += [art(6, left=True), art(7)]
+    before("DL2", 1)
+    parts.append(divider(cfg, 2, b.get("part2", ""), 2))
     p2 = d["part2"]
     for k, ty in enumerate(p2["types"]):
         sid = f'T{ty["no"]}'
@@ -453,8 +526,8 @@ def write(cfg, d, build_dir, log=print, memos=(), fit=None, gaps=None):
                  + '</div>')
     before("S3", 2)
     parts.append(render_answers(cfg, d["answers"], "S3"))
-    before("ART8", 3)
-    parts.append(art(8, left=True))
+    before("BACK", 3)
+    parts.append(credit_page(cfg))
 
     doc = ('<!doctype html><html lang="ko"><head><meta charset="utf-8">'
            f'<title>{esc(b.get("title", ""))}</title>'
