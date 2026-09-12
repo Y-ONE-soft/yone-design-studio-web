@@ -874,9 +874,11 @@ try {
         }
         // 원형 프레임/페이지 속성 (첫 컨테이너 기준 — x위치는 STEP6.5가 보정)
         var pGb = null, pOs = null, pTfp = null, pLyr = null, pMaster = null;
+        var pPageB = null;   // 원형 프레임이 놓인 **페이지**의 스프레드 좌표
         try {
             var proto4 = target.textContainers[0];
             try { pGb = proto4.geometricBounds; } catch (e) {}
+            try { pPageB = proto4.parentPage.bounds; } catch (e) {}
             try { pOs = proto4.appliedObjectStyle; } catch (e) {}
             try { pTfp = proto4.textFramePreferences.properties; } catch (e) {}
             try { pLyr = proto4.itemLayer; } catch (e) {}
@@ -924,7 +926,33 @@ try {
             // gb는 반드시 tfp 이후 마지막에 — tfp.properties 일괄 대입이 프레임
             // 폭을 리사이즈(84→82, 7차 프로브 probe_tail7c 실측)해 원본 합성과
             // 다른 리플로우(꼬리 절단 오버셋)를 유발한다
-            try { if (pGb) { nf4.geometricBounds = pGb; } } catch (e) {}
+            // ⚠ pGb 를 그대로 대입하면 안 된다. geometricBounds 는 **스프레드**
+            //   좌표라, 원형이 오른쪽 페이지 프레임이면 x 가 판면 폭 너머(실측
+            //   234~402)를 가리킨다. 새 페이지가 왼쪽 면일 때 그 좌표에 놓인
+            //   프레임은 물리적으로 오른쪽 면 위에 얹혀 parentPage 가 뒤바뀐다
+            //   → 왼쪽 면은 텅 비고 오른쪽 면에 두 지문이 **완전히 겹쳐** 인쇄된다
+            //   (26년 9월 고2 실측: 영작배열 18개가 9페이지에 2개씩 겹치고
+            //   9페이지가 빔. 내용 누락·중복·관통 게이트를 전부 통과하는
+            //   조용한 결함이었다). 원형의 "자기 페이지 안에서의 x" 를 구해
+            //   새 페이지의 왼쪽 모서리에 얹는다.
+            var gb4 = pGb;
+            if (pGb && pPageB) {
+                try {
+                    var npb4 = np4.bounds;
+                    var dx4 = pGb[1] - pPageB[1];
+                    gb4 = [pGb[0], npb4[1] + dx4, pGb[2],
+                           npb4[1] + dx4 + (pGb[3] - pGb[1])];
+                } catch (e) { gb4 = pGb; }
+            }
+            try { if (gb4) { nf4.geometricBounds = gb4; } } catch (e) {}
+            // fail-loud: 새 프레임이 제 페이지에 얹혔는가
+            var landed4 = null;
+            try { landed4 = nf4.parentPage; } catch (e) {}
+            if (!landed4 || landed4.id !== np4.id) {
+                throw new Error("STEP4.4: 새 프레임이 제 페이지에 놓이지 않았다(섹션 "
+                                + sx + ", 코드 " + marks[sx].code
+                                + ") — 좌표계 확인(겹침 인쇄 위험)");
+            }
             try {
                 target.texts[0].characters.itemByRange(sStart, sEnd)
                     .duplicate(LocationOptions.AT_END, nf4.insertionPoints[0]);
