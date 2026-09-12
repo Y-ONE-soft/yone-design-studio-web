@@ -138,6 +138,43 @@ def expected_page_count(src_pages, stats):
     return src_pages - deleted - arr_del + arr_add
 
 
+def frame_overlaps(frames_path, min_ratio=0.6):
+    """같은 페이지에서 서로 포개진 본문 프레임 쌍 — [(페이지, 앞글, 뒷글)].
+
+    겹친 프레임은 글자수도 스토리 수도 정상이라 다른 게이트에 걸리지 않는다.
+    작은 쪽 면적의 min_ratio 이상이 겹치면 "같은 자리"로 본다.
+    """
+    try:
+        data = json.load(open(frames_path, encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    by_page = {}
+    for fr in data.get("frames", []):
+        gb = fr.get("gb") or []
+        if len(gb) != 4 or gb[0] <= 0:          # 헤더(y<=0) 프레임 제외
+            continue
+        if (fr.get("chars") or 0) <= 0:          # 빈 프레임은 겹쳐도 무해
+            continue
+        by_page.setdefault(fr.get("page"), []).append(fr)
+    out = []
+    for page, frs in by_page.items():
+        for i in range(len(frs)):
+            for j in range(i + 1, len(frs)):
+                a, b = frs[i]["gb"], frs[j]["gb"]
+                ih = min(a[2], b[2]) - max(a[0], b[0])
+                iw = min(a[3], b[3]) - max(a[1], b[1])
+                if ih <= 0 or iw <= 0:
+                    continue
+                inter = ih * iw
+                area_a = (a[2] - a[0]) * (a[3] - a[1])
+                area_b = (b[2] - b[0]) * (b[3] - b[1])
+                smaller = min(area_a, area_b)
+                if smaller > 0 and inter / smaller >= min_ratio:
+                    out.append((page, (frs[i].get("head") or "")[:20],
+                                (frs[j].get("head") or "")[:20]))
+    return out
+
+
 def residual_threads(dump, max_gap=4):
     """관통 스레드의 위치 — [(페이지들, 첫 단락 40자)]. 경고에 찍어 작업자가
     바로 찾아가게 한다 ("잔존 N개"만으로는 288페이지에서 못 찾는다)."""
@@ -718,6 +755,21 @@ class ConvertToVerticalEngine(BaseEngine):
         log(f"[검수] 관통 스레드 잔존: {len(residual)}개"
             + (" — " + ", ".join("p" + "·".join(str(x) for x in n[:3])
                                  for n, _h in residual) if residual else ""))
+
+        # (a4) 프레임 겹침 게이트 — 같은 페이지에서 본문 프레임이 서로 포개지면
+        #      두 지문이 같은 자리에 겹쳐 인쇄된다. 내용 누락·중복·관통 게이트를
+        #      전부 통과하는 조용한 결함이라 따로 본다 (26년 9월 고2 실측:
+        #      STEP4.4가 스프레드 좌표를 그대로 대입해 영작배열 18개가 9페이지에
+        #      2개씩 겹치고 9페이지가 비었다 — SPEC §5.5).
+        overlaps = frame_overlaps(os.path.join(job_dir, "out_frames.json"))
+        if overlaps:
+            ok = False
+            where = ", ".join(f"p{pg}(\"{h1}\" ↔ \"{h2}\")"
+                              for pg, h1, h2 in overlaps[:3])
+            warnings.append(
+                f"❌ 프레임 겹침 {len(overlaps)}쌍 — 같은 자리에 두 글이 겹쳐 "
+                f"인쇄된다: {where}")
+        log(f"[검수] 프레임 겹침: {len(overlaps)}쌍")
 
         # (b) 사이클 구조 — 출력의 지문 코드가 연속 블록으로 그룹화됐는지
         seq = page_code_sequence(out_dump)
