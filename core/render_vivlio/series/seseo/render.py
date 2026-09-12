@@ -29,12 +29,12 @@ from core.render_vivlio import stage
 
 # ── 부(部)별 색 — 정본 실측(화면색). CMYK 는 계열 print_defaults 에서 못 박는다 ──
 PAL = {
-    1: {"band": "#ffe4b9", "pill": "#f8a57e", "tab": "#5b579f", "shadow": "#824f8c",
-        "arc": "#f58e7d", "dot": "#a4a8d5"},
-    2: {"band": "#dbddef", "pill": "#959ecf", "tab": "#5b579f", "shadow": "#824f8c",
-        "arc": "#a4a8d5", "dot": "#f58e7d"},
-    3: {"band": "#f5dada", "pill": "#daa0af", "tab": "#824f8c", "shadow": "#5b579f",
-        "arc": "#f6a0b0", "dot": "#a4a8d5"},
+    1: {"band": "var(--band1)", "pill": "var(--pill1)", "tab": "var(--dusk-dp)", "shadow": "var(--plum)",
+        "arc": "var(--coral)", "dot": "var(--dusk)"},
+    2: {"band": "var(--band2)", "pill": "var(--pill2)", "tab": "var(--dusk-dp)", "shadow": "var(--plum)",
+        "arc": "var(--dusk)", "dot": "var(--coral)"},
+    3: {"band": "var(--band3)", "pill": "var(--pill3)", "tab": "var(--plum)", "shadow": "var(--dusk-dp)",
+        "arc": "var(--rose)", "dot": "var(--dusk)"},
 }
 PART_NO = {1: 1, 2: 2, 3: 2}         # 정답 및 해설도 PART 02 의 절이다
 
@@ -89,33 +89,33 @@ def _svg(body, vb="0 0 24 24"):
 
 ICON = {
     # 4줄 요약 — 메모지
-    "note": _svg('<rect x="4" y="3" width="16" height="18" rx="2.6" fill="#fee5db" '
-                 'stroke="#e35a4d" stroke-width="1.7"/>'
-                 '<path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="#e35a4d" stroke-width="1.7" '
+    "note": _svg('<rect x="4" y="3" width="16" height="18" rx="2.6" fill="var(--coral-lt)" '
+                 'stroke="var(--coral-dp)" stroke-width="1.7"/>'
+                 '<path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="var(--coral-dp)" stroke-width="1.7" '
                  'stroke-linecap="round"/>'),
     # 3단계 프로세스 — 전구
     "bulb": _svg('<path d="M12 2.6a6.6 6.6 0 0 0-3.9 11.9c.7.5 1.1 1.3 1.1 2.1v.6h5.6v-.6'
-                 'c0-.8.4-1.6 1.1-2.1A6.6 6.6 0 0 0 12 2.6z" fill="#ffe9a4" stroke="#fcbb6e" '
+                 'c0-.8.4-1.6 1.1-2.1A6.6 6.6 0 0 0 12 2.6z" fill="var(--gold)" stroke="var(--apricot)" '
                  'stroke-width="1.3"/><path d="M10.4 12.4 12 9.8l1.6 2.6" fill="none" '
-                 'stroke="#f58e7d" stroke-width="1.1" stroke-linecap="round" '
+                 'stroke="var(--coral)" stroke-width="1.1" stroke-linecap="round" '
                  'stroke-linejoin="round"/><rect x="9.2" y="17.9" width="5.6" height="1.7" '
-                 'rx=".8" fill="#a4a8d5"/><rect x="9.9" y="20.2" width="4.2" height="1.6" '
-                 'rx=".8" fill="#a4a8d5"/>'),
+                 'rx=".8" fill="var(--dusk)"/><rect x="9.9" y="20.2" width="4.2" height="1.6" '
+                 'rx=".8" fill="var(--dusk)"/>'),
     # 필승법 — 불꽃
     "flame": _svg('<path d="M12.4 2.2c.4 3-1.6 4.6-3.2 6.4C7.6 10.4 6 12.3 6 15.1 6 18.9 8.7 '
                   '21.8 12 21.8s6-2.7 6-6.5c0-2.7-1.3-4.4-2.5-5.9-.1 1.3-.7 2.3-1.6 2.9'
-                  '.3-3.7-.3-6.8-1.5-9.3z" fill="#f58e7d"/><path d="M12.2 11.4c.2 1.6-.7 '
+                  '.3-3.7-.3-6.8-1.5-9.3z" fill="var(--coral)"/><path d="M12.2 11.4c.2 1.6-.7 '
                   '2.5-1.5 3.4-.7.8-1.3 1.7-1.3 2.9 0 1.7 1.2 3 2.7 3s2.8-1.3 2.8-3c0-1.3-.6'
-                  '-2.1-1.2-2.8-.1.7-.4 1.1-.8 1.4.1-1.9-.1-3.5-.7-4.9z" fill="#ffe9a4"/>'),
+                  '-2.1-1.2-2.8-.1.7-.4 1.1-.8 1.4.1-1.9-.1-3.5-.7-4.9z" fill="var(--gold)"/>'),
     # 해설 — 돋보기
-    "lens": _svg('<circle cx="10.2" cy="10.2" r="6.2" fill="#fff" stroke="#5b579f" '
-                 'stroke-width="1.9"/><path d="M14.8 14.8l5.6 5.6" stroke="#5b579f" '
+    "lens": _svg('<circle cx="10.2" cy="10.2" r="6.2" fill="#fff" stroke="var(--dusk-dp)" '
+                 'stroke-width="1.9"/><path d="M14.8 14.8l5.6 5.6" stroke="var(--dusk-dp)" '
                  'stroke-width="2.6" stroke-linecap="round"/><path d="M7.2 9a3.4 3.4 0 0 1 '
-                 '2.6-2.4" fill="none" stroke="#a4a8d5" stroke-width="1.4" '
+                 '2.6-2.4" fill="none" stroke="var(--dusk)" stroke-width="1.4" '
                  'stroke-linecap="round"/>'),
     # 오답 주의 — 말풍선
     "warn": _svg('<path d="M4 5.6A2.6 2.6 0 0 1 6.6 3h10.8A2.6 2.6 0 0 1 20 5.6v8.2a2.6 2.6 '
-                 '0 0 1-2.6 2.6H11l-4.4 4v-4A2.6 2.6 0 0 1 4 13.8z" fill="#e35a4d"/>'
+                 '0 0 1-2.6 2.6H11l-4.4 4v-4A2.6 2.6 0 0 1 4 13.8z" fill="var(--coral-dp)"/>'
                  '<path d="M12 6.6v4.6" stroke="#fff" stroke-width="2.1" '
                  'stroke-linecap="round"/><circle cx="12" cy="13.6" r="1.15" fill="#fff"/>'),
 }
@@ -123,12 +123,12 @@ ICON = {
 PEN = ('<span class="pen"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
        '<rect x="2" y="2" width="20" height="20" fill="#fff"/>'
        '<path d="M15.6 3.8l4.6 4.6L9.1 19.5 3.4 20.6l1.1-5.7z" fill="#fff" '
-       'stroke="#a4a8d5" stroke-width="1.35" stroke-linejoin="round"/>'
-       '<path d="M13.4 6l4.6 4.6M4.5 14.9l4.6 4.6" stroke="#a4a8d5" stroke-width="1.35"/>'
+       'stroke="var(--dusk)" stroke-width="1.35" stroke-linejoin="round"/>'
+       '<path d="M13.4 6l4.6 4.6M4.5 14.9l4.6 4.6" stroke="var(--dusk)" stroke-width="1.35"/>'
        '</svg></span>')
 
 DARROW = ('<div class="darrow"><svg viewBox="0 0 10 12" xmlns="http://www.w3.org/2000/svg">'
-          '<path d="M5 1v8.2M1.6 6.2 5 9.8l3.4-3.6" fill="none" stroke="#f58e7d" '
+          '<path d="M5 1v8.2M1.6 6.2 5 9.8l3.4-3.6" fill="none" stroke="var(--coral)" '
           'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>')
 
 
@@ -360,12 +360,16 @@ def qbody(blocks, main_box="cbox"):
             out.append(f'<div class="{main_box}">{passage_html(b["r"])}</div>')
         elif t == "bogi":
             lab = b.get("lab", "보기")
+            if re.sub(r"\s+", "", lab) in ("보기", "요약문"):
+                lab = re.sub(r"\s+", "", lab)      # 광문2 원고의 `보 기` → `보기`
             out.append(f'<div class="bogi"><div class="bl">&lt;{esc(lab)}&gt;</div>'
                        f'<div class="bw">{esc(b["r"])}</div></div>')
         elif t == "same":                      # ※ 지문은 위와 동일 (광문2)
             out.append(f'<p class="same">※ {esc(b["r"])}</p>')
         elif t == "ans":                       # (  ) ____ → ____ · → ____ 답란
-            out.append(f'<p class="ansl">{esc(b["r"])}</p>')
+            # `(   )` 안의 여러 칸은 HTML 에서 한 칸으로 줄어 번호 쓸 자리가 없어진다
+            txt = re.sub(r" {2,}", lambda m: "&nbsp;" * len(m.group(0)), esc(b["r"]))
+            out.append(f'<p class="ansl">{txt}</p>')
         elif t == "case":
             out.append(f'<div class="cbox case"><span class="bl">[{esc(b["label"])}]</span>'
                        f'{inl(b["r"])}</div>')

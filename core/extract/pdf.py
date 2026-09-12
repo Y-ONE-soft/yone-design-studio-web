@@ -593,8 +593,19 @@ def _cell_grid(lines):
     lc, rc = _cells_of(left, sizes), _cells_of(right, sizes)
     if len(lc) < 2 or len(rc) < 2 or len(lc) + len(rc) < 6:
         return None
-    # 감기는 칸이 없으면 기준선 묶음이 이미 맞다 — 손대지 않는다
-    if not any(len(c) >= 2 for c in lc + rc):
+    # 정말로 순서가 엇갈릴 때만 손댄다 — 감긴 칸의 줄 사이에 **다른 열의
+    # 줄이 끼어든** 표만 뒤섞인다(칸이 한 줄씩인 표·번호가 왼쪽에 달린
+    # 발문·줄이 나란히 감기는 통계표는 기준선 묶음이 이미 맞다).
+    def _interrupted(cells, others):
+        for cl in cells:
+            bs = sorted(l["base"] for l in cl)
+            for a, b in zip(bs, bs[1:]):
+                for o in others:
+                    if (a + 0.3 * o["size"] < o["base"]
+                            < b - 0.3 * o["size"]):
+                        return True
+        return False
+    if not (_interrupted(lc, right) or _interrupted(rc, left)):
         return None
     cells = [("L", c) for c in lc] + [("R", c) for c in rc]
     cells.sort(key=lambda t: (min(l["base"] for l in t[1]),
