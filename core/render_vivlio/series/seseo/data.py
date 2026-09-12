@@ -128,10 +128,16 @@ def group_of(src):
     m = re.match(r'^올림포스\s*(?:영어독해\s*)?(?:기본\s*\d\s*)?(\d+)\s*강', src)
     if m:
         return '올림포스', '올림포스', int(m.group(1))
+    # EBS 수능특강 Light(광문2) — 올림포스와 같은 자리
+    m = re.match(r'^수능특강\s*Light\s*(?:영어독해연습\s*)?(\d+)\s*강', src)
+    if m:
+        return '수능특강 Light', '수능특강 Light', int(m.group(1))
     m = re.match(r'^(고\d)\s*(\d+\s*년\s*\d+\s*월)', src)
     if m:
         return '모의고사', f'{m.group(1)} {m.group(2)}', None
-    m = re.match(r'^(\S+)\s+(공통영어\s*\d)\s+(.+?)\s*본문\s*\d+', src)
+    # 교과서 — 꼬리표가 `본문 N`(광문1) · `MR N`·`SL N`(광문2) 로 갈린다
+    m = re.match(r'^(\S+)\s+(공통영어\s*\d|영어\s*[12])\s+(.+?)'
+                 r'\s*(?:본문|MR|SL)\s*\d+\s*$', src)
     if m:
         return '교과서', f'{m.group(2)} {m.group(1)} {m.group(3)}', None
     return None, src, None

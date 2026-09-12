@@ -298,7 +298,8 @@ def render_part1(cfg, items):
                 out.append(f'<div class="grp"><span class="dot">&gt;</span>'
                            f'<span class="k">{esc(it["kind"])}</span>'
                            f'<span class="r">{esc(it["rest"])}</span></div>')
-            prev = "grp"
+                prev = "grp"        # ⚠ **띠를 실제로 찍었을 때만** — 안 그러면 뒤 출처
+                                    #   막대가 `first`(위 여백 0)가 되어 앞 글에 달라붙는다
             continue
         if t == "src":
             cls = "srcw" + (" first" if prev == "grp" else "")

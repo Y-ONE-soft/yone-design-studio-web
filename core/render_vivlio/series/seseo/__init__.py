@@ -236,7 +236,12 @@ class SeseoSeries(Series):
         최대 8mm 씩(답 쓸 자리). 두 면 세트도 면마다 따로 — 둘째 면 맨 위 문항의
         앞 간격은 쪽 나눔에서 잘리므로 나눔에서 뺀다.
         (문항당 12mm 로 막았을 때 60mm 넘게 빈 면 19개, 두 면 세트 둘째 면 137mm 빈 채 — 검수 FAIL)
+
+        ⚠ **세트 첫 문항은 조금만 띄운다**(`W_FIRST`·`CAP_FIRST`). 발문 `[a~b] …` 바로
+          아래가 벌어지면 발문이 붕 뜬 것처럼 보인다(사용자 지적). 남는 몫은 뒤 문항들이
+          가져간다.
         """
+        W_FIRST, CAP_FIRST = 0.3, 9.0
         pos = cls._qpos(pdf)
         out = {}
         for s in d["part2"]["sets"]:
@@ -251,12 +256,15 @@ class SeseoSeries(Series):
                 if free < 3:
                     continue
                 gq = on if pg == first_pg else on[1:]
-                per_q = min(free / len(gq), cap_q) if gq else 0.0
-                rest = free - per_q * len(gq)
+                wts = [W_FIRST if (pg == first_pg and i == 0 and q is qs[0]) else 1.0
+                       for i, q in enumerate(gq)]
+                unit = min(free / sum(wts), cap_q) if gq else 0.0
+                share = [min(unit * w, CAP_FIRST if w < 1 else cap_q) for w in wts]
+                rest = free - sum(share)
                 nl = sum(max(0, sum(1 for b in q["blocks"] if b["t"] == "line") - 1) for q in on)
                 per_l = min(rest / nl, cap_l) if nl and rest > 1 else 0.0
-                for q in gq:
-                    plan["q"][q["no"]] = round(per_q, 1)
+                for q, v in zip(gq, share):
+                    plan["q"][q["no"]] = round(v, 1)
                 for q in on:
                     if per_l:
                         plan["l"][q["no"]] = round(per_l, 1)
