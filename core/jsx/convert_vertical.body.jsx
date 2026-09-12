@@ -78,6 +78,189 @@ function isMasterNone(page) {
     return (n === "[없음]" || n === "[None]" || n === "none" || n === "");
 }
 
+// ── STEP11 STEP3(실전) 지문별 재스레드 헬퍼 (2026-09-12) ────────────────────
+// STEP4.5는 재배치를 위해 STEP3 관통 스토리를 프레임 단위로 쪼갠다(26년 9월
+// 고2: 13스토리 → 438조각). 재배치가 끝나면 그 조각을 **지문 단위로** 다시
+// 이어야 한다 — 안 이으면 문항 자동번호가 조각마다 1부터 재시작해 한 지문
+// 안에서 번호가 중복되고(실측 1,2,3 / 1,2 / 1 …), 편집해도 리플로우가 안 된다.
+//
+// ⚠ 조각의 마지막 단락은 CR 을 잃는다(스토리 끝 단락에는 \r 이 없다).
+//   그대로 move(AT_END) 하면 앞 조각 끝 단락과 뒤 조각 첫 단락이 **한 단락으로
+//   병합**되고, 그 단락의 startParagraph(NEXT_FRAME / NEXT_PAGE)가 사라져
+//   "문제마다 새 프레임에서 시작" 강제가 풀린다 → 텍스트가 앞으로 흘러
+//   12프레임 분량이 7프레임에 압축된다(실측 282프레임 중 174개 이동).
+//   문자수 합·오버셋은 멀쩡해서 그 둘로는 못 잡는다 — **프레임별 텍스트 대조**가
+//   유일한 검수다. move 직전에 CR 을 되살리면 원본과 같아진다
+//   (실측: 증가분 82자 = 복원한 CR 수, 프레임 내용 변화 0, 오버셋 0).
+function _rejoinNorm(s) { return String(s).replace(/[\r\n\t ]/g, ""); }
+
+// 지문 코드 {YYMMQQ} 로 시작하는 프레임 = 지문 묶음의 첫 프레임
+function _isPassageAnchor(tf) {
+    var c = "";
+    try { c = tf.contents; } catch (e) { return false; }
+    return /^\s*\{\d{6}\}/.test(String(c));
+}
+
+// 읽기 순서(페이지 → x) 로 늘어놓은 페이지별 프레임
+function _pageFramesInReadOrder(pg) {
+    var frs = pg.textFrames.everyItem().getElements();
+    var out = [];
+    for (var i = 0; i < frs.length; i++) { out.push(frs[i]); }
+    out.sort(function (a, b) {
+        var ga, gb;
+        try { ga = a.geometricBounds; } catch (e) { return 0; }
+        try { gb = b.geometricBounds; } catch (e) { return 0; }
+        if (Math.abs(ga[1] - gb[1]) > 0.5) { return ga[1] - gb[1]; }
+        return ga[0] - gb[0];
+    });
+    return out;
+}
+
+// 앵커와 같은 본문 슬롯인가 (top·폭 일치). STEP1·2(A/C) 페이지 프레임은 폭이
+// 달라 여기서 걸러진다 — 마스터 이름에 기대지 않으려는 판정이다.
+function _sameSlot(tf, gb0) {
+    var gb;
+    try { gb = tf.geometricBounds; } catch (e) { return false; }
+    if (Math.abs(gb[0] - gb0[0]) > 3) { return false; }
+    if (Math.abs((gb[3] - gb[1]) - (gb0[3] - gb0[1])) > 3) { return false; }
+    return true;
+}
+
+// 지문 묶음 = 앵커 프레임부터, 슬롯 프레임이 있는 **연속** 페이지 동안
+// (다음 앵커를 만나면 종료). 메모 페이지의 빈 슬롯도 원본 스토리의 일부였으므로
+// 함께 넣는다.
+function _step3Groups(doc) {
+    var groups = [];
+    for (var p = 0; p < doc.pages.length; p++) {
+        var pf = _pageFramesInReadOrder(doc.pages[p]);
+        for (var i = 0; i < pf.length; i++) {
+            if (!_isPassageAnchor(pf[i])) { continue; }
+            var gb0;
+            try { gb0 = pf[i].geometricBounds; } catch (e) { continue; }
+            var code = "";
+            try { code = String(pf[i].contents).match(/\{(\d{6})\}/)[1]; } catch (e) {}
+            var frames = [pf[i]];
+            var done = false;
+            // 같은 페이지의 뒤 슬롯
+            for (var j = i + 1; j < pf.length && !done; j++) {
+                if (_isPassageAnchor(pf[j])) { done = true; break; }
+                if (_sameSlot(pf[j], gb0)) { frames.push(pf[j]); }
+            }
+            // 다음 페이지들
+            for (var q = p + 1; q < doc.pages.length && !done; q++) {
+                var qf = _pageFramesInReadOrder(doc.pages[q]);
+                var got = 0;
+                for (var k = 0; k < qf.length; k++) {
+                    if (_isPassageAnchor(qf[k])) { done = true; break; }
+                    if (_sameSlot(qf[k], gb0)) { frames.push(qf[k]); got++; }
+                }
+                if (done) { break; }
+                if (got === 0) { break; }   // 슬롯이 끊기면 묶음 끝
+            }
+            groups.push({ code: code, frames: frames });
+        }
+    }
+    return groups;
+}
+
+// 묶음 밖으로 새는 스토리가 있으면 그 묶음은 건드리지 않는다
+function _groupLeaks(frames) {
+    var inGroup = {};
+    var i;
+    for (i = 0; i < frames.length; i++) { inGroup[frames[i].id] = 1; }
+    for (i = 0; i < frames.length; i++) {
+        var cs;
+        try { cs = frames[i].parentStory.textContainers; } catch (e) { return true; }
+        for (var c = 0; c < cs.length; c++) {
+            if (!inGroup[cs[c].id]) { return true; }
+        }
+    }
+    return false;
+}
+
+function _rejoinStep3(doc) {
+    var stats = { groups: 0, joined: 0, already: 0, skipped: 0, cr: 0, diffs: 0 };
+    var groups = _step3Groups(doc);
+    stats.groups = groups.length;
+    if (groups.length === 0) {
+        wlog("STEP11: 지문 코드 앵커 없음 — 재스레드 생략");
+        return stats;
+    }
+    var gi, fi;
+    for (gi = 0; gi < groups.length; gi++) {
+        var frames = groups[gi].frames;
+        var code = groups[gi].code;
+        if (frames.length < 2) { stats.skipped++; continue; }
+        if (_groupLeaks(frames)) {
+            wlog("[경고] STEP11: 지문 " + code + " 스토리가 묶음 밖으로 샌다 — 건너뜀");
+            stats.skipped++;
+            continue;
+        }
+        var nSt = 0, seen = {};
+        for (fi = 0; fi < frames.length; fi++) {
+            var sid0 = frames[fi].parentStory.id;
+            if (!seen[sid0]) { seen[sid0] = 1; nSt++; }
+        }
+        if (nSt === 1 && frames[0].parentStory.textContainers.length === frames.length) {
+            stats.already++;
+            continue;
+        }
+        // 결합 전 프레임별 스냅샷 — 유일한 검수 근거
+        var snap = [];
+        for (fi = 0; fi < frames.length; fi++) {
+            var c0 = "";
+            try { c0 = frames[fi].texts[0].contents; } catch (e) {}
+            snap.push(String(c0));
+        }
+        var cr = 0, err = null;
+        try {
+            for (var f4 = 1; f4 < frames.length; f4++) {
+                var tgt = frames[0].parentStory;
+                var ss = frames[f4].parentStory;
+                if (ss.id === tgt.id) { continue; }
+                if (ss.characters.length > 0) {
+                    if (tgt.characters.length > 0) {
+                        var last = "";
+                        try { last = tgt.characters[-1].contents; } catch (e) {}
+                        if (last !== "\r") {
+                            tgt.insertionPoints[-1].contents = "\r";
+                            cr++;
+                        }
+                    }
+                    ss.texts[0].move(LocationOptions.AT_END, tgt.texts[0]);
+                }
+                frames[f4 - 1].nextTextFrame = frames[f4];
+            }
+        } catch (eJ) { err = String(eJ); }
+        if (err) {
+            wlog("[오류] STEP11: 지문 " + code + " 결합 실패 — " + err);
+            throw new Error("STEP11 결합 실패(지문 " + code + "): " + err);
+        }
+        stats.cr += cr;
+        stats.joined++;
+        // 검수: 프레임에 담긴 글이 결합 전과 같아야 한다(공백 차이는 복원한 CR)
+        try { doc.recompose(); } catch (e) {}
+        for (fi = 0; fi < frames.length; fi++) {
+            var c1 = "";
+            try { c1 = frames[fi].texts[0].contents; } catch (e) {}
+            if (_rejoinNorm(c1) !== _rejoinNorm(snap[fi])) {
+                stats.diffs++;
+                wlog("[오류] STEP11: 지문 " + code + " " + (fi + 1) + "번째 프레임의 글이 "
+                     + "결합으로 바뀌었다 (" + snap[fi].length + "자 → " + String(c1).length
+                     + "자) — 지면이 밀렸다");
+            }
+        }
+        if (stats.diffs > 0) {
+            throw new Error("STEP11 재스레드로 지면이 밀렸다(지문 " + code
+                            + ", 프레임 " + stats.diffs + "개) — 저장 중단");
+        }
+    }
+    wlog("STEP11: STEP3 지문별 재스레드 — 결합 " + stats.joined + " / 이미완료 "
+         + stats.already + " / 건너뜀 " + stats.skipped + " (지문 " + stats.groups
+         + "개, CR 복원 " + stats.cr + "자)");
+    return stats;
+}
+
 // ── STEP10 마스터/스타일 동기화 헬퍼 (수동본 동일) ──────────────────────────
 function _unlockEverything(d) {
     try { d.layers.everyItem().locked = false; } catch (e) {}
@@ -1278,6 +1461,24 @@ try {
     try { app.scriptPreferences.enableRedraw = true; } catch (e) {}
     // 보존 분리로 만든 독립 프레임이 redraw=false 동안 미합성일 수 있어 강제 재합성
     try { doc.recompose(); } catch (e) {}
+
+    // ==================================================
+    // STEP 11: STEP3(실전) 지문별 재스레드 (STEP4.5 분리의 되돌림)
+    //  재배치가 끝난 뒤에 돈다 — 조각난 채로 두면 문항 자동번호가 지문 안에서
+    //  중복되고 편집 리플로우가 죽는다. 지문 사이는 잇지 않는다(세로는 지문
+    //  단위로 공부하는 책이라 묶음 경계가 곧 스토리 경계다).
+    //  실패(프레임 내용 이동)하면 저장 전에 중단한다 — 조용한 지면 파괴 방지.
+    // ==================================================
+    if (cfg.step3_rejoin === false) {
+        wlog("STEP11: STEP3 재스레드 생략(cfg.step3_rejoin=false)");
+    } else {
+        var _rj = _rejoinStep3(doc);
+        result.rejoin_groups = _rj.groups;
+        result.rejoin_joined = _rj.joined;
+        result.rejoin_already = _rj.already;
+        result.rejoin_skipped = _rj.skipped;
+        result.rejoin_cr = _rj.cr;
+    }
 
     // ── 오버플로우 집계 + 저장/Export ────────────────────────────────────────
     var ovf = 0;
