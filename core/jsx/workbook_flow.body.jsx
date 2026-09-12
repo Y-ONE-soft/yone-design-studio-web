@@ -1387,7 +1387,14 @@ function cleanupPages(doc, flowStories, op) {
     // 3) STEP3 영역 — 빈 페이지 M 마스터 재할당 (v1 adjustStep3Pages 파리티,
     //    delete 모드에선 위에서 삭제 완료 — 재할당 생략)
     if (!step3Story || deleteEmpty) { return; }
-    var emptyMasterPrefix = op.empty_master || "M";
+    reassignEmptyStep3Pages(doc, step3Story, op.empty_master || "M");
+}
+
+// STEP3 영역의 '내용 없는 페이지'에 메모(M) 마스터를 입힌다.
+// cleanupPages 와 유닛 왼쪽면 브레이크 재적용(enforceUnitEvenBreaks)이
+// 공유한다 — 후자는 페이지를 새로 비우므로 그 뒤에 한 번 더 돌아야 한다.
+function reassignEmptyStep3Pages(doc, step3Story, emptyMasterPrefix) {
+    if (!step3Story) { return 0; }
     var mMaster = null;
     try {
         var ms = doc.masterSpreads.everyItem().getElements();
@@ -1398,7 +1405,11 @@ function cleanupPages(doc, flowStories, op) {
             }
         }
     } catch (e) {}
-    if (!mMaster) { wlog("[경고] " + emptyMasterPrefix + " 마스터 없음 — STEP3 빈 페이지 재할당 생략"); return; }
+    if (!mMaster) {
+        wlog("[경고] " + emptyMasterPrefix
+             + " 마스터 없음 — STEP3 빈 페이지 재할당 생략");
+        return 0;
+    }
     try { step3Story.recompose(); } catch (e) {}
     var s3pages = storyPagesInOrder(step3Story);
     var reassigned = 0;
@@ -1423,7 +1434,9 @@ function cleanupPages(doc, flowStories, op) {
             try { spg.appliedMaster = mMaster; reassigned++; } catch (e) {}
         }
     }
-    wlog("페이지 정리: 빈 STEP3 페이지 " + emptyMasterPrefix + " 마스터 " + reassigned + "개");
+    wlog("페이지 정리: 빈 STEP3 페이지 " + emptyMasterPrefix + " 마스터 "
+         + reassigned + "개");
+    return reassigned;
 }
 
 // ── W22 op: 파트 경계 채움 페이지 (delete 모드의 cleanupPages가 호출) ───────
@@ -2901,6 +2914,54 @@ function fitUnitsInFrames(doc, flowStories, op) {
          + " / 미해결 " + gaveUp + " / 대상밖(장문) " + skipped);
 }
 
+// ── 유닛 왼쪽면 브레이크 재적용 (page_break: "even") ────────────────────────
+// 배치 단계에서 건 NEXT_EVEN_PAGE 는 뒤따르는 밀기/완화 op(question_keep,
+// stem_keep)이 같은 단락을 다시 계산하면서 NEXT_PAGE 로 덮어쓸 수 있다
+// (2026-09-12 실측: 25지문 중 22개가 오른쪽 면에서 시작 — 사용자 스펙
+// "지문은 무조건 왼쪽 페이지에서 시작" 위반). 모든 지면 조정 op 이 끝난
+// **마지막**에 한 번 더 확정한다 — 이 단계 뒤로는 페이지를 미는 op 이 없다.
+// 비는 오른쪽 면은 메모(M) 마스터로 (사용자 스펙).
+function enforceUnitEvenBreaks(doc, flowStories, plan) {
+    var total = 0, fixed = 0;
+    for (var fi = 0; fi < (plan.flows || []).length; fi++) {
+        var flow = plan.flows[fi];
+        if (!flow.break_per_unit) { continue; }
+        var rec = flowStories[flow.step];
+        if (!rec || !rec.unitStart) { continue; }
+        var story = rec.story;
+        var paras = null;
+        try { paras = story.paragraphs.everyItem().getElements(); }
+        catch (e) { continue; }
+        for (var u = 1; u < flow.units.length; u++) {   // 첫 유닛은 제자리
+            var unitObj = flow.units[u];
+            if (!unitObj || unitObj.page_break !== "even") { continue; }
+            var si = rec.unitStart[u];
+            if (si === undefined || si <= 0 || si >= paras.length) { continue; }
+            total++;
+            var cur = null;
+            try { cur = paras[si].startParagraph; } catch (e1) { continue; }
+            if (cur === StartParagraph.NEXT_EVEN_PAGE) { continue; }
+            try {
+                paras[si].startParagraph = StartParagraph.NEXT_EVEN_PAGE;
+                fixed++;
+            } catch (e2) {
+                wlog("[경고] 왼쪽면 브레이크 재적용 실패(" + flow.step
+                     + " 유닛 " + (u + 1) + "): " + e2);
+            }
+        }
+        if (fixed > 0) {
+            try { story.recompose(); } catch (e3) {}
+            // 왼쪽으로 밀린 만큼 스토리 끝이 넘칠 수 있다 — 즉시 확장
+            expandStoryOverflow(doc, flow.step + " 왼쪽면 브레이크", story);
+            reassignEmptyStep3Pages(doc, story, "M");
+        }
+    }
+    if (total > 0) {
+        wlog("유닛 왼쪽면 브레이크 재확정: 대상 " + total + " / 되돌림 "
+             + fixed);
+    }
+}
+
 function textbookPostprocess(doc) {
     var bMaster = null, dMaster = null;
     try { bMaster = doc.masterSpreads.itemByName("B-마스터"); bMaster.name; } catch (e) { bMaster = null; }
@@ -3050,6 +3111,7 @@ try {
         // 대형 스토리 필수 최적화: 컬렉션 인덱싱 대신 getElements() 1회 캐시
         // (v1 blackbook run.jsx:197 주석 — 매번 재조회는 2,000단락에서 행 유발)
         var paras = story.paragraphs.everyItem().getElements();
+        var brkEven = 0, brkFail = 0;
         var isStart = {};
         for (var us = 0; us < unitStart.length; us++) {
             // "even" = NEXT_EVEN_PAGE (왼쪽 면 시작), "page" = NEXT_PAGE
@@ -3087,7 +3149,8 @@ try {
                             : (isStart[pi] === "page")
                                 ? StartParagraph.NEXT_PAGE
                                 : StartParagraph.NEXT_FRAME;
-                } catch (e) {}
+                    if (isStart[pi] === "even") { brkEven++; }
+                } catch (e) { brkFail++; }
             }
             var runs = flat[pi].runs;
             if (runs && runs.length > 0) {
@@ -3117,6 +3180,10 @@ try {
             if ((pi + 1) % 50 === 0) {
                 wlog(flow.step + " 스타일: " + (pi + 1) + "/" + flat.length);
             }
+        }
+        if (brkEven > 0 || brkFail > 0) {
+            wlog(flow.step + " 유닛 브레이크: 왼쪽면(NEXT_EVEN_PAGE) "
+                 + brkEven + "건 / 실패 " + brkFail + "건");
         }
 
         // 아이콘 패스 — 밑줄 runs·프레임브레이크 적용 이후 마지막, 역순
@@ -3348,6 +3415,11 @@ try {
         }, ScriptLanguage.JAVASCRIPT, undefined,
            UndoModes.ENTIRE_SCRIPT, "wb_v2 question_keep");
     }
+    // 왼쪽면 브레이크 재확정 — 밀기/완화가 끝난 뒤 (순서 의존 제거)
+    app.doScript(function () {
+        enforceUnitEvenBreaks(doc, flowStories, plan);
+    }, ScriptLanguage.JAVASCRIPT, undefined,
+       UndoModes.ENTIRE_SCRIPT, "wb_v2 even_breaks");
     if (plan.page_cleanup && (typeof plan.page_cleanup === "object")) {
         // W40 결함 8: 호출 조건을 empty==="delete" 에서 page_cleanup 전반으로
         // 넓힌다. 본가(모의고사)는 empty_master:"M" 모드라 이 op 가 한 번도
