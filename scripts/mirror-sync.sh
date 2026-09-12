@@ -15,6 +15,18 @@ MIRROR_BASE="${YONE_MIRROR_BASE:-$HOME/Library/Application Support/yone-design-w
 JOBS_DIR="$HOME/dev/yone-design-web/jobs"
 LOG="$HOME/Library/Logs/yone-mirror-sync.log"
 
+# 로그 로테이션 — 로테이션이 없어서 로그가 71GB까지 불어나 디스크를 99%까지
+# 채운 사고가 있었다(2026-09-12). GDrive EDEADLK가 나면 한 사이클에 rsync가
+# 파일마다 오류 줄을 쏟아내므로, 매 실행 앞에서 크기를 보고 잘라낸다.
+LOG_MAX_BYTES=${YONE_LOG_MAX_BYTES:-52428800}   # 50MB
+if [ -f "$LOG" ]; then
+    log_size=$(stat -f%z "$LOG" 2>/dev/null || echo 0)
+    if [ "$log_size" -gt "$LOG_MAX_BYTES" ]; then
+        mv -f "$LOG" "$LOG.1"
+        : > "$LOG"
+    fi
+fi
+
 SUBPATHS=(
     "모의고사 작업/고1"
     "모의고사 작업/고2"
