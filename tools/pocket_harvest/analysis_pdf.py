@@ -673,7 +673,8 @@ def _summary_page(page, cs):
         return None
     ink = [c for c in cs if c["color"] != _WHITE]
     lines = _lines(ink)
-    got = {"topic": "", "summary": "", "exam": [], "clean": "", "voca": []}
+    got = {"topic": "", "summary": "", "exam": [], "clean": "",
+           "voca": [], "syn": [], "flow": []}
     order = sorted(chip.items(), key=lambda kv: kv[1]["oy"])
     for n, (name, cl) in enumerate(order):
         lo = cl["oy"] - 2
@@ -713,38 +714,17 @@ def _summary_page(page, cs):
     got["clean"] = _join_lines(best)
 
     if head is not None:
-        cols = head["cols"]
-        for l in lines:
-            if l["oy"] <= head["oy"] + 1:
-                continue
-            if any(c["color"] == head["color"] for c in l["cs"]):
-                continue
-            # 칸 글은 머리 글자보다 **3.5pt 왼쪽**에서 시작한다(실측) — 글자마다
-            # 칸을 고르면 `fascinated 매 | 료된` 처럼 칸 경계에서 낱말이 쪼개진다.
-            # 먼저 **덩이**(큰 틈으로 끊은 글)로 묶고, 덩이 머리로 칸을 고른다.
-            cells = [[] for _ in cols]
-            segs, prev = [], None
-            for c in l["cs"]:
-                if (prev is None or c["x0"] - prev["x1"] > 1.5 * c["size"]):
-                    segs.append([])
-                segs[-1].append(c)
-                prev = c
-            for sg in segs:
-                x0 = sg[0]["x0"]
-                k = max([i for i, x in enumerate(cols) if x - 8 <= x0] or [0])
-                cells[k].extend(sg)
-            txt = [_text(x) for x in cells]
-            for i in range(0, len(cols) - 1, 2):
-                w, ko = txt[i], txt[i + 1]
-                if w or ko:
-                    if len(_HAN.findall(w)) > len(_HAN.findall(ko)) and ko:
-                        w, ko = ko, w
-                    got["voca"].append({"w": w, "ko": ko})
+        got["voca"], got["syn"] = _voca_table(lines, head)
+    got["flow"] = _flow_note(cs, foot)
     return got
 
 
 def _voca_header(lines):
-    """VOCA 머리 줄 — 칸이 넷 이상이고 전부 먹 아닌 한 색의 작은 글자인 줄."""
+    """VOCA 머리 줄 — 칸이 넷 이상이고 전부 먹 아닌 한 색의 작은 글자인 줄.
+
+    칸의 x 자리(`cols`)와 **이름**(`names`)을 함께 돌려준다 — 이름이 있어야
+    유의어·반의어를 자리로 짐작하지 않고 가를 수 있다.
+    """
     for l in lines:
         cols = set(c["color"] for c in l["cs"] if c["c"].strip())
         if len(cols) != 1:
@@ -759,11 +739,159 @@ def _voca_header(lines):
             if not c["c"].strip():
                 continue
             if prev is None or c["x0"] - prev["x1"] > 2.0 * c["size"]:
-                cells.append(c["x0"])
+                cells.append([])
+            cells[-1].append(c)
             prev = c
         if len(cells) >= 4:
-            return {"oy": l["oy"], "cols": cells, "color": col}
+            return {"oy": l["oy"], "cols": [g[0]["x0"] for g in cells],
+                    "names": [_text(g) for g in cells], "color": col}
     return None
+
+
+# ── VOCA 표 · 동반의어 ───────────────────────────────────────
+# 칸 이름 → 뜻. Y.OS 는 디자인마다 **칸 순서가 다르다** — 강동 2024 는
+# 어휘·의미·유의어·반의어인데 배재는 어휘·의미·품사·반의어·유의어다(프리셋 실측).
+# 자리로 읽으면 유의어와 반의어가 뒤집히므로 **머리글 이름**으로 읽는다.
+_VOCA_HEAD = {
+    "중요어휘": "w", "단어표현": "w", "단어": "w", "어휘": "w", "표제어": "w",
+    "의미": "ko", "뜻": "ko",
+    "품사": "pos",
+    "유의어": "syn", "동의어": "syn",
+    "반의어": "ant",
+    "문장": "sent",
+}
+_RE_SYN_SPLIT = re.compile(r"\s*[,/;·∙]\s*|\s{2,}")
+
+
+def _norm(t):
+    return re.sub(r"[\s·∙・,]", "", t or "")
+
+
+def _syn_list(t):
+    return [x.strip() for x in _RE_SYN_SPLIT.split(t or "") if x.strip()]
+
+
+def _cells_of(line, cols):
+    """줄 → 칸별 글.
+
+    칸 글은 머리 글자보다 **3.5pt 왼쪽**에서 시작한다(실측) — 글자마다 칸을
+    고르면 `fascinated 매 | 료된` 처럼 칸 경계에서 낱말이 쪼개진다. 먼저
+    **덩이**(큰 틈으로 끊은 글)로 묶고, 덩이 머리로 칸을 고른다.
+    """
+    cells = [[] for _ in cols]
+    segs, prev = [], None
+    for c in line["cs"]:
+        if prev is None or c["x0"] - prev["x1"] > 1.5 * c["size"]:
+            segs.append([])
+        segs[-1].append(c)
+        prev = c
+    for sg in segs:
+        x0 = sg[0]["x0"]
+        k = max([i for i, x in enumerate(cols) if x - 8 <= x0] or [0])
+        cells[k].extend(sg)
+    return [_text(x) for x in cells]
+
+
+def _voca_table(lines, head):
+    """VOCA 표 → (중요어휘, 동반의어 카드).
+
+    한 벌은 **어휘 칸에서 시작한다** — 낱말이 15개를 넘으면 Y.OS 가 한 줄에
+    두 벌(8칸)을 앉힌다. 유의어·반의어 칸이 있는 표가 곧 **동반의어** 표이고,
+    그 표가 포켓북 오른쪽 면 동반의어의 정본이 된다.
+    """
+    cols, names = head["cols"], head.get("names") or []
+    fields = [_VOCA_HEAD.get(_norm(n)) for n in names]
+    fields += [None] * (len(cols) - len(fields))
+    # 머리글을 못 읽는 표는 예전처럼 (어휘, 의미) 짝으로 본다
+    if "w" not in fields:
+        fields = ["w" if i % 2 == 0 else "ko" for i in range(len(cols))]
+    sets = []
+    for i, k in enumerate(fields):
+        if k == "w" or not sets:
+            sets.append({})
+        if k:
+            sets[-1][k] = i
+    voca, syn = [], []
+    for line in lines:
+        if line["oy"] <= head["oy"] + 1:
+            continue
+        if any(c["color"] == head["color"] for c in line["cs"]):
+            continue
+        txt = _cells_of(line, cols)
+
+        def cell(s, k):
+            i = s.get(k)
+            return txt[i] if i is not None and i < len(txt) else ""
+
+        for s in sets:
+            w, ko = cell(s, "w"), cell(s, "ko")
+            if not (w or ko):
+                continue
+            if len(_HAN.findall(w)) > len(_HAN.findall(ko)) and ko:
+                w, ko = ko, w
+            voca.append({"w": w, "ko": ko})
+            if "syn" in s or "ant" in s:
+                syn.append({"w": w, "ko": ko,
+                            "syn": _syn_list(cell(s, "syn")),
+                            "ant": _syn_list(cell(s, "ant"))})
+    return voca, syn
+
+
+# ── NOTE(플로우노트) 상자 ────────────────────────────────────
+# 오른쪽 면 NOTE 상자는 **빈 판도 있고 글이 든 판도 있다.** 빈 판은 학생이
+# 직접 쓰는 자리(추가 읽기 자료가 그랬다)고, 글이 들어 있으면 그게 포켓북
+# 플로우노트의 정본이다 — 우리가 다시 쓰지 않고 그걸 가져온다.
+_RE_FLOWLAB = re.compile(r"^(flow|플로우)?(note|노트)$|^흐름$", re.I)
+_RE_BLOCKLAB = re.compile(
+    r"^(주제|주제문|요약|요약문|핵심기출문제|기출포인트|필기|필기정리|메모|"
+    r"voca|(flow|플로우)?(note|노트)|grammarpoint)$", re.I)
+_ARROWS = ("›", ">", "→", "»", "▶", "⟩")
+
+
+def _flow_note(cs, foot):
+    """오른쪽 면 NOTE 상자의 글 → 줄 목록(빈 상자면 []).
+
+    상자 경계는 **이름표로** 잡는다. 같은 높이에 다른 이름표가 있으면 두 단이니
+    그 단 앞까지가 오른쪽 끝이고(`핵심기출문제 | NOTE`), 아래 첫 이름표가
+    바닥이다(기출 포인트·VOCA). 좌표를 박아 두면 디자인이 바뀌는 순간
+    기출 상자 글을 플로우노트로 읽는다.
+    """
+    lines = _lines(cs)
+    labs = [(ln, _norm(_text(ln["cs"]))) for ln in lines]
+    lab = next((ln for ln, t in labs if _RE_FLOWLAB.match(t)), None)
+    if lab is None:
+        return []
+    others = [ln for ln, t in labs if ln is not lab and _RE_BLOCKLAB.match(t)]
+    x0, x1, bot = lab["x0"] - 4, max(ln["x1"] for ln in lines) + 2, foot
+    for b in others:
+        if abs(b["oy"] - lab["oy"]) <= 8 and b["x0"] > lab["x0"] + 40:
+            x1 = min(x1, b["x0"] - 4)
+    for b in others:
+        if lab["oy"] + 8 < b["oy"] < bot and b["x0"] < x1:
+            bot = b["oy"]
+    box = [ln for ln in _lines([c for c in cs if c["color"] != _WHITE])
+           if lab["oy"] + 1 < ln["oy"] < bot - 1 and x0 <= ln["x0"] < x1]
+    out, base = [], None
+    for ln in box:
+        # 가로 흐름 판(강동 2024)은 상자 넷이 나란히 놓이고 사이에 화살표가 있다.
+        # 한 줄에 큰 틈으로 떨어진 덩이가 둘 이상이면 `→` 로 이어 한 줄로 읽는다.
+        segs, prev = [], None
+        for c in ln["cs"]:
+            if prev is None or c["x0"] - prev["x1"] > 3.0 * c["size"]:
+                segs.append([])
+            segs[-1].append(c)
+            prev = c
+        parts = [t for t in (_text(s) for s in segs) if t and t not in _ARROWS]
+        t = " → ".join(parts)
+        if not t:
+            continue
+        # 접힌 줄 — 첫 줄보다 눈에 띄게 들어간 줄은 앞 줄의 이어짐이다
+        if out and base is not None and ln["x0"] > base + 4:
+            out[-1] = _join_lines([out[-1], t])
+        else:
+            out.append(t)
+            base = ln["x0"]
+    return out
 
 
 # ── 책 ──────────────────────────────────────────────────────
@@ -842,11 +970,11 @@ def _build(u, base):
         "translation": ([{"style": "한글", "runs": [
             {"t": ko, "style": "", "mark": None, "hl": None, "ruby": None,
              "slot": None}]}] if ko else None),
-        "flownote": [],
+        "flownote": sm.get("flow") or [],
         "title": {"en": "", "ko": u["title_ko"]},
         "topic": sm.get("topic") or "",
         "summary": sm.get("summary") or "",
-        "synonyms": [],
+        "synonyms": sm.get("syn") or [],
         "voca": sm.get("voca") or [],
         "grammar": u["grammar"],
         "exam": sm.get("exam") or [],
