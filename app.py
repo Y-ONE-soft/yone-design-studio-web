@@ -102,5 +102,9 @@ for _bp in ALL_BLUEPRINTS:
 
 
 if __name__ == "__main__":
+    # 진행 중인 조판이 있으면 자동 재시작(코드 저장/ git pull)을 잡이 끝날 때까지
+    # 미룬다. 없으면 종전대로 즉시 반영 — 개발 편의는 그대로.
+    from core import reload_guard
+    reload_guard.install()
     app.run(host="0.0.0.0", port=config.PORT, debug=True,
             use_reloader=True)

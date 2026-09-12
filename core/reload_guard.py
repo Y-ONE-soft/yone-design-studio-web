@@ -57,4 +57,5 @@ def install(max_defer_sec: int = MAX_DEFER_SEC, poll_sec: int = POLL_SEC):
         return orig_trigger(self, filename)
 
     _reloader.ReloaderLoop.trigger_reload = guarded_trigger
+    _say("설치됨 — 조판 진행 중에는 코드 변경 자동 재시작을 미룹니다")
     return True

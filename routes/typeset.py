@@ -5,6 +5,8 @@ import os
 import re
 import shutil
 import threading
+import time
+import unicodedata
 
 from flask import (Blueprint, Response, jsonify, request, send_file,
                    stream_with_context)
@@ -329,12 +331,61 @@ def api_cancel(job_id):
 @bp.route("/api/result/<job_id>")
 def api_result(job_id):
     job = jm.get_job(job_id)
-    if not job:
-        return jsonify({"error": "job not found"}), 404
-    return jsonify({
-        "status": job["status"],
-        "result": job["result"],
-    })
+    if job:
+        return jsonify({
+            "status": job["status"],
+            "result": job["result"],
+        })
+
+    # 인메모리 잡이 없다 = 서버가 그 사이 재시작됐다는 뜻(개발 자동 재시작·
+    # 크래시·수동 재기동). 결과가 디스크에 남아 있으면 그것으로 되살리고,
+    # 없으면 InDesign 이 아직 돌고 있는지 로그 갱신 시각으로 판별해 알려준다.
+    # (종전에는 무조건 404 → "결과를 찾을 수 없습니다. 다시 실행하세요" 안내가
+    #  나가서, 실제로는 조판이 계속 돌고 있는데 중복 실행을 유도했다.)
+    saved = jm.load_result(job_id)
+    if saved:
+        return jsonify({"status": saved.get("status", "done"),
+                        "result": saved.get("result")})
+
+    job_dir = os.path.join(config.JOBS_DIR, job_id)
+    if os.path.isdir(job_dir):
+        last_line, age = _job_log_progress(job_dir)
+        if age is not None and age < 300:
+            msg = ("서버가 재시작되어 진행 표시가 끊겼습니다. "
+                   "InDesign 은 계속 조판 중입니다"
+                   + (f" (마지막 진행: {last_line})" if last_line else "")
+                   + ". 다시 실행하지 말고 InDesign 이 끝날 때까지 기다리세요. "
+                     "조판이 끝나도 검수·PDF 단계는 자동으로 이어지지 않습니다.")
+        else:
+            msg = ("서버가 재시작되어 작업이 중단됐습니다"
+                   + (f" (마지막 진행: {last_line})" if last_line else "")
+                   + ". InDesign 에 남은 작업이 없으면 다시 실행해 주세요.")
+        return jsonify({"status": "error", "result": {"ok": False, "error": msg}})
+
+    return jsonify({"error": "job not found"}), 404
+
+
+def _job_log_progress(job_dir: str):
+    """잡 폴더의 조판 로그에서 (마지막 줄, 갱신된 지 몇 초) 를 얻는다.
+    로그 파일 이름은 엔진마다 다를 수 있어 폴더 안 *로그*.txt 중 최신을 본다."""
+    try:
+        # macOS 파일명은 NFD 로 분해돼 오므로 NFC 로 맞춰서 비교한다
+        # (안 맞추면 '조판_로그.txt' 가 "로그" 검색에 걸리지 않는다).
+        cands = [os.path.join(job_dir, f) for f in os.listdir(job_dir)
+                 if f.endswith(".txt")
+                 and "로그" in unicodedata.normalize("NFC", f)]
+        if not cands:
+            return None, None
+        path = max(cands, key=os.path.getmtime)
+        age = time.time() - os.path.getmtime(path)
+        with open(path, encoding="utf-8", errors="replace") as f:
+            text = f.read()[-4000:]
+        # JSX 로그는 \r 로 이어붙는 경우가 있어 둘 다 줄바꿈으로 본다.
+        lines = [ln.strip() for ln in text.replace("\r", "\n").split("\n")
+                 if ln.strip()]
+        return (lines[-1] if lines else None), age
+    except Exception:
+        return None, None
 
 
 @bp.route("/download/<job_id>/pdf")
