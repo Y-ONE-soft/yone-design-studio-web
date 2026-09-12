@@ -46,17 +46,25 @@ def test_step3_builder_corpus():
                        encoding="utf-8"))
     plan = steps_to_plan(c["steps"])
     s3 = next(f for f in plan["flows"] if f["step"] == "step3")
-    assert len(s3["units"]) == 22
+    # 2026-09-12 사용자 확정 스펙: 모의고사 짤지문은 별도 스토리
+    # (step3_short — 간지 뒤 짤지문 섹션). 합계는 그대로 22.
+    s3s = next(f for f in plan["flows"] if f["step"] == "step3_short")
+    assert len(s3["units"]) == 18 and len(s3s["units"]) == 4
     assert s3["target"] == {"master": "O"}
-    styles = {p["s"] for u in s3["units"] for p in u}
+    assert s3s["target"]["split_after_marker"] == "짤지문"
+    # 유닛은 리스트 또는 {"paras": [...]} (왼쪽 면 시작 유닛)
+    paras = [p for f in (s3, s3s) for u in f["units"]
+             for p in (u["paras"] if isinstance(u, dict) else u)]
+    # "$BASIC" 은 실행기 센티널(문서 내장 [기본 단락]) — 템플릿 스타일
+    # 인벤토리 대상이 아니다 (지문번호 {YYMMQQ} 단락이 쓴다)
+    styles = {p["s"] for p in paras if not str(p["s"]).startswith("$")}
     # W45: 답란 신설 스타일(S_답란)은 템플릿 반영 전이라 인벤토리에 없을 수
     # 있다 — 그 단락은 반드시 폴백(s_fb, 인벤토리 존재)을 함께 실어야 한다.
-    pending = {p["s"] for u in s3["units"] for p in u if p.get("s_fb")}
-    assert all(p.get("s_fb") in inv for u in s3["units"] for p in u
-               if p.get("s_fb"))
+    pending = {p["s"] for p in paras if p.get("s_fb")}
+    assert all(p.get("s_fb") in inv for p in paras if p.get("s_fb"))
     assert all(s in inv for s in styles - pending), styles - inv - pending
     # 정답/그룹헤더는 제거돼야 함 (kind GH/A → 미포함)
-    texts = [p["t"] for u in s3["units"] for p in u]
+    texts = [p["t"] for p in paras]
     assert not any(t.strip() in ("정답", "[정답]") for t in texts)
 
 

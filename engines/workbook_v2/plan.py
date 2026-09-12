@@ -4446,8 +4446,12 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         elif step_key in _CTX_BUILDERS:
             built = builder(step_data, workbook_type=workbook_type)
         elif step_key == "step3":
+            # 짤지문 별도 스토리는 **모의고사 내지**에만 있는 구조다 —
+            # 다른 계열(EBS·수능특강·교과서)은 기존대로 한 플로우.
+            _split_short = (workbook_type == "모의고사"
+                            and bool(step_data.get("short")))
             built = builder(step_data, workbook_type=workbook_type,
-                            only="normal")
+                            only=("normal" if _split_short else None))
         else:
             built = builder(step_data)
         # W30 후속 — 빌더가 소비하고 남은 ❮❯ 잔존을 등가 글리프로 치환
@@ -4464,7 +4468,7 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
         # 템플릿은 실전문제와 짤지문 구역이 한 스토리로 엮여 있어(실측: 같은
         # 스토리 554181이 p188~261 + p264~275), 실행기가 짤지문 마커 다음
         # 프레임을 언스레드해 스토리를 가른다(v1 splitStep3ShortStory 이식).
-        if step_key == "step3" and (step_data.get("short") or []):
+        if step_key == "step3" and _split_short:
             b2 = builder(step_data, workbook_type=workbook_type,
                          only="short", left_page=False)
             apply_glyph_print_map_units(b2["units"])
