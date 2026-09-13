@@ -992,6 +992,15 @@ def build_step3(step_data, workbook_type="", only=None, left_page=True):
                         take, cond_no = BG.cond_item_take(tclean, cond_no)
                         if take:
                             eff = "Cond"   # 블록 문맥 우선 — 조건 항목
+                        elif (not R.Q_START_HINT.search(tclean)
+                              and R.COND_ITEM_END.search(tclean)):
+                            # 번호·불릿 없는 조건 문장 — 파서(paragraph_kind)
+                            # 폴백과 같은 규칙. _s3_effective_kind 가 '시오'만
+                            # 보고 Cond 를 Q 로 되돌리므로 여기서 다시 잡는다
+                            # (2026-09-13 사용자 지적: '[조건]' 뒤 '…작성하시오.
+                            # (필요시 … 변형할 것)' 이 발문으로 찍혀 조건 박스가
+                            # 빈 채 인쇄 — 파서만 고쳐서는 플랜이 되돌렸다).
+                            eff = "Cond"
                         else:
                             in_cond = False   # 진짜 발문 = 블록 종료
                     elif eff == "Cond":
