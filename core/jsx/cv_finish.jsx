@@ -111,6 +111,28 @@ try {
         }
     }
 
+    // 후처리 착수 전 오버셋 스냅샷 — 마스터 적용·패딩이 새로 만든 오버셋을
+    // 구분하려면 "들어올 때" 값을 알아야 한다 (26년 9월 고1: body 산출물은
+    // 1건이었는데 후처리 뒤 2건이 됐다).
+    function _ovSnapshot(doc2) {
+        var map = {};
+        var sts2 = doc2.stories.everyItem().getElements();
+        for (var i2 = 0; i2 < sts2.length; i2++) {
+            var t2 = -1, sh2 = 0;
+            try { t2 = sts2[i2].characters.length; } catch (e2) {}
+            try {
+                var cc2 = sts2[i2].textContainers;
+                for (var j2 = 0; j2 < cc2.length; j2++) { sh2 += cc2[j2].characters.length; }
+            } catch (e2) {}
+            if (t2 !== sh2) { map[sts2[i2].id] = t2 - sh2; }
+        }
+        return map;
+    }
+    var ovBefore = _ovSnapshot(d);
+    var _ovBn = 0;
+    for (var _k in ovBefore) { _ovBn++; }
+    L("후처리 진입 시 숨은 글자 있는 스토리 " + _ovBn + "개");
+
     // ── 사이클 뒤 → 앞 (페이지 삽입이 앞 사이클 번호를 밀지 않도록) ──────
     var cycles = cfg.cycles.slice(0);
     cycles.sort(function (a, b) { return b.start - a.start; });
@@ -167,6 +189,16 @@ try {
     if (removed) { L("   낡은 전체버전 마스터 " + removed + "개 제거"); }
 
     L("마스터 적용 " + applied + "p, 메모 패딩 " + padded + "p, 최종 " + d.pages.length + "p");
+    var ovAfter = _ovSnapshot(d);
+    for (var _k2 in ovAfter) {
+        if (ovBefore[_k2] === undefined) {
+            L("[경고] 후처리가 새 오버셋을 만들었다: 스토리 " + _k2 + " — 숨은 글자 "
+              + ovAfter[_k2] + "자");
+        } else if (ovAfter[_k2] > ovBefore[_k2]) {
+            L("[경고] 후처리로 오버셋 증가: 스토리 " + _k2 + " — " + ovBefore[_k2]
+              + " → " + ovAfter[_k2] + "자");
+        }
+    }
 
     // 오버셋 판정 — 플래그만 보면 **무해한 것까지 막는다.**
     // 지문별로 끊긴 스토리는 마지막(메모 페이지) 프레임이 비어 있어도
@@ -193,6 +225,24 @@ try {
             L("   오버셋 플래그(무해): 스토리 " + stO.id + " — 표시 문자 " +
               shown + "/" + total + " 전량 인쇄");
             continue;
+        }
+        // 숨은 것이 **공백·개행뿐**이면 지면에 인쇄될 글자는 하나도 안 빠졌다.
+        // 지문별 재스레드(STEP11)가 조각 경계마다 CR 을 되살리므로 그 CR 이
+        // 마지막에 몇 자 밀려 나는 일이 있다(26년 9월 고1 260919: 10자).
+        // 글자가 섞여 있으면 그대로 막는다 — 그건 진짜 유실이다.
+        if (okCount && total > shown) {
+            var hid = total - shown;
+            var tailTxt = null;
+            try {
+                var allTxt = String(stO.texts[0].contents);
+                tailTxt = allTxt.substr(allTxt.length - hid);
+            } catch (eH) { tailTxt = null; }
+            if (tailTxt !== null && !/[^\s\u00a0]/.test(tailTxt)) {
+                benign++;
+                L("   오버셋 플래그(무해): 스토리 " + stO.id + " — 숨은 " + hid +
+                  "자가 전부 공백/개행 (인쇄 글자 " + shown + "/" + total + ")");
+                continue;
+            }
         }
         ovf++;
         L("[오류] 오버셋: 스토리 " + stO.id + " — 표시 " + shown + "/" + total +
