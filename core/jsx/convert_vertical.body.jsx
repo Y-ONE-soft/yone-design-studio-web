@@ -1158,8 +1158,17 @@ try {
             groups.push(cur);
 
             // 프레임 시작 문자 오프셋 (마지막 그룹은 오버셋 잔여까지 포함)
+            // ⚠ 범위 복제는 `characters` 인덱스를 쓴다. `contents.length` 는
+            //   표 셀·앵커 객체·각주가 섞이면 characters 개수와 어긋나고,
+            //   그러면 마지막 그룹의 end(=storyLen-1)가 스토리 끝을 넘어
+            //   itemByRange 가 "Object is invalid" 로 죽는다 (26년 9월 고1
+            //   실측: 스토리 554181, 범위 377842~380070 에서 분리 실패 →
+            //   STEP4.5 게이트가 변환 전체를 중단시켰다).
             var storyLen = 0;
-            try { storyLen = st.texts[0].contents.length; } catch (e) {}
+            try { storyLen = st.texts[0].characters.length; } catch (e) {}
+            if (!storyLen) {
+                try { storyLen = st.texts[0].contents.length; } catch (e) {}
+            }
             var cum = [];
             var acc = 0;
             for (var pi = 0; pi < caps.length; pi++) {
@@ -1217,6 +1226,9 @@ try {
                 } else {
                     end = cum[grp[grp.length - 1]] + _gN.len - 1;
                 }
+                // 스토리 끝을 넘지 않게 가둔다(위 주석 참조)
+                if (end > storyLen - 1) { end = storyLen - 1; }
+                if (start < 0) { start = 0; }
                 if (firstNf !== null && end >= start) {
                     try {
                         st.texts[0].characters.itemByRange(start, end)
@@ -1235,9 +1247,31 @@ try {
                             if (String(lc5.contents) === "\r") { lc5.remove(); }
                         } catch (e) {}
                     } catch (e) {
-                        wlog("[경고] STEP4.5 범위 복제 실패(id " + sid + ", " +
-                             start + "~" + end + "): " + e.message);
-                        okAll = false;
+                        // 1회 재시도 — 스토리 참조를 다시 잡고 실제 문자 수로
+                        // 범위를 다시 가둔다(대형 스레드에서 지정자가 일시적으로
+                        // 무효해지는 사례가 캡처 단계에도 있었다)
+                        var _redone = false;
+                        try {
+                            var stR = doc.stories.itemByID(sid);
+                            var maxR = stR.texts[0].characters.length;
+                            var endR = (end > maxR - 1) ? (maxR - 1) : end;
+                            if (start <= endR) {
+                                stR.texts[0].characters.itemByRange(start, endR)
+                                    .duplicate(LocationOptions.AT_END,
+                                               firstNf.insertionPoints[0]);
+                                _redone = true;
+                                wlog("STEP4.5: 범위 복제 재시도 성공(id " + sid +
+                                     ", " + start + "~" + endR + ")");
+                            }
+                        } catch (eR) {}
+                        if (!_redone) {
+                            var _clen = -1;
+                            try { _clen = st.texts[0].characters.length; } catch (eC) {}
+                            wlog("[경고] STEP4.5 범위 복제 실패(id " + sid + ", " +
+                                 start + "~" + end + ", 스토리 문자 " + _clen +
+                                 "): " + e.message);
+                            okAll = false;
+                        }
                     }
                 } else if (firstNf === null && grpLen > 0) {
                     wlog("[경고] STEP4.5 그룹 프레임 없음(id " + sid + ") — 내용 보존 불가");
