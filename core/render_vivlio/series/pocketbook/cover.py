@@ -292,6 +292,26 @@ def css(M, ink=None):
                 **tok)
 
 
+# 만든 연구소는 **학교마다 다르다**(사용자 지시 2026-09-13).
+#   광문 = 세희영어연구소 · 배재 = 윤기영어연구소 · 나머지 학교는 각인Books 만.
+_LABS = (("광문", "세희영어연구소"), ("배재", "윤기영어연구소"))
+
+
+def lab_of(school):
+    """학교 → 연구소 이름(없으면 빈 글자)."""
+    s = str(school or "")
+    for key, name in _LABS:
+        if key in s:
+            return name
+    return ""
+
+
+def logo_text(school=""):
+    """앞 간지 아래 로고 줄."""
+    lab = lab_of(school)
+    return ("%s · 각인Books" % lab) if lab else "각인Books"
+
+
 def first_page(school="", term=""):
     """첫 면 — 표지의 공기만 남긴 조용한 속표지."""
     return (
@@ -300,8 +320,8 @@ def first_page(school="", term=""):
         '<div class="ttl">Pocket<br>Book.</div>'
         '<div class="sub">포켓북 · 핵심 암기 노트</div>'
         '<div class="bar"><b>%s</b><span>%s</span></div>'
-        '<div class="logo">세희영어연구소 · 각인Books</div>'
-        '</div></section>' % (_esc(school), _esc(term)))
+        '<div class="logo">%s</div>'
+        '</div></section>' % (_esc(school), _esc(term), _esc(logo_text(school))))
 
 
 def last_page(school="", term=""):
