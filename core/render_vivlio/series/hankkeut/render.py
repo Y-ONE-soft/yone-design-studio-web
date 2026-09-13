@@ -225,8 +225,9 @@ def item_html(q):
         elif t == 'ask':
             o.append(f'<p class="ask"><span class="ql">Q</span>{esc(b["text"])}</p>')
         elif t == 'words':
-            o.append(f'<div class="words"><span class="wl">{esc(b["label"])}</span>'
-                     + ''.join(f'<span class="w">{esc(w)}</span>' for w in b['items']) + '</div>')
+            # ⚠ 칩 사이에 **공백**을 둬야 줄이 갈린다 — 붙여 쓰면 한 줄로 판면을 뚫는다(3곳 실측)
+            o.append(f'<div class="words"><span class="wl">{esc(b["label"])}</span> '
+                     + ' '.join(f'<span class="w">{esc(w)}</span>' for w in b['items']) + '</div>')
         elif t == 'pieces':
             o.append(pieces_html(b))
         elif t == 'ans':
@@ -288,20 +289,35 @@ def answer_html(a):
             o.append(f'<p class="asl"><span>{esc(s["title"])}</span></p>')
         for b in s['blocks']:
             if b['t'] == 'p':
-                o.append(f'<p class="ap">{inl(b["rich"])}</p>')
+                o.append(f'<p class="ap">{ox(inl(b["rich"]))}</p>')
             elif b['t'] == 'steps':
                 for k, it in enumerate(b['items']):
-                    o.append(f'<p class="st"><span class="sno">{k + 1}</span>{inl(it)}</p>')
+                    o.append(f'<p class="st"><span class="sno">{k + 1}</span>{ox(inl(it))}</p>')
             elif b['t'] == 'rows':
                 o.append('<table class="rows">')
                 for r in b['rows']:
                     cells = (r + ['', '', '', ''])[:4] if len(r) <= 4 else r
                     cls = ['n', 'm', 'x', 'r'] + [''] * (len(cells) - 4)
-                    o.append('<tr>' + ''.join(f'<td class="{c}">{esc(v)}</td>'
+                    o.append('<tr>' + ''.join(f'<td class="{c}">{mark_html(v) if c == "m" else esc(v)}</td>'
                                               for c, v in zip(cls, cells)) + '</tr>')
                 o.append('</table>')
     o.append(f'<span class="mk">§A{a["no"]}§</span></div>')
     return ''.join(o)
+
+
+def mark_html(v):
+    """일치 판정 ○/✕ — 글리프 대신 도형(속 빈 원 / 가위표 두 획)."""
+    v = (v or '').strip()
+    if v in ('○', 'O', 'o', '◯'):
+        return '<i class="mk-o"></i>'
+    if v in ('✕', 'X', 'x', '×', '✗'):
+        return '<i class="mk-x"></i>'
+    return esc(v)
+
+
+def ox(h):
+    """풀이 글 속 ○/✕(판정 표기)도 도형으로 — 줄 머리에 오면 글리프 머리 기호가 된다."""
+    return h.replace('○', '<i class="mk-o"></i>').replace('✕', '<i class="mk-x"></i>')
 
 
 def answers_html(cfg, P):

@@ -262,16 +262,17 @@ body > section:first-child { break-before: auto; }
 .ask .ql { position: absolute; left: 0; top: 0.3mm; width: 4.6mm; height: 4.6mm; border-radius: 0.8mm;
            background: var(--deep); color: #fff; font: 700 7.5pt/4.75mm Gm; text-align: center; }
 .words { margin-top: 2.4mm; line-height: 7.2mm; }
-.words .wl { margin-right: 1.8mm; }
+.words .wl { margin-right: 0.6mm; white-space: nowrap; }
 .words .w { font: 9.3pt/1 Minion, Pre; border: 0.4pt solid var(--k40); border-radius: 0.8mm;
-            padding: 0.9mm 1.8mm 0.7mm; margin-right: 1.3mm; white-space: nowrap; }
+            padding: 0.9mm 1.8mm 0.7mm; white-space: nowrap; }
 
 /* 영작 답 줄 — 도입부 + 채움 밑줄 + 한 줄 더 */
 .wline { width: 100%; border-collapse: collapse; margin-top: 3mm; }
 .wline td { vertical-align: bottom; padding: 0; height: 7.6mm; }
 .wline .c0 { width: 9.5mm; white-space: nowrap; padding-bottom: 0.6mm; }
-.wline .c1 { font: 9.8pt/5.3mm Minion, Pre; padding-right: 1.6mm; }
-.wline .c2 { width: 40%; border-bottom: 0.5pt solid var(--ink); }
+/* 도입부는 글 폭만큼(1% + nowrap), 밑줄이 나머지를 채운다 — 도입부가 칸을 벌리면 가운데가 휑하다 */
+.wline .c1 { width: 1%; white-space: nowrap; font: 9.8pt/5.3mm Minion, Pre; padding-right: 1.6mm; }
+.wline .c2 { border-bottom: 0.5pt solid var(--ink); }
 .wline .c3 { width: 2.2mm; font: 9.8pt/5.3mm Minion, Pre; }
 .wline .c4 { height: 9mm; border-bottom: 0.5pt solid var(--ink); }
 
@@ -312,6 +313,12 @@ body > section:first-child { break-before: auto; }
 .rows td.n { width: 4.2mm; font-weight: 700; color: var(--k70); }
 .rows td.m { width: 4.2mm; text-align: center; font-weight: 700; color: var(--ink); }
 .rows td.r { width: 27mm; color: var(--k60); }
+.mk-o, .mk-x { display: inline-block; position: relative; width: 2.6mm; height: 2.6mm; vertical-align: -0.35mm; }
+.mk-o { border: 0.6pt solid var(--deep); border-radius: 50%; }
+.mk-x::before, .mk-x::after { content: ""; position: absolute; left: -0.2mm; top: 1.15mm; width: 3mm;
+                              height: 0.6pt; background: var(--k60); }
+.mk-x::before { transform: rotate(45deg); }
+.mk-x::after { transform: rotate(-45deg); }
 
 /* 파트 간지 추가 */
 .dr-head .sc { font: 400 8pt/1 Pre; color: var(--k80); margin-top: 2.6mm; }
