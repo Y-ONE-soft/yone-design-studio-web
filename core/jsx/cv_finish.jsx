@@ -245,8 +245,22 @@ try {
             }
         }
         ovf++;
+        var pgs = "", hd = "", hidTxt = "";
+        try {
+            var cs3 = stO.textContainers;
+            for (var c3 = 0; c3 < cs3.length && c3 < 12; c3++) {
+                if (cs3[c3].parentPage) { pgs += (pgs ? "," : "") + cs3[c3].parentPage.name; }
+            }
+        } catch (eP3) {}
+        try { hd = String(stO.texts[0].contents).substr(0, 40); } catch (eH3) {}
+        try {
+            var at3 = String(stO.texts[0].contents);
+            hidTxt = at3.substr(at3.length - (total - shown)).substr(0, 60);
+        } catch (eT3) {}
         L("[오류] 오버셋: 스토리 " + stO.id + " — 표시 " + shown + "/" + total +
-          " (글자가 프레임 밖에 숨었다)");
+          " (글자가 프레임 밖에 숨었다) 면 " + pgs);
+        L("        머리: " + hd.replace(/[\r\n]/g, " "));
+        L("        숨은 글: " + hidTxt.replace(/[\r\n]/g, "\\n"));
     }
     if (ovf > 0) { throw "오버셋 " + ovf + "건 — 저장하지 않음"; }
     L("오버셋 0 확인" + (benign ? " (무해 플래그 " + benign + "건)" : ""));
