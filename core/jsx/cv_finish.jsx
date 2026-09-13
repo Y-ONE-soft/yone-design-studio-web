@@ -168,10 +168,38 @@ try {
 
     L("마스터 적용 " + applied + "p, 메모 패딩 " + padded + "p, 최종 " + d.pages.length + "p");
 
-    var ovf = 0;
-    for (var s = 0; s < d.stories.length; s++) { if (d.stories[s].overflows) { ovf++; } }
+    // 오버셋 판정 — 플래그만 보면 **무해한 것까지 막는다.**
+    // 지문별로 끊긴 스토리는 마지막(메모 페이지) 프레임이 비어 있어도
+    // overflows 가 켜지는 경우가 있다(26년 9월 고1 지문 260919 실측: 말미 CR
+    // 을 지워도 안 풀림). 글자가 실제로 숨었는지는 **표시 문자 합**으로
+    // 판정한다 — 컨테이너들에 보이는 문자 수가 스토리 전체와 같으면 유실이
+    // 아니다. 다르면 글자가 프레임 밖에 숨은 것이므로 그대로 막는다.
+    var ovf = 0, benign = 0;
+    for (var s = 0; s < d.stories.length; s++) {
+        var stO = d.stories[s];
+        var flagged = false;
+        try { flagged = stO.overflows; } catch (eO) { flagged = false; }
+        if (!flagged) { continue; }
+        var total = -1, shown = 0, okCount = true;
+        try { total = stO.characters.length; } catch (eT) { okCount = false; }
+        try {
+            var csO = stO.textContainers;
+            for (var cO = 0; cO < csO.length; cO++) {
+                shown += csO[cO].characters.length;
+            }
+        } catch (eS) { okCount = false; }
+        if (okCount && total >= 0 && shown === total) {
+            benign++;
+            L("   오버셋 플래그(무해): 스토리 " + stO.id + " — 표시 문자 " +
+              shown + "/" + total + " 전량 인쇄");
+            continue;
+        }
+        ovf++;
+        L("[오류] 오버셋: 스토리 " + stO.id + " — 표시 " + shown + "/" + total +
+          " (글자가 프레임 밖에 숨었다)");
+    }
     if (ovf > 0) { throw "오버셋 " + ovf + "건 — 저장하지 않음"; }
-    L("오버셋 0 확인");
+    L("오버셋 0 확인" + (benign ? " (무해 플래그 " + benign + "건)" : ""));
 
     d.save(new File(DOC_PATH));
     L("저장 완료");
