@@ -1,12 +1,11 @@
 """한끝 계열 — 한영고 특강 교재(한단끝·한문끝·한서끝) 중 **문제형** 내지.
 
-첫 책 = 한서끝(한영고 서술형 끝, 26-2-중간 한영1). 원고는 docx — 확정본은 작성 중이라
-data.py 는 초안 구조를 읽는 잠정 파서다.
+첫 책 = 한서끝(한영고 서술형 끝, 26-2-중간 한영1). 원고 = 문제지 docx + 정답및풀이 docx.
 
-빌드: 덩어리 높이 측정 → 배치(한 면 위·아래 두 칸, 긴 덩어리는 한 면 통째) → 조판 →
-      면 패리티 확인(파트 간지 왼쪽 면 시작 · 총 면수 4의 배수) → TrimBox.
-패리티는 **예측**(배치에서 면 수를 센다)으로 먼저 맞추고, 조판 결과의 표식 면 번호로
-확인해 어긋나면 MEMO 면 수를 고쳐 한 번 더 굽는다(한 면을 넘는 덩어리가 있을 때만 난다).
+빌드: 문항 높이 측정 → 배치(한 면 위·아래 두 칸, 긴 문항은 한 면 통째) → 조판 →
+      면 패리티 확인(파트 간지 왼쪽 면 시작 · 총 면수 `finish.multiple` 의 배수) → TrimBox.
+패리티는 **예측**으로 먼저 맞추고(정답 파트는 어림), 조판 결과의 표식 면 번호로 확인해
+어긋나면 MEMO 면 수를 고쳐 한 번 더 굽는다.
 """
 import json
 import os
@@ -34,12 +33,14 @@ class HankkeutSeries(Series):
     SAMPLE_UNITS = 6
 
     style_names = {
-        "unit": "덩어리(지문+문항)", "uhead": "덩어리 머리", "rng": "세트 범위 칩",
-        "uh": "세트 발문", "src": "출처", "q": "문항", "stem": "발문", "no": "문항 번호",
-        "tag": "시험 표기", "note": "안내", "pbox": "지문 상자", "sn": "지문 문장 번호",
-        "cond": "조건 상자", "summary": "요약문 상자", "pieces": "배열 조각 표",
-        "pn": "조각 번호", "ans": "답란", "alab": "답 칩", "ul": "답 밑줄",
-        "slot": "칸", "sep": "칸 사이 괘선",
+        "unit": "문항 덩어리", "uhead": "문항 머리", "ty": "유형 칩", "src": "출처",
+        "q": "문항", "stem": "발문", "no": "문항 번호", "note": "안내", "pbox": "지문 상자",
+        "sn": "지문 문장 번호", "sa": "낱말 기호", "arrow": "요약 화살표", "summary": "요약문 상자",
+        "cond": "조건 상자", "bogi": "보기 상자", "ask": "질문 줄", "words": "단어(구) 묶음",
+        "pieces": "배열 조각 표", "pn": "조각 번호", "ans": "답란", "alab": "답 칩",
+        "wline": "영작 답 줄", "ul": "답 밑줄", "slot": "칸", "sep": "칸 사이 괘선",
+        "quick": "빠른 정답 표", "ai": "문항별 풀이", "ah": "풀이 머리(정답)",
+        "asl": "풀이 절 칩", "ap": "풀이 단락", "st": "풀이 단계", "rows": "일치 판정 표",
     }
 
     # ── 인쇄 원고(CMYK) — 공통 K 단계를 K 단색으로. 유채색은 ICC.
@@ -64,10 +65,10 @@ class HankkeutSeries(Series):
     # ── 조판 ──
     @classmethod
     def _sample(cls, d):
-        if not d['parts']:
+        P = next((P for P in d['parts'] if P.get('kind') != 'answers'), None)
+        if P is None:
             return d
-        P = dict(d['parts'][0])
-        P['units'] = P['units'][:cls.SAMPLE_UNITS]
+        P = dict(P, units=P['units'][:cls.SAMPLE_UNITS])
         return dict(d, parts=[P])
 
     def build(self, cfg, log, sample=False, nomeasure=False, **_):
@@ -81,22 +82,23 @@ class HankkeutSeries(Series):
         m = render_mod.metrics_of(cfg)
         sfx = "_견본" if sample else ""
         hp = cfg.path(f"heights{sfx}.json")
-        if not nomeasure or not os.path.exists(hp):
+        keys = [u["id"] for P in d["parts"] if P.get("kind") != "answers" for u in P["units"]]
+        old = measure.load(hp) or {}
+        if not nomeasure or not os.path.exists(hp) or set(old) != set(keys):
             html_m, _ = render_mod.write(cfg, d, bd, mode="measure", log=log)
             self._stage(cfg, bd, log)
-            keys = [u["id"] for P in d["parts"] for u in P["units"]]
             h = measure.measure(html_m, os.path.join(bd, "measure.pdf"), keys,
                                 m["body_top"], render_mod.MEASURE_H - 4, pad=0.6, log=log)
-            measure.save(h, hp, log, "덩어리 높이")
+            measure.save(h, hp, log, "문항 높이")
         heights = measure.load(hp) or {}
 
         out = cfg.out_pdf(sfx)
         memo, secs = None, 0.0
-        for _try in range(3):
+        for _try in range(4):
             html_p, memo = render_mod.write(cfg, d, bd, heights=heights, memo=memo, log=log)
             self._stage(cfg, bd, log)
             secs = cli.run_build(html_p, out, log=log, extra=["-f", "pdf"])
-            fix = self._parity(out, d, memo)
+            fix = self._parity(out, d, memo, m["multiple"])
             if fix is None:
                 break
             log(f"[패리티] 예측과 달라 MEMO 면 조정 → 앞{fix['before']} 끝{fix['end']}")
@@ -107,8 +109,8 @@ class HankkeutSeries(Series):
         return {"pdf": out, "pages": pages, "seconds": round(secs, 1)}
 
     @staticmethod
-    def _parity(pdf, d, memo):
-        """간지가 왼쪽 면에서 시작하고 끝이 4의 배수인가 — 아니면 고친 MEMO 계획."""
+    def _parity(pdf, d, memo, multiple=2):
+        """간지가 왼쪽 면에서 시작하고 끝이 배수인가 — 아니면 고친 MEMO 계획."""
         texts = probe.page_texts(pdf)
 
         def page_of(mark):
@@ -119,14 +121,15 @@ class HankkeutSeries(Series):
         back = page_of('§BACK§')
         if None in dl or back is None:
             raise RuntimeError(f"간지 표식을 못 찾았다: DL={dl} BACK={back}")
-        if all(p % 2 == 0 for p in dl) and back == len(texts) and back % 4 == 0:
+        if (all(p % 2 == 0 for p in dl) and back == len(texts)
+                and back % max(2, multiple) == 0):
             return None
         counts = []
         for k in range(n):
             start = dl[k] + 2
             end = (dl[k + 1] - memo['before'][k + 1]) if k + 1 < n else back - memo['end']
             counts.append(end - start)
-        return render_mod.memo_plan(counts)
+        return render_mod.memo_plan(counts, multiple)
 
     @staticmethod
     def _stage(cfg, bd, log):
@@ -146,21 +149,30 @@ class HankkeutSeries(Series):
         m = render_mod.metrics_of(cfg)
         texts = probe.page_texts(pdf)
 
-        # 1) 누락·순서 — 되풀이되는 발문 말고 **덩어리마다 다른 글**(지문 첫머리·요약문·조각)로
+        # 1) 누락·순서 — 되풀이되는 발문 말고 **문항마다 다른 글**(지문 첫머리·요약문·보기·조각·풀이)로
         seq = self._sequence(d)
         gate.check_sequence(texts, seq, report)
         report.note(f"대조 항목 {len(seq):,}건")
 
-        # 2) 칸 넘침 — 덩어리 끝 표식이 제 칸 안에 있는가
+        # 2) 칸 넘침 — 문항 끝 표식이 제 칸 안에 있는가
         lp = os.path.join(cfg.build_dir, "layout.json")
         if os.path.exists(lp):
             with open(lp, encoding="utf-8") as f:
                 self._check_slots(pdf, json.load(f), m, report)
 
-        # 3) 면 구성 — 앞·뒤 간지, 파트 간지 펼침면, 4의 배수, 빈 면
-        self._check_pages(texts, d, report)
+        # 3) 정답 풀이가 전부 찍혔나
+        allt = '\n'.join(texts)
+        want = [a['no'] for P in d['parts'] if P.get('kind') == 'answers' for a in P['answers']]
+        miss = [n for n in want if f'§A{n}§' not in allt]
+        if miss:
+            report.fail(f"풀이 표식 없음 {len(miss)}건: {miss[:8]}")
+        elif want:
+            report.note(f"문항별 풀이 {len(want)}개 전부 조판")
 
-        # 4) 판면 넘침 — 간지·앞뒤 면은 판면이 없다
+        # 4) 면 구성 — 앞·뒤 간지, 파트 간지 펼침면, 배수, 빈 면
+        self._check_pages(texts, d, report, m["multiple"])
+
+        # 5) 판면 넘침 — 간지·앞뒤 면은 판면이 없다
         special = [i + 1 for i, t in enumerate(texts) if RE_SPECIAL.search(t)]
         frame = {"inner": m["bleed"] + m["outer"], "outer": m["bleed"] + m["inner"],
                  "width": m["text_w"], "top": m["body_top"],
@@ -172,26 +184,37 @@ class HankkeutSeries(Series):
     def _sequence(d):
         def clean(s):
             s = re.sub(r'\[\((\d+)\)\]', r'(\1)', s)
+            s = re.sub(r'\[\s*_+\s*[.?!]?\s*\]', ' ', s)
             s = re.sub(r'_+', ' ', s)
             return re.sub(r'\s+', ' ', s).strip()
+        P0 = data_mod.plain
         seq = []
         for P in d['parts']:
             seq.append((f"PART {P['no']} 제목", P['title']))
+            if P.get('kind') == 'answers':
+                for a in P['answers']:
+                    p = next((b for s in a['sections'] for b in s['blocks'] if b['t'] == 'p'), None)
+                    if p:
+                        seq.append((f"풀이 {a['no']}", clean(P0(p['rich']))[:26]))
+                continue
             for u in P['units']:
-                if u['passage']:
-                    seq.append((f"{u['id']} 지문", clean(data_mod.plain(u['passage'][0]))[:45]))
                 for q in u['items']:
                     for b in q['blocks']:
                         if b['t'] == 'passage':
-                            seq.append((f"{q['no']}번 지문",
-                                        clean(data_mod.plain(b['paras'][0]))[:45]))
+                            seq.append((f"{q['no']}번 지문", clean(P0(b['paras'][0]))[:40]))
                         elif b['t'] == 'summary':
-                            s = clean(data_mod.plain(b['paras'][0]))
-                            seq.append((f"{q['no']}번 요약문", s.split('(')[0][:35]))
+                            s = re.split(r'\b[A-Za-z]\s_', P0(b['paras'][0]))[0]
+                            seq.append((f"{q['no']}번 요약문", clean(s)[:30]))
+                        elif b['t'] == 'bogi':
+                            for x in b['items']:
+                                if len(x['text']) >= 20:
+                                    seq.append((f"{q['no']}번 보기 {x['n']}", x['text'][:28]))
+                        elif b['t'] == 'ask':
+                            seq.append((f"{q['no']}번 질문", b['text'][:28]))
                         elif b['t'] == 'pieces':
                             for c in b['cells']:
                                 if len(c['text']) >= 12:
-                                    seq.append((f"{q['no']}번 조각 {c['n']}", c['text'][:30]))
+                                    seq.append((f"{q['no']}번 조각 {c['n']}", c['text'][:28]))
         return [(k, v) for k, v in seq if v]
 
     @staticmethod
@@ -218,22 +241,23 @@ class HankkeutSeries(Series):
                             bad.append((i + 1, uid, pos, round(y1, 1)))
         miss = sorted(set(where) - seen)
         if miss:
-            report.fail(f"덩어리 표식 없음 {len(miss)}건: {miss[:8]}")
+            report.fail(f"문항 표식 없음 {len(miss)}건: {miss[:8]}")
         if bad:
             report.fail(f"칸 넘침 {len(bad)}건: {bad[:8]}")
         over = [u for u, (k, _p) in where.items() if k == 'over']
         if over:
-            report.warn(f"한 면을 넘는 덩어리 {len(over)}건(다음 면으로 흐름): {over[:8]}")
+            report.warn(f"한 면을 넘는 문항 {len(over)}건(다음 면으로 흐름): {over[:8]}")
         kinds = [k for k, _p in where.values()]
-        report.note(f"칸 배치 {len(where)}덩어리 · 반 면 {kinds.count('half')} · "
+        report.note(f"칸 배치 {len(where)}문항 · 반 면 {kinds.count('half')} · "
                     f"한 면 {kinds.count('full')}")
 
     @staticmethod
-    def _check_pages(texts, d, report):
+    def _check_pages(texts, d, report, multiple=2):
         n = len(texts)
+        mul = max(2, multiple)
         errs = []
-        if n % 4:
-            errs.append(f"총 {n}면 — 4의 배수가 아니다")
+        if n % mul:
+            errs.append(f"총 {n}면 — {mul}의 배수가 아니다")
         if '§FRONT§' not in texts[0]:
             errs.append("첫 면이 앞 간지가 아니다")
         if '§BACK§' not in texts[-1] or n % 2:
@@ -249,4 +273,4 @@ class HankkeutSeries(Series):
             errs.append(f"빈 면 {blank[:8]}")
         for e in errs:
             report.fail(e)
-        report.note(f"면 구성 {n}면 (4의 배수 {'O' if n % 4 == 0 else 'X'})")
+        report.note(f"면 구성 {n}면 ({mul}의 배수 {'O' if n % mul == 0 else 'X'})")

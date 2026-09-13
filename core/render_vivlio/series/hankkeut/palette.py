@@ -100,6 +100,25 @@ def css(n_parts):
     return '\n'.join(L) + '\n'
 
 
+# 유형 칩 — (바탕 soft, 왼쪽 띠). 유형은 파트와 **다른 축**이라 파트 색과 따로 둔다.
+# 한 파트 안에 여섯 유형이 섞여 나오므로(한서끝 40제) 칩 색이 곧 4도 다양성이다.
+# 띠는 0.9mm 색면이라 얇은 선 규칙에 안 걸린다. 더스티 코랄·세이지 계열은 피했다.
+TYPE_COLORS = {
+    'summary': ('#FDE4D0', '#EE9B5B'),   # 살구
+    'grammar': ('#D4F1E4', '#3DAE87'),   # 민트
+    'ask':     ('#E7E1FB', '#8B78D4'),   # 바이올렛
+    'match':   ('#D6ECFA', '#3D98D3'),   # 스카이
+    'arrange': ('#FBDDE8', '#DD6E9B'),   # 로즈
+    'vocab':   ('#F6ECC4', '#CFA12B'),   # 골드
+    'etc':     ('#EEEEEF', '#939598'),
+}
+
+
+def type_css():
+    return ''.join(f'.ty-{k} {{ background: {bg}; border-left-color: {bar}; }}\n'
+                   for k, (bg, bar) in TYPE_COLORS.items())
+
+
 def gray_map():
     """인쇄(CMYK) — 무채색은 K 단색으로. 빠진 회색은 ICC 를 타 리치그레이가 된다."""
     return {COMMON[k].lower(): v for k, v in K_RAMP.items()}
