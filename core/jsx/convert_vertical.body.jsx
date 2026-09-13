@@ -210,7 +210,7 @@ function _groupLeaks(frames) {
 }
 
 function _rejoinStep3(doc) {
-    var stats = { groups: 0, joined: 0, already: 0, skipped: 0, cr: 0, diffs: 0 };
+    var stats = { groups: 0, joined: 0, already: 0, skipped: 0, cr: 0, diffs: 0, overflow: 0 };
     var groups = _step3Groups(doc);
     stats.groups = groups.length;
     if (groups.length === 0) {
@@ -269,6 +269,20 @@ function _rejoinStep3(doc) {
         }
         stats.cr += cr;
         stats.joined++;
+        // 스토리 말미의 CR 1개 제거 — 지문별로 끊으면서 마지막 조각의 끝
+        // 개행이 스토리 끝이 되고, 그 암묵 빈 최종 단락이 한 줄을 요구해
+        // 스레드 마지막(메모 페이지) 프레임에 **flag-only 오버셋**을 남긴다
+        // (26년 9월 고1 실측: 지문 260919 에서 1건 → cv_finish 가 "오버셋
+        // 2건 — 저장하지 않음"으로 후처리를 통째로 중단시켰다). 지면에
+        // 보이는 글자는 그대로다. STEP4.5 의 같은 처리와 동일한 이유다.
+        try {
+            var _stz = frames[0].parentStory;
+            var _chz = _stz.characters;
+            if (_chz.length > 0) {
+                var _lcz = _chz.itemByRange(_chz.length - 1, _chz.length - 1);
+                if (String(_lcz.contents) === "\r") { _lcz.remove(); }
+            }
+        } catch (e) {}
         // 검수: 프레임에 담긴 글이 결합 전과 같아야 한다(공백 차이는 복원한 CR)
         try { doc.recompose(); } catch (e) {}
         for (fi = 0; fi < frames.length; fi++) {
@@ -281,10 +295,20 @@ function _rejoinStep3(doc) {
                      + "자) — 지면이 밀렸다");
             }
         }
+        try {
+            if (frames[0].parentStory.overflows) {
+                stats.overflow++;
+                wlog("[경고] STEP11: 지문 " + code + " 결합 후 오버셋 — "
+                     + "cv_finish 가 저장을 거부한다(말미 CR 제거로도 안 풀림)");
+            }
+        } catch (e) {}
         if (stats.diffs > 0) {
             throw new Error("STEP11 재스레드로 지면이 밀렸다(지문 " + code
                             + ", 프레임 " + stats.diffs + "개) — 저장 중단");
         }
+    }
+    if (stats.overflow > 0) {
+        wlog("[경고] STEP11: 결합 후 오버셋 " + stats.overflow + "건");
     }
     wlog("STEP11: STEP3 지문별 재스레드 — 결합 " + stats.joined + " / 이미완료 "
          + stats.already + " / 건너뜀 " + stats.skipped + " (지문 " + stats.groups
