@@ -15,7 +15,8 @@ def _tb(label, unit, file):
 def test_mock_is_round_plus_number():
     p = {"label": "231136", "unit": "모의고사", "category": "고1 23년 11월 모의고사"}
     assert R._badge_text(p) == "고1 23년 11월 모의고사 36번"
-    assert R._badge_parts(p) == ("고1 23년 11월 모의고사", "36번")
+    # 두 줄 배지는 같은 말을 길이가 비슷하게 나눈다(한 줄에 몰면 글자가 작아진다)
+    assert R._badge_parts(p) == ("고1 23년 11월", "모의고사 36번")
 
 
 def test_mock_range_keeps_range():

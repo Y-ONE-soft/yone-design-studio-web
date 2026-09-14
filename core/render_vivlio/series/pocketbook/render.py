@@ -1007,7 +1007,13 @@ def _badge_parts(p):
     tag = str(p.get("label") or p.get("no") or "")
     mk = None if p.get("_badge_raw") else _mock_parts(p)
     if mk:
-        return mk                     # 위 칸은 회차, 아래 칸은 `36번`
+        # ⚠ 위 칸에 `고1 24년 9월 모의고사` 를 통째로 넣으면 두 줄 배지(광문)가
+        #   가장 긴 줄에 맞춰 글자를 줄여 **읽을 수 없게** 작아졌다(실측).
+        #   같은 말을 `고1 24년 9월` / `모의고사 18번` 으로 나눠 두 줄 길이를 맞춘다.
+        head, no = mk
+        if head.endswith("모의고사") and head[:-4].strip():
+            return head[:-4].strip(), "모의고사 " + no
+        return mk
     full = _badge_text(p)
     if full != tag and full.endswith(tag):
         return full[:-len(tag)].strip(), tag
