@@ -103,13 +103,28 @@ def _eng_words(s):
     return len(_RE_ENG_WORD.findall(s))
 
 
+# few_eng 판정에서 빼는 마커 토큰 (숫자가 붙은 것만). "L1-p.100"의 L·p는
+# 낱말이 아니라 쪽·과 표지인데 영단어로 세어, "1. L1-p.100 Deep Learning
+# Lesson 1"(L·p·Deep·Learning·Lesson=5)이 본문으로 판정돼 헤더 전멸 →
+# HeaderSilenceError (2026-09-14 공통영어2 미래엔(김) Deep Learning 워크북).
+_RE_MARKER_TOKENS = re.compile(
+    r"\b[LU]\s*\d+|\bp\.?\s*\d+|\bno\.?\s*\d+"
+    r"|\b(?:Example|Practice|Test|Exercise|Unit|Lesson|Gateway|Analysis)"
+    r"\s*\.?\s*\d+", re.IGNORECASE)
+
+
+def _label_eng_words(s):
+    """마커 토큰을 뺀 영단어 수 — 헤더 라벨의 '영단어 희소' 신호용."""
+    return _eng_words(_RE_MARKER_TOKENS.sub(" ", s))
+
+
 def line_signals(text):
     """라인 하나의 구조 신호. dict(신호명→bool) — 판정·로그 공용."""
     t = _norm(text)
     sig = {
         "short": 0 < len(t) <= _SHORT_MAX,
         "digit": bool(_RE_DIGIT.search(t)),
-        "few_eng": _eng_words(t) < _ENG_WORD_MAX,
+        "few_eng": _label_eng_words(t) < _ENG_WORD_MAX,
         "numbered": bool(_RE_NUMBERED.match(t)),
         "marker": any(c.search(t) for c in _MARKER_CUES),
         "stem": bool(_RE_STEM.search(t) or _RE_STEM_TAIL.search(t)),
