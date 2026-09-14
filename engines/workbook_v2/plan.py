@@ -3054,7 +3054,26 @@ def build_step2_c2(step_data, workbook_type="모의고사"):
         if det.via(i) != "seq":
             return True
         return bool(_RE_C2_PAGEMARK.search(text or ""))
+    # bracket 없는 원고에서 첫 지문 헤더 앞 줄은 원고 머리(파일 표제·학교/권
+    # 표기·원고 발문)다 — 엔진 발문·템플릿 머리글과 중복. 2026-09-14 공통영어2
+    # 미래엔(김) Deep Learning: "Step2 C2 영작배열 서술형 / 상일여고1 5권 … /
+    # Q. 한글 해석을 읽고…" 3줄이 첫 유닛 머리에 인쇄됐다.
+    _c2_first_hdr = -1
+    if _no_bracket:
+        _c2_first_hdr = next(
+            (i for i, q in enumerate(_c2_paras)
+             if det.is_header(i) and _c2_strong_header(i, q.get("text") or "")),
+            -1)
+        _n_pre = sum(1 for q in _c2_paras[:max(_c2_first_hdr, 0)]
+                     if (q.get("text") or "").strip())
+        if _n_pre:
+            warnings.append("step2_c2: 첫 지문 헤더 앞 원고 머리 %d줄 제거 — "
+                            "예: %s" % (_n_pre, next(
+                                (q.get("text") or "") for q in _c2_paras
+                                if (q.get("text") or "").strip())[:30]))
     for i, p in enumerate(_c2_paras):
+        if i < _c2_first_hdr:
+            continue
         text = p.get("text") or ""
         if _no_bracket and det.is_header(i) and _c2_strong_header(i, text):
             lab = re.sub(r"^\s*\[|\]\s*$", "", _header_label(text) or "")
@@ -3217,6 +3236,13 @@ _C1_GREPS = [
     # (b) "-1(p.18)" 잔재 인쇄, (c) 마커가 `^{…}$` 아님 → 프레임브레이크 게이트
     # 오검(0e3e6469 step1_c1). 순번은 계층적 → 하위분할 전체를 라벨로.
     (re.compile(r"(?<!\{)(본문)\s*(\d+(?:\s*[-–—.]\s*\d+)*)"), r"{\1\2}"),
+    # 교과서 L-p-영문코너+강번호형 (2026-09-14 공통영어2 미래엔(김) Deep
+    # Learning): "1. L1-p.100 Deep Learning Lesson 1" → "{Deep Learning
+    # Lesson 1}". 아래 룰이 먼저 걸리면 "{본문1} Deep Learning Lesson 1"로
+    # 코너명이 잔재 인쇄되고 마커가 `^{…}$`가 아니라 G24 프레임브레이크
+    # 게이트가 헤더 0개로 본다. 라벨은 다른 스텝(_header_label)과 같은 값.
+    (re.compile(r"\b\d+\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+\s+"
+                r"([A-Za-z][A-Za-z\s]*?\s\d{1,3})\s*$"), r"{\1}"),
     (re.compile(r"\b(\d+)\.\s*L\d+\s*[-–—.]?\s*p\.?\s*\d+\b"),
      r"{본문\1}"),
     # 교과서 L-한글라벨형 (W30-r15 — "6. L1-추가본문" → "{추가본문}"):

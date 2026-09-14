@@ -838,6 +838,12 @@ def inspect_workbook_finish(content, plan, dump, uploads_dir=None):
                 # 남으므로 스타일이 두 경우를 가른다.
                 if any(k in (para.get("s") or "") for k in _Q_STYLE_KEYS):
                     continue
+            if kind == _mn.ANSWER_BLANK and "답란" in (para.get("s") or ""):
+                # 서술형 답 쓰는 줄("(1) 기호 ____ → ____")을 파서가 답란(AnsL)
+                # 으로 분류해 답란 스타일로 인쇄한 것 — 원고 잔재가 아니라 문항
+                # 내용 (2026-09-12 사용자 지침 "답란에 답란 단락스타일").
+                # 2026-09-14 공통영어2 미래엔(김) Deep Learning step3 오탐 17줄.
+                continue
             noise.setdefault(kind, []).append(tt[:60])
     stats["manuscript_noise"] = {k: len(v) for k, v in noise.items()}
     if noise:

@@ -2491,6 +2491,22 @@ function updateDividerPages(doc, line1, line2) {
                 // 단락 2개형 (모의고사 원본 내지)
                 cps[0].contents = line1 + "\r";
                 cps[1].contents = line2 + _sfx + "\r";
+                // 2행이 원본 기수 표기("1과")보다 길면 프레임을 넘친다
+                // (2026-09-14 "Deep Learning" — 간지 4개 전부 오버플로우).
+                // 넘칠 때만 2행 글자 크기를 5%씩 줄인다 (하한 40%).
+                try {
+                    var _p2 = st.paragraphs[1];
+                    var _pt0 = _p2.pointSize, _k = 0;
+                    while (st.overflows && _k < 12) {
+                        _k++;
+                        _p2.pointSize = _pt0 * (1 - 0.05 * _k);
+                    }
+                    if (_k > 0) {
+                        wlog("간지 2행 글자 크기 축소: " + Math.round(_pt0)
+                             + "pt → " + Math.round(_p2.pointSize) + "pt"
+                             + (st.overflows ? " [경고] 여전히 넘침" : ""));
+                    }
+                } catch (eFit) {}
             } else {
                 // 강제 줄바꿈 1단락형 (수특라이트 커스텀 내지 실측) —
                 // 행별 문자 범위 교체 (서식 보존)
