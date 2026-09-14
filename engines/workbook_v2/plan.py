@@ -1905,6 +1905,13 @@ _HEADER_PATTERNS = [
     # compact "L1-추가본문". 페이지/숫자 없이 한글 라벨만 직결된 형태.
     # 숫자 없는 한글 꼬리라 기존 어느 패턴에도 안 걸렸다.
     re.compile(r"^L\d+[-–—][가-힣][가-힣0-9]{0,30}(?:\([^\)]{0,40}\))?$"),
+    # 교과서 L-p-영문코너+강번호형 (2026-09-14 공통영어2 미래엔(김) Deep
+    # Learning): "1. L1-p.100 Deep Learning Lesson 1" → compact
+    # "L1-p.100DeepLearningLesson1". 위 L-p 영문 꼬리 패턴은 꼬리에 숫자를
+    # 허용하지 않아 미인식 — 헤더 뒤가 한글 해석인 영작배열(step2_c2)은 구조
+    # 신호(body_next)도 없어 유닛 1개 통짜가 됐다. 기존 패턴 무변경 append.
+    re.compile(r"^L\d+[-–—]p\.?\d+(?:~\d+)?[A-Za-z][A-Za-z0-9]{0,40}"
+               r"(?:\([^\)]{0,40}\))?$", re.I),
 ]
 _RE_SUPP = re.compile(r"^Supplementary Reading$", re.I)
 
