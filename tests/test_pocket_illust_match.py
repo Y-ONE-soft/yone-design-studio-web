@@ -55,3 +55,15 @@ def test_folder_beats_analysis_link(tmp_path):
     assert src, "삽화가 안 붙었다"
     # 복사된 파일이 폴더 그림(1강 02)인지 — 크기로는 못 가르니 복사 원본 기록을 본다
     assert D.illust_for(item, D.illust_index([str(tmp_path)])).endswith("1강 02.png")
+
+
+def test_light_book_prefers_light_folder_over_go3_suteuk(tmp_path):
+    """`고3/2027 수능특강/1강 1번` 이 먼저 걸려 수특 Light 책에 고3 그림이 나갔다."""
+    idx = _tree(tmp_path, ["고3/2027 수능특강/1강 1번.jpeg",
+                           "ebs/수능특강 Light 영어독해연습(개정판)/1강 01.png"])
+    light = {"label": "1강 01", "unit": "수능특강 1강",
+             "source": {"file": "광문2_분석본01(수특라이트영독1,2강)_내지.idml"}}
+    assert "Light" in D.illust_for(light, idx)
+    go3 = {"label": "1강 01", "unit": "수능특강 1강",
+           "source": {"file": "X_분석본01(수능특강1,2강)_내지.idml"}}
+    assert "고3" in D.illust_for(go3, idx)

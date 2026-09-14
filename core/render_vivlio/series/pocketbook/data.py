@@ -230,7 +230,20 @@ def illust_for(row, index):
         got = {idx[k] for k in keys if k in idx}
         return max(got, key=_mtime) if got else None
 
-    for folder, idx in index:
+    # ⚠ `수능특강` 을 품은 폴더가 둘이다 — `ebs/수능특강 Light 영어독해연습` 과
+    #   `고3/2027 수능특강`. 먼저 걸리는 쪽을 쓰면 수특 Light 책에 고3 수특 그림이
+    #   나갔다(광문2 21지문, 연구원 지적). 분석본 파일 이름(`수특라이트`)으로
+    #   **Light 여부가 같은 폴더를 먼저** 본다.
+    src = unicodedata.normalize(
+        "NFC", str((row.get("source") or {}).get("file") or "")).replace(" ", "")
+    light = ("라이트" in src or "light" in src.lower()) if src else None
+
+    def _light_rank(folder):
+        if light is None:
+            return 0
+        return 0 if (("light" in folder.lower() or "라이트" in folder) == light) else 1
+
+    for folder, idx in sorted(index, key=lambda fi: _light_rank(fi[0])):
         if want and want not in folder and want != "교과서":
             continue
         got = _pick(idx)
