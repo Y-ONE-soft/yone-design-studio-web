@@ -4588,7 +4588,10 @@ def _unify_passage_labels(flows, steps, warnings):
     # 공용 라벨이 헤더 순번("1","2")에서 나온 교재(YBM Project 1-1·SL 본문1 —
     # 코퍼스 r3c13ybm/r3c15sl2)는 인쇄 표기가 아니라 번호 프레임용 값이라,
     # 그걸로 덮으면 "본문1"이 "1"로 바뀐다.
-    if not any(seq == canon for _fl, _h, seq in per_flow):
+    # 순번만인 공용 라벨("1","2")은 이름이 아니라 번호다 — 한 스텝이 [1]로
+    # 찍어도 다른 스텝의 "본문1"/"Project 1-1"을 그걸로 덮지 않는다.
+    if (not any(seq == canon for _fl, _h, seq in per_flow)
+            or not all(re.search(r"[A-Za-z가-힣]", c) for c in canon)):
         return
     changed = []
     for fl, hits, seq in per_flow:
