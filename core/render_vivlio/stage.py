@@ -30,11 +30,74 @@ def find_font(name):
     return None
 
 
-def stage_fonts(build_dir, fonts, log=None, required=True):
+TTF_CACHE = os.path.expanduser("~/Library/Caches/yone-vivlio/ttf")
+
+
+def ttf_flavor(src, log=None):
+    """CFF 윤곽 OTF → **TrueType 윤곽** 사본(캐시). CFF 가 아니면 원본 경로.
+
+    ⚠ Chromium(Vivliostyle) 은 CFF 윤곽 OTF 를 PDF 에 **Type3 글꼴**로 넣는다.
+      윤곽은 벡터라 인쇄는 되지만 Acrobat 이 "'T3Font_912' 포함 글꼴을 추출할 수
+      없습니다" 경고를 띄우고, 출력기에 따라 글자가 바르지 않을 수 있다(배재1·2
+      파이널 인쇄본 실측). TrueType 윤곽이면 Type0(CID) 로 제대로 들어간다.
+    글자 폭·세로 metrics·cmap 은 그대로 둔다 — 윤곽만 3차→2차 곡선(허용 오차
+    0.5/1000em)으로 바꾸므로 **판면이 흐르지 않는다.** 파일 이름도 그대로라 CSS 를
+    고칠 필요가 없다(브라우저는 확장자가 아니라 내용으로 형식을 본다).
+    """
+    from fontTools.ttLib import TTFont
+    st = os.stat(src)
+    key = "%s-%d-%d" % (os.path.basename(src), int(st.st_mtime), st.st_size)
+    dst = os.path.join(TTF_CACHE, key, os.path.basename(src))
+    if os.path.exists(dst):
+        return dst
+    f = TTFont(src)
+    if "CFF " not in f:
+        return src
+    from fontTools.pens.cu2quPen import Cu2QuPen
+    from fontTools.pens.ttGlyphPen import TTGlyphPen
+    from fontTools.ttLib import newTable
+    order = f.getGlyphOrder()
+    gs = f.getGlyphSet()
+    tol = 0.5 * f["head"].unitsPerEm / 1000
+    glyphs = {}
+    for n in order:
+        pen = TTGlyphPen(gs)
+        gs[n].draw(Cu2QuPen(pen, tol, reverse_direction=True))
+        glyphs[n] = pen.glyph()
+    f["loca"] = newTable("loca")
+    g = f["glyf"] = newTable("glyf")
+    g.glyphOrder = order
+    g.glyphs = glyphs
+    del f["CFF "]
+    if "VORG" in f:
+        del f["VORG"]
+    m = f["maxp"] = newTable("maxp")
+    m.tableVersion = 0x00010000
+    m.maxZones = 1
+    for k in ("maxTwilightPoints", "maxStorage", "maxFunctionDefs",
+              "maxInstructionDefs", "maxStackElements",
+              "maxSizeOfInstructions", "maxComponentElements", "maxPoints",
+              "maxContours", "maxCompositePoints", "maxCompositeContours",
+              "maxComponentDepth"):
+        setattr(m, k, 0)
+    # 글리프 이름 표(post 2)는 6만5천 자 CJK 에서 넘친다 — 이름 없는 3 으로
+    f["post"].formatType = 3.0
+    f.sfntVersion = "\x00\x01\x00\x00"
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    tmp = dst + ".tmp"
+    f.save(tmp)
+    os.replace(tmp, dst)
+    if log:
+        log(f"[서체] TrueType 윤곽 사본 — {os.path.basename(src)} (Type3 방지)")
+    return dst
+
+
+def stage_fonts(build_dir, fonts, log=None, required=True, ttf=False):
     """`fonts` (파일명 목록) → build_dir/fonts/. 변경분만 복사.
 
     required=True 면 하나라도 없을 때 예외(블랙북 정책 — 서체가 빠지면 판면이
     통째로 달라진다). False 면 경고만 하고 진행(상일보카 정책).
+    ttf=True 면 CFF OTF 를 TrueType 윤곽 사본으로 넣는다(`ttf_flavor`).
     Returns: 없는 서체 이름 목록.
     """
     fdir = os.path.join(build_dir, "fonts")
@@ -46,6 +109,8 @@ def stage_fonts(build_dir, fonts, log=None, required=True):
         if src is None:
             missing.append(base)
             continue
+        if ttf:
+            src = ttf_flavor(src, log)
         dst = os.path.join(fdir, base)
         if (not os.path.exists(dst)
                 or os.path.getmtime(src) > os.path.getmtime(dst)):

@@ -367,9 +367,10 @@ class FinalSeries(Series):
     # ── 배치 ──
     @staticmethod
     def _stage(cfg, build_dir, log):
+        # 학원 출력본을 Acrobat 으로 열면 Type3 글꼴 경고가 떴다 — TrueType 윤곽으로.
         stage.stage_fonts(build_dir,
                           [f["file"] for f in cfg.get("fonts") or []],
-                          log, required=True)
+                          log, required=True, ttf=True)
         theme = cfg.get("theme") or FinalSeries.theme
         stage.stage_theme(build_dir, cfg.resolve(theme)
                           if theme.endswith(".css") else theme, log)
