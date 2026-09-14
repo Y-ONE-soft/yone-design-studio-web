@@ -196,11 +196,17 @@ class FinalVivEngine(FinalEngine):
             B.gen_data(cfg, log)
             B.build(cfg, log)
             B.print_pdf(cfg, log)
-            B.verify(cfg, log)
-            # 확인용(RGB) 내지는 검수가 끝나면 지운다 — 인쇄본만 남긴다.
+            passed = B.verify(cfg, log).print(log)
+            # 확인용(RGB) 내지는 검수를 **통과했을 때만** 지운다 — 인쇄본만 남긴다.
+            # 검수가 걸리면 남겨 둔다: 검수는 도련 포함 조판본을 읽으므로
+            # 지우면 무엇이 틀렸는지 다시 볼 길이 없다.
             raw = cfg.out_pdf(cfg.section("verify").get("suffix", ""))
             if os.path.exists(raw) and "인쇄" not in os.path.basename(raw):
-                os.remove(raw)
+                if passed:
+                    os.remove(raw)
+                else:
+                    log("[Vol%d] ★ 검수에 걸려 확인용 내지를 남깁니다 — %s"
+                        % (vol, os.path.basename(raw)))
             pr = cfg.out_pdf(cfg.section("print").get("out", "_인쇄"))
             if os.path.exists(pr):
                 made.append(pr)
