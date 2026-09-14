@@ -128,6 +128,23 @@ try {
         }
         return map;
     }
+    // 본문 프레임 기하 스냅샷 — 마스터를 갈아 끼우면 **마스터에서 오버라이드된
+    // 본문 프레임이 새 마스터의 정의로 리셋**돼 크기가 달라질 수 있다. 그러면
+    // 그 프레임의 글이 지면 밖으로 밀린다 (26년 9월 고1 260928: 4,793자가
+    // 후처리 뒤에 숨었다 — 진입 스냅샷에서는 멀쩡했다). 적용 후 원래 크기로
+    // 되돌린다.
+    function _gbSnapshot(doc2) {
+        var map = {};
+        for (var p2 = 0; p2 < doc2.pages.length; p2++) {
+            var fs2 = doc2.pages[p2].textFrames.everyItem().getElements();
+            for (var f2 = 0; f2 < fs2.length; f2++) {
+                try { map[fs2[f2].id] = fs2[f2].geometricBounds; } catch (e2) {}
+            }
+        }
+        return map;
+    }
+    var gbBefore = _gbSnapshot(d);
+
     var ovBefore = _ovSnapshot(d);
     var _ovBn = 0;
     for (var _k in ovBefore) { _ovBn++; }
@@ -189,6 +206,32 @@ try {
     if (removed) { L("   낡은 전체버전 마스터 " + removed + "개 제거"); }
 
     L("마스터 적용 " + applied + "p, 메모 패딩 " + padded + "p, 최종 " + d.pages.length + "p");
+    // 마스터 교체가 바꿔 놓은 본문 프레임 크기 복원
+    var _fixed = 0, _gone = 0;
+    for (var p3 = 0; p3 < d.pages.length; p3++) {
+        var fs3 = d.pages[p3].textFrames.everyItem().getElements();
+        for (var f3 = 0; f3 < fs3.length; f3++) {
+            var id3 = null;
+            try { id3 = fs3[f3].id; } catch (e3) { continue; }
+            var was = gbBefore[id3];
+            if (!was) { continue; }
+            var now = null;
+            try { now = fs3[f3].geometricBounds; } catch (e3) { continue; }
+            var diff = false;
+            for (var k3 = 0; k3 < 4; k3++) {
+                if (Math.abs(now[k3] - was[k3]) > 0.01) { diff = true; break; }
+            }
+            if (diff) {
+                try { fs3[f3].geometricBounds = was; _fixed++; } catch (e3) { _gone++; }
+            }
+        }
+    }
+    if (_fixed || _gone) {
+        L("   마스터 교체로 바뀐 본문 프레임 " + _fixed + "개 복원" +
+          (_gone ? " (복원 실패 " + _gone + "개)" : ""));
+        try { d.recompose(); } catch (e) {}
+    }
+
     var ovAfter = _ovSnapshot(d);
     for (var _k2 in ovAfter) {
         if (ovBefore[_k2] === undefined) {

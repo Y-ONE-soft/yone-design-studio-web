@@ -295,6 +295,30 @@ function _rejoinStep3(doc) {
                      + "자) — 지면이 밀렸다");
             }
         }
+        // 꼬리에 **다음 지문의 코드 마커**가 딸려 온 경우 잘라낸다.
+        // STEP4.5 의 범위 복제가 프레임 표시량 기준이라, 지문 경계에서 다음
+        // 지문 선두 몇 자가 앞 묶음 끝에 섞여 들어오는 일이 있다 (26년 9월 고1
+        // 260919: 숨은 10자가 "{260920}\n다"). 그 코드는 다음 묶음 첫 프레임에
+        // 온전히 들어 있으므로 여기 남은 것은 중복이고, 지면 밖으로 밀려
+        // cv_finish 의 오버셋 게이트를 막는다.
+        try {
+            var _stT = frames[0].parentStory;
+            var _tot = _stT.characters.length;
+            var _shw = 0;
+            var _csT = _stT.textContainers;
+            for (var _ci = 0; _ci < _csT.length; _ci++) {
+                _shw += _csT[_ci].characters.length;
+            }
+            if (_tot > _shw) {
+                var _hidT = String(_stT.texts[0].contents).substr(_shw);
+                if (/^\s*\{\d{6}\}/.test(_hidT)) {
+                    _stT.characters.itemByRange(_shw, _tot - 1).remove();
+                    wlog("STEP11: 지문 " + code + " 꼬리의 다음 지문 코드 " +
+                         (_tot - _shw) + "자 제거(중복)");
+                    try { doc.recompose(); } catch (e) {}
+                }
+            }
+        } catch (e) {}
         try {
             if (frames[0].parentStory.overflows) {
                 stats.overflow++;
