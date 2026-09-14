@@ -160,6 +160,23 @@ def illust_index(bases):
     return out
 
 
+# 교재(출판사+저자) — 분석본 파일 괄호 `YBM박1,2,3과` · `능률민SL2` → `YBM박` · `능률민`
+PUB = re.compile(r"(YBM|NE능률|능률|비상|미래엔|천재|동아|지학사|금성|다락원|좋은책)"
+                 r"\(?([가-힣])\)?(?=\s*[\d,]*\s*(?:과|SL|L\d|$|\)))")
+
+
+def pub_of(row):
+    """지문 행 → 교과서 교재 표기(`YBM박`). 분석본 파일 이름이 없으면 ''."""
+    src = unicodedata.normalize(
+        "NFC", str((row.get("source") or {}).get("file") or "")).replace(" ", "")
+    m = PUB.search(src)
+    return m.group(1) + m.group(2) if m else ""
+
+
+def folder_has_pub(folder, pub):
+    return pub in re.sub(r"[\s()]", "", unicodedata.normalize("NFC", folder))
+
+
 _RE_L_UNIT = re.compile(r"(\d{1,2})\s*강")
 _RE_L_NO = re.compile(r"(\d{1,3})")
 
@@ -243,12 +260,20 @@ def illust_for(row, index):
             return 0
         return 0 if (("light" in folder.lower() or "라이트" in folder) == light) else 1
 
+    # ⚠ 교과서는 **같은 교과서 폴더에서만** 찾는다. 과·번호만 보면 다른 교과서의
+    #   같은 과 그림이 붙는다(배재1 능률(오)·배재2 YBM(박)에 능률(민)·비상(황)
+    #   그림 24지문, G-P16). 그 교과서 그림이 없으면 **삽화 없이** 간다(사용자 지시).
+    pub = pub_of(row) if want == "교과서" else ""
     for folder, idx in sorted(index, key=lambda fi: _light_rank(fi[0])):
         if want and want not in folder and want != "교과서":
+            continue
+        if pub and not folder_has_pub(folder, pub):
             continue
         got = _pick(idx)
         if got:
             return got
+    if pub:
+        return None
     for folder, idx in index:                 # 폴더를 못 좁히면 전체에서
         got = _pick(idx)
         if got:

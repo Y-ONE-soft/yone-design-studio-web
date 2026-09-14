@@ -2227,7 +2227,8 @@ class PocketbookSeries(Series):
 
     @staticmethod
     def _drop_memtest_if_thick(rows, voca_pages, opt, log):
-        """**150면을 넘으면 암기 TEST 를 뺀다**(사용자 규칙).
+        """**암기 TEST 까지 넣어 170면을 넘으면 암기 TEST 를 뺀다**(사용자 규칙,
+        2026-09-14 에 150 → 170, 그 외에는 전부 넣는다).
 
         포켓북은 들고 다니는 책이라 두께가 곧 쓸모다. 넘칠 때 먼저 빠지는 것이
         암기 TEST 다 — 지문·어휘는 시험범위라 뺄 수 없다.
@@ -2237,9 +2238,12 @@ class PocketbookSeries(Series):
         mts = [r for r in rows if r.get("kind") == "memtest"]
         if want is True or not mts:
             return rows
-        cap = int(opt.get("max_pages", 150))
-        body = sum(2 for r in rows if r.get("kind") != "memtest")
-        total = body + len(mts) + len(voca_pages or []) + 2      # 간지 2면
+        cap = int(opt.get("max_pages", 170))
+        # ⚠ 지문마다 2면으로 세면 짤지문(한 면)·왼쪽 맞춤 빈 면이 틀린다 —
+        #   조판과 같은 셈(`page_plan`)으로 센다.
+        body = sum(a + b for a, b in prender.page_plan(
+            rows, int(opt.get("folio_start", 2))))
+        total = body + len(voca_pages or []) + 2      # 앞 간지·크레딧
         if want is not False and total <= cap:
             return rows
         log("■ %d면(암기 TEST %d면 포함)이라 %d면을 넘는다 — 암기 TEST 를 뺀다"

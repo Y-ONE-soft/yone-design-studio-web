@@ -86,10 +86,6 @@ _BOOKS = (("수특", "수능특강"), ("수능특강", "수능특강"), ("올포
           ("수능만만", "수능만만"))
 
 
-_PUB = re.compile(r"(YBM|NE능률|능률|비상|미래엔|천재|동아|지학사|금성|다락원|좋은책)"
-                  r"\(?([가-힣])\)?(?=\s*[\d,]*\s*(?:과|SL|L\d|$|\)))")
-
-
 def _nums(s):
     return {int(x) for x in re.findall(r"\d+", s)}
 
@@ -149,11 +145,9 @@ def illust_mismatch(row, rel):
         # 교재(출판사+저자) — 분석본 파일 괄호 `YBM박1,2,3과` ↔ 폴더 `… YBM(박)`.
         # ⚠ 과·번호만 보면 **다른 교과서의 같은 과** 그림이 통과한다(배재2
         #   YBM박 3과 본문에 비상(황) 3과 MR 그림, 이 게이트 첫 실행에서 잡힘).
-        pub = _PUB.search(src)
-        if pub:
-            want = pub.group(1) + pub.group(2)
-            if want not in re.sub(r"[\s()]", "", folder):
-                return "교과서 폴더가 %s 아님" % want
+        want = pdata.pub_of(row)
+        if want and not pdata.folder_has_pub(folder, want):
+            return "교과서 폴더가 %s 아님" % want
         ss = re.search(r"(\d{1,2})\s*과", stem)
         if not ss or int(ss.group(1)) != int(ls.group(1)):
             return "과가 %d과 아님" % int(ls.group(1))

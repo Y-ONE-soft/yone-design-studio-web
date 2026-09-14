@@ -39,6 +39,7 @@ import hashlib
 import json
 import os
 import re
+import unicodedata
 import zipfile
 
 _MARK = re.compile(r"(\d+)\s*\[([^\]]*)\]")
@@ -574,12 +575,29 @@ def _runs(rows):
     return out
 
 
+# 모의고사처럼 **지문 바로 뒤**에 암기 TEST 를 두는 부교재(사용자 규칙 2026-09-14).
+# 올림포스·리딩파워 같은 강 단위 부교재는 강 끝에 몰아 둔다.
+_AFTER_BOOKS = ("마더텅", "올포기출", "올림포스기출", "고1기출", "고2기출")
+
+
+def after_passage(row, rank):
+    """auto 자리에서 이 지문의 암기 TEST 를 지문 바로 뒤에 둘까."""
+    if rank == 2:
+        return True
+    hay = "".join(str(x) for x in (
+        (row.get("source") or {}).get("file"), row.get("category"),
+        row.get("unit"), row.get("chapter"))).replace(" ", "")
+    hay = unicodedata.normalize("NFC", hay)
+    return any(b in hay for b in _AFTER_BOOKS)
+
+
 def attach(rows, sources, log=None, place="auto", cache=None):
     """지문 목록에 암기 TEST 면을 끼워 넣는다.
 
     자리는 완성본을 따른다(강동1·명일2·성덕1 실측, 셋이 같다).
 
-        auto     모의고사는 지문 바로 뒤에 두 면, 교과서는 그 단원 끝에 몰아서
+        auto     모의고사·마더텅·올림포스 고1/고2 기출은 지문 바로 뒤에 두 면,
+                 교과서는 과 끝에, 올림포스·리딩파워는 강 끝에 몰아서
         after    언제나 지문 바로 뒤
         section  언제나 단원 끝
         end      책 맨 뒤
@@ -620,7 +638,7 @@ def attach(rows, sources, log=None, place="auto", cache=None):
             if place == "end":
                 book_tail += pages
             elif place == "after" or (
-                    place == "auto" and kind[0] == 2):   # 모의고사만 지문 바로 뒤
+                    place == "auto" and after_passage(row, kind[0])):
                 out += pages
             else:
                 sect_tail += pages
