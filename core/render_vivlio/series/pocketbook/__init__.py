@@ -542,8 +542,117 @@ def _fix_lecture_label(rows, log):
         if m and re.fullmatch(r"\d{1,2}|분석|서술형 Practice|논술형 Practice", lab):
             r["label"] = "%s강 %s" % (m.group(1), lab)
             n += 1
+        # 묶음 지문 `5~6번` — 무슨 강의 5~6번인지 안 보인다. 삽화 파일도
+        # `4강 05~06.png` 로 부른다(광문2 수특 Light 4·5·6강).
+        rg = re.fullmatch(r"(\d{1,2})\s*[-~]\s*(\d{1,2})\s*번?", lab)
+        if m and rg:
+            r["label"] = "%s강 %02d~%02d" % (m.group(1), int(rg.group(1)),
+                                           int(rg.group(2)))
+            n += 1
     if n:
         log("■ 분석 지문 라벨 %d개를 「분석」 으로 바로잡음" % n)
+    _light_analysis_first(rows, log)
+
+
+def _apply_fixes(cfg, rows, log):
+    """`<책폴더>/fixes.json` — **분석본 원고 자체가 틀린** 곳을 라벨로 고친다.
+
+    연구원 검수에서 나온 오타·빠진 문장이 원고(IDML)에 그대로 있을 때 쓴다
+    (광문2 `6강 04` 의 `under standing`, `6강 05~06` 해석 셋째 문장 누락 —
+    둘 다 원고에 그렇게 들어 있었다). data 를 다시 뽑아도 남고, 차례가 바뀌어도
+    안 어긋나게 **자리 번호가 아니라 최종 라벨**로 건다.
+
+        { "6강 04": {"passage": [["under standing", "understanding"]]},
+          "6강 05~06": {"translation": "현재의 관행에서, …"} }
+
+    ⚠ 걸 곳을 못 찾으면 **소리 내어 알린다** — 교재팀이 원고를 고치면 그 줄은
+      더 안 걸리므로 지우라는 뜻이다.
+    """
+    path = cfg.path("fixes.json")
+    if not os.path.exists(path):
+        return
+    try:
+        with open(path, encoding="utf-8") as f:
+            fixes = json.load(f)
+    except ValueError as e:
+        log("  ⚠ fixes.json 을 못 읽었다: %s" % e)
+        return
+    by = {}
+    for r in rows:
+        if r.get("kind") != "memtest":
+            by.setdefault(str(r.get("label") or ""), []).append(r)
+    n, miss = 0, []
+    for lab, fx in fixes.items():
+        if lab.startswith("_"):
+            continue
+        targets = by.get(lab) or []
+        if not targets:
+            miss.append("%s(지문 없음)" % lab)
+            continue
+        for r in targets:
+            for old, new in fx.get("passage") or []:
+                hit = False
+                for para in r.get("passage") or []:
+                    for run in para.get("runs") or []:
+                        if old in run.get("t", ""):
+                            run["t"] = run["t"].replace(old, new)
+                            hit = True
+                if hit:
+                    n += 1
+                else:
+                    miss.append("%s: %r" % (lab, old))
+            if fx.get("translation"):
+                style = ((r.get("translation") or [{}])[0] or {}).get("style") or "한글"
+                r["translation"] = [{"style": style, "runs": [
+                    {"t": fx["translation"], "style": "", "mark": None,
+                     "hl": None, "ruby": None, "slot": None}]}]
+                n += 1
+    if n:
+        log("■ 원고 교정(fixes.json) %d곳 적용" % n)
+    if miss:
+        log("  ⚠ fixes.json 에서 못 건 것 %d개 — 원고가 고쳐졌으면 그 줄을 지울 것: %s"
+            % (len(miss), ", ".join(miss[:5])))
+
+
+def _light_analysis_first(rows, log):
+    """수능특강 Light 는 **분석 지문이 그 강의 01** 이다(연구원 지적 2026-09-14).
+
+    분석본은 분석 지문을 강 맨 뒤에 두어 배지가 `수특 1강 분석`, 차례가
+    `02…06, 분석` 으로 나갔다. 삽화 폴더도 `1강 01.png` 로 부른다. 이름을
+    `N강 01` 로 바꾸고 `N강 02` 앞으로 옮긴다.
+    ⚠ 그 강에 `N강 01` 이 따로 있으면 건드리지 않는다 — 올림포스처럼 분석과
+      01 이 다른 지문인 책이 있다. 수특 Light 분석본(`수특라이트`)만 본다.
+    """
+    import unicodedata
+    pas = [r for r in rows if r.get("kind") != "memtest"]
+
+    def light(r):
+        f = unicodedata.normalize(
+            "NFC", str((r.get("source") or {}).get("file") or "")).replace(" ", "")
+        return "수특라이트" in f or "수능특강Light" in f
+
+    def unit_of(r):
+        return str(r.get("category") or r.get("unit") or "").strip()
+
+    n = 0
+    for r in pas:
+        m = re.fullmatch(r"(\d{1,2})강 분석", str(r.get("label") or ""))
+        if not m or not light(r):
+            continue
+        same = [x for x in pas if x is not r and unit_of(x) == unit_of(r)]
+        if any(str(x.get("label") or "") == "%s강 01" % m.group(1) for x in same):
+            continue
+        r["label"] = "%s강 01" % m.group(1)
+        n += 1
+        first = next((x for x in rows if any(x is y for y in same)), None)
+        if first is None:
+            continue
+        i = next(k for k, x in enumerate(rows) if x is r)
+        rows.pop(i)
+        j = next(k for k, x in enumerate(rows) if x is first)
+        rows.insert(j, r)
+    if n:
+        log("■ 수특 Light 분석 지문 %d개를 `N강 01` 로 — 그 강 맨 앞으로 옮김" % n)
 
 
 def _mock_label(rows, log):
@@ -1271,6 +1380,7 @@ class PocketbookSeries(Series):
         _fix_lecture_label(rows, log)
         _mark_short(rows, opt, log)
         _mock_label(rows, log)
+        _apply_fixes(cfg, rows, log)
         _mock_footer(rows, log, (opt.get("grade") or ""))
         rows = self._apply_memtest(cfg, opt, rows, log)
         out = os.path.join(cfg.build_dir, "data.json")

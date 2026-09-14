@@ -193,8 +193,15 @@ def illust_for(row, index):
         tail = lab[ml.end():] if ml else lab
         # 라벨이 `7강` 처럼 **강만** 있으면 그 단원의 분석 지문이다(분석본02 실측:
         # `7강, 1번, 2번, 3번, …` 에서 맨 앞이 분석이다).
+        rg = re.search(r"(\d{1,2})\s*[-~]\s*(\d{1,2})", tail)
         if "분석" in lab or "분석" in tail or not tail.strip():
             keys = [(x, t) for x in us for t in ("분석", "analysis")]
+        elif rg:
+            # 묶음 지문 — 파일도 `4강 05~06.png` 처럼 범위로 부른다
+            a, b = int(rg.group(1)), int(rg.group(2))
+            keys = [(x, t) for x in us
+                    for t in ("%02d~%02d" % (a, b), "%d~%d" % (a, b),
+                              "%02d-%02d" % (a, b), "%d-%d" % (a, b))]
         else:
             n = _RE_L_NO.search(tail)
             if n:
@@ -205,7 +212,8 @@ def illust_for(row, index):
     else:                                     # 교과서 — `본문2` → `SL과 02`
         # ⚠ 라벨의 **첫 숫자**를 쓰면 안 된다. `능률(민) SL2 본문1` 에서는
         #   교재 이름의 `2` 가 먼저 잡혀 본문1 과 본문2 가 같은 그림을 받는다.
-        n = re.search(r"(?:본문|RC|Reading)\s*(\d{1,2})", lab) or \
+        # `3과 MR1 Brain Insights` — 비상(황) 교과서의 MR(추가 읽기). 파일은 `3과 MR1.png`
+        n = re.search(r"(?:본문|RC|Reading|MR)\s*(\d{1,2})", lab) or \
             re.search(r"(\d{1,2})\s*$", lab)
         les = "sl과" if re.search(r"SL", unit, re.I) else None
         if les is None:
@@ -233,6 +241,12 @@ def illust_for(row, index):
         if got:
             return got
     return None
+
+
+def _pno_of_label(p):
+    """라벨이 여섯 자리(`260620`, `260641~42`)면 그 번호."""
+    m = re.match(r"(\d{6})(?:[-~]\d{1,3})?$", str(p.get("label") or ""))
+    return m.group(1) if m else ""
 
 
 def find_illust(pno, grade, bases):
@@ -364,8 +378,21 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
         # ⚠ 모의고사는 **삽화정리 폴더가 정본**이다(`고1/24년 9월/21.jpg`).
         #   분석본에 링크된 그림은 그 분석본 것이라 포켓북에 쓸 그림과 다르다 —
         #   링크를 먼저 보다가 18지문이 전부 엉뚱한 그림으로 나갔다(연구원 지적).
+        # ⚠ 기존 포켓북에서 온 모의고사 행은 `pno` 가 비어 있다 — 라벨(`260620`)
+        #   에서 번호를 읽지 않으면 삽화정리를 못 찾고 **옛 책 링크 그림**이 나갔다
+        #   (광문2 20~39번, 연구원 지적).
         src = None if p.get("short") else find_illust(
-            p.get("pno") or p.get("key"), p.get("grade") or grade, illust_dirs)
+            p.get("pno") or _pno_of_label(p) or p.get("key"),
+            p.get("grade") or grade, illust_dirs)
+        if src is None:
+            # ⚠ 지문번호로만 찾으면 **모의고사 말고는 하나도 안 붙는다**. 부교재·
+            #   교과서는 번호가 없고 라벨(`1강 01`·`본문2`)뿐이다 — 라벨로 찾는다.
+            # ⚠ 짤지문(안내문·도표)은 삽화가 **없다**. 붙이면 그 뒤 지문의
+            #   그림이 한 칸씩 밀린 것처럼 보인다(18·19번 실측, 사용자 지적).
+            # ⚠ **삽화정리 폴더를 분석본 링크보다 먼저** 본다. 분석본에 링크된
+            #   그림은 그 분석본 것이라 포켓북 그림과 다르다 — 링크를 먼저 봐서
+            #   수특 Light 23지문이 전부 엉뚱한 그림으로 나갔다(광문2, 연구원 지적).
+            src = None if p.get("short") else illust_for(p, _IDX)
         if src is None:
             for uri in p.get("links") or ():
                 cand = _resolve_link(uri, illust_dirs)
@@ -373,12 +400,6 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
                         ".jpg", ".jpeg", ".png"):
                     src = cand
                     break
-        if src is None:
-            # ⚠ 지문번호로만 찾으면 **모의고사 말고는 하나도 안 붙는다**. 부교재·
-            #   교과서는 번호가 없고 라벨(`1강 01`·`본문2`)뿐이다 — 라벨로 찾는다.
-            # ⚠ 짤지문(안내문·도표)은 삽화가 **없다**. 붙이면 그 뒤 지문의
-            #   그림이 한 칸씩 밀린 것처럼 보인다(18·19번 실측, 사용자 지적).
-            src = None if p.get("short") else illust_for(p, _IDX)
         if src:
             dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
             try:

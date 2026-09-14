@@ -134,7 +134,11 @@ def cut(parts, want):
     경우). 잘라 내지 않으면 옆 지문 글까지 암기테스트에 인쇄된다.
     """
     P = plain(parts)
-    idx = [i for i, ch in enumerate(P) if _LETTERS.match(ch.lower())]
+    # ⚠ `letters()` 는 **숫자를 버린다**. 여기서 숫자까지 세면 빈칸 번호(`213[to]`)
+    #   와 `175` 같은 수만큼 자리가 앞으로 밀려 **낱말 가운데서 잘린다**
+    #   (`comp|any`·`per|cent`·`one in 17|5 million`·`70[jou]` — 광문2·배재1 실측).
+    idx = [i for i, ch in enumerate(P)
+           if _LETTERS.match(ch.lower()) and not ch.isdigit()]
     hay = letters(P)
     need = letters(want)
     if not need or not hay:
