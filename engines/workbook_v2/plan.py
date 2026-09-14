@@ -4568,7 +4568,7 @@ def _unify_passage_labels(flows, steps, warnings):
     canon = passage_labels(steps)
     if len(canon) < 2:
         return
-    changed = []
+    per_flow = []
     for fl in flows:
         if str(fl.get("step") or "").startswith("step3"):
             continue
@@ -4583,6 +4583,15 @@ def _unify_passage_labels(flows, steps, warnings):
             lab = (m.group(1) or m.group(2)).strip()
             if lab not in seq:
                 seq.append(lab)
+        per_flow.append((fl, hits, seq))
+    # 공용 라벨이 **어느 스텝에서 이미 라벨로 인쇄되는 표기**일 때만 통일한다.
+    # 공용 라벨이 헤더 순번("1","2")에서 나온 교재(YBM Project 1-1·SL 본문1 —
+    # 코퍼스 r3c13ybm/r3c15sl2)는 인쇄 표기가 아니라 번호 프레임용 값이라,
+    # 그걸로 덮으면 "본문1"이 "1"로 바뀐다.
+    if not any(seq == canon for _fl, _h, seq in per_flow):
+        return
+    changed = []
+    for fl, hits, seq in per_flow:
         if len(seq) != len(canon) or set(seq) & set(canon):
             continue
         mapping = dict(zip(seq, canon))
