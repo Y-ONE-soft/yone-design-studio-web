@@ -355,7 +355,13 @@ def parse_tokens(text):
 # 아래 표는 다섯 학교 180지문을 **내용으로 짝지어** 읽어 낸 것이다.
 RE_NO = re.compile(r"^no\.?\s*(\d{1,2})(?:\s*[~\-]\s*(\d{1,2}))?$", re.I)
 RE_EXAMPLE = re.compile(r"^Example\s*(\d+)$", re.I)
-RE_BONMUN = re.compile(r"^본문\s*(\d{1,2})$")
+# `본문3-1` · `본문3-2` — 분석본이 긴 본문을 **둘로 나눈** 과(YBM(박) 2과).
+# 번호만 보면 3-1 을 버리고 3-2 도 버린다 — 그 과에서 두 지문이 통째로 빠진다.
+RE_BONMUN = re.compile(r"^본문\s*(\d{1,2})(?:\s*-\s*(\d))?$")
+
+
+def _bonmun(m):
+    return "본문%d" % int(m.group(1)) + ("-%s" % m.group(2) if m.group(2) else "")
 RE_LESSON_PREFIX = re.compile(r"^L\s*(\d{1,2})$", re.I)
 
 
@@ -386,7 +392,7 @@ def to_final_label(src, raw_label):
     if kind == "sl":
         # 특별 단원은 **번호를 붙이지 않는다** — `교과서SL 본문1`(완성본 실측).
         if RE_BONMUN.match(key):
-            return "교과서SL 본문%d" % int(RE_BONMUN.match(key).group(1))
+            return "교과서SL " + _bonmun(RE_BONMUN.match(key))
         if "Read More" in key:
             return "교과서SL RM"
         return None
@@ -399,7 +405,7 @@ def to_final_label(src, raw_label):
         if src.get("deeplearning"):
             return f"교과서{lesson}과 딥러닝"
         if RE_BONMUN.match(key):
-            return f"교과서{lesson}과 본문{int(RE_BONMUN.match(key).group(1))}"
+            return f"교과서{lesson}과 " + _bonmun(RE_BONMUN.match(key))
         if "Read More" in key:
             return f"교과서{lesson}과 RM"
         return None

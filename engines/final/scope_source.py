@@ -536,10 +536,15 @@ def lesson_ranges(text):
         # ⚠ `p. 100` 은 **쪽 표시**지 지문 번호가 아니다. 먼저 지운다 —
         #   안 지우면 100·101… 이 지문 번호로 잡혀 5지문이 10지문이 된다.
         seg = RE_PAGE_MARK.sub(" ", seg)
-        nums, named = [], []
+        nums, named, count = [], [], None
         if "본문" in seg:
-            # `본문 1, 본문 2` 처럼 **항목 이름에 붙은 번호**만 센다
-            nums = [int(x) for x in re.findall(r"본문\s*(\d+)", seg)]
+            # `본문 1, 본문 2` 처럼 **항목 이름에 붙은 번호**만 센다.
+            # `본문3-1, 본문3-2` 는 **두 지문**이다 — 거르기는 번호(3)로 하되
+            # 개수는 항목대로 센다(안 그러면 Y.OS 7지문 ≠ 6 으로 멈춘다).
+            items = re.findall(r"본문\s*(\d+)(?:\s*-\s*\d)?", seg)
+            nums = [int(x) for x in items]
+            if len(items) != len(set(items)):
+                count = len(items)
         else:
             nums = _ranges(seg)
         for chunk in seg.split(","):
@@ -547,6 +552,8 @@ def lesson_ranges(text):
             if tl and tl not in named:
                 named.append(tl)
         out[key] = {"nums": sorted(set(nums)), "named": named}
+        if count is not None:
+            out[key]["count"] = count
     return out
 
 
@@ -638,7 +645,8 @@ def from_yos_entries(entries, grade=0):
                 t = ("sl", 0) if isinstance(n, tuple) else ("lesson", n)
                 tokens.append(t)
                 detail[t] = {"subject": subj, "publisher": pub,
-                             "only": got["nums"], "named": got["named"]}
+                             "only": got["nums"], "named": got["named"],
+                             **({"count": got["count"]} if "count" in got else {})}
                 if isinstance(n, tuple):
                     detail[t]["sl"] = n[1]
         elif kind == "모의고사":
