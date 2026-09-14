@@ -199,21 +199,25 @@ def _check_vocab_pair(data, vol, report):
     return bad
 
 
-def _check_blanks(data, vol, texts, spans, report):
+def _check_blanks(data, vol, texts, spans, report, spanmap=None):
     """빈칸(밑줄) 개수 — 원고의 `[답]` 수만큼 지면에 있어야 한다."""
     v = data["vols"][str(vol)]
     sec = next((s for s in v["sections"] if s["kind"] == "vocab"), None)
     if not sec:
         return []
     pages = spans.get("vocab") or []
+    # ⚠ i 번째 지문 = i 번째 면이 아니다 — 흘린 지문이 두 면을 먹으면 그 뒤가
+    #   전부 한 면씩 밀려 **남의 면**을 센다(배재2 `본문5~6` 뒤 37건 거짓 경보).
+    where = expected_pages(sec, (spanmap or {}).get("vocab", {}))
     bad = []
     for i, b in enumerate(sec["blocks"]):
         want = sum(1 for p in b["passage"] + (b.get("summary") or [])
                    for x in p if isinstance(x, dict))
-        if i >= len(pages):
+        lo, hi = where[i]
+        if lo >= len(pages):
             break
         # 정답 쪽이 굵게 찍혀 있으므로 **낱말**로 센다(밑줄은 글자가 아니다).
-        t = texts[pages[i] - 1]
+        t = "".join(texts[pages[k] - 1] for k in range(lo, min(hi, len(pages) - 1) + 1))
         got = sum(t.count(x["a"]) for p in b["passage"] + (b.get("summary") or [])
                   for x in p if isinstance(x, dict))
         if got < want:
@@ -325,12 +329,15 @@ def run(series, cfg, log, report):
     texts = page_texts_colwise(pdf)
     skip = set(vcfg.get("skip_pages") or ())
     skip |= {len(texts) - k for k in range(vcfg.get("skip_last") or 0)}
+    # 글자 없는 면(짝 맞춤 빈 면)은 꼬리말이 없어 **앞 섹션에 딸려 붙는다** —
+    # 크레딧 앞에 빈 면을 넣자 중요어휘가 51면인데 52면으로 잡혔다(배재2 Vol1).
+    skip |= {i + 1 for i, t in enumerate(labels) if not (t or "").strip()}
     spanmap = _spanmap(cfg, vol, data)
     spans = _section_pages(data, vol, labels, report, skip)
     _check_pagecount(data, vol, spans, report, spanmap)
     _check_placement(data, vol, texts, spans, report, spanmap)
     _check_vocab_pair(data, vol, report)
-    _check_blanks(data, vol, texts, spans, report)
+    _check_blanks(data, vol, texts, spans, report, spanmap)
     _check_fit(cfg, vol, report)
     _check_head_rule(pdf, report, skip)
     _check_hyphen(data, report)
