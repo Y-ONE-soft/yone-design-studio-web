@@ -350,6 +350,11 @@ def key_of(vol, sec, i, b):
     return f"{vol}-{sec['kind']}-{i}"
 
 
+def _title_vol(title, vol):
+    tag = "Vol%s" % vol
+    return title if re.search(r"Vol\s*%s\b" % vol, title or "") else f"{title} {tag}".strip()
+
+
 def document(cfg, data, vol, fits=None, mode=None, plain_band=(),
              hide_headr=()):
     # ⚠ 자리표는 **렌더 직전에 한 번** 만든다. 안 만들면 작업대에서 지면을
@@ -359,7 +364,8 @@ def document(cfg, data, vol, fits=None, mode=None, plain_band=(),
     ch = v["chapter"]
     fits = fits or {}
     o = ['<!doctype html><html lang="ko"><head><meta charset="utf-8">',
-         f'<title>{esc(cfg.book.get("title", ""))} Vol{vol}</title>',
+         # 책 제목에 이미 `Vol2` 가 들어 있다(PDF 제목이 `… Vol2 Vol2` 로 나갔다).
+         f'<title>{esc(_title_vol(cfg.book.get("title", ""), vol))}</title>',
          '<link rel="stylesheet" href="theme.css">',
          stage.BOOK_CSS_LINKS]
     if mode == "measure":
