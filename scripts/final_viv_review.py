@@ -42,14 +42,18 @@ RE_LAB = re.compile(r"^(?:\d{6}(?:~\d{2})?|올포 \d+강 \S+|리딩파워 \d+강
 def book_parts(book_dir):
     content = json.load(open(os.path.join(book_dir, "원고", "content.json"),
                              encoding="utf-8"))
-    pdfs = []
-    for vol in (1, 2):
-        d = os.path.join(book_dir, "Vol%d" % vol)
-        if not os.path.isdir(d):
-            continue
-        for f in sorted(os.listdir(d)):
-            if f.endswith(".pdf") and "내지" in f and "인쇄" not in f:
-                pdfs.append(os.path.join(d, f))
+    # 학원 출력판은 책 폴더 하나에 **인쇄본만** 있다(`…(Vol1)_내지_인쇄.pdf`).
+    # 예전 판(Vol1/Vol2 폴더 + 확인용 내지)도 읽는다.
+    pdfs = sorted(os.path.join(book_dir, f) for f in os.listdir(book_dir)
+                  if f.endswith("_내지_인쇄.pdf"))
+    if not pdfs:
+        for vol in (1, 2):
+            d = os.path.join(book_dir, "Vol%d" % vol)
+            if not os.path.isdir(d):
+                continue
+            for f in sorted(os.listdir(d)):
+                if f.endswith(".pdf") and "내지" in f and "인쇄" not in f:
+                    pdfs.append(os.path.join(d, f))
     return content, pdfs
 
 

@@ -40,8 +40,20 @@ def _fonts():
     return out
 
 
-def book_config(school, grade, period, vol):
-    """책 한 권의 `config.json` — 교재 폴더엔 이것과 원고만 둔다."""
+def work_dir(school, grade, period, vol):
+    """한 권의 **작업 폴더**(config·data·build·측정표) — 교재 폴더 밖이다.
+
+    학원 출력이라 교재 폴더에는 `원고/` 와 인쇄본 두 개만 둔다(사용자 요청
+    2026-09-14: Vol1·Vol2 폴더를 따로 만들지 말 것, 확인용 내지는 필요 없음).
+    """
+    from config import JOBS_DIR
+    return os.path.join(JOBS_DIR, "final_books", grade, period, school,
+                        "Vol%d" % vol)
+
+
+def book_config(school, grade, period, vol, base=None):
+    """책 한 권의 `config.json`. 산출은 교재 폴더(`base`)로, 작업은 `work_dir`."""
+    base = base or os.path.join(BOOK_ROOT, grade, period, school)
     return {
         "series": "final",
         "book": {"id": "%s_파이널_Vol%d" % (school, vol),
@@ -49,11 +61,14 @@ def book_config(school, grade, period, vol):
                  "brand": "FINAL STEP", "school": school,
                  "grade": grade, "period": period},
         "page": {"width": 210, "height": 297, "bleed": 3},
-        "output": {"dir": ".", "stem": "%s_파이널" % school},
+        "output": {"dir": base, "stem": "%s_파이널" % school},
         "options": {"vol": vol},
-        "manuscript": {"dir": "../원고", "files": {"content": "content.json"}},
+        "manuscript": {"dir": os.path.join(base, "원고"),
+                       "files": {"content": "content.json"}},
         "fonts": _fonts(),
-        "print": {"out": "(Vol%d)_내지_인쇄" % vol, "gray_map": GRAY},
+        # 학원 출력 — 도련 없이 재단 크기(A4)로. 조판 판면은 그대로 두고 잘라 낸다.
+        "print": {"out": "(Vol%d)_내지_인쇄" % vol, "gray_map": GRAY,
+                  "trim_bleed": True},
         "verify": {
             "suffix": "(Vol%d)_내지" % vol,
             "frame": {"inner": 21, "outer": 25, "width": 170.7,
@@ -163,24 +178,32 @@ class FinalVivEngine(FinalEngine):
         from core.render_vivlio import book as B
         made = []
         for vol in (1, 2):
-            d = os.path.join(base, "Vol%d" % vol)
+            d = work_dir(school, grade, period, vol)
             os.makedirs(d, exist_ok=True)
             # ⚠ 이미 있는 config 는 **덮지 않는다** — 손잡이를 손봐 뒀을 수 있다.
+            #   다만 산출·원고 자리와 학원 출력 설정은 지금 규칙으로 맞춘다.
             cpath = os.path.join(d, "config.json")
-            if not os.path.exists(cpath):
-                json.dump(book_config(school, grade, period, vol),
-                          open(cpath, "w", encoding="utf-8"),
-                          ensure_ascii=False, indent=1)
+            want = book_config(school, grade, period, vol, base=base)
+            if os.path.exists(cpath):
+                cur = json.load(open(cpath, encoding="utf-8"))
+                for k in ("output", "manuscript", "print"):
+                    cur[k] = want[k]
+                want = cur
+            json.dump(want, open(cpath, "w", encoding="utf-8"),
+                      ensure_ascii=False, indent=1)
             cfg = B.load(d)
             log("[Vol%d] 조판 중…" % vol)
             B.gen_data(cfg, log)
             B.build(cfg, log)
-            if cfg.get("print"):
-                B.print_pdf(cfg, log)
+            B.print_pdf(cfg, log)
             B.verify(cfg, log)
-            for f in sorted(os.listdir(d)):
-                if f.endswith(".pdf") and "내지" in f:
-                    made.append(os.path.join(d, f))
+            # 확인용(RGB) 내지는 검수가 끝나면 지운다 — 인쇄본만 남긴다.
+            raw = cfg.out_pdf(cfg.section("verify").get("suffix", ""))
+            if os.path.exists(raw) and "인쇄" not in os.path.basename(raw):
+                os.remove(raw)
+            pr = cfg.out_pdf(cfg.section("print").get("out", "_인쇄"))
+            if os.path.exists(pr):
+                made.append(pr)
         for p in made:
             try:
                 shutil.copy2(p, os.path.join(job_dir, os.path.basename(p)))

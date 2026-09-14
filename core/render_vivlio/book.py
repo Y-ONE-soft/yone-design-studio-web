@@ -352,6 +352,12 @@ def print_pdf(cfg, log=print, **opts):
                         profile=pc.get("profile"),
                         gray_map=pc.get("gray_map"),
                         cmyk_map=pc.get("cmyk_map"), log=log)
+    if pc.get("trim_bleed"):
+        # 학원 출력 — 재단하지 않으므로 도련이 필요 없다. 조판은 검증된 판면
+        # (도련 포함 판)으로 그대로 하고 **인쇄본만 재단선에서 자른다** —
+        # 테마의 여백·띠·괘선이 전부 도련 포함 판 기준이라 판을 바꾸면 흐른다.
+        n = _crop_to_trim(dst)
+        log(f"  [학원 출력] 도련을 잘라 재단 크기로 — {n}면")
     a = prepress.audit(dst)
     log(f"  판형 {a['media_mm'][2]}×{a['media_mm'][3]}mm · "
         f"재단 {a['trim_mm']} · 색연산자 {a['ops']}")
@@ -359,6 +365,24 @@ def print_pdf(cfg, log=print, **opts):
         log(f"  [경고] DeviceRGB 연산자가 {a['rgb_left']}개 남았다")
     res["audit"] = a
     return res
+
+
+def _crop_to_trim(path):
+    """MediaBox·CropBox·BleedBox 를 TrimBox 로 — 도련 없는 재단 크기 PDF."""
+    import fitz
+    doc = fitz.open(path)
+    for pg in doc:
+        t = fitz.Rect(pg.trimbox)
+        pg.set_mediabox(t)
+        pg.set_cropbox(t)
+        pg.set_bleedbox(t)
+        pg.set_trimbox(t)
+    n = doc.page_count
+    tmp = path + ".tmp"
+    doc.save(tmp, garbage=3, deflate=True)
+    doc.close()
+    os.replace(tmp, path)
+    return n
 
 
 def verify(cfg, log=print, pdf=None, **opts):
