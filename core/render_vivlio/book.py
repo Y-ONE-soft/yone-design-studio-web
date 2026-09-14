@@ -359,7 +359,10 @@ def print_pdf(cfg, log=print, **opts):
         n = _crop_to_trim(dst)
         log(f"  [학원 출력] 도련을 잘라 재단 크기로 — {n}면")
     a = prepress.audit(dst)
-    log(f"  판형 {a['media_mm'][2]}×{a['media_mm'][3]}mm · "
+    # 판형은 **크기**로 적는다 — MediaBox 모서리 값은 원점이 0 이 아니면(잘라 낸
+    # 학원 출력판) 213×300 처럼 틀린 크기로 읽힌다.
+    mb = a["media_mm"]
+    log(f"  판형 {round(mb[2] - mb[0], 1)}×{round(mb[3] - mb[1], 1)}mm · "
         f"재단 {a['trim_mm']} · 색연산자 {a['ops']}")
     if a["rgb_left"]:
         log(f"  [경고] DeviceRGB 연산자가 {a['rgb_left']}개 남았다")
