@@ -4538,6 +4538,8 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
     _eb = _drop_empty_brackets(flows)
     if _eb:
         warnings.append("빈 괄호 단락 %d줄 제거 (원고 잔재)" % _eb)
+    if workbook_type == "교과서":
+        _unify_passage_labels(flows, steps, warnings)
     return {"format": "wb-flows-v1", "flows": flows,
             "unsupported": sorted(unsupported),
             # W66 ④ (사용자 지적 2026-08-14): 유닛 꼬리 몇 줄이 다음 칸으로
@@ -4547,6 +4549,51 @@ def steps_to_plan(steps, exclude=None, workbook_type="모의고사",
             "unit_fit": {"max_tracking": -25, "max_leading": 1,
                          "max_spill_lines": 5},
             "warnings": warnings}
+
+
+_RE_UNIT_LABEL_PARA = re.compile(r"^\s*(?:\{([^{}/]{1,30})\}|\[([^\[\]/]{1,30})\])\s*$")
+
+
+def _unify_passage_labels(flows, steps, warnings):
+    """교과서 원고 — 스텝마다 다른 지문 라벨 표기를 공용 라벨로 통일.
+
+    한 원고 안에서 스텝마다 지문 표기가 다를 수 있다 (2026-09-14 공통영어2
+    미래엔(김) Deep Learning: A/B 스텝 `[DL-1]`, C 스텝 헤더 `L1-p.100 Deep
+    Learning Lesson 1`, B1 `[194]`). 지문번호 프레임은 공용 라벨(DL-1)을
+    찍으므로 사용자 확정: "라벨은 DL-1 이걸로 정리".
+
+    유닛 머리 라벨 단락(`{X}` / `[X]` 단독 줄)을 스텝별로 순서대로 모아,
+    **개수가 공용 라벨과 같고 하나도 겹치지 않을 때만** 순서대로 치환한다 —
+    이미 공용 표기를 쓰는 스텝·지문 구성이 다른 스텝은 그대로다."""
+    canon = passage_labels(steps)
+    if len(canon) < 2:
+        return
+    changed = []
+    for fl in flows:
+        if str(fl.get("step") or "").startswith("step3"):
+            continue
+        hits = []
+        for u in fl.get("units") or []:
+            for p in unit_paras(u):
+                m = _RE_UNIT_LABEL_PARA.match(p.get("t") or "")
+                if m:
+                    hits.append((p, m))
+        seq = []
+        for _p, m in hits:
+            lab = (m.group(1) or m.group(2)).strip()
+            if lab not in seq:
+                seq.append(lab)
+        if len(seq) != len(canon) or set(seq) & set(canon):
+            continue
+        mapping = dict(zip(seq, canon))
+        for p, m in hits:
+            lab = mapping[(m.group(1) or m.group(2)).strip()]
+            new_t = ("{%s}" if m.group(1) is not None else "[%s]") % lab
+            p["t"] = new_t
+            p["runs"] = [{"t": new_t, "ul": False}]
+        changed.append("%s(%s→%s)" % (fl.get("step"), seq[0], canon[0]))
+    if changed:
+        warnings.append("지문 라벨 공용 표기로 통일: " + ", ".join(changed))
 
 
 def _drop_empty_brackets(flows):

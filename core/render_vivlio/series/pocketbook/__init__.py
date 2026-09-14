@@ -21,6 +21,7 @@ import shutil
 from core.render_vivlio import bleed, cli, knobs, measure, stage
 from core.render_vivlio.series.base import Series
 from core.render_vivlio.series.pocketbook import data as pdata
+from core.render_vivlio.series.pocketbook import checks as pchecks
 from core.render_vivlio.series.pocketbook import memtest as pmemtest
 from core.render_vivlio.series.pocketbook import render as prender
 from core.render_vivlio.series.pocketbook import voca as pvoca
@@ -2789,6 +2790,10 @@ class PocketbookSeries(Series):
         _check_content(pas, report, log)
         _check_hangul(pas, report, log)
         _check_cut(pas, cfg, report, log)
+        pchecks.memtest_tail(rows, report, log)
+        pchecks.illust_names(pas, cfg.resolve(opt.get("illust_dirs") or []),
+                             report, log)
+        pchecks.analysis_sources(cfg, report, log)
         # G-P11 — 암기 TEST 를 쓰기로 한 책인데 한 면도 안 붙었다.
         # ⚠ 이걸 안 세우면 원고 폴더가 안 잡힌 날 **면 수가 반으로 준 책이
         #   전 게이트를 통과한다**(세종1 204→106면 실측). 면 수 게이트는 남은

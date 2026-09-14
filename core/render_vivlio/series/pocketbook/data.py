@@ -460,6 +460,8 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             # 채울 때 후보로 쓰라고 들고 간다.
             "voca": p.get("voca") or [],
             "illust": illust,
+            # 삽화 원본 경로 — G-P16 이 파일 이름으로 그 지문 그림인지 본다
+            "illust_src": src if illust else "",
             "memtest": {k: _flatten(v) for k, v in mt.items() if v} or None,
         })
     return out
