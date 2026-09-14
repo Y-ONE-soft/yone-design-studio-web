@@ -320,7 +320,35 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         # ── 교과서/EBS 소스 (W28-확장): 식별자 재검증 → 로컬 복사 ──────
         from engines.final.extractor import _gdrive_safe_copy
         doc_sources = []
+        extra_order = []    # 선택 순서 그대로 결합 — doc 소스·올포기출 코드 소스
+        extra_ranges = []   # 선택 순서 범위 — ("doc", ds) | ("olpo", (교재, 강))
+        olpo_groups = {}    # (교재, 강) → 고른 지문 번호들
+        seen_codes = {c["raw"] for c in meta.get("codes", [])}
+        month_cands = {s["month_folder"]: s["candidates"]
+                       for s in meta.get("sources", [])
+                       if s.get("month_folder") and s.get("candidates")}
         for i, sel in enumerate(extra_sel):
+            if (sel["type"] == "ebs"
+                    and srcmod.list_olpo_units(cfg, sel["book"]) is not None):
+                # 올림포스 기출: 지문 = 모의고사 기출 → 회차 분석본에서 마커 추출
+                p = srcmod.resolve_olpo_passage(
+                    cfg, sel["book"], sel["unit_folder"], sel["file_name"])
+                key = (sel["book"], p["unit_label"])
+                if key not in olpo_groups:
+                    olpo_groups[key] = []
+                    extra_ranges.append(("olpo", key))
+                if sel["file_name"] not in olpo_groups[key]:
+                    olpo_groups[key].append(sel["file_name"])
+                log(f"[ebs] {sel['book']} {p['unit_label']} {sel['file_name']} → "
+                    f"고{p['grade']} {p['year']}년 {int(p['month'])}월 "
+                    f"{int(p['qNum'])}번 ({p['code']})")
+                if p["code"] in seen_codes:
+                    log(f"  - {p['code']} 이미 포함 — 중복 추출 생략")
+                    continue
+                seen_codes.add(p["code"])
+                extra_order.append(
+                    self._olpo_code_source(cfg, p, job_dir, log, month_cands))
+                continue
             if sel["type"] == "textbook":
                 src_path, lesson_label, school = srcmod.resolve_textbook_file(
                     cfg, sel["subject"], sel["publisher"],
@@ -353,7 +381,9 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
                 "derived_range": rng,
                 "range_idx": -1,      # 자동 유도 시 아래에서 채움
             })
-        meta.setdefault("sources", []).extend(doc_sources)
+            extra_order.append(doc_sources[-1])
+            extra_ranges.append(("doc", doc_sources[-1]))
+        meta.setdefault("sources", []).extend(extra_order)
 
         # 범위 목록 (간지/1페이지 기재용) — 수동 입력 우선, 비우면 문제
         # 코드(YYMMNN) + 교과서/EBS 소스에서 자동 유도
@@ -364,9 +394,13 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
         else:
             grade = self._get_meta(job_dir, "grade", "고1")
             ranges = self.derive_ranges_from_codes(meta.get("codes"), grade)
-            for ds in doc_sources:
-                ds["range_idx"] = len(ranges)
-                ranges.append(ds["derived_range"])
+            for kind, item in extra_ranges:
+                if kind == "doc":
+                    item["range_idx"] = len(ranges)
+                    ranges.append(item["derived_range"])
+                else:
+                    ranges.append(srcmod.derive_range_olpo(
+                        item[0], item[1], olpo_groups[item]))
             if not ranges:
                 raise ValueError(
                     "범위 목록이 입력되지 않았고 코드에서 유도할 수도 없습니다. "
