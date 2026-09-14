@@ -236,6 +236,32 @@ function _rejoinStep3(doc) {
             stats.already++;
             continue;
         }
+        // 결합 **전에** 조각 꼬리에 딸려온 다음 지문 코드를 잘라낸다.
+        // STEP4.5 의 범위 복제가 프레임 표시량 기준이라 지문 경계에서 다음
+        // 지문 선두 몇 자가 앞 묶음 조각 끝에 섞여 든다 (26년 9월 고1 260919:
+        // "{260920}\n다" 10자). 그대로 결합하면 그 10자가 지면 밖으로 밀려
+        // cv_finish 오버셋 게이트를 막는다. 코드 마커는 다음 묶음 첫 프레임에
+        // 온전히 있으므로 여기 남은 것은 중복이다.
+        for (fi = 0; fi < frames.length; fi++) {
+            try {
+                var _ssX = frames[fi].parentStory;
+                var _txX = String(_ssX.texts[0].contents);
+                var _reX = /\{\d{6}\}/g;
+                var _mX, _cutX = -1;
+                while ((_mX = _reX.exec(_txX)) !== null) {
+                    if (_mX.index > 0) { _cutX = _mX.index; break; }
+                }
+                if (_cutX > 0) {
+                    var _nX = _ssX.characters.length;
+                    if (_cutX < _nX) {
+                        _ssX.characters.itemByRange(_cutX, _nX - 1).remove();
+                        wlog("STEP11: 지문 " + code + " 조각 " + (fi + 1) +
+                             " 꼬리의 다음 지문 코드 " + (_nX - _cutX) + "자 제거(중복)");
+                    }
+                }
+            } catch (e) {}
+        }
+
         // 결합 전 프레임별 스냅샷 — 유일한 검수 근거
         var snap = [];
         for (fi = 0; fi < frames.length; fi++) {
