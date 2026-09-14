@@ -114,7 +114,10 @@ def split_all(items, capacity=CAPACITY, log=None):
         if it.get("kind") == "memtest" or not it.get("passage"):
             out.append(it)
             continue
-        got = split_passage(it, capacity)
+        # ⚠ 장문(`split` — 43~45번)은 조판이 **왼쪽·오른쪽 두 면에 이어** 싣는다.
+        #   여기서 또 한 번 나누면 조각마다 두 면씩 **4면**이 됐다(광문2 26년 6월
+        #   43~45번, 사용자 지적 "2페이지로만"). 두 면 분량(2배)을 넘을 때만 나눈다.
+        got = split_passage(it, capacity * 2 if it.get("split") else capacity)
         if len(got) > 1:
             n += 1
             if log:
