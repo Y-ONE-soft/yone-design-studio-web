@@ -294,6 +294,40 @@ class AnalysisMergeV2Engine(AnalysisMergeEngine):
 
     # ─── parse ─────────────────────────────────────────────────────
 
+    def _olpo_code_source(self, cfg, p, job_dir, log, month_cands):
+        """올포기출 지문 → v1 코드 소스와 같은 모양 (회차 분석본 후보 로컬 사본).
+        month_cands: 회차 폴더 → 로컬 후보 (문제 코드와 같은 회차면 재사용)."""
+        from engines.final.extractor import _gdrive_safe_copy
+        where = f"고{p['grade']} {p['year']}년 {int(p['month'])}월"
+        folder = self._find_month_folder(
+            cfg["gdrive_base"], p["grade"], p["year"], p["month"])
+        if not folder:
+            raise FileNotFoundError(
+                f"올림포스 기출 지문 {p['code']}: 모의고사 회차 폴더 없음 ({where})")
+        if folder not in month_cands:
+            files = self._find_analysis_files(
+                folder, cfg.get("file_patterns", ["분석본"]))
+            if not files:
+                raise FileNotFoundError(
+                    f"올림포스 기출 지문 {p['code']}: {os.path.basename(folder)} "
+                    f"폴더에 분석본 .indd 없음")
+            n = len(month_cands)
+            locals_ = []
+            for f in files:
+                dst = os.path.join(
+                    job_dir, f"src_olpo{n}_{_nfc(os.path.basename(f))}")
+                ok, err = _gdrive_safe_copy(f, dst, log=log)
+                if not ok:
+                    raise RuntimeError(
+                        f"소스 복사 실패: {os.path.basename(f)} — {err}")
+                locals_.append(dst)
+            log(f"  - {where} 폴더: {os.path.basename(folder)} → "
+                f"분석본 {len(locals_)}개")
+            month_cands[folder] = locals_
+        return {"code": p["code"], "year": p["year"], "month": p["month"],
+                "qNum": p["qNum"], "month_folder": folder,
+                "candidates": month_cands[folder]}
+
     def parse(self, uploaded_files, job_dir, log):
         """v1 parse(코드→소스 로컬 복사) + 교과서/EBS 소스(W28-확장) +
         템플릿 로컬 확보 + 범위/relink 맵."""

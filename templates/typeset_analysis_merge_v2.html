@@ -270,6 +270,7 @@
     '올림포스 독해기본1': '올독기1',
     '올림포스 독해기본2': '올독기2',
     '올림포스 고2 기출': '올고2기출',
+    '2026 올림포스 전국연합학력평가 기출 영어독해 고1(2025.10)': '올포기출',
     'Reading Power 유형편(기본)': '리딩파워기본',
     'Reading Power 유형편(완성)': '리딩파워완성',
     '2026 수능특강 영어': '26수특',
@@ -316,10 +317,31 @@
     }
     if (!title) { title = stem.split('(')[0].trim() || book; detail = unitLabel; }
     if (!detail) detail = unitLabel;
+    if (title.includes('분석본')) { title = book; detail = unitLabel; }
     let au = (unitLabel || '').replace(/\s+/g, '');
     const mu = /^Unit(\d+)$/.exec(au);
     if (mu) au = mu[1] + '강';
     return { title, detail, abbrev: joinAbbrev(ebsShort(book), au) };
+  }
+  // 올림포스 기출: 한 강에서 고른 지문을 범위 한 쌍으로 (서버 derive_range_olpo)
+  function deriveOlpoRange(book, unitLabel, names) {
+    const g = (/고\s*([123])/.exec(book || '') || [])[1] || '';
+    return { title: `올림포스 기출 영어독해 고${g}`,
+             detail: `${unitLabel} ${names.join(', ')}`.trim(),
+             abbrev: joinAbbrev(ebsShort(book), unitLabel) };
+  }
+  function extrasDerived(extras) {
+    const out = [], groups = {};
+    for (const src of extras) {
+      if (!src.olpo) { out.push(src.derived); continue; }
+      const key = src.book + ' ' + src.unit_folder;
+      if (!groups[key]) {
+        groups[key] = { book: src.book, unit: src.unit_folder, names: [] };
+        out.push(groups[key]);
+      }
+      if (!groups[key].names.includes(src.file_name)) groups[key].names.push(src.file_name);
+    }
+    return out.map(r => r.names ? deriveOlpoRange(r.book, r.unit, r.names) : r);
   }
 
   function _mkSelect(cls, placeholder) {
@@ -411,15 +433,23 @@
         const units = await fetchJson('/api/analysis-merge/ebs-units?book=' +
                                       encodeURIComponent(selBook.value));
         row._units = units;
-        _fill(selUnit, units.map((u, i) => ({value: i, label: u.label})), '강');
+        _fill(selUnit, units.map((u, i) => ({value: i, label: u.header || u.label})), '강');
         if (!units.length) {
-          _fill(selUnit, [], '강 없음 (미지원 구조)');
+          _fill(selUnit, [], '강 없음 (분석본 .indd를 찾지 못함)');
         }
       });
       selUnit.addEventListener('change', () => {
         _fill(selFile, [], '파일'); updateExtraSources();
         const entry = (row._units || [])[selUnit.value];
         if (!entry) return;
+        if (entry.kind === 'olpo') {
+          // 올림포스 기출: 지문 번호 → 해당 모의고사 분석본에서 그 지문만 추출
+          _fill(selFile, entry.files.map(f => ({
+            value: f.name, label: `${f.name} — ${f.display}`,
+          })), '지문 번호');
+          updateExtraSources();
+          return;
+        }
         _fill(selFile, entry.files.map(f => ({
           value: f.name,
           label: (f.school ? `[${f.school}] ` : '[기본] ') + f.name,
@@ -460,10 +490,13 @@
         const entry = (row._units || [])[unitIdx];
         if (!book || !entry || !file) return;
         const f = entry.files.find(x => x.name === file);
+        const olpo = entry.kind === 'olpo';
         out.push({
           type: 'ebs', book: book, unit_folder: entry.folder, file_name: file,
-          derived: deriveEbsRange(book, entry.label, file, f ? f.school : null),
+          derived: olpo ? deriveOlpoRange(book, entry.label, [file])
+                        : deriveEbsRange(book, entry.label, file, f ? f.school : null),
           school: f ? f.school : null,
+          olpo: olpo,
         });
       }
     });
@@ -606,7 +639,7 @@
     const manual = collectRanges();
     if (manual.length) return manual;
     const derived = deriveRangesFromCodes(items || parseCodes().items);
-    for (const src of collectExtraSources()) derived.push(src.derived);
+    derived.push(...extrasDerived(collectExtraSources()));
     return derived;
   }
 
@@ -667,7 +700,7 @@
       const extras = collectExtraSources();
       if (!collectRanges().length && (items.length || extras.length)) {
         const derived = deriveRangesFromCodes(items);
-        for (const src of extras) derived.push(src.derived);
+        derived.push(...extrasDerived(extras));
         derivedEl.innerHTML = '자동 유도 → ' + escapeHtml(
           derived.map(r => (r.title + (r.detail ? ' / ' + r.detail : '') +
                             (r.detail === '' && r.abbrev ? ' / (과 제목 자동)' : ''))

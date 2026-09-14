@@ -146,6 +146,146 @@ def test_ebs_resolve_loose_file(ebs_tree):
     assert school == "함원장버전"
 
 
+def test_ebs_nested_and_book_level_analysis_folders(tmp_path):
+    """실측 2026-09-14 — 전부 '강 없음 (미지원 구조)'로 막혀 있던 배치."""
+    base = tmp_path / "EBS 작업"
+    lt = base / "수능특강라이트 영어(개정판)" / "13강"
+    (lt / "분석본").mkdir(parents=True)
+    (lt / "분석본" / "13강_분석본.indd").write_bytes(b"x")
+    (lt / "분석본" / "13강 분석본_이의고1.indd").write_bytes(b"x")
+    (lt / "리테").mkdir()
+    (lt / "리테" / "수능특강 Light 영어 13강 리테.indd").write_bytes(b"x")
+    rp = base / "Reading Power 유형편(완성)" / "분석본"
+    rp.mkdir(parents=True)
+    (rp / "Reading Power 유형편(완성) Unit 18.indd").write_bytes(b"x")
+    st = base / "2027 수능특강 영어" / "분석본"
+    for sub in ("유형편", "내지", "TEST 1"):
+        (st / sub).mkdir(parents=True)
+    (st / "유형편" / "고3_수능특강_분석본_03강.indd").write_bytes(b"x")
+    (st / "내지" / "고3_분석본_내지 복사본.indd").write_bytes(b"x")
+    (st / "TEST 1" / "고3_분석본_TEST 1_17~20번.indd").write_bytes(b"x")
+    cfg = {"textbook_base": "", "ebs_base": str(base)}
+
+    u = S.list_ebs_units(cfg, "수능특강라이트 영어(개정판)")
+    assert [(x["label"], x["folder"]) for x in u] == [("13강", "13강/분석본")]
+    assert u[0]["files"] == [
+        {"name": "13강_분석본.indd", "school": None},
+        {"name": "13강 분석본_이의고1.indd", "school": "이의고1"}]
+    path, label, school = S.resolve_ebs_file(
+        cfg, "수능특강라이트 영어(개정판)", "13강/분석본", "13강 분석본_이의고1.indd")
+    assert path.endswith("13강 분석본_이의고1.indd")
+    assert label == "13강" and school == "이의고1"
+    r = S.derive_range_ebs("수능특강라이트 영어(개정판)", "13강", "13강_분석본.indd")
+    assert r["title"] == "수능특강라이트 영어(개정판)" and r["detail"] == "13강"
+
+    rpu = S.list_ebs_units(cfg, "Reading Power 유형편(완성)")
+    assert [(x["label"], x["folder"]) for x in rpu] == [("Unit 18", "분석본")]
+
+    stu = S.list_ebs_units(cfg, "2027 수능특강 영어")
+    assert {(x["label"], x["folder"]) for x in stu} == {
+        ("3강", "분석본/유형편"), ("Test1 17~20번", "분석본/TEST 1")}
+
+
+# ── 올림포스 기출 (지문 출처 시트 → 모의고사 분석본) ─────────────────────────
+
+OLPO_G1 = "2026 올림포스 전국연합학력평가 기출 영어독해 고1(2025.10)"
+
+
+def _write_olpo_sheet(path, columns, red=()):
+    """실물 시트 모양: 1행 'N강(유형)', A열 학평Analysis/1..16, 표 아래 메모."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "2026"
+    headers = ["13강(빈칸)", "14강(빈칸)", "15강(무관)"]
+    for ci, h in enumerate(headers, start=2):
+        ws.cell(1, ci, h)
+    for ri in range(17):
+        ws.cell(ri + 2, 1, "학평Analysis" if ri == 0 else ri)
+    for h, codes in columns.items():
+        ci = headers.index(h) + 2
+        for ri, c in enumerate(codes):
+            cell = ws.cell(ri + 2, ci, int(c))
+            if c in red:
+                cell.font = Font(color="FFFF0000")
+    ws.cell(21, 3, "2025버전에서 사라지는 것들")     # A열 빈 메모 행 — 무시
+    ws.cell(22, 3, 220333)
+    wb.save(path)
+
+
+@pytest.fixture
+def olpo_tree(tmp_path):
+    book = tmp_path / "EBS 작업" / OLPO_G1
+    nested = book / "13강" / "13강 통합본" / "분석본"
+    nested.mkdir(parents=True)
+    (nested / "13강_분석본_통합_창현고1.indd의 사본").write_bytes(b"x")
+    old = book / "고1 올림포스 기출 지문 출처 2026_14강 입력완료.xlsx"
+    new = book / "고1 올림포스 기출 지문출처 2026_15강.xlsx"
+    _write_olpo_sheet(old, {"14강(빈칸)": ["250633", "250934"]})
+    _write_olpo_sheet(new, {
+        "14강(빈칸)": ["250634", "250934"],
+        "15강(무관)": ["250935", "250635", "250335", "241035", "240935",
+                     "240635", "240335", "231135", "230935", "220335"],
+    }, red=("220335",))
+    os.utime(old, (1_700_000_000, 1_700_000_000))
+    os.utime(new, (1_800_000_000, 1_800_000_000))
+    return {"textbook_base": "", "ebs_base": str(tmp_path / "EBS 작업")}
+
+
+def test_olpo_units_from_source_sheets(olpo_tree):
+    by = {u["label"]: u for u in S.list_ebs_units(olpo_tree, OLPO_G1)}
+    assert set(by) == {"14강", "15강"}
+    u15 = by["15강"]
+    assert u15["kind"] == "olpo" and u15["header"] == "15강(무관)"
+    names = [f["name"] for f in u15["files"]]
+    assert names == ["Analysis"] + ["%d번" % n for n in range(1, 9)]   # 빨간 글자 제외
+    f7 = u15["files"][names.index("7번")]
+    assert f7["code"] == "231135" and f7["display"] == "고1 23년 11월 35번"
+    assert by["14강"]["files"][0]["code"] == "250634"     # 최신 시트가 이긴다
+
+
+def test_olpo_resolve_and_range(olpo_tree):
+    p = S.resolve_olpo_passage(olpo_tree, OLPO_G1, "15강", "8번")
+    assert p == {"code": "230935", "year": "23", "month": "09", "qNum": "35",
+                 "grade": "1", "unit_label": "15강"}
+    with pytest.raises(ValueError):
+        S.resolve_olpo_passage(olpo_tree, OLPO_G1, "15강", "99번")
+    assert S.derive_range_olpo(OLPO_G1, "15강", ["7번", "8번"]) == {
+        "title": "올림포스 기출 영어독해 고1", "detail": "15강 7번, 8번",
+        "abbrev": "올포기출15강"}
+    assert S.list_olpo_units(olpo_tree, "올림포스 독해기본2") is None
+
+
+def test_parse_olpo_passages_use_mock_exam_analysis(engine, olpo_tree,
+                                                    tmp_path, monkeypatch):
+    from engines.analysis_merge_v2 import engine as eng_mod
+    gbase = tmp_path / "모의고사 작업"
+    for ym in ("23년 11월", "23년 9월"):
+        d = gbase / "고1" / "고1 23년(3,6,9,10,11월)" / f"고1 {ym}"
+        d.mkdir(parents=True)
+        (d / f"고1 {ym} 분석본.indd").write_bytes(b"x")
+    tpl = tmp_path / "tpl.indd"
+    tpl.write_bytes(b"t")
+    cfg = dict(olpo_tree, gdrive_base=str(gbase), template_path=str(tpl),
+               image_dirs=[], file_patterns=["분석본"])
+    monkeypatch.setattr(eng_mod, "_load_config", lambda: cfg)
+    job = tmp_path / "job"
+    job.mkdir()
+    (job / "extra_sources.txt").write_text(json.dumps(
+        [{"type": "ebs", "book": OLPO_G1, "unit_folder": "15강",
+          "file_name": n} for n in ("7번", "8번")], ensure_ascii=False),
+        encoding="utf-8")
+    meta = json.load(open(engine.parse({}, str(job), lambda m: None),
+                          encoding="utf-8"))
+    assert [s["code"] for s in meta["sources"]] == ["231135", "230935"]
+    assert all(os.path.isfile(c) for s in meta["sources"]
+               for c in s["candidates"])
+    assert meta["ranges"] == [{"title": "올림포스 기출 영어독해 고1",
+                               "detail": "15강 7번, 8번",
+                               "abbrev": "올포기출15강"}]
+
+
 # ── 축약/유도 규칙 (실물 전례 + 사용자 예시로 고정) ──────────────────────────
 
 def test_publisher_short():
