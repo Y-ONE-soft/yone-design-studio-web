@@ -193,6 +193,25 @@ def illust_names(rows, illust_dirs, report, log):
         log("  G-P16 삽화 이름 대조 %d지문 — 어긋난 것 없음" % n)
 
 
+def chart_missing(rows, report, log, chart_no=None):
+    """G-P16 — 도표 짤지문(25번)에 **도표 그림이 없다**.
+
+    글만 있는 도표 설명은 뭘 가리키는지 모른다(배재2 240925·250925, 사용자 지적).
+    그림은 `포켓북/_도표/<학년>/<YY년 M월>/<번호>.png` 에 둔다.
+    """
+    want = set(chart_no or (25,))
+    miss = []
+    for r in rows:
+        if r.get("kind") == "memtest" or not r.get("short") or r.get("illust"):
+            continue
+        m = _MOCK.match(_nfc(r.get("label"))) or _MOCK.match(_nfc(r.get("no")))
+        if m and int(m.group(3)) in want:
+            miss.append(r.get("label"))
+    if miss:
+        report.warn("G-P16 도표 그림 없는 짤지문 %d개 — `포켓북/_도표/<학년>/<YY년 M월>/"
+                    "<번호>.png` 에 넣을 것: %s" % (len(miss), ", ".join(miss)))
+
+
 # ══════════════════════════════════════════════════════════════════
 # G-P17 분석본 원본(.indd) ↔ IDML
 # ══════════════════════════════════════════════════════════════════

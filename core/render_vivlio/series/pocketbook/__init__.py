@@ -732,6 +732,9 @@ def _order_mock_rounds(rows, log):
     log("■ 모의고사 %d지문을 회차별·번호순으로 다시 세웠다" % len(idx))
 
 
+# 모의고사 도표 그림 자리 — 삽화정리와 같은 모양(`<학년>/<YY년 M월>/<번호>.png`)
+CHART_DIR = "${STUDIO}/조판/교재/포켓북/_도표"
+
 _SHORT_NO = {18, 19, 25, 26, 27, 28}
 # 장문 독해 — 글이 길어 **반으로 갈라 두 면**을 다 쓴다(사용자 지시)
 _SPLIT_NO = {43, 44, 45}
@@ -1938,6 +1941,7 @@ class PocketbookSeries(Series):
         rows = pdata.prepare(
             raw, build_dir,
             illust_dirs=cfg.resolve(opt.get("illust_dirs") or []),
+            chart_dirs=cfg.resolve(opt.get("chart_dirs") or [CHART_DIR]),
             category=opt.get("category", ""),
             grade=opt.get("grade") or _grade_of(opt.get("school", "")))
         # 작업대가 볼 자료 = **자리표가 가리키는 그 목록**. 편집을 얹기 전에
@@ -2847,8 +2851,10 @@ class PocketbookSeries(Series):
         _check_hangul(pas, report, log)
         _check_cut(pas, cfg, report, log)
         pchecks.memtest_tail(rows, report, log)
-        pchecks.illust_names(pas, cfg.resolve(opt.get("illust_dirs") or []),
+        pchecks.illust_names(pas, cfg.resolve(opt.get("illust_dirs") or [])
+                             + cfg.resolve(opt.get("chart_dirs") or [CHART_DIR]),
                              report, log)
+        pchecks.chart_missing(pas, report, log, opt.get("chart_no"))
         pchecks.analysis_sources(cfg, report, log)
         # G-P11 — 암기 TEST 를 쓰기로 한 책인데 한 면도 안 붙었다.
         # ⚠ 이걸 안 세우면 원고 폴더가 안 잡힌 날 **면 수가 반으로 준 책이

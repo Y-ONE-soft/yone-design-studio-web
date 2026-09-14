@@ -259,15 +259,36 @@ def _blank_before_summary(text):
       요약이 본문에 붙고, 게이트가 "요약이 일부에만 있다"며 조판을 멈춘다
       (광문1 240924 실측). 그래서 **줄 모양**으로 본다.
     """
+    # ⚠ 시트 방언 셋(배재1·2 26-2-중간 실측):
+    #   · 옛 맥 줄바꿈 `\r` — `\n` 으로만 끊으면 요약이 지문에 붙는다(231141~42)
+    #   · 표제와 요약이 **한 줄** — `>>   내용요약   Although …`(250940)
+    #   · 그 요약을 지문 끝에 `─> …` 로 한 번 더 적음 — 요약과 **같을 때만** 뗀다
+    text = (text or "").replace("\r\n", "\n").replace("\r", "\n")
+    lines = []
+    for ln in text.split("\n"):
+        m = re.match(r"^\s*(>+\s*\|?\s*내용요약\s*\|?)\s*(\S.*)$", ln)
+        if m and len(m.group(2)) > 3:
+            lines += [m.group(1).strip(), m.group(2).strip()]
+        else:
+            lines.append(ln)
     out = []
-    for ln in (text or "").split("\n"):
+    for i, ln in enumerate(lines):
         t = ln.strip()
         if "내용요약" in t and len(t) <= 24:
             while out and not out[-1].strip():
                 out.pop()
+            nxt = next((x.strip() for x in lines[i + 1:] if x.strip()), "")
+            if nxt and out:
+                tail = re.split(r"\s*[\u2500\u2014\-]+>\s*", out[-1])
+                if len(tail) > 1 and _loose(tail[-1]) == _loose(nxt):
+                    out[-1] = tail[0].rstrip()
             out += ["", ""]
         out.append(ln)
     return "\n".join(out)
+
+
+def _loose(s):
+    return re.sub(r"\s+", "", s or "")
 
 
 RE_VLAB = re.compile(r"^(올포 \d+강 \S+|리딩파워 \d+강 \S+|교과서\S+ \S+|"

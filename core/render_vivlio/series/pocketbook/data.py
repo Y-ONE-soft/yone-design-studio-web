@@ -382,7 +382,7 @@ def _copy_wo_credit(src, dst):
     return True
 
 
-def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
+def prepare(items, build_dir, illust_dirs=(), category="", grade="", chart_dirs=()):
     """수확 결과 → 지면 항목. 그림은 build 로 복사한다.
 
     입력은 **지면 순서 목록**이다(지문과 암기테스트가 섞여 있다). 암기테스트를
@@ -422,7 +422,14 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
         src = None if p.get("short") else find_illust(
             p.get("pno") or _pno_of_label(p) or p.get("key"),
             p.get("grade") or grade, illust_dirs)
-        if src is None:
+        # 짤지문 중 **도표**(25번)는 그림이 본문이다 — 없으면 글만 남아 뭘 설명하는지
+        # 모른다(사용자 지적, 배재2 240925·250925). 도표는 삽화정리에 없어
+        # `포켓북/_도표/<학년>/<YY년 M월>/<번호>.png` 에서 찾는다(삽화와 같은 모양).
+        chart = None
+        if p.get("short"):
+            chart = find_illust(p.get("pno") or _pno_of_label(p) or p.get("key"),
+                                p.get("grade") or grade, chart_dirs)
+        if src is None and not chart:
             # ⚠ 지문번호로만 찾으면 **모의고사 말고는 하나도 안 붙는다**. 부교재·
             #   교과서는 번호가 없고 라벨(`1강 01`·`본문2`)뿐이다 — 라벨로 찾는다.
             # ⚠ 짤지문(안내문·도표)은 삽화가 **없다**. 붙이면 그 뒤 지문의
@@ -431,17 +438,22 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             #   그림은 그 분석본 것이라 포켓북 그림과 다르다 — 링크를 먼저 봐서
             #   수특 Light 23지문이 전부 엉뚱한 그림으로 나갔다(광문2, 연구원 지적).
             src = None if p.get("short") else illust_for(p, _IDX)
-        if src is None:
+        if src is None and not chart:
             for uri in p.get("links") or ():
                 cand = _resolve_link(uri, illust_dirs)
                 if cand and os.path.splitext(cand)[1].lower() in (
                         ".jpg", ".jpeg", ".png"):
                     src = cand
                     break
+        src = chart or src
         if src:
             dst = os.path.join(assets, "p%03d%s" % (i, os.path.splitext(src)[1]))
             try:
-                if not _copy_wo_credit(src, dst):
+                # ⚠ 도표는 그린이 표기 자르기를 타면 안 된다 — 맨 아래 범례가
+                #   오른쪽으로 몰린 연한 잉크라 표기로 오인될 수 있다.
+                if chart:
+                    shutil.copyfile(src, dst)
+                elif not _copy_wo_credit(src, dst):
                     shutil.copyfile(src, dst)
                 illust = "img/" + os.path.basename(dst)
             except OSError:
@@ -487,6 +499,7 @@ def prepare(items, build_dir, illust_dirs=(), category="", grade=""):
             "illust": illust,
             # 삽화 원본 경로 — G-P16 이 파일 이름으로 그 지문 그림인지 본다
             "illust_src": src if illust else "",
+            "chart": bool(chart and illust),
             "memtest": {k: _flatten(v) for k, v in mt.items() if v} or None,
         })
     return out
