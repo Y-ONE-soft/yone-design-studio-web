@@ -919,6 +919,46 @@ def flow_col_mm(M):
 # 붙인다 — 길게 쓰지 않고 `올림포스 1강 01` 처럼 짧게.
 _BOOK_SHORT = {"수능특강": "수특"}
 
+# ── 배지 표기 통일(사용자 지시 2026-09-14) ─────────────────────────
+# 모의고사는 `고1 23년 11월 모의고사 36번`, 교과서는 **교재명**(`능률(오) 1과
+# 본문1`)으로 쓴다. 예전엔 모의고사가 `고1 23년 11월 모의고사 231136` 처럼
+# 회차와 지문번호를 겹쳐 적었고, 교과서는 책마다 `교과서 1과`·`능률(민) SL2`
+# 로 달랐다.
+#
+# 교재명은 분석본 파일 이름 괄호에 있다 — `(능률오1,2과)`·`(YBM박1,2,3과)`·
+# `(미래엔김3과)` 은 **출판사 + 저자 한 글자 + 과**. 출판사 목록 없이 자르면
+# `천재3과` 가 `천(재)` 가 된다.
+_PUBS = ("미래엔", "YBM", "비상", "능률", "동아", "천재", "지학사", "금성",
+         "다락원", "신사고", "교학사", "씨마스", "길벗")
+_RE_TEXTBOOK = re.compile(r"(%s)([가-힣])?\s*\d[\d,\s]*과" % "|".join(_PUBS))
+_RE_MOCK_LABEL = re.compile(r"(\d{2})(\d{2})(\d{2})(?:[-~](\d{1,3}))?")
+
+
+def _textbook_of(p):
+    """교과서 지문의 교재명 — `능률(오)`. 모르면 빈 글자."""
+    import unicodedata
+    src = unicodedata.normalize(
+        "NFC", str((p.get("source") or {}).get("file") or ""))
+    m = _RE_TEXTBOOK.search(src)
+    if not m:
+        return ""
+    return "%s(%s)" % (m.group(1), m.group(2)) if m.group(2) else m.group(1)
+
+
+def _mock_parts(p):
+    """모의고사 지문 → (`고1 23년 11월 모의고사`, `36번`). 아니면 None."""
+    m = _RE_MOCK_LABEL.fullmatch(str(p.get("label") or ""))
+    if not m:
+        return None
+    no = "%d" % int(m.group(3))
+    if m.group(4):
+        no += "~%d" % int(m.group(4))
+    head = str(p.get("category") or "").strip()
+    if not head.endswith("모의고사"):
+        head = ("%s %s년 %d월 모의고사" % (p.get("grade") or "", m.group(1),
+                                          int(m.group(2)))).strip()
+    return head, no + "번"
+
 
 _RE_TAG_NO = re.compile(r"\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2}", re.I)
 _RE_UNIT_TAIL = re.compile(r"\s*(?:\d{1,2}\s*(?:강|과)|Unit\s*\d{1,2})\s*$", re.I)
@@ -936,7 +976,14 @@ def _badge_text(p):
     #   **범위 그대로** 적어야 한다(사용자 지시) — 라벨이 이미 여섯 자리면 그것.
     tag = lab if re.fullmatch(r"\d{6}(?:[-~]\d{1,3})?", lab) \
         else str(p.get("no") or lab or "")
+    mk = None if p.get("_badge_raw") else _mock_parts(p)
+    if mk:
+        return "%s %s" % mk
     unit = str(p.get("category") or p.get("unit") or "").strip()
+    if unit.startswith("교과서"):
+        tb = _textbook_of(p)
+        if tb:
+            unit = (tb + unit[3:]).strip()
     if p.get("_badge_raw") or not tag or not unit or unit in ("교과서", "모의고사"):
         return tag
     # 라벨이 강·과 번호를 들고 있을 때만 단원의 번호를 뗀다. `서술형 Practice`
@@ -958,8 +1005,9 @@ def _badge_text(p):
 def _badge_parts(p):
     """배지를 **교재명 / 지문번호** 두 도막으로. 두 줄 배지가 쓴다."""
     tag = str(p.get("label") or p.get("no") or "")
-    if re.fullmatch(r"\d{6}(?:[-~]\d{1,3})?", tag):
-        return "모의고사", tag        # 위 칸은 갈래, 아래 칸은 지문번호
+    mk = None if p.get("_badge_raw") else _mock_parts(p)
+    if mk:
+        return mk                     # 위 칸은 회차, 아래 칸은 `36번`
     full = _badge_text(p)
     if full != tag and full.endswith(tag):
         return full[:-len(tag)].strip(), tag
