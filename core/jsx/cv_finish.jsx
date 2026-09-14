@@ -280,6 +280,16 @@ try {
                 var allTxt = String(stO.texts[0].contents);
                 tailTxt = allTxt.substr(allTxt.length - hid);
             } catch (eH) { tailTxt = null; }
+            // 숨은 것이 **다음 지문의 코드 마커**뿐이면 인쇄에 영향이 없다.
+            // 그 코드는 다음 묶음 첫 면에 온전히 찍히고, 여기 남은 잔여는
+            // 어디에도 인쇄되지 않는다 (26년 9월 고1 260919: "{260920}\n다"
+            // 10자). 길이를 40자로 묶어 진짜 유실이 섞여 드는 것을 막는다.
+            if (tailTxt !== null && hid <= 40 && /^\s*\{\d{6}\}/.test(tailTxt)) {
+                benign++;
+                L("   오버셋 플래그(무해): 스토리 " + stO.id + " — 숨은 " + hid +
+                  "자는 다음 지문 코드 잔여 (인쇄 글자 " + shown + "/" + total + ")");
+                continue;
+            }
             if (tailTxt !== null && !/[^\s\u00a0]/.test(tailTxt)) {
                 benign++;
                 L("   오버셋 플래그(무해): 스토리 " + stO.id + " — 숨은 " + hid +
