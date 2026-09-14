@@ -56,3 +56,19 @@ def test_unknown_textbook_falls_back_to_gyogwaseo():
 def test_supplementary_unchanged():
     assert R._badge_text({"label": "1강 01", "unit": "올림포스 1강"}) == "올림포스 1강 01"
     assert R._badge_text({"label": "1강 02", "unit": "수능특강 1강"}) == "수특 1강 02"
+
+
+def test_prepare_keeps_file_name_for_badge(tmp_path):
+    """조판용 행(`data.prepare`)이 파일 이름을 떨어뜨리면 지면 배지가 `교과서 1과` 로 남는다.
+
+    미리보기(data.json 행)는 맞았는데 조판본은 옛 표기였다(배재1 실측).
+    """
+    from core.render_vivlio.series.pocketbook import data as D
+    item = {"label": "1과 본문1", "unit": "교과서 1과", "pno": "",
+            "source": {"file": "배재1_분석본01(능률오1,2과)_내지.idml"},
+            "passage": [{"style": "본문", "runs": [{"t": "Hello."}]}]}
+    mock = {"label": "240920", "unit": "모의고사", "pno": "240920", "grade": "고2",
+            "passage": [{"style": "본문", "runs": [{"t": "Hi."}]}]}
+    rows = D.prepare([item, mock], str(tmp_path))
+    assert R._badge_text(rows[0]) == "능률(오) 1과 본문1"
+    assert R._badge_text(rows[1]).endswith("모의고사 20번")
