@@ -188,6 +188,12 @@ class TextbookWorkbookEngine(BaseEngine):
                 sub_raws = sorted(_safe_listdir(full))
             except OSError:
                 continue
+            # 그룹 폴더 바로 아래에 '…워크북' 폴더가 있으면 그룹 자체가 한 단원
+            # (예: "공통영어2 미래엔 Deep Learning/워크북" — 1·2과 합본 워크북).
+            # 하위 '1과 딥러닝 변형문제' 등은 워크북이 없어 목록에서 원고 0개였다.
+            if any("워크북" in _nfc(s) and not _nfc(s).startswith(".")
+                   and os.path.isdir(os.path.join(full, s)) for s in sub_raws):
+                result.append({"folder": name, "label": group_label or name})
             for sub_raw in sub_raws:
                 sub_name = _nfc(sub_raw)
                 if sub_name.startswith("."):
