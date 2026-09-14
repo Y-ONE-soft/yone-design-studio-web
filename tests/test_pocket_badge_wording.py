@@ -73,3 +73,11 @@ def test_prepare_keeps_file_name_for_badge(tmp_path):
     rows = D.prepare([item, mock], str(tmp_path))
     assert R._badge_text(rows[0]) == "능률(오) 1과 본문1"
     assert R._badge_text(rows[1]).endswith("모의고사 20번")
+
+
+def test_split_long_passage_keeps_round_and_range():
+    """장문 반쪽(`260643~45-1`)도 `고2 26년 6월 모의고사 43~45번` — 옛 `260643` 으로 돌아갔다."""
+    for lab in ("260643~45-1", "260643~45-2"):
+        p = {"label": lab, "no": "260643", "category": "고2 26년 6월 모의고사"}
+        assert R._badge_text(p) == "고2 26년 6월 모의고사 43~45번", lab
+        assert R._badge_parts(p) == ("고2 26년 6월", "모의고사 43~45번")
