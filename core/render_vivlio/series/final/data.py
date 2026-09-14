@@ -340,5 +340,17 @@ def build(cfg, log):
 
 
 def load(cfg):
+    """data.json — 파트로 나눈 권이면 **그 파트의 섹션만** 남긴다.
+
+    표지까지 70쪽이 넘는 권은 섹션 번호마다 따로 짠다(`options.sections`,
+    예: Vol1-1 = [1] 문장배열·문장삽입, Vol1-2 = [2] 중요어휘). 조판·측정·검수가
+    모두 여기서 읽으므로 한 자리에서 거르면 셋이 같은 책을 본다.
+    """
     with open(cfg.path("data.json"), encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+    keep = (cfg.section("options") or {}).get("sections")
+    if keep:
+        keep = {int(x) for x in keep}
+        for v in data.get("vols", {}).values():
+            v["sections"] = [s for s in v["sections"] if s["no"] in keep]
+    return data

@@ -40,6 +40,19 @@ def _fonts():
     return out
 
 
+MAX_PAGES = 70          # 표지까지 합친 쪽수가 이걸 넘으면 파트로 나눈다(사용자 규칙)
+
+
+def bound_pages(inner_pdf):
+    """합본(표지 4 + 내지 − 짝 맞춤 빈 면, 4의 배수로 올림) 쪽수 어림."""
+    import fitz
+    d = fitz.open(inner_pdf)
+    n = sum(1 for p in d if p.get_text().strip() or p.get_drawings()
+            or p.get_images())
+    d.close()
+    return -(-(n + 4) // 4) * 4
+
+
 def work_dir(school, grade, period, vol):
     """한 권의 **작업 폴더**(config·data·build·측정표) — 교재 폴더 밖이다.
 
@@ -48,29 +61,34 @@ def work_dir(school, grade, period, vol):
     """
     from config import JOBS_DIR
     return os.path.join(JOBS_DIR, "final_books", grade, period, school,
-                        "Vol%d" % vol)
+                        "Vol%s" % vol)
 
 
-def book_config(school, grade, period, vol, base=None):
-    """책 한 권의 `config.json`. 산출은 교재 폴더(`base`)로, 작업은 `work_dir`."""
+def book_config(school, grade, period, vol, base=None, label=None,
+                sections=None):
+    """책 한 권의 `config.json`. 산출은 교재 폴더(`base`)로, 작업은 `work_dir`.
+
+    `label`·`sections` 는 70쪽이 넘어 **파트로 나눈 권**(`1-1` = 섹션 1 만)."""
     base = base or os.path.join(BOOK_ROOT, grade, period, school)
+    label = str(label or vol)
     return {
         "series": "final",
-        "book": {"id": "%s_파이널_Vol%d" % (school, vol),
-                 "title": "%s 파이널 직전보충 Vol%d" % (school, vol),
+        "book": {"id": "%s_파이널_Vol%s" % (school, label),
+                 "title": "%s 파이널 직전보충 Vol%s" % (school, label),
                  "brand": "FINAL STEP", "school": school,
                  "grade": grade, "period": period},
         "page": {"width": 210, "height": 297, "bleed": 3},
         "output": {"dir": base, "stem": "%s_파이널" % school},
-        "options": {"vol": vol},
+        "options": {"vol": vol, "label": label,
+                    **({"sections": sections} if sections else {})},
         "manuscript": {"dir": os.path.join(base, "원고"),
                        "files": {"content": "content.json"}},
         "fonts": _fonts(),
         # 학원 출력 — 도련 없이 재단 크기(A4)로. 조판 판면은 그대로 두고 잘라 낸다.
-        "print": {"out": "(Vol%d)_내지_인쇄" % vol, "gray_map": GRAY,
+        "print": {"out": "(Vol%s)_내지_인쇄" % label, "gray_map": GRAY,
                   "trim_bleed": True},
         "verify": {
-            "suffix": "(Vol%d)_내지" % vol,
+            "suffix": "(Vol%s)_내지" % label,
             "frame": {"inner": 21, "outer": 25, "width": 170.7,
                       "top": 25, "bottom": 283},
             "blank_ignore": "0123456789|FINALSTEPCHAPTER.",
@@ -176,23 +194,29 @@ class FinalVivEngine(FinalEngine):
                                 encoding="utf-8"), ensure_ascii=False, indent=1)
 
         from core.render_vivlio import book as B
+        from core.render_vivlio.series.final import data as FD
         made = []
-        for vol in (1, 2):
-            d = work_dir(school, grade, period, vol)
+
+        def one(vol, label=None, sections=None):
+            """한 권(또는 파트) 짜기 → 인쇄본 경로(검수 통과 여부와 함께)."""
+            label = str(label or vol)
+            d = work_dir(school, grade, period, label)
             os.makedirs(d, exist_ok=True)
             # ⚠ 이미 있는 config 는 **덮지 않는다** — 손잡이를 손봐 뒀을 수 있다.
-            #   다만 산출·원고 자리와 학원 출력 설정은 지금 규칙으로 맞춘다.
+            #   다만 산출·원고 자리와 학원 출력·파트 설정은 지금 규칙으로 맞춘다.
             cpath = os.path.join(d, "config.json")
-            want = book_config(school, grade, period, vol, base=base)
+            want = book_config(school, grade, period, vol, base=base,
+                               label=label, sections=sections)
             if os.path.exists(cpath):
                 cur = json.load(open(cpath, encoding="utf-8"))
-                for k in ("output", "manuscript", "print"):
+                for k in ("output", "manuscript", "print", "options", "book",
+                          "verify"):
                     cur[k] = want[k]
                 want = cur
             json.dump(want, open(cpath, "w", encoding="utf-8"),
                       ensure_ascii=False, indent=1)
             cfg = B.load(d)
-            log("[Vol%d] 조판 중…" % vol)
+            log("[Vol%s] 조판 중…" % label)
             B.gen_data(cfg, log)
             B.build(cfg, log)
             B.print_pdf(cfg, log)
@@ -205,10 +229,34 @@ class FinalVivEngine(FinalEngine):
                 if passed:
                     os.remove(raw)
                 else:
-                    log("[Vol%d] ★ 검수에 걸려 확인용 내지를 남깁니다 — %s"
-                        % (vol, os.path.basename(raw)))
+                    log("[Vol%s] ★ 검수에 걸려 확인용 내지를 남깁니다 — %s"
+                        % (label, os.path.basename(raw)))
             pr = cfg.out_pdf(cfg.section("print").get("out", "_인쇄"))
-            if os.path.exists(pr):
+            return pr if os.path.exists(pr) else None
+
+        for vol in (1, 2):
+            pr = one(vol)
+            if not pr:
+                continue
+            est = bound_pages(pr)
+            nos = []
+            for _k, no in FD.VOL_SPEC[vol]["sections"]:
+                if no not in nos:
+                    nos.append(no)
+            if est <= MAX_PAGES or len(nos) < 2:
+                made.append(pr)
+                continue
+            # 표지까지 합쳐 70쪽이 넘는다 — **파트(섹션 번호)마다 한 권**으로.
+            log("[Vol%d] 표지 포함 %d쪽 > %d쪽 — 파트 %s 로 나눕니다"
+                % (vol, est, MAX_PAGES,
+                   ", ".join("%d-%d" % (vol, k + 1) for k in range(len(nos)))))
+            parts = [one(vol, "%d-%d" % (vol, k + 1), [no])
+                     for k, no in enumerate(nos)]
+            if all(parts):
+                os.remove(pr)
+                made += parts
+            else:
+                log("[Vol%d] ★ 파트 조판이 끝나지 않아 한 권짜리를 남깁니다" % vol)
                 made.append(pr)
         for p in made:
             try:

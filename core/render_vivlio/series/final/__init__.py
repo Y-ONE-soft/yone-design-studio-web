@@ -172,7 +172,9 @@ class FinalSeries(Series):
 
     def _suffix(self, cfg, sample=False):
         o = cfg.section("output") or {}
-        return (o.get("suffix") or f"(Vol{self.vol_of(cfg)})_내지") + (
+        # 70쪽이 넘어 파트로 나눈 권은 `(Vol1-1)_내지` — `options.label` 이 이름이다.
+        label = (cfg.section("options") or {}).get("label") or self.vol_of(cfg)
+        return (o.get("suffix") or f"(Vol{label})_내지") + (
             "_견본" if sample else "")
 
     @staticmethod

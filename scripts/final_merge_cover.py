@@ -16,6 +16,7 @@
   **원점을 0 으로 옮긴다**(내용 앞에 이동 행렬을 넣고 상자를 [0 0 W H] 로) — 일부
   출력기가 원점이 0 이 아닌 면을 어긋나게 찍는다.
 - 결과: `<학교>_파이널(VolN)_인쇄.pdf` 하나. 내지만 있던 `_내지_인쇄.pdf` 는 지운다.
+- 70쪽이 넘어 파트로 나눈 권(`(Vol1-1)_내지_인쇄.pdf`)도 같은 식 — 표지는 `_Vol1-1.pdf`.
 """
 import argparse
 import glob
@@ -99,7 +100,9 @@ def normalize_origin(doc):
 
 # ── 합본 ────────────────────────────────────────────────────────────────
 def find_cover(cover_dir, school, grade, period, vol):
-    """`파이널_표지_배재고1_2학기중간고사_Vol1.pdf` — 학교 이름은 `배재1` → `배재고1`."""
+    """`파이널_표지_배재고1_2학기중간고사_Vol1.pdf` — 학교 이름은 `배재1` → `배재고1`.
+
+    `vol` 은 권 이름 — `1` · `2` · 파트면 `1-1`."""
     m = re.match(r"^(\D+?)(\d)$", school)
     base, g = (m.group(1), m.group(2)) if m else (school, grade[-1:])
     exam = EXAM.get(period.split("-", 1)[1] if period.count("-") >= 1 else "",
@@ -108,12 +111,12 @@ def find_cover(cover_dir, school, grade, period, vol):
     cands = []
     for f in os.listdir(cover_dir):
         n = nfc(f)
-        if not n.endswith("_Vol%d.pdf" % vol) or exam not in n:
+        if not n.endswith("_Vol%s.pdf" % vol) or exam not in n:
             continue
         if re.search(r"_%s(고|여고|중)?%s_" % (re.escape(base), g), n):
             cands.append(os.path.join(cover_dir, f))
     if len(cands) != 1:
-        raise SystemExit("[표지] %s %s Vol%d 표지를 하나로 못 골랐습니다: %s"
+        raise SystemExit("[표지] %s %s Vol%s 표지를 하나로 못 골랐습니다: %s"
                          % (school, exam, vol, [os.path.basename(c) for c in cands]))
     return cands[0]
 
@@ -123,7 +126,7 @@ def merge(book_dir, vol, cover_dir=COVER_DIR, log=print):
     period = nfc(os.path.basename(os.path.dirname(os.path.normpath(book_dir))))
     grade = nfc(os.path.basename(os.path.dirname(os.path.dirname(
         os.path.normpath(book_dir)))))
-    inner = os.path.join(book_dir, "%s_파이널(Vol%d)_내지_인쇄.pdf" % (school, vol))
+    inner = os.path.join(book_dir, "%s_파이널(Vol%s)_내지_인쇄.pdf" % (school, vol))
     if not os.path.exists(inner):
         raise SystemExit("[합본] 내지 인쇄본이 없습니다: %s" % inner)
     cover = find_cover(cover_dir, school, grade, period, vol)
@@ -155,9 +158,9 @@ def merge(book_dir, vol, cover_dir=COVER_DIR, log=print):
     doc.insert_pdf(cov, from_page=2, to_page=3)
     normalize_origin(doc)                    # 표지가 원점 0 이 아니어도 맞춘다
 
-    out = os.path.join(book_dir, "%s_파이널(Vol%d)_인쇄.pdf" % (school, vol))
+    out = os.path.join(book_dir, "%s_파이널(Vol%s)_인쇄.pdf" % (school, vol))
     doc.set_metadata({**(doc.metadata or {}),
-                      "title": "%s 파이널 직전보충 Vol%d" % (school, vol)})
+                      "title": "%s 파이널 직전보충 Vol%s" % (school, vol)})
     tmp = out + ".tmp"
     doc.save(tmp, garbage=3, deflate=True)
     doc.close()
@@ -179,7 +182,7 @@ def merge(book_dir, vol, cover_dir=COVER_DIR, log=print):
     d.close()
     ok = (res["pages"] % 4 == 0 and res["sizes"] == [(210.0, 297.0)]
           and res["origins"] == [(0.0, 0.0)])
-    log("■ Vol%d %d면 = 표지 4 + 내지 %d + MEMO %d (뺀 빈 면 %d) · %s · 원점 %s · "
+    log("■ Vol%s %d면 = 표지 4 + 내지 %d + MEMO %d (뺀 빈 면 %d) · %s · 원점 %s · "
         "RGB 연산자 %d · 표지 %s → %s"
         % (vol, res["pages"], n_inner, memo, len(blanks), res["sizes"],
            res["origins"], rgb, res["cover"], os.path.basename(out)))
@@ -198,10 +201,20 @@ def main():
     ap.add_argument("--cover-dir", default=COVER_DIR)
     a = ap.parse_args()
     bad = 0
-    for vol in (1, 2):
+    for vol in labels(os.path.abspath(a.book)):
         r = merge(os.path.abspath(a.book), vol, a.cover_dir)
         bad += 0 if r["ok"] else 1
     return 1 if bad else 0
+
+
+def labels(book_dir):
+    """책 폴더에 있는 내지 인쇄본의 권 이름들 — `1` · `2` · `1-1` · `1-2`."""
+    out = []
+    for f in sorted(os.listdir(book_dir)):
+        m = re.search(r"\(Vol([\d-]+)\)_내지_인쇄\.pdf$", nfc(f))
+        if m:
+            out.append(m.group(1))
+    return out
 
 
 if __name__ == "__main__":
