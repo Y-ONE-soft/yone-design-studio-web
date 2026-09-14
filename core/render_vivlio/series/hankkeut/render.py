@@ -462,8 +462,7 @@ def divl_html(cfg, P, m):
     if P.get('kind') == 'answers':
         foot = f'<b>{lo:02d} – {hi:02d}</b>빠른 정답  ·  문항별 풀이 {len(P["answers"])}'
     else:
-        nq = sum(len(u['items']) for u in P['units'])
-        foot = f'<b>{lo:02d} – {hi:02d}</b>문항 {nq}'
+        foot = f'<b>{lo:02d} – {hi:02d}</b>'     # "문항 40" 은 빼라(사용자 2026-09-14)
     o = [f'<section class="divl paper p{n}">', f'<span class="mk">§DL{n}§</span>',
          rule_motif(x, 17.1 + b, 118, 15.7),
          f'<div class="dl-part" style="left:{x + 0.3:.2f}mm;top:{52 + b:.2f}mm">PART</div>',

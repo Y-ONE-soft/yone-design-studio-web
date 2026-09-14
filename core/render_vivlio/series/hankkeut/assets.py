@@ -32,31 +32,58 @@ def svg_of(page, rect_mm, color=None):
     for dr in page.get_drawings():
         if dr.get('fill') is None or not R.contains(dr['rect']):
             continue
-        d, last = [], None
+        # ⚠ 사각형·사변형 항목은 **감는 방향**을 잃는다. nonzero 채움에서 구멍(입의 ㅂ·문의 ㅁ)은
+        #   바깥 윤곽과 반대로 감겨야 뚫리는데, 늘 같은 방향으로 쓰면 구멍이 메워진다(사용자 지적).
+        #   → 곡선·직선 윤곽은 원래 순서 그대로 두고, 사각형은 **다른 윤곽 안에 몇 겹 들어 있나**로
+        #   방향을 정한다(짝수 겹 = 바깥과 같은 방향, 홀수 겹 = 반대 = 구멍).
+        subs, cur, last = [], None, None
         for it in dr['items']:
             op = it[0]
-            if op == 'l':
-                if not same(it[1], last):
-                    d.append('M' + f(it[1]))
-                d.append('L' + f(it[2]))
-                last = it[2]
-            elif op == 'c':
-                if not same(it[1], last):
-                    d.append('M' + f(it[1]))
-                d.append('C' + f(it[2]) + ' ' + f(it[3]) + ' ' + f(it[4]))
-                last = it[4]
-            elif op == 're':
-                r = it[1]
-                d.append(f'M{f(r.tl)}L{f(r.tr)}L{f(r.br)}L{f(r.bl)}Z')
-                last = None
-            elif op == 'qu':
-                q = it[1]
-                d.append(f'M{f(q.ul)}L{f(q.ur)}L{f(q.lr)}L{f(q.ll)}Z')
-                last = None
-        if not d:
+            if op in ('l', 'c'):
+                p0 = it[1]
+                if cur is None or not same(p0, last):
+                    cur = {'kind': 'path', 'pts': [p0], 'cmds': ['M' + f(p0)]}
+                    subs.append(cur)
+                if op == 'l':
+                    cur['cmds'].append('L' + f(it[2]))
+                    cur['pts'].append(it[2])
+                    last = it[2]
+                else:
+                    cur['cmds'].append('C' + f(it[2]) + ' ' + f(it[3]) + ' ' + f(it[4]))
+                    cur['pts'] += [it[2], it[3], it[4]]
+                    last = it[4]
+            elif op in ('re', 'qu'):
+                q = it[1].quad if op == 're' else it[1]
+                subs.append({'kind': 'box', 'pts': [q.ul, q.ur, q.lr, q.ll]})
+                cur, last = None, None
+        if not subs:
             continue
-        if dr.get('closePath'):
-            d.append('Z')
+
+        def area(pts):
+            return sum(a.x * b.y - b.x * a.y for a, b in zip(pts, pts[1:] + pts[:1]))
+
+        def bbox(pts):
+            return (min(p.x for p in pts), min(p.y for p in pts),
+                    max(p.x for p in pts), max(p.y for p in pts))
+
+        def inside(a, b):
+            return (b[0] <= a[0] and b[1] <= a[1] and a[2] <= b[2] and a[3] <= b[3]
+                    and (a[2] - a[0]) * (a[3] - a[1]) < (b[2] - b[0]) * (b[3] - b[1]))
+
+        outer = [s for s in subs if s['kind'] == 'path']
+        ref = 1 if not outer else (1 if area(max(outer, key=lambda s: abs(area(s['pts'])))['pts']) >= 0 else -1)
+        d = []
+        for s in subs:
+            if s['kind'] == 'path':
+                d += s['cmds']
+                if dr.get('closePath'):
+                    d.append('Z')
+                continue
+            bb = bbox(s['pts'])
+            depth = sum(1 for o in subs if o is not s and inside(bb, bbox(o['pts'])))
+            want = ref if depth % 2 == 0 else -ref
+            pts = s['pts'] if (area(s['pts']) >= 0) == (want > 0) else s['pts'][::-1]
+            d.append('M' + f(pts[0]) + ''.join('L' + f(p) for p in pts[1:]) + 'Z')
         rule = 'evenodd' if dr.get('even_odd') else 'nonzero'
         paths.append(f'<path d="{"".join(d)}" fill="{color or _hex(dr["fill"])}" '
                      f'fill-rule="{rule}"/>')
