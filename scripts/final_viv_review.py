@@ -46,6 +46,11 @@ def book_parts(book_dir):
     # 예전 판(Vol1/Vol2 폴더 + 확인용 내지)도 읽는다.
     pdfs = sorted(os.path.join(book_dir, f) for f in os.listdir(book_dir)
                   if f.endswith("_내지_인쇄.pdf"))
+    # 표지를 합친 뒤에는 `…(Vol1-1)_인쇄.pdf` 만 남는다(내지 인쇄본은 지워진다).
+    # 표지·MEMO 면이 끼어 있어도 원고→PDF 글자 대조에는 지장이 없다.
+    if not pdfs:
+        pdfs = sorted(os.path.join(book_dir, f) for f in os.listdir(book_dir)
+                      if re.search(r"\(Vol[\d-]+\)_인쇄\.pdf$", f))
     if not pdfs:
         for vol in (1, 2):
             d = os.path.join(book_dir, "Vol%d" % vol)
