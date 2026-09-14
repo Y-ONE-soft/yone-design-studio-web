@@ -88,10 +88,33 @@ def _blank(word):
             f'</span></span>')
 
 
+RE_GLUE = re.compile(r"^[.,;:!?)\]’”'\"]+")
+
+
 def inl_cloze(segs):
-    """중요어휘 왼쪽 — `[답]` 을 빈칸으로."""
-    return "".join(_blank(x["a"]) if isinstance(x, dict) else esc(x)
-                   for x in segs)
+    """중요어휘 왼쪽 — `[답]` 을 빈칸으로.
+
+    ⚠ 빈칸 머리글자·밑줄·**바로 뒤 문장부호**는 한 덩어리로 묶는다. 안 묶으면
+      `j` 는 줄 끝, 밑줄은 다음 줄 머리로 갈라지고 `."` 가 다음 줄을 연다
+      (배재1 Vol1 12·13·18·27쪽 검수 지적) — 학생이 빈칸 둘로 읽는다.
+    """
+    out, segs = [], list(segs or [])
+    i = 0
+    while i < len(segs):
+        x = segs[i]
+        if isinstance(x, dict):
+            glue = ""
+            nxt = segs[i + 1] if i + 1 < len(segs) else None
+            if isinstance(nxt, str):
+                m = RE_GLUE.match(nxt)
+                if m:
+                    glue = m.group(0)
+                    segs[i + 1] = nxt[m.end():]
+            out.append('<span class="blg">' + _blank(x["a"]) + esc(glue) + "</span>")
+        else:
+            out.append(esc(x))
+        i += 1
+    return "".join(out)
 
 
 def inl_answer(segs):

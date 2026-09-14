@@ -378,6 +378,7 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
     # 어디서 읽었는지 남긴다 — 이 파일만으로 다시 대조·재빌드가 된다
     out["_manuscript_sources"] = [{"dir": d, "spec": spec}
                                   for d, spec in srcs if spec]
+    _strip_arrow_tails(out, log)
     # 연구원이 앞선 책에서 잡아 준 것을 얹는다 — **지문 이름과 글자로** 걸어
     # 두었으므로 학교가 달라도 같은 지문이면 그대로 반영된다.
     from engines.final import marks as MK
@@ -385,6 +386,38 @@ def build(content, log=print, keep_all=False, scope_text=None, yos=None):
                              src="%s %s" % (content.get("school", ""),
                                             content.get("exam_period", "")))
     return out
+
+
+# 원고가 지문 끝에 `-> 요약문` 을 붙여 둔 것 — 요약은 중요어휘 면의 몫이라
+# 배열·삽입·어법 지면에 찍히면 **답이 새는 것**이다(배재1 231140 어법,
+# 배재2 230940 삽입 — 검수 에이전트 C9 지적). 문장이 끝난 **뒤** 에 오는
+# 화살표만 뗀다(글 속 `->` 는 건드리지 않는다).
+RE_ARROW_TAIL = re.compile(r"(?<=[.!?\"'’”)])\s+[\u2500\u2014\-]+>\s+\S.*$", re.S)
+
+
+def _strip_arrow_tails(out, log=print):
+    hits = []
+
+    def fix(text, where):
+        if isinstance(text, str) and RE_ARROW_TAIL.search(text):
+            hits.append(where)
+            return RE_ARROW_TAIL.sub("", text)
+        return text
+
+    g = out["vol2"].get("어법수정") or []
+    for i in range(0, len(g) - 1, 2):
+        g[i + 1] = fix(g[i + 1], "어법 %s" % g[i])
+    for b in out["vol1"].get("문장배열") or []:
+        b["items"] = [fix(t, "배열 %s" % b["header"]) for t in b.get("items", [])]
+        if b.get("passage"):
+            b["passage"] = fix(b["passage"], "배열 %s" % b["header"])
+    for b in out["vol1"].get("문장삽입") or []:
+        for pa in b.get("paras") or []:
+            if isinstance(pa, dict):
+                pa["text"] = fix(pa.get("text"), "삽입 %s" % b["header"])
+    if hits:
+        log("■ 지문 끝 `-> 요약` 뗌 %d곳 — %s" % (len(hits), ", ".join(sorted(set(hits)))))
+    return hits
 
 
 EMPTY = {"vol1": {"문장배열": [], "문장삽입": [], "중요어휘_왼": "",

@@ -371,6 +371,8 @@ body { widows: 2; orphans: 2; hyphens: none; line-break: strict; }
 
 /* 빈칸 — 첫 글자만 굵게 보이고 나머지 길이만큼 밑줄 */
 .blk .bl { font-weight: 700; }
+/* 머리글자·밑줄·뒤 문장부호가 줄에서 갈라지지 않게(검수 지적) */
+.blk .blg { white-space: nowrap; }
 /* ⚠ 인라인 블록은 **줄 상자를 키운다.** 밑줄 칸 때문에 왼쪽 단만 행간이
  *   7.06 → 7.17mm 로 벌어졌다(완성본은 좌우가 같다) → 줄간을 끊는다. */
 .blk .bl .u {
