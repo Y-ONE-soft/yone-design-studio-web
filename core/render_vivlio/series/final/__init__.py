@@ -163,6 +163,10 @@ class FinalSeries(Series):
         credits = self.series_asset("credits.pdf")
         if not spec.get("append") and os.path.exists(credits):
             spec["append"] = [{"pdf": credits, "page": 0}]
+        # 무선 제본 — 마지막 면(크레딧)은 **왼쪽(짝수)**. 본문이 홀수로 끝나면
+        # 크레딧 앞에 빈 면을 한 장 넣는다(배재2 Vol1 26-2-중간: 80+1=81p 실측).
+        # 짝수로 끝나는 책은 그대로다.
+        spec.setdefault("end_on_left", {"page": 0})
         spec.setdefault("trim", {"bleed": cfg.page["bleed"] or 3})
         return spec
 
