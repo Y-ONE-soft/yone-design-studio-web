@@ -348,8 +348,8 @@ function _rejoinStep3(doc) {
         try {
             if (frames[0].parentStory.overflows) {
                 stats.overflow++;
-                wlog("[경고] STEP11: 지문 " + code + " 결합 후 오버셋 — "
-                     + "cv_finish 가 저장을 거부한다(말미 CR 제거로도 안 풀림)");
+                wlog("STEP11: 지문 " + code + " 결합 후 오버셋 플래그 — "
+                     + "cv_finish 가 인쇄 글자 수로 무해/유실을 가른다");
             }
         } catch (e) {}
         if (stats.diffs > 0) {
@@ -358,7 +358,7 @@ function _rejoinStep3(doc) {
         }
     }
     if (stats.overflow > 0) {
-        wlog("[경고] STEP11: 결합 후 오버셋 " + stats.overflow + "건");
+        wlog("STEP11: 결합 후 오버셋 플래그 " + stats.overflow + "건 (판정은 cv_finish)");
     }
     wlog("STEP11: STEP3 지문별 재스레드 — 결합 " + stats.joined + " / 이미완료 "
          + stats.already + " / 건너뜀 " + stats.skipped + " (지문 " + stats.groups

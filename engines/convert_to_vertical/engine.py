@@ -793,8 +793,21 @@ class ConvertToVerticalEngine(BaseEngine):
         log(f"[검수] 사이클 구조: 코드 페이지 {len(seq)}개 → 블록 "
             f"{len(blocks)}개 (문제 {num_problems or '?'}개)")
 
-        # (c) 오버플로우 — 원본 대비 증가만 실패
+        # (c) 오버플로우 — 원본 대비 증가만 실패.
+        #     단 cv_finish 가 **인쇄 영향 없음**으로 판정한 것(숨은 것이 공백뿐
+        #     이거나 다음 지문 코드 잔여)은 빼고 센다. 덤프는 플래그만 보므로
+        #     그대로 두면 지면이 멀쩡한데도 실패로 잡힌다(SPEC §5.7).
         src_overflow = src_dump.get("overflow_stories", 0)
+        benign_ov = 0
+        try:
+            fin_log = os.path.join(job_dir, "cv_finish_로그.txt")
+            with open(fin_log, encoding="utf-8") as f:
+                benign_ov = sum(1 for ln in f if "오버셋 플래그(무해)" in ln)
+        except OSError:
+            pass
+        if benign_ov:
+            log(f"[검수] 오버셋 무해 판정 {benign_ov}건 (cv_finish 확인 — 인쇄 글자 전량)")
+            out_overflow = max(0, out_overflow - benign_ov)
         if out_overflow > src_overflow:
             ok = False
             warnings.append(f"❌ 오버플로우 증가: {src_overflow} → {out_overflow}")
