@@ -564,7 +564,8 @@ def _apply_fixes(cfg, rows, log):
     안 어긋나게 **자리 번호가 아니라 최종 라벨**로 건다.
 
         { "6강 04": {"passage": [["under standing", "understanding"]]},
-          "6강 05~06": {"translation": "현재의 관행에서, …"} }
+          "6강 05~06": {"translation": "현재의 관행에서, …"},
+          "230933": {"topic": "…"} }
 
     ⚠ 걸 곳을 못 찾으면 **소리 내어 알린다** — 교재팀이 원고를 고치면 그 줄은
       더 안 걸리므로 지우라는 뜻이다.
@@ -602,6 +603,12 @@ def _apply_fixes(cfg, rows, log):
                     n += 1
                 else:
                     miss.append("%s: %r" % (lab, old))
+            # 주제·요약 — 원고에 **다른 지문의 주제**가 들어 있을 때(배재2 분석본04
+            # 33·39·40번). 우리가 쓴 오른쪽 면은 빈 칸에만 얹으므로 여기서 덮는다.
+            for f in ("topic", "summary"):
+                if fx.get(f):
+                    r[f] = fx[f]
+                    n += 1
             if fx.get("translation"):
                 style = ((r.get("translation") or [{}])[0] or {}).get("style") or "한글"
                 r["translation"] = [{"style": style, "runs": [
@@ -682,6 +689,49 @@ def _mock_label(rows, log):
         log("■ 모의고사 라벨 %d개를 여섯 자리(YYMMNN)로 통일" % n)
 
 
+def _mock_label_from_chapter(r):
+    """모의고사 행 라벨이 회차(`고2 24년 9월`)로 들어오고 번호는 `chapter`
+    (`25번`)에만 있으면 번호를 라벨로 올린다.
+
+    ⚠ 도표만 모은 분석본 스프레드는 머리에 회차와 번호가 **둘 다** 있어 라벨이
+      회차 쪽으로 잡혔다 — 짤지문 판정·라벨 통일이 `번` 을 못 봐 오른쪽 면
+      있는 온전한 지문으로 조판되고 회차 끝이 아닌 책 끝에 붙었다(배재2
+      240925·250925). 모의고사 행에만 한다 — 부교재 `1강 01`(chapter `1번`)은
+      건드리지 않는다.
+    """
+    unit = str(r.get("category") or r.get("unit") or "")
+    lab = str(r.get("label") or "")
+    ch = str(r.get("chapter") or "").strip()
+    if ("모의고사" in unit and "번" not in lab and re.fullmatch(r"\d{1,2}(?:[-~]\d{1,2})?번", ch)
+            and re.fullmatch(r"\d{6}", str(r.get("pno") or ""))):
+        r["label"] = ch
+
+
+def _order_mock_rounds(rows, log):
+    """모의고사 지문을 **회차별로 모으고 회차 안에서는 번호 순**으로 세운다.
+
+    회차 차례는 처음 나온 순서 그대로 둔다(분석본 순서). 한 회차 지문이 여러
+    분석본에 흩어져 오면(도표만 따로 모은 분석본) 회차 끝이 아닌 책 끝에
+    붙었다(배재2 240925·250925).
+    """
+    idx = [i for i, r in enumerate(rows) if r.get("kind") != "memtest"
+           and r.get("_rank") == 2 and re.fullmatch(r"\d{6}", str(r.get("pno") or ""))]
+    if len(idx) < 2:
+        return
+    rounds = []
+    for i in idx:
+        rd = str(rows[i]["pno"])[:4]
+        if rd not in rounds:
+            rounds.append(rd)
+    got = sorted((rows[i] for i in idx),
+                 key=lambda r: (rounds.index(str(r["pno"])[:4]), int(str(r["pno"])[4:])))
+    if [id(r) for r in got] == [id(rows[i]) for i in idx]:
+        return
+    for i, r in zip(idx, got):
+        rows[i] = r
+    log("■ 모의고사 %d지문을 회차별·번호순으로 다시 세웠다" % len(idx))
+
+
 _SHORT_NO = {18, 19, 25, 26, 27, 28}
 # 장문 독해 — 글이 길어 **반으로 갈라 두 면**을 다 쓴다(사용자 지시)
 _SPLIT_NO = {43, 44, 45}
@@ -700,6 +750,7 @@ def _mark_short(rows, opt, log):
     for r in rows:
         if r.get("kind") == "memtest":
             continue
+        _mock_label_from_chapter(r)
         lab = r.get("label") or ""
         if "번" not in lab:
             continue
@@ -1381,6 +1432,7 @@ class PocketbookSeries(Series):
         _fix_lecture_label(rows, log)
         _mark_short(rows, opt, log)
         _mock_label(rows, log)
+        _order_mock_rounds(rows, log)
         _apply_fixes(cfg, rows, log)
         _mock_footer(rows, log, (opt.get("grade") or ""))
         rows = self._apply_memtest(cfg, opt, rows, log)

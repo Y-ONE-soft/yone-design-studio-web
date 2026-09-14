@@ -44,3 +44,11 @@ def test_no_file_is_silent(tmp_path):
     logs = []
     _apply_fixes(_Cfg(tmp_path), _rows(), logs.append)
     assert logs == []
+
+
+def test_topic_summary_overwrite_wrong_manuscript_topic(tmp_path):
+    (tmp_path / "fixes.json").write_text(json.dumps({
+        "230933": {"topic": "박쥐와 나방의 감각 군비 경쟁"}}, ensure_ascii=False), encoding="utf-8")
+    rows = [{"label": "230933", "topic": "돌봄 로봇의 도덕적 문제", "summary": "요약", "passage": []}]
+    _apply_fixes(_Cfg(tmp_path), rows, lambda *_: None)
+    assert rows[0]["topic"] == "박쥐와 나방의 감각 군비 경쟁" and rows[0]["summary"] == "요약"
