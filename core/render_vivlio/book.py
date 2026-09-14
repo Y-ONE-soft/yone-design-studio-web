@@ -368,15 +368,20 @@ def print_pdf(cfg, log=print, **opts):
 
 
 def _crop_to_trim(path):
-    """MediaBox·CropBox·BleedBox 를 TrimBox 로 — 도련 없는 재단 크기 PDF."""
+    """MediaBox·CropBox·BleedBox 를 TrimBox 로 — 도련 없는 재단 크기 PDF.
+
+    ⚠ PyMuPDF 의 `set_mediabox`/`set_trimbox` 는 좌표를 서로 다른 기준으로
+      옮겨 받아 "not in MediaBox" 로 멈춘다. 면 사전의 **원래 PDF 좌표**를
+      그대로 읽어 네 상자에 똑같이 적는다(내용 스트림은 손대지 않는다).
+    """
     import fitz
     doc = fitz.open(path)
     for pg in doc:
-        t = fitz.Rect(pg.trimbox)
-        pg.set_mediabox(t)
-        pg.set_cropbox(t)
-        pg.set_bleedbox(t)
-        pg.set_trimbox(t)
+        kind, val = doc.xref_get_key(pg.xref, "TrimBox")
+        if kind != "array":
+            raise ValueError(f"{pg.number + 1}면에 TrimBox 가 없다 — 자를 기준이 없다")
+        for key in ("MediaBox", "CropBox", "BleedBox", "TrimBox"):
+            doc.xref_set_key(pg.xref, key, val)
     n = doc.page_count
     tmp = path + ".tmp"
     doc.save(tmp, garbage=3, deflate=True)
