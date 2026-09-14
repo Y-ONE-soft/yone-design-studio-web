@@ -42,6 +42,11 @@ import re
 from core.structure.header_detect import (HeaderSilenceError,
                                           detect_headers)
 from core.structure.rules import Q_START_HINT as _RE_Q_START_HINT
+# 실전문제 지문 출처 표기 "[from <책 제목> by <저자>]" — 인쇄하지 않는다
+# (사용자 지시 2026-09-14: "Step3 의 [from~…] 출처 표기는 모두 삭제" + 앞으로
+# 조판 기본값). 업체 원고가 출처 뒤에 쪽 이음 표시("261번 계속")를 같은 줄에
+# 붙여 오는 경우도 한 줄째 버린다.
+_RE_S3_FROM_SRC = re.compile(r"^\[\s*from\s+[^\]]+\](?:\s+\S.*)?$", re.I)
 from core.structure.style_resolver import resolve_style
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
@@ -927,6 +932,8 @@ def build_step3(step_data, workbook_type="", only=None, left_page=True):
                 if _s3_arrow_para(text):
                     arrow_pending = True     # v1 pass 11: 화살표 단락 삭제
                     continue
+                if _RE_S3_FROM_SRC.match(tclean):
+                    continue    # 지문 출처 [from …] 제거 (2026-09-14 기본값)
                 if _RE_S3_TEXTBOOK_SRC.match(tclean):
                     continue    # W30-r15: 교과서 실전문제 출처 라인 제거
                                 # (결함 5 — 배경 대기(arrow_pending)는
