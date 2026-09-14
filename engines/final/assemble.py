@@ -228,8 +228,23 @@ def vocab(school, grade, exam_period, scope=None, order=None, codes=None,
                                  passage_codes=codes or None,
                                  code_order=codes or None,
                                  exam_period=exam_period) or {}
+    # 교과서도 중요어휘를 싣는다(2026-09-14) — 시트 칸 이름이 아니라 **원고
+    # 지문의 글**로 짝지어 가져온다(`textbook_vocab`).
+    tb = ""
+    if scope:
+        try:
+            from engines.final import textbook_vocab as TV
+            cfg = json.load(open(os.path.join(os.path.dirname(
+                os.path.abspath(__file__)), "config.json"), encoding="utf-8"))
+            tb = TV.vocab_text(scope, os.path.expanduser(
+                cfg["gdrive_content_base"]),
+                int("".join(c for c in grade if c.isdigit()) or 0), log=log)
+        except Exception as e:                                 # noqa: BLE001
+            log("[교과서 어휘] ★ 읽다가 멈췄습니다 — 교과서 어휘 없이 갑니다: %s" % e)
     out = []
     for t in (got.get("left_text", ""), got.get("right_text", "")):
+        if tb:
+            t = (t.rstrip() + "\n\n" + tb) if t.strip() else tb
         t = _blank_before_summary(t)
         t = re.sub("(?<=[\x21-\x7e])\\s+式\\s+(?=[\x21-\x7e])", " \u2500 ", t)
         out.append(_sort_vocab(t))
