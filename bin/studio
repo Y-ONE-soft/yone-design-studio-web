@@ -1,0 +1,10 @@
+#!/bin/sh
+# 카탈로그 + 내지 작업대를 웹으로 띄운다. 사용: bin/studio [--port 5099] [--host 127.0.0.1]
+#
+# 클로드 기능(PDF 판정·작업대 클로드 칸)은 ANTHROPIC_API_KEY 가 있어야 켜진다.
+# 매번 export 하기 싫으면 ~/.config/yone/env 에 한 줄 적어 두면 여기서 읽는다:
+#     export ANTHROPIC_API_KEY=sk-ant-...
+# (이 파일은 리포 밖·본인 홈에만 둔다. 키를 리포나 채팅에 적지 말 것.)
+[ -f "$HOME/.config/yone/env" ] && . "$HOME/.config/yone/env"
+cd "$(dirname "$0")/.." || exit 1
+exec python3 -u studio_server.py "$@"

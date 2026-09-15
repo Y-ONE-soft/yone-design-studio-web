@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block title %}{{ t.name }} · {{ d.name }}{% endblock %}
+
+{% block content %}
+{#
+  화면 2 — 틀 하나.
+  왼쪽: 디자인 이미지(크게). `+ 이미지 추가` 로 사용자가 더 넣을 수 있고 × 로 뺀다.
+  오른쪽: 원고 파일 + 이름 두 칸 + [조판]. 끝나면 PDF 링크.
+#}
+<style>
+  .tp { max-width: 1240px; margin: 0 auto; padding: 22px 20px 60px; color: #e8e9ee; }
+  .tp .back { color: #8b91a5; text-decoration: none; font-size: 13px; }
+  .tp h1 { font-size: 22px; margin: 6px 0 2px; display: flex; align-items: center; gap: 10px; }
+  .tp .desc { color: #8b91a5; font-size: 13px; margin-bottom: 18px; }
+  .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; }
+  @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+
+  .draftbox { background: #4a2a12; color: #ffe1bd; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.7; margin: 8px 0 12px; }
+  .draftbox .ok { background: #5b7cfa; color: #fff; border: 0; border-radius: 7px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+  .draftbox .why { color: #f3b26b; font-size: 12px; margin-top: 6px; }
+  .gal .main { background: #0f1118; border: 1px solid #2b2f40; border-radius: 12px; min-height: 380px;
+               display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .gal .main img { max-width: 100%; max-height: 640px; display: block; }
+  .gal .main .none { color: #3f4560; font-size: 14px; text-align: center; line-height: 1.7; }
+  .main-label { color: #9aa2b8; font-size: 12px; margin-top: 6px; text-align: center; }
+  .sec { color: #cfd4e6; font-size: 13px; font-weight: 700; margin-top: 16px; }
+  .sec small { color: #6d7389; font-weight: 400; }
+  .thumbs .th .lb { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.6); color: #dfe3ee;
+                    font-size: 10px; text-align: center; padding: 2px 0; }
+  .thumbs .th.m { width: 96px; height: 110px; }
+  .thumbs { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .thumbs .th { position: relative; width: 84px; height: 84px; border-radius: 8px; overflow: hidden; border: 2px solid transparent;
+                background: #0f1118; cursor: pointer; }
+  .thumbs .th.on { border-color: #5b7cfa; }
+  .thumbs .th img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .thumbs .th .x { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,.6); color: #fff; border: 0; border-radius: 4px;
+                   font-size: 11px; width: 18px; height: 18px; cursor: pointer; display: none; }
+  .thumbs .th:hover .x { display: block; }
+  .thumbs .add { width: 84px; height: 84px; border-radius: 8px; border: 1px dashed #3f4560; color: #8b91a5; font-size: 12px;
+                 display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; line-height: 1.4; }
+  .thumbs .add:hover { border-color: #5b7cfa; color: #cfd4e6; }
+
+  .form { background: #1c1f2b; border: 1px solid #2b2f40; border-radius: 12px; padding: 18px 20px 20px; }
+  .form h2 { font-size: 15px; margin: 0 0 10px; }
+  .form label { display: block; font-size: 12px; color: #9aa2b8; margin: 12px 0 5px; }
+  .form input[type=text] { width: 100%; box-sizing: border-box; background: #0f1118; border: 1px solid #2b2f40;
+           color: #e8e9ee; border-radius: 8px; padding: 9px 11px; font-size: 14px; }
+  .form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .drop { border: 1px dashed #3f4560; border-radius: 10px; padding: 14px; background: #0f1118; transition: border-color .15s, background .15s; }
+  .drop.over { border-color: #5b7cfa; background: #161a2b; }
+  .drop { cursor: pointer; }
+  .drop .big { text-align: center; padding: 18px 8px; color: #8b91a5; font-size: 12.5px; line-height: 1.7; }
+  .drop .big b { color: #e8e9ee; font-size: 14px; }
+  .drop .big a { color: #9fb3ff; cursor: pointer; }
+  .drop .manual { margin-top: 8px; cursor: default; }
+  .drop .manual summary { color: #6d7389; font-size: 12px; cursor: pointer; }
+  .drop.has { border-style: solid; border-color: #2f9e6a; }
+  .drop .fp input { width: 100%; box-sizing: border-box; background: #0a0b10; border: 1px solid #2b2f40; color: #e8e9ee; border-radius: 8px; padding: 8px 10px; font-size: 12.5px; margin-bottom: 8px; }
+  .drop .picked { color: #d9f7e6; font-size: 12px; margin: 4px 0 8px; }
+  .drop label { margin: 8px 0 4px; }
+  .drop label:first-child { margin-top: 0; }
+  .drop input[type=file] { color: #aeb4c6; font-size: 13px; width: 100%; }
+  .drop .ex { color: #4f5670; font-size: 11px; margin-top: 2px; }
+  .btn { background: #5b7cfa; color: #fff; border: 0; border-radius: 8px; padding: 11px 18px; font-size: 15px; font-weight: 700;
+         cursor: pointer; width: 100%; margin-top: 16px; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .note { color: #f0a441; font-size: 12px; margin-top: 10px; line-height: 1.5; }
+  .err { color: #ff9c9c; font-size: 13px; margin-top: 10px; }
+  .status { color: #8b91a5; font-size: 12px; margin-top: 10px; }
+  .log { background: #0a0b10; border: 1px solid #2b2f40; border-radius: 8px; padding: 10px; margin-top: 10px;
+         font: 11.5px/1.5 ui-monospace, Menlo, monospace; color: #9aa2b8; max-height: 220px; overflow: auto; white-space: pre-wrap; }
+  .result { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: #163d2a; color: #d9f7e6; font-size: 13.5px; line-height: 1.8; }
+  .result.warn { background: #4a2a12; color: #ffe1bd; }
+  .result.fail { background: #4a1616; color: #ffd0d0; }
+  .result a { color: #fff; font-weight: 600; }
+  .result .big { display: block; font-size: 16px; }
+</style>
+
+<div class="tp">
+  <a class="back" href="/catalog/{{ t.series }}">← {{ t.name }}</a>
+  <h1>{{ d.name }}</h1>
+  {% if d.draft %}<div class="draftbox">이 디자인은 <b>PDF에서 만든 초안</b>입니다. 판형·색은 PDF에서 잰 값이고 레이아웃은 틀 것입니다.
+    원고를 넣어 조판해 보고, 견본 사진(올린 PDF)과 비교해 맞으면 <button class="ok" id="confirm">확인 완료</button> — 아니면 작업대에서 손본 책을 새 디자인으로 등록하세요.
+    {% if d.intake and d.intake.verdict %}<div class="why">판정: {{ d.intake.verdict.reasons|join(' · ') }}</div>{% endif %}</div>{% endif %}
+  <div class="desc">틀 {{ t.name }} · 판형 {{ page.width if page else '?' }}×{{ page.height if page else '?' }}mm{% if d.desc %} · {{ d.desc }}{% endif %}</div>
+
+  <div class="wrap">
+    <div class="gal">
+      <div class="main" id="main">
+        {% if d.masters %}<img id="main-img" src="/catalog/master/{{ t.series }}/{{ d.id }}/{{ d.masters[1].file if d.masters|length > 1 else d.masters[0].file }}" alt="">
+        {% elif d.previews %}<img id="main-img" src="/catalog/preview/{{ t.series }}/{{ d.id }}/{{ d.previews[1] if d.previews|length > 1 else d.previews[0] }}" alt="">
+        {% else %}<div class="none">아직 페이지 틀 이미지가 없습니다<br><small>이 틀로 책을 한 번 만들면 자동으로 뽑힙니다</small></div>{% endif %}
+      </div>
+      <div class="main-label" id="main-label">{{ (d.masters[1].label if d.masters|length > 1 else d.masters[0].label) if d.masters else '' }}</div>
+
+      <div class="sec">페이지 틀 <small>— 원고가 들어가는 자리(회색)를 비운 실제 지면. 틀 코드에서 뽑은 것이라 조판 결과와 같다</small></div>
+      <div class="thumbs" id="masters">
+        {% for m in d.masters %}
+        <div class="th m {{ 'on' if loop.index0 == (1 if d.masters|length > 1 else 0) else '' }}" data-src="/catalog/master/{{ t.series }}/{{ d.id }}/{{ m.file }}" data-label="{{ m.label }}">
+          <img src="/catalog/master/{{ t.series }}/{{ d.id }}/{{ m.file }}" alt=""><span class="lb">{{ m.label }}</span>
+        </div>
+        {% endfor %}
+        {% if not d.masters %}<span class="ex">없음</span>{% endif %}
+      </div>
+
+      <div class="sec">견본 사진 <small>— 이 틀로 만든 책의 실제 면(보기용)</small></div>
+      <div class="thumbs" id="thumbs">
+        {% for p in d.previews %}
+        <div class="th" data-src="/catalog/preview/{{ t.series }}/{{ d.id }}/{{ p }}" data-name="{{ p }}" data-label="견본">
+          <img src="/catalog/preview/{{ t.series }}/{{ d.id }}/{{ p }}" alt=""><button class="x" title="빼기">×</button>
+        </div>
+        {% endfor %}
+        <label class="add" for="img-add" title="보기용 사진만 추가됩니다 — 조판 결과는 바뀌지 않습니다">+ 사진</label>
+        <input type="file" id="img-add" accept=".png,.jpg,.jpeg,.pdf" multiple hidden>
+      </div>
+    </div>
+
+    <div class="form">
+      <h2>원고 넣기</h2>
+      <form id="form">
+        <input type="hidden" name="series" value="{{ t.series }}">
+        <input type="hidden" name="design" value="{{ d.id }}">
+        <div class="drop" id="ms-drop">
+          <input type="file" id="ms-files" multiple hidden>
+          <input type="file" id="ms-dir" webkitdirectory multiple hidden>
+          <div class="big" id="ms-big"><b>원고 폴더나 파일을 여기에 놓으세요</b><br><small>클릭하면 파일 고르기 · <a id="ms-pickdir">폴더 고르기</a> · <a id="ms-pathtoggle">경로로 넣기</a></small></div>
+          <div class="fp" id="ms-fp" hidden><input type="text" name="folder_path" id="ms-path" placeholder="이 맥의 폴더 경로 — 예: ~/Downloads/고1 25년 10월 워크북"></div>
+          <div class="picked" id="ms-picked" hidden></div>
+          {% if slots.mode in ('files', 'named') %}
+          <details class="manual"><summary>칸별로 직접 고르기 ({{ slots.slots|length }}칸)</summary>
+            {% for s in slots.slots %}
+            <label>{{ s.key }}</label><input type="file" name="slot_{{ s.key }}"><div class="ex">예: {{ s.example }}</div>
+            {% endfor %}
+          </details>
+          {% elif slots.hint %}<div class="ex" style="margin-top:6px">{{ slots.hint }}</div>{% endif %}
+        </div>
+        {% if t.fields %}<div class="two">
+          {% for f in t.fields %}<div><label>{{ f.label }}</label><input type="text" name="f_{{ f.key }}" placeholder="{{ f.placeholder }}" value="{{ f.default }}"></div>{% endfor %}
+        </div>{% endif %}
+        <div class="two">
+          <div><label>교재명 *</label><input type="text" name="name" placeholder="예: 이의1보카"></div>
+          <div><label>학기 *</label><input type="text" name="period" placeholder="예: 27-1-중간"></div>
+        </div>
+        <div class="two">
+          <div><label>학교</label><input type="text" name="school" placeholder="비워도 됨"></div>
+          <div><label>책 제목</label><input type="text" name="title" placeholder="비우면 교재명"></div>
+        </div>
+        {% if t.ready == 'manual' %}
+          <div class="note">이 틀은 원고를 읽는 코드가 통합웹(GitHub 리포)에 있어 여기서는 못 만듭니다. <code>README_로컬실행.md</code> 참고.</div>
+        {% elif t.ready == 'blocked' %}
+          <div class="note">준비물이 부족합니다 —
+            {% if t.fonts_missing %}서체 {{ t.fonts_missing|join(', ') }}{% endif %}
+            {% if t.paths_missing %} · 바깥 자료 {{ t.paths_missing|length }}곳{% endif %}.
+            그래도 시도는 됩니다(서체는 대체 서체로 나옴).</div>
+        {% endif %}
+        <button type="submit" class="btn" id="go" {% if t.ready == 'manual' %}disabled{% endif %}>조판</button>
+        <div class="err" id="err"></div>
+      </form>
+      <div class="status" id="status"></div>
+      <div class="log" id="log" hidden></div>
+      <div id="result"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var SERIES = {{ t.series|tojson }}, DESIGN = {{ d.id|tojson }};
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  // ── 이미지 ──
+  var thumbs = document.getElementById('thumbs');
+  function show(src) {
+    var m = document.getElementById('main');
+    m.innerHTML = '<img id="main-img" src="' + src + '" alt="">';
+  }
+  document.getElementById('masters').addEventListener('click', function (e) {
+    var th = e.target.closest('.th'); if (!th) return;
+    show(th.dataset.src); document.getElementById('main-label').textContent = th.dataset.label || '';
+    document.querySelectorAll('.th').forEach(function (t) { t.classList.toggle('on', t === th); });
+  });
+  thumbs.addEventListener('click', function (e) {
+    var x = e.target.closest('.x');
+    if (x) {
+      var th = x.closest('.th');
+      if (!confirm('이 이미지를 뺄까요?')) return;
+      fetch('/api/catalog/preview/' + SERIES + '/' + DESIGN + '/' + encodeURIComponent(th.dataset.name), { method: 'DELETE' })
+        .then(function () { location.reload(); });
+      return;
+    }
+    var th = e.target.closest('.th');
+    if (th) { show(th.dataset.src); document.getElementById('main-label').textContent = th.dataset.label || '';
+              document.querySelectorAll('.th').forEach(function (t) { t.classList.toggle('on', t === th); }); }
+  });
+  document.getElementById('img-add').addEventListener('change', function (e) {
+    var fd = new FormData();
+    Array.prototype.forEach.call(e.target.files, function (f) { fd.append('img', f); });
+    fetch('/api/catalog/preview/' + SERIES + '/' + DESIGN, { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { if (j.error) alert(j.error); else location.reload(); });
+  });
+
+  var ok = document.getElementById('confirm');
+  if (ok) ok.addEventListener('click', function () {
+    fetch('/api/catalog/design/' + SERIES + '/' + DESIGN + '/confirm', { method: 'POST' }).then(function () { location.reload(); });
+  });
+
+  // ── 원고 칸 하나: 폴더든 파일이든 놓으면 된다 ──
+  var msd = document.getElementById('ms-drop');
+  var BULK = [];                                   // 받은 파일 {file, rel}
+  var okExt = /\.(docx|hwp|hwpx|xlsx|pdf|json|idml)$/i;
+  function keep(f) { return okExt.test(f.name) && !/^~\$|^\./.test(f.name); }
+  function showPicked() {
+    var el = document.getElementById('ms-picked');
+    var path = document.getElementById('ms-path').value.trim();
+    if (!BULK.length && !path) { el.hidden = true; msd.classList.remove('has'); return; }
+    el.hidden = false; msd.classList.add('has');
+    el.textContent = path ? '📁 경로: ' + path : '📁 ' + BULK.length + '개 파일 — ' + BULK.slice(0, 4).map(function (b) { return b.rel; }).join(', ') + (BULK.length > 4 ? ' …' : '');
+  }
+  function walkEntry(entry, prefix, out) {
+    return new Promise(function (resolve) {
+      if (entry.isFile) { entry.file(function (f) { out.push({ file: f, rel: prefix + f.name }); resolve(); }, function () { resolve(); }); }
+      else if (entry.isDirectory) {
+        var reader = entry.createReader(), all = [];
+        (function read() { reader.readEntries(function (es) {
+          if (!es.length) { Promise.all(all.map(function (e) { return walkEntry(e, prefix + entry.name + '/', out); })).then(resolve); return; }
+          all = all.concat(es); read();
+        }, function () { resolve(); }); })();
+      } else resolve();
+    });
+  }
+  function stripTop(list) { list.forEach(function (b) { var p = b.rel.split('/'); if (p.length > 1) b.rel = p.slice(1).join('/'); }); return list; }
+  document.getElementById('ms-big').addEventListener('click', function (e) { if (e.target.tagName === 'A') return; document.getElementById('ms-files').click(); });
+  document.getElementById('ms-pickdir').addEventListener('click', function (e) { e.stopPropagation(); document.getElementById('ms-dir').click(); });
+  document.getElementById('ms-pathtoggle').addEventListener('click', function (e) { e.stopPropagation(); var fp = document.getElementById('ms-fp'); fp.hidden = !fp.hidden; if (!fp.hidden) document.getElementById('ms-path').focus(); });
+  document.getElementById('ms-path').addEventListener('input', showPicked);
+  document.getElementById('ms-files').addEventListener('change', function (e) {
+    BULK = Array.prototype.slice.call(e.target.files).filter(keep).map(function (f) { return { file: f, rel: f.name }; }); showPicked();
+  });
+  document.getElementById('ms-dir').addEventListener('change', function (e) {
+    BULK = stripTop(Array.prototype.slice.call(e.target.files).filter(keep).map(function (f) { return { file: f, rel: f.webkitRelativePath || f.name }; })); showPicked();
+  });
+  ['dragenter', 'dragover'].forEach(function (ev) { msd.addEventListener(ev, function (e) { e.preventDefault(); msd.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { msd.addEventListener(ev, function (e) { e.preventDefault(); msd.classList.remove('over'); }); });
+  msd.addEventListener('drop', function (e) {
+    var items = e.dataTransfer && e.dataTransfer.items ? Array.prototype.slice.call(e.dataTransfer.items) : [];
+    var entries = items.map(function (it) { return it.webkitGetAsEntry ? it.webkitGetAsEntry() : null; }).filter(Boolean);
+    var out = [];
+    Promise.all(entries.map(function (en) { return walkEntry(en, '', out); })).then(function () {
+      var hadDir = entries.some(function (en) { return en.isDirectory; });
+      BULK = (hadDir ? stripTop(out) : out).filter(function (b) { return keep(b.file); });
+      showPicked();
+    });
+  });
+  ['dragover', 'drop'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (!(e.target.closest && e.target.closest('#ms-drop'))) e.preventDefault(); }); });
+
+  // ── 조판 ──
+  var poll = null;
+  document.getElementById('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var go = document.getElementById('go'); go.disabled = true;
+    document.getElementById('err').textContent = '';
+    document.getElementById('result').innerHTML = '';
+    document.getElementById('status').textContent = '올리는 중…';
+    var fd = new FormData(e.target);
+    BULK.forEach(function (b) { fd.append('slot_folder', b.file, b.rel); });
+    var manual = Array.prototype.some.call(msd.querySelectorAll('.manual input[type=file]'), function (i) { return i.files.length; });
+    if (!BULK.length && !document.getElementById('ms-path').value.trim() && !manual) { document.getElementById('err').textContent = '원고를 먼저 넣어 주세요.'; return; }
+    fetch('/api/catalog/create', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.error) { document.getElementById('err').textContent = j.error; go.disabled = false; document.getElementById('status').textContent = ''; return; }
+        var log = document.getElementById('log'); log.hidden = false; log.textContent = '';
+        var n = 0;
+        poll = setInterval(function () {
+          fetch('/api/catalog/job/' + j.job + '?since=' + n).then(function (r) { return r.json(); }).then(function (s) {
+            if (s.log.length) { log.textContent += s.log.join('\n') + '\n'; log.scrollTop = log.scrollHeight; n = s.n; }
+            document.getElementById('status').textContent = (s.status === 'running' ? '조판 중… ' : '끝 · ') + s.elapsed + '초';
+            if (s.status === 'running') return;
+            clearInterval(poll); go.disabled = false;
+            var r = document.getElementById('result');
+            if (s.status === 'failed') {
+              r.innerHTML = '<div class="result fail">실패 — 로그를 보세요. 대개 원고 형식이 이 틀과 다를 때입니다.</div>';
+              return;
+            }
+            var fin = s.pdfs.filter(function (p) { return /_최종\.pdf$/.test(p); })[0] || s.pdfs.filter(function (p) { return !/_인쇄\.pdf$/.test(p); })[0];
+            var prn = s.pdfs.filter(function (p) { return /_인쇄\.pdf$/.test(p); })[0];
+            var u = function (p) { return '/catalog/out/' + s.bid + '/' + encodeURIComponent(p); };
+            r.innerHTML = '<div class="result' + (s.status === 'done_warn' ? ' warn' : '') + '">' +
+              (s.status === 'done_warn' ? '조판됨 · 검수 지적 있음 (로그 참고)' : '완료') +
+              (fin ? '<a class="big" href="' + u(fin) + '" target="_blank">📄 ' + esc(fin) + '</a>' : '') +
+              (prn ? '<a href="' + u(prn) + '" target="_blank">인쇄용(CMYK) ' + esc(prn) + '</a><br>' : '') +
+              '<a href="/book-studio?b=' + encodeURIComponent(s.key) + '" target="_blank">작업대에서 열기 →</a> · <a href="/books">책 목록 →</a>' +
+              (s.snapped ? '<br><small>이 책에서 페이지 틀 이미지를 뽑아 두었습니다</small>' : '') +
+              '</div>';
+          });
+        }, 1200);
+      })
+      .catch(function (err) { document.getElementById('err').textContent = String(err); go.disabled = false; });
+  });
+</script>
+{% endblock %}

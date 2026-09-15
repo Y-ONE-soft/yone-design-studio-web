@@ -1,0 +1,206 @@
+{
+ "name": "스텝바이스텝 워크북 (블루·베이지·브릭, A4)",
+ "desc": "PDF 에서 만든 디자인",
+ "source": "PDF: 한영1_워크북04(능률민1과)_내지(수정).pdf",
+ "date": "2026-09-15",
+ "draft": false,
+ "intake": {
+  "verdict": {
+   "verdict": "design",
+   "series": "workbook",
+   "confidence": 0.93,
+   "reasons": [
+    "표지(p1)에 'STEP BY STEP' 로고와 1 FRAME — 2 BUILD UP — 3 TEST 3단계 진행 점선, 우상단 사선 'STEP BY STEP' 탭이 있어 workbook 계열의 3구간(STEP01/02/03) 구성과 일치한다.",
+    "p2가 STEP 01 간지(바탕 전면 색 + 'STEP' 라벨 + 큰 숫자 01 + 하단 3단계 진행바 + 'S T E P  B Y  S T E P' 자간 넓은 워드마크)로, 구간 앞 간지 2면이 붙는다는 계열 설명과 맞는다.",
+    "본문 왼쪽 면(38쪽)은 좌상단에 'STEP 02 BUILD UP' 크림 머리말 패널 + 코드 배지(C1)+제목(빈칸 어휘)+원형 단계 표시, 하단 왼쪽에 쪽번호·'STEP BY STEP' 러닝 푸터 — 계열의 머리말/쪽번호 규칙과 동일.",
+    "오른쪽 면(39쪽)은 요소가 바깥쪽(오른쪽)으로 반전되어 코드 배지 C1·사선 탭이 우상단, 쪽번호가 우하단, 우측 모서리에 세 개의 세로 측면 탭(파랑/베이지/분홍 = STEP1·2·3 색)이 붙어 있다 — 계열 고유의 면 구성.",
+    "계측 색이 손잡이 기본값과 정확히 일치: 본문 텍스트 #77a1c4(palette.s1), #cba56f(palette.s2), #bc736c(palette.s3), 선택지 파랑 #00559f(palette.sel), 지문 번호 #af9d81(palette.pnum).",
+    "서체 구성(Noto Sans CJK KR + Montserrat + Elice DX Neolli/Elice Baeum + Gmarket Sans)과 본문 활자 8~8.5pt가 계열의 typeface 지정과 일치한다.",
+    "마지막 면(74쪽)은 Writer/Teacher/Assistant/Design/Production 판권면으로 계열 마감 구성 그대로다."
+   ],
+   "design_name": "스텝바이스텝 워크북 (블루·베이지·브릭, A4)",
+   "knobs": {
+    "page.width": "210",
+    "page.height": "297",
+    "page.bleed": "3",
+    "palette.s1": "#77a1c4",
+    "palette.s2": "#cba56f",
+    "palette.s3": "#bc736c",
+    "palette.sel": "#00559f",
+    "palette.pnum": "#af9d81"
+   },
+   "notes": "구조(간지 2면·머리말 크림 패널·좌우 반전되는 코드 배지와 사선 탭·측면 3색 탭·쪽번호+STEP BY STEP 푸터)가 workbook 계열 설명과 완전히 일치하므로 design 으로 본다. 다만 계열 손잡이의 page.width/height 가 None 이라 A4(210×297, 도련 3mm)로 채워 넣기를 제안한다. 간지 바탕색으로 측정된 #8aabc9 는 STEP1 주색(#77a1c4)과 다른 별도 값이라, 간지 바탕 손잡이가 없다면 코드 쪽에 cover_bg 계열 손잡이 추가가 필요할 수 있다(구조 변경은 아님). 상자 색 #dbecf2·#f9efda·#e1eaf3 는 box_sky/box_body 계열 값과 성격이 같으나 실측값이 조금 달라 확정하지 않았다."
+  },
+  "measured": {
+   "pages": 74,
+   "trim_mm": [
+    210.0,
+    297.0
+   ],
+   "bleed_mm": 3.0,
+   "media_mm": [
+    216.0,
+    303.0
+   ],
+   "margins_mm": {
+    "left": 21.5,
+    "right": 2.4,
+    "top": 44.7,
+    "bottom": 51.8
+   },
+   "fonts": [
+    {
+     "font": "NotoSansCJKkr-Regular",
+     "share": 0.911
+    },
+    {
+     "font": "NotoSansCJKkr-Medium",
+     "share": 0.048
+    },
+    {
+     "font": "NotoSansCJKkr-Bold",
+     "share": 0.015
+    },
+    {
+     "font": "Montserrat-Bold",
+     "share": 0.014
+    },
+    {
+     "font": "EliceDXNeolliOTF-Bd",
+     "share": 0.005
+    },
+    {
+     "font": "EliceDigitalBaeumOTF",
+     "share": 0.004
+    },
+    {
+     "font": "GmarketSansBold",
+     "share": 0.001
+    },
+    {
+     "font": "Montserrat-Medium",
+     "share": 0.001
+    }
+   ],
+   "sizes_pt": [
+    {
+     "pt": 8.0,
+     "share": 0.666
+    },
+    {
+     "pt": 8.5,
+     "share": 0.276
+    },
+    {
+     "pt": 9.0,
+     "share": 0.036
+    },
+    {
+     "pt": 6.5,
+     "share": 0.009
+    },
+    {
+     "pt": 6.0,
+     "share": 0.008
+    },
+    {
+     "pt": 12.0,
+     "share": 0.002
+    }
+   ],
+   "text_colors": [
+    {
+     "hex": "#231f20",
+     "share": 0.965
+    },
+    {
+     "hex": "#00559f",
+     "share": 0.017
+    },
+    {
+     "hex": "#ffffff",
+     "share": 0.012
+    },
+    {
+     "hex": "#cba56f",
+     "share": 0.001
+    },
+    {
+     "hex": "#77a1c4",
+     "share": 0.001
+    },
+    {
+     "hex": "#bc736c",
+     "share": 0.001
+    },
+    {
+     "hex": "#3b4247",
+     "share": 0.001
+    },
+    {
+     "hex": "#af9d81",
+     "share": 0.001
+    }
+   ],
+   "shape_colors": [
+    {
+     "hex": "#8aabc9",
+     "area_mm2": 65464
+    },
+    {
+     "hex": "#72bbda",
+     "area_mm2": 7153
+    },
+    {
+     "hex": "#e5aa7e",
+     "area_mm2": 6824
+    },
+    {
+     "hex": "#dbecf2",
+     "area_mm2": 3538
+    },
+    {
+     "hex": "#6ab3c7",
+     "area_mm2": 3538
+    },
+    {
+     "hex": "#f9efda",
+     "area_mm2": 1490
+    },
+    {
+     "hex": "#e1eaf3",
+     "area_mm2": 1490
+    },
+    {
+     "hex": "#bdafa2",
+     "area_mm2": 1218
+    }
+   ],
+   "running_header": true,
+   "running_footer": true,
+   "sampled_pages": [
+    3,
+    13,
+    23,
+    33,
+    43,
+    53,
+    63,
+    73
+   ]
+  },
+  "applied": {
+   "page.width": 210.0,
+   "page.height": 297.0,
+   "page.bleed": 3.0,
+   "palette.s1": "#77a1c4",
+   "palette.s2": "#cba56f",
+   "palette.s3": "#bc736c",
+   "palette.sel": "#00559f",
+   "palette.pnum": "#af9d81"
+  },
+  "rejected": [],
+  "decided_by_user": true,
+  "judged_series": "workbook"
+ }
+}

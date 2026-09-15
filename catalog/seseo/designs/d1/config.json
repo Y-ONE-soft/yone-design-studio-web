@@ -1,0 +1,112 @@
+{
+  "series": "seseo",
+  "book": {
+    "id": "광문1_세서특필_26-2-중간",
+    "title": "세서특필",
+    "school": "광문고1",
+    "period": "26-2-중간",
+    "running": "2026 광문고1 서술형 특강",
+    "header": "2026 광문고 1학년 2학기 중간고사 서술형 대비",
+    "wordmark": "세/서/특/필",
+    "part1": "세희T PICK 중요문장",
+    "part2": "광문고 기출 서술형 실전문제",
+    "answers": "정답 및 해설",
+    "note": "세희쌤과 함께하는 서술형 특별 필승법. 디자인 정본 = 26-1 기말 광문1_세서특필02_내지(수정).pdf (참고/). 앞 5면·Part 2 간지 2면·뒤 1면은 정본 면을 그대로 쓴다(간지/).",
+    "author": "박세희",
+    "cover_exam": "2026 2학기 중간고사 대비",
+    "cover_series": "광문고1 서술형 특강",
+    "cover_tagline": "광문고 영어는, 박세희.",
+    "cover_hand": "광문고 서술형 출제 경향 완벽 대비 필승법!"
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "광문1_세서특필_내지"
+  },
+  "manuscript": {
+    "dir": "원고",
+    "files": {
+      "part1": "광문고1 26-2중간 세서특필 Part 1.docx",
+      "part2": "광문고1 26-2중간 세서특필 Part 2.docx",
+      "answers": "광문고1 26-2중간 세서특필 Part 2 정답 및 해설.docx"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf"
+    },
+    {
+      "family": "Myr",
+      "file": "MyriadPro-Regular.otf"
+    },
+    {
+      "family": "Myr",
+      "file": "MyriadPro-Semibold.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Light.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Regular.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Medium.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-SemiBold.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Bold.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Medium.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Bold.otf"
+    },
+    {
+      "family": "Ghana",
+      "file": "Ghanachocolate.otf"
+    },
+    {
+      "family": "Jal",
+      "file": "JalnanOTF.otf"
+    }
+  ],
+  "finish": {
+    "_note": "간지는 직접 그린다(seseo render). 여기서는 TrimBox 만 — page.bleed 로 자동."
+  },
+  "print": {
+    "_note": "유채색은 정본 PDF 의 CMYK 값을 그대로 못 박는다(계열 기본표). 무채색은 K 단색."
+  },
+  "cover": {
+    "_note": "펼침 1면(뒤 210 + 책등 + 앞 210) · 도련 3mm. 만들기: python3 표지/make_cover.py",
+    "paper": "newplus",
+    "paper_name": "뉴플러스 80g",
+    "pages": 140,
+    "spine_mm": 7,
+    "spine_raw_mm": 5.6,
+    "photo": "assets/teacher.png (26-1 정본 표지에서 뽑음, 300dpi 로 올림)"
+  },
+  "_틀": "기준: 책별_설정/seseo/특강교재__세서특필__26-2-중간__광문1 (2026-09-14 인계본). options.expect 는 뺐다 — 새 원고는 수량이 다르므로."
+}

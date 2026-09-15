@@ -111,6 +111,13 @@
                justify-content: center; color: #e8e8e8; font-size: 13px; }
 
   /* 오른쪽 팔레트 */
+  .ide-realpane { flex: 1; min-width: 0; display: flex; flex-direction: column; border-left: 2px solid #5b7cfa; background: #2a2a2a; }
+  .ide-realpane[hidden] { display: none; }
+  .ide-realhead { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; background: #1b1e2b; color: #cfd4e6; font-size: 12px; border-bottom: 1px solid #2c3145; }
+  .ide-realframe { flex: 1; border: 0; width: 100%; background: #2a2a2a; }
+  .ide-realempty { position: absolute; color: #9aa2b8; font-size: 13px; padding: 20px; display: none; }
+  .ide-realpane.empty .ide-realempty { display: block; position: static; }
+  .ide-realpane.empty .ide-realframe { display: none; }
   .ide-right { width: 300px; background: #1b1e2b; border-left: 1px solid #2c3145;
                overflow: auto; }
   .ide-right.hide { display: none; }
@@ -230,6 +237,7 @@
       <button class="ide-b" id="ide-scope"
               title="견본 = 앞부분 몇 면만 조판해 빠르게 봅니다(색·여백 볼 때). 전권 = 책 전체 — 느리지만 면수·면 나눔이 실제와 같습니다.">견본</button>
       <button class="ide-b" id="ide-reload" title="다시 조판">다시 조판</button>
+      <button class="ide-b" id="ide-real" title="실물 — 마지막으로 조판한 PDF 를 옆에 그대로 펼칩니다. 줄바꿈·면 나눔이 이것이 진짜입니다. 값을 고친 뒤 [PDF] 로 다시 뽑으면 여기도 새로 뜹니다.">실물</button>
       <button class="ide-b" id="ide-export" title="전권을 PDF 로 뽑습니다 (오래 걸립니다)">PDF</button>
       <button class="ide-b" id="ide-press" title="인쇄 원고(CMYK)까지 만듭니다">인쇄용</button>
       <button class="ide-b" id="ide-pal-t" title="팔레트 접기">팔레트</button>
@@ -259,6 +267,13 @@
            그 안을 그대로 만진다(클릭·편집·선택 모두 된다). -->
       <iframe class="ide-stage" id="ide-frame" src="/book-studio/frame"></iframe>
       <div class="ide-empty" id="ide-empty">교재를 고르세요</div>
+    </div>
+
+    <!-- ── 실물: 마지막 조판 PDF (브라우저 PDF 뷰어) ──────── -->
+    <div class="ide-realpane" id="ide-realpane" hidden>
+      <div class="ide-realhead"><span id="ide-realname">실물 PDF</span><button class="ide-b" id="ide-realclose" title="닫기">×</button></div>
+      <iframe class="ide-realframe" id="ide-realframe" src="about:blank"></iframe>
+      <div class="ide-realempty" id="ide-realempty">아직 조판한 PDF 가 없습니다 — 위 [PDF] 를 눌러 만드세요.</div>
     </div>
 
     <!-- ── 오른쪽: 팔레트 ───────────────────────────────── -->
@@ -4384,8 +4399,23 @@
       if (d.error) { msg('✗ ' + String(d.error).split('\n').pop().slice(0, 120)); return; }
       msg('✓ ' + (d.note || '') + (d.pdf ? ' — ' + d.pdf : ''));
       loadThumbs();                    // 새 PDF 로 썸네일도 새로
+      setTimeout(function () { if (!$('ide-realpane').hidden) showReal(true); }, 1500);   // 실물 패널도 새 PDF 로
     });
   }
+  // ── 실물 PDF 패널 ─────────────────────────────────────
+  function showReal(on) {
+    var pane = $('ide-realpane');
+    if (!on) { pane.hidden = true; $('ide-realframe').src = 'about:blank'; $('ide-real').classList.remove('on'); return; }
+    pane.hidden = false; $('ide-real').classList.add('on');
+    fetch('/api/books/pdf?b=' + encodeURIComponent(key)).then(function (r) { return r.json(); }).then(function (d) {
+      if (!d || !d.pdf) { pane.classList.add('empty'); $('ide-realname').textContent = '실물 PDF'; return; }
+      pane.classList.remove('empty');
+      $('ide-realname').textContent = '실물 — ' + d.pdf + ' (' + (d.pages || '?') + '면 · ' + d.date + ')';
+      $('ide-realframe').src = encodeURI(d.url) + '?t=' + Date.now() + '#view=FitH';
+    });
+  }
+  $('ide-real').addEventListener('click', function () { showReal($('ide-realpane').hidden); });
+  $('ide-realclose').addEventListener('click', function () { showReal(false); });
   $('ide-export').addEventListener('click', function () { exportPdf('pdf'); });
   $('ide-press').addEventListener('click', function () { exportPdf('press'); });
   $('ide-brk').addEventListener('click', pageBreak);

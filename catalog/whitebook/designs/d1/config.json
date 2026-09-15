@@ -1,0 +1,200 @@
+{
+  "series": "whitebook",
+  "book": {
+    "id": "화이트북02",
+    "title": "화이트북 02",
+    "brand": "WHITE BOOK VOL.2",
+    "volume": 2,
+    "subject": "워드마스터 고등 COMPLETE Day 21~30",
+    "school": "배재고1",
+    "period": "26-2-중간",
+    "note": "실전문제(어휘 연습) 전용 권. Day 01~20 · 하루 20문항. 디자인은 1권 실전문제(EXERCISE) 실측 이식."
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "배재1_화이트북02_내지"
+  },
+  "manuscript": {
+    "_note": "폴더 안 docx 를 구조로 읽는다 — 파일 이름 규칙에 기대지 않는다.",
+    "dir": "원고",
+    "questions_per_day": 20
+  },
+  "fonts": [
+    {
+      "family": "Minion",
+      "file": "MinionPro-Regular.otf"
+    },
+    {
+      "family": "Minion",
+      "file": "MinionPro-Semibold.otf"
+    },
+    {
+      "family": "Minion",
+      "file": "MinionPro-Bold.otf"
+    },
+    {
+      "family": "Minion",
+      "file": "MinionPro-It.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Thin.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDigitalBaeumOTF_Regular.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDigitalBaeumOTF_Bold.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Light.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Medium.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Bold.otf"
+    },
+    {
+      "family": "Ghana",
+      "file": "Ghanachocolate.otf"
+    }
+  ],
+  "assets": {
+    "_note": "1권 완성본에서 로고·상표를 뜬다. VOL 번호만 Elice 로 다시 그린다.",
+    "dir": "assets",
+    "src_pdf": "참고/배재1_화이트북01_내지_v2_2.pdf",
+    "volume": 2
+  },
+  "finish": {
+    "_note": "앞뒤 간지·파리티 면은 1권 완성본의 아트워크 면을 그대로 끼운다(판 번호가 안 들어간 면이라 2권에 그대로 쓴다).",
+    "art_pdf": "참고/배재1_화이트북01_내지_v2_2.pdf",
+    "inserts": [
+      {
+        "marker": "§DIV1§",
+        "page": 0,
+        "mode": "replace"
+      }
+    ],
+    "end_on_left": {
+      "page": 32,
+      "_note": "MEMO 면 — 마지막 면이 왼쪽(짝수)이 되도록 보충"
+    },
+    "append": [
+      {
+        "page": 129,
+        "_note": "뒤 간지"
+      }
+    ],
+    "trim": {
+      "bleed": 3
+    }
+  },
+  "verify": {
+    "frame": {
+      "inner": 23,
+      "outer": 26,
+      "width": 167.75,
+      "top": 21,
+      "bottom": 282.5
+    },
+    "blank_ignore": "0123456789|WHITEBOOKVOL.DAYEXERCISE정답",
+    "_frame_note": "좌표는 **미디어(도련 포함)** 기준이다. inner=왼쪽 면의 왼쪽 여백, outer=오른쪽 면의 왼쪽 여백.",
+    "skip_pages": [
+      1
+    ],
+    "skip_last": 1
+  },
+  "print": {
+    "_note": "인쇄 원고(CMYK) — 도련 사방 3mm 포함. 색은 1권 완성본(인디자인)에서 그대로 읽어 못 박았다. 무채색은 K 단색으로 미리 내리고, 나머지 유채색은 cmyk_map 으로 고정한다.",
+    "out": "_인쇄",
+    "profile": "JapanColor2001Coated.icc",
+    "gray_map": {
+      "#231f20": 1.0,
+      "#58595b": 0.8,
+      "#d1d3d4": 0.2,
+      "#ffffff": 0.0
+    },
+    "_gray_map": "완성본 실측 — 본문 먹 K100 · 정답 부연 K80 · 머리 패널 그림자 K20",
+    "cmyk_map": {
+      "#18a6c0": [
+        75,
+        15,
+        20,
+        0
+      ],
+      "#13276f": [
+        100,
+        90,
+        0,
+        34
+      ],
+      "#bfdb7f": [
+        28,
+        0,
+        65,
+        0
+      ],
+      "#d4deed": [
+        15,
+        8,
+        2,
+        0
+      ],
+      "#dcdcd1": [
+        13,
+        9,
+        16,
+        0
+      ],
+      "#074481": [
+        100,
+        78,
+        13,
+        16
+      ],
+      "#0076bb": [
+        100,
+        40,
+        0,
+        6
+      ],
+      "#638fac": [
+        65,
+        36,
+        22,
+        0
+      ],
+      "#00559f": [
+        100,
+        68,
+        0,
+        9
+      ]
+    },
+    "_cmyk_map": "1권 완성본 CMYK 그대로 — 강조 청록 · 탭 그림자 남색 · DAY 연두 · 문제면 띠 · 상자선/정답면 띠 · 쪽번호 · 꼬리말 구분자(홀/짝) · 정답 번호"
+  },
+  "_틀": "기준: 책별_설정/whitebook/프리미엄북__화이트북__26-2-중간 (2026-09-14 인계본). options.expect 는 뺐다 — 새 원고는 수량이 다르므로."
+}

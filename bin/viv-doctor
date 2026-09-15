@@ -1,0 +1,80 @@
+#!/bin/bash
+# 비블리오 조판 환경 점검 — 런타임·의존성·서체가 갖춰졌는지 한눈에.
+#
+#   bin/viv-doctor                # 스튜디오 트리의 책 config 가 쓰는 서체까지 점검
+#   bin/viv-doctor <config 폴더>  # 인계 폴더 `책별_설정/` 처럼 config.json 이 모여 있는 곳도 함께
+set -e
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO"
+exec python3 -u - "$@" <<'PY'
+import glob, json, os, shutil, subprocess, sys
+
+ok = lambda b: "✅" if b else "❌"
+rows = []
+
+# ── 런타임 ──────────────────────────────────────────────
+rows.append(("Python", sys.version.split()[0],
+             sys.version_info >= (3, 12), "3.12+ 필요(중첩 f-string). 원본 실측 3.14"))
+node = shutil.which("node")
+nv = subprocess.run([node, "--version"], capture_output=True, text=True).stdout.strip() if node else ""
+rows.append(("Node", nv or "없음", bool(node), ""))
+viv = os.path.join("core", "render_vivlio", "node_modules", ".bin", "vivliostyle")
+vv = subprocess.run([viv, "--version"], capture_output=True, text=True).stdout.strip().replace("\n", " ") if os.path.exists(viv) else ""
+rows.append(("Vivliostyle CLI", vv or "없음", "11.1.0" in vv, "npm --prefix core/render_vivlio ci"))
+gs = shutil.which("gs")
+gv = subprocess.run([gs, "--version"], capture_output=True, text=True).stdout.strip() if gs else ""
+rows.append(("Ghostscript", gv or "없음", bool(gs), "print 단계(CMYK)에만 필요. brew install ghostscript"))
+
+# ── 파이썬 패키지 ───────────────────────────────────────
+for mod, pipname, need in (("fitz", "pymupdf", True), ("openpyxl", "openpyxl", True),
+                           ("docx", "python-docx", True), ("numpy", "numpy", True),
+                           ("PIL", "pillow", True), ("fontTools", "fonttools", True),
+                           ("anthropic", "anthropic", False),
+                           ("flask", "flask", False)):
+    try:
+        __import__(mod); have = True
+    except Exception:
+        have = False
+    rows.append((f"pip {pipname}", "있음" if have else "없음", have or not need,
+                 "" if need else ("선택(웹 작업대 bin/studio)" if mod == "flask"
+                                  else "선택(작업대 클로드 칸)")))
+
+# ── ICC ────────────────────────────────────────────────
+sys.path.insert(0, REPO := os.getcwd())
+from core.render_vivlio import prepress, stage, config as vcfg
+icc = prepress.find_profile()
+rows.append(("ICC 프로파일", os.path.basename(icc) if icc else "없음(gs 기본 CMYK 로 진행)", True,
+             "납품용은 JapanColor2001Coated.icc — Adobe CC 설치 시 자동 존재"))
+
+# ── 스튜디오 ───────────────────────────────────────────
+root = vcfg._studio_root()
+rows.append(("스튜디오 루트", root or "없음", bool(root), "YONE_STUDIO_ROOT 로 지정 가능"))
+books = glob.glob(os.path.join(root, "조판", "교재", "**", "config.json"), recursive=True) if root else []
+rows.append(("책(config.json)", f"{len(books)}권", True, "bin/viv --list"))
+
+# ── 서체 ───────────────────────────────────────────────
+cfgs = list(books)
+for extra in sys.argv[1:]:
+    cfgs += glob.glob(os.path.join(extra, "**", "config.json"), recursive=True)
+want = {}
+for p in cfgs:
+    try:
+        c = json.load(open(p, encoding="utf-8"))
+    except Exception:
+        continue
+    for f in c.get("fonts") or []:
+        fn = f.get("file") if isinstance(f, dict) else f
+        if fn:
+            want.setdefault(fn, set()).add(c.get("series", "?"))
+missing = {fn: s for fn, s in want.items() if not stage.find_font(fn)}
+rows.append(("서체", f"{len(want) - len(missing)}/{len(want)} 있음", not missing,
+             "탐색: " + ", ".join(stage.FONT_DIRS)))
+
+w = max(len(r[0]) for r in rows)
+for name, val, good, note in rows:
+    print(f"{ok(good)} {name.ljust(w)}  {val}" + (f"   — {note}" if note and not good else ""))
+if missing:
+    print("\n없는 서체 (파일명 그대로 ~/Library/Fonts 에 넣어야 한다):")
+    for fn in sorted(missing, key=lambda k: (-len(missing[k]), k)):
+        print(f"   {fn:36s} ← {', '.join(sorted(missing[fn]))}")
+PY

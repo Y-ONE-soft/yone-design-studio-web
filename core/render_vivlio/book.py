@@ -580,7 +580,8 @@ def main(argv=None):
             #   `"Gmarket Sans", sans-serif` 라 `sans-serif` 가 따로 떨어져
             #   「모르는 손잡이: sans-serif」로 죽었다(실측). 다음 `키=` 가
             #   시작되는 콤마에서만 자른다.
-            sets = [x for x in re.split(r",(?=\s*[a-z_]+\.[a-z0-9_]+\s*=)",
+            #   키는 `palette.sections.s-text.main` 처럼 셋 이상 이어질 수 있다(하이픈 포함).
+            sets = [x for x in re.split(r",(?=\s*[a-z_][a-z0-9_.-]*\s*=)",
                                         str(opts.get("set", ""))) if x.strip()]
             resets = [x for x in str(opts.get("reset", "")).split(",") if x.strip()]
             if sets or resets:

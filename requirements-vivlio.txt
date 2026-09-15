@@ -1,0 +1,14 @@
+pymupdf>=1.27
+openpyxl
+python-docx
+numpy
+pillow
+fonttools
+anthropic
+flask
+pyhwp
+jsonschema
+requests
+beautifulsoup4
+pyyaml
+six

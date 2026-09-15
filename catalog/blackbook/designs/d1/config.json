@@ -1,0 +1,215 @@
+{
+  "series": "blackbook",
+  "book": {
+    "id": "블랙북01",
+    "title": "블랙북 01",
+    "brand": "BLACK BOOK VOL.1",
+    "subject": "공통영어2 능률(오)",
+    "school": "배재고1",
+    "period": "26-2-중간",
+    "note": "교과서 공통영어2 능률 1·2과. 머리말 표기는 원고 표기 그대로."
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "배재1_블랙북01_내지"
+  },
+  "manuscript": {
+    "dir": "원고",
+    "pattern": "블랙북01_{kind}_교과서_{lesson}과.docx",
+    "lessons": [
+      1,
+      2
+    ],
+    "kinds": {
+      "problems": "문제",
+      "vocab": "연관어휘",
+      "answers": "해설"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Minion",
+      "file": "MinionPro-Regular.otf"
+    },
+    {
+      "family": "Minion",
+      "file": "MinionPro-Bold.otf"
+    },
+    {
+      "family": "Minion",
+      "file": "MinionPro-It.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDigitalBaeumOTF_Regular.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDigitalBaeumOTF_Bold.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Light.otf"
+    },
+    {
+      "family": "Ghana",
+      "file": "Ghanachocolate.otf"
+    },
+    {
+      "family": "PyeongChang",
+      "file": "PyeongChang-Bold.otf"
+    }
+  ],
+  "metrics": {
+    "content_h": 245.0,
+    "slot": 122.5,
+    "qgap": 4.0,
+    "col_w": 82.27,
+    "col_h": 240.0,
+    "agap": 2.5,
+    "body_top": 31.5,
+    "body_bottom": 279.0
+  },
+  "assets": {
+    "_note": "완성본에서 방패·브랜드·푸터를 잘라 assets/ 로. 디자인이 바뀔 때만 실행.",
+    "dir": "assets",
+    "src_pdf": "${STUDIO}/조판/교재/프리미엄북/블랙북/블랙북_1_v2_9.pdf",
+    "jobs": [
+      {
+        "name": "shield",
+        "page": 2,
+        "rect": [
+          188.0,
+          8.5,
+          209.0,
+          19.6
+        ]
+      },
+      {
+        "name": "brand",
+        "page": 7,
+        "rect": [
+          17.8,
+          9.5,
+          64.0,
+          17.6
+        ],
+        "unmix": {
+          "bg": [
+            147,
+            149,
+            152
+          ],
+          "zones": [
+            [
+              23.0,
+              [
+                144,
+                132,
+                0
+              ]
+            ],
+            [
+              999,
+              [
+                35,
+                31,
+                32
+              ]
+            ]
+          ]
+        }
+      },
+      {
+        "name": "footL",
+        "page": 1,
+        "rect": [
+          17.0,
+          282.5,
+          50.0,
+          289.0
+        ]
+      },
+      {
+        "name": "footR",
+        "page": 2,
+        "rect": [
+          193.6,
+          282.5,
+          197.0,
+          289.0
+        ]
+      }
+    ]
+  },
+  "finish": {
+    "_note": "간지·MEMO 는 인디자인 완성본의 아트워크 면을 그대로 끼운다. 마지막 면은 언제나 왼쪽(짝수), 뒤 간지는 1장.",
+    "art_pdf": "${STUDIO}/조판/교재/프리미엄북/블랙북/블랙북_1_v2_9.pdf",
+    "inserts": [
+      {
+        "marker": "§DIV1§",
+        "page": 0,
+        "mode": "replace"
+      },
+      {
+        "marker": "§DIV2§",
+        "page": 53,
+        "mode": "replace"
+      }
+    ],
+    "blank_fill": {
+      "page": 60
+    },
+    "end_on_left": {
+      "page": 60
+    },
+    "append": [
+      {
+        "page": 61,
+        "_redact": "뒤 간지 원본에 110번 지문의 잘린 조각이 남아 있다(인디자인 원본 자체의 결함) — 흰 상자로 가린다",
+        "redact": [
+          58.0,
+          0.0,
+          198.0,
+          8.0
+        ]
+      }
+    ],
+    "trim": {
+      "bleed": 3
+    }
+  },
+  "verify": {
+    "frame": {
+      "inner": 23,
+      "outer": 26,
+      "width": 167,
+      "top": 25,
+      "bottom": 277.5
+    },
+    "skip_pages": [
+      1
+    ],
+    "_skip_last": "뒤에 붙인 원본 아트워크 3면(MEMO·파리티·뒤 간지)은 우리가 조판한 면이 아니다",
+    "skip_last": 3,
+    "blank_ignore": "0123456789|BLACKOOKVOL.본문정답및해설MEMO§DIV"
+  },
+  "_틀": "기준: 책별_설정/blackbook/프리미엄북__블랙북__26-2-중간 (2026-09-14 인계본). options.expect 는 뺐다 — 새 원고는 수량이 다르므로."
+}

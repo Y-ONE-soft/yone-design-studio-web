@@ -1,0 +1,114 @@
+{
+  "vocacard": {
+    "name": "단어장 카드형",
+    "desc": "구간별 낱말 카드(표제어·품사·뜻·예문·유반의어). 이의보카.",
+    "root": "단어장",
+    "ready": "auto",
+    "base": "vocacard/단어장__이의1보카__26-2-중간"
+  },
+  "vocaunit": {
+    "name": "단어장 UNIT형",
+    "desc": "UNIT 단위 단어장 + 대단원 색 구분. 광문보카.",
+    "root": "단어장",
+    "ready": "auto",
+    "base": "vocaunit/단어장__광문보카__26-2-중간"
+  },
+  "vocabook": {
+    "name": "단어장 Day형",
+    "desc": "Day 단위 단어장 + 워크북·정답. 상일·배재·한영보카.",
+    "root": "단어장",
+    "ready": "auto",
+    "base": "vocabook/단어장__상일보카__26-2-중간"
+  },
+  "final": {
+    "name": "파이널 직전보충",
+    "desc": "시험범위(Y.OS·시트)에서 소스를 모아 만드는 파이널. 코드는 있으나 Y.OS 접근과 되수확본이 이 기기에 없어 아직 못 돌린다.",
+    "root": "파이널 직전보충",
+    "ready": "manual",
+    "base": "final/파이널 직전보충__고1__26-2-중간__광문1__Vol1"
+  },
+  "workbook": {
+    "name": "STEP BY STEP 워크북",
+    "desc": "13스텝 워크북. Step1~3 원고(docx·hwp·hwpx, 정답지 포함)를 전부 올리면 통합웹 파서가 플랜을 만들고 조판한다.",
+    "root": "워크북_비블리오",
+    "ready": "auto",
+    "base": "workbook/워크북_비블리오__수능만만10강",
+    "pipeline": "workbook_v2",
+    "fields": [
+      {
+        "key": "grade",
+        "label": "학년",
+        "placeholder": "1",
+        "default": "1"
+      },
+      {
+        "key": "year",
+        "label": "연도(두 자리)",
+        "placeholder": "25",
+        "default": "25"
+      },
+      {
+        "key": "month",
+        "label": "월",
+        "placeholder": "10",
+        "default": "10"
+      },
+      {
+        "key": "workbook_type",
+        "label": "유형",
+        "placeholder": "모의고사",
+        "default": "모의고사"
+      }
+    ],
+    "slot_hint": "Step1·Step2·Step3 원고 파일 전부 (정답지 포함 · PDF는 Step3만). 파일 이름의 'Step1 A1 어휘선택' 같은 표기로 스텝을 알아본다."
+  },
+  "special": {
+    "name": "특강 합본",
+    "desc": "방학·특강 합본(어휘·구문·독해). docx 1개.",
+    "root": "특강교재",
+    "ready": "auto",
+    "base": "special/특강교재__예비고1특강__26-여름"
+  },
+  "blackbook": {
+    "name": "프리미엄북 블랙북",
+    "desc": "교과 단원별 문제·연관어휘·해설. 과별 docx 여러 개.",
+    "root": "프리미엄북/블랙북",
+    "ready": "auto",
+    "base": "blackbook/프리미엄북__블랙북__26-2-중간"
+  },
+  "whitebook": {
+    "name": "프리미엄북 화이트북",
+    "desc": "어휘 실전문제. 폴더 안 docx 전부를 구조로 읽음.",
+    "root": "프리미엄북/화이트북",
+    "ready": "auto",
+    "base": "whitebook/프리미엄북__화이트북__26-2-중간"
+  },
+  "hankkeut": {
+    "name": "한끝",
+    "desc": "한영고 특강 문제형(문제지·정답). 새 계열 참조 구현.",
+    "root": "특강교재/한서끝",
+    "ready": "auto",
+    "base": "hankkeut/특강교재__한서끝__26-2-중간__한영1"
+  },
+  "seseo": {
+    "name": "세서특필",
+    "desc": "서술형 특강(Part 1·2·정답). docx 3개.",
+    "root": "특강교재/세서특필",
+    "ready": "auto",
+    "base": "seseo/특강교재__세서특필__26-2-중간__광문1"
+  },
+  "pocketbook": {
+    "name": "포켓북",
+    "desc": "코퍼스(인디자인 완성본 수확)·분석본 IDML/PDF·드라이브 삽화로 만드는 포켓북. 코드는 있으나 코퍼스·분석본·삽화 자료(nhj 맥 교재 폴더 + 드라이브)가 이 기기에 없어 아직 못 돌린다.",
+    "root": "포켓북",
+    "ready": "manual",
+    "base": "pocketbook/포켓북__26-2-중간__광문1"
+  },
+  "middle": {
+    "name": "중등 내신 정규",
+    "desc": "중등 내신 정규. 교재 폴더 automation 코드(인계 zip 에 있음)로 조판 — 폴더를 풀어 넣은 뒤 원고 docx.",
+    "root": "중등부/내신 정규 교재",
+    "ready": "auto",
+    "base": "middle/중등부__내신 정규 교재__중2_천재소_L5"
+  }
+}

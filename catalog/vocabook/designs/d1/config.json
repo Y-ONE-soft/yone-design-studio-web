@@ -1,0 +1,367 @@
+{
+  "series": "vocabook",
+  "book": {
+    "id": "상일보카01",
+    "title": "상일보카",
+    "school": "상일여고1",
+    "period": "26-2-중간",
+    "note": "Part1 단어장 + Part2 워크북 합본 1권"
+  },
+  "page": {
+    "width": 148,
+    "height": 210,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "상일1_상일보카01_내지"
+  },
+  "manuscript": {
+    "dir": "원고",
+    "files": {
+      "part1": "능률VOCA 어원편 Day 31~45 조판용.xlsx",
+      "workbook": "능률VOCA 어원편 Day 31~45 워크북.hwpx",
+      "answers": "능률VOCA 어원편 Day 31~45 워크북 정답.hwpx"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf",
+      "weight": 400
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf",
+      "weight": 500
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Light.otf",
+      "weight": 300
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Medium.otf",
+      "weight": 500
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Disp",
+      "file": "BebasNeue-Regular.otf",
+      "weight": 400
+    },
+    {
+      "family": "Disp",
+      "file": "BebasNeue-Bold.otf",
+      "weight": 700
+    }
+  ],
+  "palette": {
+    "common": {
+      "ink": "#231f20",
+      "gray": "#58595b",
+      "label": "#a7a9ac",
+      "rule": "#d9dde2",
+      "band": "#f1f3f6",
+      "hl": "#f3776f",
+      "ans": "#f2eedd",
+      "line": "#d8cfa8",
+      "pos-bg": "#e9edf2",
+      "blank": "#e0328c"
+    },
+    "sections": {
+      "s-head": {
+        "page": "p-head",
+        "main": "#0b4578",
+        "pale": "#ccdff3",
+        "sub": "#3f7fc4",
+        "label": "(1) 표제어"
+      },
+      "s-deriv": {
+        "page": "p-deriv",
+        "main": "#14566f",
+        "pale": "#cfe2e8",
+        "sub": "#3f92b8",
+        "label": "(2) 파생어"
+      },
+      "s-mw": {
+        "page": "p-mw",
+        "main": "#2f4a86",
+        "pale": "#d5dcef",
+        "sub": "#7a6cb5",
+        "label": "(3) more with"
+      },
+      "s-vs": {
+        "page": "p-vs",
+        "main": "#46356e",
+        "pale": "#ddd6ea",
+        "sub": "#8b6aa8",
+        "label": "(4) vs."
+      },
+      "s-wb": {
+        "page": "p-wb",
+        "main": "#6b6355",
+        "pale": "#e9e5dd",
+        "sub": "#b3a894",
+        "label": "워크북"
+      },
+      "s-ans": {
+        "page": "p-ans",
+        "main": "#55606b",
+        "pale": "#dfe3e7",
+        "sub": "#9aa5ae",
+        "label": "정답"
+      }
+    }
+  },
+  "metrics": {
+    "mgn_x": 22.0,
+    "margin_top": 23.0,
+    "margin_bottom": 14.0,
+    "lab_w": 25.25,
+    "page_margin_top": {
+      "p-ans": 12
+    }
+  },
+  "options": {
+    "brand": "SANGIL VOCA",
+    "subtitle": "능률VOCA 어원편 Day 31~45",
+    "day_range": [
+      31,
+      45
+    ],
+    "sections": {
+      "s-head": {
+        "title": "표제어"
+      },
+      "s-deriv": {
+        "title": "파생어 & 연관어휘"
+      },
+      "s-mw": {
+        "title": "more with"
+      },
+      "s-vs": {
+        "title": "VOCA vs. VOCA"
+      },
+      "s-ans": {
+        "title": "정답"
+      }
+    },
+    "parts": {
+      "1": {
+        "kicker": "PART 1",
+        "title": "단어장",
+        "sub": "능률VOCA 어원편 Day 31~45",
+        "toc": [
+          [
+            "(1) 표제어",
+            "head"
+          ],
+          [
+            "(2) 파생어 & 연관어휘",
+            "deriv"
+          ],
+          [
+            "(3) more with",
+            "mw"
+          ],
+          [
+            "(4) VOCA vs. VOCA",
+            "vs"
+          ]
+        ]
+      },
+      "2": {
+        "kicker": "PART 2",
+        "title": "워크북",
+        "sub": "Day 31~45 · A~D + 정답",
+        "toc": [
+          [
+            "A",
+            "우리말 뜻 쓰기"
+          ],
+          [
+            "B",
+            "빈칸에 알맞은 단어"
+          ],
+          [
+            "C",
+            "영영사전 풀이"
+          ],
+          [
+            "D",
+            "유의어 · 반의어 찾기"
+          ],
+          [
+            "정답",
+            "Day 31~45"
+          ]
+        ]
+      }
+    },
+    "_more_with_roots": "원고에 어근명이 없어 여기서 관리한다. 합계 = 시트 행 수",
+    "more_with_roots": [
+      [
+        "log",
+        2
+      ],
+      [
+        "dict",
+        2
+      ],
+      [
+        "pel",
+        2
+      ],
+      [
+        "long",
+        2
+      ],
+      [
+        "miss",
+        3
+      ],
+      [
+        "spir",
+        3
+      ],
+      [
+        "phan",
+        2
+      ],
+      [
+        "meter",
+        3
+      ],
+      [
+        "audi",
+        4
+      ]
+    ],
+    "_vs_groups": "원고에 묶음 경계·제목이 없어 여기서 관리한다. (개수, 제목)",
+    "vs_groups": [
+      [
+        3,
+        "기억하다, 생각해내다"
+      ],
+      [
+        6,
+        "여행"
+      ],
+      [
+        3,
+        "작동시키다, 다루다"
+      ],
+      [
+        3,
+        "변하다, 바꾸다"
+      ],
+      [
+        3,
+        "피하다"
+      ],
+      [
+        3,
+        "벌하다"
+      ],
+      [
+        5,
+        "공포, 두려움"
+      ],
+      [
+        5,
+        "다치게 하다, 손상시키다"
+      ],
+      [
+        5,
+        "직업"
+      ],
+      [
+        5,
+        "냄새"
+      ],
+      [
+        4,
+        "회사"
+      ],
+      [
+        3,
+        "허락하다"
+      ],
+      [
+        3,
+        "빌리다"
+      ],
+      [
+        4,
+        "명백한"
+      ],
+      [
+        4,
+        "능력"
+      ],
+      [
+        2,
+        "관객, 관중"
+      ],
+      [
+        3,
+        "운명"
+      ],
+      [
+        2,
+        "정치인"
+      ]
+    ],
+    "_deriv_fix": "어근이 짧아 자동 귀속이 안 되는 예외 (파생어 → 표제어)",
+    "deriv_fix": {
+      "flight": "fly",
+      "usage": "use"
+    },
+    "sample": {
+      "day": 31,
+      "vs": 2,
+      "workbook": 1,
+      "answers": 1
+    }
+  },
+  "finish": {
+    "_note": "1쪽(임시 표지면)을 간지 앞으로 교체하고 맨 뒤에 간지 뒤를 붙인다. TrimBox 는 마지막에 전 면.",
+    "inserts": [
+      {
+        "at": 1,
+        "mode": "replace",
+        "page": 0,
+        "pdf": "${STUDIO}/디자인/표지/상일보카/상일1_상일보카01_간지_앞.pdf"
+      }
+    ],
+    "append": [
+      {
+        "page": 0,
+        "pdf": "${STUDIO}/디자인/표지/상일보카/상일1_상일보카01_간지_뒤.pdf"
+      }
+    ],
+    "trim": {
+      "bleed": 3
+    },
+    "suffix": "_최종"
+  },
+  "verify": {
+    "suffix": "_최종",
+    "skip_pages": [
+      1
+    ],
+    "blank_ignore": "MEMO"
+  },
+  "_틀": "기준: 책별_설정/vocabook/단어장__상일보카__26-2-중간 (2026-09-14 인계본). options.expect 는 뺐다 — 새 원고는 수량이 다르므로."
+}

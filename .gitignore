@@ -31,3 +31,8 @@ data_corpus/
 # Vivliostyle 파일럿 (W42)
 pilot/vivliostyle/node_modules/
 core/render_vivlio/node_modules/
+
+# 배포용 리포(2026-09-15): 비밀 백업·PDF 판정 임시 업로드는 추적하지 않는다
+.env.bak*
+catalog/_intake/*
+!catalog/_intake/.keep
