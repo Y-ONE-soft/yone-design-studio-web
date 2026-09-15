@@ -1,6 +1,6 @@
-# 로컬 실행 (GitHub 리포 `YONE-DESIGN/YONE-DESIGN-WEB` main 기준)
+# 로컬 실행 (GitHub 리포 `Y-ONE-soft/yone-design-studio-web` main 기준)
 
-이 폴더는 GitHub 리포 클론이다(2026-09-15). 통합웹(`app.py`, 로그인)은 그대로 있고, 그와 별개로
+이 폴더는 우리 배포용 리포 `Y-ONE-soft/yone-design-studio-web`의 작업 사본이다(2026-09-15, 이전 `YONE-DESIGN/YONE-DESIGN-WEB`에서 분리). 통합웹(`app.py`, 로그인)은 그대로 있고, 그와 별개로
 로그인 없이 로컬에서 쓰는 **단독 실행기**(`bin/studio` → `studio_server.py`)를 얹었다.
 단독 실행기는 `templates_local/base.html`(최소 머리띠)을 쓰고, 나머지 템플릿·엔진은 리포 것을 그대로 쓴다.
 

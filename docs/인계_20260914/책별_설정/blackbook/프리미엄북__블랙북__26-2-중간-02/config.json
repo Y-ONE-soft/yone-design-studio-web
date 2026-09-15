@@ -1,0 +1,96 @@
+{
+  "series": "blackbook",
+
+  "book": {
+    "id": "블랙북02",
+    "title": "블랙북 02",
+    "brand": "BLACK BOOK VOL.2",
+    "subject": "고1 2023년 11월 학력평가",
+    "school": "배재고1",
+    "period": "26-2-중간",
+    "note": "모의고사 지문본. 묶음은 과가 아니라 지문 번호(18~22 / 23·24·29~31). 배치는 1권과 동일."
+  },
+
+  "page": { "width": 210, "height": 297, "bleed": 3 },
+
+  "output": { "dir": ".", "stem": "배재1_블랙북02_내지" },
+
+  "manuscript": {
+    "dir": "원고",
+    "pattern": "블랙북02_{kind}_{lesson}.docx",
+    "lessons": ["18~22번", "23~31번"],
+    "labels": ["18 ~ 22번", "23·24·29 ~ 31번"],
+    "_labels": "머리·꼬리에 인쇄되는 말 — 원고 머리글의 표기를 그대로 쓴다",
+    "vocab_title": false,
+    "_vocab_title": "1권은 지문 앞에 제목 줄이 있었지만 이 책은 지문이 바로 시작한다",
+    "kinds": { "problems": "문제", "vocab": "연관어휘", "answers": "해설" }
+  },
+
+  "fonts": [
+    { "family": "Minion",      "file": "MinionPro-Regular.otf" },
+    { "family": "Minion",      "file": "MinionPro-Bold.otf" },
+    { "family": "Minion",      "file": "MinionPro-It.otf" },
+    { "family": "Noto",        "file": "NotoSansCJKkr-Regular.otf" },
+    { "family": "Noto",        "file": "NotoSansCJKkr-Medium.otf" },
+    { "family": "Noto",        "file": "NotoSansCJKkr-Bold.otf" },
+    { "family": "Elice",       "file": "EliceDigitalBaeumOTF_Regular.otf" },
+    { "family": "Elice",       "file": "EliceDigitalBaeumOTF_Bold.otf" },
+    { "family": "Neolli",      "file": "EliceDXNeolliOTF-Light.otf" },
+    { "family": "Ghana",       "file": "Ghanachocolate.otf" },
+    { "family": "PyeongChang", "file": "PyeongChang-Bold.otf" }
+  ],
+
+  "metrics": {
+    "content_h": 245.0,
+    "slot": 122.5,
+    "qgap": 4.0,
+    "col_w": 82.27,
+    "col_h": 240.0,
+    "agap": 2.5,
+    "body_top": 31.5,
+    "body_bottom": 279.0
+  },
+
+  "assets": {
+    "_note": "1권과 같은 디자인이라 아트워크도 같은 완성본에서. 다만 브랜드·왼쪽 푸터는 'VOL.2' 가 박혀 있어 2권 완성본(26-1-기말)에서 자른다.",
+    "dir": "assets",
+    "src_pdf": "${STUDIO}/조판/교재/프리미엄북/블랙북/블랙북_1_v2_9.pdf",
+    "vol2_pdf": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/(공유용)각인북스_자료/노윤기T(배재1,2)/배재1/프리미엄반(블랙화이트)/26-1-기말/배재1_블랙북02_내지(수정).pdf",
+    "jobs": [
+      { "name": "shield", "page": 2, "rect": [188.0, 8.5, 209.0, 19.6] },
+      { "name": "brand", "page": 3, "rect": [17.8, 9.5, 64.0, 17.6],
+        "src": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/(공유용)각인북스_자료/노윤기T(배재1,2)/배재1/프리미엄반(블랙화이트)/26-1-기말/배재1_블랙북02_내지(수정).pdf",
+        "unmix": { "bg": [147, 149, 152],
+                   "zones": [[23.0, [144, 132, 0]], [999, [35, 31, 32]]] } },
+      { "name": "footL", "page": 1, "rect": [17.0, 282.5, 50.0, 289.0],
+        "src": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/(공유용)각인북스_자료/노윤기T(배재1,2)/배재1/프리미엄반(블랙화이트)/26-1-기말/배재1_블랙북02_내지(수정).pdf" },
+      { "name": "footR", "page": 2, "rect": [193.6, 282.5, 197.0, 289.0] }
+    ]
+  },
+
+  "finish": {
+    "_note": "간지·MEMO 는 인디자인 완성본의 아트워크 면을 그대로 끼운다. 마지막 면은 언제나 왼쪽(짝수), 뒤 간지는 1장.",
+    "art_pdf": "${STUDIO}/조판/교재/프리미엄북/블랙북/블랙북_1_v2_9.pdf",
+    "inserts": [
+      { "marker": "§DIV1§", "page": 0, "mode": "replace" },
+      { "marker": "§DIV2§", "page": 53, "mode": "replace" }
+    ],
+    "blank_fill": { "page": 60 },
+    "end_on_left": { "page": 60 },
+    "append": [
+      { "page": 61,
+        "_redact": "뒤 간지 원본에 지문 잔재가 남아 있다(인디자인 원본 자체의 결함) — 흰 상자로 가린다",
+        "redact": [58.0, 0.0, 198.0, 8.0] }
+    ],
+    "trim": { "bleed": 3 }
+  },
+
+  "verify": {
+    "frame": { "inner": 23, "outer": 26, "width": 167,
+               "top": 25, "bottom": 277.5 },
+    "skip_pages": [1],
+    "_skip_last": "뒤에 붙인 원본 아트워크 3면(MEMO·파리티·뒤 간지)은 우리가 조판한 면이 아니다",
+    "skip_last": 3,
+    "blank_ignore": "0123456789|BLACKOOKVOL.본문정답및해설MEMO§DIV"
+  }
+}

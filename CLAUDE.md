@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+> **⚠ 2026-09-15 — 이 리포는 `Y-ONE-soft/yone-design-studio-web`(배포용, 이전 `YONE-DESIGN/YONE-DESIGN-WEB`에서 분리)이다.**
+> 아래 본문은 이전 개발자(nhj) 아이맥 환경 기준이라 이 맥에서는 **다음이 없다**: `조판_자동화/`·`통합웹사이트/` 심볼릭 링크,
+> launchd `com.yonestudio.flask`(:5010), InDesign. 이 맥에서의 실행은 `README_로컬실행.md` 기준 — `bin/studio` → http://127.0.0.1:5099/catalog
+> (Vivliostyle 코드 조판 + 카탈로그, 로그인 없음). 인계 문서·작업 메모는 `docs/인계_20260914/`.
+> 책 데이터는 `~/Documents/작업/Y.ONE STUDIO/조판/교재/`, 클로드 키는 `~/.config/yone/env`(리포·채팅에 적지 말 것).
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > 이 디렉터리(`조판_자동화/`)는 `통합웹사이트/` 심볼릭 링크와 동일합니다. launchd가 `통합웹사이트/app.py` 경로로 Flask를 spawn하므로 두 경로 어느 쪽으로 작업해도 같은 파일을 수정하는 것입니다.

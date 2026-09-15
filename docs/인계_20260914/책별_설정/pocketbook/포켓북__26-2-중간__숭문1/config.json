@@ -1,0 +1,48 @@
+{
+ "series": "pocketbook",
+ "book": {
+  "id": "숭문1_포켓북",
+  "title": "숭문1 포켓북 26-2 중간"
+ },
+ "page": {
+  "width": 148,
+  "height": 210,
+  "bleed": 3
+ },
+ "output": {
+  "dir": ".",
+  "stem": "숭문1_포켓북(26-2-중간)_내지"
+ },
+ "options": {
+  "analysis": [
+   "${STUDIO}/조판/교재/포켓북/_idml/analysis/고1,고2(공통)/26-2-중간/숭문1"
+  ],
+  "manuscript": [],
+  "folio_start": 2,
+  "illust_dirs": [
+   "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/포켓북 삽화정리"
+  ],
+  "school": "숭문1",
+  "grade": "고1",
+  "review_tests": [
+   "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/리테 모음"
+  ]
+ },
+ "finish": {
+  "trim": {
+   "bleed": 3
+  },
+  "inserts": [
+   {
+    "pdf": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/이미지/포켓북/C버전/포켓북_1P.ai",
+    "at": 1,
+    "mode": "insert"
+   }
+  ],
+  "append": [
+   {
+    "pdf": "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/인디자인 파일/이미지/포켓북/C버전/포켓북_마지막P.ai"
+   }
+  ]
+ }
+}

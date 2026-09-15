@@ -1,0 +1,27 @@
+{
+ "series": "workbook",
+ "book": {
+  "id": "워크북수능만만10강",
+  "title": "STEP BY STEP 워크북",
+  "brand": "STEP BY STEP",
+  "line1": "수능만만 기본",
+  "line2": "10강"
+ },
+ "page": {
+  "width": 210,
+  "height": 297,
+  "bleed": 3
+ },
+ "output": {
+  "dir": ".",
+  "stem": "워크북수능만만10강_내지_비블리오"
+ },
+ "manuscript": {
+  "plan": "${BOOK}/원고/render_plan.json"
+ },
+ "verify": {
+  "blank_pages": [
+   1
+  ]
+ }
+}

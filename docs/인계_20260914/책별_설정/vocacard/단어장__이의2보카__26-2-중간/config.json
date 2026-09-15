@@ -1,0 +1,176 @@
+{
+  "series": "vocacard",
+  "book": {
+    "id": "이의2보카01",
+    "title": "이의2보카",
+    "school": "이의고2",
+    "period": "26-2-중간",
+    "note": "자체 편집 단어장 — 교과서 · 부교재 · 모의고사 3파트 단권"
+  },
+  "page": {
+    "width": 148,
+    "height": 210,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "이의2_이의2보카01_내지"
+  },
+  "_manuscript_note": "정본은 **워드**다. 엑셀본 유의어 칸에는 원고를 만들며 남긴 작업 메모('유. 3개 확보 불가 — 사유: …')가 71낱말에 섞여 있어 그대로 조판하면 책에 실린다(실측: 65면). 워드본은 학생이 볼 것만 담겨 있다.",
+  "manuscript": {
+    "dir": "원고",
+    "files": {
+      "words": "이의고2_단어장_원고(수정).docx"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf",
+      "weight": 400
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf",
+      "weight": 500
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Light.otf",
+      "weight": 300
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Medium.otf",
+      "weight": 500
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Disp",
+      "file": "BebasNeue-Regular.otf",
+      "weight": 400
+    },
+    {
+      "family": "Disp",
+      "file": "BebasNeue-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Logo",
+      "file": "Paperlogy-9Black.ttf",
+      "weight": 900
+    }
+  ],
+  "_palette_note": "표지 시안(송아영T 시안A_INFLATE) 실측 — 초록 #19A86B(어휘 배지 벡터값) · 먹 #14161a(제목 글자) · 분홍 #FDC5D7~#FEDAE7(배경). 3파트는 표지의 두 축(초록·분홍)에 파랑을 더해 색상환을 벌렸다 — 명도만 달리했더니 구분이 안 됐고 짙은 그린은 탁했다.",
+  "palette": {
+    "common": {
+      "ink": "#14161a",
+      "gray": "#5c6470",
+      "label": "#9aa2ac",
+      "rule": "#dfe3e8",
+      "band": "#faedf1",
+      "hl": "#e1477a",
+      "pos-bg": "#eef1f4"
+    },
+    "sections": {
+      "s-text": {
+        "page": "p-text",
+        "main": "#14a667",
+        "pale": "#dcf7eb",
+        "sub": "#54d49c",
+        "label": "교과서"
+      },
+      "s-supp": {
+        "page": "p-supp",
+        "main": "#2570b6",
+        "pale": "#dceaf7",
+        "sub": "#5496d4",
+        "label": "부교재"
+      },
+      "s-mock": {
+        "page": "p-mock",
+        "main": "#c22e5f",
+        "pale": "#f7dce5",
+        "sub": "#d4547e",
+        "label": "모의고사"
+      }
+    }
+  },
+  "metrics": {
+    "mgn_x": 22.0,
+    "margin_top": 23.0,
+    "margin_bottom": 14.0,
+    "lab_w": 25.25
+  },
+  "options": {
+    "brand": "EEGOEEGO",
+    "subtitle": "영어Ⅱ YBM(박) 1과 · 수능특강Light 8~11강 · 2026년 9월 고2 학평",
+    "_expect_note": "2026-09-08 수정 원고 — 낱말 121→542, 구간 36→35(부교재 9강 Ex05~07 제외). 열 이름이 '구간'→'지문' 으로 바뀌었지만 파서는 열 위치로 읽어 영향 없다.",
+    "expect": {
+      "words": 542,
+      "parts": {
+        "text": 105,
+        "supp": 257,
+        "mock": 180
+      }
+    },
+    "_page_cap_note": "한 면에 담는 낱말 카드 수. 수정 원고는 유의어가 6줄이라 카드가 51mm(이전 40mm) — 4장이면 면(가용 170mm)을 넘쳐 마지막 1장이 밀리면서 한 장짜리 면이 101개 생겼다. 3장 = 154mm + 소제목 9mm 로 맞다.",
+    "page_cap": 3,
+    "_idx_note": "측면 라벨을 파트마다 내리는 폭(mm). 교과서 0 · 부교재 1칸 · 모의고사 2칸.",
+    "idx_step_mm": 22,
+    "_cover_note": "간지(앞·뒤)에 들어가는 글. 3D 그림은 표지 PDF 에서 뽑아 둔 assets/up3d.png.",
+    "cover_line": "이의고2 2학기 중간",
+    "cover_badge": "어휘",
+    "cover_tagline": [
+      "UPGRADE YOUR ENGLISH",
+      "ELEVATE YOUR FUTURE"
+    ],
+    "author": "SONG AHYOUNG",
+    "sample": {
+      "part": "text",
+      "n": 6
+    },
+    "_fit_note": "이 책은 검수를 마친 189쪽 판을 유지한다 — 면 나눔 값을 그때 값으로 고정. 이의고1 에서 다듬은 기본값(171/160/어림+2mm)을 그대로 받으면 193쪽이 되어 판이 달라진다.",
+    "page_fill_mm": 173.0,
+    "page_first_fill_mm": 173.0,
+    "rough_pad_mm": 0.0
+  },
+  "_finish_note": "간지는 조판이 직접 그린다(표지 축소 삽입을 걷어냄) — 여기서는 도련·TrimBox 만 마감한다.",
+  "finish": {
+    "trim": {
+      "bleed": 3
+    },
+    "suffix": "_최종"
+  },
+  "_print_note": "인쇄 원고 — 무채색·회색 계열은 K 단색으로 먼저 바꾸고(5~7pt 작은 글자를 4도로 찍으면 핀 어긋남으로 뭉갠다) 나머지 유채색만 ICC 로 CMYK 변환한다. K 값은 조판 팔레트의 명도 실측.",
+  "print": {
+    "suffix": "_최종",
+    "out": "_인쇄",
+    "profile": "JapanColor2001Coated.icc",
+    "gray_map": {
+      "#14161a": 1.0,
+      "#000000": 1.0,
+      "#5c6470": 0.61,
+      "#9aa2ac": 0.37,
+      "#b9bfc7": 0.25,
+      "#e4e8ec": 0.09,
+      "#eef1f4": 0.06,
+      "#ffffff": 0.0
+    }
+  },
+  "verify": {
+    "suffix": "_최종",
+    "skip_pages": [
+      1
+    ]
+  }
+}

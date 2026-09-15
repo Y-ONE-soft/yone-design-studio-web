@@ -1,0 +1,100 @@
+{
+  "series": "final",
+  "book": {
+    "id": "광문2_파이널_Vol2",
+    "title": "광문2 파이널 직전보충 Vol2",
+    "brand": "FINAL STEP",
+    "school": "광문2",
+    "grade": "고2",
+    "period": "26-1-기말"
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "광문2_파이널"
+  },
+  "options": {
+    "vol": 2
+  },
+  "manuscript": {
+    "dir": "../원고",
+    "files": {
+      "content": "content.json"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Light.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Medium.otf"
+    },
+    {
+      "family": "Neolli",
+      "file": "EliceDXNeolliOTF-Bold.otf"
+    },
+    {
+      "family": "Jalnan",
+      "file": "JalnanOTF.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Black.otf"
+    }
+  ],
+  "print": {
+    "out": "(Vol2)_내지_인쇄",
+    "gray_map": {
+      "#231f20": 1.0,
+      "#6d6e71": 0.66,
+      "#a7a9ac": 0.4,
+      "#e2e3e4": 0.13,
+      "#e6e7e8": 0.11,
+      "#f2f2f3": 0.06,
+      "#ffffff": 0.0
+    },
+    "_note": "전권 무채색 — 먹·회색을 DeviceGray 로 내려 K 단색으로 낸다"
+  },
+  "verify": {
+    "suffix": "(Vol2)_내지",
+    "frame": {
+      "inner": 21,
+      "outer": 25,
+      "width": 170.7,
+      "top": 25,
+      "bottom": 283
+    },
+    "blank_ignore": "0123456789|FINALSTEPCHAPTER.",
+    "skip_pages": [
+      1
+    ],
+    "skip_last": 1,
+    "design": {
+      "off": true
+    }
+  },
+  "finish": {
+    "_note": "간지는 조판한다(차례가 권·학년마다 다르다). 크레딧 면은 계열 자산(내지/마지막페이지.ai)을 뒤에 붙인다.",
+    "trim": {
+      "bleed": 3
+    }
+  }
+}

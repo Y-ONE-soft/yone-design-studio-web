@@ -1,0 +1,291 @@
+{
+  "series": "seseo",
+  "book": {
+    "id": "광문2_세서특필_26-2-중간",
+    "title": "세서특필",
+    "school": "광문고2",
+    "period": "26-2-중간",
+    "running": "2026 광문고2 서술형 특강",
+    "header": "2026 광문고 2학년 2학기 중간고사 서술형 대비",
+    "wordmark": "세/서/특/필",
+    "part1": "세희T PICK 중요문장",
+    "part2": "광문고 기출 서술형 실전문제",
+    "answers": "정답 및 해설",
+    "note": "세희쌤과 함께하는 서술형 특별 필승법. 광문1(26-2 중간)과 같은 계열·같은 판짜기, 색만 다르게 간다.",
+    "author": "박세희",
+    "cover_exam": "2026 2학기 중간고사 대비",
+    "cover_series": "광문고2 서술형 특강",
+    "cover_tagline": "광문고 영어는, 박세희.",
+    "cover_hand": "광문고 서술형 출제 경향 완벽 대비 필승법!"
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "광문2_세서특필_내지"
+  },
+  "manuscript": {
+    "dir": "원고",
+    "files": {
+      "part1": "광문고2 26-2중간 세서특필 Part 1.docx",
+      "part2": "광문고2 26-2중간 세서특필 Part 2.docx",
+      "answers": "광문고2 26-2중간 세서특필 Part 2 정답 및 해설.docx"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf"
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf"
+    },
+    {
+      "family": "Myr",
+      "file": "MyriadPro-Regular.otf"
+    },
+    {
+      "family": "Myr",
+      "file": "MyriadPro-Semibold.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Light.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Regular.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Medium.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-SemiBold.otf"
+    },
+    {
+      "family": "Pre",
+      "file": "Pretendard-Bold.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Medium.otf"
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Bold.otf"
+    },
+    {
+      "family": "Ghana",
+      "file": "Ghanachocolate.otf"
+    },
+    {
+      "family": "Jal",
+      "file": "JalnanOTF.otf"
+    }
+  ],
+  "finish": {
+    "_note": "간지는 직접 그린다(seseo render). 여기서는 TrimBox 만 — page.bleed 로 자동."
+  },
+  "print": {
+    "_note": "새벽 하늘 팔레트 — 참고/palette.py 가 쓴다. 무채색은 K 단색, 유채색은 아래 값으로 못 박는다.",
+    "cmyk_map": {
+      "#7cacdc": [
+        50,
+        22,
+        0,
+        0
+      ],
+      "#adcdec": [
+        30,
+        10,
+        0,
+        0
+      ],
+      "#d6e4f5": [
+        14,
+        5,
+        0,
+        0
+      ],
+      "#e9f2fb": [
+        7,
+        2,
+        0,
+        0
+      ],
+      "#28659a": [
+        88,
+        60,
+        16,
+        4
+      ],
+      "#228fb6": [
+        78,
+        30,
+        16,
+        2
+      ],
+      "#69c9cd": [
+        55,
+        0,
+        22,
+        0
+      ],
+      "#d8efec": [
+        14,
+        0,
+        7,
+        0
+      ],
+      "#07a3aa": [
+        80,
+        12,
+        34,
+        2
+      ],
+      "#fecb88": [
+        0,
+        22,
+        52,
+        0
+      ],
+      "#fff3de": [
+        0,
+        4,
+        13,
+        0
+      ],
+      "#ffedad": [
+        0,
+        5,
+        38,
+        0
+      ],
+      "#f9f6e5": [
+        2,
+        2,
+        10,
+        0
+      ],
+      "#ffd680": [
+        0,
+        16,
+        58,
+        0
+      ],
+      "#9bd7d5": [
+        38,
+        0,
+        18,
+        0
+      ],
+      "#e5f4f1": [
+        9,
+        0,
+        5,
+        0
+      ],
+      "#3ca09d": [
+        72,
+        16,
+        40,
+        3
+      ],
+      "#c7ddf3": [
+        20,
+        6,
+        0,
+        0
+      ],
+      "#ffe9c2": [
+        0,
+        8,
+        26,
+        0
+      ],
+      "#d6e3f4": [
+        14,
+        6,
+        0,
+        0
+      ],
+      "#6ea9db": [
+        55,
+        22,
+        0,
+        0
+      ],
+      "#d8eeeb": [
+        14,
+        0,
+        8,
+        0
+      ],
+      "#50bbb7": [
+        64,
+        4,
+        32,
+        0
+      ],
+      "#ffebce": [
+        0,
+        7,
+        20,
+        0
+      ],
+      "#fcbb6f": [
+        0,
+        30,
+        64,
+        0
+      ],
+      "#809eb7": [
+        52,
+        30,
+        18,
+        0
+      ],
+      "#89acda": [
+        45,
+        24,
+        0,
+        0
+      ],
+      "#355d88": [
+        85,
+        62,
+        24,
+        10
+      ],
+      "#f9fbee": [
+        2,
+        0,
+        7,
+        0
+      ],
+      "#92a2af": [
+        45,
+        30,
+        24,
+        0
+      ]
+    },
+    "gray_map": {
+      "#231f20": 1.0,
+      "#414042": 0.9,
+      "#58595b": 0.8,
+      "#6d6f71": 0.7,
+      "#ffffff": 0.0
+    }
+  }
+}

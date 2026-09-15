@@ -1,0 +1,85 @@
+{
+  "series": "hankkeut",
+
+  "book": {
+    "id": "한서끝_한영1_26-2-중간",
+    "title": "한서끝",
+    "wordmark": "한.서.끝.",
+    "header": "26학년도 2학기 중간고사 대비 서답형",
+    "footer": "2026 한영고1 한서끝",
+    "school": "한영고1",
+    "period": "26-2-중간",
+    "note": "한영고 서술형 끝 — 문제형. 한 면 위·아래 두 칸, 긴 문항은 한 면 통째. 1면·끝 면 = 표지 느낌 간지, 파트 사이 간지 2면."
+  },
+
+  "page": { "width": 210, "height": 297, "bleed": 3 },
+
+  "output": { "dir": ".", "stem": "한영1_한서끝_내지" },
+
+  "manuscript": {
+    "_note": "확정 원고(2026-09-13) — 드라이브 콘텐츠 관리/내신대비/2026년/고1/한영고1/3. 26-2-중간/한서끝 의 로컬 사본. 원고가 바뀌면 다시 복사해 온다(드라이브 직접 수정 금지).",
+    "dir": "원고",
+    "problems": "한서끝 문제지.docx",
+    "answers": "한서끝 정답및풀이_학생용.docx"
+  },
+
+  "cover": {
+    "_note": "표지 문구(grid·tagline)는 확정 전 임시값(한문끝 구성을 따름). 속표지 판 표기·구성·범위는 원고 머리에서 읽는다.",
+    "grid": ["한영고내신", "필수서술형", "완벽대비끝"],
+    "accent": [[0, 0], [1, 2], [2, 4]],
+    "tagline": ["한영고 내신 필수", "서술형 완벽 대비 끝"],
+    "colophon": "한서끝  |  2026 한영고 1학년 2학기 중간고사 서답형 대비"
+  },
+
+  "parts": [
+    { "title": "서답형 40제", "en": "CONSTRUCTED-RESPONSE  40" },
+    { "title": "정답 및 풀이", "en": "ANSWERS  &  SOLUTIONS" }
+  ],
+
+  "finish": {
+    "_note": "총 면수 배수 — 기본 무선제본이라 짝수(2). 사용자가 중철이라고 할 때만 4.",
+    "multiple": 2
+  },
+
+  "fonts": [
+    { "family": "Minion", "file": "MinionPro-Regular.otf" },
+    { "family": "Minion", "file": "MinionPro-Bold.otf" },
+    { "family": "Minion", "file": "MinionPro-It.otf" },
+    { "family": "Pre",    "file": "Pretendard-Regular.otf" },
+    { "family": "Pre",    "file": "Pretendard-Medium.otf" },
+    { "family": "Pre",    "file": "Pretendard-SemiBold.otf" },
+    { "family": "Pre",    "file": "Pretendard-Bold.otf" },
+    { "family": "Maru",   "file": "MaruBuri-Light.otf" },
+    { "family": "Maru",   "file": "MaruBuri-Regular.otf" },
+    { "family": "Maru",   "file": "MaruBuri-SemiBold.otf" },
+    { "family": "Maru",   "file": "MaruBuri-Bold.otf" },
+    { "family": "Gm",     "file": "GmarketSansLight.otf" },
+    { "family": "Gm",     "file": "GmarketSansMedium.otf" },
+    { "family": "Gm",     "file": "GmarketSansBold.otf" }
+  ],
+
+  "metrics": {
+    "top": 30.0, "bottom": 20.0, "inner": 20.0, "outer": 17.0,
+    "slot": 119.5, "gap": 7.0
+  },
+
+  "assets": {
+    "_note": "로고는 한문끝 수정 표지 PDF 의 벡터 패스를 SVG 로 옮긴다(bin/viv <책> theme). 좌표 = 표지 미디어 mm.",
+    "dir": "assets",
+    "cover_pdf": "참고/한문끝_표지(수정).pdf",
+    "jobs": [
+      { "name": "logo_books", "page": 0, "rect": [232.0, 271.0, 268.5, 281.5], "color": "#231F20" },
+      { "name": "logo_gakin", "page": 0, "rect": [84.0, 267.0, 126.5, 276.2],
+        "_color": "색을 안 적으면 표지 원래 색(남색 C100 M100 Y57 K13) 그대로" }
+    ]
+  },
+
+  "print": {
+    "_note": "무채색 K 단계는 계열 기본표. 각인입시전문학원 남색 로고는 수정 표지의 CMYK 값 그대로 못 박는다(ICC 를 안 탄다).",
+    "cmyk_map": { "#2e2c53": [100, 100, 57, 13] }
+  },
+
+  "verify": {
+    "design": { "strict": true }
+  }
+}

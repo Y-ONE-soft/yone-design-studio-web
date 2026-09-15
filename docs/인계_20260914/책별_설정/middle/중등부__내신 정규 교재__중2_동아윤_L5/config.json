@@ -1,0 +1,34 @@
+{
+  "_note": "automation 을 그대로 부르는 다리다(`series/middle`). 조판 코드는 여기 없고 `내신 정규 교재/automation/` 에 있다 — 이 파일은 3계열 도구(bin/viv · 내지 작업대)가 이 책을 **찾을 수 있게** 한다. `middle.vol` 이 지금 보는 권(1=같이새김 · 2=홀로새김)이다.",
+  "series": "middle",
+  "middle": {
+    "book": "donga",
+    "vol": 1
+  },
+  "book": {
+    "id": "중2_동아윤_L5",
+    "title": "중2 동아(윤) Lesson 05",
+    "school": "중등부",
+    "period": "내신 정규",
+    "series_no": 1
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "중2_동아윤_L5_1권(같이새김)_내지"
+  },
+  "verify": {
+    "design": {
+      "strict": false
+    }
+  },
+  "styles": {
+    ".sechd": {
+      "font-size": "20"
+    }
+  }
+}

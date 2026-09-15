@@ -1,0 +1,160 @@
+{
+ "head": 0,
+ "ops": [
+  {
+   "op": "set",
+   "ref": "lessons.0.vocab.0.paras.0",
+   "v": [
+    {
+     "t": "My name is ",
+     "b": true
+    },
+    "Lee Saem. My first name has an impressive meaning in Korean: “a source of power and vitality.” Since Saem sounds like Sam, I decided to make that my English name."
+   ],
+   "at": "2026-09-02 01:39:37"
+  },
+  {
+   "op": "insert",
+   "ref": "lessons.0.vocab.0.paras.1",
+   "v": {
+    "t": "table",
+    "rows": [
+     [
+      "",
+      "",
+      ""
+     ],
+     [
+      "",
+      "",
+      ""
+     ],
+     [
+      "",
+      "",
+      ""
+     ]
+    ],
+    "head": [
+     "",
+     "",
+     ""
+    ]
+   },
+   "note": "표 넣기",
+   "at": "2026-09-02 01:39:39"
+  },
+  {
+   "op": "set",
+   "ref": "lessons.0.vocab.0.paras.1",
+   "v": {
+    "t": "table",
+    "rows": [
+     [
+      {
+       "v": "",
+       "c": 2,
+       "r": 2
+      },
+      null,
+      ""
+     ],
+     [
+      null,
+      null,
+      ""
+     ],
+     [
+      "",
+      "",
+      ""
+     ]
+    ],
+    "head": [
+     "",
+     "",
+     ""
+    ]
+   },
+   "note": "표 merge",
+   "at": "2026-09-02 01:39:39"
+  },
+  {
+   "op": "insert",
+   "ref": "lessons.0.vocab.0.paras.1",
+   "v": {
+    "t": "box",
+    "at": {
+     "top": "20mm",
+     "left": "20mm",
+     "width": "50mm"
+    },
+    "style": {
+     "border": "0.4pt solid",
+     "padding": "1.5mm"
+    },
+    "paras": [
+     ""
+    ]
+   },
+   "note": "상자 넣기",
+   "at": "2026-09-02 01:39:41"
+  },
+  {
+   "op": "set",
+   "ref": "lessons.0.vocab.0.paras.1",
+   "v": {
+    "t": "box",
+    "at": {
+     "top": "20mm",
+     "left": "60.01mm",
+     "width": "50mm"
+    },
+    "style": {
+     "border": "0.4pt solid",
+     "padding": "1.5mm"
+    },
+    "paras": [
+     ""
+    ]
+   },
+   "note": "상자 옮기기",
+   "at": "2026-09-02 01:39:43"
+  },
+  {
+   "op": "set",
+   "ref": "lessons.0.vocab.0.paras.1",
+   "v": {
+    "t": "box",
+    "at": {
+     "top": "20mm",
+     "left": "60.01mm",
+     "width": "70.09mm",
+     "height": "13.31mm"
+    },
+    "style": {
+     "border": "0.4pt solid",
+     "padding": "1.5mm"
+    },
+    "paras": [
+     ""
+    ]
+   },
+   "note": "상자 옮기기",
+   "at": "2026-09-02 01:39:46"
+  },
+  {
+   "op": "knob",
+   "key": "page_rules",
+   "v": {
+    ":left": {
+     "margin-left": "33mm"
+    }
+   },
+   "note": "마스터 페이지",
+   "at": "2026-09-02 01:39:52",
+   "prev": null
+  }
+ ],
+ "_note": "작업대에서 고친 것. 일어난 순서대로 쌓이고 `head` 까지 적용된다. 원고를 다시 뽑아도 얹힌다. 교재팀이 원고를 고치면 그 줄을 지울 것."
+}

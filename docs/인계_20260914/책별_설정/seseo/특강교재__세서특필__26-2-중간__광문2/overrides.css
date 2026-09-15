@@ -1,0 +1,39 @@
+/* 광문2 · 새벽 하늘(블루아워) — 참고/palette.py 가 만든다. 손으로 고치지 말 것.
+ * 값은 CMYK 로 먼저 정하고 화면색은 그 변환값이다(config print.cmyk_map 이 못 박는다).
+ */
+:root {
+  --ink:        #231f20;   /* C0 M0 Y0 K100 */
+  --k90:        #414042;   /* C0 M0 Y0 K90 */
+  --k80:        #58595b;   /* C0 M0 Y0 K80 */
+  --k70:        #6d6f71;   /* C0 M0 Y0 K70 */
+  --dusk:       #7cacdc;   /* C50 M22 Y0 K0 */
+  --dusk-mid:   #adcdec;   /* C30 M10 Y0 K0 */
+  --dusk-lt:    #d6e4f5;   /* C14 M5 Y0 K0 */
+  --dusk-xl:    #e9f2fb;   /* C7 M2 Y0 K0 */
+  --dusk-dp:    #28659a;   /* C88 M60 Y16 K4 */
+  --plum:       #228fb6;   /* C78 M30 Y16 K2 */
+  --coral:      #69c9cd;   /* C55 M0 Y22 K0 */
+  --coral-lt:   #d8efec;   /* C14 M0 Y7 K0 */
+  --coral-dp:   #07a3aa;   /* C80 M12 Y34 K2 */
+  --apricot:    #fecb88;   /* C0 M22 Y52 K0 */
+  --apricot-lt: #fff3de;   /* C0 M4 Y13 K0 */
+  --gold:       #ffedad;   /* C0 M5 Y38 K0 */
+  --cream:      #f9f6e5;   /* C2 M2 Y10 K0 */
+  --gold-dp:    #ffd680;   /* C0 M16 Y58 K0 */
+  --rose:       #9bd7d5;   /* C38 M0 Y18 K0 */
+  --rose-lt:    #e5f4f1;   /* C9 M0 Y5 K0 */
+  --rose-dp:    #3ca09d;   /* C72 M16 Y40 K3 */
+  --sky-lt:     #c7ddf3;   /* C20 M6 Y0 K0 */
+  --butter:     #ffe9c2;   /* C0 M8 Y26 K0 */
+  --band1:      #d6e3f4;   /* C14 M6 Y0 K0 */
+  --pill1:      #6ea9db;   /* C55 M22 Y0 K0 */
+  --band2:      #d8eeeb;   /* C14 M0 Y8 K0 */
+  --pill2:      #50bbb7;   /* C64 M4 Y32 K0 */
+  --band3:      #ffebce;   /* C0 M7 Y20 K0 */
+  --pill3:      #fcbb6f;   /* C0 M30 Y64 K0 */
+  --mauve:      #809eb7;   /* C52 M30 Y18 K0 */
+  --dusk-2:     #89acda;   /* C45 M24 Y0 K0 */
+  --ink-dusk:   #355d88;   /* C85 M62 Y24 K10 */
+  --paper:      #f9fbee;   /* C2 M0 Y7 K0 */
+  --mute:       #92a2af;   /* C45 M30 Y24 K0 */
+}

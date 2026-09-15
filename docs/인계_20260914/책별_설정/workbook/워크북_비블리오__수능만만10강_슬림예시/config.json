@@ -1,0 +1,15 @@
+{
+  "series": "workbook",
+  "book": { "id": "수능만만10강_슬림", "title": "STEP BY STEP 워크북",
+            "brand": "STEP BY STEP", "line1": "수능만만 기본", "line2": "10강" },
+  "page": { "width": 210, "height": 297, "bleed": 3 },
+  "output": { "dir": ".", "stem": "워크북수능만만10강_슬림예시" },
+  "manuscript": { "plan": "${BOOK}/원고/render_plan.json" },
+  "verify": { "blank_pages": [1] },
+  "_설명": "지문 2·4번만 · 스텝 5개만 — 같은 원고로 config 만 다르다",
+  "select": {
+    "passages": [2, 4],
+    "steps": ["step1_a1", "step1_a2", "step1_c1", "step2_c2", "step3"],
+    "renumber": true
+  }
+}

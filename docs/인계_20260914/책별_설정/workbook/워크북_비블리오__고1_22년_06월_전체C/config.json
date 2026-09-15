@@ -1,0 +1,9 @@
+{
+  "series": "workbook",
+  "book": { "id": "고1_22년_06월_전체C", "title": "STEP BY STEP 워크북",
+            "brand": "STEP BY STEP", "line1": "고1 모의고사", "line2": "22년 6월" },
+  "page": { "width": 210, "height": 297, "bleed": 3 },
+  "output": { "dir": ".", "stem": "고1_22년_06월_전체C_내지_비블리오" },
+  "manuscript": { "plan": "${BOOK}/원고/render_plan.json" },
+  "verify": { "blank_pages": [1] }
+}
