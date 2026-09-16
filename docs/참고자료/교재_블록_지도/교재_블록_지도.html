@@ -1,0 +1,544 @@
+<title>교재 블록 지도</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Nanum+Myeongjo:wght@700;800&display=swap">
+<style>
+:root{
+  --ground:#F5F6F8; --paper:#FFFFFF; --ink:#1A2230; --ink-2:#4A5466; --ink-3:#7C8596;
+  --rule:#DDE1E8; --rule-2:#EBEEF2; --red:#C23A2B; --red-soft:#F8E6E3; --blue:#2D5AA0; --blue-soft:#E4ECF7;
+  --dot:#1A2230; --ring:#8A93A3;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#12161D; --paper:#1A1F28; --ink:#E6E9EE; --ink-2:#B3BAC6; --ink-3:#848C99;
+    --rule:#2E3542; --rule-2:#252B36; --red:#E8715F; --red-soft:#3A2220; --blue:#7FA6E0; --blue-soft:#1E2A3D;
+    --dot:#E6E9EE; --ring:#7A8391;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#12161D; --paper:#1A1F28; --ink:#E6E9EE; --ink-2:#B3BAC6; --ink-3:#848C99;
+  --rule:#2E3542; --rule-2:#252B36; --red:#E8715F; --red-soft:#3A2220; --blue:#7FA6E0; --blue-soft:#1E2A3D;
+  --dot:#E6E9EE; --ring:#7A8391;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:56px 28px 96px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:40px;line-height:1.2;letter-spacing:-.01em}
+h2{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:26px;line-height:1.3}
+h3{font-size:16px;font-weight:700}
+p{margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12.5px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;color:var(--ink-3)}
+.lede{max-width:66ch;color:var(--ink-2);font-size:16px}
+section{margin-top:64px;display:grid;gap:20px}
+header{display:grid;gap:16px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--ink-3);font-size:13px}
+.meta b{color:var(--ink-2);font-weight:600}
+
+/* verdict */
+.verdict{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:28px 30px;display:grid;gap:18px}
+.verdict ol{margin:0;padding-left:0;list-style:none;display:grid;gap:14px;counter-reset:v}
+.verdict li{display:grid;grid-template-columns:28px 1fr;gap:10px;counter-increment:v}
+.verdict li::before{content:counter(v);font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--red);font-weight:500;padding-top:2px}
+.verdict li b{font-weight:700}
+.del{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+.ins{color:var(--red);font-weight:600}
+
+/* block list */
+.blocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.blk{background:var(--paper);padding:20px 22px;display:grid;gap:8px;align-content:start}
+.blk-top{display:flex;align-items:baseline;gap:10px}
+.blk-no{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3);min-width:22px}
+.tag{font-size:11px;font-weight:600;letter-spacing:.04em;padding:1px 7px;border-radius:3px;white-space:nowrap}
+.tag.new{color:var(--red);background:var(--red-soft)}
+.tag.chg{color:var(--blue);background:var(--blue-soft)}
+.blk p{color:var(--ink-2);font-size:14px}
+.blk dl{margin:4px 0 0;display:grid;grid-template-columns:52px 1fr;gap:3px 10px;font-size:13px}
+.blk dt{color:var(--ink-3)}
+.blk dd{margin:0;color:var(--ink)}
+
+/* matrix */
+.legend{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--ink-2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.scroll{overflow-x:auto;background:var(--paper);border:1px solid var(--rule);border-radius:6px}
+table.mx{border-collapse:collapse;width:100%;min-width:1080px;font-size:13px}
+.mx th,.mx td{border-bottom:1px solid var(--rule-2);padding:7px 6px;text-align:center;vertical-align:middle}
+.mx thead th{position:sticky;top:0;background:var(--paper);font-weight:600;font-size:12px;color:var(--ink-2);border-bottom:1px solid var(--rule);line-height:1.3;height:64px;vertical-align:bottom}
+.mx thead th.newcol{color:var(--red)}
+.mx th.book{text-align:left;position:sticky;left:0;background:var(--paper);min-width:170px;font-weight:600;color:var(--ink);padding-left:16px;z-index:1}
+.mx thead th.book{z-index:2;color:var(--ink-3);font-weight:500}
+.mx td.frame{text-align:left;color:var(--ink-3);font-size:12px;white-space:nowrap;padding-right:16px}
+.mx tr.grp th{background:var(--ground);text-align:left;font-size:11.5px;letter-spacing:.06em;color:var(--ink-3);font-weight:600;padding:6px 16px;position:static}
+.d{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle}
+.d.f{background:var(--dot)}
+.d.p{border:1.5px solid var(--ring)}
+.mx td.n{color:var(--red);font-size:11px;font-weight:600}
+.mx tbody tr:hover td,.mx tbody tr:hover th.book{background:var(--rule-2)}
+
+/* not-blocks */
+.four{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:20px 22px;display:grid;gap:10px;align-content:start}
+.card ul{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--ink-2);font-size:14px}
+.card li b{color:var(--ink);font-weight:600}
+
+/* traps */
+.traps{display:grid;gap:0;border-top:1px solid var(--rule)}
+.trap{display:grid;grid-template-columns:140px 1fr;gap:20px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.trap h3{font-size:15px}
+.trap .word{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:20px;color:var(--red)}
+.trap ul{margin:0;padding-left:18px;color:var(--ink-2);font-size:14px;display:grid;gap:4px}
+
+/* decisions */
+.dec{display:grid;gap:12px;counter-reset:q}
+.q{background:var(--paper);border:1px solid var(--rule);border-left:3px solid var(--red);border-radius:0 6px 6px 0;padding:16px 20px;display:grid;gap:6px}
+.q h3{font-size:15px}
+.q p{color:var(--ink-2);font-size:14px}
+
+details{background:var(--paper);border:1px solid var(--rule);border-radius:6px;padding:14px 20px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+summary:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+details ul{margin:12px 0 0;padding-left:18px;display:grid;gap:4px;color:var(--ink-2);font-size:13px}
+.note{font-size:13px;color:var(--ink-3)}
+/* layers */
+.layers{display:grid;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--rule);gap:1px}
+.layer{display:grid;grid-template-columns:132px 1fr;background:var(--paper)}
+.layer-no{padding:20px 0 20px 22px;display:grid;align-content:start;gap:2px;border-right:1px solid var(--rule-2)}
+.layer-no .n{font-family:"Nanum Myeongjo",serif;font-weight:800;font-size:24px;line-height:1}
+.layer-no .k{font-size:12px;color:var(--ink-3)}
+.layer-body{padding:18px 24px 20px;display:grid;gap:10px}
+.layer-body h3{font-size:17px}
+.layer-body h3 small{font-weight:500;color:var(--ink-3);font-size:13px;margin-left:8px}
+.layer-body p{color:var(--ink-2);font-size:14px;max-width:72ch}
+.layer.core .layer-no .n{color:var(--red)}
+.kv{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:baseline;gap:5px;border:1px solid var(--rule);background:var(--ground);padding:2px 8px;border-radius:3px;font-size:12.5px;line-height:1.5;white-space:nowrap;color:var(--ink)}
+.chip i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3)}
+.chip.none{border-style:dashed;color:var(--ink-3);background:transparent}
+.chip.plain{background:var(--paper)}
+
+/* compositions */
+.comp{display:grid;border-top:1px solid var(--rule)}
+.comp-row{display:grid;grid-template-columns:190px 1fr;gap:14px 18px;padding:14px 0;border-bottom:1px solid var(--rule-2);align-items:start}
+.comp-name{display:grid;gap:2px}
+.comp-name b{font-size:15px;font-weight:700}
+.comp-name span{font-size:12px;color:var(--ink-3)}
+.comp-name .ojt{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--red)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ar{color:var(--ink-3);font-size:12px}
+.rep{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;border:1px dashed var(--ring);border-radius:4px;padding:5px 7px;position:relative}
+.rep::before{content:attr(data-l);font-size:11px;color:var(--blue);font-weight:600;margin-right:2px}
+.comp-note{grid-column:2;font-size:12.5px;color:var(--ink-3);margin-top:-8px}
+.comp-sub{font-size:11.5px;letter-spacing:.06em;color:var(--ink-3);font-weight:600;padding:18px 0 6px}
+.goods{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.good{display:grid;gap:6px;padding-top:12px;border-top:2px solid var(--ink)}
+.good p{font-size:14px;color:var(--ink-2)}
+@media (max-width:640px){
+  .layer{grid-template-columns:1fr}.layer-no{border-right:0;padding-bottom:0}
+  .comp-row{grid-template-columns:1fr;gap:8px}.comp-note{grid-column:1;margin-top:0}
+}
+@media (max-width:640px){
+  h1{font-size:30px}.wrap{padding:36px 18px 72px}
+  .trap{grid-template-columns:1fr;gap:6px}
+  .blocks{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Y.ONE 비블리오 전환 · 콘텐츠 유형 틀 검증</p>
+  <h1>교재 블록 지도</h1>
+  <p class="lede">처음 제안한 8블록을 실물 교재에 대입해 봤습니다. 인쇄본 PDF 텍스트를 쪽별로 뽑고 조판 코드와 대조했습니다. <b>디자인 에셋과 콘텐츠를 붙일 단위는 "책"이 아니라 "블록"</b>이라는 방향은 맞았고, 블록 목록은 아래처럼 고쳐야 합니다.</p>
+  <div class="meta">
+    <span><b>대상</b> 라인업 28종 (대표 1권씩, 포켓북은 21권 전수)</span>
+    <span><b>근거</b> 조판/교재, 콘텐츠 관리 백업, render_vivlio/series</span>
+    <span><b>작성</b> 2026-09-15</span>
+  </div>
+</header>
+
+<section>
+  <div style="display:grid;gap:6px">
+    <h2>전체 구조 — 4개 층</h2>
+    <p class="lede">지금 분류(특강교재·프리미엄북·워크북·포켓북…)는 상품 등급, 판형, 용도, 풀이 방식이 한 줄에 섞여 있습니다. 이걸 네 층으로 풀면, 에셋과 콘텐츠는 1층에만 붙이고 나머지 층은 그 위에 얹는 설정이 됩니다.</p>
+  </div>
+  <div class="layers">
+    <div class="layer core">
+      <div class="layer-no"><span class="n">1층</span><span class="k">연동 단위</span></div>
+      <div class="layer-body">
+        <h3>블록<small>디자인 에셋 저장·학습, 콘텐츠 연동이 붙는 곳</small></h3>
+        <p>지면에 들어가는 가장 작은 덩어리. 콘텐츠팀은 블록별 필드만 맞추면 되고, 모양은 디자인이 variant로 고릅니다.</p>
+        <div class="kv">
+          <span class="chip"><i>B1</i>원문지문</span><span class="chip"><i>B2</i>지문분석</span><span class="chip"><i>B3</i>요약노트</span><span class="chip"><i>B4</i>개념·전략</span><span class="chip"><i>B5</i>어휘</span><span class="chip"><i>B6</i>문항</span><span class="chip"><i>B7</i>변형지문</span><span class="chip"><i>B8</i>문장드릴</span><span class="chip"><i>B9</i>정답해설</span><span class="chip"><i>B10</i>구조면</span><span class="chip"><i>B11</i>관리양식</span>
+        </div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-no"><span class="n">2층</span><span class="k">책 설계도</span></div>
+      <div class="layer-body">
+        <h3>교재 구성<small>블록을 어떤 순서·반복으로 쌓는가</small></h3>
+        <p>라인업 이름은 여기서 "블록 조합의 이름"으로 살아납니다. 새 상품이 나오면 블록을 새로 만들지 않고 조합만 등록합니다. STEP·시험지·회차 같은 틀도 이 층입니다. 라인업별 조합은 바로 아래 표에 있습니다.</p>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-no"><span class="n">3층</span><span class="k">물리 규격</span></div>
+      <div class="layer-body">
+        <h3>판형·제본·색<small>레이아웃 파라미터</small></h3>
+        <div class="kv">
+          <span class="chip plain">A4 스프링 · 분석본</span><span class="chip plain">A4 무선 · 워크북</span><span class="chip plain">A5 스프링 · 포켓북</span><span class="chip plain">A4 중철 흑백 · 직전보충</span><span class="chip plain">B4 · 동형모의고사</span><span class="chip plain">A4 학원 출력 · 리테·세미</span>
+        </div>
+        <p>포켓북은 원래 이 층의 이름입니다(A5 스프링). 면수 규칙(중철만 4의 배수)도 여기서 정해집니다.</p>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-no"><span class="n">4층</span><span class="k">옷</span></div>
+      <div class="layer-body">
+        <h3>라인업·스킨<small>같은 블록에 입히는 브랜드와 학교색</small></h3>
+        <div class="kv">
+          <span class="chip plain">브랜드: 블랙북·화이트북·파이널·세서특필·한서끝</span><span class="chip plain">강사 프리셋</span><span class="chip plain">학교 오버라이드</span><span class="chip plain">러닝헤드 강사명</span>
+        </div>
+        <p>블랙북 문항과 동형모의고사 문항은 같은 B6이고 옷만 다릅니다. 한영2 썸머스텝과 핵단기는 98쪽 내용이 같고 머리글만 다른, 이 층만 바뀐 사례입니다.</p>
+      </div>
+    </div>
+  </div>
+  <p class="note">층 밖에 붙는 태그: 원고 출처(교과서·모의고사·EBS·부교재 — 원고 읽는 방식에만 영향), 지문 ID, 유형, 배점, 기출 이력.</p>
+</section>
+
+<section>
+  <div style="display:grid;gap:6px">
+    <h2>2층 — 라인업별 블록 조합</h2>
+    <p class="lede">실물 인쇄본의 순서 그대로입니다. 점선 상자가 반복 단위이고, 점선 칩은 인쇄본에 없는 블록입니다. 빨간 번호는 OJT 8종 순서입니다.</p>
+  </div>
+  <div class="comp">
+    <div class="comp-sub">OJT 라인업 8종</div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">01</span><b>분석본</b><span>A4 스프링 · 분석본결합·마더텅결합 공용</span></div>
+      <div class="flow"><span class="chip"><i>B10</i>간지 1P</span><span class="ar">→</span><span class="rep" data-l="지문마다 2면"><span class="chip"><i>B2</i>지문분석</span><span class="chip"><i>B3</i>요약노트</span><span class="chip"><i>B5</i>어휘</span><span class="chip"><i>B6</i>문항 1개</span><span class="chip"><i>B9</i>정답 인라인</span></span></div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">02</span><b>워크북</b><span>A4 무선 · 교과서·모의고사·부교재·EBS</span></div>
+      <div class="flow"><span class="rep" data-l="STEP 1·2"><span class="chip"><i>B10</i>STEP 간지</span><span class="chip"><i>B7</i>변형지문</span><span class="chip"><i>B8</i>문장드릴</span></span><span class="ar">→</span><span class="rep" data-l="STEP 3"><span class="chip"><i>B6</i>문항 세트</span></span><span class="ar">→</span><span class="chip none"><i>B9</i>정답 별도 docx</span></div>
+      <p class="comp-note">세로판은 같은 블록을 지문 순서로 돌림 · 짤지문은 STEP3만 · 슬림은 지문을 덜어냄</p>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">03</span><b>포켓북</b><span>A5 스프링</span></div>
+      <div class="flow"><span class="chip"><i>B10</i>간지 1P</span><span class="ar">→</span><span class="rep" data-l="지문마다 펼침"><span class="chip"><i>B2</i>지문분석</span><span class="chip"><i>B3</i>FLOW NOTE</span><span class="chip"><i>B5</i>동반의어</span></span><span class="ar">→</span><span class="chip"><i>B8</i>암기 TEST 빈칸본</span><span class="ar">→</span><span class="chip"><i>B9</i>정답 다음 면</span><span class="ar">→</span><span class="chip"><i>B10</i>크레딧</span></div>
+      <p class="comp-note">암기 TEST 21권 중 17권 · 광문1은 어휘 파트 추가</p>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">04</span><b>학교별 변형문제</b><span>세미모의·기적의특강(시험지형)</span></div>
+      <div class="flow"><span class="chip"><i>B10</i>시험지 표지</span><span class="ar">→</span><span class="rep" data-l="회차마다"><span class="chip"><i>B6</i>문항 세트</span><span class="chip"><i>B9</i>정답 1면</span></span><span class="ar">→</span><span class="chip"><i>B10</i>뒷표지</span></div>
+      <p class="comp-note">학교별 이름: 성덕=기적의특강 · 명일·상일=세미모의 · 광문=세서특필 · 배재=블랙북 (아래 프리미엄북·특강교재에 따로)</p>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">05</span><b>동형모의고사</b><span>B4 · 학교 시험지 틀</span></div>
+      <div class="flow"><span class="rep" data-l="시험지 틀"><span class="chip"><i>B6</i>선택형</span><span class="ar">→</span><span class="chip"><i>B6</i>서답형</span><span class="ar">→</span><span class="chip plain">배점 요약표</span></span><span class="ar">→</span><span class="chip none"><i>B9</i>정답 없음</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">06</span><b>직전보충</b><span>A4 중철 흑백 · Vol1-1·1-2·2</span></div>
+      <div class="flow"><span class="rep" data-l="권마다"><span class="chip"><i>B10</i>Chapter 간지</span><span class="chip"><i>B7</i>배열·삽입·어법수정</span><span class="chip"><i>B8</i>중요어휘·영작</span><span class="chip"><i>B3</i>요약문</span><span class="chip"><i>B10</i>MEMO·크레딧</span></span><span class="ar">→</span><span class="chip none"><i>B9</i>정답 없음</span></div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">07</span><b>리테 (리뷰테스트)</b><span>A4 학원 출력 · 주차별</span></div>
+      <div class="flow"><span class="chip"><i>B10</i>표지 · 학교·이름</span><span class="ar">→</span><span class="chip"><i>B7</i>문장배열 <small>(워크북 C1 발췌)</small></span><span class="ar">→</span><span class="chip"><i>B8</i>빈칸어휘</span><span class="ar">→</span><span class="chip"><i>B8</i>영작배열 <small>(워크북 C2 발췌)</small></span><span class="ar">→</span><span class="chip"><i>B9</i>정답 별도 파일</span></div>
+      <p class="comp-note">변종: 모의고사형 = 지문마다 B8 빈칸어휘 1면 · 단어 리테 = <b>B11 판정 헤더(점수·PASS/FAIL)</b> + B5 어휘 빈칸본 50문항, 재시 판 따로</p>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><span class="ojt">08</span><b>클리닉</b><span>주차별 합본 · 리테와 함께 운영</span></div>
+      <div class="flow"><span class="chip"><i>B11</i>관리 표지 <small>체크리스트·오답 수·서명</small></span><span class="ar">→</span><span class="rep" data-l="리테 그대로"><span class="chip"><i>B7</i>배열</span><span class="chip"><i>B8</i>빈칸</span><span class="chip"><i>B8</i>영작</span></span><span class="ar">→</span><span class="chip"><i>B6</i>실전문제 16문항</span><span class="ar">→</span><span class="chip"><i>B10</i>정답지 간지</span><span class="ar">→</span><span class="chip"><i>B9</i>리테 정답</span><span class="chip"><i>B9</i>실전 정답</span></div>
+      <p class="comp-note">클리닉 = 리테 + 실전문제 + 정답을 한 권으로 묶고 관리 표지를 붙인 것 (배재고1 2주차, 36p)</p>
+    </div>
+
+    <div class="comp-sub">교재 폴더 계열</div>
+
+    <div class="comp-row">
+      <div class="comp-name"><b>프리미엄북</b><span>블랙북 · 배N제 · 화이트북</span></div>
+      <div class="flow" style="display:grid;gap:8px">
+        <div class="flow"><span class="chip plain">블랙북</span><span class="rep" data-l="과마다"><span class="chip"><i>B1</i>원문지문</span><span class="chip"><i>B5</i>연관어휘</span><span class="ar">→</span><span class="chip"><i>B6</i>문항</span></span><span class="ar">→</span><span class="chip"><i>B9</i>해설</span></div>
+        <div class="flow"><span class="chip plain">배N제</span><span class="rep" data-l="Lesson마다"><span class="chip"><i>B11</i>Date·점수</span><span class="chip"><i>B6</i>객관식</span></span><span class="ar">→</span><span class="chip"><i>B9</i>정답해설</span></div>
+        <div class="flow"><span class="chip plain">화이트북</span><span class="rep" data-l="DAY마다"><span class="chip"><i>B5</i>어휘</span><span class="chip"><i>B8</i>A~E 드릴</span></span><span class="ar">→</span><span class="chip"><i>B6</i>EXERCISE</span><span class="ar">→</span><span class="chip"><i>B9</i>정답</span></div>
+      </div>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><b>특강교재</b><span>세서특필 · 한서끝 · 예비고1 · 방학특강</span></div>
+      <div class="flow"><span class="chip"><i>B4</i>개념·전략</span><span class="ar">→</span><span class="chip"><i>B6</i>예제·연습</span><span class="ar">→</span><span class="chip"><i>B6</i>실전 세트</span><span class="ar">→</span><span class="chip"><i>B9</i>빠른정답 + 풀이</span></div>
+      <p class="comp-note">세서특필은 앞에 B2 중요문장 분석 · 예비고1·창현고는 B5 어휘 파트 · 한서끝은 B4 없이 문항만</p>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><b>단어장</b><span>상일·광문·이의·배재·한단끝</span></div>
+      <div class="flow"><span class="rep" data-l="DAY·UNIT마다"><span class="chip"><i>B5</i>어휘</span></span><span class="ar">→</span><span class="chip"><i>B8</i>빈칸본 워크북</span><span class="ar">→</span><span class="chip"><i>B9</i>권말 정답</span></div>
+      <p class="comp-note">이의·배재·광문은 어휘만 · 상일·한단끝은 드릴+정답까지</p>
+    </div>
+
+    <div class="comp-row">
+      <div class="comp-name"><b>중등부</b><span>내신 정규 · 1권 같이새김 / 2권 홀로새김</span></div>
+      <div class="flow"><span class="rep" data-l="PART × STEP"><span class="chip"><i>B4</i>개념</span><span class="chip"><i>B5</i>어휘</span><span class="chip"><i>B2</i>직독직해</span><span class="chip"><i>B8</i>빈칸·T/F</span><span class="chip"><i>B6</i>문항</span></span><span class="ar">→</span><span class="chip"><i>B3</i>5분 점검</span><span class="ar">→</span><span class="chip"><i>B6</i>실전 모의 1~5회</span></div>
+      <p class="comp-note">STEP이 1권(1~3)에서 2권(3~5)으로 이어짐</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>이렇게 나누면</h2>
+  <div class="goods">
+    <div class="good"><h3>에셋을 한 번 만들면 여러 책에서 씁니다</h3><p>에셋을 "블록 × 옷"으로 저장하니, 블랙북에서 만든 문항 디자인을 세미모의·특강교재에서 바로 씁니다. 리테·클리닉은 워크북 B7·B8을 그대로 가져갑니다.</p></div>
+    <div class="good"><h3>콘텐츠 계약이 11개로 끝납니다</h3><p>책 종류마다가 아니라 블록 11종의 필드만 맞추면 됩니다. 분석본에서 정한 원칙(콘텐츠는 필드와 역할, 배치와 색은 디자인)과 그대로 이어집니다.</p></div>
+    <div class="good"><h3>폴더와 메뉴는 바꾸지 않아도 됩니다</h3><p>교재 폴더와 OJT 8종은 사람이 찾는 이름으로 두고, 시스템 안에서만 4개 층으로 관리합니다.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>8블록 초안에서 무엇이 바뀌었나</h2>
+  <div class="verdict">
+    <ol>
+      <li><div><span class="del">4 단계형훈련</span> → <span class="ins">블록이 아니라 틀(frame)</span>. STEP은 순서를 정하는 틀이고, 안에 든 과제는 제각각입니다. 워크북 가로/세로의 차이도 내용이 아니라 순서뿐이었습니다(<span class="mono">series/workbook/data.py to_cycles</span>).</div></li>
+      <li><div><span class="ins">변형지문 블록 신설</span>. 발문·선지 없이 지문 전체를 한 방식으로 바꾼 것입니다(워크북 A1 어휘선택·C1 문장배열·STEP2 A1 어법선택, 파이널 배열·삽입·어법수정). 8블록 중 어디에도 안 들어가는 가장 큰 덩어리였습니다.</div></li>
+      <li><div><span class="del">6 테스트</span> → <span class="ins">문장드릴 블록</span> + <span class="ins">"빈칸본" 모드</span>. 테스트는 독립 블록이라기보다, 같은 글을 빈칸본·정답본 두 벌로 찍는 방식이었습니다. 문장 번호 + 해석 + 빈칸/배열/O·X 목록은 따로 블록으로 둡니다.</div></li>
+      <li><div><span class="ins">요약노트 블록 신설</span>. 포켓북 FLOW NOTE, 분석본 기출포인트·유형 체크, 신준원T 본문정리처럼 지문을 요약한 면입니다. 지문분석도 개념설명도 아닙니다.</div></li>
+      <li><div><span class="del">2 개념설명</span> → <span class="ins">개념·전략</span>. 문법 개념과 문제 풀이 절차(세서특필 3단계 필승 프로세스, 광문 SIGNAL/FLOW/STRATEGY, How to Approach)가 같은 자리에 섞여 있어 variant로 나눕니다.</div></li>
+      <li><div><span class="chg">문항</span>은 <b>세트(지문 1 + 소문항 n)</b>를 기본 단위로 받아야 합니다. "다음 글을 읽고 물음에 답하시오"가 워크북에서만 118회 나옵니다.</div></li>
+      <li><div><span class="ins">원문지문</span>, <span class="ins">관리양식</span> 신설. 블랙북 본문면·신준원T 원문모음처럼 해석 없는 원문만 싣는 면이 있고, 클리닉 표지(체크리스트·오답 개수·선생님 서명)와 단어 리테 PASS/FAIL은 구조면이 아니라 운영 양식입니다.</div></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div style="display:grid;gap:6px">
+    <h2>수정안 — 블록 11종</h2>
+    <p class="lede">블록마다 콘텐츠가 주는 필드와, 디자인이 고르는 표시 방식(variant)을 적었습니다. 에셋 저장·학습과 콘텐츠 연동은 모두 이 단위에 붙습니다.</p>
+  </div>
+  <div class="blocks">
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B1</span><h3>원문지문</h3><span class="tag new">신설</span></div>
+      <p>해석·태그 없는 지문 전문. 다른 블록이 지문 ID로 참조하는 원본이기도 합니다.</p>
+      <dl><dt>필드</dt><dd>지문 ID, 출처, 본문</dd><dt>variant</dt><dd>박스형, 읽기면(본문예열), 문장 번호 목록(원문모음)</dd><dt>실물</dt><dd>블랙북 본문, 우솔서점, 신준원T</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B2</span><h3>지문분석</h3></div>
+      <p>문장·청크·단락 단위로 끊어 해석과 문법 표시를 붙인 것.</p>
+      <dl><dt>필드</dt><dd>문장 번호, 태그본, 해석, 그래머 포인트, 마크 역할</dd><dt>variant</dt><dd>문장분석, 청크 직독직해, 단락 대응, 지문 속 어휘</dd><dt>실물</dt><dd>분석본, 포켓북, 세서특필 PART1, 중등 4-0, 광문보카 PART2</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B3</span><h3>요약노트</h3><span class="tag new">신설</span></div>
+      <p>지문 하나를 흐름·주제·요약으로 정리한 면.</p>
+      <dl><dt>필드</dt><dd>주제, 요약문, 흐름 칸(최대 5), 유형 체크, 기출 포인트</dd><dt>variant</dt><dd>FLOW NOTE, 기출포인트, 한국어 개요, 5분 점검표</dd><dt>실물</dt><dd>포켓북, 분석본 우면, 신준원T 본문정리, 중등 PART6</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B4</span><h3>개념·전략</h3><span class="tag chg">변경</span></div>
+      <p>문법·어휘 개념 설명과 유형별 풀이 절차.</p>
+      <dl><dt>필드</dt><dd>제목, 설명, 구조식·표, 예문, 절차 단계, TIP</dd><dt>variant</dt><dd>문법 개념, 유형 전략, 유의어 구분(VOCA vs VOCA), 배경지식 노트</dd><dt>실물</dt><dd>세서특필 대표유형, 예비고1, 여름배재 GP, 썸머스텝, 중등</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B5</span><h3>어휘</h3><span class="tag chg">변경</span></div>
+      <p>필드 superset 하나, 표시 방식 여러 개. 같은 원고가 광문보카·광문1 포켓북에 다른 모양으로 들어갑니다.</p>
+      <dl><dt>필드</dt><dd>표제어, 발음, 품사, 뜻(복수), 유의·반의(각 뜻), 파생어, 영영풀이, 예문, 주의</dd><dt>variant</dt><dd>목록, 표 행, 카드, 지문 부속(연관어휘·동반의어), 어원 카드, 색인</dd><dt>실물</dt><dd>단어장 6종, 블랙북, 포켓북, 창현고, 예비고1</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B6</span><h3>문항</h3><span class="tag chg">변경</span></div>
+      <p>발문이 있는 문제. 단일 문항과 세트를 같은 블록이 받습니다.</p>
+      <dl><dt>필드</dt><dd>발문, 지문 ID(복수 가능), 선지, 부속(요약상자·&lt;보기&gt;·&lt;조건&gt;·(A)(B)표·대화문), 답란, 메타</dd><dt>variant</dt><dd>객관식, 서술형, 세트, 예제(정답 붙음), 한 면 N문항 고정</dd><dt>실물</dt><dd>거의 모든 책</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B7</span><h3>변형지문</h3><span class="tag new">신설</span></div>
+      <p>발문·선지 없이 지문 전체를 한 방식으로 바꾼 것. 지문 + 변형 종류 파라미터.</p>
+      <dl><dt>필드</dt><dd>지문 ID, 변형 종류, 변형 마크(선택 괄호·카드 순서·위치 표시)</dd><dt>variant</dt><dd>어휘선택, 어법선택, 문장배열, 삽입 위치, 어법수정, O/X 진술 부속</dd><dt>실물</dt><dd>워크북 STEP1·2, 파이널, 리테·클리닉</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B8</span><h3>문장드릴</h3><span class="tag new">신설</span></div>
+      <p>문장 번호 + 해석 + 한 가지 과제를 줄줄이 늘어놓은 목록.</p>
+      <dl><dt>필드</dt><dd>문장 번호, 원문, 해석, 과제 종류, 정답</dd><dt>variant</dt><dd>첫 글자 빈칸, 통 빈칸, 청크 영작 배열, 어법 O/X, 해석 쓰기 칸</dd><dt>실물</dt><dd>워크북 C2·STEP2, 포켓북 암기 TEST, 파이널 중요어휘·영작, 한단끝 PRACTICE, 화이트북 A~E</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B9</span><h3>정답해설</h3><span class="tag chg">변경</span></div>
+      <p>빠른정답과 문항별 풀이는 서로 다른 블록으로 봅니다. 필드는 책마다 달라 전부 선택형.</p>
+      <dl><dt>필드</dt><dd>번호, 정답, 해석, 해설, 출제의도, 어구, 오답 이유, 유형 태그</dd><dt>variant</dt><dd>빠른정답 격자, 번호·정답 표, 문항별 풀이, 정답 복원 전문(<span class="mono">1[fallen]</span>)</dd><dt>실물</dt><dd>한서끝, 세서특필, 배N제, 리테</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B10</span><h3>구조면</h3></div>
+      <p>앞 간지 1P · 파트 간지 2P · 크레딧 1P · MEMO · 목차 · 수량 안내면.</p>
+      <dl><dt>필드</dt><dd>책·학교·시험·범위, 파트 목록, 문항 수</dd><dt>variant</dt><dd>간지, 정답지 간지, 목차, MEMO 면, 헤더만 있는 채움면, 광고면</dd><dt>실물</dt><dd>전 계열</dd></dl>
+    </div>
+    <div class="blk">
+      <div class="blk-top"><span class="blk-no">B11</span><h3>관리양식</h3><span class="tag new">신설</span></div>
+      <p>학원 운영용 기록 칸. 채점 칸이 아니라 운영 기록입니다.</p>
+      <dl><dt>필드</dt><dd>날짜·시간, 과제 × 학생/교사 체크, 상태 A/B/C, 오답 개수, 점수·PASS/FAIL, 서명, 자기 피드백</dd><dt>variant</dt><dd>클리닉 표지, 판정 헤더, Date/Time/점수 칸</dd><dt>실물</dt><dd>클리닉, 단어 리테, 배N제</dd></dl>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div style="display:grid;gap:6px">
+    <h2>책 × 블록</h2>
+    <p class="lede">실물 인쇄본에서 확인한 것만 찍었습니다. 빨간 열이 이번에 새로 생긴 블록입니다.</p>
+  </div>
+  <div class="legend">
+    <span><i class="d f"></i>핵심 구성</span>
+    <span><i class="d p"></i>일부·부속</span>
+    <span style="color:var(--red);font-weight:600">없음!</span><span>있어야 할 것 같은데 인쇄본에 없음</span>
+  </div>
+  <div class="scroll">
+  <table class="mx">
+    <thead><tr>
+      <th class="book">교재</th>
+      <th class="newcol">원문<br>지문</th><th>지문<br>분석</th><th class="newcol">요약<br>노트</th><th>개념<br>전략</th><th>어휘</th><th>문항</th><th class="newcol">변형<br>지문</th><th class="newcol">문장<br>드릴</th><th>정답<br>해설</th><th>구조면</th><th class="newcol">관리<br>양식</th>
+      <th class="book" style="position:static">틀</th>
+    </tr></thead>
+    <tbody>
+      <tr class="grp"><th colspan="13">분석·암기</th></tr>
+      <tr><th class="book">분석본 · 분석본결합</th><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td></td><td></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td></td><td class="frame">2면 펼침 고정</td></tr>
+      <tr><th class="book">포켓북</th><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">좌 분석 / 우 노트</td></tr>
+      <tr><th class="book">신준원T 내신분석서</th><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td></td><td></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td></td><td class="frame">과 단위 5종</td></tr>
+
+      <tr class="grp"><th colspan="13">워크북·직전</th></tr>
+      <tr><th class="book">워크북 가로 (교과서·모의·부교재·EBS)</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td class="n">없음!</td><td><i class="d f"></i></td><td></td><td class="frame">STEP 1·2·3 (스텝순)</td></tr>
+      <tr><th class="book">워크북 세로 · 세로결합</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td></td><td class="frame">STEP (지문순)</td></tr>
+      <tr><th class="book">짤지문</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td></td><td></td><td><i class="d f"></i></td><td></td><td class="frame">STEP3만</td></tr>
+      <tr><th class="book">파이널 직전보충</th><td></td><td></td><td><i class="d p"></i></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td class="n">없음!</td><td><i class="d f"></i></td><td></td><td class="frame">권 단위 섹션</td></tr>
+
+      <tr class="grp"><th colspan="13">프리미엄북</th></tr>
+      <tr><th class="book">블랙북</th><td><i class="d f"></i></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">과 단위</td></tr>
+      <tr><th class="book">배N제</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td class="frame">Lesson 단위</td></tr>
+      <tr><th class="book">화이트북 워크북</th><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">WEEK · DAY</td></tr>
+      <tr><th class="book">화이트북 실전문제</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">한 면 4문항 고정</td></tr>
+
+      <tr class="grp"><th colspan="13">시험형</th></tr>
+      <tr><th class="book">동형모의고사</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td class="n">없음!</td><td></td><td></td><td class="frame">학교 시험지 틀</td></tr>
+      <tr><th class="book">세미모의 · 기적의특강</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">시험지 표지 · 회차</td></tr>
+      <tr><th class="book">세서특필 모의고사</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td class="frame">시험지 · WEEK</td></tr>
+      <tr><th class="book">리테</th><td></td><td></td><td></td><td></td><td><i class="d p"></i></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td class="frame">주차 · 워크북 발췌</td></tr>
+      <tr><th class="book">클리닉</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td class="frame">주차 · 합본</td></tr>
+
+      <tr class="grp"><th colspan="13">특강교재</th></tr>
+      <tr><th class="book">세서특필</th><td></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">PART · 세트 한 면</td></tr>
+      <tr><th class="book">한서끝</th><td></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">한 면 두 칸</td></tr>
+      <tr><th class="book">우솔서점</th><td><i class="d f"></i></td><td></td><td></td><td></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td></td><td></td><td class="n">없음!</td><td><i class="d p"></i></td><td></td><td class="frame">좌 지문 / 우 문항</td></tr>
+      <tr><th class="book">예비고1특강</th><td></td><td></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">영역 × LESSON</td></tr>
+      <tr><th class="book">방학특강 (썸머스텝·여름배재·창현·광문)</th><td></td><td><i class="d p"></i></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">예제 → 연습 → 실전</td></tr>
+      <tr><th class="book">중등 내신 정규</th><td></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td class="n">미확인</td><td><i class="d f"></i></td><td></td><td class="frame">PART × STEP, 권 넘어 이어짐</td></tr>
+
+      <tr class="grp"><th colspan="13">단어장</th></tr>
+      <tr><th class="book">상일보카</th><td></td><td></td><td></td><td><i class="d p"></i></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td></td><td class="frame">Day · PART</td></tr>
+      <tr><th class="book">광문보카</th><td></td><td><i class="d p"></i></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td class="frame">UNIT · PART</td></tr>
+      <tr><th class="book">이의1·2보카 · 배재보카</th><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td class="frame">출처별 · DAY</td></tr>
+      <tr><th class="book">한영보카 한단끝</th><td></td><td></td><td></td><td></td><td><i class="d f"></i></td><td></td><td></td><td><i class="d f"></i></td><td><i class="d f"></i></td><td><i class="d p"></i></td><td></td><td class="frame">과 · DAY</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="note">워크북 본가는 정답이 인쇄되지 않고 별도 docx로 나갑니다(p52에 "지문30_정답해설.docx" 안내문이 인쇄돼 있음). 동형·파이널·우솔서점도 PDF 안에 정답면이 0건이었습니다.</p>
+</section>
+
+<section>
+  <div style="display:grid;gap:6px">
+    <h2>블록이 아닌 것 — 따로 관리할 층</h2>
+    <p class="lede">블록 목록에 넣으면 목록이 끝없이 늘어나는 것들입니다. 블록 위아래에 붙는 층으로 분리합니다.</p>
+  </div>
+  <div class="four">
+    <div class="card">
+      <h3>틀 (frame)</h3>
+      <ul>
+        <li><b>STEP 틀</b>: 번호·태그(FRAME/BUILD UP/TEST)·간지 메뉴·지면 짜임 5종</li>
+        <li><b>시험지 틀</b>: 과목코드·확인란·배점·"뒷면에 계속"·"- 끝 -". 학교마다 방언</li>
+        <li><b>펼침 규칙</b>: 분석본 2면, 우솔 좌우 짝, 세트 한 면 맞춤</li>
+        <li><b>반복 단위</b>: 과·Lesson·DAY·WEEK·회차·주차</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>메타데이터</h3>
+      <ul>
+        <li><b>지문 ID·출처</b>: <span class="mono">230929</span>, <span class="mono">L4-p.83</span>, 교과서 2과 본문1 — 표기 4가지 이상</li>
+        <li><b>유형 태그</b>: 빈칸·어법·순서…</li>
+        <li><b>배점</b>: 〔3.3점〕, 2점/3점 규칙</li>
+        <li><b>기출 이력</b>: "25-2 중간 9번 [2.1점]"</li>
+        <li><b>강사·학교</b>: 러닝헤드 이름</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>속성</h3>
+      <ul>
+        <li><b>모드</b>: 학습본 / 빈칸본. 같은 데이터로 두 벌</li>
+        <li><b>정답 위치</b>: 같은 블록 옆 · 다음 면 · 파트 끝 · 권말 · 별책 · 미주 번호</li>
+        <li><b>선택 필드</b>: 어휘·정답해설은 책마다 쓰는 칸이 다름</li>
+        <li><b>작성 영역</b>: 모든 면 MEMO 옆단, 필기 모눈, 라벨 달린 답 칸(핵심구조·본동사·풀이 근거)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>조립</h3>
+      <ul>
+        <li><b>발췌 재사용</b>: 리테가 워크북 면을 원래 쪽번호째 끼움</li>
+        <li><b>합본</b>: 클리닉 = 리테 + 실전문제 + 정답지 간지 + 정답 2종</li>
+        <li><b>같은 데이터, 다른 스킨</b>: 썸머스텝 ≡ 핵단기 (98p 동일, 머리글만 다름)</li>
+        <li><b>지문 한 개 3회 사용</b>: 세서특필 분석 → 세트 → 해설</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div style="display:grid;gap:6px">
+    <h2>이름만 같은 함정</h2>
+    <p class="lede">라벨로 분류하면 틀리는 것들입니다. 에셋을 학습시킬 때 라벨 대신 구조로 판별해야 합니다.</p>
+  </div>
+  <div class="traps">
+    <div class="trap"><div class="word">STEP</div><ul>
+      <li>워크북·중등: 같은 지문으로 단계를 밟는 진짜 단계형 → 틀</li>
+      <li>세서특필 STEP 1~3, 광문 STRATEGY: 풀이 절차 → B4 개념·전략</li>
+      <li>화이트북 STEP 01·02: WEEK 단위 EXERCISE 이름일 뿐 → B6 문항</li>
+    </ul></div>
+    <div class="trap"><div class="word">빈칸</div><ul>
+      <li>파이널 중요어휘: 첫 글자 + 정답이 같은 블록 옆</li>
+      <li>포켓북 암기 TEST: 통 빈칸 + 정답은 다음 면</li>
+      <li>워크북 C2 / STEP2 C1: 힌트 있음 / 없음 → B8 문장드릴</li>
+      <li>STEP3 빈칸 문항: 발문·선지 있음 → B6 문항</li>
+    </ul></div>
+    <div class="trap"><div class="word">괄호 선택</div><ul>
+      <li>워크북 A1 <span class="mono">[ⓐ short / ⓑ lengthy]</span>: 지문에 박힘, 발문 없음 → B7 변형지문</li>
+      <li>STEP3 <span class="mono">(A)[which / where]</span>: 조합 선지표 → B6 문항</li>
+      <li>파이널 서술형 영작 괄호: 재료 목록 → B8 문장드릴</li>
+    </ul></div>
+    <div class="trap"><div class="word">해석</div><ul>
+      <li>문장별 해석(B2) · 청크 해석 · 단락 해석 · 문항 뒤 해석 면 · 풀이 속 해석(B9) · 빈칸 섞인 Translation(B8)</li>
+    </ul></div>
+    <div class="trap"><div class="word">요약</div><ul>
+      <li>요약문 빈칸 서술형(B6) · (A)(B) 5지선다(B6) · 요약하기 쓰기 칸(B8) · 한국어 개요(B3)</li>
+    </ul></div>
+    <div class="trap"><div class="word">MEMO</div><ul>
+      <li>전면 MEMO 페이지(B10) · 모든 면의 MEMO 여백 열(틀) · 필기노트 모눈(B4 부속)</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>정하셔야 할 것</h2>
+  <div class="dec">
+    <div class="q"><h3>1. 테스트를 "모드"로 내리는 데 동의하시나요?</h3><p>동의하시면 콘텐츠팀은 정답이 든 한 벌만 내고, 빈칸본은 디자인이 만듭니다(포켓북 <span class="mono">숫자[낱말]</span> 표기가 이미 이 방식). 반대면 B8에 정답 필드를 따로 받아야 합니다.</p></div>
+    <div class="q"><h3>2. 관리양식을 콘텐츠 연동 대상에 넣을까요?</h3><p>클리닉 체크리스트·PASS/FAIL은 학원 운영 쪽 데이터라, 교재 조판 범위에 넣을지 표지 에셋으로만 둘지에 따라 계약이 달라집니다.</p></div>
+    <div class="q"><h3>3. 필기 주석 레이어(신준원T)는 범위에 넣나요?</h3><p>손필기·형광펜 벡터를 지문 위에 얹는 방식이라 태그·마크 역할 모델로 표현이 안 됩니다. 넣으면 B2에 "자유 주석" variant가 필요합니다.</p></div>
+    <div class="q"><h3>4. 문항 하위 형식을 어디까지 나눌까요?</h3><p>실물에서 객관식 30여 종, 서술형 20여 종이 나왔습니다. 에셋이 달라지는 단위(부속 구조: 요약상자·(A)(B)표·&lt;조건&gt;·대화문·답란)까지만 블록 variant로, 나머지는 유형 태그로 두기를 권합니다.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>확인 범위</h2>
+  <details>
+    <summary>대표 파일과 미확인 항목</summary>
+    <ul>
+      <li>프리미엄북: <span class="mono">배재1_블랙북01_내지_인쇄.pdf</span>, <span class="mono">배재2_배N제01_내지.pdf</span>, <span class="mono">배재1_화이트북01_내지_v2_2.pdf</span>, <span class="mono">배재1_화이트북02_내지_인쇄.pdf</span></li>
+      <li>시험형: <span class="mono">강동1·2·3_동형모의고사(1회).pdf</span>, <span class="mono">세서특필모의고사(학평선별35)_시험지.pdf</span>, <span class="mono">24-2-중간_명일여고1_명세모_완성.pdf</span>, <span class="mono">배재고1 2주차 리테·클리닉(답지포함).pdf</span></li>
+      <li>워크북: <span class="mono">고1_26년_09월_전체_v2.pdf</span>, <span class="mono">워크북수능만만10강_내지_v2.pdf</span>, <span class="mono">고1_26년_06월_전체(C세로).pdf</span>, 워크북_비블리오 3종</li>
+      <li>분석·암기: <span class="mono">분석본/고1/26-2-중간/세종1</span>, 포켓북 26-2-중간 21권 전수, <span class="mono">숙명1 최종분석서 / 3주차 내신분석서</span></li>
+      <li>특강: <span class="mono">광문1_세서특필_내지_인쇄.pdf</span>, <span class="mono">한영1_한서끝_내지_인쇄.pdf</span>, <span class="mono">강동1_우솔서점_내지_흑백.pdf</span>, 예비고1, 방학특강 8권, 중등 동아윤 L5 1·2권</li>
+      <li>단어장: 상일·광문·이의1·이의2·배재·한영 한단끝, 파이널 고2 배재2 Vol1-1·1-2·2</li>
+      <li>미확인: OJT 사이트 원문(로그인 필요), 클리닉 설명 원문, EBS 수능특강 워크북(PDF 없음), 중등 정답 별책, 세서특필 seseo 계열 비블리오 인쇄본, OMR 답안지 면</li>
+    </ul>
+  </details>
+</section>
+</div>
