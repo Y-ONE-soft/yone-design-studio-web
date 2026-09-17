@@ -48,6 +48,60 @@
     .panel .note b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 6px; }
     .panel .note a { color: var(--pp); }
 
+    .panel .fold { position: absolute; right: -18px; top: 50%; width: 18px; height: 46px; transform: translateY(-50%); background: #fff; border: 1px solid var(--line); border-left: 0; border-radius: 0 10px 10px 0; display: grid; place-items: center; font-size: 12px; color: #5f6368; cursor: pointer; }
+    body.nopanel aside.panel { display: none; }
+    body.nopanel main.canvas, body.nopanel footer { left: var(--rail); }
+
+    /* AI — 프롬프트 상자(Canva 생성칸 꼴) + 명령(/ 틀 등록하기 …) + 대화 스레드 */
+    .ai { flex: 1; overflow: auto; padding: 14px 16px 24px; font-size: 13px; display: flex; flex-direction: column; }
+    .prompt { border: 1.5px solid #b79cf3; border-radius: 16px; padding: 10px 12px 8px; background: #fff; box-shadow: 0 4px 16px rgba(125,42,232,.08); }
+    .prompt:focus-within { border-color: var(--pp); }
+    .prompt textarea { width: 100%; box-sizing: border-box; border: 0; outline: 0; resize: none; font-size: 14.5px; line-height: 1.5; min-height: 52px; font-family: inherit; background: transparent; }
+    .prompt .att { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+    .prompt .att span { display: inline-flex; align-items: center; gap: 6px; background: #f1eff8; border-radius: 8px; padding: 4px 8px; font-size: 12px; max-width: 100%; }
+    .prompt .att span b { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+    .prompt .att span i { font-style: normal; cursor: pointer; color: #8b8fa3; }
+    .prompt .bar { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .prompt .bar button { border: 0; background: transparent; border-radius: 8px; height: 30px; padding: 0 8px; font-size: 13px; cursor: pointer; color: #3c4043; font-family: inherit; }
+    .prompt .bar button:hover { background: #f1eff8; }
+    .prompt .bar .plus { font-size: 20px; width: 30px; padding: 0; }
+    .prompt .bar .cmd { border: 1px solid #ddd8ea; border-radius: 999px; padding: 0 10px; font-weight: 600; color: #5f6368; background: #f6f5fa; }
+    .prompt .bar .cmd.on { color: var(--pp); background: var(--pp-bg); border-color: #c9b8f5; }
+    .msg.bot p { margin: 0 0 6px; } .msg.bot p:last-child { margin: 0; }
+    .prompt .bar .grow { flex: 1; }
+    .prompt .bar .model { font-size: 11px; color: #8b8fa3; white-space: nowrap; }
+    .prompt .bar .send { width: 32px; height: 32px; border-radius: 50%; background: var(--pp); color: #fff; font-size: 16px; padding: 0; }
+    .prompt .bar .send[disabled] { opacity: .4; cursor: default; }
+    .prompt .bar .send:hover:not([disabled]) { background: #6a1fd0; }
+    .cmds { position: relative; }
+    .cmds .menu { position: absolute; left: 0; top: 36px; min-width: 230px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.16); padding: 6px; display: none; z-index: 5; }
+    .cmds .menu.on { display: block; }
+    .cmds .menu div { padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+    .cmds .menu div:hover { background: #f1eff8; }
+    .cmds .menu div small { display: block; color: #8b8fa3; font-size: 11px; }
+    .ai .off { background: #fff4e5; color: #8a5a00; border-radius: 9px; padding: 8px 12px; margin-top: 8px; line-height: 1.5; font-size: 12px; }
+    .thread { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { border-radius: 12px; padding: 10px 12px; line-height: 1.55; }
+    .msg.me { background: var(--pp-bg); align-self: flex-end; max-width: 92%; }
+    .msg.me small { display: block; color: #6b5a9a; font-size: 11px; }
+    .msg.bot { background: #f6f5fa; border: 1px solid var(--line); }
+    .msg .v { font-size: 14.5px; font-weight: 700; }
+    .msg .v.design { color: #1d7a4b; } .msg .v.new { color: #b45309; } .msg .v.unsure { color: #5f6368; }
+    .msg ul { margin: 6px 0 0; padding-left: 18px; color: #5f6368; }
+    .msg .pgs { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; }
+    .msg .pgs img { height: 60px; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+    .msg select, .msg input[type=text] { width: 100%; box-sizing: border-box; border: 1px solid #cfc8e6; border-radius: 9px; padding: 8px 10px; font-size: 13px; margin-top: 8px; font-family: inherit; background: #fff; }
+    .msg .acts { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .msg .acts button, .msg .acts a { border: 0; border-radius: 9px; padding: 8px 12px; font-size: 13px; cursor: pointer; font-family: inherit; text-decoration: none; background: #ecebf3; color: #1f2330; }
+    .msg .acts .go { background: var(--pp); color: #fff; font-weight: 600; }
+    .msg .it { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+    .msg .it:hover { background: #ebe8f5; }
+    .msg .it .tg { font-size: 10.5px; padding: 2px 7px; border-radius: 999px; background: #efe9ff; color: #3b1a80; flex: none; }
+    .msg .it .tg.new { background: #fff4e5; color: #8a5a00; }
+    .msg .it .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg .it .dt { color: #8b8fa3; font-size: 11px; }
+    .msg.ok { border-color: #bfe3cf; background: #eefaf3; }
+
     main.canvas { position: fixed; left: calc(var(--rail) + var(--panel)); right: 0; top: var(--top); bottom: 64px; overflow: auto; display: grid; place-items: center; padding: 30px; box-sizing: border-box; }
     .page { background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.14); transform-origin: center; }
     .page img { display: block; max-height: 78vh; max-width: 100%; }
@@ -80,6 +134,7 @@
 
   <nav class="rail">
     <button class="on" data-tab="tpl"><span class="ic">◫</span>템플릿</button>
+    <button data-tab="ai"><span class="ic">✦</span>AI</button>
     <button data-tab="elem"><span class="ic">⬡</span>요소</button>
     <button data-tab="text"><span class="ic">T</span>텍스트</button>
     <button data-tab="upload"><span class="ic">☁</span>업로드 항목</button>
@@ -87,6 +142,32 @@
   </nav>
 
   <aside class="panel">
+    <span class="fold" id="fold" title="패널 접기">‹</span>
+    <div class="tabs" id="tab-ai">
+      <div class="ai">
+        <div class="prompt">
+          <div class="att" id="ai-att"></div>
+          <textarea id="ai-text" placeholder="원하는 디자인을 설명해 주세요 — 예: 배재고1 블랙북 26-2 중간 완성본, 이 틀로 등록"></textarea>
+          <div class="bar">
+            <button type="button" class="plus" id="ai-plus" title="PDF · 지면 이미지 첨부">+</button>
+            <input type="file" id="ai-file" accept=".pdf,.png,.jpg,.jpeg,.webp" style="display:none">
+            <span class="cmds"><button type="button" class="cmd" id="ai-cmd">/ 명령 ▾</button>
+              <div class="menu" id="ai-menu">
+                <div data-cmd="">프롬프트<small>그냥 묻기 — 원하는 디자인을 설명하면 어느 틀·폴더인지 답함 (기본)</small></div>
+                <div data-cmd="register">/ 틀 등록하기<small>첨부한 PDF·이미지를 판정해 그 틀의 디자인으로 등록</small></div>
+                <div data-cmd="new">/ 새 틀 요청<small>면 구성이 다른 것 — 클로드 세션에서 만들 요청을 남김</small></div>
+                <div data-cmd="search">/ 디자인 검색<small>적은 말로 템플릿 탭을 거름</small></div>
+                <div data-cmd="load">/ 불러오기<small>결정 대기 · 새 틀 요청 불러오기</small></div>
+              </div></span>
+            <span class="grow"></span>
+            <span class="model">{{ model if claude else '클로드 꺼짐' }}</span>
+            <button type="button" class="send" id="ai-send" title="보내기">↑</button>
+          </div>
+        </div>
+        {% if not claude %}<div class="off">클로드 키가 없어 판정은 못 함 — 틀을 직접 골라 등록만 됨 (`~/.config/yone/env`).</div>{% endif %}
+        <div class="thread" id="ai-thread"></div>
+      </div>
+    </div>
     <div class="tabs on" id="tab-tpl">
       <div class="search"><span>⌕</span><input id="q" placeholder="디자인 · 틀 이름으로 찾기" autocomplete="off"></div>
       <div class="row">
@@ -96,11 +177,12 @@
       <div class="grid" id="grid">
         {% for t in templates %}
           {% for d in t.designs %}
-          {% set imgs = (d.masters|map(attribute='file')|list) if d.masters else d.previews %}
-          <div class="tpl" data-series="{{ t.series }}" data-design="{{ d.id }}" data-name="{{ d.name }}" data-tname="{{ t.name }}" data-kind="{{ 'master' if d.masters else 'preview' }}"
-               data-imgs="{{ imgs|join(',') }}" data-labels="{{ (d.masters|map(attribute='label')|list|join(',')) if d.masters else '' }}" data-q="{{ (d.name ~ ' ' ~ t.name ~ ' ' ~ t.dir_name)|lower }}"
+          {% set real = d.previews|length > 0 %}
+          {% set imgs = d.previews if real else (d.masters|map(attribute='file')|list) %}
+          <div class="tpl" data-series="{{ t.series }}" data-design="{{ d.id }}" data-name="{{ d.name }}" data-tname="{{ t.name }}" data-kind="{{ 'preview' if real else 'master' }}"
+               data-imgs="{{ imgs|join(',') }}" data-labels="{{ '' if real else (d.masters|map(attribute='label')|list|join(',')) }}" data-q="{{ (d.name ~ ' ' ~ t.name ~ ' ' ~ t.dir_name)|lower }}"
                title="{{ t.name }} · {{ d.name }}{% if d.desc %} — {{ d.desc }}{% endif %}">
-            {% if imgs %}<img src="/catalog/{{ 'master' if d.masters else 'preview' }}/{{ t.series }}/{{ d.id }}/{{ imgs[0] }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
+            {% if imgs %}<img src="/catalog/{{ 'preview' if real else 'master' }}/{{ t.series }}/{{ d.id }}/{{ imgs[0] }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
             <span class="n">{{ imgs|length }}</span><i class="dot {{ t.ready }}"></i>
             <span class="nm">{{ t.name }} · {{ d.name }}</span>
           </div>
@@ -130,10 +212,13 @@
     document.querySelectorAll('.rail button').forEach(function (b) {
       b.addEventListener('click', function () {
         if (b.dataset.href) { location.href = b.dataset.href; return; }
+        if (b.classList.contains('on')) { document.body.classList.toggle('nopanel'); return; }   // 켜진 탭 다시 누르면 패널 접기/펴기 → 지면 크게
+        document.body.classList.remove('nopanel');
         document.querySelectorAll('.rail button').forEach(function (x) { x.classList.toggle('on', x === b); });
         document.querySelectorAll('.panel .tabs').forEach(function (t) { t.classList.toggle('on', t.id === 'tab-' + b.dataset.tab); });
       });
     });
+    document.getElementById('fold').addEventListener('click', function () { document.body.classList.add('nopanel'); });
     // 템플릿 거르기
     function filt() {
       var q = document.getElementById('q').value.trim().toLowerCase(), s = document.getElementById('f-series').value;
@@ -167,6 +252,111 @@
     document.getElementById('next').addEventListener('click', function () { show(idx + 1); });
     document.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') show(idx - 1); if (e.key === 'ArrowRight') show(idx + 1); });
     document.getElementById('zoom').addEventListener('input', function () { page.style.transform = 'scale(' + this.value / 100 + ')'; document.getElementById('zv').textContent = this.value + '%'; });
+    // ?pick=<틀>/<디자인> — 방금 등록한 디자인을 바로 고른다
+    (function () {
+      var pk = new URLSearchParams(location.search).get('pick');
+      if (!pk) return;
+      var t = document.querySelector('.tpl[data-series="' + pk.split('/')[0] + '"][data-design="' + pk.split('/')[1] + '"]');
+      if (t) { t.click(); t.scrollIntoView({ block: 'center' }); }
+    })();
+
+    // ── AI: 프롬프트 + 명령(/ 틀 등록하기 · 새 틀 요청 · 디자인 검색 · 불러오기) + 스레드 ──
+    var SERIES = {{ series_map|tojson }};   // 틀 → {name, dir, dir_name}
+    var aiText = document.getElementById('ai-text'), aiFile = document.getElementById('ai-file'), aiSend = document.getElementById('ai-send');
+    var thread = document.getElementById('ai-thread'), cmd = '', hist = [], CMD = { register: '/ 틀 등록하기', new: '/ 새 틀 요청', search: '/ 디자인 검색', load: '/ 불러오기' };
+    function setCmd(c) { cmd = c || ''; var b = document.getElementById('ai-cmd'); b.textContent = (cmd ? CMD[cmd] : '/ 명령') + ' ▾'; b.classList.toggle('on', !!cmd); document.getElementById('ai-menu').classList.remove('on'); }
+    document.getElementById('ai-cmd').addEventListener('click', function (e) { e.stopPropagation(); document.getElementById('ai-menu').classList.toggle('on'); });
+    document.querySelectorAll('#ai-menu div').forEach(function (d) { d.addEventListener('click', function () { setCmd(d.dataset.cmd); }); });
+    document.addEventListener('click', function () { document.getElementById('ai-menu').classList.remove('on'); });
+    document.getElementById('ai-plus').addEventListener('click', function () { aiFile.click(); });
+    function pickFile(f) { if (!f) return; aiFile._f = f; document.getElementById('ai-att').innerHTML = '<span><b>📎 ' + f.name + '</b><i title="빼기">×</i></span>';
+      document.querySelector('#ai-att i').addEventListener('click', function () { aiFile._f = null; aiFile.value = ''; document.getElementById('ai-att').innerHTML = ''; }); }
+    aiFile.addEventListener('change', function () { pickFile(this.files[0]); });
+    aiText.addEventListener('dragover', function (e) { e.preventDefault(); }); aiText.addEventListener('drop', function (e) { e.preventDefault(); pickFile(e.dataTransfer.files[0]); });
+    aiText.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend.click(); } if (e.key === '/' && !aiText.value) { e.preventDefault(); document.getElementById('ai-menu').classList.add('on'); } });
+    function say(cls, html) { var m = document.createElement('div'); m.className = 'msg ' + cls; m.innerHTML = html; thread.appendChild(m); m.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return m; }
+    function esc(t) { return String(t || '').replace(/</g, '&lt;'); }
+    function tplOptions(sel) { return Object.keys(SERIES).map(function (k) { return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(SERIES[k].name) + '</option>'; }).join(''); }
+
+    function showJudged(j) {     // 판정 결과 메시지 — 틀 고르고 등록 / 새 틀 요청
+      var v = j.verdict || {}, kind = v.verdict || 'unsure', S = SERIES[v.series] || {};
+      var conf = v.confidence ? ' · 신뢰도 ' + Math.round(v.confidence * (v.confidence <= 1 ? 100 : 1)) + '%' : '';
+      var head = kind === 'design' ? '기존 틀의 디자인 — ' + esc(S.name || v.series) + conf + (S.dir_name ? ' · 폴더 「' + esc(S.dir_name) + '」' : '')
+               : kind === 'new' ? '새 틀 — 면 구성이 기존 틀과 다름 (코드 필요)' : '판정 보류 — 틀을 직접 고르세요';
+      var m = say('bot', '<div class="v ' + kind + '">' + head + '</div>'
+        + '<ul>' + (v.reasons || []).slice(0, 4).map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ul>'
+        + '<div class="pgs">' + (j.pages || []).map(function (p) { return '<img src="/catalog/intake/' + j.id + '/' + p.file + '" title="' + p.label + ' p' + p.page + '">'; }).join('') + '</div>'
+        + (j.status === 'registered' ? '<div class="acts"><a class="go" href="/project/new?pick=' + j.series + '/' + j.design + '">지면에 열기</a><a href="/projects?dir=' + (SERIES[j.series] || {}).dir + '">폴더 열기</a></div>'
+         : j.status === 'new_request' ? '<div style="margin-top:8px;color:#8a5a00">새 틀 요청으로 남아 있음 — 클로드 세션에서 만듦</div>'
+         : '<select class="ser">' + tplOptions(v.series) + '</select><input type="text" class="dname" value="' + esc(v.design_name || (j.pdf || '').replace(/\.[^.]+$/, '')) + '" placeholder="디자인 이름">'
+           + '<div class="acts"><button class="go reg">이 틀의 디자인으로 등록</button><button class="nw">새 틀로 요청</button></div>'));
+      var reg = m.querySelector('.reg'), nw = m.querySelector('.nw');
+      if (reg) reg.addEventListener('click', function () { decide(j, m.querySelector('.ser').value, m.querySelector('.dname').value, m); });
+      if (nw) nw.addEventListener('click', function () { decide(j, '__new__', m.querySelector('.dname').value, m); });
+    }
+    function decide(j, series, name, m) {
+      m.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+      fetch('/api/catalog/intake/' + j.id + '/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ series: series, name: name, note: aiText.value }) })
+        .then(function (r) { return r.json(); })
+        .then(function (r) {
+          if (r.error) { say('bot', '⚠ ' + esc(r.error)); return; }
+          if (r.status === 'new_request') { say('bot ok', '새 틀 요청을 남겼습니다 (catalog/_intake/' + j.id + '). 클로드 세션에서 "이 PDF 로 새 틀 만들어줘" 하면 틀이 생기고 폴더에 들어갑니다.'); return; }
+          var S = SERIES[r.series] || {};
+          say('bot ok', '✅ 「' + esc(S.name || r.series) + '」 틀에 디자인 <b>' + esc(name) + '</b> 등록 — 폴더 「' + esc(S.dir_name || '') + '」 에서 바로 쓸 수 있습니다.'
+            + (r.rejected && r.rejected.length ? '<div style="color:#8a5a00;margin-top:4px">잰 값 중 못 넣은 것 ' + r.rejected.length + '개 — 지면에서 확인</div>' : '')
+            + '<div class="acts"><a class="go" href="/project/new?pick=' + r.series + '/' + r.design + '">지면에 열기</a><a href="/projects?dir=' + S.dir + '" target="_blank">폴더 열기</a><a href="' + r.link + '">원고 넣기</a></div>');
+        });
+    }
+    function loadList() {
+      var m = say('bot', '불러오는 중…');
+      fetch('/api/catalog/intake').then(function (r) { return r.json(); }).then(function (j) {
+        var items = (j.pending || []).map(function (x) { return { id: x.id, nm: x.pdf, dt: x.date, tg: '결정 대기' }; })
+          .concat((j.new_requests || []).map(function (x) { return { id: x.id, nm: x.name || x.pdf, dt: x.date, tg: '새 틀 요청', cls: 'new' }; }));
+        m.innerHTML = items.length ? items.map(function (x) { return '<div class="it" data-id="' + x.id + '"><span class="tg ' + (x.cls || '') + '">' + x.tg + '</span><span class="nm">' + esc(x.nm) + '</span><span class="dt">' + (x.dt || '') + '</span></div>'; }).join('') : '불러올 것이 없습니다.';
+        m.querySelectorAll('.it').forEach(function (it) { it.addEventListener('click', function () { fetch('/api/catalog/intake/' + it.dataset.id).then(function (r) { return r.json(); }).then(showJudged); }); });
+      });
+    }
+    function md(t) {   // 아주 얕은 마크다운 — 굵게 · 코드 · 줄바꿈
+      return esc(t).replace(/```[a-z]*\n?([\s\S]*?)```/g, function (_, c) { return '<code>' + c.trim() + '</code>'; }).replace(/^#{1,6}\s*(.+)$/gm, '<b>$1</b>')
+        .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`\n]+)`/g, '<code>$1</code>').split(/\n{2,}/).map(function (p) { return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
+    }
+    function askClaude(text, f) {   // 기본 = 그냥 프롬프트
+      if (!text && !f) return;
+      say('me', esc(text || '(첨부)') + (f ? '<small>📎 ' + esc(f.name) + '</small>' : ''));
+      var wait = say('bot', '생각 중…'); aiSend.disabled = true;
+      var fd = new FormData(); fd.append('text', text); fd.append('history', JSON.stringify(hist)); if (f) fd.append('file', f);
+      fetch('/api/catalog/ask', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          aiSend.disabled = false;
+          if (j.error) { wait.innerHTML = '⚠ ' + esc(j.error); return; }
+          hist.push({ role: 'user', text: text || '(첨부)' }); hist.push({ role: 'assistant', text: j.text });
+          wait.innerHTML = md(j.text) + (f ? '<div class="acts"><button class="go run-reg">/ 틀 등록하기 로 이 첨부 판정·등록</button></div>' : '');
+          var b = wait.querySelector('.run-reg'); if (b) b.addEventListener('click', function () { setCmd('register'); aiFile._f = f; aiSend.click(); });
+        })
+        .catch(function (e) { aiSend.disabled = false; wait.textContent = '실패: ' + e; });
+      aiText.value = '';
+    }
+    aiSend.addEventListener('click', function () {
+      var text = aiText.value.trim(), f = aiFile._f;
+      if (!cmd) { askClaude(text, f); return; }
+      if (cmd === 'load') { say('me', CMD.load); loadList(); setCmd(''); return; }
+      if (cmd === 'search') { if (!text) return; say('me', CMD.search + '<small>' + esc(text) + '</small>'); document.getElementById('q').value = text; filt(); document.querySelector('.rail button[data-tab="tpl"]').click(); setCmd(''); return; }
+      if (!f) { say('bot', '+ 로 완성본 PDF 나 지면 이미지를 첨부하세요.'); return; }
+      say('me', CMD[cmd] + '<small>📎 ' + esc(f.name) + (text ? ' · ' + esc(text) : '') + '</small>');
+      var wait = say('bot', '재는 중… 판정은 20~40초'), runCmd = cmd; setCmd('');
+      aiSend.disabled = true;
+      var fd = new FormData(); fd.append('pdf', f); fd.append('hint', text);
+      {% if not claude %}fd.append('series', Object.keys(SERIES)[0] || '');{% endif %}
+      fetch('/api/catalog/intake', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          aiSend.disabled = false; wait.remove();
+          if (j.error) { say('bot', '⚠ ' + esc(j.error)); return; }
+          if (runCmd === 'new') { showJudged(j); var m = thread.lastChild; decide(j, '__new__', text || j.pdf, m); return; }
+          showJudged(j);
+        })
+        .catch(function (e) { aiSend.disabled = false; wait.textContent = '실패: ' + e; });
+    });
+
     document.getElementById('m-file').addEventListener('click', function () { alert('파일: 디자인을 고르고 [만들기] 로 책을 만듭니다. 만든 책은 프로젝트에 모입니다.'); });
     document.getElementById('m-size').addEventListener('click', function () { alert('크기(판형·도련)는 디자인 config 가 정합니다. 책을 만든 뒤 내지 작업대에서 바꿉니다.'); });
   </script>
