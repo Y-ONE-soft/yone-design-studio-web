@@ -21,9 +21,24 @@
   .err { color: #c0263a; font-size: 12.5px; margin-top: 8px; white-space: pre-wrap; }
 
   /* 왼쪽 — 부품 라이브러리 */
-  .lib { width: 250px; flex: none; overflow: auto; background: #fff; border-right: 1px solid var(--line); }
+  .lib { width: 270px; flex: none; overflow: auto; background: #fff; border-right: 1px solid var(--line); }
+  .lib details { border-top: 1px solid var(--line); }
+  .lib summary { list-style: none; cursor: pointer; padding: 9px 14px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .lib summary::-webkit-details-marker { display: none; }
+  .lib summary .arr { color: #a0a4b5; font-size: 10px; width: 10px; }
+  .lib details[open] summary .arr { transform: rotate(90deg); }
+  .lib summary small { font-weight: 400; color: var(--mute); margin-left: auto; font-size: 11px; }
+  .lib summary .rd { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: #d9f2e3; color: #1d6b3a; font-weight: 700; }
+  .lib summary .ref { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: #f1f0f6; color: var(--mute); font-weight: 600; }
   .lib .grp { padding: 0 12px 10px; }
-  .lib .grp h3 { margin: 10px 2px 6px; }
+  .codes { display: flex; gap: 4px; flex-wrap: wrap; padding: 8px 14px 10px; }
+  .codes button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 2px 8px; font-size: 10.5px; cursor: pointer; color: #3c4043; }
+  .codes button.on { background: var(--pp); border-color: var(--pp); color: #fff; }
+  .card .cd { display: inline-block; font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: #eef0f5; color: #3c4043; margin-right: 2px; font-weight: 600; }
+  .card.ref { cursor: grab; }
+  .card.ref .nm::after { content: " 참고"; font-size: 9.5px; color: #a0a4b5; font-weight: 500; }
+  .card.hide { display: none; }
+  .card.k표지간지 { border-left: 4px solid #9aa3b5; } .card.k간지 { border-left: 4px solid #c9c2dd; }
   .card { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 6px; margin-bottom: 6px; background: #fff; cursor: grab; }
   .card:hover { border-color: #cfc8e6; box-shadow: 0 2px 8px rgba(30,20,60,.06); }
   .card img { width: 46px; height: 64px; object-fit: cover; object-position: top; border-radius: 4px; background: #eceef3; border: 1px solid #e3e1ec; flex: none; }
@@ -56,6 +71,8 @@
   .seq li button:hover { background: var(--pp-bg); color: var(--pp); }
   .seq li button.x:hover { background: #fde8e8; color: #c0263a; }
   .seq li.div { background: #f6f5fa; border-style: dashed; color: var(--mute); font-size: 11.5px; padding: 4px 8px; }
+  .seq li .k .sr { color: var(--pp); font-weight: 600; }
+  .seq li.ref { border-left: 3px solid #c9c2dd; }
   .seq li.div .nm { font-weight: 500; color: var(--mute); }
   .cv .sum { font-size: 12px; color: var(--mute); margin: 6px 0; }
   .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
@@ -81,6 +98,16 @@
   .files { list-style: none; margin: 0; padding: 0; font-size: 12px; }
   .files li { padding: 3px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* 스토리보드 — 지면 순서 */
+  .board { position: absolute; inset: 41px 0 0 0; overflow: auto; background: #ecebf3; padding: 16px; display: none; }
+  .board.on { display: block; }
+  .board .pgs { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .board .p { width: 150px; text-align: center; font-size: 11px; color: #3c4043; }
+  .board .p img { width: 150px; aspect-ratio: 210 / 297; object-fit: cover; object-position: top; background: #fff; border: 1px solid #d8d3ea; border-radius: 4px; box-shadow: 0 2px 6px rgba(30,20,60,.08); display: block; margin-bottom: 4px; }
+  .board .p .no { color: var(--mute); font-size: 10px; }
+  .board .p.auto img { opacity: .75; }
+  .board .p .tl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .board .p .tl b { display: block; font-size: 10px; color: var(--pp); font-weight: 600; }
   /* 오른쪽 — 미리보기 */
   .stage { flex: 1; position: relative; display: flex; flex-direction: column; min-width: 0; }
   .bar { display: flex; gap: 8px; align-items: center; padding: 9px 14px; background: #fff; border-bottom: 1px solid var(--line); font-size: 12.5px; color: #3c4043; }
@@ -99,29 +126,36 @@
   <!-- 왼쪽: 부품 -->
   <aside class="lib">
     <h1>🧩 부품</h1>
-    <p class="lede">카드의 + 를 누르거나 가운데로 끌어다 놓으면 구성에 담긴다. STEP 간지는 그 스텝이 처음 나올 때 저절로 붙는다.</p>
-    {% if not parts %}
-    <p class="note" style="padding:0 16px">부품 썸네일이 없다 — 터미널: <code>book &lt;워크북 책&gt; make --what=thumbs --out=catalog/workbook/parts</code></p>
-    {% endif %}
-    {% for n in (1, 2, 3) %}
-    <div class="grp">
-      <h3>STEP 0{{ n }} · {{ {1: 'FRAME', 2: 'BUILD UP', 3: 'TEST'}[n] }}</h3>
-      {% for p in parts if p.step == n %}
-      <div class="card s{{ n }}" draggable="true" data-key="{{ p.key }}" data-name="{{ p.name }}" data-thumb="{{ p.thumb }}" data-step="{{ p.step }}" data-logo="{{ p.logo }}">
-        <img src="/make/parts/{{ p.thumb }}" alt="">
-        <div class="t"><div class="nm">{{ p.logo }} {{ p.name }}</div><div class="ds">{{ p.desc }}</div></div>
+    <p class="lede">프로젝트 &gt; 틀의 모든 블록. + 를 누르거나 가운데로 끌어다 놓으면 구성에 담긴다.</p>
+    <div class="codes" id="codes">
+      <button data-code="" class="on">전부</button>
+      <button data-code="표지·간지">표지·간지</button>
+      {% for c in ['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11'] %}<button data-code="{{ c }}">{{ c }}</button>{% endfor %}
+    </div>
+    {% for t in library %}
+    <details {% if t.renderable %}open{% endif %}>
+      <summary><span class="arr">▶</span>{{ t.name }}<small>{{ t.blocks|length }}</small>{% if t.renderable %}<span class="rd">조판</span>{% else %}<span class="ref">참고</span>{% endif %}</summary>
+      <div class="grp">
+      {% for p in t.blocks %}
+      <div class="card {% if p.step %}s{{ p.step }}{% endif %} {% if not p.renderable %}ref{% endif %} k{{ p.kind|replace('·','') }}" draggable="true"
+           data-id="{{ p.id }}" data-series="{{ p.series }}" data-design="{{ p.design }}" data-key="{{ p.key or '' }}" data-label="{{ p.label }}"
+           data-kind="{{ p.kind }}" data-thumb="{{ p.thumb }}" data-step="{{ p.step or '' }}" data-page="{{ p.page or '' }}" data-codes="{{ p.codes|join(',') }}" data-tpl="{{ t.name }}">
+        <img src="{{ p.thumb }}" alt="" loading="lazy">
+        <div class="t"><div class="nm">{{ p.label }}</div>
+          <div class="ds">{% for c in p.codes %}<span class="cd">{{ c }}</span>{% endfor %}{% if p.kind != '본문' %}<span class="cd">{{ p.kind }}</span>{% endif %} {{ p.desc or '' }}{% if p.pages and p.pages > 1 %} · 기준 {{ p.pages }}면{% endif %}</div></div>
         <button class="add" title="구성에 담기">+</button>
       </div>
       {% endfor %}
-    </div>
+      </div>
+    </details>
     {% endfor %}
-    <p class="note" style="padding:0 16px 16px">지금 부품은 스텝 단위(원고 파일 단위). 면 안에서 섞는 잘은 부품은 다음 단계.</p>
+    <p class="note" style="padding:10px 16px 16px">「조판」 틀의 부품은 원고를 넣으면 실제로 조판된다. 「참고」 틀의 블록은 기준 PDF 의 지면 형태 — 구성에 담아 순서를 짤 수 있고, 그 틀이 조판 연결되면 그대로 살아난다.</p>
   </aside>
 
   <!-- 가운데: 구성 -->
   <section class="cv">
     <h1>🪜 구성</h1>
-    <p class="lede">부품을 순서대로 쌓은 것이 구성이다. 저장하면 다음 책에서 그대로 쓴다.</p>
+    <p class="lede">부품을 순서대로 쌓은 것이 구성이다. 여러 틀의 블록을 섞어 담을 수 있다. 저장하면 다음 책에서 그대로 쓴다.</p>
     <div class="box">
       <h3>저장된 구성</h3>
       <div class="chips" id="comps"></div>
@@ -205,8 +239,10 @@
       <select id="sample">{% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}</select>
       <button id="prev">‹</button><span id="pg">–</span><button id="next">›</button>
       <button id="spread">펼침</button>
+      <button id="mode" title="조판 미리보기 ↔ 지면 순서">지면 순서</button>
     </div>
     <iframe class="frame" id="frame" src="/book-studio/frame"></iframe>
+    <div class="board" id="board"><div class="pgs" id="board-pgs"></div></div>
     <pre id="log"></pre>
   </section>
 </div>
@@ -217,7 +253,8 @@
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var PARTS = {};
-  document.querySelectorAll('.lib .card').forEach(function (c) { PARTS[c.dataset.key] = c.dataset; });
+  document.querySelectorAll('.lib .card').forEach(function (c) { PARTS[c.dataset.id] = c.dataset; });
+  var mode = 'auto';                                     // auto | viewer | board
   var comps = {{ compositions|tojson }};
   var viewer = null, V = null, spread = false, curDoc = '', timer = null, madeKey = '', madeBid = '';
 
@@ -272,26 +309,30 @@
 
   // ── 구성 상태 ──
   function items() {
-    return Array.prototype.map.call($('seq').querySelectorAll('li[data-key]'), function (li) {
-      return { key: li.dataset.key, n: li.querySelector('input[type=number]').value };
+    return Array.prototype.map.call($('seq').querySelectorAll('li[data-id]'), function (li) {
+      var p = PARTS[li.dataset.id] || {};
+      return { id: li.dataset.id, series: p.series, design: p.design, key: p.key || '', label: p.label, kind: p.kind,
+               thumb: p.thumb, page: p.page, n: li.querySelector('input[type=number]').value };
     });
   }
   function composition() {
     var its = items(), limits = {};
-    its.forEach(function (it) { if (it.n) limits[it.key] = parseInt(it.n, 10); });
-    return { steps: its.map(function (it) { return it.key; }), limits: limits,
+    its.forEach(function (it) { if (it.key && it.n) limits[it.key] = parseInt(it.n, 10); });
+    return { items: its, steps: its.filter(function (it) { return it.key; }).map(function (it) { return it.key; }), limits: limits,
              cycle: document.querySelector('input[name=order]:checked').value === 'cycle' };
   }
   function redrawDividers() {
     var seq = $('seq'), seen = {};
     seq.querySelectorAll('li.div').forEach(function (d) { d.remove(); });
-    var lis = seq.querySelectorAll('li[data-key]');
+    var lis = seq.querySelectorAll('li[data-id]');
     lis.forEach(function (li) {
-      var st = PARTS[li.dataset.key].step;
-      if (!seen[st]) {
+      var p = PARTS[li.dataset.id] || {};
+      if (!p.key) return;                                // 간지 자동 삽입은 조판되는 워크북 부품에만
+      var st = p.step;
+      if (st && !seen[st]) {
         seen[st] = 1;
         var d = document.createElement('li'); d.className = 'div';
-        d.innerHTML = '<span class="nm">▮ STEP 0' + st + ' 간지 2면 (자동)</span>';
+        d.innerHTML = '<span class="nm">▮ STEP 0' + st + ' 간지 2면 (조판 때 자동)</span>';
         seq.insertBefore(d, li);
       }
     });
@@ -299,22 +340,26 @@
     if (lis.length && e) e.remove();
     if (!lis.length && !e) { seq.innerHTML = '<li class="empty">비어 있다 — 왼쪽에서 부품을 담을 것</li>'; }
     $('cnt').textContent = lis.length ? lis.length + '개' : '';
-    var c = composition();
-    $('sum').textContent = lis.length ? ((c.cycle ? '세로' : '가로') + ' · 부품 ' + lis.length + '개' + (Object.keys(c.limits).length ? ' · 지문 수 제한 ' + Object.keys(c.limits).length : '')) : '';
+    var c = composition(), nr = c.items.filter(function (it) { return !it.key && it.kind === '본문'; }).length;
+    $('sum').textContent = lis.length ? ((c.cycle ? '세로' : '가로') + ' · 블록 ' + lis.length + '개 · 조판 ' + c.steps.length + '개'
+      + (nr ? ' · 참고(조판 연결 전) ' + nr + '개' : '') + (Object.keys(c.limits).length ? ' · 지문 수 제한 ' + Object.keys(c.limits).length : '')) : '';
+    $('mkbook-open').disabled = !c.steps.length;
+    $('mkbook-open').title = c.steps.length ? '' : '조판되는 부품(워크북)이 있어야 책을 만든다';
   }
   function changed() { redrawDividers(); clearTimeout(timer); timer = setTimeout(preview, 600); }
-  function addItem(key, n, at) {
-    var p = PARTS[key]; if (!p) return;
-    var li = document.createElement('li'); li.dataset.key = key; li.draggable = true;
-    li.innerHTML = '<img src="/make/parts/' + p.thumb + '" alt="">' +
-      '<div class="t"><div class="nm">' + p.logo + ' ' + p.name + '</div><div class="k">' + key + '</div></div>' +
-      '<input type="number" min="1" max="99" placeholder="전부" value="' + (n || '') + '" title="지문 수 제한">' +
+  function addItem(id, n, at) {
+    var p = PARTS[id]; if (!p) return;
+    var li = document.createElement('li'); li.dataset.id = id; li.draggable = true;
+    if (!p.key) li.className = 'ref';
+    li.innerHTML = '<img src="' + p.thumb + '" alt="">' +
+      '<div class="t"><div class="nm">' + p.label + '</div><div class="k"><span class="sr">' + p.tpl + '</span>' + (p.key ? ' · ' + p.key : ' · 참고') + (p.kind !== '본문' ? ' · ' + p.kind : '') + '</div></div>' +
+      (p.key ? '<input type="number" min="1" max="99" placeholder="전부" value="' + (n || '') + '" title="지문 수 제한">' : '<input type="number" hidden>') +
       '<button class="up" title="위로">▲</button><button class="dn" title="아래로">▼</button><button class="x" title="빼기">✕</button>';
     li.querySelector('.up').onclick = function () { var prev = li.previousElementSibling; while (prev && prev.classList.contains('div')) prev = prev.previousElementSibling; if (prev) li.parentNode.insertBefore(li, prev); changed(); };
     li.querySelector('.dn').onclick = function () { var nx = li.nextElementSibling; while (nx && nx.classList.contains('div')) nx = nx.nextElementSibling; if (nx) li.parentNode.insertBefore(nx, li); changed(); };
     li.querySelector('.x').onclick = function () { li.remove(); changed(); };
     li.querySelector('input').onchange = changed;
-    li.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/move', key); li.classList.add('drag'); });
+    li.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/move', id); li.classList.add('drag'); });
     li.addEventListener('dragend', function () { li.classList.remove('drag'); });
     var seq = $('seq');
     if (at && at.parentNode === seq) seq.insertBefore(li, at); else seq.appendChild(li);
@@ -323,40 +368,78 @@
   function load(c) {
     $('seq').innerHTML = '';
     document.querySelector('input[name=order][value=' + (c.cycle ? 'cycle' : 'step') + ']').checked = true;
-    (c.steps || []).forEach(function (k) { addItem(k, (c.limits || {})[k]); });
+    if (c.items && c.items.length) c.items.forEach(function (it) { addItem(it.id, it.n); });
+    else (c.steps || []).forEach(function (k) { addItem('workbook:' + k, (c.limits || {})[k]); });
     redrawDividers();
   }
   document.querySelectorAll('input[name=order]').forEach(function (r) { r.onchange = changed; });
 
+  // 코드 필터
+  document.querySelectorAll('#codes button').forEach(function (b) {
+    b.onclick = function () {
+      document.querySelectorAll('#codes button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      var code = b.dataset.code;
+      document.querySelectorAll('.lib .card').forEach(function (c) {
+        var hit = !code || (code === '표지·간지' ? c.dataset.kind !== '본문' : (',' + c.dataset.codes + ',').indexOf(',' + code + ',') >= 0);
+        c.classList.toggle('hide', !hit);
+      });
+      if (code) document.querySelectorAll('.lib details').forEach(function (d) { d.open = !!d.querySelector('.card:not(.hide)'); });
+    };
+  });
+
   // 라이브러리 → 캔버스: + 단추, 끌어놓기
   document.querySelectorAll('.lib .card').forEach(function (c) {
-    c.querySelector('.add').onclick = function () { addItem(c.dataset.key); };
-    c.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/add', c.dataset.key); });
+    c.querySelector('.add').onclick = function () { addItem(c.dataset.id); };
+    c.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/add', c.dataset.id); });
   });
   var seq = $('seq');
   seq.addEventListener('dragover', function (e) { e.preventDefault(); seq.classList.add('over'); });
   seq.addEventListener('dragleave', function () { seq.classList.remove('over'); });
   seq.addEventListener('drop', function (e) {
     e.preventDefault(); seq.classList.remove('over');
-    var at = e.target.closest ? e.target.closest('li[data-key]') : null;
+    var at = e.target.closest ? e.target.closest('li[data-id]') : null;
     var add = e.dataTransfer.getData('text/add'), mv = e.dataTransfer.getData('text/move');
     if (add) addItem(add, '', at);
-    else if (mv) { var li = seq.querySelector('li[data-key="' + mv + '"]'); if (li && at && at !== li) { seq.insertBefore(li, at); changed(); } else if (li && !at) { seq.appendChild(li); changed(); } }
+    else if (mv) { var li = seq.querySelector('li[data-id="' + mv + '"]'); if (li && at && at !== li) { seq.insertBefore(li, at); changed(); } else if (li && !at) { seq.appendChild(li); changed(); } }
   });
 
-  // ── 미리보기 ──
+  // ── 미리보기: 지면 순서(스토리보드) / 조판 ──
+  function board() {
+    var its = items(), box = $('board-pgs'); box.innerHTML = '';
+    var no = 0, seen = {};
+    its.forEach(function (it) {
+      var p = PARTS[it.id] || {};
+      if (p.key && p.step && !seen[p.step]) {           // 조판 때 자동으로 붙는 간지
+        seen[p.step] = 1; no += 2;
+        var dv = document.createElement('div'); dv.className = 'p auto';
+        dv.innerHTML = '<img src="/make/parts/divider_' + p.step + '.png" alt=""><div class="no">' + (no - 1) + '~' + no + '</div><div class="tl"><b>자동</b>STEP 0' + p.step + ' 간지</div>';
+        box.appendChild(dv);
+      }
+      no += 1;
+      var d = document.createElement('div'); d.className = 'p' + (p.key ? '' : ' ref');
+      d.innerHTML = '<img src="' + (p.key ? p.thumb : p.thumb.replace('dpi=40', 'dpi=56')) + '" alt=""><div class="no">' + no + (p.key ? ' …' : '') + '</div><div class="tl"><b>' + p.tpl + '</b>' + p.label + (it.n ? ' · 지문 ' + it.n : '') + '</div>';
+      box.appendChild(d);
+    });
+    if (!its.length) box.innerHTML = '<div class="note">부품을 담으면 지면 순서가 여기 놓인다.</div>';
+  }
+  function showBoard(on) { $('board').classList.toggle('on', on); $('mode').textContent = on ? '조판 미리보기' : '지면 순서'; }
   function preview() {
     var c = composition();
-    if (!c.steps.length) { $('what').textContent = '—'; return; }
+    board();
+    var useBoard = mode === 'board' || (mode === 'auto' && !c.steps.length);
+    showBoard(useBoard);
+    if (!c.steps.length) { $('what').textContent = c.items.length ? '지면 순서 · ' + c.items.length + '개 블록 (조판 연결 전)' : '—'; return; }
+    if (useBoard) { $('what').textContent = '지면 순서 · ' + c.items.length + '개 블록'; return; }
     c.b = $('sample').value; c.n = 2;
     msg('미리보기 조판 중…');
     api('/api/make/preview', c).then(function (d) {
       if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); return; }
-      log(d.log || ''); show(d.doc, '구성 미리보기 · ' + c.steps.length + '개 부품');
+      log(d.log || ''); show(d.doc, '조판 미리보기 · ' + c.steps.length + '개 부품' + (c.items.length > c.steps.length ? ' (참고 블록 ' + (c.items.length - c.steps.length) + '개는 지면 순서에서)' : ''));
     });
   }
-  $('preview').onclick = preview;
-  $('sample').onchange = preview;
+  $('preview').onclick = function () { preview(); };
+  $('sample').onchange = function () { preview(); };
+  $('mode').onclick = function () { mode = $('board').classList.contains('on') ? 'viewer' : 'board'; preview(); };
 
   // ── 저장된 구성 ──
   function drawComps() {
@@ -365,7 +448,7 @@
     if (!names.length) { box.innerHTML = '<span class="note">아직 없다 — 아래에서 이름 붙여 저장</span>'; return; }
     names.forEach(function (n) {
       var c = comps[n];
-      var el = document.createElement('span'); el.className = 'chip'; el.title = (c.steps || []).length + '개 부품 · ' + (c.cycle ? '세로' : '가로') + ' · ' + (c.made || '');
+      var el = document.createElement('span'); el.className = 'chip'; el.title = ((c.items || c.steps || []).length) + '개 블록 · ' + (c.cycle ? '세로' : '가로') + ' · ' + (c.made || '');
       el.innerHTML = n + ' <i title="지우기">✕</i>';
       el.onclick = function (e) {
         if (e.target.tagName === 'I') {
@@ -380,11 +463,12 @@
   }
   $('csave').onclick = function () {
     var name = $('cname').value.trim(); if (!name) { $('cname').focus(); return; }
-    var c = composition(); if (!c.steps.length) { msg('부품이 하나도 없다'); return; }
+    var c = composition(); if (!c.items.length) { msg('부품이 하나도 없다'); return; }
     c.name = name;
     api('/api/make/compositions', c).then(function (d) { if (d.error) { msg('✗ ' + d.error); return; } comps = d.compositions; drawComps(); msg('저장했다: ' + name); });
   };
   drawComps();
+  board(); showBoard(true); $('what').textContent = '—';
 
   // ── 책 만들기 ──
   $('mkbook-open').onclick = function () { var b = $('mkbook'); b.hidden = !b.hidden; if (!b.hidden) b.scrollIntoView({ behavior: 'smooth' }); };
@@ -404,7 +488,7 @@
     });
   }
   function applyTo(key) {
-    var c = composition(); if (!c.steps.length) { msg('부품이 하나도 없다'); return Promise.resolve(null); }
+    var c = composition(); if (!c.steps.length) { msg('조판되는 부품(워크북)이 없다'); return Promise.resolve(null); }
     c.b = key; msg('구성 적용 · data · 견본 조판 중…');
     return api('/api/make/apply', c).then(function (d) {
       if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); return null; }
@@ -430,7 +514,7 @@
     drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('over'); try { files.files = e.dataTransfer.files; dropped = null; } catch (x) { dropped = e.dataTransfer.files; } listFiles(files.files.length ? files.files : dropped); };
     form.onsubmit = function (e) {
       e.preventDefault(); err.textContent = '';
-      if (!composition().steps.length) { err.textContent = '먼저 부품을 담아 구성을 만들 것'; return; }
+      if (!composition().steps.length) { err.textContent = '조판되는 부품(워크북)을 하나 이상 담을 것'; return; }
       var fd = new FormData();
       fd.append('series', 'workbook'); fd.append('nobuild', '1');
       fd.append('design', (form.querySelector('[name=design]:checked') || {}).value || 'd1');
