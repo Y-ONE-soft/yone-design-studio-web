@@ -44,3 +44,6 @@ catalog/_intake/*
 # Blob 업로드 캐시(런타임) — 서버 볼륨에만
 catalog/**/blob.json
 /fonts.tgz
+
+# 디자인 상세의 지면 그림 캐시 (routes/catalog.py design_page_img)
+catalog/*/designs/*/_pages/
