@@ -26,7 +26,7 @@ from flask import Blueprint, abort, jsonify, request
 bp = Blueprint("intake", __name__)
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CATALOG = os.path.join(REPO, "catalog")
+CATALOG = os.environ.get("YONE_CATALOG_DIR") or os.path.join(REPO, "catalog")   # 컨테이너: 볼륨
 INTAKE = os.path.join(CATALOG, "_intake")
 MODEL = os.environ.get("YONE_ASSIST_MODEL", "claude-opus-5")
 PT = 25.4 / 72.0
@@ -360,22 +360,94 @@ def register_draft(series, verdict, measured, pdf_path, pages, pdf_name):
                 shutil.copy2(src, os.path.join(d, sub))
             elif os.path.isdir(src):
                 shutil.copytree(src, os.path.join(d, sub), dirs_exist_ok=True)
-    shutil.copy2(pdf_path, os.path.join(d, "reference.pdf"))
+    # 올린 PDF 가 이 디자인의 **아트워크 원본**이다 — 디자인 폴더 참고/ 에 두고 config 가
+    # 그것을 가리키게 한다(nhj 맥 절대경로 같은 바깥 파일에 기대지 않는다). 책을 만들 때
+    # 참고/·assets/ 가 책 폴더로 같이 복사된다.
+    os.makedirs(os.path.join(d, "참고"), exist_ok=True)
+    shutil.copy2(pdf_path, os.path.join(d, "참고", "reference.pdf"))
+    cfg, rewired = _point_artwork_at(cfg, "참고/reference.pdf")
+    json.dump(cfg, open(os.path.join(d, "config.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    artwork = extract_artwork(series, d)
     # 올린 PDF 의 면을 견본 사진으로 (이 디자인이 목표로 하는 모습)
     for k, p in enumerate(pages, 1):
         shutil.copy2(p["file"], os.path.join(d, f"preview_{k}.png"))
     json.dump({"name": verdict.get("design_name") or pdf_name, "desc": "PDF 초안 · 확인 필요",
                "source": f"PDF: {pdf_name}", "date": datetime.date.today().isoformat(), "draft": True,
-               "intake": {"verdict": verdict, "measured": measured, "applied": changes, "rejected": bad}},
+               "intake": {"verdict": verdict, "measured": measured, "applied": changes, "rejected": bad,
+                          "artwork": {"rewired": rewired, **artwork}}},
               open(os.path.join(d, "design.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     return did, changes, bad
+
+
+_EXTERNAL = re.compile(r"^(\$\{STUDIO\}|~|/)")
+
+
+def _point_artwork_at(cfg, ref):
+    """config 안의 아트워크 원본 경로(`src_pdf`·`cover_pdf`·`art_pdf`·`jobs[].src`)를
+    디자인 폴더의 참고 PDF 로 돌린다. 이미 디자인 폴더 상대경로면 그대로 둔다.
+    Returns: (cfg, 바꾼 키 목록)."""
+    done = []
+    a = cfg.get("assets")
+    if isinstance(a, dict):
+        for k in ("src_pdf", "cover_pdf"):
+            v = a.get(k)
+            if isinstance(v, str) and (not v or _EXTERNAL.match(v)):
+                a[k] = ref
+                done.append(f"assets.{k}")
+        for j in a.get("jobs") or []:
+            if isinstance(j, dict) and isinstance(j.get("src"), str) and _EXTERNAL.match(j["src"]):
+                j["src"] = ref
+                done.append(f"assets.jobs.{j.get('name', '?')}.src")
+    f = cfg.get("finish")
+    if isinstance(f, dict):
+        v = f.get("art_pdf")
+        if isinstance(v, str) and _EXTERNAL.match(v):
+            f["art_pdf"] = ref
+            done.append("finish.art_pdf")
+        for key in ("inserts", "append"):
+            for it in f.get(key) or []:
+                if isinstance(it, dict) and isinstance(it.get("pdf"), str) and _EXTERNAL.match(it["pdf"]):
+                    it["pdf"] = ref
+                    done.append(f"finish.{key}.pdf")
+    return cfg, done
+
+
+def extract_artwork(series, design_dir, log=None):
+    """디자인 폴더의 참고 PDF 에서 로고·조각을 잘라 `assets/` 로 (계열 `gen_theme`).
+
+    실패해도 디자인 등록은 막지 않는다 — 어느 조각이 안 나왔는지만 남긴다.
+    Returns: {"ok": bool, "log": [...], "assets": [...]}"""
+    from core.render_vivlio.config import BookConfig
+    from core.render_vivlio import book as book_mod
+    lines = []
+    cfg_p = os.path.join(design_dir, "config.json")
+    try:
+        cfg = BookConfig(json.load(open(cfg_p, encoding="utf-8")), design_dir)
+        if not (cfg.section("assets") or {}).get("jobs"):
+            return {"ok": True, "log": ["자를 조각이 없는 틀"], "assets": _asset_files(design_dir)}
+        book_mod.gen_theme(cfg, log=lambda m: (lines.append(str(m)), log and log(m)))
+        return {"ok": True, "log": lines, "assets": _asset_files(design_dir)}
+    except Exception as e:
+        lines.append(f"실패: {e}")
+        return {"ok": False, "log": lines, "assets": _asset_files(design_dir)}
+
+
+def _asset_files(design_dir):
+    a = os.path.join(design_dir, "assets")
+    return sorted(os.listdir(a)) if os.path.isdir(a) else []
 
 
 # ── 라우트 ───────────────────────────────────────────────────────
 @bp.route("/api/catalog/intake", methods=["POST"])
 def intake():
-    """① 잰다 ② 판정한다 — 여기서 멈춘다. 등록은 사람이 확인한 뒤 `decide` 로."""
-    if not have_key():
+    """① 잰다 ② 판정한다 — 여기서 멈춘다. 등록은 사람이 확인한 뒤 `decide` 로.
+
+    `series` 를 같이 보내면(틀 화면의 디자인 등록) 클로드 키가 없을 때 판정을 건너뛰고
+    그 틀로 정해진 것으로 두어 잰 값만으로 초안을 만들 수 있다.
+    """
+    from routes.catalog import _meta
+    series = (request.form.get("series") or "").strip()
+    if not have_key() and series not in _meta():
         return jsonify({"error": "클로드 키가 없다. bin/studio 를 띄우기 전에 `export ANTHROPIC_API_KEY=…` (README_로컬실행.md)"}), 400
     f = request.files.get("pdf")
     if not f or not f.filename.lower().endswith(".pdf"):
@@ -392,16 +464,19 @@ def intake():
         pages = render_pages(pdf_path, d)
     except Exception as e:
         return jsonify({"error": f"PDF 를 못 읽었다: {e}"}), 400
-    cards = _template_cards()
-    try:
-        verdict = judge(measured, pages, cards, hint)
-    except Exception as e:
-        return jsonify({"error": f"판정 실패: {e}", "measured": measured}), 500
+    if have_key():
+        cards = _template_cards()
+        try:
+            verdict = judge(measured, pages, cards, hint)
+        except Exception as e:
+            return jsonify({"error": f"판정 실패: {e}", "measured": measured}), 500
+    else:                                   # 키 없음 + 틀 지정 — 판정 없이 사람이 고른 틀
+        verdict = {"verdict": "design", "series": series, "confidence": 0, "design_name": os.path.splitext(pdf_name)[0],
+                   "reasons": ["클로드 키가 없어 판정을 건너뜀 — 사람이 고른 틀"], "knobs": {}, "skipped": True}
     state = {"id": jid, "pdf": pdf_name, "hint": hint, "measured": measured, "verdict": verdict,
              "pages": [{"label": p["label"], "page": p["page"], "file": os.path.basename(p["file"])} for p in pages],
              "date": datetime.date.today().isoformat(), "status": "judged"}
     json.dump(state, open(os.path.join(d, "state.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    from routes.catalog import _meta
     return jsonify({**state, "templates": [{"series": k, "name": v["name"]} for k, v in _meta().items()]})
 
 

@@ -1,0 +1,174 @@
+{# 새 프로젝트 — Canva 편집기 꼴 (base.html 을 안 쓴다: 전체화면, 새 창).
+   위 막대 · 왼쪽 도구 레일 · 템플릿 패널(카탈로그 디자인 전부) · 가운데 지면 · 아래 페이지 줄.
+   디자인을 고르면 가운데에 페이지 틀(master_N.png, 없으면 preview_N.png) 이 뜨고 [만들기] 가 켜진다. #}
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>새 프로젝트 · Y.ONE 조판</title>
+  <style>
+    :root { --pp: #7d2ae8; --pp-bg: #efe9ff; --ink: #0e1318; --line: #e8e6ef; --top: 56px; --rail: 84px; --panel: 360px; }
+    html, body { margin: 0; height: 100%; font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: var(--ink); background: #f0f0f4; overflow: hidden; }
+    header { position: fixed; left: 0; right: 0; top: 0; height: var(--top); display: flex; align-items: center; gap: 6px; padding: 0 14px; box-sizing: border-box; color: #fff;
+             background: linear-gradient(90deg, #12a6c8 0%, #2f7de8 45%, #7d2ae8 100%); z-index: 10; }
+    header a, header button { color: #fff; text-decoration: none; background: transparent; border: 0; font-size: 14px; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    header a:hover, header button:hover { background: rgba(255,255,255,.14); }
+    header .home { font-size: 18px; padding: 6px 10px; }
+    header .sep { width: 1px; height: 22px; background: rgba(255,255,255,.35); margin: 0 6px; }
+    header .title { flex: 1; text-align: center; font-size: 14px; color: rgba(255,255,255,.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    header .go { background: #fff; color: var(--pp); font-weight: 700; padding: 9px 18px; border-radius: 9px; opacity: .55; pointer-events: none; }
+    header .go.on { opacity: 1; pointer-events: auto; }
+    header .go:hover { background: #f1eaff; }
+
+    nav.rail { position: fixed; left: 0; top: var(--top); bottom: 0; width: var(--rail); background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 2px; z-index: 6; }
+    .rail button { width: 72px; border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 10px 0 8px; border-radius: 10px; font-size: 11.5px; color: #3c4043; cursor: pointer; font-family: inherit; }
+    .rail button .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 19px; }
+    .rail button:hover .ic { background: #f1f0f6; }
+    .rail button.on { color: var(--pp); font-weight: 600; } .rail button.on .ic { background: var(--pp-bg); }
+
+    aside.panel { position: fixed; left: var(--rail); top: var(--top); bottom: 0; width: var(--panel); background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 5; }
+    .panel .tabs { display: none; flex: 1; min-height: 0; flex-direction: column; } .panel .tabs.on { display: flex; }
+    .panel .search { margin: 14px 16px 10px; display: flex; align-items: center; gap: 10px; border: 1px solid #cfc8e6; border-radius: 12px; padding: 12px 14px; }
+    .panel .search input { flex: 1; border: 0; outline: 0; font-size: 14.5px; background: transparent; font-family: inherit; }
+    .panel .row { display: flex; gap: 10px; margin: 0 16px 12px; }
+    .panel .row select { flex: 1; border: 1px solid #cfc8e6; border-radius: 10px; padding: 10px 12px; font-size: 14px; background: #fff; font-family: inherit; }
+    .panel .row .btn { background: var(--pp); color: #fff; border: 0; border-radius: 10px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .panel .grid { flex: 1; overflow: auto; padding: 4px 16px 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; align-items: start; grid-auto-rows: max-content; }
+    .panel .grid .sec { grid-column: 1 / -1; font-size: 12px; color: #8b8fa3; margin: 8px 0 -4px; }
+    .tpl { position: relative; border-radius: 10px; overflow: hidden; background: #f1f2f6; border: 2px solid transparent; cursor: pointer; aspect-ratio: 3 / 4; }
+    .tpl img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .tpl .ph { position: absolute; inset: 0; display: grid; place-items: center; color: #8b8fa3; font-size: 26px; }
+    .tpl:hover { border-color: #c9b8f5; } .tpl.on { border-color: var(--pp); }
+    .tpl .nm { position: absolute; left: 0; right: 0; bottom: 0; padding: 6px 8px; font-size: 11.5px; background: linear-gradient(180deg, transparent, rgba(0,0,0,.62)); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tpl .n { position: absolute; left: 8px; top: 8px; background: rgba(0,0,0,.55); color: #fff; font-size: 10.5px; padding: 2px 7px; border-radius: 999px; }
+    .tpl .dot { position: absolute; right: 8px; top: 8px; width: 8px; height: 8px; border-radius: 50%; }
+    .dot.auto { background: #4fd68a; } .dot.blocked { background: #f0a441; } .dot.manual { background: #b8bccb; }
+    .panel .note { padding: 26px 22px; color: #5f6368; font-size: 13.5px; line-height: 1.6; }
+    .panel .note b { display: block; color: var(--ink); font-size: 15px; margin-bottom: 6px; }
+    .panel .note a { color: var(--pp); }
+
+    main.canvas { position: fixed; left: calc(var(--rail) + var(--panel)); right: 0; top: var(--top); bottom: 64px; overflow: auto; display: grid; place-items: center; padding: 30px; box-sizing: border-box; }
+    .page { background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.14); transform-origin: center; }
+    .page img { display: block; max-height: 78vh; max-width: 100%; }
+    .page.blank { width: 520px; height: 735px; display: grid; place-items: center; color: #b0b3c0; font-size: 14px; text-align: center; line-height: 1.7; }
+    .lbl { position: fixed; right: 20px; top: calc(var(--top) + 14px); background: rgba(20,22,31,.75); color: #fff; font-size: 12px; padding: 4px 10px; border-radius: 999px; display: none; }
+    .lbl.on { display: block; }
+
+    footer { position: fixed; left: calc(var(--rail) + var(--panel)); right: 0; bottom: 0; height: 64px; background: #fff; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 14px; padding: 0 18px; box-sizing: border-box; font-size: 13px; color: #3c4043; }
+    footer .thumbs { flex: 1; display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; }
+    footer .thumbs .t { flex: none; height: 44px; aspect-ratio: 3 / 4; border-radius: 6px; overflow: hidden; border: 2px solid transparent; cursor: pointer; background: #f1f2f6; position: relative; }
+    footer .thumbs .t img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    footer .thumbs .t.on { border-color: var(--pp); }
+    footer .thumbs .t i { position: absolute; left: 3px; bottom: 1px; font-style: normal; font-size: 9px; color: #333; background: rgba(255,255,255,.8); padding: 0 3px; border-radius: 3px; }
+    footer .nav button { border: 0; background: transparent; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    footer .nav button:hover { background: #f1f0f6; }
+    footer input[type=range] { width: 150px; accent-color: var(--pp); }
+    footer .z { width: 40px; text-align: right; }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="home" href="/projects" title="프로젝트로">⌂</a>
+    <button type="button" id="m-file">파일</button>
+    <button type="button" id="m-size">크기 조정</button>
+    <span class="sep"></span>
+    <button type="button">✎ 편집 중 ▾</button>
+    <span class="title" id="title">제목 없는 프로젝트</span>
+    <a class="go" id="go" href="#" title="이 디자인으로 원고 넣기 → 조판">만들기</a>
+  </header>
+
+  <nav class="rail">
+    <button class="on" data-tab="tpl"><span class="ic">◫</span>템플릿</button>
+    <button data-tab="elem"><span class="ic">⬡</span>요소</button>
+    <button data-tab="text"><span class="ic">T</span>텍스트</button>
+    <button data-tab="upload"><span class="ic">☁</span>업로드 항목</button>
+    <button data-tab="proj" data-href="/projects"><span class="ic">🗂</span>프로젝트</button>
+  </nav>
+
+  <aside class="panel">
+    <div class="tabs on" id="tab-tpl">
+      <div class="search"><span>⌕</span><input id="q" placeholder="디자인 · 틀 이름으로 찾기" autocomplete="off"></div>
+      <div class="row">
+        <select id="f-series"><option value="">모든 틀 ({{ n }})</option>{% for t in templates %}<option value="{{ t.series }}">{{ t.name }} ({{ t.designs|length }})</option>{% endfor %}</select>
+        <button type="button" class="btn" id="btn-q">검색</button>
+      </div>
+      <div class="grid" id="grid">
+        {% for t in templates %}
+          {% for d in t.designs %}
+          {% set imgs = (d.masters|map(attribute='file')|list) if d.masters else d.previews %}
+          <div class="tpl" data-series="{{ t.series }}" data-design="{{ d.id }}" data-name="{{ d.name }}" data-tname="{{ t.name }}" data-kind="{{ 'master' if d.masters else 'preview' }}"
+               data-imgs="{{ imgs|join(',') }}" data-labels="{{ (d.masters|map(attribute='label')|list|join(',')) if d.masters else '' }}" data-q="{{ (d.name ~ ' ' ~ t.name ~ ' ' ~ t.dir_name)|lower }}"
+               title="{{ t.name }} · {{ d.name }}{% if d.desc %} — {{ d.desc }}{% endif %}">
+            {% if imgs %}<img src="/catalog/{{ 'master' if d.masters else 'preview' }}/{{ t.series }}/{{ d.id }}/{{ imgs[0] }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
+            <span class="n">{{ imgs|length }}</span><i class="dot {{ t.ready }}"></i>
+            <span class="nm">{{ t.name }} · {{ d.name }}</span>
+          </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="tabs" id="tab-elem"><div class="note"><b>요소</b>블록(B1 원문지문 … B11 관리양식)은 디자인이 정한 대로 놓입니다. 책을 만든 뒤 <a href="/book-studio">내지 작업대</a>에서 고칩니다.</div></div>
+    <div class="tabs" id="tab-text"><div class="note"><b>텍스트</b>글은 원고(docx·hwp·pdf)에서 옵니다. 디자인을 고르고 [만들기] 에서 원고를 올리세요.</div></div>
+    <div class="tabs" id="tab-upload"><div class="note"><b>업로드 항목</b>원고는 디자인을 고른 뒤 [만들기] 화면에서 올립니다. PDF 완성본으로 디자인을 늘리려면 <a href="/catalog/intake">PDF 판정</a>.</div></div>
+  </aside>
+
+  <main class="canvas">
+    <div class="page blank" id="page">왼쪽에서 디자인을 고르세요<br><small>틀 → 디자인 → 원고</small></div>
+  </main>
+  <span class="lbl" id="lbl"></span>
+
+  <footer>
+    <div class="thumbs" id="thumbs"></div>
+    <span class="nav"><button type="button" id="prev">‹</button><span id="pos">– / –</span><button type="button" id="next">›</button></span>
+    <input type="range" id="zoom" min="30" max="150" value="100"><span class="z" id="zv">100%</span>
+  </footer>
+
+  <script>
+    var sel = null, idx = 0, page = document.getElementById('page'), thumbs = document.getElementById('thumbs');
+    // 레일 → 패널 탭
+    document.querySelectorAll('.rail button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (b.dataset.href) { location.href = b.dataset.href; return; }
+        document.querySelectorAll('.rail button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        document.querySelectorAll('.panel .tabs').forEach(function (t) { t.classList.toggle('on', t.id === 'tab-' + b.dataset.tab); });
+      });
+    });
+    // 템플릿 거르기
+    function filt() {
+      var q = document.getElementById('q').value.trim().toLowerCase(), s = document.getElementById('f-series').value;
+      document.querySelectorAll('.tpl').forEach(function (t) { t.style.display = ((!q || t.dataset.q.indexOf(q) >= 0) && (!s || t.dataset.series === s)) ? '' : 'none'; });
+    }
+    document.getElementById('q').addEventListener('input', filt); document.getElementById('f-series').addEventListener('change', filt); document.getElementById('btn-q').addEventListener('click', filt);
+    // 디자인 고르기 → 지면 + 페이지 줄 + 만들기
+    function src(i) { return '/catalog/' + sel.kind + '/' + sel.series + '/' + sel.design + '/' + sel.imgs[i]; }
+    function show(i) {
+      if (!sel || !sel.imgs.length) return;
+      idx = Math.max(0, Math.min(i, sel.imgs.length - 1));
+      page.className = 'page'; page.innerHTML = '<img src="' + src(idx) + '" alt="">';
+      document.getElementById('pos').textContent = (idx + 1) + ' / ' + sel.imgs.length;
+      var l = document.getElementById('lbl'); l.textContent = sel.labels[idx] || ''; l.classList.toggle('on', !!sel.labels[idx]);
+      thumbs.querySelectorAll('.t').forEach(function (t, k) { t.classList.toggle('on', k === idx); });
+    }
+    document.querySelectorAll('.tpl').forEach(function (t) {
+      t.addEventListener('click', function () {
+        document.querySelectorAll('.tpl').forEach(function (x) { x.classList.toggle('on', x === t); });
+        var d = t.dataset;
+        sel = { series: d.series, design: d.design, kind: d.kind, imgs: d.imgs ? d.imgs.split(',') : [], labels: d.labels ? d.labels.split(',') : [] };
+        document.getElementById('title').textContent = '제목 없는 프로젝트 - ' + d.tname + ' · ' + d.name;
+        var go = document.getElementById('go'); go.href = '/catalog/' + d.series + '/' + d.design; go.classList.add('on');
+        thumbs.innerHTML = sel.imgs.map(function (f, k) { return '<div class="t" data-i="' + k + '"><img src="' + src(k) + '" alt=""><i>' + (k + 1) + '</i></div>'; }).join('');
+        thumbs.querySelectorAll('.t').forEach(function (x) { x.addEventListener('click', function () { show(+x.dataset.i); }); });
+        if (sel.imgs.length) show(0);
+        else { page.className = 'page blank'; page.innerHTML = '이 디자인은 아직 페이지 틀 그림이 없습니다<br><small>만들기에서 바로 원고를 넣을 수 있습니다</small>'; document.getElementById('pos').textContent = '– / –'; }
+      });
+    });
+    document.getElementById('prev').addEventListener('click', function () { show(idx - 1); });
+    document.getElementById('next').addEventListener('click', function () { show(idx + 1); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') show(idx - 1); if (e.key === 'ArrowRight') show(idx + 1); });
+    document.getElementById('zoom').addEventListener('input', function () { page.style.transform = 'scale(' + this.value / 100 + ')'; document.getElementById('zv').textContent = this.value + '%'; });
+    document.getElementById('m-file').addEventListener('click', function () { alert('파일: 디자인을 고르고 [만들기] 로 책을 만듭니다. 만든 책은 프로젝트에 모입니다.'); });
+    document.getElementById('m-size').addEventListener('click', function () { alert('크기(판형·도련)는 디자인 config 가 정합니다. 책을 만든 뒤 내지 작업대에서 바꿉니다.'); });
+  </script>
+</body>
+</html>

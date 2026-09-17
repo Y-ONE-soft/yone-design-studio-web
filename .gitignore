@@ -36,3 +36,11 @@ core/render_vivlio/node_modules/
 .env.bak*
 catalog/_intake/*
 !catalog/_intake/.keep
+
+# 웹 배포(컨테이너) — 서체·ICC 는 리포 밖 (상용 라이선스). docker-compose 가 ./fonts ./icc 를 마운트한다
+/fonts/
+/icc/
+
+# Blob 업로드 캐시(런타임) — 서버 볼륨에만
+catalog/**/blob.json
+/fonts.tgz

@@ -24,7 +24,7 @@
      두었는데 실제 머리띠는 73px 이라 23px 짜리 죽은 틈이 생기고, 그만큼
      문서가 길어져 **화면이 12px 스크롤**됐다. 스크롤되는 조판 프로그램은
      쓸 수가 없다(고정 껍데기는 그대로, 뒤에 깔린 면만 움직인다). */
-  .ide { position: fixed; left: 0; right: 0; bottom: 0;
+  .ide { position: fixed; left: var(--rail-w, 0); right: 0; bottom: 0;   /* 왼쪽 레일(base.html) 만큼 띄운다 */
          top: var(--ide-top, 96px);
          display: flex; flex-direction: column; background: #14161f; }
   /* 작업대가 떠 있는 동안은 문서가 스크롤되지 않는다 */
@@ -43,7 +43,7 @@
      두었는데 실제 머리띠는 73px 이라 23px 짜리 죽은 틈이 생기고, 그만큼
      문서가 길어져 **화면이 12px 스크롤**됐다. 스크롤되는 조판 프로그램은
      쓸 수가 없다(고정 껍데기는 그대로, 뒤에 깔린 면만 움직인다). */
-  .ide { position: fixed; left: 0; right: 0; bottom: 0;
+  .ide { position: fixed; left: var(--rail-w, 0); right: 0; bottom: 0;   /* 왼쪽 레일(base.html) 만큼 띄운다 */
          top: var(--ide-top, 96px);
          display: flex; flex-direction: column; background: #14161f; }
   /* 작업대가 떠 있는 동안은 문서가 스크롤되지 않는다 */
@@ -561,8 +561,8 @@
   /** 머리띠 높이를 재서 껍데기를 그 아래에 붙인다.
    *  못 박아 두면 머리띠가 줄바꿈될 때(좁은 창) 도구줄이 그 밑에 깔린다. */
   function fitShell() {
-    var h = document.querySelector('header');
-    var top = h ? Math.round(h.getBoundingClientRect().bottom) : 96;
+    var h = document.querySelector('header');   // 위 머리띠가 있을 때만(통합웹). 레일 껍데기(templates_local)엔 없어서 0
+    var top = h ? Math.round(h.getBoundingClientRect().bottom) : 0;
     document.documentElement.style.setProperty('--ide-top', top + 'px');
   }
   document.body.classList.add('ide-on');
@@ -4394,12 +4394,32 @@
                  + over)) return;
     $('ide-export').disabled = $('ide-press').disabled = true;
     msg(label + ' 만드는 중… (창을 닫지 마세요)');
-    api('/api/book-studio/export', { b: key, kind: kind }).then(function (d) {
+    // 잡을 만들고 진행 로그를 폴링한다 — 요청 하나로 기다리면 웹(프록시)에서 끊긴다
+    var done = function (d) {
       $('ide-export').disabled = $('ide-press').disabled = false;
-      if (d.error) { msg('✗ ' + String(d.error).split('\n').pop().slice(0, 120)); return; }
-      msg('✓ ' + (d.note || '') + (d.pdf ? ' — ' + d.pdf : ''));
+      if (!d || d.error || d.status === 'failed' || d.status === 'lost') {
+        var e = (d && (d.error || (d.log && d.log.length && d.log[d.log.length - 1]))) || '실패';
+        msg('✗ ' + String(e).split('\n').pop().slice(0, 120)); return;
+      }
+      var r = d.result || {};
+      msg('✓ ' + (r.note || '') + (r.pdf ? ' — ' + r.pdf : ''));
       loadThumbs();                    // 새 PDF 로 썸네일도 새로
       setTimeout(function () { if (!$('ide-realpane').hidden) showReal(true); }, 1500);   // 실물 패널도 새 PDF 로
+    };
+    api('/api/book-studio/export', { b: key, kind: kind }).then(function (d) {
+      if (!d || d.error || !d.job) { done(d); return; }
+      var since = 0;
+      (function poll() {
+        fetch('/api/book-studio/export/' + d.job + '?since=' + since).then(function (r) { return r.json(); })
+          .then(function (s) {
+            if (!s || s.error) { done(s); return; }
+            since = s.n || since;
+            var last = s.log && s.log.length ? s.log[s.log.length - 1] : '';
+            if (last) msg(label + ' 만드는 중… ' + last.slice(0, 90) + ' (' + s.elapsed + '초)');
+            if (s.status === 'queued' || s.status === 'running') { setTimeout(poll, 1500); return; }
+            done(s);
+          }).catch(function () { setTimeout(poll, 3000); });
+      })();
     });
   }
   // ── 실물 PDF 패널 ─────────────────────────────────────

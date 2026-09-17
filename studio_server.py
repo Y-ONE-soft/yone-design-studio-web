@@ -6,12 +6,14 @@
     python3 studio_server.py --host 0.0.0.0   # 같은 네트워크의 다른 기기에서도
 
 원래 리포에서는 `routes/__init__.py` 가 이 blueprint 를 통합웹 Flask 앱에 붙이고
-`routes/auth.py` 가 로그인·CSP 를 건다. 스냅샷에는 그 껍데기가 없으므로 여기서
-blueprint 만 그대로 물려 돌린다. **인증이 없다** — 기본값이 127.0.0.1 인 이유다.
+`routes/auth.py` 가 로그인·CSP 를 건다. 여기서는 blueprint 만 그대로 물려 돌린다.
 
-⚠ CSP 를 걸지 않으므로 뷰어 번들의 `eval` 도 그대로 된다. 원래 리포는
-  `/book-studio/viewer`·`/frame` 경로에만 `unsafe-eval` 을 허용한다(`auth.py:230`).
-  이 서버를 바깥에 노출하려면 그 경계를 다시 세워야 한다.
+인증은 `core/webauth.py` — **Y.OS 계정(HMAC 링크 토큰)** 으로 검사한다. `YOS_LINK_SECRET` 이
+있으면 켜지고(CSP·CORS·보안 헤더도 그때 붙는다), 없으면 로컬처럼 꺼진다. 꺼진 채로
+`--host 0.0.0.0` 은 `YONE_AUTH=off` 를 명시해야만 된다.
+
+바깥(contents·core·design·앱)은 `/api/v1` (`routes/api_v1.py`) 을 부른다. 배포는 Fly.io —
+`deploy/README.md`, 리포 루트 `Dockerfile`·`fly.toml`.
 """
 import argparse
 import os
@@ -27,6 +29,8 @@ from routes.catalog import bp as catalog_bp  # noqa: E402
 from routes.intake import bp as intake_bp, have_key  # noqa: E402
 from routes.books import bp as books_bp  # noqa: E402
 from routes.make import bp as make_bp  # noqa: E402
+from routes import api_v1  # noqa: E402
+from core import jobs, webauth  # noqa: E402
 
 
 def create_app():
@@ -37,15 +41,34 @@ def create_app():
     from jinja2 import ChoiceLoader, FileSystemLoader
     app.jinja_loader = ChoiceLoader([FileSystemLoader(os.path.join(REPO, "templates_local")),
                                      FileSystemLoader(os.path.join(REPO, "templates"))])
+    # 업로드 상한 — 원고 폴더째(docx·pdf 수십 개)가 온다.
+    app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("YONE_MAX_UPLOAD_MB", "512")) * 1024 * 1024
+    # 인증·CORS·보안 헤더 — YOS_LINK_SECRET 이 없으면 꺼짐(로컬 그대로)
+    webauth.install(app)
     app.register_blueprint(bp)
     app.register_blueprint(catalog_bp)
     app.register_blueprint(intake_bp)
     app.register_blueprint(books_bp)
     app.register_blueprint(make_bp)
+    api_v1.install(app)                 # /api/v1 — contents·core·앱이 부르는 계약
+    jobs.mark_lost_on_boot()            # 재시작 전에 돌던 잡은 lost 로
+
+    @app.context_processor
+    def _intake_badge():
+        # 머리띠 "PDF 판정" 옆 개수 — 판정은 됐는데 결정 안 한 것 + 새 틀 요청
+        from routes.catalog import DIR_COLORS
+        from routes.intake import new_requests, pending
+        try:
+            n = len(pending()) + len(new_requests())
+        except Exception:
+            n = 0
+        return {"intake_open": n, "dir_colors": DIR_COLORS}   # dir_colors: base.html 의 폴더 시트 색 고르기
 
     @app.route("/")
     def home():
-        return redirect("/catalog")
+        from flask import render_template
+        from routes.books import projects
+        return render_template("home.html", books=projects(), active_nav="홈")
 
     @app.errorhandler(404)
     def _lost(_e):
@@ -58,7 +81,7 @@ def create_app():
             return redirect("/catalog")
         if path.startswith("/book-studio/") or path.startswith("/api/"):
             return jsonify({"error": "없는 경로", "path": path}), 404
-        return redirect("/book-studio")
+        return redirect("/")
 
     @app.after_request
     def _no_cache(resp):
@@ -77,10 +100,18 @@ def main():
     ap.add_argument("--debug", action="store_true")
     a = ap.parse_args()
 
+    # 인증이 꺼진 채로 바깥에 여는 것은 사고다 — 일부러 그러려면 YONE_AUTH=off 를 적어야 한다.
+    if a.host not in ("127.0.0.1", "localhost", "::1") and webauth.mode() == "off" \
+            and os.environ.get("YONE_AUTH", "").strip().lower() != "off":
+        print(f"✗ --host {a.host} 인데 인증이 꺼져 있다. YOS_LINK_SECRET 을 주거나, "
+              "사무실 안에서만 쓸 거면 YONE_AUTH=off 를 명시할 것.")
+        sys.exit(2)
+
     from core.render_vivlio.config import _studio_root
     root = _studio_root()
     print(f"■ 스튜디오 루트: {root}")
     print(f"■ 책 폴더:      {os.path.join(root, '조판', '교재')}")
+    print(f"■ 인증:         {webauth.describe()}")
     print(f"■ 카탈로그:     http://{a.host}:{a.port}/catalog")
     print(f"■ 클로드:       {'켜짐 (' + os.environ.get('YONE_ASSIST_MODEL', 'claude-opus-5') + ')' if have_key() else '꺼짐 — ANTHROPIC_API_KEY 없음 (PDF 판정·작업대 클로드 칸 안 됨)'}")
     print(f"■ 책 목록:      http://{a.host}:{a.port}/books")

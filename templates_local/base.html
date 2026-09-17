@@ -1,9 +1,9 @@
 {#
-  단독 실행용 최소 껍데기.
+  단독 실행용 껍데기 — Canva 식 레이아웃.
 
-  원래 리포의 `base.html`(통합웹 머리띠·로그인·CSP)은 스냅샷에 없다.
-  `book_studio.html` 이 쓰는 것은 `title`·`content`·`scripts` 세 블록과
-  `<header>` 하나뿐이다(`fitShell()` 이 머리띠 높이를 재서 `--ide-top` 에 넣는다).
+  왼쪽 세로 레일(만들기 · 홈 · 프로젝트 · 구성요소) + (있으면) 보조 사이드바(`side` 블록) + 본문.
+  블록: `title` · `side` · `content` · `scripts` · `theme`(light 기본, 옛 어두운 화면은 dark).
+  `book_studio.html` 은 `.ide` 를 `--rail-w` 만큼 띄우고 `--ide-top` 은 0 이다(위 머리띠가 없다).
 #}
 <!doctype html>
 <html lang="ko">
@@ -12,27 +12,174 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Y.ONE STUDIO{% endblock %} · Y.ONE 조판</title>
   <style>
-    html, body { margin: 0; padding: 0; font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; background: #14161f; color: #e8e9ee; }
-    header.yo-bar { display: flex; align-items: center; gap: 14px; height: 44px; padding: 0 14px;
-                    background: #0e1016; border-bottom: 1px solid #262a38; font-size: 13px; }
-    header.yo-bar .brand { font-weight: 700; letter-spacing: .04em; color: #fff; }
-    header.yo-bar a { color: #aeb4c6; text-decoration: none; padding: 4px 8px; border-radius: 6px; }
-    header.yo-bar a.on { background: #262a38; color: #fff; }
-    header.yo-bar .spacer { flex: 1; }
-    header.yo-bar .hint { color: #6d7389; font-size: 12px; }
+    :root { --rail-w: 76px; --side-w: 250px; --pp: #7d2ae8; --pp-bg: #efe9ff; --ink: #0e1318; --mute: #5f6368; --line: #e8e6ef; }
+    html, body { margin: 0; padding: 0; font-family: -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; background: #fff; color: var(--ink); }
+    a { color: inherit; }
+    nav.rail { position: fixed; left: 0; top: 0; bottom: 0; width: var(--rail-w); box-sizing: border-box; background: #fff; border-right: 1px solid var(--line);
+               display: flex; flex-direction: column; align-items: center; padding: 14px 0 12px; gap: 4px; z-index: 60; }
+    .rail .logo { font-weight: 800; font-size: 14px; letter-spacing: -.02em; color: var(--pp); text-decoration: none; margin-bottom: 10px; line-height: 1.1; text-align: center; }
+    .rail .logo small { display: block; font-size: 8.5px; letter-spacing: .12em; color: #a89cc9; font-weight: 700; }
+    .rail a.item { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 62px; padding: 7px 0 6px; border-radius: 10px; text-decoration: none; color: #3c4043; font-size: 11px; position: relative; }
+    .rail a.item .ic { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 17px; line-height: 1; transition: background .12s; }
+    .rail a.item:hover .ic { background: #f1f0f6; }
+    .rail a.item.on { color: var(--pp); font-weight: 600; }
+    .rail a.item.on .ic { background: var(--pp-bg); }
+    .rail a.mk { margin-bottom: 10px; color: var(--pp); font-weight: 600; }
+    .rail a.mk .ic { width: 38px; height: 38px; border-radius: 50%; background: var(--pp); color: #fff; font-size: 24px; font-weight: 300; }
+    .rail a.mk:hover .ic { background: #6a1fd0; }
+    .rail .grow { flex: 1; }
+    .rail .badge { position: absolute; top: 4px; right: 8px; min-width: 16px; padding: 0 4px; border-radius: 999px; background: #f0a441; color: #1a1300; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
+    .rail .hint { font-size: 9.5px; color: #b0b3c0; text-align: center; line-height: 1.3; padding: 0 6px; }
+
+    aside.side { position: fixed; left: var(--rail-w); top: 0; bottom: 0; width: var(--side-w); box-sizing: border-box; background: #fbfafd; border-right: 1px solid var(--line);
+                 padding: 18px 12px; overflow: auto; z-index: 55; }
+    .side .si { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; text-decoration: none; color: #1f2330; font-size: 14px; margin-bottom: 2px; }
+    .side .si .ic { width: 22px; text-align: center; font-size: 16px; }
+    .side .si:hover { background: #f1eff8; }
+    .side .si.on { background: var(--pp-bg); color: #3b1a80; font-weight: 600; }
+    .side .si .cnt { margin-left: auto; font-size: 11.5px; color: #8b91a5; }
+    .side .tip { margin: 22px 4px 0; padding: 14px 14px 12px; border: 1px dashed #cfc8e6; border-radius: 12px; font-size: 12px; color: #5f6368; line-height: 1.55; text-align: center; }
+    .side .tip b { display: block; color: #1f2330; margin-bottom: 4px; font-size: 12.5px; }
+
+    /* 새 항목 추가 — 레일 만들기 · 화면의 + 가 같은 메뉴를 연다 */
+    .newmenu { position: fixed; z-index: 70; display: none; min-width: 240px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 10px 8px; box-shadow: 0 12px 36px rgba(30,20,60,.18); }
+    .newmenu.on { display: block; }
+    .newmenu .h { font-size: 15px; font-weight: 700; padding: 6px 10px 8px; }
+    .newmenu button { display: flex; align-items: center; gap: 12px; width: 100%; border: 0; background: transparent; padding: 10px 10px; border-radius: 9px; font-size: 14.5px; color: #1f2330; cursor: pointer; text-align: left; }
+    .newmenu button:hover { background: #f1eff8; }
+    .newmenu button .ic { width: 22px; text-align: center; font-size: 17px; }
+
+    /* 디렉토리(폴더) 추가·수정 시트 — 카탈로그·프로젝트가 같이 쓴다 (window.dirSheet) */
+    .panel { position: fixed; inset: 0; background: rgba(20,16,40,.45); display: none; z-index: 80; align-items: center; justify-content: center; padding: 16px; }
+    .panel.on { display: flex; }
+    .sheet { background: #fff; border: 1px solid #e3e1ec; box-shadow: 0 16px 48px rgba(30,20,60,.18); border-radius: 14px; width: min(460px, 100%); padding: 22px 24px; box-sizing: border-box; }
+    .sheet h2 { margin: 0 0 4px; font-size: 17px; }
+    .sheet .hint { color: #5f6368; font-size: 12.5px; margin-bottom: 8px; line-height: 1.5; }
+    .sheet label { display: block; font-size: 12px; color: #5f6368; margin: 12px 0 5px; }
+    .sheet input[type=text], .sheet select { width: 100%; box-sizing: border-box; background: #fff; border: 1px solid #cfc8e6; color: var(--ink); border-radius: 8px; padding: 9px 11px; font-size: 14px; }
+    .sheet .row { display: grid; grid-template-columns: 72px 1fr; gap: 10px; }
+    .sheet .emo { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+    .sheet .emo button { width: 30px; height: 30px; border: 1px solid transparent; border-radius: 8px; background: #f6f5fa; font-size: 17px; cursor: pointer; padding: 0; line-height: 1; }
+    .sheet .emo button:hover { border-color: var(--pp); background: var(--pp-bg); }
+    .sw { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sw label { margin: 0; cursor: pointer; }
+    .sw input { display: none; }
+    .sw i { display: block; width: 24px; height: 24px; border-radius: 50%; background: var(--c); border: 2px solid transparent; box-sizing: border-box; }
+    .sw input:checked + i { border-color: #fff; box-shadow: 0 0 0 2px var(--c); }
+    .sheet .btns { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+    .btn { background: #ecebf3; color: #1f2330; border: 0; border-radius: 8px; padding: 9px 16px; font-size: 14px; cursor: pointer; }
+    .btn.go { background: var(--pp); color: #fff; font-weight: 600; }
+    .err { color: #c0263a; font-size: 13px; margin-top: 8px; }
+
+    main.page { margin-left: var(--rail-w); min-height: 100vh; }
+    body.has-side main.page { margin-left: calc(var(--rail-w) + var(--side-w)); }
+    main.page.dark { background: #14161f; color: #e8e9ee; }
   </style>
 </head>
-<body>
-  <header class="yo-bar">
-    <span class="brand">Y.ONE 조판</span>
-    <a href="/catalog" class="{{ 'on' if active_nav == '틀' else '' }}">틀 갤러리</a>
-    <a href="/books" class="{{ 'on' if active_nav == '책' else '' }}">책 목록</a>
-    <a href="/book-studio" class="{{ 'on' if active_nav == '작업대' else '' }}">내지 작업대</a>
-    <a href="/make" class="{{ 'on' if active_nav == '만들기' else '' }}">만들기</a>
-    <span class="spacer"></span>
-    <span class="hint">로컬 단독 실행 · 인증 없음</span>
-  </header>
+<body class="{% block body_class %}{% endblock %}">
+  <nav class="rail">
+    <a class="logo" href="/">Y.ONE<small>STUDIO</small></a>
+    <a class="item mk" href="/catalog" data-new-menu title="새 항목 추가"><span class="ic">+</span>만들기</a>
+    <a class="item {{ 'on' if active_nav == '홈' else '' }}" href="/"><span class="ic">⌂</span>홈</a>
+    <a class="item {{ 'on' if active_nav in ('프로젝트', '책', '작업대', 'PDF') else '' }}" href="/projects"><span class="ic">🗂</span>프로젝트{% if intake_open %}<span class="badge" title="PDF 판정 — 결정 대기 · 새 틀 요청">{{ intake_open }}</span>{% endif %}</a>
+    <a class="item {{ 'on' if active_nav == '틀' else '' }}" href="/catalog"><span class="ic">◫</span>구성요소</a>
+    <span class="grow"></span>
+    <span class="hint">로컬 실행<br>인증 없음</span>
+  </nav>
+  {% block side %}{% endblock %}
+  <main class="page {% block theme %}dark{% endblock %}">
   {% block content %}{% endblock %}
+  </main>
+  <div class="newmenu" id="newmenu">
+    <div class="h">새 항목 추가</div>
+    <button id="new-folder"><span class="ic">📁</span>새 폴더</button>
+    <button id="new-design"><span class="ic">▦</span>프로젝트</button>
+    <button id="new-make"><span class="ic">🪜</span>조립 — 부품·틀·스텝·책</button>
+  </div>
+  <div class="panel" id="dir-panel">
+    <div class="sheet">
+      <h2 id="dir-title">새 폴더</h2>
+      <div class="hint" id="dir-hint">카탈로그 디렉토리로 만들어집니다. 프로젝트의 폴더이자 구성요소의 갈래입니다.</div>
+      <form id="dir-form" data-id="">
+        <div class="row">
+          <div><label>아이콘</label><input type="text" name="icon" value="📁" maxlength="4"></div>
+          <div><label>이름 *</label><input type="text" name="name" placeholder="예: 듣기평가" autocomplete="off"></div>
+        </div>
+        <div class="emo" id="dir-emo"></div>
+        <label>영문 라벨</label><input type="text" name="en" placeholder="예: LISTENING" style="text-transform:uppercase" autocomplete="off">
+        <label>설명</label><input type="text" name="desc" placeholder="한 줄로" autocomplete="off">
+        <label>묶음</label>
+        <select name="group"><option value="folder">교재 폴더 계열</option><option value="ojt">OJT 라인업</option></select>
+        <label>색</label>
+        <div class="sw">{% for c in dir_colors %}<label style="--c: {{ c }}"><input type="radio" name="color" value="{{ c }}" {{ 'checked' if loop.first else '' }}><i></i></label>{% endfor %}</div>
+        <div class="err" id="dir-err"></div>
+        <div class="btns">
+          <button type="button" class="btn" id="dir-close">닫기</button>
+          <button type="submit" class="btn go" id="dir-submit">만들기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    // 디렉토리(폴더) 시트 — dirSheet.open(d) : d 가 있으면 수정, 없으면 추가. dirSheet.remove(id, name, n) : 삭제(안의 틀은 기타로).
+    window.dirSheet = (function () {
+      var panel = document.getElementById('dir-panel'), form = document.getElementById('dir-form');
+      var emo = document.getElementById('dir-emo');
+      '📁 📂 📖 ✍️ 📔 📝 📋 📑 🔁 🩺 🔤 📕 📗 📘 🎓 🏫 🧪 🎧 🗂️ ⭐'.split(' ').forEach(function (e) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = e;
+        b.addEventListener('click', function () { form.icon.value = e; }); emo.appendChild(b);
+      });
+      function open(d) {
+        form.dataset.id = d ? d.id : '';
+        form.name.value = d ? d.name : ''; form.en.value = d ? d.en : ''; form.desc.value = d ? d.desc : ''; form.icon.value = d ? d.icon : '📁';
+        form.group.value = (d && d.group) || 'folder';
+        var c = d ? d.color : '', hit = false;
+        form.querySelectorAll('[name=color]').forEach(function (r) { r.checked = (r.value === c); hit = hit || r.checked; });
+        if (!hit) form.querySelector('[name=color]').checked = true;
+        document.getElementById('dir-title').textContent = d ? '폴더 수정' : '새 폴더';
+        document.getElementById('dir-hint').textContent = d ? '이름·설명·아이콘·색·묶음을 바꿉니다. 안의 틀과 책은 그대로.' : '카탈로그 디렉토리로 만들어집니다 — 프로젝트의 폴더이자 구성요소의 갈래.';
+        document.getElementById('dir-submit').textContent = d ? '저장' : '만들기';
+        document.getElementById('dir-err').textContent = '';
+        panel.classList.add('on'); form.name.focus();
+      }
+      function close() { panel.classList.remove('on'); }
+      document.getElementById('dir-close').addEventListener('click', close);
+      panel.addEventListener('click', function (e) { if (e.target === panel) close(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var id = form.dataset.id, body = { name: form.name.value, en: form.en.value, desc: form.desc.value, icon: form.icon.value, color: form.color.value, group: form.group.value };
+        fetch(id ? '/api/catalog/dirs/' + encodeURIComponent(id) : '/api/catalog/dirs',
+              { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j.error) document.getElementById('dir-err').textContent = j.error; else location.reload(); });
+      });
+      function remove(id, name, n) {
+        var msg = '폴더 “' + name + '” 을 지울까요?' + (n ? '\n\n안의 틀 ' + n + '개는 기타로 옮겨집니다. 책은 그대로 남습니다.' : '');
+        if (!confirm(msg)) return;
+        fetch('/api/catalog/dirs/' + encodeURIComponent(id), { method: 'DELETE' })
+          .then(function (r) { return r.json(); })
+          .then(function (j) { if (j.error) alert(j.error); else location.reload(); });
+      }
+      return { open: open, remove: remove };
+    })();
+    (function () {
+      var m = document.getElementById('newmenu');
+      function open(btn) {
+        var r = btn.getBoundingClientRect(), right = r.right + 248 > innerWidth;
+        m.style.top = Math.min(r.bottom + 8, innerHeight - 160) + 'px';
+        m.style.left = (right ? r.right - 248 : r.left) + 'px';
+        m.classList.add('on');
+      }
+      document.querySelectorAll('[data-new-menu]').forEach(function (b) {
+        b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); m.classList.contains('on') ? m.classList.remove('on') : open(b); });
+      });
+      document.addEventListener('click', function (e) { if (!m.contains(e.target)) m.classList.remove('on'); });
+      document.getElementById('new-design').addEventListener('click', function () { m.classList.remove('on'); window.open('/project/new', '_blank'); });   // 새 창: 디자인 고르기 → 원고
+      document.getElementById('new-folder').addEventListener('click', function () { m.classList.remove('on'); dirSheet.open(null); });
+      document.getElementById('new-make').addEventListener('click', function () { m.classList.remove('on'); location.href = '/make'; });   // 사다리 한 칸씩 보고 구성해 책으로
+    })();
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

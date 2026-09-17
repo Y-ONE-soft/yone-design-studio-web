@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}홈{% endblock %}
+{% block theme %}light{% endblock %}
+
+{% block content %}
+<style>
+  .hero { padding: 54px 40px 30px; background: linear-gradient(180deg, rgba(214,242,238,.9) 0%, rgba(236,230,255,.75) 45%, #fff 100%); text-align: center; }
+  .hero h1 { margin: 0 0 22px; font-size: 40px; font-weight: 700; letter-spacing: -.02em; }
+  .search { max-width: 860px; margin: 0 auto; display: flex; align-items: center; gap: 12px; background: #fff; border: 1.5px solid #c9b8f5; border-radius: 999px; padding: 16px 24px; box-shadow: 0 6px 24px rgba(125,42,232,.08); }
+  .search input { flex: 1; border: 0; outline: 0; font-size: 16px; background: transparent; color: var(--ink); }
+  .quick { display: flex; justify-content: center; gap: 26px; margin-top: 30px; flex-wrap: wrap; }
+  .quick a { display: flex; flex-direction: column; align-items: center; gap: 8px; text-decoration: none; color: #1f2330; font-size: 13px; width: 92px; }
+  .quick a .ic { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; background: #fff; border: 1px solid #e3ddf5; box-shadow: 0 2px 8px rgba(30,20,60,.06); transition: transform .12s, box-shadow .12s; }
+  .quick a:hover .ic { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(125,42,232,.14); }
+  .quick a.pp .ic { background: var(--pp); color: #fff; border-color: var(--pp); }
+  .quick a .cnt { position: absolute; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 10px 40px 80px; }
+  h2 { font-size: 22px; margin: 26px 0 14px; display: flex; align-items: baseline; gap: 10px; }
+  h2 a { font-size: 13px; color: var(--pp); text-decoration: none; font-weight: 500; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 22px 18px; }
+  .card { text-decoration: none; color: inherit; display: block; }
+  .card .th { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; background: #eceef3; border: 1px solid #e3e1ec; box-sizing: border-box; overflow: hidden; display: grid; place-items: center; }
+  .card .th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; filter: drop-shadow(0 2px 6px rgba(0,0,0,.14)); }
+  .card .th .ph { font-size: 30px; color: #2a2f3d; }
+  .card .th .pg { position: absolute; right: 8px; bottom: 8px; background: rgba(20,22,31,.75); color: #fff; font-size: 10.5px; padding: 2px 7px; border-radius: 999px; }
+  .card:hover .th { box-shadow: 0 0 0 2px var(--pp); }
+  .card .tt { margin: 10px 2px 3px; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .mt { font-size: 12px; color: #5f6368; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .empty { padding: 40px 0; text-align: center; color: #5f6368; }
+  .empty b { display: block; font-size: 18px; color: var(--ink); margin-bottom: 6px; }
+</style>
+
+<div class="hero">
+  <h1>오늘은 어떤 책을 만들까요?</h1>
+  <form class="search" action="/projects" method="get"><span>⌕</span><input name="q" type="search" placeholder="내 책, 틀, 디자인 검색" autocomplete="off"></form>
+  <div class="quick">
+    <a class="pp" href="/project/new" target="_blank"><span class="ic">+</span>새<br>프로젝트</a>
+    <a href="/projects"><span class="ic">🗂</span>프로젝트</a>
+    <a href="/catalog/intake"><span class="ic">📄</span>PDF 로<br>디자인 추가</a>
+    <a href="/book-studio"><span class="ic">🛠</span>내지 작업대</a>
+    <a href="/catalog"><span class="ic">◫</span>구성요소<br>틀 · 디자인</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <h2>최근 조판 <a href="/projects">모두 보기 →</a></h2>
+  {% if books %}
+  <div class="cards">{% for b in books[:6] %}{% include "_book_card.html" %}{% endfor %}</div>
+  {% else %}
+  <div class="empty"><b>아직 만든 책이 없어요</b><a href="/project/new" target="_blank">새 프로젝트</a>에서 디자인을 고르고 원고를 올려 시작해 보세요.</div>
+  {% endif %}
+</div>
+{% endblock %}

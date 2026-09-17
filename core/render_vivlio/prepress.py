@@ -36,9 +36,11 @@ DEFAULT_GRAY_MAP = {
 }
 
 # 인쇄용 CMYK 프로파일 후보 (앞에서부터). 한국 상업 인쇄 관행상 Japan Color 우선.
-PROFILE_DIRS = ("/Library/Application Support/Adobe/Color/Profiles/Recommended",
+PROFILE_DIRS = tuple(d for d in (os.environ.get("YONE_ICC_DIRS") or "").split(":") if d.strip()) + (
+                "/Library/Application Support/Adobe/Color/Profiles/Recommended",
                 "/System/Library/ColorSync/Profiles",
-                "/Library/ColorSync/Profiles")
+                "/Library/ColorSync/Profiles",
+                "/usr/share/color/icc", "/usr/share/color/icc/ghostscript")   # 리눅스: YONE_ICC_DIRS 에 납품용 ICC
 DEFAULT_PROFILES = ("JapanColor2001Coated.icc", "USWebCoatedSWOP.icc",
                     "CoatedFOGRA39.icc")
 

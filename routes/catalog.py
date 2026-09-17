@@ -1,20 +1,30 @@
 # -*- coding: utf-8 -*-
-"""카탈로그 — **틀 → 디자인 → 원고.**
+"""카탈로그 — **디렉토리 → 틀 → 디자인 → 원고.**
 
+    디렉토리(dir)  교재 갈래. 두 묶음(`group`) — OJT 라인업 8종(분석본·워크북·포켓북·학교별 변형문제·동형모의고사·직전보충·리테·클리닉)
+                   · 교재 폴더 계열(프리미엄북·특강교재·단어장·중등부) + 기타. `catalog/dirs.json` 으로 늘어난다. `blocks` = 블록 조합(블록 지도 2층).
+                   틀은 디렉토리 하나에 속하고(`catalog.json` 의 `dir`), 화면에서 옮길 수 있다.
     틀(series)     계열 코드 하나 = 면 구성(레이아웃). 12개. 코드로만 늘어난다.
     디자인(design) 그 틀의 한 모습 = config(색·치수·서체) + overrides.css + 페이지 틀 이미지.
                    책을 작업대에서 손본 뒤 "디자인으로 등록"하면 늘어난다.
     원고           디자인을 고르고 올리면 새 책.
 
-    /catalog                              틀 12개
+    /catalog                              디렉토리 10개
+    /catalog/dir/<dir>                    그 디렉토리의 틀들 (+ 틀 옮기기)
+    /catalog/intake                       PDF 판정 (올리기 · 결정 대기 · 새 틀 요청) — routes/intake.py 의 API 를 쓴다
     /catalog/<series>                     그 틀의 디자인들 (+ 디자인 등록)
     /catalog/<series>/<design>            디자인 하나: 페이지 틀 이미지 + 원고 넣기
+    POST /api/catalog/series/<series>/dir 틀을 다른 디렉토리로 옮긴다 {"dir": id}
+    POST /api/catalog/dirs                디렉토리 추가 {name, en, desc, icon, color, group} — 기타 앞에 끼운다
+    PUT  /api/catalog/dirs/<dir>          디렉토리 수정 (같은 필드; id·순서·안의 틀은 그대로)
+    DELETE /api/catalog/dirs/<dir>        디렉토리 삭제 — 안의 틀은 기타로. 기타는 못 지운다
     POST /api/catalog/create              새 책 → data → build → print → verify (배경)
     POST /api/catalog/design/<series>     책 하나를 디자인으로 등록 (config·css 복사, 페이지 틀 뽑기)
     DELETE /api/catalog/design/<series>/<design>
 
 폴더:
-    catalog/catalog.json                        틀 목록(이름·설명·루트 폴더)
+    catalog/dirs.json                           디렉토리 목록(순서·이름·설명·색)
+    catalog/catalog.json                        틀 목록(이름·설명·루트 폴더·dir)
     catalog/<series>/designs/<id>/design.json   {name, desc, source, date}
     catalog/<series>/designs/<id>/config.json   기준 config (options.expect 는 뺀다)
     catalog/<series>/designs/<id>/overrides.css (있으면)
@@ -44,7 +54,7 @@ from flask import (Blueprint, abort, jsonify, render_template, request,
 bp = Blueprint("catalog", __name__)
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CATALOG = os.path.join(REPO, "catalog")
+CATALOG = os.environ.get("YONE_CATALOG_DIR") or os.path.join(REPO, "catalog")   # 컨테이너: 볼륨
 JOBS = {}
 _LOCK = threading.Lock()
 _ID = re.compile(r"^[a-z][a-z0-9_-]{0,40}$")
@@ -85,9 +95,60 @@ def _books():
         return []
 
 
-# ── 틀 ──────────────────────────────────────────────────────────
+# ── 디렉토리 · 틀 ───────────────────────────────────────────────
+DEFAULT_DIR = "etc"                      # 어느 갈래도 아닌 틀은 "기타"
+_META_LOCK = threading.Lock()
+
+
+DIR_GROUPS = ("ojt", "folder")            # 묶음: OJT 라인업 8종 · 교재 폴더 계열 (docs/참고자료/교재_블록_지도 2층)
+DIR_COLORS = ("#3b7ddd", "#2fa47a", "#7b6cf6", "#f0863b", "#e0567b", "#2bb3c0", "#c9a227", "#8b91a5")
+
+
+def _dirs():
+    """디렉토리 목록 — `catalog/dirs.json` 순서 그대로."""
+    return json.load(open(os.path.join(CATALOG, "dirs.json"), encoding="utf-8"))
+
+
+def _save_dirs(dirs):
+    """순서 그대로 저장. 기타는 항상 맨 뒤."""
+    dirs = [d for d in dirs if d["id"] != DEFAULT_DIR] + [d for d in dirs if d["id"] == DEFAULT_DIR]
+    for d in dirs:
+        d.pop("no", None)
+    p = os.path.join(CATALOG, "dirs.json")
+    tmp = p + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(dirs, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, p)
+    return dirs
+
+
+def _new_dir_id(en, taken):
+    """영문 라벨을 슬러그로, 없거나 겹치면 dir1·dir2…"""
+    base = re.sub(r"[^a-z0-9]+", "-", (en or "").lower()).strip("-")[:24]
+    if base and base[0].isalpha() and base not in taken and base != "dir":
+        return base
+    n = 1
+    while f"dir{n}" in taken:
+        n += 1
+    return f"dir{n}"
+
+
+def _dir_of(meta, ids=None):
+    """틀이 속한 디렉토리 id. 적혀 있지 않거나 모르는 id 면 기타."""
+    ids = ids if ids is not None else {d["id"] for d in _dirs()}
+    return meta.get("dir") if meta.get("dir") in ids else DEFAULT_DIR
+
+
 def _meta():
     return json.load(open(os.path.join(CATALOG, "catalog.json"), encoding="utf-8"))
+
+
+def _save_meta(meta):
+    p = os.path.join(CATALOG, "catalog.json")
+    tmp = p + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(meta, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, p)
 
 
 def _ddir(series, design):
@@ -153,7 +214,14 @@ def _slots(cfg):
     return {"mode": "folder", "slots": [], "hint": hint}
 
 
-def _readiness(cfg):
+def _readiness(cfg, ddir=None):
+    """이 디자인으로 지금 책을 만들 수 있나 — 서체 · 바깥 경로 · **디자인 폴더 안의 아트워크**.
+
+    틀은 자기 재료를 디자인 폴더(`assets/`·`참고/`)에 갖고 있어야 한다. 바깥 경로
+    (`${STUDIO}`·`~`)는 다른 기기에 없기 마련이라 그대로 "부족"이고, 디자인 폴더 상대경로는
+    실제로 파일이 있는지 본다. 자산 조각(`assets.jobs`)이 이미 잘려 있으면 원본 PDF 는
+    없어도 된다 — 원본은 조각을 다시 자를 때만 필요하다.
+    """
     from core.render_vivlio import stage
     missing = []
     for f in cfg.get("fonts") or []:
@@ -165,7 +233,37 @@ def _readiness(cfg):
         p = os.path.expanduser(m.replace("${STUDIO}", _studio()))
         if not os.path.exists(p):
             ext.append(m)
+    if ddir:
+        ext += _local_artwork_missing(cfg, ddir)
     return {"fonts_missing": missing, "paths_missing": ext}
+
+
+def _local_artwork_missing(cfg, ddir):
+    """디자인 폴더 기준 상대경로 아트워크 중 없는 것."""
+    out = []
+    is_rel = lambda v: isinstance(v, str) and v and not v.startswith(("${", "~", "/"))
+    a = cfg.get("assets") or {}
+    if isinstance(a, dict):
+        adir = os.path.join(ddir, a.get("dir") or "assets")
+        have = set(os.listdir(adir)) if os.path.isdir(adir) else set()
+        jobs = [j for j in (a.get("jobs") or []) if isinstance(j, dict) and j.get("name")]
+        cut = [j["name"] for j in jobs if not any(f.startswith(j["name"] + ".") for f in have)]
+        if cut:
+            for k in ("src_pdf", "cover_pdf"):
+                v = a.get(k)
+                if is_rel(v) and not os.path.exists(os.path.join(ddir, v)):
+                    out.append(f"{v}  (자산 {', '.join(cut)} 을 잘라낼 원본)")
+    f = cfg.get("finish") or {}
+    if isinstance(f, dict):
+        v = f.get("art_pdf")
+        if is_rel(v) and not os.path.exists(os.path.join(ddir, v)):
+            out.append(f"{v}  (간지 아트워크)")
+        for key in ("inserts", "append"):
+            for it in f.get(key) or []:
+                v = it.get("pdf") if isinstance(it, dict) else None
+                if is_rel(v) and not os.path.exists(os.path.join(ddir, v)) and v not in out:
+                    out.append(v)
+    return out
 
 
 def template_info(series):
@@ -174,12 +272,15 @@ def template_info(series):
         return None
     designs = _designs(series)
     cfg = _design_cfg(series, designs[0]["id"]) if designs else None
-    r = _readiness(cfg) if cfg else {"fonts_missing": [], "paths_missing": []}
+    r = _readiness(cfg, _ddir(series, designs[0]["id"])) if cfg else {"fonts_missing": [], "paths_missing": []}
     ready = meta.get("ready", "auto")
     if ready == "auto" and (r["fonts_missing"] or r["paths_missing"] or not designs):
         ready = "blocked"
+    dirs = {d["id"]: d for d in _dirs()}
+    did = _dir_of(meta, set(dirs))
     return {"series": series, "name": meta["name"], "desc": meta.get("desc", ""),
             "root": meta.get("root", series), "ready": ready, "designs": designs,
+            "dir": did, "dir_name": dirs[did]["name"] if did in dirs else did,
             "pipeline": meta.get("pipeline"), "fields": meta.get("fields") or [],
             "slot_hint": meta.get("slot_hint", ""),
             "fonts_missing": r["fonts_missing"], "paths_missing": r["paths_missing"],
@@ -190,13 +291,119 @@ def templates():
     return [t for t in (template_info(s) for s in _meta()) if t]
 
 
+def directories():
+    """디렉토리마다 그 안의 틀을 붙여 돌려준다 (dirs.json 순서)."""
+    ts = templates()
+    return [{**d, "templates": [t for t in ts if t["dir"] == d["id"]]} for d in _dirs()]
+
+
 # ── 화면 ────────────────────────────────────────────────────────
 @bp.route("/catalog")
 def gallery():
+    return render_template("catalog.html", dirs=directories(), colors=DIR_COLORS, active_nav="틀")
+
+
+@bp.route("/catalog/intake")
+def intake_page():
+    """PDF 판정 — 올리기 + 결정 대기 + 새 틀 요청. 디렉토리 화면과는 별개 흐름."""
     from routes.intake import have_key, new_requests, pending
-    return render_template("catalog.html", templates=templates(), active_nav="틀", claude=have_key(),
+    return render_template("catalog_intake.html", active_nav="PDF", claude=have_key(),
                            new_requests=new_requests(), pending=pending(),
                            tnames={k: v["name"] for k, v in _meta().items()})
+
+
+@bp.route("/catalog/dir/<did>")
+def dir_page(did):
+    dirs = directories()
+    d = next((x for x in dirs if x["id"] == did), None)
+    if not d:
+        abort(404)
+    return render_template("catalog_dir.html", d=d, dirs=dirs, active_nav="틀")
+
+
+@bp.route("/api/catalog/dirs")
+def api_dirs():
+    return jsonify(directories())
+
+
+@bp.route("/api/catalog/series/<series>/dir", methods=["POST"])
+def series_move(series):
+    """틀을 다른 디렉토리로 옮긴다 — catalog.json 의 `dir` 만 바꾼다."""
+    did = ((request.get_json(silent=True) or {}).get("dir") or request.form.get("dir") or "").strip()
+    dirs = {d["id"]: d for d in _dirs()}
+    if did not in dirs:
+        return jsonify({"error": "모르는 디렉토리"}), 400
+    with _META_LOCK:
+        meta = _meta()
+        if series not in meta:
+            return jsonify({"error": "모르는 틀"}), 404
+        meta[series]["dir"] = did
+        _save_meta(meta)
+    return jsonify({"ok": True, "series": series, "dir": did, "dir_name": dirs[did]["name"]})
+
+
+@bp.route("/api/catalog/dirs", methods=["POST"])
+def dir_add():
+    b = request.get_json(silent=True) or request.form
+    name = _nfc(b.get("name", "")).strip()
+    if not name:
+        return jsonify({"error": "디렉토리 이름을 적어야 한다"}), 400
+    en = _nfc(b.get("en", "")).strip().upper()
+    color = (b.get("color") or "").strip()
+    if not re.match(r"^#[0-9a-fA-F]{6}$", color):
+        color = DIR_COLORS[0]
+    icon = _nfc(b.get("icon", "")).strip()[:4] or "📁"
+    with _META_LOCK:
+        dirs = _dirs()
+        if any(d["name"] == name for d in dirs):
+            return jsonify({"error": "같은 이름의 디렉토리가 있다"}), 400
+        d = {"id": _new_dir_id(en, {x["id"] for x in dirs}), "name": name, "en": en,
+             "icon": icon, "color": color, "desc": _nfc(b.get("desc", "")).strip(),
+             "group": b.get("group") if b.get("group") in DIR_GROUPS else "folder"}
+        dirs.append(d)                 # _save_dirs 가 기타를 뒤로 보낸다
+        _save_dirs(dirs)
+    return jsonify({"ok": True, "dir": d})
+
+
+@bp.route("/api/catalog/dirs/<did>", methods=["PUT"])
+def dir_edit(did):
+    """이름·영문·설명·아이콘·색만 바꾼다. id·순서·안의 틀은 그대로."""
+    b = request.get_json(silent=True) or request.form
+    name = _nfc(b.get("name", "")).strip()
+    if not name:
+        return jsonify({"error": "디렉토리 이름을 적어야 한다"}), 400
+    color = (b.get("color") or "").strip()
+    with _META_LOCK:
+        dirs = _dirs()
+        d = next((x for x in dirs if x["id"] == did), None)
+        if not d:
+            return jsonify({"error": "모르는 디렉토리"}), 404
+        if any(x["name"] == name and x["id"] != did for x in dirs):
+            return jsonify({"error": "같은 이름의 디렉토리가 있다"}), 400
+        d.update({"name": name, "en": _nfc(b.get("en", "")).strip().upper(), "desc": _nfc(b.get("desc", "")).strip(),
+                  "icon": _nfc(b.get("icon", "")).strip()[:4] or d.get("icon") or "📁",
+                  "color": color if re.match(r"^#[0-9a-fA-F]{6}$", color) else d.get("color", DIR_COLORS[0]),
+                  "group": b.get("group") if b.get("group") in DIR_GROUPS else d.get("group", "folder")})
+        _save_dirs(dirs)
+    return jsonify({"ok": True, "dir": d})
+
+
+@bp.route("/api/catalog/dirs/<did>", methods=["DELETE"])
+def dir_del(did):
+    if did == DEFAULT_DIR:
+        return jsonify({"error": "기타는 지울 수 없다 — 갈래 없는 틀이 모이는 곳"}), 400
+    with _META_LOCK:
+        dirs = _dirs()
+        if not any(d["id"] == did for d in dirs):
+            return jsonify({"error": "모르는 디렉토리"}), 404
+        meta = _meta()
+        moved = [k for k, v in meta.items() if v.get("dir") == did]
+        for k in moved:
+            meta[k]["dir"] = DEFAULT_DIR
+        if moved:
+            _save_meta(meta)
+        _save_dirs([d for d in dirs if d["id"] != did])
+    return jsonify({"ok": True, "moved": moved})
 
 
 @bp.route("/catalog/<series>")
@@ -204,8 +411,9 @@ def series_page(series):
     t = template_info(series)
     if not t:
         abort(404)
+    from routes.intake import have_key
     books = [b for b in _books() if b.get("series") == series]
-    return render_template("catalog_series.html", t=t, books=books, active_nav="틀")
+    return render_template("catalog_series.html", t=t, books=books, claude=have_key(), active_nav="틀")
 
 
 @bp.route("/catalog/<series>/<design>")
@@ -315,6 +523,8 @@ def design_add(series):
         did = register_design(series, name, book_dir, key, desc)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+    from core import yos_hooks
+    yos_hooks.design_changed(series, did, "added")      # contents 가 카탈로그 캐시를 비우도록
     return jsonify({"design": did})
 
 
@@ -325,6 +535,8 @@ def design_del(series, design):
     d = _ddir(series, design)
     if os.path.isdir(d):
         shutil.rmtree(d)
+    from core import yos_hooks
+    yos_hooks.design_changed(series, design, "deleted")
     return jsonify({"ok": True})
 
 
@@ -648,6 +860,15 @@ def create():
     changes["book.period"] = period
     if school:
         changes["book.school"] = school
+        # 간지 글귀의 학교 이름(`cover.school_ko`)도 따라간다. 영문 이름은 모르니 비운다 —
+        # 비우면 그 줄("ONLY FOR … HIGH SCHOOL")이 빠진다. 작업대에서 채우면 된다.
+        cov = cfg.get("cover")
+        if isinstance(cov, dict) and "school_ko" in cov:
+            sk = re.sub(r"\d+$", "", school).strip()
+            if sk and sk != cov.get("school_ko"):
+                changes["cover.school_ko"] = sk
+                if "school_en" in cov:
+                    changes["cover.school_en"] = ""
     stem = f"{school}_{name}_내지" if school else f"{name}_내지"
     changes["output.stem"] = stem
     changes["output.dir"] = "."

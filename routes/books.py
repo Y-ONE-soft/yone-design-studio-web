@@ -5,7 +5,8 @@
 `config.json` 만 있으면 여기 뜬다(`bin/viv --list` 와 같은 목록). 산출 PDF·쪽수·날짜·원고 수·
 어느 틀·디자인으로 만들었는지(`config._카탈로그`)를 같이 보여 준다.
 
-    /books                 목록 (틀별)
+    /books                 목록 (틀별, 표)
+    /projects              프로젝트 — Canva 식 "모든 프로젝트" (최근 카드 · 폴더 = 틀 · 전체)
     /api/books             JSON
     POST /api/books/rebuild {key}   data → build → print → verify 다시 (카탈로그 잡과 같은 실행기)
     DELETE /api/books      {key}    책 폴더 삭제 — 사용자가 확인한 뒤에만
@@ -89,6 +90,75 @@ def page():
         groups.setdefault(b["series"], []).append(b)
     ordered = [(s, _meta()[s]["name"], groups[s]) for s in order if s in groups]
     return render_template("books.html", groups=ordered, total=len(bs), active_nav="책")
+
+
+def _ago(stamp):
+    """'2026-09-15 15:58' → '몇 분 전 편집함' 식. 없으면 '아직 조판 안 함'."""
+    if not stamp:
+        return "아직 조판 안 함"
+    try:
+        t = datetime.datetime.strptime(stamp, "%Y-%m-%d %H:%M")
+    except ValueError:
+        return stamp
+    m = int((datetime.datetime.now() - t).total_seconds() // 60)
+    if m < 1:
+        return "방금 편집함"
+    if m < 60:
+        return f"{m}분 전 편집함"
+    if m < 24 * 60:
+        return f"{m // 60}시간 전 편집함"
+    if m < 30 * 24 * 60:
+        return f"{m // (24 * 60)}일 전 편집함"
+    return t.strftime("%Y-%m-%d 편집함")
+
+
+def projects():
+    """`books()` + 디렉토리(카탈로그 dirs.json)·편집 시각 문구. 최근 것이 앞."""
+    from routes.catalog import _dir_of, _dirs, _meta
+    meta, dirs = _meta(), {d["id"]: d for d in _dirs()}
+    out = []
+    for b in books():
+        did = _dir_of(meta.get(b["series"]) or {}, set(dirs))
+        d = dirs.get(did) or {}
+        out.append({**b, "dir": did, "dir_name": d.get("name", did), "dir_color": d.get("color", "#8b91a5"),
+                    "ago": _ago(b["latest"]), "day": (b["latest"] or "")[:10]})
+    out.sort(key=lambda x: x["latest"], reverse=True)
+    return out
+
+
+@bp.route("/projects")
+def page_projects():
+    """`?dir=<디렉토리>` 면 그 폴더 안의 책만, `?q=` 면 제목·틀·디자인에 그 말이 든 책만."""
+    from routes.catalog import DEFAULT_DIR, _dir_of, _dirs, _meta
+    bs = projects()
+    counts, tcounts = {}, {}
+    for b in bs:
+        counts[b["dir"]] = counts.get(b["dir"], 0) + 1
+    ids = {d["id"] for d in _dirs()}
+    for m in _meta().values():                       # 틀 수 — 지울 때 "안의 틀 n개는 기타로" 안내용
+        tcounts[_dir_of(m, ids)] = tcounts.get(_dir_of(m, ids), 0) + 1
+    # 폴더 = 카탈로그 디렉토리(dirs.json 순서). 기타는 책·틀이 있을 때만.
+    folders = [{**d, "n": counts.get(d["id"], 0), "t": tcounts.get(d["id"], 0)}
+               for d in _dirs() if d["id"] != DEFAULT_DIR or counts.get(d["id"]) or tcounts.get(d["id"])]
+    did = _nfc(request.args.get("dir", "")).strip()
+    q = _nfc(request.args.get("q", "")).strip().lower()
+    folder = next((f for f in folders if f["id"] == did), None) if did else None
+    if folder:
+        bs = [b for b in bs if b["dir"] == did]
+    if q:
+        bs = [b for b in bs if q in " ".join((b["title"], b["key"], b["series_name"] or "", b["design"])).lower()]
+    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q,
+                           total=sum(counts.values()), active_nav="프로젝트")
+
+
+@bp.route("/project/new")
+def page_project_new():
+    """새 프로젝트 — Canva 편집기 꼴의 전체화면. 왼쪽에서 디자인(틀의 모습)을 고르면 가운데에 그 페이지 틀이
+    보이고, [만들기] 가 그 디자인의 원고 넣기 화면(/catalog/<틀>/<디자인>)으로 보낸다. 새 창으로 연다."""
+    from routes.catalog import templates
+    ts = [t for t in templates() if t["designs"]]
+    return render_template("project_new.html", templates=ts,
+                           n=sum(len(t["designs"]) for t in ts))
 
 
 @bp.route("/api/books")
