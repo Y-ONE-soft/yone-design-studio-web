@@ -36,7 +36,7 @@ if ! fly volumes list -a "$APP" --json 2>/dev/null | grep -q '"studio_data"'; th
 fi
 
 # ── 비밀값 (없는 것만) ──
-have=" $(fly secrets list -a "$APP" --json 2>/dev/null | python3 -c 'import json,sys; print(" ".join(x["Name"] for x in json.load(sys.stdin)))' 2>/dev/null) "
+have=" $(fly secrets list -a "$APP" --json | python3 -c 'import json,sys; print(" ".join(x.get("name") or x["Name"] for x in json.load(sys.stdin)))') "
 staged=0
 set_if_missing() {
   case "$have" in *" $1 "*) return 0 ;; esac
