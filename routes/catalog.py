@@ -466,6 +466,66 @@ def design_pages(series, design):
         return 0
 
 
+def _page_labels(page):
+    """러닝 요소의 이름표 — 머리 10%·바닥 7% 안의 짧은 라벨(한글·대문자 위주). 본문 문장(영어 소문자)은 뺀다."""
+    W, H = page.rect.width, page.rect.height
+    out = []
+    for b in page.get_text("blocks"):
+        x0, y0, x1, y1, t = b[:5]
+        if not (y1 < H * 0.10 or y0 > H * 0.93):
+            continue
+        for line in t.split("\n"):
+            t2 = re.sub(r"[\d\s.·:/()\-~|_,'\"!?]+", "", line)
+            if not t2 or len(t2) > 16 or sum(c.islower() for c in t2) > len(t2) * 0.5:
+                continue
+            out.append(t2)
+    return out
+
+
+def design_layouts(series, design):
+    """기준 PDF 의 면을 **지면 형태**로 묶는다 — 지문만 다르고 형태가 같은 면은 하나로.
+
+    형태 키 = (좌/우, 섹션 라벨, 본문 단 수). 섹션 라벨은 러닝 헤드의 한글 라벨(STEP 이름 등)이고,
+    라벨 없는 면(왼쪽 면·간지)은 직전 섹션이 이어진 것으로 본다. 결과는 `_pages/layouts_<stamp>.json` 에 둔다.
+    """
+    pdf = _design_pdf(series, design)
+    if not pdf:
+        return {"total": 0, "layouts": []}
+    tdir = os.path.join(_ddir(series, design), "_pages")
+    os.makedirs(tdir, exist_ok=True)
+    cache = os.path.join(tdir, f"layouts_{int(os.path.getmtime(pdf))}.json")
+    if os.path.exists(cache):
+        return json.load(open(cache, encoding="utf-8"))
+    import collections
+    import fitz
+    doc = fitz.open(pdf)
+    seen, order, section = {}, [], ""
+    for page in doc:
+        cand = [l for l in _page_labels(page) if l not in ("STEP", "STEPBYSTEP")]
+        ko = [l for l in cand if re.search(r"[가-힣]", l)]
+        if ko:
+            section = max(ko, key=len)
+        elif cand and not section:
+            section = max(cand, key=len)
+        W, H = page.rect.width, page.rect.height
+        cols = collections.Counter()
+        for b in page.get_text("blocks"):
+            x0, y0, x1, y1, t = b[:5]
+            if H * 0.10 <= y0 <= H * 0.93 and len(t.strip()) > 20:
+                cols[round(x0 / W * 4)] += 1
+        ncol = min(len([k for k, v in cols.items() if v >= 2]), 2)
+        key = (page.number % 2, section, ncol)
+        seen.setdefault(key, []).append(page.number + 1)
+        if len(seen[key]) == 1:
+            order.append(key)
+    out = {"total": doc.page_count,
+           "layouts": [{"n": seen[k][0], "pages": seen[k], "count": len(seen[k]), "side": "우" if k[0] else "좌",
+                        "section": k[1], "cols": k[2]} for k in order]}
+    doc.close()
+    json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
+    return out
+
+
 @bp.route("/catalog/page/<series>/<design>/<int:n>.png")
 def design_page_img(series, design, n):
     """기준 PDF 의 n 면 그림(1부터). `_pages/` 에 두고 다시 안 그린다. ?dpi= 24~120."""

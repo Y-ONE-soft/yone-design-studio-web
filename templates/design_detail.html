@@ -38,6 +38,14 @@
   .pages.all { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
   .pages.all .pg .th { border-radius: 6px; }
   .pages.all .pg .lb { font-size: 11px; color: #8b8fa3; text-align: center; }
+  #layouts { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  #layouts .pg .th { position: relative; }
+  #layouts .pg .cnt { position: absolute; right: 6px; top: 6px; background: rgba(20,22,31,.75); color: #fff; font-size: 10.5px; padding: 2px 7px; border-radius: 999px; }
+  #layouts .pg .lb { text-align: left; color: #3c4043; white-space: normal; line-height: 1.35; }
+  #layouts .pg .lb b { font-weight: 600; }
+  .pages.hide { display: none; }
+  h2 .tg { margin-left: auto; border: 1px solid #cfc8e6; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; color: #3c4043; }
+  h2 .tg:hover { border-color: var(--pp); color: var(--pp); }
   .pg { cursor: pointer; }
   .pg .th { aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; background: #eceef3; border: 2px solid transparent; display: grid; place-items: center; }
   .pg .th img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
@@ -77,9 +85,14 @@
   </div>
 
   {% if total %}
-  <h2>지면 전체 <span class="n">기준 PDF {{ total }}면 — 스텝·섹션 지면이 다 있다. 누르면 크게</span></h2>
-  <div class="pages all" id="all-pages">
-    {% for n in range(1, total + 1) %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div><div class="lb">p{{ n }}</div></div>{% endfor %}
+  <h2>지면 형태 <span class="n">{{ layouts|length }}가지 — 지문만 다르고 형태가 같은 면은 하나로 (기준 PDF {{ total }}면)</span>
+    <button class="tg" id="tg-all">전체 {{ total }}면 펼치기</button></h2>
+  <div class="pages all" id="layouts">
+    {% for l in layouts %}<div class="pg" data-n="{{ l.n }}" title="같은 형태: {{ l.pages|join(', ') }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ l.n }}.png?dpi=30" alt="" loading="lazy"><span class="cnt">×{{ l.count }}</span></div>
+      <div class="lb"><b>{{ ('간지 (' ~ l.section ~ ' 뒤)') if l.cols == 0 and l.section else (l.section or '표지 · 간지') }}</b> {{ l.side }}{% if l.cols == 2 %} · 2단{% endif %} <small>p{{ l.n }}</small></div></div>{% endfor %}
+  </div>
+  <div class="pages all hide" id="all-pages">
+    {% for n in range(1, total + 1) %}<div class="pg" data-n="{{ n }}"><div class="th"><img data-src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div><div class="lb">p{{ n }}</div></div>{% endfor %}
   </div>
   {% endif %}
 
@@ -107,7 +120,13 @@
     document.querySelectorAll('#all-pages .pg').forEach(function (p) { p.classList.toggle('on', +p.dataset.n === PAGES[i].n); });
   }
   document.querySelectorAll('#pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(+p.dataset.i); }); });
-  document.querySelectorAll('#all-pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(REP.length + (+p.dataset.n) - 1); document.getElementById('stage').scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+  document.querySelectorAll('#layouts .pg, #all-pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(REP.length + (+p.dataset.n) - 1); document.getElementById('stage').scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+  var tg = document.getElementById('tg-all');
+  if (tg) tg.addEventListener('click', function () {      // 전체 면은 펼칠 때만 그림을 청한다
+    var all = document.getElementById('all-pages'), open = all.classList.toggle('hide');
+    all.querySelectorAll('img[data-src]').forEach(function (im) { im.src = im.dataset.src; im.removeAttribute('data-src'); });
+    tg.textContent = open ? '전체 ' + TOTAL + '면 펼치기' : '전체 접기';
+  });
   if (PAGES.length) { document.getElementById('prev').addEventListener('click', function () { show(i - 1); }); document.getElementById('next').addEventListener('click', function () { show(i + 1); }); }
   document.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') show(i - 1); if (e.key === 'ArrowRight') show(i + 1); });
   var c = document.getElementById('confirm');
