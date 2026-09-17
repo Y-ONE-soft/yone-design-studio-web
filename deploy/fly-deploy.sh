@@ -7,8 +7,11 @@
 #
 # 비밀값은 없는 것만 만든다. 이미 있으면 건드리지 않는다. 밖에서 줄 수 있는 것:
 #   BLOB_READ_WRITE_TOKEN  ANTHROPIC_API_KEY  YOS_LOGIN_URL  YOS_ORIGINS  YOS_WEBHOOK_URL  (환경변수로)
+#   ANTHROPIC_API_KEY 는 이 맥의 ~/.config/yone/env (로컬 bin/studio 가 쓰는 같은 키) 에서 읽는다.
+# 올라가는 것은 **커밋된 HEAD** 뿐이다 (git archive). 다른 세션의 커밋 안 된 변경이 메인에 있어도 섞이지 않는다.
 set -e
 cd "$(dirname "$0")/.."
+[ -f "$HOME/.config/yone/env" ] && . "$HOME/.config/yone/env"
 APP=${FLY_APP:-yos-studio}
 REGION=${FLY_REGION:-nrt}
 
@@ -55,9 +58,12 @@ set_if_missing BLOB_READ_WRITE_TOKEN "$BLOB_READ_WRITE_TOKEN"
 set_if_missing ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"
 set_if_missing YOS_WEBHOOK_URL   "$YOS_WEBHOOK_URL"
 
-# ── 배포 (단일 머신 · 볼륨) ──
-echo "■ fly deploy"
-fly deploy -a "$APP" --ha=false
+# ── 배포 (단일 머신 · 볼륨) — 커밋된 HEAD 만 ──
+[ -z "$(git status --porcelain --untracked-files=no)" ] || echo "■ 주의: 커밋 안 된 변경은 올라가지 않는다 (HEAD 만 배포)"
+src=$(mktemp -d); trap 'rm -rf "$src"' EXIT
+git archive HEAD | tar -x -C "$src"
+echo "■ fly deploy  $(git rev-parse --short HEAD)  $(git log -1 --format=%s | cut -c1-60)"
+fly deploy "$src" -a "$APP" --ha=false
 fly scale count 1 -a "$APP" --yes >/dev/null 2>&1 || true
 echo "■ 헬스:"
 curl -fsS "https://$APP.fly.dev/api/v1/health" && echo
