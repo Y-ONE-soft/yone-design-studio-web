@@ -172,6 +172,13 @@ GET {YOS_CONTENTS_API}/api/typeset/data?series=<틀>&school=…&grade=…&week=�
 지켜 줄 것은 `docs/yos_시험범위_읽기API_요청서.md` 와 같다 — 가공하지 말 것, count 실을 것, 미확정이면 거절, 읽기 전용.
 (초기엔 `type:"data"` 로 contents 가 data.json 을 본문에 실어 보내도 된다 — 어댑터 없이 바로 된다.)
 
+**워크북 — contents 가 자기 모양 그대로 보내는 길 (2026-09-18, 돌아감).** contents 의 「워크북 · 교재별 제작 현황 → 지문 →
+유형별 등록 현황」에서 「등록됨 → 지면」/「지면 만들기」를 누르면 contents 가 `POST /api/v1/renders` 에
+`source: {"type":"data","data":{"format":"yos-workbook-v1","book":{…},"passages":[{"no":"20","content":"…","items":[{"key":"vocab-choice","label":"…","content":{…원고 색인 그대로…}}]}]}}`
+를 보낸다. `format` 표시를 보고 스튜디오가 `core/sources/yos_workbook.py` 로 워크북 data.json 을 만든다 — **매핑은 그 파일 한 곳**
+(어느 항목 key 가 어느 스텝인지, 어법선택 5지선다 판본은 하단 상자 등). contents 쪽 코드: `src/server/studio/{client,workbook-payload}.ts` ·
+`src/app/api/passages/[passageId]/studio-workbook/route.ts` (Vercel 환경변수 `STUDIO_SERVICE_URL` · `STUDIO_SERVICE_TOKEN`).
+
 ## 7. 웹훅 — 스튜디오 → Y.OS (`deploy/yos/studio-webhook-route.ts`)
 
 `YOS_WEBHOOK_URL` 로 POST JSON. 헤더 `x-studio-event`, `x-studio-signature: <hex HMAC-SHA256(STUDIO_LINK_SECRET, 본문)>` —
