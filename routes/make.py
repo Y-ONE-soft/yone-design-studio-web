@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """조립 — 사용자 순서로 책 한 권을 만든다.
 
-    ① 책      워크북 책 고르기 (새 책은 새 프로젝트에서)
+    ① 책      워크북 책 고르기 · 새 워크북(디자인 고르고 원고 올리기 → 견본까지, 전권은 ⑤)
     ② 구성    스텝 넣고 빼기·순서·지문 수·가로/세로 → 프리셋으로 저장·불러오기
               (구조 보기: 부품·틀·스텝 해부도 — `book … make --what=…`)
     ③ 옷      색 손잡이 + 책 이름표(제목·학교·간지 문구)
@@ -55,12 +55,23 @@ def page():
         b["made"] = cat.get("made") or ""
     key = request.args.get("b") or ""
     _, meta = _book_dir(key) if key else (None, None)
+    new = bool(request.args.get("new"))
     if meta:
         key = meta["key"]
-    elif bs:
+    elif bs and not new:
         key = bs[0]["key"]
-    return render_template("make.html", books=bs, book_key=key,
-                           bid=_bid(key) if key else "", active_nav="조립")
+    else:
+        key = ""
+    # 새 워크북 — 디자인 목록·원고 칸은 카탈로그가 안다(같은 create 로 만든다)
+    from routes.catalog import template_info
+    tpl = template_info("workbook") or {}
+    designs = [{"id": d["id"], "name": d.get("name", d["id"]), "desc": d.get("desc", ""),
+                "draft": bool(d.get("draft")), "preview": (d.get("previews") or [None])[0]}
+               for d in tpl.get("designs") or []]
+    return render_template("make.html", books=bs, book_key=key, new=new,
+                           bid=_bid(key) if key else "", active_nav="조립",
+                           designs=designs, fields=tpl.get("fields") or [],
+                           slot_hint=tpl.get("slot_hint", ""), root=tpl.get("root", "워크북_비블리오"))
 
 
 def _need_book():

@@ -895,6 +895,18 @@ def create():
         if os.path.isdir(src):
             shutil.copytree(src, os.path.join(out_dir, sub), dirs_exist_ok=True)
 
+    if request.form.get("nobuild"):
+        # 조립(/make) 흐름: 전권을 굽지 않고 data + 견본(HTML)까지만 — 몇 초. 구성·옷을
+        # 만진 뒤 ⑤ 에서 전권을 굽는다. 실패해도 폴더는 남긴다(원고·로그를 봐야 한다).
+        r = subprocess.run([_python(), "-u", "-m", "core.render_vivlio.book", out_dir,
+                            "data", "render", "--sample"],
+                           cwd=REPO, capture_output=True, text=True, timeout=600)
+        if r.returncode != 0:
+            return jsonify({"error": "원고는 받았지만 data 를 못 만들었다 — 아래 로그",
+                            "log": (r.stdout + r.stderr)[-2000:], "key": rel, "bid": _bid(rel)}), 500
+        return jsonify({"key": rel, "bid": _bid(rel), "log": r.stdout[-1500:],
+                        "doc": "/book-studio/doc/%s/index.html" % _bid(rel)})
+
     job = {"id": uuid.uuid4().hex[:8], "status": "running", "log": [], "book_dir": out_dir,
            "key": rel, "bid": _bid(rel), "stem": stem, "series": series, "design": design,
            "started": time.time(), "pdfs": []}

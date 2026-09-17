@@ -44,6 +44,24 @@
   .bk .mt { color: var(--mute); font-size: 12px; margin-top: 2px; display: block; }
   .bk.new { border-style: dashed; color: var(--pp); }
   .bk.new .th { background: var(--pp-bg); color: var(--pp); }
+  /* ① 새 책 */
+  .dz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .dz label { display: block; border: 1px solid var(--line); border-radius: 10px; padding: 6px; cursor: pointer; text-align: center; font-size: 11.5px; color: #3c4043; position: relative; }
+  .dz label:hover { border-color: #cfc8e6; }
+  .dz label.on { border-color: var(--pp); box-shadow: 0 0 0 1px var(--pp); background: #faf7ff; }
+  .dz label input { display: none; }
+  .dz label img { width: 100%; aspect-ratio: 210 / 297; object-fit: cover; border-radius: 6px; background: #eceef3; display: block; margin-bottom: 5px; }
+  .dz label .nm { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dz label .draft { position: absolute; top: 10px; right: 10px; background: #f0a441; color: #1a1300; font-size: 9.5px; padding: 1px 6px; border-radius: 999px; font-weight: 700; }
+  .fx { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fx label, .kv2 label { display: block; font-size: 11.5px; color: var(--mute); margin-bottom: 3px; }
+  .drop { border: 1.5px dashed #cfc8e6; border-radius: 10px; padding: 14px; text-align: center; color: var(--mute); font-size: 12.5px; cursor: pointer; }
+  .drop:hover, .drop.over { border-color: var(--pp); background: #faf7ff; color: var(--pp); }
+  .drop input { display: none; }
+  .drop b { color: var(--ink); display: block; font-size: 13px; margin-bottom: 2px; }
+  .picked { font-size: 12px; color: #3c4043; margin: 6px 0 0; max-height: 110px; overflow: auto; }
+  .picked li { padding: 2px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .err { color: #c0263a; font-size: 12.5px; margin-top: 8px; white-space: pre-wrap; }
   /* ② 구성 목록 */
   .mk-list { list-style: none; margin: 0 0 12px; padding: 0; }
   .mk-list li { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
@@ -108,7 +126,45 @@
           <span class="mt">{{ b.period }}{% if b.design %} · {{ b.design }}{% endif %}{% if b.made %} · {{ b.made }}{% endif %}</span></span>
       </a>
       {% endfor %}
-      <a class="bk new" href="/project/new" target="_blank"><span class="th">+</span><span><span class="tt">새 워크북</span><span class="mt">디자인 고르고 원고 올리기 (새 프로젝트)</span></span></a>
+      <a class="bk new {{ 'on' if new else '' }}" href="#" id="bk-new"><span class="th">+</span><span><span class="tt">새 워크북 — 처음부터</span><span class="mt">디자인 고르고 · 이름 붙이고 · 원고 올리면 견본까지</span></span></a>
+
+      <form id="new-form" {% if not new %}hidden{% endif %} style="margin-top:14px" autocomplete="off">
+        <h3>디자인</h3>
+        <div class="dz">
+          {% for d in designs %}
+          <label class="{{ 'on' if loop.first else '' }}"><input type="radio" name="design" value="{{ d.id }}" {{ 'checked' if loop.first else '' }}>
+            {% if d.preview %}<img src="/catalog/preview/workbook/{{ d.id }}/{{ d.preview }}" alt="">{% else %}<img alt="">{% endif %}
+            <span class="nm" title="{{ d.name }}">{{ d.name }}</span>{% if d.draft %}<span class="draft">초안</span>{% endif %}</label>
+          {% endfor %}
+        </div>
+        <h3>이름</h3>
+        <div class="fx">
+          <div><label>교재명 *</label><input type="text" name="name" placeholder="예: 워크북"></div>
+          <div><label>학기 *</label><input type="text" name="period" placeholder="예: 26-2"></div>
+          <div><label>학교</label><input type="text" name="school" placeholder="예: 한영고"></div>
+          <div><label>제목(표지·간지)</label><input type="text" name="title" placeholder="비우면 교재명"></div>
+        </div>
+        <p class="note" style="margin:6px 0 0">폴더: <code>조판/교재/{{ root }}/&lt;교재명&gt;/&lt;학기&gt;/</code></p>
+        <h3>원고</h3>
+        <div class="fx">
+          {% for f in fields %}
+          <div><label>{{ f.label }}</label><input type="text" name="f_{{ f.key }}" value="{{ f.default }}" placeholder="{{ f.placeholder }}"></div>
+          {% endfor %}
+        </div>
+        <label class="drop" id="drop" style="display:block;margin-top:8px">
+          <input type="file" name="slot_folder" id="new-files" multiple accept=".docx,.hwp,.hwpx,.pdf,.xlsx">
+          <b>원고 파일 올리기</b>클릭하거나 끌어다 놓기 — docx · hwp · hwpx (정답지 포함, PDF 는 Step3 만)
+        </label>
+        <p class="note" style="margin:6px 0 0">{{ slot_hint }}</p>
+        <ul class="picked" id="new-picked"></ul>
+        <div style="margin-top:8px"><label style="font-size:11.5px;color:var(--mute)">또는 이 맥의 폴더 경로</label><input type="text" name="folder_path" placeholder="~/Downloads/교재/워크북 원고"></div>
+        <div class="mk-row" style="margin-top:12px">
+          <button type="submit" class="mk-btn" id="new-go">만들기 → 견본</button>
+          <button type="button" class="mk-btn sub" id="new-cancel">닫기</button>
+        </div>
+        <div class="err" id="new-err"></div>
+        <p class="note">원고를 읽어 data 를 만들고 견본까지(10~60초). 전권 PDF 는 ⑤ 에서.</p>
+      </form>
     </div>
 
     <!-- ② 구성 -->
@@ -269,6 +325,52 @@
   }
   document.querySelectorAll('.mk-steps li').forEach(function (b) { b.onclick = function () { goTab(b.dataset.tab); }; });
   whenFrame(lightFrame);
+
+  // ── ① 새 워크북 — 이 화면 안에서 처음부터 ──
+  (function () {
+    var form = $('new-form'), files = $('new-files'), picked = $('new-picked'), err = $('new-err');
+    var dropped = null;                                   // 끌어다 놓은 파일(input 에 못 넣는 브라우저용)
+    function showForm(on) { form.hidden = !on; $('bk-new').classList.toggle('on', on); if (on) form.querySelector('[name=name]').focus(); }
+    $('bk-new').onclick = function (e) { e.preventDefault(); showForm(form.hidden); };
+    $('new-cancel').onclick = function () { showForm(false); };
+    form.querySelectorAll('.dz label').forEach(function (l) {
+      l.onclick = function () { form.querySelectorAll('.dz label').forEach(function (x) { x.classList.toggle('on', x === l); }); };
+    });
+    function listFiles(fl) {
+      picked.innerHTML = '';
+      Array.prototype.forEach.call(fl || [], function (f) { var li = document.createElement('li'); li.textContent = (f.webkitRelativePath || f.name) + ' · ' + Math.round(f.size / 1024) + 'KB'; picked.appendChild(li); });
+      $('drop').querySelector('b').textContent = (fl && fl.length) ? '원고 ' + fl.length + '개' : '원고 파일 올리기';
+    }
+    files.onchange = function () { dropped = null; listFiles(files.files); };
+    var drop = $('drop');
+    drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('over'); };
+    drop.ondragleave = function () { drop.classList.remove('over'); };
+    drop.ondrop = function (e) {
+      e.preventDefault(); drop.classList.remove('over');
+      try { files.files = e.dataTransfer.files; dropped = null; } catch (x) { dropped = e.dataTransfer.files; }
+      listFiles(files.files.length ? files.files : dropped);
+    };
+    form.onsubmit = function (e) {
+      e.preventDefault(); err.textContent = '';
+      var fd = new FormData();
+      fd.append('series', 'workbook'); fd.append('nobuild', '1');
+      fd.append('design', (form.querySelector('[name=design]:checked') || {}).value || 'd1');
+      ['name', 'period', 'school', 'title', 'folder_path'].forEach(function (k) { fd.append(k, form.querySelector('[name=' + k + ']').value.trim()); });
+      form.querySelectorAll('[name^=f_]').forEach(function (i) { fd.append(i.name, i.value.trim()); });
+      var fl = files.files.length ? files.files : (dropped || []);
+      Array.prototype.forEach.call(fl, function (f) { fd.append('slot_folder', f, f.webkitRelativePath || f.name); });
+      if (!fd.get('name') || !fd.get('period')) { err.textContent = '교재명과 학기는 꼭 적어야 한다'; return; }
+      if (!fl.length && !fd.get('folder_path')) { err.textContent = '원고 파일을 올리거나 폴더 경로를 적을 것'; return; }
+      $('new-go').disabled = true; msg('원고 읽는 중 → data → 견본… (10~60초)');
+      fetch('/api/catalog/create', { method: 'POST', body: fd }).then(function (r) { return r.json(); }).then(function (d) {
+        $('new-go').disabled = false;
+        if (d.error) { msg('✗ 실패'); err.textContent = d.error + (d.log ? '\n\n' + d.log : ''); log(d.log || ''); return; }
+        msg('만들었다 — 여는 중');
+        location.href = '/make?b=' + encodeURIComponent(d.key) + '#compose';
+      }).catch(function (x) { $('new-go').disabled = false; msg('✗ ' + x); });
+    };
+  })();
+
   if (!bookKey) return;                                  // 책이 없으면 ①에서 멈춘다
   markDone('book');
   $('to-studio').href = '/book-studio?b=' + encodeURIComponent(bookKey);
@@ -512,6 +614,7 @@
   loadSections().then(loadPresets);
   loadKnobs();
   loadManuscript();
+  if (location.hash === '#compose') { goTab('compose'); history.replaceState(null, '', location.pathname + location.search); }
 })();
 </script>
 {% endblock %}
