@@ -24,12 +24,28 @@ def resolve(source, series, log=None):
     if t == "data":
         if not isinstance(source.get("data"), dict):
             raise SourceError("source.data 는 객체여야 한다")
-        return "data", source["data"]
-    if t == "plan":
+        kind, obj = "data", source["data"]
+    elif t == "plan":
         if not isinstance(source.get("plan"), dict):
             raise SourceError("source.plan 은 객체여야 한다")
-        return "plan", source["plan"]
-    if t == "yos":
+        kind, obj = "plan", source["plan"]
+    elif t == "yos":
         from core.sources import yos_contents
-        return yos_contents.fetch(series, {k: v for k, v in source.items() if k != "type"}, log)
-    raise SourceError(f"모르는 source.type: {t}")
+        kind, obj = yos_contents.fetch(series, {k: v for k, v in source.items() if k != "type"}, log)
+    else:
+        raise SourceError(f"모르는 source.type: {t}")
+    return kind, _adapt(obj, kind, series, log)
+
+
+def _adapt(obj, kind, series, log):
+    """contents 가 자기 모양 그대로 보낸 것(`format` 표시)은 여기서 그 틀의 data.json 으로.
+    어느 길(data 본문·yos 읽기)로 왔든 한 번만 거친다."""
+    from core.sources import yos_workbook
+    if kind == "data" and isinstance(obj, dict) and obj.get("format") == yos_workbook.FORMAT:
+        if series != "workbook":
+            raise SourceError(f"{yos_workbook.FORMAT} 는 workbook 틀에만 쓴다 (이 틀: {series})")
+        try:
+            return yos_workbook.to_data(obj, log)
+        except ValueError as e:
+            raise SourceError(str(e))
+    return obj
