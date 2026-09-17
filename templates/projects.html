@@ -75,6 +75,9 @@
   .dsg .d .acts { display: flex; gap: 6px; margin-top: 8px; }
   .dsg .d .acts a { flex: 1; text-align: center; text-decoration: none; font-size: 12.5px; padding: 7px 0; border-radius: 8px; background: #ecebf3; color: #1f2330; }
   .dsg .d .acts a.go { background: var(--pp); color: #fff; font-weight: 600; }
+  .dsg .d .x { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border: 0; border-radius: 50%; background: rgba(255,255,255,.92); color: #5f6368; font-size: 15px; cursor: pointer; opacity: 0; transition: opacity .12s; }
+  .dsg .d:hover .x { opacity: 1; }
+  .dsg .d .x:hover { background: #fde8ea; color: #c0263a; }
   .empty { padding: 60px 0; text-align: center; color: #5f6368; }
   .empty .big { font-size: 56px; margin-bottom: 8px; }
   .empty b { display: block; font-size: 20px; color: var(--ink); margin-bottom: 6px; }
@@ -97,12 +100,13 @@
   <section id="designs">
     <h2>틀 · 디자인 <span class="n">{{ designs|length }}개 — 골라서 새 책</span></h2>
     {% if designs %}<div class="dsg">
-      {% for d in designs %}<div class="d">
+      {% for d in designs %}<div class="d" data-series="{{ d.series }}" data-id="{{ d.id }}" data-name="{{ d.name }}">
         <div class="th">{% if d.img %}<img src="{{ d.img }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
-          <span class="tag {{ 'draft' if d.draft else '' }}">{{ '초안 · 확인 필요' if d.draft else d.tname }}</span></div>
+          <span class="tag {{ 'draft' if d.draft else '' }}">{{ '초안 · 확인 필요' if d.draft else d.tname }}</span>
+          <button class="x" title="디자인 삭제">×</button></div>
         <div class="tt">{{ d.name }}</div>
         <div class="mt"><i class="dot {{ d.ready }}"></i>{{ d.tname }}{% if d.n %} · {{ d.n }}면{% endif %}</div>
-        <div class="acts"><a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">원고 넣기</a><a href="/project/new?pick={{ d.series }}/{{ d.id }}" target="_blank">지면 보기</a></div>
+        <div class="acts"><a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">원고 넣기</a><a href="/design/{{ d.series }}/{{ d.id }}">지면 보기</a></div>
       </div>{% endfor %}
     </div>
     {% else %}<div class="empty" style="padding:24px 0"><b>이 폴더에 틀이 없어요</b>새 프로젝트 → AI → / 틀 등록하기 로 PDF 를 판정해 넣거나, 새 틀 요청을 남기세요.</div>{% endif %}
@@ -145,6 +149,15 @@
       e.preventDefault(); e.stopPropagation();
       var a = b.closest('.folder').dataset;
       dirSheet.remove(a.id, a.name, parseInt(a.t, 10) || 0);
+    });
+  });
+  document.querySelectorAll('.dsg .d .x').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var a = b.closest('.d').dataset;
+      if (!confirm('디자인 “' + a.name + '” 을 지울까요?\n\n디자인 폴더(config · 페이지 틀 · 견본)가 삭제됩니다. 이 디자인으로 만든 책은 그대로 남습니다.')) return;
+      fetch('/api/catalog/design/' + a.series + '/' + a.id, { method: 'DELETE' }).then(function (r) { return r.json(); })
+        .then(function (j) { if (j.error) alert(j.error); else location.reload(); });
     });
   });
   document.querySelectorAll('h2 .tg').forEach(function (t) {

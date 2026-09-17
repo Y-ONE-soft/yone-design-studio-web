@@ -174,6 +174,21 @@ def page_project_new():
                            series_map=series_map, n=sum(len(t["designs"]) for t in ts))
 
 
+@bp.route("/design/<series>/<design>")
+def page_design(series, design):
+    """디자인 상세 — 지면 전부(페이지 틀 + 견본 사진) 크게 보기. 원고 넣기·새 프로젝트에서 열기·확인 완료·삭제."""
+    from routes.catalog import _ID, template_info
+    t = template_info(series)
+    if not t or not _ID.match(design):
+        abort(404)
+    d = next((x for x in t["designs"] if x["id"] == design), None)
+    if not d:
+        abort(404)
+    pages = [{"src": f"/catalog/master/{series}/{design}/{m['file']}", "label": m["label"], "kind": "페이지 틀", "page": m.get("page")} for m in d["masters"]] \
+          + [{"src": f"/catalog/preview/{series}/{design}/{p}", "label": f"견본 {i + 1}", "kind": "견본 사진"} for i, p in enumerate(d["previews"])]
+    return render_template("design_detail.html", t=t, d=d, pages=pages, active_nav="프로젝트")
+
+
 @bp.route("/api/books")
 def api_books():
     return jsonify(books())
