@@ -180,6 +180,40 @@ def set_select(cfg, log=print, exclude=None, include=None, limits=None,
     return sel
 
 
+def set_book(cfg, log=print, backup=True, **fields):
+    """`config.json` 의 `book` 절(제목·학교·간지 문구 line1/line2)을 쓴다.
+
+    손잡이가 **값**, select 가 **구성**이라면 이것은 **책 이름표**다. 빈 문자열은
+    그 칸을 지운다(계열 기본값으로 돌아간다).
+    """
+    import json as _json
+    import shutil
+    allowed = ("title", "school", "period", "line1", "line2", "brand")
+    bad = [k for k in fields if k not in allowed]
+    if bad:
+        raise SystemExit(f"모르는 책 칸: {', '.join(bad)} — 되는 것: {', '.join(allowed)}")
+    path = cfg.path("config.json")
+    with open(path, encoding="utf-8") as f:
+        data = _json.loads(f.read())
+    book = dict(data.get("book") or {})
+    for k, v in fields.items():
+        if v is None:
+            continue
+        v = "" if v is True else str(v).strip()      # `--title=` 처럼 빈 값은 True 로 온다
+        if v:
+            book[k] = v
+        else:
+            book.pop(k, None)
+    data["book"] = book
+    if backup:
+        shutil.copy2(path, path + ".bak")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(_json.dumps(data, ensure_ascii=False, indent=1) + "\n")
+    log("  book → " + _json.dumps(book, ensure_ascii=False))
+    log("  → 간지 문구는 `data build` 로 반영된다")
+    return book
+
+
 def set_css(cfg, log=print, text=None, file=None, clear=False, **_):
     """그 책의 `overrides.css` 를 쓴다 — **뼈대 위에 얹는 모양**이다.
 
@@ -610,6 +644,11 @@ def main(argv=None):
                        clear=bool(opts.get("clear")),
                        cycle=None if cyc is None else str(cyc).lower() in ("1", "on", "true", "yes"))
             cfg = load(book)      # 같은 호출의 뒤 단계(data·render)가 바뀐 구성을 보게
+        elif st == "book":
+            set_book(cfg, log, **{k: opts.get(k) for k in
+                                  ("title", "school", "period", "line1", "line2", "brand")
+                                  if k in opts})
+            cfg = load(book)
         elif st == "css":
             set_css(cfg, log, text=(opts.get("text") if isinstance(opts.get("text"), str) else None),
                     file=opts.get("file"), clear=bool(opts.get("clear")))
