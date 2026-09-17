@@ -47,11 +47,71 @@ def _wb_books():
 
 
 def _parts():
+    """워크북의 조판되는 부품(스텝 단위) — `make --what=thumbs` 가 만든 목록."""
     try:
         with open(_cat("parts", "parts.json"), encoding="utf-8") as f:
             return json.load(f).get("parts") or []
     except (OSError, ValueError):
         return []
+
+
+_RE_CODES = re.compile(r"\b(B1[01]|B[1-9])\b")
+
+
+def _library():
+    """모든 틀의 블록 — 프로젝트 > 틀의 '지면 형태'(기준 PDF 를 구성 단위로 묶은 것) 그대로.
+
+    틀마다 [{id, series, design, label, kind(표지·간지/본문), codes(B1~B11), thumb, pages, key?}].
+    워크북은 본문 블록 대신 **조판되는 부품**(스텝 키, `key`)을 쓰고, 표지·간지만 기준 PDF 에서 가져온다.
+    다른 틀의 블록은 아직 기준 PDF 그림(참고)이다 — 담을 수는 있고, 조판은 그 틀이 select 를 받게 되면 붙는다.
+    """
+    from routes.catalog import design_layouts, templates
+    out = []
+    wb_parts = _parts()
+    for t in templates():
+        ds = t.get("designs") or []
+        if not ds:
+            continue
+        d = next((x for x in ds if not x.get("draft")), ds[0])
+        try:
+            L = design_layouts(t["series"], d["id"])
+        except Exception:
+            L = {"layouts": []}
+        blocks = []
+        for lay in L.get("layouts") or []:
+            label = lay["label"]
+            kind = "간지" if lay.get("kind") == "간지" else "본문"
+            if kind == "간지" and label.startswith("간지 · 표지") or label.startswith("표지"):
+                kind = "표지·간지"
+            if t["series"] == SERIES and kind == "본문":
+                continue                      # 워크북 본문은 아래 조판 부품으로
+            blocks.append({
+                "id": f"{t['series']}:{d['id']}:{lay['n']}", "series": t["series"], "design": d["id"],
+                "label": label, "kind": kind, "codes": _RE_CODES.findall(label),
+                "thumb": f"/catalog/page/{t['series']}/{d['id']}/{lay['n']}.png?dpi=40",
+                "page": lay["n"], "pages": lay.get("count", 1), "renderable": False,
+            })
+        if t["series"] == SERIES:
+            for p in wb_parts:
+                blocks.append({
+                    "id": f"{SERIES}:{p['key']}", "series": SERIES, "design": d["id"], "key": p["key"],
+                    "label": f"{p.get('logo') or ''} {p['name']}".strip(), "desc": p.get("desc", ""),
+                    "kind": "본문", "codes": _WB_CODES.get(p["key"], []),
+                    "thumb": f"/make/parts/{p['thumb']}", "step": p.get("step"), "renderable": True,
+                })
+        out.append({"series": t["series"], "name": t["name"], "dir": t.get("dir_name") or "",
+                    "design": d["id"], "design_name": d.get("name", d["id"]), "blocks": blocks,
+                    "renderable": t["series"] == SERIES})
+    out.sort(key=lambda t: not t["renderable"])          # 조판되는 틀을 맨 위에
+    return out
+
+
+# 워크북 부품 → 블록 지도 코드 (docs/참고자료/교재_블록_지도)
+_WB_CODES = {
+    "step1_a1": ["B7"], "step1_a1_2": ["B7"], "step1_a2": ["B7"], "step1_b1": ["B3", "B6"],
+    "step1_b2": ["B6"], "step1_c1": ["B7"], "step1_c2": ["B8"], "step2_a1": ["B7", "B6"],
+    "step2_b1": ["B8"], "step2_c1": ["B8"], "step2_c2": ["B8"], "step3": ["B6"], "step3_short": ["B6"],
+}
 
 
 def _read_json(path):
@@ -81,7 +141,7 @@ def page():
     tpl = template_info(SERIES) or {}
     designs = [{"id": d["id"], "name": d.get("name", d["id"]), "draft": bool(d.get("draft")),
                 "preview": (d.get("previews") or [None])[0]} for d in tpl.get("designs") or []]
-    return render_template("make.html", parts=_parts(), books=bs, designs=designs,
+    return render_template("make.html", library=_library(), books=bs, designs=designs,
                            fields=tpl.get("fields") or [], slot_hint=tpl.get("slot_hint", ""),
                            root=tpl.get("root", ""), compositions=_read_json(_cat("compositions.json")),
                            active_nav="조립")
@@ -97,11 +157,28 @@ def part_png(name):
 # ── 미리보기 — config 안 건드림 ─────────────────────────────────
 
 def _comp_args(p):
-    """화면의 구성 → CLI 옵션. steps 는 순서 그대로, limits 는 {키: 지문 수}."""
-    steps = [str(k) for k in (p.get("steps") or []) if _RE_KEY.match(str(k))]
+    """화면의 구성 → CLI 옵션. `items`(블록 목록, key 있는 것만 조판) 또는 `steps`. limits 는 {키: 지문 수}."""
+    if p.get("items"):
+        steps = [str(it.get("key")) for it in p["items"]
+                 if isinstance(it, dict) and it.get("key") and _RE_KEY.match(str(it["key"]))]
+    else:
+        steps = [str(k) for k in (p.get("steps") or []) if _RE_KEY.match(str(k))]
     lim = {str(k): int(v) for k, v in (p.get("limits") or {}).items()
            if _RE_KEY.match(str(k)) and str(v).isdigit() and int(v) > 0}
     return steps, lim, bool(p.get("cycle"))
+
+
+def _clean_items(p):
+    """저장용 블록 목록 — 화면이 준 것 중 아는 칸만."""
+    out = []
+    for it in p.get("items") or []:
+        if not isinstance(it, dict) or not it.get("id"):
+            continue
+        o = {k: it[k] for k in ("id", "series", "design", "key", "label", "kind", "thumb", "page") if k in it}
+        if it.get("n") and str(it["n"]).isdigit():
+            o["n"] = int(it["n"])
+        out.append(o)
+    return out[:200]
 
 
 @bp.route("/api/make/preview", methods=["POST"])
@@ -112,7 +189,7 @@ def api_preview():
         return jsonify({"error": "견본 책을 모른다"}), 404
     steps, lim, cycle = _comp_args(p)
     if not steps:
-        return jsonify({"error": "부품이 하나도 없다"}), 400
+        return jsonify({"error": "조판되는 부품이 없다 (지금은 워크북 부품만 조판된다)"}), 400
     args = [d, "make", "--what=compose", "--steps=" + ",".join(steps),
             "--n=%d" % max(0, min(int(p.get("n") or 2), 99))]
     if lim:
@@ -140,11 +217,12 @@ def api_composition_save():
     if not _RE_NAME.match(name):
         return jsonify({"error": "이름은 1~40자, 슬래시 없이"}), 400
     steps, lim, cycle = _comp_args(p)
-    if not steps:
+    items = _clean_items(p)
+    if not items and not steps:
         return jsonify({"error": "부품이 하나도 없다"}), 400
     path = _cat("compositions.json")
     comps = _read_json(path)
-    comps[name] = {"steps": steps, "limits": lim, "cycle": cycle,
+    comps[name] = {"items": items, "steps": steps, "limits": lim, "cycle": cycle,
                    "note": str(p.get("note") or "")[:200], "made": time.strftime("%Y-%m-%d %H:%M")}
     _write_json(path, comps)
     return jsonify({"ok": True, "compositions": comps})
