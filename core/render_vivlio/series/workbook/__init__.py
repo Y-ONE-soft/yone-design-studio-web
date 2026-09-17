@@ -222,6 +222,13 @@ class WorkbookSeries(Series):
             })
         return out
 
+    # ── 만들기 — 사다리 한 칸씩(부품·틀·스텝) 미리보기 HTML ──
+    def make(self, cfg, what, log, **opts):
+        from core.render_vivlio.series.workbook import make as make_mod
+        os.makedirs(cfg.build_dir, exist_ok=True)
+        self._stage(cfg, cfg.build_dir, log)
+        return make_mod.make(cfg, what, log, **opts)
+
     def build(self, cfg, log, sample=False, **_):
         build_dir = cfg.build_dir
         os.makedirs(build_dir, exist_ok=True)

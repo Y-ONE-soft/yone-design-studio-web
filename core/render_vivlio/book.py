@@ -92,7 +92,7 @@ def show_knobs(cfg, log=print, as_json=False, book=None, **_):
 
 
 def set_select(cfg, log=print, exclude=None, include=None, limits=None,
-               order=None, clear=False, backup=True):
+               order=None, clear=False, backup=True, cycle=None):
     """`config.json` 의 `select` 를 쓴다 — 「무엇을 빼고 몇 문항만 남길지」.
 
     손잡이(`set_knobs`)가 **값**을 쓴다면 이것은 **구성**을 쓴다.
@@ -102,6 +102,8 @@ def set_select(cfg, log=print, exclude=None, include=None, limits=None,
     include : 그중 이 책에서만 되돌릴 키 (exclude 를 이긴다).
     limits  : `step1_c2=4` 처럼 스텝마다 남길 지문 수. 쉼표로 여럿.
     clear   : select 를 통째로 지운다 (원고 그대로로 돌아간다).
+    cycle   : True/False — 세로형(지문 하나가 스텝을 다 돌고 다음 지문) 켜고 끄기.
+              `options.order` 에 쓴다 (select 가 아니라 순서 규칙이라 따로 산다).
 
     ⚠ 아는 스텝 키인지 먼저 본다 — 오타를 그대로 저장하면 **조용히 아무 일도
       안 일어난다.** 그게 가장 나쁜 실패다.
@@ -154,6 +156,16 @@ def set_select(cfg, log=print, exclude=None, include=None, limits=None,
         data.pop("select", None)
     else:
         data["select"] = sel
+    if cycle is not None:
+        opt = dict(data.get("options") or {})
+        if cycle:
+            opt["order"] = "cycle"
+        else:
+            opt.pop("order", None)
+        if opt:
+            data["options"] = opt
+        else:
+            data.pop("options", None)
     if backup:
         shutil.copy2(path, path + ".bak")
     with open(path, "w", encoding="utf-8") as f:
@@ -162,6 +174,8 @@ def set_select(cfg, log=print, exclude=None, include=None, limits=None,
         log("  select 를 지웠다 — 원고 그대로 나온다")
     else:
         log("  select → " + _json.dumps(sel, ensure_ascii=False))
+    if cycle is not None:
+        log("  순서 → " + ("세로(사이클)" if cycle else "가로(스텝순)"))
     log("  → 지면에 반영하려면 `data build` (build 만으로는 구성이 안 바뀐다)")
     return sel
 
@@ -589,15 +603,28 @@ def main(argv=None):
                 cfg = load(book)                    # 바꾼 값으로 다시 읽어 보여 준다
             show_knobs(cfg, log, as_json=bool(opts.get("json")), book=book)
         elif st == "select":
+            cyc = opts.get("cycle")
             set_select(cfg, log,
                        exclude=opts.get("exclude"), include=opts.get("include"),
                        limits=opts.get("limits"), order=opts.get("order"),
-                       clear=bool(opts.get("clear")))
+                       clear=bool(opts.get("clear")),
+                       cycle=None if cyc is None else str(cyc).lower() in ("1", "on", "true", "yes"))
+            cfg = load(book)      # 같은 호출의 뒤 단계(data·render)가 바뀐 구성을 보게
         elif st == "css":
             set_css(cfg, log, text=(opts.get("text") if isinstance(opts.get("text"), str) else None),
                     file=opts.get("file"), clear=bool(opts.get("clear")))
         elif st == "sections":
             show_sections(cfg, log, as_json=bool(opts.get("json")), book=book)
+        elif st == "make":
+            # 사다리 한 칸(부품·틀·스텝)만 HTML 로 — 계열이 `make()` 를 주면 된다
+            fn = getattr(_series(cfg), "make", None)
+            if not fn:
+                log(f"[오류] 계열 {cfg.series} 에는 만들기 칸이 없다")
+                rc = 2
+            else:
+                html = fn(cfg, str(opts.get("what") or "parts"), log,
+                          key=opts.get("key"), n=int(opts.get("n") or 2))
+                log(f"MAKE_HTML={html}")
         elif st == "build":
             build(cfg, log, **opts)
         elif st == "print":

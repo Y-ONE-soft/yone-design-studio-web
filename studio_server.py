@@ -26,6 +26,7 @@ from routes.book_studio import bp  # noqa: E402
 from routes.catalog import bp as catalog_bp  # noqa: E402
 from routes.intake import bp as intake_bp, have_key  # noqa: E402
 from routes.books import bp as books_bp  # noqa: E402
+from routes.make import bp as make_bp  # noqa: E402
 
 
 def create_app():
@@ -40,6 +41,7 @@ def create_app():
     app.register_blueprint(catalog_bp)
     app.register_blueprint(intake_bp)
     app.register_blueprint(books_bp)
+    app.register_blueprint(make_bp)
 
     @app.route("/")
     def home():
