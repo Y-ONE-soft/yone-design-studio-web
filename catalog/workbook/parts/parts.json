@@ -1,0 +1,149 @@
+{
+ "series": "workbook",
+ "from": "/Users/juwoongkim/Documents/작업/Y.ONE STUDIO/조판/교재/워크북_비블리오/워크북/26-2",
+ "parts": [
+  {
+   "key": "step1_a1",
+   "name": "어휘 선택 1",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "A1",
+   "layout": "a1",
+   "frame": "상·하 두 칸 고정 (지문 2개 = 한 면)",
+   "desc": "지문 속 낱말 둘 중 고르기 · 한 면에 지문 2개",
+   "thumb": "step1_a1.png"
+  },
+  {
+   "key": "step1_a1_2",
+   "name": "어휘 선택 2",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "A1",
+   "layout": "a1",
+   "frame": "상·하 두 칸 고정 (지문 2개 = 한 면)",
+   "desc": "어휘 선택 두 번째 벌 · 한 면에 지문 2개",
+   "thumb": "step1_a1_2.png"
+  },
+  {
+   "key": "step1_a2",
+   "name": "본문 O/X",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "A2",
+   "layout": "sheet",
+   "frame": "한 칸 (지문 1개 = 한 면, 길면 이어짐)",
+   "desc": "본문 문장 O/X 판단 · 한 면에 지문 1개",
+   "thumb": "step1_a2.png"
+  },
+  {
+   "key": "step1_b1",
+   "name": "본문 정리",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "B1",
+   "layout": "pair",
+   "frame": "상 지문 + 하 문제 (지문 1개 = 한 면)",
+   "desc": "주제·제목·정리 줄 + 하단 문제 · 한 면에 지문 1개",
+   "thumb": "step1_b1.png"
+  },
+  {
+   "key": "step1_b2",
+   "name": "내용 종합",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "B2",
+   "layout": "sheet",
+   "frame": "한 칸 (지문 1개 = 한 면, 길면 이어짐)",
+   "desc": "내용 종합 객관식 · 한 면에 지문 1개",
+   "thumb": "step1_b2.png"
+  },
+  {
+   "key": "step1_c1",
+   "name": "문장 배열",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "C1",
+   "layout": "pair",
+   "frame": "상 지문 + 하 문제 (지문 1개 = 한 면)",
+   "desc": "문장 배열 + 주어진 문장 · 한 면에 지문 1개",
+   "thumb": "step1_c1.png"
+  },
+  {
+   "key": "step1_c2",
+   "name": "빈칸 어휘",
+   "step": 1,
+   "tag": "FRAME",
+   "logo": "C2",
+   "layout": "sheet",
+   "frame": "한 칸 (지문 1개 = 한 면, 길면 이어짐)",
+   "desc": "빈칸 어휘 + 해석 · 한 면에 지문 1개",
+   "thumb": "step1_c2.png"
+  },
+  {
+   "key": "step2_a1",
+   "name": "어법 선택",
+   "step": 2,
+   "tag": "BUILD UP",
+   "logo": "A1",
+   "layout": "sheet",
+   "frame": "한 칸 (지문 1개 = 한 면, 길면 이어짐)",
+   "desc": "어법 선택 지문 + 하단 문제(주황 상자)",
+   "thumb": "step2_a1.png"
+  },
+  {
+   "key": "step2_b1",
+   "name": "어법 O/X",
+   "step": 2,
+   "tag": "BUILD UP",
+   "logo": "B1",
+   "layout": "sheet",
+   "frame": "한 칸 (지문 1개 = 한 면, 길면 이어짐)",
+   "desc": "문장마다 어법 O/X 표시하고 고치기",
+   "thumb": "step2_b1.png"
+  },
+  {
+   "key": "step2_c1",
+   "name": "빈칸 어법",
+   "step": 2,
+   "tag": "BUILD UP",
+   "logo": "C1",
+   "layout": "sheet",
+   "frame": "한 칸 (지문 1개 = 한 면, 길면 이어짐)",
+   "desc": "빈칸 어법 + 해석",
+   "thumb": "step2_c1.png"
+  },
+  {
+   "key": "step2_c2",
+   "name": "영작 배열",
+   "step": 2,
+   "tag": "BUILD UP",
+   "logo": "C2",
+   "layout": "flow",
+   "frame": "흘림 (면 수는 조판이 정함)",
+   "desc": "청크 영작 배열 · 흘림",
+   "thumb": "step2_c2.png"
+  },
+  {
+   "key": "step3",
+   "name": "실전 문제",
+   "step": 3,
+   "tag": "TEST",
+   "logo": "S",
+   "layout": "s3",
+   "frame": "2단 흘림 (실전 문제)",
+   "desc": "실전 문항 세트(안내문+지문+문항) · 2단 흘림",
+   "thumb": "step3.png"
+  },
+  {
+   "key": "step3_short",
+   "name": "실전 문제",
+   "step": 3,
+   "tag": "TEST",
+   "logo": "S",
+   "layout": "s3",
+   "frame": "2단 흘림 (실전 문제)",
+   "desc": "짧은 실전 문항 · 2단 흘림",
+   "thumb": "step3_short.png"
+  }
+ ]
+}
