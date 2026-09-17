@@ -38,11 +38,14 @@
   .pages.all { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
   .pages.all .pg .th { border-radius: 6px; }
   .pages.all .pg .lb { font-size: 11px; color: #8b8fa3; text-align: center; }
-  #layouts { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-  #layouts .pg .th { position: relative; }
-  #layouts .pg .cnt { position: absolute; right: 6px; top: 6px; background: rgba(20,22,31,.75); color: #fff; font-size: 10.5px; padding: 2px 7px; border-radius: 999px; }
-  #layouts .pg .lb { text-align: left; color: #3c4043; white-space: normal; line-height: 1.35; }
-  #layouts .pg .lb b { font-weight: 600; }
+  .secs { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px 16px; }
+  .sec .two { display: flex; gap: 4px; background: #eceef3; border-radius: 10px; padding: 6px; }
+  .sec .two .pg { flex: 1; min-width: 0; }
+  .sec .two .pg:only-child { flex: 0 0 calc(50% - 2px); }
+  .sec .two .pg .th { border-radius: 6px; border-color: transparent; }
+  .sec .lb { margin-top: 8px; font-size: 13.5px; color: var(--ink); line-height: 1.4; }
+  .sec .lb b { font-weight: 700; }
+  .sec .lb small { color: #8b8fa3; font-size: 12px; }
   .pages.hide { display: none; }
   h2 .tg { margin-left: auto; border: 1px solid #cfc8e6; background: #fff; border-radius: 999px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: inherit; color: #3c4043; }
   h2 .tg:hover { border-color: var(--pp); color: var(--pp); }
@@ -85,11 +88,16 @@
   </div>
 
   {% if total %}
-  <h2>지면 형태 <span class="n">{{ layouts|length }}가지 — 지문만 다르고 형태가 같은 면은 하나로 (기준 PDF {{ total }}면)</span>
+  <h2>구성 <span class="n">{{ layouts|length }}개 — 지문만 다르고 형태가 같은 면은 하나로 (기준 PDF {{ total }}면)</span>
     <button class="tg" id="tg-all">전체 {{ total }}면 펼치기</button></h2>
-  <div class="pages all" id="layouts">
-    {% for l in layouts %}<div class="pg" data-n="{{ l.n }}" title="같은 형태: {{ l.pages|join(', ') }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ l.n }}.png?dpi=30" alt="" loading="lazy"><span class="cnt">×{{ l.count }}</span></div>
-      <div class="lb"><b>{{ ('간지 (' ~ l.section ~ ' 뒤)') if l.cols == 0 and l.section else (l.section or '표지 · 간지') }}</b> {{ l.side }}{% if l.cols == 2 %} · 2단{% endif %} <small>p{{ l.n }}</small></div></div>{% endfor %}
+  <div class="secs" id="layouts">
+    {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}">
+      <div class="two">
+        <div class="pg" data-n="{{ l.n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ l.n }}.png?dpi=30" alt="" loading="lazy"></div></div>
+        {% if l.count > 1 %}<div class="pg" data-n="{{ l.pages[1] }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ l.pages[1] }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endif %}
+      </div>
+      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}면 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}</small></div>
+    </div>{% endfor %}
   </div>
   <div class="pages all hide" id="all-pages">
     {% for n in range(1, total + 1) %}<div class="pg" data-n="{{ n }}"><div class="th"><img data-src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div><div class="lb">p{{ n }}</div></div>{% endfor %}

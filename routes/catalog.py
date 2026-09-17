@@ -483,20 +483,20 @@ def _page_labels(page):
 
 
 def design_layouts(series, design):
-    """기준 PDF 의 면을 **지면 형태**로 묶는다 — 지문만 다르고 형태가 같은 면은 하나로.
+    """기준 PDF 의 면을 **구성 단위(섹션)** 로 묶는다 — 지문만 다르고 형태가 같은 면은 하나로.
 
-    형태 키 = (좌/우, 섹션 라벨, 본문 단 수). 섹션 라벨은 러닝 헤드의 한글 라벨(STEP 이름 등)이고,
-    라벨 없는 면(왼쪽 면·간지)은 직전 섹션이 이어진 것으로 본다. 결과는 `_pages/layouts_<stamp>.json` 에 둔다.
+    섹션 = 러닝 헤드의 한글 라벨(STEP 이름 등). 라벨 없는 면(왼쪽 면)은 직전 섹션이 이어진 것.
+    본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다. 좌/우·단 수는 구분하지 않는다
+    (같은 STEP 의 좌·우 면은 같은 구성이다). 결과는 `_pages/layouts_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts2_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
-    import collections
     import fitz
     doc = fitz.open(pdf)
     seen, order, section = {}, [], ""
@@ -508,19 +508,15 @@ def design_layouts(series, design):
         elif cand and not section:
             section = max(cand, key=len)
         W, H = page.rect.width, page.rect.height
-        cols = collections.Counter()
-        for b in page.get_text("blocks"):
-            x0, y0, x1, y1, t = b[:5]
-            if H * 0.10 <= y0 <= H * 0.93 and len(t.strip()) > 20:
-                cols[round(x0 / W * 4)] += 1
-        ncol = min(len([k for k, v in cols.items() if v >= 2]), 2)
-        key = (page.number % 2, section, ncol)
+        body = sum(1 for b in page.get_text("blocks") if H * 0.10 <= b[1] <= H * 0.93 and len(b[4].strip()) > 20)
+        key = ("간지", section) if body < 2 else ("본문", section)
         seen.setdefault(key, []).append(page.number + 1)
         if len(seen[key]) == 1:
             order.append(key)
     out = {"total": doc.page_count,
-           "layouts": [{"n": seen[k][0], "pages": seen[k], "count": len(seen[k]), "side": "우" if k[0] else "좌",
-                        "section": k[1], "cols": k[2]} for k in order]}
+           "layouts": [{"n": seen[k][0], "pages": seen[k], "count": len(seen[k]), "kind": k[0], "section": k[1],
+                        "label": (k[1] or "표지 · 간지") if k[0] == "본문" else ("간지" + (f" ({k[1]} 뒤)" if k[1] else " · 표지"))}
+                       for k in order]}
     doc.close()
     json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
     return out
