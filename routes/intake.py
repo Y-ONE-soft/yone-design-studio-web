@@ -141,6 +141,18 @@ def render_pages(pdf_path, out_dir, dpi=50):
     return out
 
 
+def _image_to_pdf(img_path, pdf_path, dpi=300):
+    """지면 이미지 한 장을 PDF 한 면으로. 크기는 dpi 가정으로 환산."""
+    import fitz
+    from PIL import Image
+    w, h = Image.open(img_path).size
+    doc = fitz.open()
+    page = doc.new_page(width=w * 72 / dpi, height=h * 72 / dpi)
+    page.insert_image(page.rect, filename=img_path)
+    doc.save(pdf_path)
+    doc.close()
+
+
 # ── 2. 판정 ─────────────────────────────────────────────────────
 def _b64png(path, max_px=900):
     from PIL import Image
@@ -438,6 +450,65 @@ def _asset_files(design_dir):
 
 
 # ── 라우트 ───────────────────────────────────────────────────────
+ASK_SYSTEM = """너는 Y.ONE 스튜디오(영어 교재 코드 조판, Vivliostyle)의 디자인 도우미다. 한국어로 짧고 구체적으로 답한다.
+스튜디오의 구조: 폴더(카탈로그 디렉토리) → 틀(계열 코드 = 면 구성, 코드로만 늘어남) → 디자인(그 틀의 한 모습: 색·치수·서체) → 원고를 넣으면 책.
+콘텐츠 연동 단위는 블록 11종: B1 원문지문·B2 지문분석·B3 요약노트·B4 개념·전략·B5 어휘·B6 문항·B7 변형지문·B8 문장드릴·B9 정답해설·B10 구조면·B11 관리양식.
+사용자가 할 수 있는 명령: `/ 틀 등록하기`(첨부한 완성본 PDF·지면 이미지를 판정해 기존 틀의 디자인으로 등록), `/ 새 틀 요청`(면 구성이 다른 것 — 클로드 코드 세션에서 코드로 만듦), `/ 디자인 검색`, `/ 불러오기`.
+형식: 짧은 문단과 `-` 목록만. 마크다운 제목(#)·코드 펜스(```)는 쓰지 않는다. 명령은 `/ 틀 등록하기` 처럼 한 줄 안에 적는다.
+원칙: 디자인은 지어내지 않고 기존 완성본을 실측해 옮긴다. 사용자가 원하는 디자인을 설명하거나 지면을 첨부하면 (1) 어느 틀·폴더에 가장 가까운지 (2) 기존 디자인으로 되는지, 새 틀이 필요한지 (3) 다음에 할 명령 하나를 말한다. 모르는 것은 모른다고 한다. 없는 기능을 있다고 하지 않는다."""
+
+
+@bp.route("/api/catalog/ask", methods=["POST"])
+def ask():
+    """기본 프롬프트 — 원하는 디자인을 말로(+첨부) 물으면 클로드가 어느 틀·폴더인지, 다음 명령이 무엇인지 답한다.
+    `history` = [{role, text}] 최근 대화(클라이언트가 들고 있음). 첨부는 판정용 면 그림으로 같이 보낸다(등록은 안 한다)."""
+    import tempfile
+    if not have_key():
+        return jsonify({"error": "클로드 키가 없다 (~/.config/yone/env)"}), 400
+    from routes.catalog import _dirs, _meta
+    text = (request.form.get("text") or "").strip()
+    try:
+        history = json.loads(request.form.get("history") or "[]")[-8:]
+    except ValueError:
+        history = []
+    f = request.files.get("file")
+    content = []
+    tmp = None
+    if f and f.filename:
+        ext = os.path.splitext(f.filename)[1].lower()
+        tmp = tempfile.mkdtemp(prefix="ask_")
+        src = os.path.join(tmp, "ref" + (ext if ext in (".pdf", ".png", ".jpg", ".jpeg", ".webp") else ".bin"))
+        f.save(src)
+        try:
+            if ext == ".pdf":
+                pages = render_pages(src, tmp)[:3]
+                content.append({"type": "text", "text": f"## 첨부 PDF `{f.filename}` 의 면들 (계측 {json.dumps(measure(src), ensure_ascii=False)[:600]})"})
+                for pg in pages:
+                    content.append({"type": "text", "text": f"({pg['label']} — {pg['page']}쪽)"})
+                    content.append({"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": _b64png(pg["file"])}})
+            elif ext in (".png", ".jpg", ".jpeg", ".webp"):
+                content.append({"type": "text", "text": f"## 첨부 지면 이미지 `{f.filename}`"})
+                content.append({"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": _b64png(src)}})
+        except Exception as e:
+            content.append({"type": "text", "text": f"(첨부 `{f.filename}` 을 못 읽었다: {e})"})
+    dirs = {d["id"]: d["name"] for d in _dirs()}
+    cat = "\n".join(f"- 폴더 「{dirs.get(v.get('dir'), '기타')}」 › 틀 `{k}` {v['name']}: {v.get('desc', '')}" for k, v in _meta().items())
+    content.append({"type": "text", "text": "## 지금 등록된 폴더·틀\n" + cat + "\n(틀이 없는 폴더: " + ", ".join(n for i, n in dirs.items() if i not in {v.get('dir') for v in _meta().values()}) + ")"})
+    content.append({"type": "text", "text": "## 사용자\n" + (text or "(첨부만 보냄 — 이 지면이 어느 틀에 가까운지 말해 줘)")})
+    msgs = [{"role": h["role"], "content": h["text"]} for h in history if h.get("role") in ("user", "assistant") and h.get("text")]
+    msgs.append({"role": "user", "content": content})
+    try:
+        import anthropic
+        r = anthropic.Anthropic().messages.create(model=MODEL, max_tokens=1200, system=ASK_SYSTEM, messages=msgs)
+        answer = "".join(b.text for b in r.content if b.type == "text").strip()
+    except Exception as e:
+        return jsonify({"error": f"클로드 호출 실패: {e}"}), 500
+    finally:
+        if tmp:
+            shutil.rmtree(tmp, ignore_errors=True)
+    return jsonify({"text": answer, "attached": bool(f and f.filename)})
+
+
 @bp.route("/api/catalog/intake", methods=["POST"])
 def intake():
     """① 잰다 ② 판정한다 — 여기서 멈춘다. 등록은 사람이 확인한 뒤 `decide` 로.
@@ -450,15 +521,26 @@ def intake():
     if not have_key() and series not in _meta():
         return jsonify({"error": "클로드 키가 없다. bin/studio 를 띄우기 전에 `export ANTHROPIC_API_KEY=…` (README_로컬실행.md)"}), 400
     f = request.files.get("pdf")
-    if not f or not f.filename.lower().endswith(".pdf"):
-        return jsonify({"error": "PDF 파일을 올려야 한다"}), 400
+    ext = os.path.splitext(f.filename or "")[1].lower() if f else ""
+    if not f or ext not in (".pdf", ".png", ".jpg", ".jpeg", ".webp"):
+        return jsonify({"error": "PDF 나 지면 이미지(png·jpg)를 올려야 한다"}), 400
     hint = (request.form.get("hint") or "").strip()
     jid = uuid.uuid4().hex[:8]
     d = os.path.join(INTAKE, jid)
     os.makedirs(d, exist_ok=True)
     pdf_name = os.path.basename(f.filename)
     pdf_path = os.path.join(d, "ref.pdf")
-    f.save(pdf_path)
+    if ext == ".pdf":
+        f.save(pdf_path)
+    else:
+        # 지면 이미지 → 한 면짜리 PDF. 실제 치수를 모르니 300dpi 스캔으로 가정한다(판형·여백은 어림, 모양 판정용).
+        img_path = os.path.join(d, "ref" + ext)
+        f.save(img_path)
+        try:
+            _image_to_pdf(img_path, pdf_path)
+        except Exception as e:
+            return jsonify({"error": f"이미지를 못 읽었다: {e}"}), 400
+        hint = (hint + "\n(지면 이미지 1장 — 치수는 300dpi 가정한 어림값)").strip()
     try:
         measured = measure(pdf_path)
         pages = render_pages(pdf_path, d)
@@ -561,6 +643,33 @@ def new_requests():
                         "judged": st["verdict"].get("series"), "confidence": st["verdict"].get("confidence"),
                         "reasons": st["verdict"].get("reasons", [])[:3], "path": f"catalog/_intake/{jid}/ref.pdf"})
     return out
+
+
+@bp.route("/api/catalog/intake")
+def intake_list():
+    """결정 대기 + 새 틀 요청 — 새 프로젝트 AI 칸의 '불러오기'."""
+    return jsonify({"claude": have_key(), "model": MODEL, "pending": pending(), "new_requests": new_requests()})
+
+
+@bp.route("/api/catalog/intake/<jid>")
+def intake_get(jid):
+    if not re.match(r"^[0-9a-f]{8}$", jid):
+        abort(404)
+    sp = os.path.join(INTAKE, jid, "state.json")
+    if not os.path.exists(sp):
+        abort(404)
+    from routes.catalog import _meta
+    state = json.load(open(sp, encoding="utf-8"))
+    return jsonify({**state, "templates": [{"series": k, "name": v["name"]} for k, v in _meta().items()]})
+
+
+@bp.route("/catalog/intake/<jid>/<name>")
+def intake_img(jid, name):
+    """판정에 쓴 면 그림(page_*.png)."""
+    from flask import send_from_directory
+    if not re.match(r"^[0-9a-f]{8}$", jid) or not re.match(r"^page_[a-z0-9]+\.png$", name):
+        abort(404)
+    return send_from_directory(os.path.join(INTAKE, jid), name)
 
 
 @bp.route("/api/catalog/intake/<jid>", methods=["DELETE"])

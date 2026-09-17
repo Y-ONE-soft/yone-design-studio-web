@@ -89,6 +89,21 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 - 새 엔진을 추가할 때 `engines/registry.py`의 `_ENGINE_LIST`에서 기존 엔진을 삭제하지 않는다.
 - subjects.json의 `engine_id`는 `material_id`와 정확히 일치해야 인덱스 카드 → 페이지 이동이 동작.
 
+## 배포 규칙 — 로컬 반영 한 번 = 배포서버 반영 (MANDATORY, 2026-09-18)
+
+배포서버는 **https://yos-studio.fly.dev** (Fly.io `yos-studio`, 도쿄 머신 1대, 볼륨 `/data`). 로컬 :5099 에 반영이 끝난 작업은 **같은 세션에서** 배포서버까지 올린다. 절차:
+
+1. 워크트리에서 커밋 → `ExitWorktree(keep)` → 메인에서 `git merge --no-ff worktree-<이름>` (메인의 미커밋 파일과 겹치면 멈추고 사용자에게).
+2. `bin/studio` 재기동 → http://127.0.0.1:5099 에서 바꾼 화면 확인.
+3. `git push origin main`.
+4. `deploy/fly-deploy.sh` — 메인 체크아웃에서. **커밋된 HEAD 만** 올라간다(`git archive`) — 다른 세션의 미커밋 파일은 섞이지 않는다. 빌드 5~10분. 비밀값은 없는 것만 채운다(클로드 키는 `~/.config/yone/env` 에서 자동).
+5. `curl -s https://yos-studio.fly.dev/api/v1/health` 가 `"ok":true,"claude":true` 이고, 바꾼 화면이 배포서버에서도 로컬과 같게 보여야 완료. 다르면 원인 해결 전까지 미완료.
+
+- 건너뛰는 경우: 문서·CLAUDE.md·docs/ 만 바뀐 커밋. 사용자가 "로컬만"이라고 한 경우.
+- 서버 확인만: `fly status -a yos-studio` · `fly logs -a yos-studio` · `fly secrets list -a yos-studio`(이름만 보임). 키 값은 리포·채팅에 적지 않는다.
+- Claude Code 자동 모드는 `fly secrets set/import`·`fly ssh` 를 막는다. 비밀값이 새로 필요하면 사용자가 터미널에서 `deploy/fly-deploy.sh` 를 직접 돌린다(없는 것만 채우고 배포까지).
+- 카탈로그(틀·디자인)는 첫 기동 때만 리포에서 `/data/catalog` 로 복사된다. 리포의 `catalog/` 를 고쳐도 배포서버는 안 바뀐다 — 볼륨이 정본(`deploy/README.md` 1절).
+
 ## 운영 규칙 (MANDATORY)
 
 - **yonestudio.com**은 Cloudflare Tunnel로 localhost:5010에 묶여 있어 **Flask 재시작 = 즉시 실서비스 배포**. 절차: 코드 수정 → Flask 재시작(kickstart) → (해당 시) export 실행 → **localhost:5010과 yonestudio.com 양쪽 모두** 실제 동작 확인 → 양쪽이 다르면 원인 해결 전까지 작업 미완료. 상세 절차는 `deploy-check` 스킬(`.claude/skills/deploy-check/`) 참조.
