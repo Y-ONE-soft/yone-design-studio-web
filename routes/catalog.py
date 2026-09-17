@@ -482,31 +482,96 @@ def _page_labels(page):
     return out
 
 
+# 틀별 구성 규칙 — 면 머리(위 22%) 글에서 이 순서로 처음 맞는 것이 그 면의 구성. 없으면 직전 구성이 이어진다.
+# 이름은 블록 지도(docs/참고자료/교재_블록_지도) 2층의 블록 조합에 맞췄다. 워크북은 러닝 헤드에 STEP 이름이 있어 규칙 없이 된다.
+SECTION_RULES = {
+    "blackbook": [(r"Exercise", "문항 (Exercise · B6)"), (r"정답\s*및\s*해설", "정답 및 해설 (B9)"),
+                  (r"Unit\s*\d+|\d+과\s*본문", "원문 지문 · 연관어휘 (B1 + B5)")],
+    "whitebook": [(r"DAY\s*\d+\s*EXERCISE", "DAY 실전문제 (EXERCISE · B6)"), (r"^정답", "정답 (B9)")],
+    "pocketbook": [(r"FLOW\s*NOTE", "요약노트 FLOW NOTE (B3)"), (r"암기\s*TEST", "암기 TEST (B8)"), (r"^정답", "정답 (B9)"),
+                   (r"어휘\s*고교기본|Unit\s*\d+", "어휘 목록 (B5)"), (r"본문\s*\d|모의고사\s*\d+|\d강\s*\d+", "지문 분석 (B2 + B5 동반의어)")],
+    "final": [(r"문장\s*삽입", "문장 삽입 / 순서 배열 (B7)"), (r"문장\s*배열", "문장 배열 (B7)"),
+              (r"중요\s*어휘", "중요 어휘 / 요약문 (B8 + B3)"), (r"내용\s*요약", "내용 요약 (B3)")],
+    "special": [(r"WEEK\s*VOCABULARY", "WEEK 어휘 (B5)"), (r"APPENDIX|부록", "부록 어근·접두사·접미사 (B5)"),
+                (r"구문\s*연습문제", "구문 연습문제 (B6)"), (r"어법\s*연습문제", "어법 연습문제 (B6)"),
+                (r"LESSON", "구문·어법 LESSON 개념 (B4)"), (r"WEEK\s*READING|EXAMPLE", "WEEK 독해 예제 (B4 + B6)"),
+                (r"배경지식\s*노트", "배경지식 노트 (B4)"), (r"ANSWERS|정답\s*및", "정답 (B9)")],
+    "hankkeut": [(r"빠른\s*정답", "빠른 정답 (B9)"), (r"문항별\s*정답|정답\s*및\s*풀이", "문항별 정답 및 풀이 (B9)"),
+                 (r"PART\s*0?1|서답형\s*\d+제", "서답형 문항 (B6)")],
+    "seseo": [(r"중요문장|PICK", "PART 1 중요문장 분석 (B2)"), (r"대표유형", "PART 2 대표유형 풀이 전략 (B4)"),
+              (r"§P\d|연습\s*\d", "PART 2 연습 (B6)"), (r"실전문제|§B\d|§Q\d", "PART 2 실전문제 세트 (B6)"),
+              (r"정답\s*및\s*해설", "정답 및 해설 (B9)")],
+    "vocaunit": [(r"어휘끝", "PART 1 어휘끝 UNIT 어휘 (B5)"), (r"올림포스", "PART 2 올림포스 지문 어휘 (B5)"),
+                 (r"교과서", "PART 3 교과서 지문 어휘 (B5)"), (r"모의고사", "PART 4 모의고사 지문 어휘 (B5)")],
+    "vocabook": [(r"표제어", "DAY 표제어 (B5)"), (r"파생어", "DAY 파생어 & 연관어휘 (B5)"), (r"VOCA\s*vs", "VOCA vs. VOCA (B4)"),
+                 (r"워크북|주어진 단어에 해당하는|우리말 해석을 참고", "워크북 빈칸 드릴 (B8)"), (r"^정답|정 답", "정답 (B9)")],
+}
+
+
+def _head_text(page):
+    """면 머리(위 22%)의 글 — 띄어 쓴 로마자(W E E K)는 붙이고 공백은 하나로."""
+    H = page.rect.height
+    blocks = sorted(page.get_text("blocks"), key=lambda b: (round(b[1] / 8), b[0]))
+    t = " | ".join(b[4] for b in blocks if b[1] < H * 0.22)
+    t = re.sub(r"(?<=[A-Z])\s+(?=[A-Z])", "", t)          # W E E K VO CA B U L A RY → WEEKVOCABULARY
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def _section_of(series, page, prev):
+    """이 면의 구성 이름. 규칙(틀별) → 중등부 PART 머리 → 러닝 헤드 라벨(워크북) 순. 못 찾으면 직전 것."""
+    head = _head_text(page)
+    if series in SECTION_RULES:
+        for pat, name in SECTION_RULES[series]:
+            if re.search(pat, head, re.I | re.M):
+                return name
+        return prev
+    if series == "middle":
+        m = re.search(r"PART\s*(\d)\s*([가-힣\d ]+?)(?:\s*(STEP\s*\d)\s*([가-힣 /()TF]+?))?\s*(?:[A-Z]{3,}|\||—|$)", head)
+        if m:
+            name = f"PART {m.group(1)} {re.sub(r'\s*\d+\s*$', '', m.group(2).strip())}"
+            if m.group(3):
+                name += f" · {m.group(3).replace(' ', '')} {m.group(4).strip()}"
+            return re.sub(r"\s+", " ", name)
+        return prev
+    cand = [l for l in _page_labels(page) if l not in ("STEP", "STEPBYSTEP")]
+    ko = [l for l in cand if re.search(r"[가-힣]", l)]
+    if ko:
+        return max(ko, key=len)
+    if cand and not prev:
+        return max(cand, key=len)
+    return prev
+
+
+def design_images(series, d, limit=6):
+    """디자인 타일·지면에 보일 그림 [{src, label}] — 견본 사진 > 페이지 틀 > 기준 PDF 앞 면들(limit)."""
+    if d.get("previews"):
+        return [{"src": f"/catalog/preview/{series}/{d['id']}/{p}", "label": f"견본 {i + 1}"} for i, p in enumerate(d["previews"])]
+    if d.get("masters"):
+        return [{"src": f"/catalog/master/{series}/{d['id']}/{m['file']}", "label": m["label"]} for m in d["masters"]]
+    n = min(design_pages(series, d["id"]), limit)
+    return [{"src": f"/catalog/page/{series}/{d['id']}/{k}.png?dpi=40", "label": f"p{k}"} for k in range(1, n + 1)]
+
+
 def design_layouts(series, design):
     """기준 PDF 의 면을 **구성 단위(섹션)** 로 묶는다 — 지문만 다르고 형태가 같은 면은 하나로.
 
-    섹션 = 러닝 헤드의 한글 라벨(STEP 이름 등). 라벨 없는 면(왼쪽 면)은 직전 섹션이 이어진 것.
-    본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다. 좌/우·단 수는 구분하지 않는다
-    (같은 STEP 의 좌·우 면은 같은 구성이다). 결과는 `_pages/layouts_<stamp>.json` 에 둔다.
+    섹션 = 틀별 규칙(SECTION_RULES, 블록 지도 기준) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
+    라벨 없는 면은 직전 섹션이 이어진 것. 본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다.
+    좌/우·단 수는 구분하지 않는다. 결과는 `_pages/layouts3_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts2_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts3_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
     doc = fitz.open(pdf)
     seen, order, section = {}, [], ""
     for page in doc:
-        cand = [l for l in _page_labels(page) if l not in ("STEP", "STEPBYSTEP")]
-        ko = [l for l in cand if re.search(r"[가-힣]", l)]
-        if ko:
-            section = max(ko, key=len)
-        elif cand and not section:
-            section = max(cand, key=len)
+        section = _section_of(series, page, section)
         W, H = page.rect.width, page.rect.height
         body = sum(1 for b in page.get_text("blocks") if H * 0.10 <= b[1] <= H * 0.93 and len(b[4].strip()) > 20)
         key = ("간지", section) if body < 2 else ("본문", section)

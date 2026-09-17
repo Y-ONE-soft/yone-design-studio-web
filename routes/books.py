@@ -146,15 +146,14 @@ def page_projects():
     designs = []
     if folder:
         bs = [b for b in bs if b["dir"] == did]
-        from routes.catalog import templates                     # 이 폴더의 틀·디자인 — 여기서 바로 만들 수 있게
+        from routes.catalog import design_images, templates     # 이 폴더의 틀·디자인 — 여기서 바로 만들 수 있게
         for t in templates():
             if t["dir"] != did:
                 continue
             for d in t["designs"]:
-                imgs = d["previews"] or [m["file"] for m in d["masters"]]
+                imgs = design_images(t["series"], d)      # 견본 > 페이지 틀 > 기준 PDF 앞 면
                 designs.append({"series": t["series"], "tname": t["name"], "ready": t["ready"], "id": d["id"], "name": d["name"],
-                                "draft": d.get("draft", False), "n": len(imgs),
-                                "img": f"/catalog/{'preview' if d['previews'] else 'master'}/{t['series']}/{d['id']}/{imgs[0]}" if imgs else ""})
+                                "draft": d.get("draft", False), "n": len(imgs), "img": imgs[0]["src"] if imgs else ""})
     if q:
         bs = [b for b in bs if q in " ".join((b["title"], b["key"], b["series_name"] or "", b["design"])).lower()]
     return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs,
@@ -165,10 +164,13 @@ def page_projects():
 def page_project_new():
     """새 프로젝트 — Canva 편집기 꼴의 전체화면. 왼쪽에서 디자인(틀의 모습)을 고르면 가운데에 그 페이지 틀이
     보이고, [만들기] 가 그 디자인의 원고 넣기 화면(/catalog/<틀>/<디자인>)으로 보낸다. 새 창으로 연다."""
-    from routes.catalog import templates
+    from routes.catalog import design_images, templates
     from routes.intake import MODEL, have_key
     allt = templates()
     ts = [t for t in allt if t["designs"]]
+    for t in ts:
+        for d in t["designs"]:
+            d["images"] = design_images(t["series"], d)   # 타일·지면 그림 [{src, label}]
     series_map = {t["series"]: {"name": t["name"], "dir": t["dir"], "dir_name": t["dir_name"]} for t in allt}
     return render_template("project_new.html", templates=ts, claude=have_key(), model=MODEL,
                            series_map=series_map, n=sum(len(t["designs"]) for t in ts))

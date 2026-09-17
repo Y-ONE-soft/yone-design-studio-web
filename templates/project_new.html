@@ -177,12 +177,11 @@
       <div class="grid" id="grid">
         {% for t in templates %}
           {% for d in t.designs %}
-          {% set real = d.previews|length > 0 %}
-          {% set imgs = d.previews if real else (d.masters|map(attribute='file')|list) %}
-          <div class="tpl" data-series="{{ t.series }}" data-design="{{ d.id }}" data-name="{{ d.name }}" data-tname="{{ t.name }}" data-kind="{{ 'preview' if real else 'master' }}"
-               data-imgs="{{ imgs|join(',') }}" data-labels="{{ '' if real else (d.masters|map(attribute='label')|list|join(',')) }}" data-q="{{ (d.name ~ ' ' ~ t.name ~ ' ' ~ t.dir_name)|lower }}"
+          {% set imgs = d.images %}
+          <div class="tpl" data-series="{{ t.series }}" data-design="{{ d.id }}" data-name="{{ d.name }}" data-tname="{{ t.name }}"
+               data-imgs="{{ imgs|map(attribute='src')|list|join(',') }}" data-labels="{{ '' if d.previews else (imgs|map(attribute='label')|list|join(',')) }}" data-q="{{ (d.name ~ ' ' ~ t.name ~ ' ' ~ t.dir_name)|lower }}"
                title="{{ t.name }} · {{ d.name }}{% if d.desc %} — {{ d.desc }}{% endif %}">
-            {% if imgs %}<img src="/catalog/{{ 'preview' if real else 'master' }}/{{ t.series }}/{{ d.id }}/{{ imgs[0] }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
+            {% if imgs %}<img src="{{ imgs[0].src }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
             <span class="n">{{ imgs|length }}</span><i class="dot {{ t.ready }}"></i>
             <span class="nm">{{ t.name }} · {{ d.name }}</span>
           </div>
@@ -226,7 +225,7 @@
     }
     document.getElementById('q').addEventListener('input', filt); document.getElementById('f-series').addEventListener('change', filt); document.getElementById('btn-q').addEventListener('click', filt);
     // 디자인 고르기 → 지면 + 페이지 줄 + 만들기
-    function src(i) { return '/catalog/' + sel.kind + '/' + sel.series + '/' + sel.design + '/' + sel.imgs[i]; }
+    function src(i) { return sel.imgs[i].indexOf('?') > 0 ? sel.imgs[i].replace(/dpi=\d+/, 'dpi=96') : sel.imgs[i]; }   // 기준 PDF 면은 크게
     function show(i) {
       if (!sel || !sel.imgs.length) return;
       idx = Math.max(0, Math.min(i, sel.imgs.length - 1));
@@ -239,10 +238,10 @@
       t.addEventListener('click', function () {
         document.querySelectorAll('.tpl').forEach(function (x) { x.classList.toggle('on', x === t); });
         var d = t.dataset;
-        sel = { series: d.series, design: d.design, kind: d.kind, imgs: d.imgs ? d.imgs.split(',') : [], labels: d.labels ? d.labels.split(',') : [] };
+        sel = { series: d.series, design: d.design, imgs: d.imgs ? d.imgs.split(',') : [], labels: d.labels ? d.labels.split(',') : [] };
         document.getElementById('title').textContent = '제목 없는 프로젝트 - ' + d.tname + ' · ' + d.name;
         var go = document.getElementById('go'); go.href = '/catalog/' + d.series + '/' + d.design; go.classList.add('on');
-        thumbs.innerHTML = sel.imgs.map(function (f, k) { return '<div class="t" data-i="' + k + '"><img src="' + src(k) + '" alt=""><i>' + (k + 1) + '</i></div>'; }).join('');
+        thumbs.innerHTML = sel.imgs.map(function (f, k) { return '<div class="t" data-i="' + k + '"><img src="' + f + '" alt=""><i>' + (k + 1) + '</i></div>'; }).join('');
         thumbs.querySelectorAll('.t').forEach(function (x) { x.addEventListener('click', function () { show(+x.dataset.i); }); });
         if (sel.imgs.length) show(0);
         else { page.className = 'page blank'; page.innerHTML = '이 디자인은 아직 페이지 틀 그림이 없습니다<br><small>만들기에서 바로 원고를 넣을 수 있습니다</small>'; document.getElementById('pos').textContent = '– / –'; }
