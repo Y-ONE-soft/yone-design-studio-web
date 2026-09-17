@@ -103,7 +103,119 @@ def _library():
                     "design": d["id"], "design_name": d.get("name", d["id"]), "blocks": blocks,
                     "renderable": t["series"] == SERIES})
     out.sort(key=lambda t: not t["renderable"])          # 조판되는 틀을 맨 위에
+    for t in out:
+        for b in t["blocks"]:
+            b["item"] = _classify(b)
+            b["tpl"] = t["name"]
     return out
+
+
+def _by_item(library):
+    """항목 → 옷(블록) 목록. 조판되는 것이 먼저."""
+    by = {i: [] for i in ITEMS}
+    for t in library:
+        for b in t["blocks"]:
+            by.setdefault(b["item"], []).append(b)
+    for k in by:
+        by[k].sort(key=lambda b: (not b.get("renderable"), b["tpl"]))
+    return by
+
+
+# ── 책과 무관한 공통 항목 — 라이브러리의 「블록별 보기」 ─────────────
+# 블록 지도(B1~B11)를 바탕으로 하되 사람이 고르기 쉬운 갈래로 다시 나눴다. 항목 하나에
+# 틀마다 다른 '옷'(variant = 그 틀의 지면 형태)이 여럿 달린다. 구성엔 항목 + 옷을 담는다.
+TAXONOMY = [
+    ("구조", "책 뼈대 — 원고 없음", [
+        ("cover", "표지", "앞표지·시작면"),
+        ("divider", "구간 간지", "STEP·PART·WEEK·DAY 앞 간지"),
+        ("answer_div", "정답지 간지", "정답·해설 앞 간지"),
+        ("memo", "MEMO·채움면", "메모 면·빈 면"),
+        ("credits", "크레딧·판권", "만든 사람·판권"),
+    ]),
+    ("지문", "지문이 주인공인 면", [
+        ("passage_raw", "원문 지문", "해석·표시 없는 지문 전문"),
+        ("passage_analysis", "지문 분석·직독직해", "문장 끊어 해석·문법 표시·스크립트"),
+        ("passage_variant", "변형 지문", "어휘 선택·어법 선택·문장 배열·삽입·본문 O/X"),
+    ]),
+    ("정리", "요약과 개념", [
+        ("summary", "요약·정리", "주제·제목·FLOW NOTE·5분 점검"),
+        ("concept", "개념·풀이 전략", "문법 개념·유형 전략·배경지식"),
+    ]),
+    ("어휘", "낱말", [
+        ("vocab_list", "어휘 목록", "표제어·뜻·예문"),
+        ("vocab_related", "파생·연관 어휘", "지문 부속 어휘·유반의어"),
+        ("vocab_drill", "어휘 빈칸·암기 TEST", "어휘 목록의 빈칸본"),
+    ]),
+    ("문항", "발문이 있는 문제", [
+        ("q_set", "문항 세트", "지문 + 객관식 문항"),
+        ("q_exam", "실전·모의고사 세트", "회차·시험지 꼴"),
+        ("q_short", "서답형·단답", "쓰는 문항·T/F"),
+    ]),
+    ("드릴", "문장 단위 과제 목록", [
+        ("drill_blank", "빈칸 채우기", "빈칸 어휘·빈칸 어법·해석 빈칸"),
+        ("drill_ox", "어법 O/X", "문장마다 O/X 표시하고 고치기"),
+        ("drill_write", "영작·배열", "청크 영작·단어 배열·대화 순서"),
+    ]),
+    ("정답", "답과 풀이", [
+        ("ans_quick", "빠른 정답", "번호·정답 격자"),
+        ("ans_full", "정답·해설", "문항별 풀이"),
+    ]),
+    ("기타", "아직 못 가른 것", [
+        ("misc", "기타", "라벨로 못 가른 면 — 틀별 보기에서 확인"),
+    ]),
+]
+ITEMS = {i[0]: {"id": i[0], "name": i[1], "desc": i[2], "cat": c[0]} for c in TAXONOMY for i in c[2]}
+
+# 워크북 조판 부품 → 항목
+_WB_ITEM = {
+    "step1_a1": "passage_variant", "step1_a1_2": "passage_variant", "step1_a2": "passage_variant",
+    "step1_b1": "summary", "step1_b2": "q_set", "step1_c1": "passage_variant", "step1_c2": "drill_blank",
+    "step2_a1": "passage_variant", "step2_b1": "drill_ox", "step2_c1": "drill_blank", "step2_c2": "drill_write",
+    "step3": "q_exam", "step3_short": "q_exam",
+}
+
+# 기준 PDF 라벨 → 항목. 위에서부터 첫 일치. 구체적인 것이 먼저.
+_LABEL_ITEM = [
+    (r"정답지|정답.*간지|간지.*정답", "answer_div"),
+    (r"^간지 \(", "divider"),
+    (r"^표지|간지 · 표지", "cover"),
+    (r"MEMO|메모", "memo"),
+    (r"크레딧|판권", "credits"),
+    (r"빠른\s*정답", "ans_quick"),
+    (r"정답\s*및\s*해설|정답 및 풀이|해설", "ans_full"),
+    (r"^정답", "ans_quick"),
+    (r"서답형|T\s*/\s*F", "q_short"),
+    (r"STEP\s*\d\s*(확인|응용)", "q_set"),                   # 중등 'PART 1 어휘 · STEP1 확인' 은 문항
+    (r"원문", "passage_raw"),                              # 블랙북 '원문 지문 · 연관어휘' — 지문이 주인공
+    (r"분석|직독직해|스크립트", "passage_analysis"),          # 포켓북 '지문 분석 (B2 + B5)' 도 여기
+    (r"중요\s*어휘", "drill_blank"),                        # 파이널 중요어휘 = 빈칸 드릴(블록 지도 B8)
+    (r"VOCA\s*vs|개념|전략|배경지식", "concept"),
+    (r"지문 어휘|암기\s*TEST|빈칸 드릴", None),               # 아래 두 줄에서 가른다
+    (r"암기\s*TEST|빈칸 드릴", "vocab_drill"),
+    (r"파생|연관어휘|동반의어", "vocab_related"),
+    (r"어근|접두사|표제어|어휘|VOCA", "vocab_list"),
+    (r"실전문제 세트|모의고사 세트|시험지|회차", "q_exam"),
+    (r"연습문제|Exercise|EXERCISE|연습|확인|응용|문항|예제", "q_set"),
+    (r"실전|모의", "q_exam"),
+    (r"요약|FLOW|점검|정리", "summary"),
+    (r"어법\s*O/?X", "drill_ox"),
+    (r"영작|단어 배열|대화 순서", "drill_write"),
+    (r"빈칸", "drill_blank"),
+    (r"문장\s*배열|문장\s*삽입|순서 배열|어법 고르기|어휘 선택|어법 선택|본문\s*O", "passage_variant"),
+    (r"지문", "passage_raw"),
+]
+
+
+def _classify(block):
+    if block.get("key"):
+        return _WB_ITEM.get(block["key"], "misc")
+    label = block.get("label") or ""
+    for pat, item in _LABEL_ITEM:
+        if item and re.search(pat, label, re.I):
+            return item
+    if block.get("kind") != "본문":
+        return "divider"
+    return "misc"
 
 
 # 워크북 부품 → 블록 지도 코드 (docs/참고자료/교재_블록_지도)
@@ -141,7 +253,9 @@ def page():
     tpl = template_info(SERIES) or {}
     designs = [{"id": d["id"], "name": d.get("name", d["id"]), "draft": bool(d.get("draft")),
                 "preview": (d.get("previews") or [None])[0]} for d in tpl.get("designs") or []]
-    return render_template("make.html", library=_library(), books=bs, designs=designs,
+    lib = _library()
+    return render_template("make.html", library=lib, by_item=_by_item(lib), taxonomy=TAXONOMY, items=ITEMS,
+                           books=bs, designs=designs,
                            fields=tpl.get("fields") or [], slot_hint=tpl.get("slot_hint", ""),
                            root=tpl.get("root", ""), compositions=_read_json(_cat("compositions.json")),
                            active_nav="조립")
@@ -174,7 +288,7 @@ def _clean_items(p):
     for it in p.get("items") or []:
         if not isinstance(it, dict) or not it.get("id"):
             continue
-        o = {k: it[k] for k in ("id", "series", "design", "key", "label", "kind", "thumb", "page") if k in it}
+        o = {k: it[k] for k in ("id", "series", "design", "key", "label", "kind", "thumb", "page", "item") if k in it}
         if it.get("n") and str(it["n"]).isdigit():
             o["n"] = int(it["n"])
         out.append(o)
@@ -222,7 +336,9 @@ def api_composition_save():
         return jsonify({"error": "부품이 하나도 없다"}), 400
     path = _cat("compositions.json")
     comps = _read_json(path)
-    comps[name] = {"items": items, "steps": steps, "limits": lim, "cycle": cycle,
+    rules = p.get("rules") if isinstance(p.get("rules"), dict) else {}
+    rules = {k: str(v)[:40] for k, v in rules.items() if k in ("repeat", "answers", "mode")}
+    comps[name] = {"items": items, "steps": steps, "limits": lim, "cycle": cycle, "rules": rules,
                    "note": str(p.get("note") or "")[:200], "made": time.strftime("%Y-%m-%d %H:%M")}
     _write_json(path, comps)
     return jsonify({"ok": True, "compositions": comps})
