@@ -5,6 +5,10 @@
 > launchd `com.yonestudio.flask`(:5010), InDesign. 이 맥에서의 실행은 `README_로컬실행.md` 기준 — `bin/studio` → http://127.0.0.1:5099/catalog
 > (Vivliostyle 코드 조판 + 카탈로그, 로그인 없음). 인계 문서·작업 메모는 `docs/인계_20260914/`.
 > 책 데이터는 `~/Documents/작업/Y.ONE STUDIO/조판/교재/`, 클로드 키는 `~/.config/yone/env`(리포·채팅에 적지 말 것).
+> **웹 배포·Y.OS 연동(2026-09-15)**: `deploy/README.md`. Fly.io `yos-studio`(`Dockerfile`+`fly.toml`, yos-typeset 과 같은 방식),
+> 인증 `core/webauth.py`(Y.OS HMAC 링크 토큰 — `CHAT_LINK_SECRET` 식), 바깥 API `routes/api_v1.py`(`/api/v1`), 잡 `core/jobs.py`,
+> Vercel Blob `core/blob.py`, 웹훅 `core/yos_hooks.py`, contents 데이터 어댑터 `core/sources/`, Y.OS 쪽 드롭인 `deploy/yos/*.ts`.
+> (`core/notify.py` 는 예전 macOS 알림 모듈 — 웹훅과 다르다.) 테스트 `tests/test_webauth.py`·`tests/test_api_v1.py`.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -90,6 +94,7 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 - **yonestudio.com**은 Cloudflare Tunnel로 localhost:5010에 묶여 있어 **Flask 재시작 = 즉시 실서비스 배포**. 절차: 코드 수정 → Flask 재시작(kickstart) → (해당 시) export 실행 → **localhost:5010과 yonestudio.com 양쪽 모두** 실제 동작 확인 → 양쪽이 다르면 원인 해결 전까지 작업 미완료. 상세 절차는 `deploy-check` 스킬(`.claude/skills/deploy-check/`) 참조.
 - **구글 드라이브 파일은 직접 수정 금지** — 반드시 로컬로 복사 후 작업 (`_gdrive_safe_copy` 사용).
 - **버그 수정 격리**: A 케이스 수정이 B 케이스를 깨뜨리지 않도록 영향 범위를 최소화. 요청 범위 외 리팩터링 금지.
+- **워크트리에서 작업할 때**: launchd Flask는 메인 체크아웃(`main`) 경로에서 뜨므로 워크트리(`.claude/worktrees/<name>`)의 변경은 **main에 머지(또는 체크아웃)한 뒤 kickstart**해야 반영된다. 워크트리 안에서 kickstart만 하고 "반영 안 됨"으로 판단하지 말 것. 배포 확인(localhost:5010 + yonestudio.com)은 머지 후 메인 체크아웃 기준으로 수행.
 
 ## 디버깅 팁
 
@@ -104,3 +109,13 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 ## 회고 / 가이드라인
 
 새 엔진이 완성되거나 큰 버그를 잡았으면 `.claude/rules/development-guide.md`의 "과거 반복된 실수 목록" 섹션에 패턴을 추가합니다 (자동 주입됨). 다음 세션에서 같은 실수를 반복하지 않게 하기 위함.
+
+## 응답 스타일 — caveman · ponytail · i-have-adhd (MANDATORY, 2026-09-16)
+
+이 프로젝트의 모든 응답은 세 스킬 규칙을 **항상** 따른다. 전체 규칙은 `.claude/skills/{caveman,ponytail,i-have-adhd}/SKILL.md` — `.claude/settings.json` 의 SessionStart 훅이 세션 시작(startup/resume/clear/compact) 때 자동 주입한다. `.claude/` 는 gitignore 라 이 맥의 메인 체크아웃에만 있음(출처·버전·갱신법은 `.claude/skills/SOURCES.md`). 훅 출력이 컨텍스트에 없으면 첫 응답 전에 `/caveman` `/ponytail` `/i-have-adhd` 를 로드한다.
+
+- **caveman (full)**: 서론·마무리 인사·군말·꾸밈(장식용 표·이모지) 없음. 도구 호출 전후 진행 설명 없음. 문장 짧게, 한 문장 한 뜻. 코드·명령·에러 문자열은 원문 그대로. 한국어 조사·어미는 유지(관사 삭제 규칙은 영어용). 보안 경고·되돌릴 수 없는 작업 확인·순서가 중요한 다단계 절차는 평문으로 쓴다.
+- **ponytail (full)**: 코드는 사다리 순서로 — 필요한가(YAGNI) → 이 코드베이스에 이미 있나 → stdlib → 플랫폼 기능 → 이미 설치된 의존성 → 한 줄 → 그때서야 최소 구현. 요청 밖 추상화·스캐폴딩·리팩터링 금지. 버그는 증상 아닌 원인을, 호출자 전부 확인한 뒤 공유 지점에서 한 번 고친다. 트러스트 경계 검증·데이터 손실 방지·보안·접근성은 생략 금지.
+- **i-have-adhd**: 첫 줄은 사용자가 바로 할 수 있는 행동 또는 답. 다단계는 번호 목록, 목록은 그룹당 5개 이하. 상태를 매 턴 다시 말한다("3/5 단계 완료"). 시간 추정은 분 단위로. 곁가지는 본론이 끝난 뒤 한 줄로. 끝은 2분 안에 할 수 있는 다음 행동 하나.
+- 끄기: "stop caveman" / "stop ponytail" / "stop adhd mode" / "normal mode". 강도: `/caveman lite|full|ultra`, `/ponytail lite|full|ultra`.
+- 예외: 커밋 메시지·PR·이슈·문서·코드 주석처럼 채팅 밖에 남는 글은 평문으로 쓴다(caveman Boundaries).

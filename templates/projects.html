@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}{{ folder.name if folder else '프로젝트' }}{% endblock %}
+{% block theme %}light{% endblock %}
+{% block body_class %}has-side{% endblock %}
+
+{% block side %}
+<aside class="side">
+  <a class="si on" href="/projects"><span class="ic">🗂</span>모든 프로젝트<span class="cnt">{{ total }}</span></a>
+</aside>
+{% endblock %}
+
+{% block content %}
+{# Canva 의 "모든 프로젝트" — 제목 · 도구줄(새 항목) · 폴더(= 카탈로그 디렉토리). 최근·디자인(전체) 구역은 당분간 뺐다.
+   `?dir=` 이면 그 폴더 안만, `?q=` 면 검색 결과만 (둘 다 서버가 거른다). #}
+<style>
+  .hero { padding: 42px 40px 26px; background: linear-gradient(180deg, rgba(214,242,238,.9) 0%, rgba(236,230,255,.75) 45%, #fff 100%); text-align: center; }
+  .hero h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -.02em; }
+  .hero .back { display: inline-block; margin-bottom: 10px; font-size: 13px; color: var(--pp); text-decoration: none; }
+  .hero .sub { margin-top: 8px; color: #5f6368; font-size: 14px; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 10px 40px 80px; }
+  .tools { display: flex; justify-content: flex-end; gap: 10px; margin: 8px 0 18px; }
+  .tools button { width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent; font-size: 18px; cursor: pointer; display: grid; place-items: center; color: #1f2330; }
+  .tools button:hover { background: #f1eff8; }
+  .tools button.new { border: 1px solid #cfc8e6; font-size: 22px; font-weight: 300; }
+  .tools button.on { background: var(--pp-bg); color: var(--pp); }
+  h2 { font-size: 22px; margin: 26px 0 14px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+  h2 .tg { font-size: 14px; color: #5f6368; cursor: pointer; user-select: none; }
+  h2 .n { font-size: 13px; color: #8b91a5; font-weight: 500; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 22px 18px; }
+  .card { text-decoration: none; color: inherit; display: block; }
+  .card .th { position: relative; aspect-ratio: 1 / 1; border-radius: 12px; background: #eceef3; border: 1px solid #e3e1ec; box-sizing: border-box; overflow: hidden; display: grid; place-items: center; }
+  .card .th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; box-sizing: border-box; filter: drop-shadow(0 2px 6px rgba(0,0,0,.14)); }
+  .card .th .ph { font-size: 30px; color: #2a2f3d; }
+  .card .th .pg { position: absolute; right: 8px; bottom: 8px; background: rgba(20,22,31,.75); color: #fff; font-size: 10.5px; padding: 2px 7px; border-radius: 999px; }
+  .card:hover .th { box-shadow: 0 0 0 2px var(--pp); }
+  .card .tt { margin: 10px 2px 3px; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .mt { font-size: 12px; color: #5f6368; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .cards.list { grid-template-columns: 1fr; gap: 6px; }
+  .cards.list .card { display: grid; grid-template-columns: 56px 1fr; column-gap: 14px; align-items: center; padding: 6px 8px; border-radius: 10px; }
+  .cards.list .card:hover { background: #f7f5fc; }
+  .cards.list .card .th { aspect-ratio: auto; height: 56px; border-radius: 8px; }
+  .cards.list .card .th img { padding: 4px; }
+  .cards.list .card .th .ph { font-size: 18px; }
+  .cards.list .card .th .pg { display: none; }
+  .cards.list .card .tt { margin: 0; }
+  .cards.list .card .mt { grid-column: 2; }
+
+  .folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .folder { display: flex; align-items: center; gap: 14px; padding: 10px 12px; border-radius: 12px; text-decoration: none; color: inherit; }
+  .folder:hover { background: #f7f5fc; }
+  .folder .fi { width: 54px; height: 44px; border-radius: 8px; background: color-mix(in srgb, var(--c) 28%, #fff); position: relative; display: grid; place-items: center; font-size: 20px; }
+  .folder .fi::before { content: ""; position: absolute; left: 0; top: -6px; width: 22px; height: 8px; border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--c) 40%, #fff); }
+  .folder { position: relative; }
+  .folder .acts { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: inline-flex; gap: 2px; opacity: 0; transition: opacity .12s; }
+  .folder:hover .acts { opacity: 1; }
+  .folder .acts button { width: 26px; height: 26px; border: 0; border-radius: 7px; background: transparent; color: #8b8fa3; font-size: 14px; cursor: pointer; padding: 0; }
+  .folder .acts button:hover { background: #e9e6f3; color: #1f2330; }
+  .folder .acts button.del:hover { background: #fde8ea; color: #c0263a; }
+  .folder .fn { font-size: 14.5px; font-weight: 600; }
+  .folder .fc { font-size: 12px; color: #8b91a5; }
+  .empty { padding: 60px 0; text-align: center; color: #5f6368; }
+  .empty .big { font-size: 56px; margin-bottom: 8px; }
+  .empty b { display: block; font-size: 20px; color: var(--ink); margin-bottom: 6px; }
+</style>
+
+<div class="hero">
+  {% if folder or q %}<a class="back" href="/projects">← 모든 프로젝트</a>{% endif %}
+  <h1>{{ folder.name if folder else ('“' ~ q ~ '” 검색' if q else '모든 프로젝트') }}</h1>
+  {% if folder %}<div class="sub">{{ folder.desc }}</div>{% endif %}
+</div>
+
+<div class="wrap">
+  <div class="tools">
+    {% if folder or q %}<button id="sort" title="정렬: 최근 편집 순 ↔ 이름 순">⇅</button>
+    <button id="view" title="목록으로 보기">☰</button>{% endif %}
+    <button class="new" data-new-menu title="새 항목 추가">+</button>
+  </div>
+
+  {% if folder or q %}
+  <section id="all">
+    <h2>{{ folder.name if folder else '검색 결과' }} <span class="n">{{ books|length }}권</span></h2>
+    {% if books %}<div class="cards" id="all-cards">{% for b in books %}{% include "_book_card.html" %}{% endfor %}</div>
+    {% else %}<div class="empty"><div class="big">🔍</div><b>{{ '이 폴더에 아직 책이 없어요' if folder else '맞는 책이 없어요' }}</b>{{ '+ → 프로젝트에서 이 갈래의 디자인을 골라 만들 수 있어요.' if folder else '다른 말로 찾아 보세요.' }}</div>{% endif %}
+  </section>
+  {% else %}
+  <section id="folders">
+    <h2><span class="tg" data-for="folder-list">▾</span>폴더 <span class="n">카탈로그 디렉토리</span></h2>
+    <div class="folders" id="folder-list">
+      {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
+         data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
+        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '책 ' ~ f.n ~ '권' if f.n else ('책 없음' if f.t else '비어 있음') }}{% if f.t %} · 틀 {{ f.t }}개{% endif %}</span></span>
+        <span class="acts"><button class="edit" title="수정">✎</button>{% if f.id != 'etc' %}<button class="del" title="삭제">×</button>{% endif %}</span>
+      </a>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var all = document.getElementById('all-cards'), cards = all ? Array.prototype.slice.call(all.children) : [], byName = false;
+  document.querySelectorAll('.folder .edit').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var a = b.closest('.folder').dataset;
+      dirSheet.open({ id: a.id, name: a.name, en: a.en, desc: a.desc, icon: a.icon, color: a.color, group: a.group });
+    });
+  });
+  document.querySelectorAll('.folder .del').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var a = b.closest('.folder').dataset;
+      dirSheet.remove(a.id, a.name, parseInt(a.t, 10) || 0);
+    });
+  });
+  document.querySelectorAll('h2 .tg').forEach(function (t) {
+    t.addEventListener('click', function () { var el = document.getElementById(t.dataset.for), off = el.style.display === 'none'; el.style.display = off ? '' : 'none'; t.textContent = off ? '▾' : '▸'; });
+  });
+  if (all) document.getElementById('sort').addEventListener('click', function () {
+    byName = !byName; this.classList.toggle('on', byName);
+    cards.sort(function (a, b) { return byName ? a.dataset.title.localeCompare(b.dataset.title, 'ko') : (b.dataset.latest || '').localeCompare(a.dataset.latest || ''); });
+    cards.forEach(function (c) { all.appendChild(c); });
+  });
+  if (all) document.getElementById('view').addEventListener('click', function () {
+    var list = all.classList.toggle('list'); this.classList.toggle('on', list); this.title = list ? '바둑판으로 보기' : '목록으로 보기';
+  });
+</script>
+{% endblock %}

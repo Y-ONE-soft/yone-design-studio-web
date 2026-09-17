@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}{{ d.name }}{% endblock %}
+
+{% block content %}
+{#
+  화면 2 — 디렉토리 하나의 틀들. 카드 = 틀(작은 페이지 틀 썸네일 + 이름 + 설명 + 상태·디자인 수·판형).
+  카드 오른쪽 위 📁 칩으로 틀을 다른 디렉토리로 옮긴다 (catalog.json 의 dir 만 바뀐다).
+  카드를 누르면 그 틀의 디자인 목록(/catalog/<틀>)으로.
+#}
+<style>
+  .pick { max-width: 1180px; margin: 0 auto; padding: 22px 20px 60px; color: #e8e9ee; }
+  .crumb { color: #8b91a5; text-decoration: none; font-size: 13px; }
+  .crumb:hover { color: #e8e9ee; }
+  .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 8px 0 18px; flex-wrap: wrap; }
+  .head h1 { font-size: 22px; margin: 0 0 4px; display: flex; align-items: center; gap: 10px; }
+  .head h1 .ico { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-size: 16px; line-height: 1;
+                  background: color-mix(in srgb, {{ d.color }} 18%, transparent); }
+  .head h1 .en { font-size: 11px; letter-spacing: .16em; color: #6d7389; font-weight: 600; }
+  .head .sub { color: #8b91a5; font-size: 13px; line-height: 1.6; }
+  .head .cnt { color: #6d7389; font-size: 13px; white-space: nowrap; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+  .card { position: relative; background: #1c1f2b; border: 1px solid #2b2f40; border-radius: 12px; transition: border-color .15s, transform .15s; }
+  .card:hover { border-color: #5b7cfa; transform: translateY(-1px); }
+  .card.moving { opacity: .4; pointer-events: none; }
+  .card .go { display: grid; grid-template-columns: 76px 1fr; gap: 14px; padding: 14px; text-decoration: none; color: inherit; min-height: 122px; }
+  .thumb { width: 76px; height: 94px; border-radius: 6px; overflow: hidden; background: #0f1118; border: 1px solid #262a38; flex: none; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .thumb.ph { display: flex; flex-direction: column; gap: 5px; padding: 14px 12px; box-sizing: border-box; }
+  .thumb.ph i { display: block; height: 4px; border-radius: 2px; background: #262a38; }
+  .thumb.ph i:nth-child(1) { width: 55%; background: #343950; } .thumb.ph i:nth-child(3) { width: 80%; } .thumb.ph i:nth-child(4) { width: 65%; }
+  .body { min-width: 0; display: flex; flex-direction: column; }
+  .body b { font-size: 15px; line-height: 1.3; padding-right: 44px; }
+  .body p { margin: 5px 0 0; color: #8b91a5; font-size: 12.5px; line-height: 1.55;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .meta { display: flex; align-items: center; gap: 10px; margin-top: auto; padding-top: 10px; font-size: 12px; color: #6d7389; flex-wrap: wrap; }
+  .st { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .st::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
+  .st.auto { color: #4fd68a; } .st.auto::before { background: #4fd68a; }
+  .st.blocked { color: #f0a441; } .st.blocked::before { background: #f0a441; }
+  .st.manual { color: #8b91a5; } .st.manual::before { background: #5b6280; }
+
+  .mv { position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 3px; height: 24px; padding: 0 7px 0 8px;
+        border: 1px solid #2b2f40; border-radius: 999px; background: #14161f; color: #8b91a5; font-size: 12px; cursor: pointer; }
+  .mv:hover { border-color: #5b7cfa; color: #e8e9ee; }
+  .mv .chev { font-size: 8px; }
+  .mv select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
+  .mv select option { background: #1c1f2b; color: #e8e9ee; }
+
+  .empty { border: 1px dashed #3f4560; border-radius: 12px; padding: 34px 20px; text-align: center; color: #8b91a5; font-size: 14px; line-height: 1.7; }
+  .empty a { color: #9fb3ff; }
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: #163d2a; color: #d9f7e6; border: 1px solid #2f9e6a;
+           border-radius: 10px; padding: 11px 16px; font-size: 13.5px; z-index: 60; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .toast a { color: #fff; font-weight: 700; margin-left: 8px; }
+</style>
+
+<div class="pick">
+  <a class="crumb" href="/catalog">← 디렉토리</a>
+  <div class="head">
+    <div>
+      <h1><span class="ico">{{ d.icon }}</span>{{ d.name }}<span class="en">{{ d.en }}</span></h1>
+      <div class="sub">{{ d.desc }}<br>카드를 누르면 그 틀의 디자인이 보이고, 오른쪽 위 📁 칸으로 다른 디렉토리로 옮길 수 있습니다.</div>
+    </div>
+    <div class="cnt">틀 {{ d.templates|length }}개</div>
+  </div>
+
+  <div class="cards" id="cards">
+  {% for t in d.templates %}
+    {% set d0 = t.designs[0] if t.designs else none %}
+    {% set img = ('/catalog/master/' ~ t.series ~ '/' ~ d0.id ~ '/' ~ (d0.masters[1].file if d0.masters|length > 1 else d0.masters[0].file)) if d0 and d0.masters
+             else (('/catalog/preview/' ~ t.series ~ '/' ~ d0.id ~ '/' ~ (d0.previews[1] if d0.previews|length > 1 else d0.previews[0])) if d0 and d0.previews else '') %}
+    <div class="card" data-series="{{ t.series }}" data-name="{{ t.name }}">
+      <a class="go" href="/catalog/{{ t.series }}">
+        {% if img %}<div class="thumb"><img src="{{ img }}" alt=""></div>
+        {% else %}<div class="thumb ph" title="페이지 틀 이미지 없음"><i></i><i></i><i></i><i></i></div>{% endif %}
+        <div class="body">
+          <b>{{ t.name }}</b>
+          <p>{{ t.desc }}</p>
+          <div class="meta">
+            <span class="st {{ t.ready }}">{{ {'auto': '바로 됨', 'blocked': '서체·자료 부족', 'manual': '여기선 못 만듦'}[t.ready] }}</span>
+            <span>디자인 {{ t.designs|length }}개</span>
+            {% if t.page %}{% set W, H = t.page.width, t.page.height %}<span>{{ W|int if W|int == W else W }}×{{ H|int if H|int == H else H }}mm</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      <span class="mv" title="다른 디렉토리로 옮기기">📁<span class="chev">▼</span>
+        <select class="mv-sel" aria-label="다른 디렉토리로 옮기기">
+          <optgroup label="OJT 라인업 8종">{% for x in dirs if x.group == 'ojt' %}<option value="{{ x.id }}" {{ 'selected' if x.id == d.id else '' }}>{{ x.name }}</option>{% endfor %}</optgroup>
+          <optgroup label="교재 폴더 계열">{% for x in dirs if x.group != 'ojt' %}<option value="{{ x.id }}" {{ 'selected' if x.id == d.id else '' }}>{{ x.name }}</option>{% endfor %}</optgroup>
+        </select></span>
+    </div>
+  {% endfor %}
+  </div>
+  <div class="empty" id="empty" {{ '' if not d.templates else 'hidden' }}>이 디렉토리에는 아직 틀이 없습니다.<br>
+    다른 디렉토리(예: <a href="/catalog/dir/etc">기타</a>)에서 틀 카드의 📁 칸을 바꾸면 여기로 옮겨집니다.</div>
+  <div class="toast" id="toast" hidden></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  var DIR = {{ d.id|tojson }};
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  var toastTimer = null;
+  function toast(html) {
+    var t = document.getElementById('toast'); t.innerHTML = html; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 6000);
+  }
+  document.querySelectorAll('.mv-sel').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      var card = sel.closest('.card'), series = card.dataset.series, to = sel.value;
+      if (to === DIR) return;
+      card.classList.add('moving');
+      fetch('/api/catalog/series/' + series + '/dir', { method: 'POST', headers: {'Content-Type': 'application/json'},
+             body: JSON.stringify({ dir: to }) })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.error) { alert(j.error); sel.value = DIR; card.classList.remove('moving'); return; }
+          card.remove();
+          if (!document.querySelector('#cards .card')) document.getElementById('empty').hidden = false;
+          toast('“' + esc(card.dataset.name) + '” 틀을 <b>' + esc(j.dir_name) + '</b> 디렉토리로 옮겼습니다.' +
+                '<a href="/catalog/dir/' + encodeURIComponent(to) + '">보러 가기 →</a>');
+        })
+        .catch(function (e) { alert(String(e)); sel.value = DIR; card.classList.remove('moving'); });
+    });
+  });
+</script>
+{% endblock %}

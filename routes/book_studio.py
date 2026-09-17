@@ -1418,9 +1418,11 @@ def api_export():
     인디자인의 「내보내기」 자리다. 지금까지는 통합웹의 조판 카드에서만 됐는데,
     작업대에서 고치고 곧바로 뽑아 볼 수 있어야 한다.
 
-    ⚠ **오래 걸린다**(전권 조판 20~50초, 인쇄 원고는 더). 그래서 진행 상황을
-      돌려주고, 화면은 기다리는 동안 무엇을 하고 있는지 적는다.
+    ⚠ **오래 걸린다**(전권 조판 20~50초, 인쇄 원고는 더). 요청 안에서 기다리면
+      웹(프록시 100초 한계)에서 끊긴다 — 잡을 만들어 바로 돌려주고, 화면은
+      `GET /api/book-studio/export/<job>` 으로 진행 로그를 받아 적는다.
     """
+    from core import jobs
     p = request.get_json(silent=True) or {}
     d, meta = _book_dir(p.get("b"))
     if not d:
@@ -1429,20 +1431,31 @@ def api_export():
     if kind not in ("pdf", "press"):
         return jsonify({"error": f"모르는 종류: {kind}"}), 400
     steps = ["build"] if kind == "pdf" else ["build", "print"]
-    logs = []
-    for st in steps:
-        r = _run([d, st], timeout=1800)
-        logs.append(r.stdout[-4000:])
-        if r.returncode != 0:
-            return jsonify({"error": (r.stderr or r.stdout)[-1200:],
-                            "log": "\n".join(logs)}), 500
-    from core.render_vivlio import book as bookmod
-    cfg = bookmod.load(d)
-    out = _last_pdf(cfg, d)
-    return jsonify({"ok": True, "log": "\n".join(logs),
-                    "pdf": os.path.basename(out) if out else None,
-                    "note": ("인쇄 원고(CMYK)까지 만들었습니다"
-                             if kind == "press" else "조판본 PDF 를 만들었습니다")})
+
+    def _go(job, log):
+        rc = jobs.run_cmd(job, [_python(), "-u", "-m", "core.render_vivlio.book", d] + steps,
+                          cwd=REPO, timeout=1800)
+        job.rc = rc
+        if rc != 0:
+            raise RuntimeError("\n".join(job.log[-6:]) or f"exit {rc}")
+        from core.render_vivlio import book as bookmod
+        out = _last_pdf(bookmod.load(d), d)
+        return {"pdf": os.path.basename(out) if out else None,
+                "note": ("인쇄 원고(CMYK)까지 만들었습니다"
+                         if kind == "press" else "조판본 PDF 를 만들었습니다")}
+
+    job = jobs.start("export", _go, meta={"book": meta["key"], "bid": meta["bid"], "kind": kind})
+    return jsonify({"job": job.id, "status": job.status}), 202
+
+
+@bp.route("/api/book-studio/export/<jid>")
+def api_export_status(jid):
+    from core import jobs
+    job = jobs.get(jid)
+    if not job or job.kind != "export":
+        return jsonify({"error": "모르는 잡"}), 404
+    since = int(request.args.get("since", 0) or 0)
+    return jsonify(job.to_dict(since=since))
 
 
 @bp.route("/api/book-studio/table", methods=["POST"])

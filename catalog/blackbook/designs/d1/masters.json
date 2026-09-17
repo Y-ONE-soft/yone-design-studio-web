@@ -1,0 +1,32 @@
+{
+ "source": "조판/교재/프리미엄북/블랙북/테스트_배재고1/99-9-검증",
+ "pdf": "배재고1_테스트_배재고1_내지.pdf",
+ "pages": [
+  {
+   "file": "master_1.png",
+   "label": "앞 간지",
+   "page": 1
+  },
+  {
+   "file": "master_2.png",
+   "label": "시작면",
+   "page": 2
+  },
+  {
+   "file": "master_3.png",
+   "label": "본문 왼쪽 면",
+   "page": 60
+  },
+  {
+   "file": "master_4.png",
+   "label": "본문 오른쪽 면",
+   "page": 61
+  },
+  {
+   "file": "master_5.png",
+   "label": "뒤 간지",
+   "page": 116
+  }
+ ],
+ "date": "2026-09-15"
+}

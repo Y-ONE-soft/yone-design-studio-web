@@ -1,0 +1,247 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.7.0">
+  <diagram id="yone-studio-infra" name="인프라 구성도">
+    <mxGraphModel dx="1800" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1040" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ───────── 제목 ───────── -->
+        <mxCell id="title" value="&lt;b&gt;Y.ONE 디자인 스튜디오 — Y.OS 인프라에 얹은 최종 구성&lt;/b&gt;&amp;nbsp;&amp;nbsp;&lt;font color=&quot;#666666&quot;&gt;2026-09-15 · 정본: deploy/README.md · Y.OS 쪽 드롭인: deploy/yos/*.ts&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=16;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="0" width="1100" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── 영역(배경) ───────── -->
+        <mxCell id="zoneUsers" value="사용자" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="1520" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="zoneVercel" value="Vercel (sin1) — Y.OS 앱들 · Next.js 16 · Auth.js(구글) · Neon Postgres · Vercel Blob" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="640" height="450" as="geometry"/>
+        </mxCell>
+        <mxCell id="zoneFly" value="Fly.io (nrt 도쿄) — Y.OS 조판 컨테이너들 · Fly Proxy 가 TLS · *.fly.dev" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="740" y="200" width="820" height="600" as="geometry"/>
+        </mxCell>
+        <mxCell id="zoneExt" value="외부" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;align=left;fontStyle=1;spacingLeft=8;spacingTop=2;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="40" y="890" width="1520" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── 사용자 ───────── -->
+        <mxCell id="uDesigner" value="&lt;b&gt;디자이너&lt;/b&gt; (브라우저)&lt;br&gt;스튜디오 화면: 틀·디자인 관리 · 작업대" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="80" y="80" width="260" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="uStaff" value="&lt;b&gt;교재팀 · 조교&lt;/b&gt; (브라우저)&lt;br&gt;contents/design 화면: 데이터 → 디자인 고르기 → 조판 → PDF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="600" y="80" width="360" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="uApp" value="&lt;b&gt;모바일 / 데스크톱 앱&lt;/b&gt; (나중)&lt;br&gt;Y.OS 로그인 → 표 → 같은 /api/v1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;dashed=1;" vertex="1" parent="1">
+          <mxGeometry x="1260" y="80" width="260" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── Vercel ───────── -->
+        <mxCell id="core" value="&lt;b&gt;yos-core-web&lt;/b&gt;&lt;br&gt;로그인 · 사용자 · 권한 (Auth.js 구글)&lt;br&gt;앱 간 HMAC 링크 토큰 (CHAT_LINK_SECRET 식)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="250" width="280" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="design" value="&lt;b&gt;yos-design-web&lt;/b&gt; — 지면 디자인 앱&lt;br&gt;&lt;b&gt;/studio&lt;/b&gt; 진입 라우트: 로그인 → 표 발급 → 스튜디오로&lt;br&gt;(STUDIO_URL · STUDIO_LINK_SECRET)&lt;br&gt;디자인 고르기 화면 ← 스튜디오 카탈로그" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="70" y="350" width="280" height="95" as="geometry"/>
+        </mxCell>
+        <mxCell id="contents" value="&lt;b&gt;yos-contents-web&lt;/b&gt;&lt;br&gt;&lt;b&gt;데이터의 주인&lt;/b&gt; — 지문 · 문항 · 단어 · 시험범위&lt;br&gt;화면: 디자인 고르기 → [조판] → 결과 · PDF&lt;br&gt;GET /api/typeset/data — 읽기 API&lt;br&gt;POST /api/hooks/studio — 웹훅 수신&lt;br&gt;STUDIO_SERVICE_URL · STUDIO_SERVICE_TOKEN&lt;br&gt;Blob pathname 저장 → presignUrl 로 PDF 열람" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#9673a6;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="380" y="250" width="280" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="neon" value="&lt;b&gt;Neon Postgres&lt;/b&gt;&lt;br&gt;core · contents · design 스키마&lt;br&gt;(스튜디오는 안 씀)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#ffffff;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="480" width="240" height="90" as="geometry"/>
+        </mxCell>
+        <mxCell id="blob" value="&lt;b&gt;Vercel Blob&lt;/b&gt; (contents 와 같은 스토어)&lt;br&gt;studio/renders/… PDF (private)&lt;br&gt;studio/catalog/… 미리보기 (public)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="380" y="480" width="280" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── Fly.io ───────── -->
+        <mxCell id="studio" value="&lt;b&gt;yos-studio&lt;/b&gt; (이 리포) — 머신 1대 · 2GB · gunicorn 워커 1 + 스레드 · Flask&lt;br&gt;python 3.13 · node 22 · chromium · ghostscript · PyMuPDF" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=8;spacingTop=2;" vertex="1" parent="1">
+          <mxGeometry x="770" y="250" width="480" height="420" as="geometry"/>
+        </mxCell>
+        <mxCell id="webauth" value="&lt;b&gt;core/webauth&lt;/b&gt;&lt;br&gt;링크 토큰(YOS_LINK_SECRET) · SERVICE_TOKEN&lt;br&gt;세션 쿠키 · CSP · CORS · 임베드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="785" y="300" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="ui" value="&lt;b&gt;/catalog · /book-studio&lt;/b&gt;&lt;br&gt;디자이너 화면 (Jinja)&lt;br&gt;틀·디자인 등록 · 작업대 · PDF 판정" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="300" width="215" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="api" value="&lt;b&gt;/api/v1&lt;/b&gt; (routes/api_v1)&lt;br&gt;catalog · renders · embed-token&lt;br&gt;books · health" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="785" y="375" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="jobs" value="&lt;b&gt;core/jobs&lt;/b&gt;&lt;br&gt;스레드 잡 + 폴링 (요청 밖에서 조판)&lt;br&gt;_jobs/*.json 기록" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="375" width="215" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="sources" value="&lt;b&gt;core/sources/yos_contents&lt;/b&gt;&lt;br&gt;contents 데이터 → 틀별 data.json&lt;br&gt;(매핑 코드는 여기 한 곳)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="785" y="450" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="hooks" value="&lt;b&gt;core/yos_hooks · core/blob&lt;/b&gt;&lt;br&gt;웹훅 (x-studio-signature, HMAC hex)&lt;br&gt;Blob 업로드 (SDK 와 같은 REST v12)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1020" y="450" width="215" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="pipeline" value="&lt;b&gt;조판 파이프라인&lt;/b&gt; — subprocess: core.render_vivlio.book build · print · verify&lt;br&gt;data.json + 디자인(config · overrides.css) → HTML → &lt;b&gt;Vivliostyle CLI 11 → Chromium&lt;/b&gt; → PDF&lt;br&gt;→ PyMuPDF 마감(간지 · TrimBox) → &lt;b&gt;Ghostscript&lt;/b&gt; CMYK 인쇄본 → verify 검수" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="785" y="530" width="450" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="volume" value="&lt;b&gt;볼륨 studio_data → /data&lt;/b&gt; (10GB)&lt;br&gt;studio/ 책 폴더(조판/교재) · PDF · _jobs&lt;br&gt;catalog/ 틀·디자인 (첫 기동 때 리포 것으로 채움)&lt;br&gt;fonts/ 상용 서체 37개 (sftp 로 올림 · ⚠ 라이선스)&lt;br&gt;icc/ JapanColor2001Coated.icc&lt;br&gt;Fly 자동 스냅샷(매일)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=14;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="250" width="240" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="typeset" value="&lt;b&gt;yos-typeset · yos-design-typeset&lt;/b&gt; (기존, contents scripts/typeset)&lt;br&gt;contents·design 이 TYPESET_SERVICE_URL 로 부름&lt;br&gt;Next.js /print 지면 → Vivliostyle 9 → PDF · 무상태 · 자동 확장&lt;br&gt;그대로 둔다 — 계약이 달라 스튜디오와 합치지 않음" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#6c8ebf;dashed=1;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="470" width="240" height="115" as="geometry"/>
+        </mxCell>
+        <mxCell id="flyops" value="&lt;b&gt;운영&lt;/b&gt;&amp;nbsp; fly deploy · fly logs · fly ssh console&lt;br&gt;fly scale count 1 (볼륨 달린 단일 머신)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="1290" y="600" width="240" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── 외부 ───────── -->
+        <mxCell id="google" value="&lt;b&gt;Google OAuth&lt;/b&gt;&lt;br&gt;Y.OS 로그인 (Auth.js) — 스튜디오는 직접 안 씀" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="80" y="930" width="300" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="github" value="&lt;b&gt;GitHub&lt;/b&gt; Y-ONE-soft/yone-design-studio-web&lt;br&gt;배포: git pull → fly deploy (원격 빌드)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="420" y="930" width="300" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="anthropic" value="&lt;b&gt;Anthropic API&lt;/b&gt; (클로드) — Y.OS 와 같은 키&lt;br&gt;PDF 판정 · 작업대 클로드 칸" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="800" y="930" width="300" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── 흐름표 · 미결 ───────── -->
+        <mxCell id="flows" value="&lt;b&gt;흐름&lt;/b&gt;&amp;nbsp; (실선 = 지금 구현됨 · 점선 = 나중 / 배포)&lt;br&gt;① 디자이너 → 스튜디오 → (세션 없음) → yos-design-web/studio?next=… → Auth.js 로그인&lt;br&gt;② design 이 표 발급(signStudioToken) → https://yos-studio.fly.dev/auth/callback?token=…&amp;amp;next= → 세션 쿠키 12h&lt;br&gt;③ 디자이너 → /catalog · /book-studio (세션 쿠키)&lt;br&gt;④ contents/design → GET /api/v1/catalog — 틀 · 디자인 · 미리보기(Blob URL) · version (SERVICE_TOKEN)&lt;br&gt;⑤ contents → POST /api/v1/renders {design, source:{type:&quot;yos&quot;|&quot;data&quot;…}} → 202 job → 폴링 또는 ⑦&lt;br&gt;⑥ studio(sources) → contents GET /api/typeset/data?series=… (YOS_CONTENTS_TOKEN)&lt;br&gt;⑦ studio → contents 웹훅 render.finished · design.changed (x-studio-signature) → revalidateTag&lt;br&gt;⑧ studio → Vercel Blob: PDF private · 미리보기 public → contents 는 pathname 저장, presignUrl 로 열람&lt;br&gt;⑨ contents iframe: POST /api/v1/embed-token → /auth/embed?t= → /book-studio (frame-ancestors = YOS_ORIGINS)" style="text;html=1;align=left;verticalAlign=top;fontSize=11;strokeColor=#999999;fillColor=#ffffff;spacingLeft=8;spacingTop=4;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="670" width="640" height="170" as="geometry"/>
+        </mxCell>
+        <mxCell id="decisions" value="&lt;b&gt;원칙&lt;/b&gt; contents = 데이터 주인 · 스튜디오 = 지면 주인 · 복사 대신 API · 디자인 version 은 렌더 기록에 · Y.OS 가 이미 쓰는 것(Fly · Blob · 링크 토큰)만 쓴다&lt;br&gt;&lt;b&gt;미결&lt;/b&gt; 첫 연동 계열(→ data.schema.json) · Blob 토큰(contents 스토어) · 진입 라우트 둘 앱(design 권장) · 상용 서체 서버 라이선스" style="text;html=1;align=left;verticalAlign=top;fontSize=11;strokeColor=#d6b656;fillColor=#fff2cc;spacingLeft=8;spacingTop=4;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="740" y="812" width="820" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ───────── 흐름 화살표 ───────── -->
+        <mxCell id="e1" value="①" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#9673a6;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="uDesigner" target="core">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eCoreDesign" value="같은 계정 · 같은 DB" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;fontSize=10;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="core" target="design">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eStaff" value="로그인 · 화면" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#d6b656;fontSize=11;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="uStaff" target="contents">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="170"/>
+              <mxPoint x="520" y="170"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="②" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#9673a6;fontSize=12;labelBackgroundColor=#ffffff;exitX=1;exitY=0.2;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="design" target="webauth">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="365" y="369"/>
+              <mxPoint x="365" y="228"/>
+              <mxPoint x="720" y="228"/>
+              <mxPoint x="720" y="330"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" value="③" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#d6b656;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.85;exitY=1;exitDx=0;exitDy=0;entryX=0.4;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="uDesigner" target="studio">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="301" y="185"/>
+              <mxPoint x="962" y="185"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eApp" value="표 → /api/v1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#82b366;fontSize=10;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.8;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="uApp" target="studio">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1390" y="190"/>
+              <mxPoint x="1154" y="190"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e45" value="④ ⑤ ⑨" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;strokeWidth=2;fontSize=12;labelBackgroundColor=#ffffff;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="contents" target="api">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="710" y="295"/>
+              <mxPoint x="710" y="405"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e6" value="⑥" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;fontSize=12;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;" edge="1" parent="1" source="sources" target="contents">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="480"/>
+              <mxPoint x="700" y="355"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" value="⑦" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#b85450;fontSize=12;labelBackgroundColor=#ffffff;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.9;entryDx=0;entryDy=0;" edge="1" parent="1" source="hooks" target="contents">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1012" y="468"/>
+              <mxPoint x="1012" y="518"/>
+              <mxPoint x="690" y="518"/>
+              <mxPoint x="690" y="385"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e8" value="⑧" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;fontSize=12;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="hooks" target="blob">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1127" y="522"/>
+              <mxPoint x="1260" y="522"/>
+              <mxPoint x="1260" y="690"/>
+              <mxPoint x="730" y="690"/>
+              <mxPoint x="730" y="525"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eBlobRead" value="presignUrl · &lt;img&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;fontSize=10;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="contents" target="blob">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eNeon" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=none;startArrow=none;strokeColor=#9673a6;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="design" target="neon">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Fly 내부 -->
+        <mxCell id="eApiJobs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="api" target="jobs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eSrcApi" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="sources" target="api">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eJobsHooks" value="끝나면" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#b85450;fontSize=10;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="jobs" target="hooks">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eJobsPipe" value="subprocess" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#82b366;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.97;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="jobs" target="pipeline">
+          <mxGeometry x="0.35" y="0" relative="1" as="geometry">
+            <mxPoint x="14" y="0" as="offset"/>
+            <Array as="points">
+              <mxPoint x="1245" y="405"/>
+              <mxPoint x="1245" y="520"/>
+              <mxPoint x="1221" y="520"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eVol" value="책 · 디자인 · 서체 · ICC" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;startArrow=block;strokeColor=#6c8ebf;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="pipeline" target="volume">
+          <mxGeometry x="-0.8" y="0" relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset"/>
+            <Array as="points">
+              <mxPoint x="1265" y="585"/>
+              <mxPoint x="1265" y="340"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="eUiVol" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;startArrow=block;strokeColor=#6c8ebf;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;" edge="1" parent="1" source="ui" target="volume">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1262" y="330"/>
+              <mxPoint x="1262" y="304"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- 외부 -->
+        <mxCell id="eClaude" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#666666;exitX=0.4;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="studio" target="anthropic">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="eGit" value="fly deploy" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#666666;fontSize=10;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.95;entryDx=0;entryDy=0;" edge="1" parent="1" source="github" target="studio">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="957"/>
+              <mxPoint x="760" y="649"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

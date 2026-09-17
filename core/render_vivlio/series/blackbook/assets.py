@@ -9,6 +9,7 @@
 잘라낼 대상은 config 의 `assets.jobs` 에 둔다:
     [{"name","page","rect":[x0,y0,x1,y1],"unmix":{"bg":[r,g,b],
       "zones":[[x분기mm,[r,g,b]], …]}}]
+`page` 가 음수면 뒤에서 센다(-1 = 마지막 면). `src` 를 적으면 조각마다 다른 완성본.
 """
 import os
 import fitz
@@ -66,13 +67,15 @@ def build(cfg, log=print):
                 raise FileNotFoundError(f'아트워크 원본 없음: {jsrc}')
             docs[jsrc] = fitz.open(jsrc)
         jdoc = docs[jsrc]
+        if page < 0:                      # -1 = 마지막 면(뒤 간지) — 완성본마다 면수가 다르다
+            page += len(jdoc)
         x0, y0, x1, y1 = job['rect']
         um = job.get('unmix')
         key = None
         if um:
             key = (tuple(um['bg']),
                    [(lim, tuple(c)) for lim, c in um['zones']])
-        dpi = DPI if not key else job.get('dpi', 800)
+        dpi = job.get('dpi') or (DPI if not key else 800)
         pix = jdoc[page].get_pixmap(
             dpi=dpi, clip=fitz.Rect(x0 * PT, y0 * PT, x1 * PT, y1 * PT),
             alpha=True)

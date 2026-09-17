@@ -10,11 +10,13 @@ import shutil
 HERE = os.path.dirname(os.path.abspath(__file__))
 THEMES_DIR = os.path.join(HERE, "themes")
 
-# 로컬 서체 탐색 경로 (앞에서부터)
-FONT_DIRS = [
+# 로컬 서체 탐색 경로 (앞에서부터). 맥 기본 + `YONE_FONT_DIRS`(콜론으로 여러 개 — 컨테이너는 /data/fonts).
+FONT_DIRS = [d for d in (os.environ.get("YONE_FONT_DIRS") or "").split(":") if d.strip()] + [
     os.path.expanduser("~/Library/Fonts"),
     "/Library/Fonts",
     "/System/Library/Fonts",
+    "/System/Library/Fonts/Supplemental",     # Academy Engraved LET 등 맥 동봉 서체
+    "/usr/share/fonts", "/usr/local/share/fonts", os.path.expanduser("~/.fonts"),
 ]
 
 
@@ -114,7 +116,12 @@ def stage_fonts(build_dir, fonts, log=None, required=True, ttf=False):
         dst = os.path.join(fdir, base)
         if (not os.path.exists(dst)
                 or os.path.getmtime(src) > os.path.getmtime(dst)):
-            shutil.copy2(src, dst)
+            try:
+                shutil.copy2(src, dst)
+            except PermissionError:
+                # 맥 시스템 서체(/System/Library/Fonts/…)는 restricted 플래그를 복사하려다
+                # 막힌다 — 내용만 복사한다
+                shutil.copyfile(src, dst)
     if missing:
         msg = f"[서체 없음] {', '.join(missing)}"
         if required:

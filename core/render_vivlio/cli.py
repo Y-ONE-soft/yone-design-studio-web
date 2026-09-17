@@ -56,6 +56,12 @@ def require_cli():
     return p
 
 
+def _browser_args():
+    """`YONE_VIV_BROWSER=/usr/bin/chromium` 이면 CLI 가 크롬을 내려받지 않고 그것을 쓴다(컨테이너)."""
+    b = (os.environ.get("YONE_VIV_BROWSER") or "").strip()
+    return ["--executable-browser", b] if b else []
+
+
 # ── 조판 건너뛰기 (라이브 미리보기 전용) ─────────────────────────────
 class RenderOnly(Exception):
     """"HTML 까지만 만들고 멈춘다"는 신호. `html_path` 를 달고 온다.
@@ -106,7 +112,7 @@ def run_preview(html_path, port=13000, host="127.0.0.1", log=None, timeout=90):
     html_path = os.path.abspath(html_path)
     cmd = [cli, "preview", os.path.basename(html_path),
            "--no-open-viewer", "--host", host, "--port", str(port),
-           "--log-level", "info"]
+           "--log-level", "info"] + _browser_args()
     proc = subprocess.Popen(cmd, cwd=os.path.dirname(html_path),
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, bufsize=1, env=dict(os.environ))
@@ -171,7 +177,7 @@ def run_build(html_path, out_pdf, log=None, timeout=900, extra=(), final=True):
             log(f"  [정규식 스타일] 건너뜀 — {e}")
     cwd = os.path.dirname(html_path)
     cmd = [cli, "build", os.path.basename(html_path),
-           "-o", os.path.abspath(out_pdf)] + list(extra)
+           "-o", os.path.abspath(out_pdf)] + _browser_args() + list(extra)
     t0 = time.time()
     proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
                           timeout=timeout,

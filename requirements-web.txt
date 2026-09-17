@@ -1,0 +1,4 @@
+# 웹 배포(컨테이너) 런타임 — 로컬 bin/studio 는 requirements-vivlio.txt 만으로 된다.
+-r requirements-vivlio.txt
+gunicorn>=23.0            # 프로세스 1개 + 스레드 (잡 등록부가 인메모리라 워커는 1개)
+requests>=2.32            # contents 데이터 어댑터 · 웹훅 · Vercel Blob 업로드

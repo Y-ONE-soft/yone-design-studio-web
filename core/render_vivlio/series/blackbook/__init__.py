@@ -16,6 +16,7 @@ from core.render_vivlio import bleed as bleed_mod
 from core.render_vivlio import cli, knobs, measure, probe, stage
 from core.render_vivlio import verify as gate
 from core.render_vivlio.series.base import Series
+from core.render_vivlio.series.blackbook import art as art_mod
 from core.render_vivlio.series.blackbook import assets as assets_mod
 from core.render_vivlio.series.blackbook import data as data_mod
 from core.render_vivlio.series.blackbook import render as render_mod
@@ -55,7 +56,8 @@ class BlackbookSeries(Series):
         P = dict(self.PRINT_GRAY_DEFAULT_HEX, **(cfg.section("palette") or {}))
         gray = {str(P[k]).lower(): v for k, v in self.PRINT_GRAY.items()
                 if isinstance(P.get(k), str)}
-        return prepress.default_print(gray_map=gray)
+        # 간지·MEMO 의 띠·제목 색은 완성본 CMYK 값 그대로(art.CMYK)
+        return prepress.default_print(gray_map=gray, cmyk_map=art_mod.CMYK)
 
     def gen_data(self, cfg, log):
         return data_mod.build(cfg, log)
@@ -139,6 +141,10 @@ class BlackbookSeries(Series):
         res = {"pdf": out, "pages": pages, "seconds": round(secs, 1)}
         spec = cfg.finish_spec()
         if spec and not sample:
+            # 간지·MEMO·뒤 간지는 **코드로 만든 art.pdf** 에서 끼운다. 책이 `art_pdf` 를
+            # 따로 적었으면(옛 인디자인 완성본) 그것을 존중한다.
+            if not spec.get("art_pdf"):
+                spec["art_pdf"] = art_mod.build(cfg, build_dir, log)
             res["final"] = bleed_mod.finish(out, spec, log)
         return res
 
@@ -147,6 +153,8 @@ class BlackbookSeries(Series):
         """서체·테마·자산 배치. 서체가 빠지면 판면이 통째로 달라지므로 필수로 본다."""
         stage.stage_fonts(build_dir, [f["file"] for f in cfg.get("fonts") or []],
                           log, required=True)
+        # 간지 서체(Academy Engraved·RIDIBatang·잠실·평창) — 없으면 간지만 폴백, 본문은 무관
+        stage.stage_fonts(build_dir, [f["file"] for f in art_mod.FONTS], log, required=False)
         theme = cfg.get("theme") or BlackbookSeries.theme
         stage.stage_theme(build_dir, cfg.resolve(theme)
                           if theme.endswith(".css") else theme, log)
