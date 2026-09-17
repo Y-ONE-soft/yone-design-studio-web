@@ -661,8 +661,11 @@ def main(argv=None):
                 log(f"[오류] 계열 {cfg.series} 에는 만들기 칸이 없다")
                 rc = 2
             else:
+                cyc = str(opts.get("cycle") or "").lower() in ("1", "on", "true", "yes")
                 html = fn(cfg, str(opts.get("what") or "parts"), log,
-                          key=opts.get("key"), n=int(opts.get("n") or 2))
+                          key=opts.get("key"), n=int(opts.get("n") or 2),
+                          steps=opts.get("steps"), limits=opts.get("limits"),
+                          cycle=cyc, out=opts.get("out"))
                 log(f"MAKE_HTML={html}")
         elif st == "build":
             build(cfg, log, **opts)
