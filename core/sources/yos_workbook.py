@@ -79,7 +79,12 @@ def _split_two_stages(c):
     text = str(c.get("text") or "")
     hits = [m.start() for m in re.finditer(r"\(1\)\s*[❮\[]", text)]
     if len(hits) >= 2:
-        return [text[:hits[1]].strip(), text[hits[1]:].strip()]
+        # 2단계 본문은 문장 첫머리부터 — 두 번째 (1) 앞의 마지막 문장 경계에서 가른다
+        cut = hits[1]
+        m = list(_RE_SENT_SPLIT.finditer(text, hits[0], hits[1]))
+        if m:
+            cut = m[-1].end()
+        return [text[:cut].strip(), text[cut:].strip()]
     return [text]
 
 
