@@ -1,81 +1,101 @@
 {% extends "base.html" %}
-{% block title %}만들기{% endblock %}
+{% block title %}조립{% endblock %}
+{% block theme %}light{% endblock %}
 {% block content %}
 <style>
-  .mk { display: flex; height: 100vh; }
-  .mk-side { width: 340px; flex: none; overflow: auto; border-right: 1px solid #262a38; background: #181b25; font-size: 13px; }
-  .mk-side h2 { font-size: 12px; letter-spacing: .06em; color: #8b91a8; margin: 0; padding: 12px 14px 6px; text-transform: uppercase; }
-  .mk-side select, .mk-side input[type=number] { width: 100%; box-sizing: border-box; background: #0e1016; color: #e8e9ee; border: 1px solid #333849; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+  .ladder { display: flex; height: 100vh; background: #f6f5fa; }
+  .mk-side { width: 360px; flex: none; overflow: auto; background: #fff; border-right: 1px solid var(--line); font-size: 13.5px; color: #1f2330; }
+  .mk-side h1 { font-size: 20px; font-weight: 700; margin: 0; padding: 22px 20px 4px; letter-spacing: -.01em; }
+  .mk-side .lede { margin: 0; padding: 0 20px 14px; color: var(--mute); font-size: 12.5px; line-height: 1.5; }
+  .mk-box { padding: 0 20px 16px; border-bottom: 1px solid var(--line); }
+  .mk-box label.t { display: block; font-size: 11.5px; color: var(--mute); margin-bottom: 5px; }
+  .mk-side select, .mk-side input[type=number] { width: 100%; box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 8px 10px; font-size: 13.5px; }
   .mk-side input[type=number] { width: 64px; }
-  .mk-box { padding: 6px 14px 12px; border-bottom: 1px solid #262a38; }
-  .mk-tabs { display: flex; gap: 4px; padding: 10px 14px 0; }
-  .mk-tabs button { flex: 1; background: #22263a; color: #aeb4c6; border: 0; border-radius: 6px 6px 0 0; padding: 8px 0; cursor: pointer; font-size: 13px; }
-  .mk-tabs button.on { background: #2f3550; color: #fff; }
-  .mk-pane { display: none; padding: 12px 14px; }
+  /* 사다리 — 칸 4개를 위에서 아래로 */
+  .mk-steps { list-style: none; margin: 0; padding: 10px 12px; }
+  .mk-steps li { display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 10px; cursor: pointer; }
+  .mk-steps li:hover { background: #f1eff8; }
+  .mk-steps li.on { background: var(--pp-bg); color: #3b1a80; font-weight: 600; }
+  .mk-steps li .no { width: 26px; height: 26px; border-radius: 50%; background: #ecebf3; color: #3c4043; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+  .mk-steps li.on .no { background: var(--pp); color: #fff; }
+  .mk-steps li small { display: block; font-weight: 400; color: var(--mute); font-size: 11.5px; margin-top: 2px; }
+  .mk-pane { display: none; padding: 6px 20px 18px; border-top: 1px solid var(--line); }
   .mk-pane.on { display: block; }
-  .mk-pane p { margin: 0 0 8px; color: #aeb4c6; line-height: 1.5; }
-  .mk-pane p.note { color: #6d7389; font-size: 12px; }
-  .mk-btn { display: inline-block; background: #4c6fff; color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; cursor: pointer; font-size: 13px; }
-  .mk-btn.sub { background: #2a2f44; color: #d5d8e4; }
+  .mk-pane p { margin: 12px 0 10px; color: #3c4043; line-height: 1.55; }
+  .mk-pane p.note { color: var(--mute); font-size: 12px; }
+  .mk-pane code { background: #f1f0f6; padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
+  .mk-btn { display: inline-block; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-size: 13.5px; font-weight: 600; }
+  .mk-btn:hover { background: #6a1fd0; }
+  .mk-btn.sub { background: #ecebf3; color: #1f2330; font-weight: 500; }
+  .mk-btn.sub:hover { background: #e2e0ec; }
   .mk-btn:disabled { opacity: .5; cursor: default; }
-  .mk-row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
-  .mk-list { list-style: none; margin: 0 0 10px; padding: 0; }
-  .mk-list li { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px dashed #262a38; }
+  .mk-row { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+  .mk-row label { color: #3c4043; }
+  .mk-list { list-style: none; margin: 0 0 12px; padding: 0; }
+  .mk-list li { display: flex; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
   .mk-list li .k { flex: 1; }
-  .mk-list li .k small { color: #6d7389; margin-left: 4px; }
-  .mk-list li .attach { color: #6d7389; padding-left: 22px; }
-  .mk-list li button { background: #22263a; color: #aeb4c6; border: 0; border-radius: 4px; width: 22px; height: 22px; cursor: pointer; }
-  .mk-list li input[type=number] { width: 48px; padding: 2px 4px; }
-  .mk-stage { flex: 1; position: relative; display: flex; flex-direction: column; }
-  .mk-bar { display: flex; gap: 8px; align-items: center; padding: 6px 12px; background: #0e1016; border-bottom: 1px solid #262a38; font-size: 12px; color: #aeb4c6; }
+  .mk-list li .k small { color: var(--mute); margin-left: 4px; font-size: 11px; }
+  .mk-list li .attach { color: var(--mute); padding-left: 22px; font-size: 12px; }
+  .mk-list li button { background: #f1f0f6; color: #3c4043; border: 0; border-radius: 6px; width: 24px; height: 24px; cursor: pointer; }
+  .mk-list li button:hover { background: var(--pp-bg); color: var(--pp); }
+  .mk-list li input[type=number] { width: 52px; padding: 3px 5px; font-size: 12px; }
+  .mk-list li input[type=checkbox] { accent-color: var(--pp); }
+  .mk-row input[type=radio] { accent-color: var(--pp); }
+  /* 지면 */
+  .mk-stage { flex: 1; position: relative; display: flex; flex-direction: column; min-width: 0; }
+  .mk-bar { display: flex; gap: 8px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line); font-size: 13px; color: #3c4043; }
+  .mk-bar #mk-what { font-weight: 600; color: var(--ink); }
   .mk-bar .sp { flex: 1; }
-  .mk-bar button { background: #22263a; color: #d5d8e4; border: 0; border-radius: 5px; padding: 4px 10px; cursor: pointer; }
-  .mk-bar #mk-msg { color: #f2c14e; }
-  iframe.mk-frame { flex: 1; width: 100%; border: 0; background: #2b2e3a; }
-  pre#mk-log { max-height: 140px; overflow: auto; background: #0e1016; color: #8b91a8; font-size: 11px; margin: 0; padding: 8px 12px; border-top: 1px solid #262a38; white-space: pre-wrap; }
+  .mk-bar button { background: #f1f0f6; color: #1f2330; border: 0; border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 13px; }
+  .mk-bar button:hover { background: var(--pp-bg); color: var(--pp); }
+  .mk-bar #mk-msg { color: #b26a00; }
+  .mk-bar #mk-pg { min-width: 56px; text-align: center; color: var(--mute); }
+  iframe.mk-frame { flex: 1; width: 100%; border: 0; background: #ecebf3; }
+  pre#mk-log { max-height: 130px; overflow: auto; background: #fff; color: var(--mute); font-size: 11px; margin: 0; padding: 8px 16px; border-top: 1px solid var(--line); white-space: pre-wrap; }
 </style>
 
-<div class="mk">
+<div class="ladder">
   <aside class="mk-side">
-    <h2>책</h2>
+    <h1>🪜 조립</h1>
+    <p class="lede">작은 것부터 쌓아 책이 된다 — 부품 → 틀 → 스텝 → 책. 칸을 누르고 파란 단추를 누르면 오른쪽에 지면이 뜬다.</p>
     <div class="mk-box">
+      <label class="t">책 (워크북 계열)</label>
       <select id="mk-book">
         {% for b in books %}
         <option value="{{ b.key }}" {% if b.key == book_key %}selected{% endif %}>{{ b.title }} — {{ b.key }}</option>
         {% endfor %}
       </select>
-      <p class="note" style="margin:6px 0 0;color:#6d7389;font-size:12px">워크북 계열만. 다른 계열은 아직 만들기 칸이 없다.</p>
     </div>
 
-    <div class="mk-tabs">
-      <button data-tab="parts" class="on">① 부품</button>
-      <button data-tab="frames">② 틀</button>
-      <button data-tab="step">③ 스텝</button>
-      <button data-tab="book">④ 책</button>
-    </div>
+    <ul class="mk-steps">
+      <li data-tab="parts" class="on"><span class="no">1</span><span>부품<small>역할마다 지면 조각 하나 — 원고가 들어가는 자리</small></span></li>
+      <li data-tab="frames"><span class="no">2</span><span>틀<small>빈 칸 + 껍데기(머리말·탭·쪽번호) + 간지</small></span></li>
+      <li data-tab="step"><span class="no">3</span><span>스텝<small>틀 + 부품 + 지문 n개 = 구간 하나</small></span></li>
+      <li data-tab="book"><span class="no">4</span><span>책<small>스텝 넣고 빼고 · 순서 · 세로 → 견본 조판</small></span></li>
+    </ul>
 
     <div class="mk-pane on" id="pane-parts">
-      <p>역할마다 원고 단락 하나를 그 역할의 부품으로 그린다. 원고가 들어가는 자리는 여기뿐이다.</p>
+      <p>역할 32종마다 원고 단락 하나를 그 역할의 부품으로 그린다.</p>
       <button class="mk-btn" data-level="parts">부품 카탈로그 보기</button>
-      <p class="note" style="margin-top:10px">터미널: <code>book &lt;책&gt; make --what=parts</code></p>
+      <p class="note">터미널: <code>book &lt;책&gt; make --what=parts</code></p>
     </div>
 
     <div class="mk-pane" id="pane-frames">
-      <p>원고 없이 빈 칸과 껍데기(머리말·탭·쪽번호)만. 간지 3벌 + 틀 5종(a1·sheet·pair·flow·s3).</p>
+      <p>원고 없이 간지 3벌 + 틀 5종(a1·sheet·pair·flow·s3).</p>
       <button class="mk-btn" data-level="frames">틀 보기</button>
-      <p class="note" style="margin-top:10px">터미널: <code>book &lt;책&gt; make --what=frames</code></p>
+      <p class="note">터미널: <code>book &lt;책&gt; make --what=frames</code></p>
     </div>
 
     <div class="mk-pane" id="pane-step">
-      <p>틀 + 부품 + 지문 n개 = 스텝 구간 하나(간지 포함).</p>
+      <p>스텝 하나를 고르고 지문 몇 개만 앉혀 본다(간지 포함).</p>
       <div class="mk-row"><select id="mk-step"></select></div>
       <div class="mk-row"><label>지문 <input type="number" id="mk-n" value="2" min="1" max="20"> 개</label>
         <button class="mk-btn" data-level="step">스텝 보기</button></div>
-      <p class="note" style="margin-top:10px">터미널: <code>book &lt;책&gt; make --what=step --key=&lt;키&gt; --n=2</code></p>
+      <p class="note">터미널: <code>book &lt;책&gt; make --what=step --key=&lt;키&gt; --n=2</code></p>
     </div>
 
     <div class="mk-pane" id="pane-book">
-      <p>스텝을 넣고 빼고, 순서를 바꾸고, 지문 수를 제한한다. 그 구성으로 견본(스텝마다 지문 2개)을 앉힌다.</p>
+      <p>체크로 넣고 빼고, ▲▼ 로 순서, 숫자로 지문 수 제한. 저장하면 견본(스텝마다 지문 2개)을 앉힌다.</p>
       <div class="mk-row"><label><input type="radio" name="mk-order" value="step" checked> 가로(스텝순)</label>
         <label><input type="radio" name="mk-order" value="cycle"> 세로(지문순 사이클)</label></div>
       <ul class="mk-list" id="mk-sections"></ul>
@@ -83,7 +103,7 @@
         <button class="mk-btn" id="mk-compose">구성 저장 + 견본 조판</button>
         <button class="mk-btn sub" id="mk-clear">구성 지우기</button>
       </div>
-      <p class="note">전권 PDF 는 터미널: <code>book &lt;책&gt; all</code> (몇 분). 구성만: <code>book &lt;책&gt; select --exclude=… --order=… --limits=키=2 --cycle=on</code></p>
+      <p class="note">전권 PDF: <code>book &lt;책&gt; all</code> (몇 분). 구성만: <code>book &lt;책&gt; select --exclude=… --order=… --limits=키=2 --cycle=on</code></p>
     </div>
   </aside>
 
@@ -131,6 +151,8 @@
     if (viewer) return viewer;
     V = fwin() && fwin().VivlioCore;
     if (!V) return null;
+    // 지면 문서는 작업대 것(어두운 회색 바탕) — 이 화면은 밝은 쉘이라 바탕만 맞춘다
+    try { fdoc().body.style.background = '#ecebf3'; } catch (e) {}
     viewer = new V.CoreViewer({ viewportElement: stageEl() },
       { renderAllPages: true, pageViewMode: 'singlePage', fitToScreen: true });
     viewer.addListener('nav', function (p) {
@@ -157,9 +179,9 @@
   $('mk-spread').onclick = function () { spread = !spread; if (curDoc) show(curDoc); };
 
   // ── 탭 ──
-  document.querySelectorAll('.mk-tabs button').forEach(function (b) {
+  document.querySelectorAll('.mk-steps li').forEach(function (b) {
     b.onclick = function () {
-      document.querySelectorAll('.mk-tabs button').forEach(function (x) { x.classList.toggle('on', x === b); });
+      document.querySelectorAll('.mk-steps li').forEach(function (x) { x.classList.toggle('on', x === b); });
       document.querySelectorAll('.mk-pane').forEach(function (p) { p.classList.toggle('on', p.id === 'pane-' + b.dataset.tab); });
     };
   });
@@ -250,6 +272,7 @@
   $('mk-book').onchange = function () { location.href = '/make?b=' + encodeURIComponent(this.value); };
 
   loadSections();
+  whenFrame(function () { try { fdoc().body.style.background = '#ecebf3'; } catch (e) {} });
 })();
 </script>
 {% endblock %}

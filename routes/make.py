@@ -38,7 +38,7 @@ def page():
     elif bs:
         key = bs[0]["key"]
     return render_template("make.html", books=bs, book_key=key,
-                           bid=_bid(key) if key else "", active_nav="만들기")
+                           bid=_bid(key) if key else "", active_nav="조립")
 
 
 def _need_book():

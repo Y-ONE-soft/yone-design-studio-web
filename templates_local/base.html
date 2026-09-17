@@ -83,6 +83,7 @@
     <a class="item {{ 'on' if active_nav == '홈' else '' }}" href="/"><span class="ic">⌂</span>홈</a>
     <a class="item {{ 'on' if active_nav in ('프로젝트', '책', '작업대', 'PDF') else '' }}" href="/projects"><span class="ic">🗂</span>프로젝트{% if intake_open %}<span class="badge" title="PDF 판정 — 결정 대기 · 새 틀 요청">{{ intake_open }}</span>{% endif %}</a>
     <a class="item {{ 'on' if active_nav == '틀' else '' }}" href="/catalog"><span class="ic">◫</span>구성요소</a>
+    <a class="item {{ 'on' if active_nav == '조립' else '' }}" href="/make"><span class="ic">🪜</span>조립</a>
     <span class="grow"></span>
     <span class="hint">로컬 실행<br>인증 없음</span>
   </nav>
