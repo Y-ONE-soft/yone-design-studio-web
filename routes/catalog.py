@@ -439,6 +439,63 @@ def master_img(series, design, name):
     return send_from_directory(_ddir(series, design), name)
 
 
+def _design_pdf(series, design):
+    """디자인의 기준 PDF — 디자인 폴더의 reference.pdf(참고/ 포함) > 출처 책 폴더의 조판 PDF."""
+    d = _ddir(series, design)
+    for c in (os.path.join(d, "reference.pdf"), os.path.join(d, "참고", "reference.pdf")):
+        if os.path.exists(c):
+            return c
+    p = os.path.join(d, "design.json")
+    src = json.load(open(p, encoding="utf-8")).get("source", "") if os.path.exists(p) else ""
+    if src and not src.startswith("PDF:"):
+        bd = os.path.join(_studio(), src)
+        if os.path.isdir(bd):
+            return _book_pdf(bd)
+    return None
+
+
+def design_pages(series, design):
+    """기준 PDF 의 총 면수 (없으면 0). 상세 화면이 지면 전체를 늘어놓을 때 쓴다."""
+    pdf = _design_pdf(series, design)
+    if not pdf:
+        return 0
+    try:
+        import fitz
+        return fitz.open(pdf).page_count
+    except Exception:
+        return 0
+
+
+@bp.route("/catalog/page/<series>/<design>/<int:n>.png")
+def design_page_img(series, design, n):
+    """기준 PDF 의 n 면 그림(1부터). `_pages/` 에 두고 다시 안 그린다. ?dpi= 24~120."""
+    if not _ID.match(design) or n < 1:
+        abort(404)
+    pdf = _design_pdf(series, design)
+    if not pdf:
+        abort(404)
+    try:
+        dpi = max(24, min(int(request.args.get("dpi") or 36), 120))
+    except ValueError:
+        dpi = 36
+    tdir = os.path.join(_ddir(series, design), "_pages")
+    os.makedirs(tdir, exist_ok=True)
+    out = f"{int(os.path.getmtime(pdf))}_{n}_{dpi}.png"
+    if not os.path.exists(os.path.join(tdir, out)):
+        try:
+            import fitz
+            doc = fitz.open(pdf)
+            ok = n <= doc.page_count
+            if ok:
+                doc[n - 1].get_pixmap(dpi=dpi).save(os.path.join(tdir, out))
+            doc.close()
+        except Exception:
+            abort(500)
+        if not ok:
+            abort(404)
+    return send_from_directory(tdir, out)
+
+
 @bp.route("/catalog/preview/<series>/<design>/<name>")
 def preview_img(series, design, name):
     if not _ID.match(design) or not re.match(r"^preview_\d+\.png$", name):
