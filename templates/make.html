@@ -65,6 +65,21 @@
   .item .vcnt { font-size: 10.5px; color: var(--mute); align-self: center; }
   .item.hide { display: none; }
   .lib summary .cd2 { font-weight: 400; color: var(--mute); font-size: 11px; margin-left: 4px; }
+  /* 블록·에셋(지면 안) */
+  .blk { border: 1px solid var(--line); border-radius: 10px; margin: 0 12px 8px; background: #fff; overflow: hidden; }
+  .blk img { display: block; width: 100%; max-height: 120px; object-fit: contain; object-position: left top; background: #fafafa; border-bottom: 1px solid var(--line); padding: 6px; box-sizing: border-box; }
+  .blk .bd { padding: 7px 9px 8px; }
+  .blk .nm { font-weight: 600; font-size: 12.5px; }
+  .blk .ds { font-size: 11px; color: var(--mute); margin-top: 1px; }
+  .blk .fl { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px; }
+  .blk .fl span { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: #eef0f5; color: #3c4043; }
+  .blk .fl span.as { background: #f2ecff; color: #5b2bb0; }
+  .blk .fl b { font-size: 10px; color: var(--mute); font-weight: 600; margin-right: 2px; align-self: center; }
+  .as-list { list-style: none; margin: 0 12px 10px; padding: 0; }
+  .as-list li { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-bottom: 1px dashed var(--line); font-size: 12px; }
+  .as-list li .k { font-size: 9.5px; padding: 1px 6px; border-radius: 4px; background: #eef0f5; color: #3c4043; flex: none; width: 34px; text-align: center; }
+  .as-list li .r { margin-left: auto; font-size: 10.5px; color: var(--mute); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+  .as-list li .sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #d8d3ea; flex: none; }
   /* 가운데 — 구성 캔버스 */
   .cv { width: 360px; flex: none; overflow: auto; background: #fbfafd; border-right: 1px solid var(--line); padding: 0 0 20px; }
   .cv .box { padding: 0 14px; }
@@ -145,7 +160,32 @@
   <aside class="lib">
     <h1>🧩 부품</h1>
     <p class="lede">프로젝트 &gt; 틀의 모든 블록. + 를 누르거나 가운데로 끌어다 놓으면 구성에 담긴다.</p>
-    <div class="views"><button data-view="item" class="on">블록별 (책과 무관)</button><button data-view="tpl">틀별</button></div>
+    <div class="views"><button data-view="item" class="on">항목별</button><button data-view="tpl">틀별</button><button data-view="blk">지면 안 블록·에셋</button></div>
+    <div id="view-blk" hidden>
+      <p class="note" style="padding:0 16px 8px">지면(틀) 아래 두 층 — <b>블록</b>은 원고가 들어가는 덩어리(워크북 {{ blocks|length }}종), <b>에셋</b>은 블록을 그리는 상자·마크·색·서체({{ assets|length }}종). 그림은 한영고 원고로 실제 렌더러가 그린 것. 다음 단계에서 지면에 끌어 놓는 단위가 된다.</p>
+      <details open>
+        <summary><span class="arr">▶</span>블록<span class="cd2">콘텐츠가 들어가는 덩어리</span><small>{{ blocks|length }}</small></summary>
+        {% for b in blocks %}
+        <div class="blk" data-block="{{ b.id }}">
+          <img src="/make/blocks/{{ b.thumb }}" alt="" loading="lazy">
+          <div class="bd"><div class="nm">{{ b.name }} <span style="font-weight:400;color:var(--mute);font-size:10.5px">{{ b.id }}</span></div><div class="ds">{{ b.desc }}</div>
+            <div class="fl"><b>필드</b>{% for f in b.fields %}<span>{{ f }}</span>{% endfor %}</div>
+            <div class="fl"><b>에셋</b>{% for a in b.assets %}<span class="as" title="{{ asset_by_id[a].ref if a in asset_by_id else a }}">{{ asset_by_id[a].name if a in asset_by_id else a }}</span>{% endfor %}</div>
+            <div class="fl"><b>원고</b>{% for r in b.roles %}<span>{{ r }}</span>{% endfor %}{% if not b.roles %}<span>(원고 없음)</span>{% endif %}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </details>
+      <details>
+        <summary><span class="arr">▶</span>에셋<span class="cd2">블록을 그리는 것</span><small>{{ assets|length }}</small></summary>
+        <ul class="as-list">
+          {% for a in assets %}
+          <li><span class="k">{{ a.kind }}</span>{% if a.kind == 'color' %}<span class="sw" data-knob="{{ a.knob }}"></span>{% endif %}<span>{{ a.name }}</span><span class="r" title="{{ a.ref }}{% if a.knob %} · {{ a.knob }}{% endif %}">{{ a.ref }}</span></li>
+          {% endfor %}
+        </ul>
+        <p class="note" style="padding:0 16px 12px">에셋의 색·서체는 내지 작업대 손잡이(knob)와 같은 키. 상자·마크는 <code>themes/workbook.css</code> 의 클래스.</p>
+      </details>
+    </div>
     <div id="view-item">
       {% for cat, cdesc, its in taxonomy %}
       {% set have = its|selectattr(0, 'in', by_item)|list %}
@@ -383,7 +423,7 @@
   document.querySelectorAll('.views button').forEach(function (b) {
     b.onclick = function () {
       document.querySelectorAll('.views button').forEach(function (x) { x.classList.toggle('on', x === b); });
-      $('view-item').hidden = b.dataset.view !== 'item'; $('view-tpl').hidden = b.dataset.view !== 'tpl';
+      $('view-item').hidden = b.dataset.view !== 'item'; $('view-tpl').hidden = b.dataset.view !== 'tpl'; $('view-blk').hidden = b.dataset.view !== 'blk';
     };
   });
   // 블록별: + 는 기본 옷, 작은 그림은 그 옷
@@ -509,6 +549,14 @@
   };
   drawComps();
   board();
+  // 색 에셋 스와치 — 견본 책의 손잡이 값으로
+  (function () {
+    var sws = document.querySelectorAll('.as-list .sw[data-knob]'); if (!sws.length) return;
+    api('/api/book-studio/knobs?b=' + encodeURIComponent($('sample').value)).then(function (d) {
+      var v = {}; (d.knobs || []).forEach(function (k) { v[k.key] = k.value; });
+      sws.forEach(function (el) { if (v[el.dataset.knob]) el.style.background = v[el.dataset.knob]; });
+    }).catch(function () {});
+  })();
 
   // ── 책 만들기 ──
   $('mkbook-open').onclick = function () { var b = $('mkbook'); b.hidden = !b.hidden; if (!b.hidden) b.scrollIntoView({ behavior: 'smooth' }); };

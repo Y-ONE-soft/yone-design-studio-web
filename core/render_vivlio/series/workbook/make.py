@@ -56,6 +56,8 @@ FRAME_NAMES = {
 }
 
 _CSS = """
+.mk-blk { width: 168mm; padding: 4mm 0; }
+.mk-blk .flowbody { column-count: 1; }
 .pg.ref { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background: #f3f2f7; }
 .pg.ref img { width: 100%; height: 100%; object-fit: contain; object-position: top; }
 .pg.ref .lab { position: absolute; left: 0; right: 0; bottom: 4mm; text-align: center; font: 8pt/1.4 -apple-system, "Apple SD Gothic Neo", sans-serif; color: #6d7389; }
@@ -337,6 +339,67 @@ def rasterize(html, build_dir, stem="make_compose", dpi=60, log=print):
     return n
 
 
+def blocks_catalog(cfg, data, out_dir, log=print, dpi=72):
+    """블록 14종 카탈로그 — 블록마다 한영고 단락으로 그린 그림(잉크 부분만 잘라) + blocks.json."""
+    import json as _json
+    import warnings
+    from core.render_vivlio import cli
+    from core.render_vivlio.series.workbook import blocks as B
+    warnings.filterwarnings("ignore")
+    import fitz
+    os.makedirs(out_dir, exist_ok=True)
+    build_dir = cfg.build_dir
+    _reset()
+    R.index_refs(data)
+    secs, made = [], []
+    for blk in B.BLOCKS:
+        n, key, html_s = 1, "step1_a1", ""
+        if blk.get("label"):
+            html_s = '<span class="pnum">20</span><p class="en">…</p>'
+        elif blk.get("icon"):
+            html_s = R.icon_html("TF 버튼", 1) + R.svg_ansline(1)
+        else:
+            paras, st = B.sample_paragraphs(data, blk)
+            if not paras:
+                log(f"  [블록] {blk['id']}: 원고에 표본이 없다 — 건너뜀")
+                continue
+            n, key = st["step"], st["key"]
+            if st["layout"] == "s3":
+                html_s = '<div class="flowbody">' + R.s3_blocks(paras, 1)[0] + "</div>"
+            else:
+                html_s = R.blocks_html(paras, n, key)
+        secs.append(f'<section class="sec fixed s{n} k-{key}"><div class="pg"><div class="mk-blk">{html_s}</div></div></section>')
+        made.append(dict(blk, thumb=f"{blk['id']}.png", sample_step=key))
+    html = _write(build_dir, "make_blocks.html", _doc("블록", "\n".join(secs)))
+    pdf = os.path.join(build_dir, "make_blocks.pdf")
+    cli.run_build(html, pdf, log=lambda *a: None, extra=["-f", "pdf"])
+    doc = fitz.open(pdf)
+    for i, blk in enumerate(made):
+        if i >= doc.page_count:
+            break
+        page = doc[i]
+        rect = None
+        for b in page.get_text("dict").get("blocks", []):
+            r = fitz.Rect(b["bbox"])
+            rect = r if rect is None else rect | r
+        for d in page.get_drawings():
+            r = fitz.Rect(d["rect"])
+            # 면·판면 크기의 바탕(칸 테두리 등)은 뺀다 — 블록 상자·마크·선만 잉크로 친다
+            if r.width < page.rect.width * 0.98 and r.height < page.rect.height * 0.4:
+                rect = r if rect is None else rect | r
+        if rect is None or rect.is_empty:
+            rect = page.rect
+        rect = (rect + (-8, -8, 8, 8)) & page.rect
+        page.get_pixmap(dpi=dpi, clip=rect).save(os.path.join(out_dir, blk["thumb"]))
+        log(f"  [블록] {blk['id']:10} ← {blk['sample_step']} · {rect.width:.0f}×{rect.height:.0f}pt")
+    doc.close()
+    with open(os.path.join(out_dir, "blocks.json"), "w", encoding="utf-8") as f:
+        _json.dump({"series": "workbook", "from": cfg.root, "blocks": made, "assets": B.ASSETS}, f,
+                   ensure_ascii=False, indent=1)
+    log(f"  블록 {len(made)}개 · 에셋 {len(B.ASSETS)}개 → {out_dir}")
+    return os.path.join(out_dir, "blocks.json")
+
+
 def thumbs(cfg, data, out_dir, log=print, dpi=40):
     """부품마다 대표 면 한 장 PNG. 간지 3장도 함께. → parts.json 목록."""
     import json as _json
@@ -404,6 +467,8 @@ def make(cfg, what, log=print, key=None, n=2, steps=None, limits=None, cycle=Fal
         return html
     if what == "thumbs":
         return thumbs(cfg, data, out or os.path.join(build_dir, "parts"), log)
+    if what == "blocks":
+        return blocks_catalog(cfg, data, out or os.path.join(build_dir, "blocks"), log)
     if what == "parts":
         return _write(build_dir, "make_parts.html", parts(cfg, data, log))
     if what == "frames":
