@@ -1,0 +1,178 @@
+{
+  "series": "vocacard",
+  "book": {
+    "id": "이의1보카01",
+    "title": "이의1보카",
+    "school": "이의고1",
+    "period": "26-2-중간",
+    "note": "자체 편집 단어장 — 교과서 · 부교재 · 모의고사 3파트 단권"
+  },
+  "page": {
+    "width": 148,
+    "height": 210,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "이의1_이의1보카01_내지"
+  },
+  "_manuscript_note": "정본은 워드. 이 책은 엑셀본에도 작업 메모가 없지만(이의고2 와 달리) 관행대로 워드를 쓴다.",
+  "manuscript": {
+    "dir": "원고",
+    "files": {
+      "words": "이의고1_단어장_원고_최종수정.docx"
+    }
+  },
+  "fonts": [
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Regular.otf",
+      "weight": 400
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Medium.otf",
+      "weight": 500
+    },
+    {
+      "family": "Noto",
+      "file": "NotoSansCJKkr-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Light.otf",
+      "weight": 300
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Medium.otf",
+      "weight": 500
+    },
+    {
+      "family": "Elice",
+      "file": "EliceDXNeolliOTF-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Disp",
+      "file": "BebasNeue-Regular.otf",
+      "weight": 400
+    },
+    {
+      "family": "Disp",
+      "file": "BebasNeue-Bold.otf",
+      "weight": 700
+    },
+    {
+      "family": "Logo",
+      "file": "Paperlogy-9Black.ttf",
+      "weight": 900
+    }
+  ],
+  "_palette_note": "표지 시안(송아영T 시안A_INFLATE) 실측 — 초록 #19A86B(어휘 배지 벡터값) · 먹 #14161a(제목 글자) · 분홍 #FDC5D7~#FEDAE7(배경). 3파트는 표지의 두 축(초록·분홍)에 파랑을 더해 색상환을 벌렸다 — 명도만 달리했더니 구분이 안 됐고 짙은 그린은 탁했다.",
+  "palette": {
+    "common": {
+      "ink": "#14161a",
+      "gray": "#5c6470",
+      "label": "#9aa2ac",
+      "rule": "#dfe3e8",
+      "band": "#faedf1",
+      "hl": "#e1477a",
+      "pos-bg": "#eef1f4"
+    },
+    "sections": {
+      "s-text": {
+        "page": "p-text",
+        "main": "#14a667",
+        "pale": "#dcf7eb",
+        "sub": "#54d49c",
+        "label": "교과서"
+      },
+      "s-supp": {
+        "page": "p-supp",
+        "main": "#2570b6",
+        "pale": "#dceaf7",
+        "sub": "#5496d4",
+        "label": "부교재"
+      },
+      "s-mock": {
+        "page": "p-mock",
+        "main": "#c22e5f",
+        "pale": "#f7dce5",
+        "sub": "#d4547e",
+        "label": "모의고사"
+      }
+    }
+  },
+  "metrics": {
+    "mgn_x": 22.0,
+    "margin_top": 23.0,
+    "margin_bottom": 14.0,
+    "lab_w": 25.25
+  },
+  "options": {
+    "brand": "EEGOEEGO",
+    "subtitle": "공통영어2 능률(민) 1과 · 수능특강Light 12~15강 · 2026년 9월 고1 학평",
+    "page_cap": 3,
+    "_idx_note": "측면 라벨을 파트마다 내리는 폭(mm). 교과서 0 · 부교재 1칸 · 모의고사 2칸.",
+    "idx_step_mm": 22,
+    "_cover_note": "간지(앞·뒤)에 들어가는 글. 3D 그림은 표지 PDF 에서 뽑아 둔 assets/up3d.png.",
+    "cover_line": "이의고1 2학기 중간",
+    "cover_badge": "어휘",
+    "cover_tagline": [
+      "UPGRADE YOUR ENGLISH",
+      "ELEVATE YOUR FUTURE"
+    ],
+    "author": "SONG AHYOUNG",
+    "sample": {
+      "part": "text",
+      "n": 6
+    },
+    "_parts_match_note": "구간 이름이 이의고2 와 다르다 — 부교재에 '부교재' 라는 말이 없고() 교과서·모의고사도 ' - ' 구분자가 없다. 괄호 안이 구간 소제목이 된다.",
+    "parts_match": [
+      [
+        "text",
+        "^교과서\\s+.*?(본문\\s*\\d+)\\s*$"
+      ],
+      [
+        "supp",
+        "^수능특강.*?(\\d+강\\s*Exercise.*)$"
+      ],
+      [
+        "mock",
+        "^.*모의고사\\s+(\\S+번)\\s*$"
+      ]
+    ]
+  },
+  "_finish_note": "간지는 조판이 직접 그린다(표지 축소 삽입을 걷어냄) — 여기서는 도련·TrimBox 만 마감한다.",
+  "finish": {
+    "trim": {
+      "bleed": 3
+    },
+    "suffix": "_최종"
+  },
+  "_print_note": "인쇄 원고 — 무채색·회색 계열은 K 단색으로 먼저 바꾸고(5~7pt 작은 글자를 4도로 찍으면 핀 어긋남으로 뭉갠다) 나머지 유채색만 ICC 로 CMYK 변환한다. K 값은 조판 팔레트의 명도 실측.",
+  "print": {
+    "suffix": "_최종",
+    "out": "_인쇄",
+    "profile": "JapanColor2001Coated.icc",
+    "gray_map": {
+      "#14161a": 1.0,
+      "#000000": 1.0,
+      "#5c6470": 0.61,
+      "#9aa2ac": 0.37,
+      "#b9bfc7": 0.25,
+      "#e4e8ec": 0.09,
+      "#eef1f4": 0.06,
+      "#ffffff": 0.0
+    }
+  },
+  "verify": {
+    "suffix": "_최종",
+    "skip_pages": [
+      1
+    ]
+  },
+  "_디자인": "이의1보카 (민트·A5) — 기준 책 이의1보카 (2026-09-18)"
+}
