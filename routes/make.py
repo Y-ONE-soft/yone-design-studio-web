@@ -302,12 +302,28 @@ def api_preview():
     if not d:
         return jsonify({"error": "견본 책을 모른다"}), 404
     steps, lim, cycle = _comp_args(p)
-    if not steps:
-        return jsonify({"error": "조판되는 부품이 없다 (지금은 워크북 부품만 조판된다)"}), 400
-    args = [d, "make", "--what=compose", "--steps=" + ",".join(steps),
-            "--n=%d" % max(0, min(int(p.get("n") or 2), 99))]
-    if lim:
-        args.append("--limits=" + ",".join("%s=%d" % kv for kv in lim.items()))
+    plan = []
+    for it in (p.get("items") or []):
+        if not isinstance(it, dict):
+            continue
+        if it.get("key") and _RE_KEY.match(str(it["key"])):
+            plan.append({"key": str(it["key"]), "n": lim.get(str(it["key"]), 0)})
+        elif str(it.get("thumb") or "").startswith("/catalog/page/"):
+            plan.append({"image": str(it["thumb"]).replace("dpi=40", "dpi=72")[:300],
+                         "label": " · ".join(x for x in (it.get("tpl"), it.get("label")) if x)[:120]})
+    if not plan and not steps:
+        return jsonify({"error": "부품이 하나도 없다"}), 400
+    args = [d, "make", "--what=compose", "--n=%d" % max(0, min(int(p.get("n") or 2), 99))]
+    if plan:
+        plan_p = os.path.join(d, "build", "make_compose_plan.json")
+        os.makedirs(os.path.dirname(plan_p), exist_ok=True)
+        with open(plan_p, "w", encoding="utf-8") as f:
+            json.dump(plan, f, ensure_ascii=False)
+        args.append("--plan=" + plan_p)
+    else:
+        args.append("--steps=" + ",".join(steps))
+        if lim:
+            args.append("--limits=" + ",".join("%s=%d" % kv for kv in lim.items()))
     if cycle:
         args.append("--cycle=on")
     r = _run(args, timeout=180)

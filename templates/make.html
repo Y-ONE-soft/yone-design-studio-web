@@ -322,28 +322,38 @@
     V = fwin() && fwin().VivlioCore;
     if (!V) return null;
     lightFrame();
-    viewer = new V.CoreViewer({ viewportElement: stageEl() }, { renderAllPages: true, pageViewMode: 'singlePage', fitToScreen: true });
+    // ⚠ 모든 면을 미리 그리면(renderAllPages) 다 그릴 때까지 다음 면으로 못 넘어가고 'loaded' 도 늦다
+    //   (작업대에서 겪은 것). 보이는 면만 그리고 넘길 때 그린다 — 넘김이 항상 된다.
+    viewer = new V.CoreViewer({ viewportElement: stageEl() }, { renderAllPages: false, pageViewMode: 'singlePage', fitToScreen: true });
     viewer.addListener('nav', function (p) {
       var pp = null; try { pp = viewer.adaptViewer_.pagePosition; } catch (e) {}
       var cur = (pp && pp.pageIndex != null) ? pp.pageIndex + 1 : (p && p.epage != null ? Math.round(p.epage) + 1 : '?');
-      $('pg').textContent = cur + (p && p.epageCount ? ' / ' + p.epageCount : '');
+      // 다 그리기 전의 전체 면수는 어림값이라(작업대에서 실측) 다 그린 뒤에만 보인다
+      $('pg').textContent = cur + (p && p.epageCount && viewer.readyState === 'complete' ? ' / ' + p.epageCount : '');
     });
-    viewer.addListener('loaded', function () { msg(''); try { viewer.navigateToPage('epage', 1); } catch (e) {} });
+    viewer.addListener('readystatechange', function () {
+      if (viewer.readyState === 'interactive' || viewer.readyState === 'complete') {
+        msg('');
+        // 첫 면은 빈 간지 자리 — 처음 열릴 때 한 번만 2면으로. 사용자가 이미 넘겼으면 건드리지 않는다
+        if (!navigated && !jumped) { jumped = true; setTimeout(function () { try { if (!navigated) viewer.navigateToPage(V.Navigation.NEXT); } catch (e) {} }, 50); }
+      }
+    });
     viewer.addListener('error', function (p) { msg('✗ ' + JSON.stringify(p && p.content).slice(0, 160)); });
     return viewer;
   }
+  var navigated = false, jumped = false;
   function show(doc, what) {
     curDoc = doc; if (what) $('what').textContent = what;
     whenFrame(function () {
       ensureViewer();
       if (!viewer) { msg('조판 엔진을 불러오지 못했다'); return; }
-      msg('지면 앉히는 중…');
+      msg('지면 앉히는 중…'); navigated = false; jumped = false;
       viewer.loadDocument({ url: doc + (doc.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now() }, {},
-        { renderAllPages: true, pageViewMode: spread ? 'spread' : 'singlePage', fitToScreen: true });
+        { renderAllPages: false, pageViewMode: spread ? 'spread' : 'singlePage', fitToScreen: true });
     });
   }
-  $('prev').onclick = function () { if (viewer) viewer.navigateToPage(V.Navigation.PREVIOUS); };
-  $('next').onclick = function () { if (viewer) viewer.navigateToPage(V.Navigation.NEXT); };
+  $('prev').onclick = function () { if (viewer) { navigated = true; viewer.navigateToPage(V.Navigation.PREVIOUS); } };
+  $('next').onclick = function () { if (viewer) { navigated = true; viewer.navigateToPage(V.Navigation.NEXT); } };
   $('spread').onclick = function () { spread = !spread; if (curDoc) show(curDoc); };
   whenFrame(lightFrame);
 
@@ -352,7 +362,7 @@
     return Array.prototype.map.call($('seq').querySelectorAll('li[data-id]'), function (li) {
       var p = PARTS[li.dataset.id] || {};
       return { id: li.dataset.id, series: p.series, design: p.design, key: p.key || '', label: p.label, kind: p.kind,
-               item: p.item, thumb: p.thumb, page: p.page, n: li.querySelector('input[type=number]').value };
+               item: p.item, tpl: p.tpl, thumb: p.thumb, page: p.page, n: li.querySelector('input[type=number]').value };
     });
   }
   function rules() {
@@ -495,7 +505,7 @@
     msg('미리보기 조판 중…');
     api('/api/make/preview', c).then(function (d) {
       if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); return; }
-      log(d.log || ''); show(d.doc, '조판 미리보기 · ' + c.steps.length + '개 부품' + (c.items.length > c.steps.length ? ' (참고 블록 ' + (c.items.length - c.steps.length) + '개는 지면 순서에서)' : ''));
+      log(d.log || ''); show(d.doc, '조판 미리보기 · 부품 ' + c.steps.length + '개' + (c.items.length > c.steps.length ? ' + 참고 블록 ' + (c.items.length - c.steps.length) + '개(자리표 면)' : ''));
     });
   }
   $('preview').onclick = function () { preview(); };
