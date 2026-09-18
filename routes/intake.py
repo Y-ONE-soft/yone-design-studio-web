@@ -882,6 +882,143 @@ def forge_status(jid):
                     "round": st.get("round"), "round_no": st.get("forge_round"), "session": bool(st.get("forge_session"))})
 
 
+# ── AI 스레드 = Claude Code 세션 ──────────────────────────────────────────────
+# 새 프로젝트 AI 칸의 기본 프롬프트. 예전엔 API 한 번(도구 없음)이었는데, 이제 새 틀 만들기와 같은 방식 —
+# 이 맥의 Claude Code 세션 하나가 스레드에 붙어 사람의 말대로 보고·판정·등록·조판·수정한다. 턴마다 --resume.
+CHAT = os.path.join(INTAKE, "_chat")
+_CHAT = {}           # tid → {"proc"}
+
+
+def _chat_protocol(tid, files):
+    d = os.path.join(CHAT, tid)
+    return f"""너는 Y.ONE 스튜디오(영어 교재 코드 조판, Vivliostyle)의 조판 개발자이자 도우미다. 이 스레드는 한 사람과의 대화다. 사람이 말하는 대로 한다. 한국어, 짧고 구체적으로.
+
+## 할 수 있는 것 (이 저장소 안에서)
+- 카탈로그 보기·설명: 폴더(`catalog/dirs.json`) → 틀(`catalog/catalog.json`, `core/render_vivlio/series/*`) → 디자인(`catalog/<틀>/designs/*`). 블록 지도 `docs/참고자료/교재_블록_지도/README.md`.
+- 첨부(완성본 PDF·지면 이미지) 판정 — 어느 틀의 디자인인가 / 새 틀인가: `python3 -c "from routes.intake import measure, render_pages, judge, _template_cards; …"` (판정 결과와 근거를 사람에게).
+- 기존 틀에 디자인 등록: `routes.intake.register_draft(series, verdict, measured, pdf_path, pages, pdf_name)` 또는 사람에게 새 프로젝트의 `/ 틀 등록하기` 를 안내.
+- 책 만들기·다시 조판: `bin/viv "<책 폴더>" all`, `python -m core.render_vivlio.book`. 디자인 손보기: 디자인 config·overrides.css 손잡이(`bin/viv <책> knobs`).
+- 새 틀 만들기: 라운드로 — docs 읽기(CLAUDE.md, docs/인계_20260914/02_계열별_현황.md §14, 07_틀별_디자인·원고_자료.md) → PDF 실측 → 워크트리에서 계열 코드(`core/render_vivlio/series/<키>/` + `themes/<키>.css` + register) → 시험 조판 → 완성본과 대조 → 사람이 "등록해" 하면 `catalog/catalog.json` 등록 + 디자인 d1 + 커밋·main 머지.
+- 코드 수정은 워크트리에서(EnterWorktree). 메인 체크아웃은 편집이 막혀 있다. 서버 재시작은 사람이 한다 — 코드가 바뀌었으면 그렇게 말한다.
+
+## 턴 규칙
+- 답은 말로 한다. 그림을 보여줄 것(대조·견본·판정에 쓴 면)이 있거나 확인이 필요하면 `{d}/card.json` 을 쓴다:
+  {{"summary": "3~6줄", "ask": "확인받을 것 한 줄 또는 \\"\\"", "compare": [{{"ref": "turn_N/ref_p3.png", "out": "turn_N/out_p3.png", "note": "차이"}}], "links": [{{"label": "폴더 열기", "href": "/projects?dir=…"}}]}}
+  그림은 `{d}/turn_N/` 에 png 로(fitz dpi 60). 없으면 card.json 을 쓰지 않는다.
+- 정본 = 완성본. 디자인은 지어내지 않는다. 사람에게 묻는 건 대조로도 못 가르는 것만. 요청 밖 리팩터링 금지. 비밀값 금지.
+- 첨부 파일은 `{d}/files/` 에 있다: {json.dumps(files, ensure_ascii=False) if files else '(없음)'}"""
+
+
+def _chat_turn_prompt(state, text, new_files):
+    n = int(state.get("turn") or 0) + 1
+    d = os.path.join(CHAT, state["id"])
+    add = f"\n(새 첨부: {json.dumps(new_files, ensure_ascii=False)} — `{d}/files/`)" if new_files else ""
+    return f"[{n}턴] 사람: {text.strip() or '(첨부만)'}{add}\n\n그림·확인이 필요하면 `{d}/card.json` (그림은 `{d}/turn_{n}/`). 아니면 말로만."
+
+
+@bp.route("/api/catalog/chat", methods=["POST"])
+def chat_send():
+    """스레드에 한 턴 보내기. multipart: tid(없으면 새 스레드), text, files[]. 로컬(claude CLI) 에서만."""
+    import subprocess
+    import threading
+    cli = _claude_cli()
+    if not cli:
+        return jsonify({"error": "이 서버에는 claude CLI 가 없다 — 이 맥의 bin/studio 에서만 된다"}), 400
+    tid = (request.form.get("tid") or "").strip()
+    if tid and not re.match(r"^[0-9a-f]{8}$", tid):
+        abort(400)
+    tid = tid or uuid.uuid4().hex[:8]
+    d = os.path.join(CHAT, tid)
+    os.makedirs(os.path.join(d, "files"), exist_ok=True)
+    sp = os.path.join(d, "state.json")
+    state = json.load(open(sp, encoding="utf-8")) if os.path.exists(sp) else {"id": tid, "session": str(uuid.uuid4()), "turn": 0, "files": []}
+    if tid in _CHAT and _CHAT[tid]["proc"].poll() is None:
+        return jsonify({"error": "아직 앞 턴이 끝나지 않았다"}), 409
+    new_files = []
+    for x in request.files.getlist("files"):
+        if x and x.filename:
+            x.save(os.path.join(d, "files", os.path.basename(x.filename)))
+            new_files.append(os.path.basename(x.filename))
+    state["files"] = state.get("files", []) + new_files
+    text = (request.form.get("text") or "").strip()
+    turn = int(state.get("turn") or 0) + 1
+    if turn == 1:
+        prompt = _chat_protocol(tid, state["files"]) + "\n\n[1턴] 사람: " + (text or "(첨부만 — 이게 어느 틀에 가까운지 봐줘)")
+        args = [cli, "-p", prompt, "--session-id", state["session"]]
+    else:
+        prompt = _chat_turn_prompt(state, text, new_files)
+        args = [cli, "-p", prompt, "--resume", state["session"]]
+    allowed = ("Read Edit Write Glob Grep EnterWorktree ExitWorktree "
+               "Bash(git *) Bash(python3 *) Bash(python *) Bash(bin/*) Bash(ls *) Bash(cp *) Bash(mkdir *) Bash(cat *) Bash(head *) Bash(wc *)")
+    args += ["--permission-mode", "acceptEdits", "--allowedTools", allowed, "--output-format", "stream-json", "--verbose",
+             "--max-budget-usd", os.environ.get("YONE_CHAT_BUDGET_USD", "20")]
+    env = dict(os.environ)
+    env.pop("CLAUDECODE", None)
+    cp = os.path.join(d, "card.json")
+    if os.path.exists(cp):
+        os.remove(cp)                          # 이번 턴 카드만 보이게
+    log = open(os.path.join(d, "chat.log"), "a", encoding="utf-8")
+    log.write(f"\n══ {turn}턴 {datetime.datetime.now().isoformat(timespec='seconds')} ══\n"); log.flush()
+    proc = subprocess.Popen(args, cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, start_new_session=True, text=True)
+    _CHAT[tid] = {"proc": proc}
+    state.update({"status": "running", "turn": turn, "pid": proc.pid, "text": "", "last_user": text})
+    json.dump(state, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+    def _pump():
+        final = ""
+        for line in proc.stdout:
+            for out in _forge_lines(line):
+                log.write(out + "\n")
+            try:
+                ev = json.loads(line)
+                if ev.get("type") == "result" and ev.get("result"):
+                    final = str(ev["result"])
+            except ValueError:
+                pass
+            log.flush()
+        rc = proc.wait()
+        log.close()
+        st = json.load(open(sp, encoding="utf-8"))
+        card = None
+        if os.path.exists(cp):
+            try:
+                card = json.load(open(cp, encoding="utf-8"))
+            except ValueError:
+                card = None
+        st.update({"status": "done" if rc == 0 else "failed", "rc": rc, "text": final, "card": card})
+        json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    threading.Thread(target=_pump, daemon=True).start()
+    return jsonify({"ok": True, "tid": tid, "turn": turn, "status": "running"})
+
+
+@bp.route("/api/catalog/chat/<tid>")
+def chat_status(tid):
+    if not re.match(r"^[0-9a-f]{8}$", tid):
+        abort(404)
+    d = os.path.join(CHAT, tid)
+    sp = os.path.join(d, "state.json")
+    if not os.path.exists(sp):
+        abort(404)
+    st = json.load(open(sp, encoding="utf-8"))
+    if st.get("status") == "running" and tid not in _CHAT and not _alive(st.get("pid")):
+        st.update({"status": "done", "rc": None, "text": st.get("text") or "(서버가 재시작돼 이 턴의 답을 못 받았다 — 로그 참고)"})
+        json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    lp = os.path.join(d, "chat.log")
+    tail = ""
+    if os.path.exists(lp):
+        with open(lp, encoding="utf-8", errors="replace") as f:
+            tail = f.read()[-6000:]
+    return jsonify({"status": st.get("status"), "turn": st.get("turn"), "text": st.get("text", ""), "card": st.get("card"), "log": tail, "rc": st.get("rc")})
+
+
+@bp.route("/catalog/chat/<tid>/<path:name>")
+def chat_img(tid, name):
+    from flask import send_from_directory
+    if not re.match(r"^[0-9a-f]{8}$", tid) or not re.match(r"^turn_\d+/[A-Za-z0-9_\-]+\.png$", name):
+        abort(404)
+    return send_from_directory(os.path.join(CHAT, tid), name)
+
+
 @bp.route("/api/catalog/intake/<jid>", methods=["DELETE"])
 def intake_del(jid):
     if not re.match(r"^[0-9a-f]{8}$", jid):

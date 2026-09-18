@@ -347,15 +347,20 @@
       if (f) { b.textContent = '▶ 새 틀 「' + f.name + '」 ' + f.round + '라운드 ▾'; b.classList.add('on'); aiText.placeholder = '답하기 — 예: "맞아, 계속" · "3번 면 머리띠 더 진하게" · "등록해"'; }
       else { setCmd(''); aiText.placeholder = '원하는 디자인을 설명해 주세요 — 예: 배재고1 블랙북 26-2 중간 완성본, 이 틀로 등록'; }
     }
-    function roundCard(jid, s) {   // 라운드 결과 카드: 요약 · 완성본↔조판본 나란히 · 물음 · 단추
-      var r = s.round || {}, pairs = (r.compare || []).map(function (c) {
-        var ref = c.ref ? '<img src="/catalog/intake/' + jid + '/' + c.ref + '" title="완성본">' : '<span class="ph">완성본 없음</span>';
-        var out = c.out ? '<img src="/catalog/intake/' + jid + '/' + c.out + '" title="조판본">' : '<span class="ph">아직 조판 전</span>';
+    function cardHtml(base, r) {   // 카드 본문: 요약 · 완성본↔조판본 나란히 · 물음 · 링크 (새 틀 라운드와 일반 스레드가 같이 씀)
+      var pairs = (r.compare || []).map(function (c) {
+        var ref = c.ref ? '<img src="' + base + c.ref + '" title="완성본">' : '<span class="ph">완성본 없음</span>';
+        var out = c.out ? '<img src="' + base + c.out + '" title="조판본">' : '<span class="ph">아직 조판 전</span>';
         return '<div class="pair"><div class="two">' + ref + out + '</div><div class="note">' + esc(c.note || '') + '</div></div>';
       }).join('');
-      var m = say('bot ok', '<div class="v design">' + (r.round || s.round_no || '') + '라운드 · ' + esc({ measure: '실측·구성 판독', code: '코드·시험 조판', fix: '고치기', register: '등록' }[r.stage] || r.stage || '') + '</div>'
-        + md(r.summary || '') + (pairs ? '<div class="cmp">' + pairs + '</div>' : '')
+      return md(r.summary || '') + (pairs ? '<div class="cmp">' + pairs + '</div>' : '')
         + (r.ask ? '<div class="ask">❓ ' + esc(r.ask) + '</div>' : '')
+        + ((r.links || []).length ? '<div class="acts">' + r.links.map(function (l) { return '<a href="' + esc(l.href) + '">' + esc(l.label) + '</a>'; }).join('') + '</div>' : '');
+    }
+    function roundCard(jid, s) {   // 새 틀 라운드 카드 + 단추
+      var r = s.round || {};
+      var m = say('bot ok', '<div class="v design">' + (r.round || s.round_no || '') + '라운드 · ' + esc({ measure: '실측·구성 판독', code: '코드·시험 조판', fix: '고치기', register: '등록' }[r.stage] || r.stage || '') + '</div>'
+        + cardHtml('/catalog/intake/' + jid + '/', r)
         + '<div class="acts"><button class="go go-on">맞아, 계속</button><button class="go-reg">등록해</button><button class="go-stop">그만</button></div>');
       m.querySelector('.go-on').addEventListener('click', function () { forgeSay(jid, '맞아, 계속'); });
       m.querySelector('.go-reg').addEventListener('click', function () { forgeSay(jid, '등록해'); });
@@ -403,21 +408,32 @@
       return esc(t).replace(/```[a-z]*\n?([\s\S]*?)```/g, function (_, c) { return '<code>' + c.trim() + '</code>'; }).replace(/^#{1,6}\s*(.+)$/gm, '<b>$1</b>')
         .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`\n]+)`/g, '<code>$1</code>').split(/\n{2,}/).map(function (p) { return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
     }
-    function askClaude(text, f) {   // 기본 = 그냥 프롬프트
-      if (!text && !f) return;
-      say('me', esc(text || '(첨부)') + (f ? '<small>📎 ' + esc(f.name) + '</small>' : ''));
-      var wait = say('bot', '생각 중…'); aiSend.disabled = true;
-      var fd = new FormData(); fd.append('text', text); fd.append('history', JSON.stringify(hist)); if (f) fd.append('file', f);
-      fetch('/api/catalog/ask', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
-        .then(function (j) {
+    // ── 기본 프롬프트 = 이 스레드에 붙은 Claude Code 세션 (새 틀 라운드와 같은 방식). 첨부는 아무 턴에나. ──
+    var TID = null;   // 스레드 id — 첫 턴에 서버가 준다. 이후 턴은 같은 세션(--resume)
+    function askClaude(text, f) {
+      if (!text && !ATT.length) return;
+      say('me', esc(text || '(첨부)') + (ATT.length ? '<small>📎 ' + ATT.map(function (x) { return esc(x.name); }).join(' · ') + '</small>' : ''));
+      var fd = new FormData(); fd.append('text', text); if (TID) fd.append('tid', TID);
+      ATT.forEach(function (x) { fd.append('files', x); }); ATT = []; drawAtt();
+      aiText.value = ''; aiSend.disabled = true;
+      fetch('/api/catalog/chat', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+        .then(function (j) { if (j.error) { aiSend.disabled = false; say('bot', '⚠ ' + esc(j.error)); return; } TID = j.tid; watchChat(j.tid); })
+        .catch(function (e) { aiSend.disabled = false; say('bot', '실패: ' + e); });
+    }
+    function watchChat(tid) {   // 턴 진행 — 도구 호출 로그(접힘) → 끝나면 말 + (있으면) 카드
+      var m = say('bot', '<details><summary style="cursor:pointer;color:#8b8fa3;font-size:12px">작업 중… (로그)</summary><pre class="flog" style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:#fff;border:1px solid #e8e6ef;border-radius:8px;padding:8px;margin:6px 0 0"></pre></details><div class="ans"></div>');
+      var pre = m.querySelector('.flog'), ans = m.querySelector('.ans'), sum = m.querySelector('summary');
+      (function poll() {
+        fetch('/api/catalog/chat/' + tid).then(function (r) { return r.json(); }).then(function (s) {
+          pre.textContent = (s.log || '').slice(-3000) || '(시작)'; pre.scrollTop = pre.scrollHeight;
+          if (s.status === 'running') { setTimeout(poll, 3000); return; }
           aiSend.disabled = false;
-          if (j.error) { wait.innerHTML = '⚠ ' + esc(j.error); return; }
-          hist.push({ role: 'user', text: text || '(첨부)' }); hist.push({ role: 'assistant', text: j.text });
-          wait.innerHTML = md(j.text) + (f ? '<div class="acts"><button class="go run-reg">/ 틀 등록하기 로 이 첨부 판정·등록</button></div>' : '');
-          var b = wait.querySelector('.run-reg'); if (b) b.addEventListener('click', function () { setCmd('register'); aiFile._f = f; aiSend.click(); });
-        })
-        .catch(function (e) { aiSend.disabled = false; wait.textContent = '실패: ' + e; });
-      aiText.value = '';
+          sum.textContent = (s.turn || '') + '턴 로그';
+          if (s.status !== 'done') { ans.innerHTML = '⚠ 중단됨 (rc ' + s.rc + ') — 로그를 펼쳐 보세요.'; return; }
+          ans.innerHTML = (s.text ? md(s.text) : '') + (s.card ? '<div class="msg ok" style="margin-top:8px">' + cardHtml('/catalog/chat/' + tid + '/', s.card) + '</div>' : '');
+          m.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }).catch(function () { setTimeout(poll, 6000); });
+      })();
     }
     aiSend.addEventListener('click', function () {
       var text = aiText.value.trim(), f = aiFile._f;
