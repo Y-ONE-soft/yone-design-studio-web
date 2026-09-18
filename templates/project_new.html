@@ -157,7 +157,7 @@
           <textarea id="ai-text" placeholder="원하는 디자인을 설명해 주세요 — 예: 배재고1 블랙북 26-2 중간 완성본, 이 틀로 등록"></textarea>
           <div class="bar">
             <button type="button" class="plus" id="ai-plus" title="PDF · 지면 이미지 첨부">+</button>
-            <input type="file" id="ai-file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.hwp,.hwpx,.xlsx,.json,.txt" style="display:none">
+            <input type="file" id="ai-file" multiple style="display:none">
             <span class="cmds"><button type="button" class="cmd" id="ai-cmd">/ 명령 ▾</button>
               <div class="menu" id="ai-menu">
                 <div data-cmd="">프롬프트<small>그냥 묻기 — 원하는 디자인을 설명하면 어느 틀·폴더인지 답함 (기본)</small></div>
@@ -288,6 +288,21 @@
     function pickFiles(list) { Array.prototype.forEach.call(list || [], function (f) { if (f) ATT.push(f); }); aiFile.value = ''; drawAtt(); }
     aiFile.addEventListener('change', function () { pickFiles(this.files); });
     aiText.addEventListener('dragover', function (e) { e.preventDefault(); }); aiText.addEventListener('drop', function (e) { e.preventDefault(); pickFiles(e.dataTransfer.files); });
+    // 붙여넣기 — 스크린샷(클립보드 그림)·파일을 그대로 첨부. 그림은 이름을 붙여준다.
+    document.addEventListener('paste', function (e) {
+      if (document.querySelector('.rail button[data-tab="ai"]').classList.contains('on') === false) return;
+      var items = (e.clipboardData || {}).items || [], got = [];
+      Array.prototype.forEach.call(items, function (it) {
+        if (it.kind !== 'file') return;
+        var f = it.getAsFile(); if (!f) return;
+        if (!f.name || /^(image|blob)\.?/i.test(f.name)) f = new File([f], '붙여넣기_' + new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '') + (f.type === 'image/png' ? '.png' : f.type === 'image/jpeg' ? '.jpg' : ''), { type: f.type });
+        got.push(f);
+      });
+      if (got.length) { e.preventDefault(); pickFiles(got); }
+    });
+    // 패널 어디에 놓아도 첨부
+    var panelEl = document.querySelector('#tab-ai .ai');
+    panelEl.addEventListener('dragover', function (e) { e.preventDefault(); }); panelEl.addEventListener('drop', function (e) { e.preventDefault(); pickFiles(e.dataTransfer.files); });
     aiText.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend.click(); } if (e.key === '/' && !aiText.value) { e.preventDefault(); document.getElementById('ai-menu').classList.add('on'); } });
     function say(cls, html) { var m = document.createElement('div'); m.className = 'msg ' + cls; m.innerHTML = html; thread.appendChild(m); m.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return m; }
     function esc(t) { return String(t || '').replace(/</g, '&lt;'); }
