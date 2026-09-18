@@ -94,3 +94,23 @@ def test_outline_text_goes_to_summary_step(raw):
     blocks = _step(d, "step1_b1")["groups"][0]["units"][0]
     assert [b["role"] for b in blocks] == ["box_body", "sum_line", "sum_line", "sum_line"]
     assert blocks[1]["text"] == "주제" and blocks[3]["text"] == "Keep it short."
+
+
+def test_grammar_ox_key_with_fix_shape_uses_marks(raw):
+    """시스템 생성 어법OX — key=grammar-ox, 모양은 grammar-fix(text + n[word]). 빈 면이 아니라 밑줄 문장이어야 한다."""
+    raw["passages"][0]["items"] = [
+        {"key": "grammar-ox", "label": "어법OX",
+         "content": {"kind": "grammar-fix", "text": "There 1[are] no way. It 2[work] well.",
+                     "marks": [{"no": 1, "shown": "are", "correct": "is"}, {"no": 2, "shown": "work", "correct": "works"}]}}]
+    blocks = _step(yw.to_data(raw), "step2_b1")["groups"][0]["units"][0]
+    assert len(blocks) == 2 and blocks[0]["role"] == "gram_ox"
+    assert [r["t"] for r in blocks[0]["runs"] if r["ul"]] == ["are"]
+
+
+def test_empty_items_are_skipped_not_blank_pages(raw):
+    raw["passages"][0]["items"] = [
+        {"key": "grammar-ox", "label": "어법OX", "content": {"kind": "grammar-ox", "sentences": []}},
+        {"key": "sentence-order", "label": "순서배열 1단계", "content": {"kind": "sentence-order", "options": []}},
+        {"key": "vocab-choice", "label": "어휘선택 1단계", "content": {"kind": "vocab-choice", "text": "Plain (1)❮ ⓐ a / ⓑ b ❯ text."}}]
+    d = yw.to_data(raw)
+    assert [s["key"] for s in d["steps"]] == ["step1_a1"]
