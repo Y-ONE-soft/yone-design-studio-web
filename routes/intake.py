@@ -985,7 +985,8 @@ def chat_send():
                 card = json.load(open(cp, encoding="utf-8"))
             except ValueError:
                 card = None
-        st.update({"status": "done" if rc == 0 else "failed", "rc": rc, "text": final, "card": card})
+        st.update({"status": "done" if rc == 0 else ("stopped" if st.get("status") == "stopped" else "failed"),
+                   "rc": rc, "text": final or st.get("text", ""), "card": card})
         json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     threading.Thread(target=_pump, daemon=True).start()
     return jsonify({"ok": True, "tid": tid, "turn": turn, "status": "running"})
@@ -1009,6 +1010,33 @@ def chat_status(tid):
         with open(lp, encoding="utf-8", errors="replace") as f:
             tail = f.read()[-6000:]
     return jsonify({"status": st.get("status"), "turn": st.get("turn"), "text": st.get("text", ""), "card": st.get("card"), "log": tail, "rc": st.get("rc")})
+
+
+@bp.route("/api/catalog/chat/<tid>/stop", methods=["POST"])
+def chat_stop(tid):
+    """턴 중간에 멈추기 — 프로세스 그룹에 SIGTERM. 세션은 남아 다음 턴에 이어진다."""
+    import signal
+    if not re.match(r"^[0-9a-f]{8}$", tid):
+        abort(404)
+    sp = os.path.join(CHAT, tid, "state.json")
+    if not os.path.exists(sp):
+        abort(404)
+    st = json.load(open(sp, encoding="utf-8"))
+    pid = st.get("pid")
+    f = _CHAT.get(tid)
+    if f and f["proc"].poll() is None:
+        try:
+            os.killpg(os.getpgid(f["proc"].pid), signal.SIGTERM)
+        except OSError:
+            pass
+    elif _alive(pid):
+        try:
+            os.killpg(os.getpgid(int(pid)), signal.SIGTERM)
+        except OSError:
+            pass
+    st.update({"status": "stopped", "text": st.get("text") or "(멈춤)"})
+    json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    return jsonify({"ok": True})
 
 
 @bp.route("/catalog/chat/<tid>/<path:name>")
