@@ -254,7 +254,9 @@ def page():
     designs = [{"id": d["id"], "name": d.get("name", d["id"]), "draft": bool(d.get("draft")),
                 "preview": (d.get("previews") or [None])[0]} for d in tpl.get("designs") or []]
     lib = _library()
+    blocks, assets = _blocks()
     return render_template("make.html", library=lib, by_item=_by_item(lib), taxonomy=TAXONOMY, items=ITEMS,
+                           blocks=blocks, assets=assets, asset_by_id={a["id"]: a for a in assets},
                            books=bs, designs=designs,
                            fields=tpl.get("fields") or [], slot_hint=tpl.get("slot_hint", ""),
                            root=tpl.get("root", ""), compositions=_read_json(_cat("compositions.json")),
@@ -266,6 +268,19 @@ def part_png(name):
     if not _RE_PNG.match(name):
         abort(404)
     return send_from_directory(_cat("parts"), name)
+
+
+@bp.route("/make/blocks/<name>")
+def block_png(name):
+    if not _RE_PNG.match(name):
+        abort(404)
+    return send_from_directory(_cat("blocks"), name)
+
+
+def _blocks():
+    """지면 안 블록 14종 + 에셋 — `make --what=blocks` 가 만든 catalog/workbook/blocks/blocks.json."""
+    d = _read_json(_cat("blocks", "blocks.json"))
+    return d.get("blocks") or [], d.get("assets") or []
 
 
 # ── 미리보기 — config 안 건드림 ─────────────────────────────────
