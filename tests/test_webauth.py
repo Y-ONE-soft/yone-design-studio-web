@@ -11,7 +11,7 @@ import pytest
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-_ENV = ("YONE_AUTH", "YOS_LINK_SECRET", "YOS_LOGIN_URL", "SERVICE_TOKEN", "YOS_SERVICE_TOKENS",
+_ENV = ("YONE_AUTH", "YONE_PASSWORD", "YOS_LINK_SECRET", "YOS_LOGIN_URL", "SERVICE_TOKEN", "YOS_SERVICE_TOKENS",
         "YOS_ORIGINS", "YONE_SECRET_KEY", "YONE_ALLOWED_ROLES", "YONE_COOKIE_SECURE",
         "YONE_STUDIO_ROOT", "BLOB_READ_WRITE_TOKEN")
 
@@ -192,3 +192,54 @@ def test_refuses_public_host_without_auth(env, monkeypatch):
     with pytest.raises(SystemExit) as e:
         studio_server.main()
     assert e.value.code == 2
+
+
+def test_password_mode_login(env):
+    env.setenv("YONE_PASSWORD", "pw-1234")
+    env.setenv("YONE_SECRET_KEY", "k" * 32)
+    app = _app()
+    c = app.test_client()
+    assert c.get("/auth/me").get_json()["mode"] == "password"
+    # 미인증: 화면은 자체 로그인으로, API 는 401 JSON
+    r = c.get("/catalog?x=1", headers={"Accept": "text/html"})
+    assert r.status_code == 302 and r.headers["Location"].endswith("/auth/login?next=%2Fcatalog%3Fx%3D1")
+    r = c.get("/api/v1/catalog")
+    assert r.status_code == 401 and r.get_json()["login"] == "/auth/login"
+    assert c.get("/auth/login").status_code == 200
+    # 틀린 비밀번호
+    r = c.post("/auth/login", data={"password": "nope", "next": "/catalog"})
+    assert r.status_code == 401 and "yone_session=" not in r.headers.get("Set-Cookie", "")
+    # 맞는 비밀번호 → 쿠키 + next 로. next 는 이 서버 안 경로만
+    r = c.post("/auth/login", data={"password": "pw-1234", "next": "https://evil.example/"})
+    assert r.status_code == 302 and r.headers["Location"].endswith("/catalog")
+    assert "yone_session=" in r.headers.get("Set-Cookie", "")
+    assert c.get("/api/v1/catalog").status_code == 200
+    assert c.get("/auth/me").get_json()["user"]["sub"] == "studio"
+    # 로그아웃 → 자체 로그인으로
+    r = c.get("/auth/logout")
+    assert r.status_code == 302 and r.headers["Location"].endswith("/auth/login")
+    assert c.get("/api/v1/catalog").status_code == 401
+
+
+def test_password_mode_wins_when_explicit(env):
+    # YOS_LINK_SECRET 이 남아 있어도 YONE_AUTH=password 면 자체 로그인
+    env.setenv("YONE_AUTH", "password")
+    env.setenv("YONE_PASSWORD", "pw")
+    env.setenv("YOS_LINK_SECRET", SECRET)
+    env.setenv("YOS_LOGIN_URL", "https://core.example/login")
+    env.setenv("YONE_SECRET_KEY", "k" * 32)
+    c = _app().test_client()
+    r = c.get("/catalog", headers={"Accept": "text/html"})
+    assert r.headers["Location"].endswith("/auth/login?next=%2Fcatalog")
+    # 자체 로그인이 없는 방식에선 /auth/login 은 404
+    env.setenv("YONE_AUTH", "link")
+    assert _app().test_client().get("/auth/login").status_code == 404
+
+
+def test_password_mode_without_password_is_locked(env):
+    env.setenv("YONE_AUTH", "password")
+    env.setenv("YONE_SECRET_KEY", "k" * 32)
+    c = _app().test_client()
+    assert c.get("/api/v1/catalog").status_code == 401
+    r = c.post("/auth/login", data={"password": ""})
+    assert r.status_code == 503 and "yone_session=" not in r.headers.get("Set-Cookie", "")

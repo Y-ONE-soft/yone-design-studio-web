@@ -8,7 +8,7 @@
 # 배포: deploy/README.md 의 "Fly.io 에 올리기" — 요약
 #   fly apps create yos-studio --org personal
 #   fly volumes create studio_data --region nrt --size 10
-#   fly secrets set YOS_LINK_SECRET=… SERVICE_TOKEN=… YONE_SECRET_KEY=… YOS_LOGIN_URL=… YOS_ORIGINS=… BLOB_READ_WRITE_TOKEN=…
+#   fly secrets set YONE_PASSWORD=… SERVICE_TOKEN=… YONE_SECRET_KEY=… YOS_ORIGINS=… BLOB_READ_WRITE_TOKEN=…
 #   fly deploy
 #   deploy/fonts-pack.sh && fly ssh sftp put fonts.tgz /data/fonts.tgz && fly ssh console -C "tar xzf /data/fonts.tgz -C /data/fonts"
 app = "yos-studio"
@@ -19,6 +19,7 @@ primary_region = "nrt"   # 도쿄 — yos-typeset 과 같다
 
 [env]
   YONE_PUBLIC_URL = "https://yos-studio.fly.dev"   # 웹훅·카탈로그 안의 절대 링크. 도메인을 붙이면 바꾼다
+  YONE_AUTH = "password"   # 스튜디오 자체 로그인(/auth/login, 비밀번호 YONE_PASSWORD). Y.OS 웹과 별개 — 옛 YOS_LINK_SECRET 이 남아 있어도 이게 이긴다
   YONE_THREADS = "16"
   YONE_LOG_LEVEL = "info"
 

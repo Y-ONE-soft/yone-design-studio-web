@@ -6,7 +6,7 @@
 > (Vivliostyle 코드 조판 + 카탈로그, 로그인 없음). 인계 문서·작업 메모는 `docs/인계_20260914/`.
 > 책 데이터는 `~/Documents/작업/Y.ONE STUDIO/조판/교재/`, 클로드 키는 `~/.config/yone/env`(리포·채팅에 적지 말 것).
 > **웹 배포·Y.OS 연동(2026-09-15)**: `deploy/README.md`. Fly.io `yos-studio`(`Dockerfile`+`fly.toml`, yos-typeset 과 같은 방식),
-> 인증 `core/webauth.py`(Y.OS HMAC 링크 토큰 — `CHAT_LINK_SECRET` 식), 바깥 API `routes/api_v1.py`(`/api/v1`), 잡 `core/jobs.py`,
+> 인증 `core/webauth.py`(**2026-09-18 부터 자체 로그인 `/auth/login` + `YONE_PASSWORD` — yos-design-web 과 별개 프로젝트**; Y.OS HMAC 링크 토큰 방식은 남아 있으나 안 씀), 바깥 API `routes/api_v1.py`(`/api/v1`), 잡 `core/jobs.py`,
 > Vercel Blob `core/blob.py`, 웹훅 `core/yos_hooks.py`, contents 데이터 어댑터 `core/sources/`, Y.OS 쪽 드롭인 `deploy/yos/*.ts`.
 > (`core/notify.py` 는 예전 macOS 알림 모듈 — 웹훅과 다르다.) 테스트 `tests/test_webauth.py`·`tests/test_api_v1.py`.
 
