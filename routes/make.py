@@ -295,13 +295,49 @@ def _clean_items(p):
     return out[:200]
 
 
+_RE_PAGE_URL = re.compile(r"^/catalog/page/([a-z0-9_]+)/([a-z0-9_]+)/(\d+)\.png")
+
+
+def _ref_png(url, dpi=72):
+    """참고 블록의 그림 URL → **로컬 PNG 경로**(조판 엔진은 파일만 읽는다). 카탈로그의 면 캐시와 같은 자리."""
+    m = _RE_PAGE_URL.match(url or "")
+    if not m:
+        return None
+    from routes.catalog import _ddir, _design_pdf
+    series, design, n = m.group(1), m.group(2), int(m.group(3))
+    pdf = _design_pdf(series, design)
+    if not pdf:
+        return None
+    tdir = os.path.join(_ddir(series, design), "_pages")
+    os.makedirs(tdir, exist_ok=True)
+    out = os.path.join(tdir, f"{int(os.path.getmtime(pdf))}_{n}_{dpi}.png")
+    if not os.path.exists(out):
+        import warnings
+        warnings.filterwarnings("ignore")
+        import fitz
+        doc = fitz.open(pdf)
+        if n > doc.page_count:
+            doc.close()
+            return None
+        doc[n - 1].get_pixmap(dpi=dpi).save(out)
+        doc.close()
+    return out
+
+
 @bp.route("/api/make/preview", methods=["POST"])
 def api_preview():
+    """구성 → 조판 → 면 PNG 목록. 화면은 세로로 죽 보여 준다."""
     p = request.get_json(silent=True) or {}
     d, meta = _book_dir(p.get("b"))
     if not d:
         return jsonify({"error": "견본 책을 모른다"}), 404
     steps, lim, cycle = _comp_args(p)
+    import shutil
+    build = os.path.join(d, "build")
+    os.makedirs(build, exist_ok=True)
+    for old in os.listdir(build):
+        if old.startswith("make_ref_"):
+            os.remove(os.path.join(build, old))
     plan = []
     for it in (p.get("items") or []):
         if not isinstance(it, dict):
@@ -309,11 +345,16 @@ def api_preview():
         if it.get("key") and _RE_KEY.match(str(it["key"])):
             plan.append({"key": str(it["key"]), "n": lim.get(str(it["key"]), 0)})
         elif str(it.get("thumb") or "").startswith("/catalog/page/"):
-            plan.append({"image": str(it["thumb"]).replace("dpi=40", "dpi=72")[:300],
-                         "label": " · ".join(x for x in (it.get("tpl"), it.get("label")) if x)[:120]})
+            png = _ref_png(str(it["thumb"]))
+            if png:
+                # 조판 엔진(CLI)은 build/ 를 http 로 띄워 읽는다 — file:// 는 막히므로 build/ 안에 복사해 상대경로로
+                name = "make_ref_%d.png" % len(plan)
+                shutil.copy2(png, os.path.join(build, name))
+                plan.append({"image": name,
+                             "label": " · ".join(x for x in (it.get("tpl"), it.get("label")) if x)[:120]})
     if not plan and not steps:
         return jsonify({"error": "부품이 하나도 없다"}), 400
-    args = [d, "make", "--what=compose", "--n=%d" % max(0, min(int(p.get("n") or 2), 99))]
+    args = [d, "make", "--what=compose", "--png=1", "--n=%d" % max(0, min(int(p.get("n") or 2), 99))]
     if plan:
         plan_p = os.path.join(d, "build", "make_compose_plan.json")
         os.makedirs(os.path.dirname(plan_p), exist_ok=True)
@@ -326,10 +367,15 @@ def api_preview():
             args.append("--limits=" + ",".join("%s=%d" % kv for kv in lim.items()))
     if cycle:
         args.append("--cycle=on")
-    r = _run(args, timeout=180)
+    r = _run(args, timeout=300)
     if r.returncode != 0:
         return jsonify({"error": (r.stderr or r.stdout)[-1500:]}), 500
+    m = re.search(r"^MAKE_PAGES=(\d+)$", r.stdout, re.M)
+    n_pages = int(m.group(1)) if m else 0
+    stamp = int(time.time())
     return jsonify({"ok": True, "doc": "/book-studio/doc/%s/make_compose.html" % meta["bid"],
+                    "pages": ["/book-studio/doc/%s/make_compose_p%d.png?_=%d" % (meta["bid"], k, stamp)
+                              for k in range(1, n_pages + 1)],
                     "log": r.stdout[-1200:]})
 
 
