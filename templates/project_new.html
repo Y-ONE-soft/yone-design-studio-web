@@ -101,6 +101,13 @@
     .msg .it .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .msg .it .dt { color: #8b8fa3; font-size: 11px; }
     .msg.ok { border-color: #bfe3cf; background: #eefaf3; }
+    /* 라운드 카드 — 완성본 ↔ 조판본 나란히 */
+    .msg .cmp { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .msg .pair .two { display: flex; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+    .msg .pair .two img { flex: 1; min-width: 0; max-height: 200px; object-fit: contain; background: #f6f5fa; border-radius: 4px; cursor: zoom-in; }
+    .msg .pair .two .ph { flex: 1; display: grid; place-items: center; color: #8b8fa3; font-size: 11.5px; background: #f6f5fa; border-radius: 4px; min-height: 120px; }
+    .msg .pair .note { font-size: 12px; color: #5f6368; margin-top: 4px; }
+    .msg .ask { margin-top: 10px; padding: 8px 10px; background: #fff4e5; color: #8a5a00; border-radius: 8px; font-size: 13px; }
 
     main.canvas { position: fixed; left: calc(var(--rail) + var(--panel)); right: 0; top: var(--top); bottom: 64px; overflow: auto; display: grid; place-items: center; padding: 30px; box-sizing: border-box; }
     .page { background: #fff; box-shadow: 0 2px 14px rgba(0,0,0,.14); transform-origin: center; }
@@ -297,6 +304,7 @@
         + (j.status === 'registered' ? '<div class="acts"><a class="go" href="/project/new?pick=' + j.series + '/' + j.design + '">지면에 열기</a><a href="/projects?dir=' + (SERIES[j.series] || {}).dir + '">폴더 열기</a></div>'
          : j.status === 'new_request' ? '<div style="margin-top:8px;color:#8a5a00">새 틀 요청으로 남아 있음</div><div class="acts"><button class="forge-again">지금 만들기</button></div>'
          : j.status === 'forging' ? '<div style="margin-top:8px;color:#1d7a4b">지금 만드는 중</div><div class="acts"><button class="forge-watch">진행 보기</button></div>'
+         : j.status === 'forge_paused' ? '<div style="margin-top:8px;color:#3b1a80">라운드 ' + (j.forge_round || '') + ' — 답을 기다리는 중</div><div class="acts"><button class="forge-watch">이어서 보기</button></div>'
          : (j.status === 'forged' || j.status === 'forge_failed') ? '<div style="margin-top:8px">' + (j.status === 'forged' ? '✅ 만들어짐 — 서버 재시작 후 폴더에 뜸' : '⚠ 만들다 중단됨') + '</div><div class="acts"><button class="forge-watch">로그 보기</button></div>'
          : '<select class="ser">' + tplOptions(v.series) + '</select><input type="text" class="dname" value="' + esc(v.design_name || (j.pdf || '').replace(/\.[^.]+$/, '')) + '" placeholder="디자인 이름">'
            + '<div class="acts"><button class="go reg">이 틀의 디자인으로 등록</button><button class="nw">새 틀로 요청</button></div>'));
@@ -332,20 +340,52 @@
           .then(function (r) { if (r.error) { say('bot', '⚠ ' + esc(r.error)); return; } watchForge(j.id); });
       });
     }
-    function watchForge(jid) {   // 진행 로그를 5초마다 — 끝나면 서버 재시작 단추
-      var m = say('bot', '<b>새 틀 만드는 중…</b><pre class="flog" style="white-space:pre-wrap;font-size:11px;max-height:260px;overflow:auto;background:#fff;border:1px solid #e8e6ef;border-radius:8px;padding:8px;margin:8px 0 0"></pre>');
+    // ── 새 틀 만들기: 라운드 — 에이전트가 round.json 을 쓰고 멈추면 카드로 보여주고, 사람의 다음 말이 같은 세션에 이어진다 ──
+    var FORGE = null;   // {jid, name, round} 진행 중인 새 틀 세션. 있으면 프롬프트가 이 세션으로 간다.
+    function setForge(f) {
+      FORGE = f; var b = document.getElementById('ai-cmd');
+      if (f) { b.textContent = '▶ 새 틀 「' + f.name + '」 ' + f.round + '라운드 ▾'; b.classList.add('on'); aiText.placeholder = '답하기 — 예: "맞아, 계속" · "3번 면 머리띠 더 진하게" · "등록해"'; }
+      else { setCmd(''); aiText.placeholder = '원하는 디자인을 설명해 주세요 — 예: 배재고1 블랙북 26-2 중간 완성본, 이 틀로 등록'; }
+    }
+    function roundCard(jid, s) {   // 라운드 결과 카드: 요약 · 완성본↔조판본 나란히 · 물음 · 단추
+      var r = s.round || {}, pairs = (r.compare || []).map(function (c) {
+        var ref = c.ref ? '<img src="/catalog/intake/' + jid + '/' + c.ref + '" title="완성본">' : '<span class="ph">완성본 없음</span>';
+        var out = c.out ? '<img src="/catalog/intake/' + jid + '/' + c.out + '" title="조판본">' : '<span class="ph">아직 조판 전</span>';
+        return '<div class="pair"><div class="two">' + ref + out + '</div><div class="note">' + esc(c.note || '') + '</div></div>';
+      }).join('');
+      var m = say('bot ok', '<div class="v design">' + (r.round || s.round_no || '') + '라운드 · ' + esc({ measure: '실측·구성 판독', code: '코드·시험 조판', fix: '고치기', register: '등록' }[r.stage] || r.stage || '') + '</div>'
+        + md(r.summary || '') + (pairs ? '<div class="cmp">' + pairs + '</div>' : '')
+        + (r.ask ? '<div class="ask">❓ ' + esc(r.ask) + '</div>' : '')
+        + '<div class="acts"><button class="go go-on">맞아, 계속</button><button class="go-reg">등록해</button><button class="go-stop">그만</button></div>');
+      m.querySelector('.go-on').addEventListener('click', function () { forgeSay(jid, '맞아, 계속'); });
+      m.querySelector('.go-reg').addEventListener('click', function () { forgeSay(jid, '등록해'); });
+      m.querySelector('.go-stop').addEventListener('click', function () { setForge(null); say('bot', '새 틀 세션을 닫았습니다. / 불러오기 로 다시 이을 수 있습니다.'); });
+    }
+    function forgeSay(jid, text) {   // 사람의 답 → 같은 세션 다음 라운드
+      say('me', esc(text));
+      fetch('/api/catalog/intake/' + jid + '/forge', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text }) })
+        .then(function (r) { return r.json(); })
+        .then(function (r) { if (r.error) { say('bot', '⚠ ' + esc(r.error)); return; } watchForge(jid); });
+    }
+    function watchForge(jid) {   // 진행 로그를 5초마다 — 라운드가 멈추면 카드, 끝나면 서버 재시작 단추
+      var m = say('bot', '<b>새 틀 만드는 중…</b><pre class="flog" style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:#fff;border:1px solid #e8e6ef;border-radius:8px;padding:8px;margin:8px 0 0"></pre>');
       var pre = m.querySelector('.flog');
       (function poll() {
         fetch('/api/catalog/intake/' + jid + '/forge').then(function (r) { return r.json(); }).then(function (s) {
           pre.textContent = (s.log || '').slice(-3000) || '(시작 대기)'; pre.scrollTop = pre.scrollHeight;
           if (s.status === 'forging') { setTimeout(poll, 5000); return; }
+          m.querySelector('b').textContent = (s.round_no || '') + '라운드 로그';
+          if (s.status === 'forge_paused') { setForge({ jid: jid, name: s.name, round: s.round_no || 1 }); roundCard(jid, s); return; }
           if (s.status === 'forged') {
+            setForge(null);
+            if (s.round) roundCard(jid, s);
             say('bot ok', '✅ 새 틀 「' + esc(s.name) + '」 — main 에 머지됨. 서버를 다시 띄워야 카탈로그에 뜹니다.<div class="acts"><button class="go rs">서버 재시작 → 폴더 열기</button></div>')
               .querySelector('.rs').addEventListener('click', function () {
                 this.disabled = true;
                 fetch('/api/studio/restart', { method: 'POST' }).then(function () { setTimeout(function () { location.href = '/projects?dir=' + (s.dir || 'etc'); }, 4000); });
               });
-          } else { say('bot', '⚠ 중단됨 (rc ' + s.rc + '). 위 로그 마지막 줄을 보세요. catalog/_intake/' + jid + '/forge.log'); }
+          } else { setForge(null); say('bot', '⚠ 중단됨 (rc ' + s.rc + '). 위 로그 마지막 줄을 보세요. catalog/_intake/' + jid + '/forge.log' + (s.session ? '<div class="acts"><button class="again">이어서 다시</button></div>' : ''));
+            var ag = thread.lastChild.querySelector('.again'); if (ag) ag.addEventListener('click', function () { forgeSay(jid, '막힌 데서 이어서 계속'); }); }
         }).catch(function () { setTimeout(poll, 8000); });
       })();
     }
@@ -354,7 +394,7 @@
       fetch('/api/catalog/intake').then(function (r) { return r.json(); }).then(function (j) {
         var items = (j.pending || []).map(function (x) { return { id: x.id, nm: x.pdf, dt: x.date, tg: '결정 대기' }; })
           .concat((j.new_requests || []).map(function (x) { return { id: x.id, nm: x.name || x.pdf, dt: x.date, cls: 'new',
-            tg: { forging: '만드는 중', forged: '만들어짐', forge_failed: '중단' }[x.status] || '새 틀 요청' }; }));
+            tg: { forging: '만드는 중', forge_paused: '답 기다림', forged: '만들어짐', forge_failed: '중단' }[x.status] || '새 틀 요청' }; }));
         m.innerHTML = items.length ? items.map(function (x) { return '<div class="it" data-id="' + x.id + '"><span class="tg ' + (x.cls || '') + '">' + x.tg + '</span><span class="nm">' + esc(x.nm) + '</span><span class="dt">' + (x.dt || '') + '</span></div>'; }).join('') : '불러올 것이 없습니다.';
         m.querySelectorAll('.it').forEach(function (it) { it.addEventListener('click', function () { fetch('/api/catalog/intake/' + it.dataset.id).then(function (r) { return r.json(); }).then(showJudged); }); });
       });
@@ -381,6 +421,7 @@
     }
     aiSend.addEventListener('click', function () {
       var text = aiText.value.trim(), f = aiFile._f;
+      if (!cmd && FORGE) { if (!text) return; aiText.value = ''; forgeSay(FORGE.jid, text); return; }   // 새 틀 세션이 열려 있으면 그쪽으로
       if (!cmd) { askClaude(text, f); return; }
       if (cmd === 'load') { say('me', CMD.load); loadList(); setCmd(''); return; }
       if (cmd === 'search') { if (!text) return; say('me', CMD.search + '<small>' + esc(text) + '</small>'); document.getElementById('q').value = text; filt(); document.querySelector('.rail button[data-tab="tpl"]').click(); setCmd(''); return; }
@@ -401,6 +442,9 @@
         .catch(function (e) { aiSend.disabled = false; wait.textContent = '실패: ' + e; });
     });
 
+    thread.addEventListener('click', function (e) {   // 대조 그림 누르면 가운데 지면에 크게
+      if (e.target.tagName === 'IMG' && e.target.closest('.pair')) { page.className = 'page'; page.innerHTML = '<img src="' + e.target.src + '" alt="">'; document.getElementById('lbl').textContent = e.target.title || ''; document.getElementById('lbl').classList.add('on'); }
+    });
     document.getElementById('m-file').addEventListener('click', function () { alert('파일: 디자인을 고르고 [만들기] 로 책을 만듭니다. 만든 책은 프로젝트에 모입니다.'); });
     document.getElementById('m-size').addEventListener('click', function () { alert('크기(판형·도련)는 디자인 config 가 정합니다. 책을 만든 뒤 내지 작업대에서 바꿉니다.'); });
   </script>
