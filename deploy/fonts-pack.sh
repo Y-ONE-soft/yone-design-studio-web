@@ -4,10 +4,14 @@
 #   deploy/fonts-pack.sh
 #   fly ssh sftp put fonts.tgz /data/fonts.tgz
 #   fly ssh console -C "sh -c 'tar xzf /data/fonts.tgz -C /data/fonts && rm /data/fonts.tgz && ls /data/fonts | wc -l'"
+#
+# 서체 목록의 출처 둘: ① 디자인 config 의 `fonts` ② 계열 코드가 직접 적은 `FONTS`
+# (core/render_vivlio/series/<계열>/render.py — 워크북·포켓북). ②를 빼먹어 Fly 에서
+# 워크북 조판이 "[서체 없음] YeongdoOTF.otf …" 로 죽었다(2026-09-18 실측).
 set -e
 cd "$(dirname "$0")/.."
 python3 - <<'PY'
-import glob, json, os, tarfile
+import glob, json, os, re, tarfile
 want = {}
 for p in glob.glob("catalog/**/config.json", recursive=True) + glob.glob("docs/인계_20260914/책별_설정/**/config.json", recursive=True):
     try: c = json.load(open(p, encoding="utf-8"))
@@ -15,6 +19,9 @@ for p in glob.glob("catalog/**/config.json", recursive=True) + glob.glob("docs/�
     for f in c.get("fonts") or []:
         fn = f.get("file") if isinstance(f, dict) else f
         if fn: want[fn] = True
+for p in glob.glob("core/render_vivlio/series/*/render.py") + glob.glob("core/render_vivlio/series/*/__init__.py"):
+    for fn in re.findall(r'"([^"/]+\.(?:otf|ttf|OTF|TTF))"', open(p, encoding="utf-8").read()):
+        want[fn] = True
 dirs = [os.path.expanduser("~/Library/Fonts"), "/Library/Fonts", "/System/Library/Fonts",
         "/System/Library/Fonts/Supplemental"]          # stage.FONT_DIRS 와 같은 순서 + 맥 보조 서체
 found = {}
