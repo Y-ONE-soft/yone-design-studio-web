@@ -324,7 +324,8 @@ def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
 #   pair  : 상 칸 + 하 칸, 지문 1개 = 한 면                — zones[0]·zones[1]
 #   flow  : 흘림 — 지문마다 이어 붙는다                     — zones[0]
 #   s3    : 2단 흘림(실전)                                 — zones[0]
-FRAME_ZONES = {"a1": 1, "sheet": 1, "pair": 2, "flow": 1, "s3": 1}
+#   free  : 자유 배치 — 칸 대신 블록마다 x·y·w(mm, 판면 기준 0~168 × 0~260)   — zones[0] 의 항목에 x,y,w
+FRAME_ZONES = {"a1": 1, "sheet": 1, "pair": 2, "flow": 1, "s3": 1, "free": 1}
 STEP_TAG = {1: "FRAME", 2: "BUILD UP", 3: "TEST"}
 
 
@@ -441,6 +442,21 @@ def pages_html(cfg, data, pages, n=2, log=print):
                 if len(zones) > 1 and zones[1]:
                     zs.append(R.zone(_zone_html(zones[1], gi, data, step, key, role_steps), "bottom"))
                 body.append(R.page_block(zs, step=key))
+        elif frame == "free":
+            for gi in range(count):
+                inner = []
+                for sp in zones[0]:
+                    x = max(0.0, min(float(sp.get("x") or 0), 168.0))
+                    y = max(0.0, min(float(sp.get("y") or 0), 260.0))
+                    w = max(20.0, min(float(sp.get("w") or 168), 168.0 - x))
+                    if sp.get("block") == "pnum":
+                        html_s = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+                    else:
+                        html_s = _zone_html([sp], gi, data, step, key, role_steps)
+                    if html_s:
+                        inner.append(f'<div class="free" style="position:absolute;left:{x:.1f}mm;top:{y:.1f}mm;'
+                                     f'width:{w:.1f}mm">{html_s}</div>')
+                body.append(R.page_block(["".join(inner) + '<span class="zend"></span>'], step=key))
         elif frame == "sheet":
             for gi in range(count):
                 q_idx, (mark, tight) = R._beg()

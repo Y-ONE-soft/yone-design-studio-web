@@ -141,6 +141,33 @@
   .zone li button:hover { background: var(--pp-bg); color: var(--pp); }
   .blk .addto { display: inline-block; margin-top: 6px; background: var(--pp-bg); color: var(--pp); border: 0; border-radius: 6px; padding: 4px 9px; font-size: 11.5px; cursor: pointer; font-weight: 600; }
   .blk .addto:hover { background: var(--pp); color: #fff; }
+  /* 지면 캔버스 — 실제 조판 면 위에 블록을 끌어 놓는다 */
+  .canvas { flex: 1; overflow: auto; background: #ecebf3; padding: 18px; display: none; }
+  .canvas.on { display: block; }
+  .cwrap { display: flex; gap: 18px; align-items: flex-start; }
+  .cpage { position: relative; background: #fff; box-shadow: 0 4px 18px rgba(30,20,60,.18); flex: none; overflow: hidden; }
+  .cpage img.bg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+  .cpage .trim { position: absolute; border: 1px dashed rgba(125,42,232,.35); pointer-events: none; }
+  .cpage .content { position: absolute; }
+  .cpage .content.over { outline: 2px dashed var(--pp); outline-offset: 2px; }
+  .czone { position: absolute; left: 0; width: 100%; border: 1px dashed rgba(125,42,232,.35); border-radius: 3px; box-sizing: border-box; }
+  .czone.on { border-color: var(--pp); background: rgba(125,42,232,.04); }
+  .czone .zl { position: absolute; right: 3px; top: 2px; font-size: 9px; color: rgba(125,42,232,.7); }
+  .citem { position: absolute; box-sizing: border-box; border: 1.5px solid rgba(125,42,232,.55); background: rgba(255,255,255,.35); border-radius: 3px; cursor: grab; overflow: hidden; }
+  .citem:hover { border-color: var(--pp); background: rgba(125,42,232,.06); }
+  .citem.on { border-color: var(--pp); box-shadow: 0 0 0 2px rgba(125,42,232,.25); background: rgba(125,42,232,.05); }
+  .citem.drag { opacity: .5; }
+  .citem .lab { position: absolute; left: 0; top: 0; background: var(--pp); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 0 0 4px 0; white-space: nowrap; pointer-events: none; }
+  .citem img { width: 100%; display: block; opacity: .25; pointer-events: none; }
+  .cpage.hasbg .citem img { display: none; }
+  .cside { width: 230px; flex: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 12.5px; }
+  .cside h4 { margin: 0 0 6px; font-size: 12px; color: var(--mute); font-weight: 600; }
+  .cside .kv { display: grid; grid-template-columns: 44px 1fr; gap: 5px 6px; align-items: center; font-size: 12px; }
+  .cside .kv input, .cside .kv select { padding: 4px 6px; font-size: 12px; }
+  .cside .st { color: var(--mute); font-size: 11.5px; margin-top: 8px; line-height: 1.5; }
+  .cside .btn { margin-top: 8px; }
+  .cbusy { position: absolute; left: 0; right: 0; top: 0; padding: 4px 8px; background: rgba(125,42,232,.85); color: #fff; font-size: 11px; display: none; }
+  .cbusy.on { display: block; }
   /* 책 만들기 판 */
   .mkbook { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 6px; }
   .dz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
@@ -275,6 +302,7 @@
       <div class="frpick" id="frpick">
         <button data-frame="sheet">한 칸 (지문 1)</button><button data-frame="a1">상·하 두 칸 (지문 2)</button>
         <button data-frame="pair">상 지문 · 하 문제</button><button data-frame="flow">흘림</button><button data-frame="s3">2단 흘림 (실전)</button>
+        <button data-frame="free" style="border-color:var(--pp);color:var(--pp)">자유 배치 — 블록을 아무 데나</button>
       </div>
       <div id="pg-edit" hidden>
         <div class="pgset">
@@ -374,6 +402,7 @@
     <div class="bar">
       <button id="mode-board" class="on" data-mode="board">지면 순서</button>
       <button id="mode-render" data-mode="render">조판 미리보기</button>
+      <button id="mode-canvas" title="지면 캔버스로">지면 캔버스</button>
       <span id="what">—</span>
       <span class="sp"></span>
       <span id="msg"></span>
@@ -381,6 +410,34 @@
       <select id="sample">{% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}</select>
     </div>
     <div class="board" id="board"><div class="pgs" id="board-pgs"></div></div>
+    <div class="canvas" id="canvas">
+      <div class="cwrap">
+        <div>
+          <div class="cpage" id="cpage">
+            <img class="bg" id="cbg" alt="">
+            <div class="trim" id="ctrim"></div>
+            <div class="content" id="ccontent"></div>
+            <div class="cbusy" id="cbusy">조판 중…</div>
+          </div>
+        </div>
+        <div class="cside">
+          <h4 id="cs-title">지면</h4>
+          <div class="note" id="cs-hint" style="margin:0 0 8px">왼쪽 블록을 지면 위로 끌어다 놓는다. 놓인 블록은 끌어서 옮기고, 누르면 아래에서 원고 역할·폭을 바꾼다.</div>
+          <div id="cs-item" hidden>
+            <h4>고른 블록</h4>
+            <div class="kv">
+              <span>블록</span><b id="cs-name"></b>
+              <span>원고</span><select id="cs-role"></select>
+              <span>폭</span><select id="cs-w"><option value="168">전체 (168mm)</option><option value="82">반 (82mm)</option><option value="110">2/3 (110mm)</option><option value="56">1/3 (56mm)</option></select>
+              <span>위치</span><span id="cs-xy" style="color:var(--mute);font-size:11px"></span>
+            </div>
+            <button class="btn sub sm" id="cs-del">이 블록 빼기</button>
+          </div>
+          <div class="st" id="cs-state"></div>
+          <button class="btn sm" id="cs-rerender">지금 조판해서 배경 갱신</button>
+        </div>
+      </div>
+    </div>
     <pre id="log"></pre>
   </section>
 </div>
@@ -574,8 +631,9 @@
     $('mode-board').classList.toggle('on', m === 'board'); $('mode-render').classList.toggle('on', m === 'render');
     preview();
   }
-  $('mode-board').onclick = function () { setMode('board'); };
-  $('mode-render').onclick = function () { setMode('render'); };
+  $('mode-board').onclick = function () { canvasOn(false); setMode('board'); };
+  $('mode-render').onclick = function () { canvasOn(false); setMode('render'); };
+  $('mode-canvas').onclick = function () { if (cvMode !== 'pages') setCv('pages'); canvasOn(true); drawCanvas(); };
   $('preview').onclick = function () { rendered = null; preview(); };
   $('sample').onchange = function () { rendered = null; preview(); };
 
@@ -620,13 +678,14 @@
   var PAGES = [], curPg = -1, curZone = 0, pagesets = {{ pagesets|tojson }}, cvMode = 'comp';
   var BLOCKS = {};
   document.querySelectorAll('.blk[data-block]').forEach(function (b) { BLOCKS[b.dataset.block] = { name: b.dataset.name, roles: (b.dataset.roles || '').split(',').filter(Boolean) }; });
-  var FRAME_ZONES = { a1: ['칸 (지문 2개에 되풀이)'], sheet: ['칸'], pair: ['상 칸 — 지문', '하 칸 — 문제'], flow: ['흘림 칸'], s3: ['2단 흘림 칸'] };
-  var FRAME_NM = { a1: '상·하 두 칸', sheet: '한 칸', pair: '상 지문 · 하 문제', flow: '흘림', s3: '2단 흘림' };
+  var FRAME_ZONES = { a1: ['칸 (지문 2개에 되풀이)'], sheet: ['칸'], pair: ['상 칸 — 지문', '하 칸 — 문제'], flow: ['흘림 칸'], s3: ['2단 흘림 칸'], free: ['자유 배치'] };
+  var FRAME_NM = { a1: '상·하 두 칸', sheet: '한 칸', pair: '상 지문 · 하 문제', flow: '흘림', s3: '2단 흘림', free: '자유 배치' };
   function frameIcon(fr) {
     if (fr === 'a1') return '<div class="fr"><i></i><i></i></div>';
     if (fr === 'pair') return '<div class="fr"><i style="flex:2"></i><i></i></div>';
     if (fr === 's3') return '<div class="fr s3"><i></i><i></i></div>';
     if (fr === 'flow') return '<div class="fr"><i style="opacity:.5"></i></div>';
+    if (fr === 'free') return '<div class="fr" style="border-style:dashed"><i style="flex:0 0 30%;margin:2px 30% 0 0"></i><i style="flex:0 0 20%;margin-left:40%"></i></div>';
     return '<div class="fr"><i></i></div>';
   }
   function drawPages() {
@@ -644,8 +703,9 @@
     if (i < 0) return;
     var pg = PAGES[i];
     $('pg-step').value = pg.step || 1; $('pg-logo').value = pg.logo || ''; $('pg-title').value = pg.title || '';
-    $('pg-frame-note').textContent = FRAME_NM[pg.frame] + ' 틀';
-    drawZones();
+    $('pg-frame-note').textContent = (FRAME_NM[pg.frame] || '자유 배치') + ' 틀';
+    curItem = -1; cBgKey = '';
+    drawZones(); canvasOn(true); drawCanvas();
   }
   function drawZones() {
     var pg = PAGES[curPg], box = $('zones'); box.innerHTML = '';
@@ -663,24 +723,27 @@
         var opts = b.roles.map(function (r) { return '<option value="' + r + '"' + (sp.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('');
         li.innerHTML = '<span class="bn">' + b.name + '</span>' + (b.roles.length ? '<select title="원고 역할">' + opts + '</select>' : '<span class="note" style="margin:0">원고 없음</span>') +
           '<button class="up">▲</button><button class="dn">▼</button><button class="x">✕</button>';
-        var sel = li.querySelector('select'); if (sel) sel.onchange = function () { sp.role = sel.value; };
-        li.querySelector('.up').onclick = function () { if (si > 0) { pg.zones[zi].splice(si - 1, 0, pg.zones[zi].splice(si, 1)[0]); drawZones(); } };
-        li.querySelector('.dn').onclick = function () { if (si < pg.zones[zi].length - 1) { pg.zones[zi].splice(si + 1, 0, pg.zones[zi].splice(si, 1)[0]); drawZones(); } };
-        li.querySelector('.x').onclick = function () { pg.zones[zi].splice(si, 1); drawZones(); };
+        var sel = li.querySelector('select'); if (sel) sel.onchange = function () { sp.role = sel.value; drawCanvas(); scheduleBg(); };
+        li.querySelector('.up').onclick = function () { if (si > 0) { pg.zones[zi].splice(si - 1, 0, pg.zones[zi].splice(si, 1)[0]); afterCanvasChange(); } };
+        li.querySelector('.dn').onclick = function () { if (si < pg.zones[zi].length - 1) { pg.zones[zi].splice(si + 1, 0, pg.zones[zi].splice(si, 1)[0]); afterCanvasChange(); } };
+        li.querySelector('.x').onclick = function () { pg.zones[zi].splice(si, 1); curItem = -1; afterCanvasChange(); };
         ul.appendChild(li);
       });
-      z.onclick = function (e) { if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') { curZone = zi; drawZones(); } };
       z.addEventListener('dragover', function (e) { e.preventDefault(); z.classList.add('over'); });
       z.addEventListener('dragleave', function () { z.classList.remove('over'); });
       z.addEventListener('drop', function (e) { e.preventDefault(); z.classList.remove('over'); var id = e.dataTransfer.getData('text/block'); if (id) { curZone = zi; addBlock(id); } });
+      z.onclick = function (e) { if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') { curZone = zi; drawZones(); drawCanvas(); } };
       box.appendChild(z);
     });
   }
   function addBlock(id) {
     if (curPg < 0) { msg('먼저 지면을 추가할 것'); setCv('pages'); return; }
     var b = BLOCKS[id]; if (!b) return;
-    PAGES[curPg].zones[curZone].push({ block: id, role: b.roles[0] || '' });
-    drawZones();
+    var pg = PAGES[curPg], it = { block: id, role: b.roles[0] || '' };
+    if (pg.frame === 'free') { var n0 = pg.zones[0].length; it.x = 0; it.y = Math.min(240, 4 + n0 * 40); it.w = 168; }
+    pg.zones[curZone].push(it);
+    curItem = pg.zones[curZone].length - 1; curItemZone = curZone;
+    afterCanvasChange();
   }
   $('pg-add').onclick = function () { $('frpick').classList.toggle('on'); };
   document.querySelectorAll('#frpick button').forEach(function (b) {
@@ -700,6 +763,7 @@
   function pagesBody() { return { b: $('sample').value, pages: PAGES, n: parseInt($('pg-n').value || '1', 10) }; }
   function renderPages() {
     if (!PAGES.length) { msg('지면이 없다'); return; }
+    canvasOn(false);
     rendered = null; setMode('render'); drawRendered(); msg('지면 조판 중…');
     api('/api/make/pages/preview', pagesBody()).then(function (d) {
       if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); rendered = []; drawRendered(); return; }
@@ -733,9 +797,146 @@
     cvMode = m;
     document.querySelectorAll('.cvtabs button').forEach(function (x) { x.classList.toggle('on', x.dataset.cv === m); });
     $('cv-comp').hidden = m !== 'comp'; $('cv-pages').hidden = m !== 'pages';
-    if (m === 'pages') { document.querySelector('.views button[data-view=blk]').click(); }
+    canvasOn(m === 'pages');
+    if (m === 'pages') { document.querySelector('.views button[data-view=blk]').click(); drawCanvas(); }
   }
   document.querySelectorAll('.cvtabs button').forEach(function (b) { b.onclick = function () { setCv(b.dataset.cv); }; });
+
+  // ── 지면 캔버스: 실제 조판 면(PNG) 위에 블록을 끌어 놓는다 ──
+  var S = 2.0;                                           // px / mm
+  var PAGE_W = 216, PAGE_H = 303, BLEED = 3;             // 조판 PNG 는 도련 포함
+  var CX = 3 + 23, CY = 3 + 26.5, CW = 168, CH = 260;     // 판면(왼쪽 면 기준) — 도련 3mm 더한 좌표
+  var ZONES_MM = { a1: [[1, 128], [130, 130]], pair: [[1, 128], [130, 130]], sheet: [[0, 260]], flow: [[0, 260]], s3: [[0, 260]], free: [[0, 260]] };
+  var THUMB_AR = {};                                     // 블록 썸네일 가로/세로 비
+  document.querySelectorAll('.blk[data-block] img').forEach(function (im) {
+    var id = im.parentNode.dataset.block, done = function () { if (im.naturalWidth) THUMB_AR[id] = im.naturalHeight / im.naturalWidth; };
+    if (im.complete) done(); else im.onload = done;
+  });
+  var curItem = -1, curItemZone = 0, cTimer = null, cBgKey = '';
+  function canvasOn(on) { $('canvas').classList.toggle('on', on); $('board').style.display = on ? 'none' : ''; }
+  function estH(id, wmm) { return Math.max(8, Math.min(120, (THUMB_AR[id] || 0.3) * wmm)); }
+  function pageOf() { return curPg >= 0 ? PAGES[curPg] : null; }
+  function drawCanvas() {
+    var pg = pageOf(), cp = $('cpage'), cc = $('ccontent');
+    cp.style.width = (PAGE_W * S) + 'px'; cp.style.height = (PAGE_H * S) + 'px';
+    $('ctrim').style.left = (BLEED * S) + 'px'; $('ctrim').style.top = (BLEED * S) + 'px';
+    $('ctrim').style.width = ((PAGE_W - 2 * BLEED) * S) + 'px'; $('ctrim').style.height = ((PAGE_H - 2 * BLEED) * S) + 'px';
+    cc.style.left = (CX * S) + 'px'; cc.style.top = (CY * S) + 'px'; cc.style.width = (CW * S) + 'px'; cc.style.height = (CH * S) + 'px';
+    cc.innerHTML = '';
+    if (!pg) { $('cs-title').textContent = '지면 없음 — + 로 추가'; $('cs-item').hidden = true; cp.classList.remove('hasbg'); $('cbg').removeAttribute('src'); return; }
+    $('cs-title').textContent = (curPg + 1) + ' · ' + (pg.title || FRAME_NM[pg.frame] || pg.frame) + ' (' + (FRAME_NM[pg.frame] || '자유 배치') + ')';
+    var zs = ZONES_MM[pg.frame] || [[0, 260]];
+    if (pg.frame === 'free') {
+      (pg.zones[0] || []).forEach(function (sp, si) {
+        var w = sp.w || 168, x = sp.x || 0, y = sp.y || 0, h = estH(sp.block, w);
+        var el = document.createElement('div'); el.className = 'citem' + (si === curItem ? ' on' : ''); el.dataset.si = si;
+        el.style.left = (x * S) + 'px'; el.style.top = (y * S) + 'px'; el.style.width = (w * S) + 'px'; el.style.height = (h * S) + 'px';
+        el.innerHTML = '<span class="lab">' + ((BLOCKS[sp.block] || {}).name || sp.block) + (sp.role ? ' · ' + sp.role : '') + '</span><img src="/make/blocks/' + sp.block + '.png" alt="">';
+        el.addEventListener('mousedown', function (e) { startMove(e, sp, si, el); });
+        cc.appendChild(el);
+      });
+    } else {
+      zs.forEach(function (z, zi) {
+        var zd = document.createElement('div'); zd.className = 'czone' + (zi === curZone ? ' on' : ''); zd.dataset.zi = zi;
+        zd.style.top = (z[0] * S) + 'px'; zd.style.height = (z[1] * S) + 'px';
+        zd.innerHTML = '<span class="zl">' + (FRAME_ZONES[pg.frame] || ['칸'])[zi] + '</span>';
+        var y = 4;
+        (pg.zones[zi] || []).forEach(function (sp, si) {
+          var h = estH(sp.block, 168);
+          var el = document.createElement('div'); el.className = 'citem' + (zi === curItemZone && si === curItem ? ' on' : ''); el.dataset.si = si; el.dataset.zi = zi;
+          el.style.left = '0'; el.style.top = (y * S) + 'px'; el.style.width = '100%'; el.style.height = (h * S) + 'px';
+          el.innerHTML = '<span class="lab">' + ((BLOCKS[sp.block] || {}).name || sp.block) + (sp.role ? ' · ' + sp.role : '') + '</span><img src="/make/blocks/' + sp.block + '.png" alt="">';
+          el.draggable = true;
+          el.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/citem', zi + ':' + si); el.classList.add('drag'); });
+          el.addEventListener('dragend', function () { el.classList.remove('drag'); });
+          el.onclick = function (e) { e.stopPropagation(); curItem = si; curItemZone = zi; curZone = zi; drawCanvas(); drawZones(); };
+          zd.appendChild(el);
+          y += h + 2;
+        });
+        zd.addEventListener('dragover', function (e) { e.preventDefault(); zd.classList.add('on'); });
+        zd.addEventListener('dragleave', function () { zd.classList.remove('on'); });
+        zd.addEventListener('drop', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var id = e.dataTransfer.getData('text/block'), mv = e.dataTransfer.getData('text/citem');
+          if (id) { curZone = zi; pg.zones[zi].push({ block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '' }); curItem = pg.zones[zi].length - 1; curItemZone = zi; }
+          else if (mv) { var a = mv.split(':'), fz = +a[0], fi = +a[1]; var it = pg.zones[fz].splice(fi, 1)[0]; pg.zones[zi].push(it); curItem = pg.zones[zi].length - 1; curItemZone = zi; curZone = zi; }
+          afterCanvasChange();
+        });
+        zd.onclick = function () { curZone = zi; curItem = -1; drawCanvas(); drawZones(); };
+        cc.appendChild(zd);
+      });
+    }
+    drawSide();
+    if (cBgKey !== JSON.stringify([curPg, pg.frame])) { cBgKey = JSON.stringify([curPg, pg.frame]); scheduleBg(); }
+  }
+  function drawSide() {
+    var pg = pageOf(); if (!pg) return;
+    var zi = pg.frame === 'free' ? 0 : curItemZone;
+    var sp = curItem >= 0 && pg.zones[zi] ? pg.zones[zi][curItem] : null;
+    $('cs-item').hidden = !sp;
+    if (!sp) { $('cs-state').textContent = '블록 ' + pg.zones.reduce(function (a, z) { return a + z.length; }, 0) + '개'; return; }
+    var b = BLOCKS[sp.block] || { name: sp.block, roles: [] };
+    $('cs-name').textContent = b.name;
+    var rs = $('cs-role'); rs.innerHTML = b.roles.map(function (r) { return '<option value="' + r + '"' + (sp.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') || '<option value="">(원고 없음)</option>';
+    rs.onchange = function () { sp.role = rs.value; afterCanvasChange(); };
+    var ws = $('cs-w'); ws.parentNode.style.display = ''; ws.value = String(Math.round(sp.w || 168)); if (ws.value !== String(Math.round(sp.w || 168))) ws.value = '168';
+    ws.onchange = function () { sp.w = parseFloat(ws.value); afterCanvasChange(); };
+    ws.disabled = pg.frame !== 'free';
+    $('cs-xy').textContent = pg.frame === 'free' ? ('x ' + Math.round(sp.x || 0) + 'mm · y ' + Math.round(sp.y || 0) + 'mm') : ((FRAME_ZONES[pg.frame] || ['칸'])[zi] + ' · ' + (curItem + 1) + '번째');
+    $('cs-del').onclick = function () { pg.zones[zi].splice(curItem, 1); curItem = -1; afterCanvasChange(); };
+    $('cs-state').textContent = '';
+  }
+  function afterCanvasChange() { drawZones(); drawCanvas(); scheduleBg(); }
+  function scheduleBg() { clearTimeout(cTimer); cTimer = setTimeout(renderBg, 900); }
+  function renderBg() {
+    var pg = pageOf(); if (!pg) return;
+    var has = pg.zones.some(function (z) { return z.length; });
+    if (!has) { $('cpage').classList.remove('hasbg'); $('cbg').removeAttribute('src'); return; }
+    $('cbusy').classList.add('on');
+    var body = { b: $('sample').value, pages: [pg], n: 1 };
+    api('/api/make/pages/preview', body).then(function (d) {
+      $('cbusy').classList.remove('on');
+      if (d.error || !(d.pages || []).length) { msg('✗ ' + (d.error || '조판 면이 없다').slice(0, 160)); log(d.error || ''); return; }
+      $('cbg').src = d.pages[0]; $('cpage').classList.add('hasbg'); msg('');
+      $('cs-state').textContent = '배경 = 실제 조판 (지문 1개 기준, 면 ' + d.pages.length + ')';
+    }).catch(function () { $('cbusy').classList.remove('on'); });
+  }
+  $('cs-rerender').onclick = renderBg;
+  // 자유 배치: 끌어서 옮기기
+  function startMove(e, sp, si, el) {
+    e.preventDefault();
+    var pg = pageOf(); curItem = si; curItemZone = 0;
+    var sx = e.clientX, sy = e.clientY, ox = sp.x || 0, oy = sp.y || 0;
+    document.querySelectorAll('.citem').forEach(function (x) { x.classList.toggle('on', x === el); });
+    function mv(ev) {
+      var nx = Math.max(0, Math.min(168 - (sp.w || 168), ox + (ev.clientX - sx) / S)), ny = Math.max(0, Math.min(255, oy + (ev.clientY - sy) / S));
+      sp.x = Math.round(nx); sp.y = Math.round(ny);
+      el.style.left = (sp.x * S) + 'px'; el.style.top = (sp.y * S) + 'px';
+      $('cs-xy').textContent = 'x ' + sp.x + 'mm · y ' + sp.y + 'mm';
+    }
+    function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); drawSide(); scheduleBg(); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  }
+  // 라이브러리 → 캔버스 놓기 (자유 배치는 놓은 자리에)
+  (function () {
+    var cc = $('ccontent');
+    cc.addEventListener('dragover', function (e) { e.preventDefault(); cc.classList.add('over'); });
+    cc.addEventListener('dragleave', function () { cc.classList.remove('over'); });
+    cc.addEventListener('drop', function (e) {
+      cc.classList.remove('over');
+      var pg = pageOf(); if (!pg) return;
+      var id = e.dataTransfer.getData('text/block'); if (!id) return;
+      if (pg.frame !== 'free') return;                 // 칸 틀은 칸이 받는다
+      e.preventDefault();
+      var r = cc.getBoundingClientRect();
+      var x = Math.max(0, Math.min(168, (e.clientX - r.left) / S)), y = Math.max(0, Math.min(255, (e.clientY - r.top) / S));
+      var w = 168; if (x > 84) { w = Math.max(20, 168 - Math.round(x)); }
+      pg.zones[0].push({ block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '', x: Math.round(x), y: Math.round(y), w: w });
+      curItem = pg.zones[0].length - 1; curItemZone = 0;
+      afterCanvasChange();
+    });
+    $('cpage').onclick = function () { curItem = -1; drawCanvas(); };
+  })();
 
   // ── 책 만들기 ──
   $('mkbook-open').onclick = function () { var b = $('mkbook'); b.hidden = !b.hidden; if (!b.hidden) b.scrollIntoView({ behavior: 'smooth' }); };
