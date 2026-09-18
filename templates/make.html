@@ -114,10 +114,13 @@
   .files { list-style: none; margin: 0; padding: 0; font-size: 12px; }
   .files li { padding: 3px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* 스토리보드 — 지면 순서 */
-  .board { position: absolute; inset: 41px 0 0 0; overflow: auto; background: #ecebf3; padding: 16px; display: none; }
-  .board.on { display: block; }
+  /* 무대 — 늘 세로 스크롤. 지면 순서(기준 그림) / 조판 미리보기(실제 조판 면) */
+  .board { flex: 1; overflow: auto; background: #ecebf3; padding: 16px; }
   .board .pgs { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .board.big .p { width: min(46%, 520px); }
+  .board.big .p img { width: 100%; }
+  .board .wait { padding: 30px; text-align: center; color: var(--mute); font-size: 13px; }
+  .bar button.on { background: var(--pp-bg); color: var(--pp); font-weight: 600; }
   .board .p { width: 150px; text-align: center; font-size: 11px; color: #3c4043; }
   .board .p img { width: 150px; aspect-ratio: 210 / 297; object-fit: cover; object-position: top; background: #fff; border: 1px solid #d8d3ea; border-radius: 4px; box-shadow: 0 2px 6px rgba(30,20,60,.08); display: block; margin-bottom: 4px; }
   .board .p .no { color: var(--mute); font-size: 10px; }
@@ -134,7 +137,6 @@
   .bar #msg { color: #b26a00; }
   .bar #pg { min-width: 56px; text-align: center; color: var(--mute); }
   .bar select { width: auto; padding: 4px 8px; font-size: 12px; }
-  iframe.frame { flex: 1; width: 100%; border: 0; background: #ecebf3; }
   pre#log { max-height: 120px; overflow: auto; background: #fff; color: var(--mute); font-size: 11px; margin: 0; padding: 8px 14px; border-top: 1px solid var(--line); white-space: pre-wrap; }
 </style>
 
@@ -272,16 +274,14 @@
   <!-- 오른쪽: 미리보기 -->
   <section class="stage">
     <div class="bar">
+      <button id="mode-board" class="on" data-mode="board">지면 순서</button>
+      <button id="mode-render" data-mode="render">조판 미리보기</button>
       <span id="what">—</span>
       <span class="sp"></span>
       <span id="msg"></span>
       <label style="color:var(--mute)">견본 원고</label>
       <select id="sample">{% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}</select>
-      <button id="prev">‹</button><span id="pg">–</span><button id="next">›</button>
-      <button id="spread">펼침</button>
-      <button id="mode" title="조판 미리보기 ↔ 지면 순서">지면 순서</button>
     </div>
-    <iframe class="frame" id="frame" src="/book-studio/frame"></iframe>
     <div class="board" id="board"><div class="pgs" id="board-pgs"></div></div>
     <pre id="log"></pre>
   </section>
@@ -294,68 +294,17 @@
   var $ = function (id) { return document.getElementById(id); };
   var PARTS = {};
   document.querySelectorAll('.lib .card').forEach(function (c) { PARTS[c.dataset.id] = c.dataset; });
-  var mode = 'auto';                                     // auto | viewer | board
   var comps = {{ compositions|tojson }};
-  var viewer = null, V = null, spread = false, curDoc = '', timer = null, madeKey = '', madeBid = '';
+  var timer = null, madeKey = '', madeBid = '';
 
-  function fwin() { var f = $('frame'); return f && f.contentWindow; }
-  function fdoc() { var f = $('frame'); return f && f.contentDocument; }
-  function stageEl() { var d = fdoc(); return d && d.getElementById('viv'); }
-  function whenFrame(cb, tries) {
-    tries = tries || 0;
-    var d = fdoc(), w = fwin();
-    if (d && d.readyState === 'complete' && w && w.VivlioCore && stageEl()) return cb();
-    if (tries > 100) { msg('✗ 지면 문서를 못 열었다'); return; }
-    setTimeout(function () { whenFrame(cb, tries + 1); }, 60);
-  }
   function msg(t) { $('msg').textContent = t || ''; }
   function log(t) { $('log').textContent = t || ''; }
   function api(u, body, method) {
     return fetch(u, body ? { method: method || 'POST', headers: { 'Content-Type': 'application/json' },
                              body: JSON.stringify(body) } : undefined).then(function (r) { return r.json(); });
   }
-  function lightFrame() { try { fdoc().body.style.background = '#ecebf3'; } catch (e) {} }
-
-  // ── 지면 ──
-  function ensureViewer() {
-    if (viewer) return viewer;
-    V = fwin() && fwin().VivlioCore;
-    if (!V) return null;
-    lightFrame();
-    // ⚠ 모든 면을 미리 그리면(renderAllPages) 다 그릴 때까지 다음 면으로 못 넘어가고 'loaded' 도 늦다
-    //   (작업대에서 겪은 것). 보이는 면만 그리고 넘길 때 그린다 — 넘김이 항상 된다.
-    viewer = new V.CoreViewer({ viewportElement: stageEl() }, { renderAllPages: false, pageViewMode: 'singlePage', fitToScreen: true });
-    viewer.addListener('nav', function (p) {
-      var pp = null; try { pp = viewer.adaptViewer_.pagePosition; } catch (e) {}
-      var cur = (pp && pp.pageIndex != null) ? pp.pageIndex + 1 : (p && p.epage != null ? Math.round(p.epage) + 1 : '?');
-      // 다 그리기 전의 전체 면수는 어림값이라(작업대에서 실측) 다 그린 뒤에만 보인다
-      $('pg').textContent = cur + (p && p.epageCount && viewer.readyState === 'complete' ? ' / ' + p.epageCount : '');
-    });
-    viewer.addListener('readystatechange', function () {
-      if (viewer.readyState === 'interactive' || viewer.readyState === 'complete') {
-        msg('');
-        // 첫 면은 빈 간지 자리 — 처음 열릴 때 한 번만 2면으로. 사용자가 이미 넘겼으면 건드리지 않는다
-        if (!navigated && !jumped) { jumped = true; setTimeout(function () { try { if (!navigated) viewer.navigateToPage(V.Navigation.NEXT); } catch (e) {} }, 50); }
-      }
-    });
-    viewer.addListener('error', function (p) { msg('✗ ' + JSON.stringify(p && p.content).slice(0, 160)); });
-    return viewer;
-  }
-  var navigated = false, jumped = false;
-  function show(doc, what) {
-    curDoc = doc; if (what) $('what').textContent = what;
-    whenFrame(function () {
-      ensureViewer();
-      if (!viewer) { msg('조판 엔진을 불러오지 못했다'); return; }
-      msg('지면 앉히는 중…'); navigated = false; jumped = false;
-      viewer.loadDocument({ url: doc + (doc.indexOf('?') < 0 ? '?' : '&') + '_=' + Date.now() }, {},
-        { renderAllPages: false, pageViewMode: spread ? 'spread' : 'singlePage', fitToScreen: true });
-    });
-  }
-  $('prev').onclick = function () { if (viewer) { navigated = true; viewer.navigateToPage(V.Navigation.PREVIOUS); } };
-  $('next').onclick = function () { if (viewer) { navigated = true; viewer.navigateToPage(V.Navigation.NEXT); } };
-  $('spread').onclick = function () { spread = !spread; if (curDoc) show(curDoc); };
-  whenFrame(lightFrame);
+  var mode = 'board';                                    // board(지면 순서) | render(조판 미리보기) — 사용자가 누를 때만 바뀐다
+  var rendered = null;                                   // 마지막 조판 면 그림 목록
 
   // ── 구성 상태 ──
   function items() {
@@ -474,9 +423,10 @@
     else if (mv) { var li = seq.querySelector('li[data-id="' + mv + '"]'); if (li && at && at !== li) { seq.insertBefore(li, at); changed(); } else if (li && !at) { seq.appendChild(li); changed(); } }
   });
 
-  // ── 미리보기: 지면 순서(스토리보드) / 조판 ──
+  // ── 무대: 지면 순서(기준 그림, 즉시) / 조판 미리보기(실제 조판 면, 몇 초) — 둘 다 세로 스크롤 ──
   function board() {
     var its = items(), box = $('board-pgs'); box.innerHTML = '';
+    $('board').classList.remove('big');
     var no = 0, seen = {};
     its.forEach(function (it) {
       var p = PARTS[it.id] || {};
@@ -492,25 +442,44 @@
       box.appendChild(d);
     });
     if (!its.length) box.innerHTML = '<div class="note">부품을 담으면 지면 순서가 여기 놓인다.</div>';
+    $('what').textContent = its.length ? '지면 순서 · ' + its.length + '개 블록' : '—';
   }
-  function showBoard(on) { $('board').classList.toggle('on', on); $('mode').textContent = on ? '조판 미리보기' : '지면 순서'; }
-  function preview() {
+  function drawRendered() {
+    var box = $('board-pgs'); box.innerHTML = '';
+    $('board').classList.add('big');
+    if (!rendered) { box.innerHTML = '<div class="wait">조판 중… 몇 초 걸린다</div>'; return; }
+    rendered.forEach(function (u, i) {
+      var d = document.createElement('div'); d.className = 'p';
+      d.innerHTML = '<img src="' + u + '" alt="" loading="lazy"><div class="no">' + (i + 1) + '</div>';
+      box.appendChild(d);
+    });
+    if (!rendered.length) box.innerHTML = '<div class="note">조판된 면이 없다.</div>';
+  }
+  function render() {
     var c = composition();
-    board();
-    var useBoard = mode === 'board' || (mode === 'auto' && !c.steps.length);
-    showBoard(useBoard);
-    if (!c.steps.length) { $('what').textContent = c.items.length ? '지면 순서 · ' + c.items.length + '개 블록 (조판 연결 전)' : '—'; return; }
-    if (useBoard) { $('what').textContent = '지면 순서 · ' + c.items.length + '개 블록'; return; }
+    if (!c.items.length) { rendered = []; drawRendered(); $('what').textContent = '—'; return; }
     c.b = $('sample').value; c.n = 2;
-    msg('미리보기 조판 중…');
+    rendered = null; drawRendered(); msg('조판 중…');
     api('/api/make/preview', c).then(function (d) {
-      if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); return; }
-      log(d.log || ''); show(d.doc, '조판 미리보기 · 부품 ' + c.steps.length + '개' + (c.items.length > c.steps.length ? ' + 참고 블록 ' + (c.items.length - c.steps.length) + '개(자리표 면)' : ''));
+      if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); rendered = []; drawRendered(); return; }
+      msg(''); log(d.log || '');
+      rendered = d.pages || [];
+      if (mode === 'render') drawRendered();
+      $('what').textContent = '조판 미리보기 · ' + rendered.length + '면 · 부품 ' + c.steps.length + '개' + (c.items.length > c.steps.length ? ' + 참고 블록 ' + (c.items.length - c.steps.length) + '개(자리표 면)' : '');
     });
   }
-  $('preview').onclick = function () { preview(); };
-  $('sample').onchange = function () { preview(); };
-  $('mode').onclick = function () { mode = $('board').classList.contains('on') ? 'viewer' : 'board'; preview(); };
+  function preview() {
+    if (mode === 'render') render(); else board();
+  }
+  function setMode(m) {
+    mode = m;
+    $('mode-board').classList.toggle('on', m === 'board'); $('mode-render').classList.toggle('on', m === 'render');
+    preview();
+  }
+  $('mode-board').onclick = function () { setMode('board'); };
+  $('mode-render').onclick = function () { setMode('render'); };
+  $('preview').onclick = function () { rendered = null; preview(); };
+  $('sample').onchange = function () { rendered = null; preview(); };
 
   // ── 저장된 구성 ──
   function drawComps() {
@@ -539,7 +508,7 @@
     api('/api/make/compositions', c).then(function (d) { if (d.error) { msg('✗ ' + d.error); return; } comps = d.compositions; drawComps(); msg('저장했다: ' + name); });
   };
   drawComps();
-  board(); showBoard(true); $('what').textContent = '—';
+  board();
 
   // ── 책 만들기 ──
   $('mkbook-open').onclick = function () { var b = $('mkbook'); b.hidden = !b.hidden; if (!b.hidden) b.scrollIntoView({ behavior: 'smooth' }); };
@@ -563,8 +532,13 @@
     c.b = key; msg('구성 적용 · data · 견본 조판 중…');
     return api('/api/make/apply', c).then(function (d) {
       if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); return null; }
-      log(d.log || ''); show(d.doc, '책 견본 · ' + key.split('/').slice(-2).join('/'));
-      afterMade(d.key, d.bid); return d;
+      log(d.log || '');
+      afterMade(d.key, d.bid);
+      // 만든 책을 견본 원고로 골라 그 원고로 조판 미리보기
+      var sel = $('sample');
+      if (!Array.prototype.some.call(sel.options, function (o) { return o.value === d.key; })) { var o = document.createElement('option'); o.value = d.key; o.textContent = d.key.split('/').slice(-2).join(' · '); sel.appendChild(o); }
+      sel.value = d.key; rendered = null; setMode('render');
+      return d;
     });
   }
   $('apply-existing').onclick = function () { $('apply-existing').disabled = true; applyTo($('target').value).then(function () { $('apply-existing').disabled = false; }); };

@@ -665,7 +665,8 @@ def main(argv=None):
                 html = fn(cfg, str(opts.get("what") or "parts"), log,
                           key=opts.get("key"), n=int(opts.get("n") or 2),
                           steps=opts.get("steps"), limits=opts.get("limits"),
-                          cycle=cyc, out=opts.get("out"), plan=opts.get("plan"))
+                          cycle=cyc, out=opts.get("out"), plan=opts.get("plan"),
+                          png=bool(opts.get("png")))
                 log(f"MAKE_HTML={html}")
         elif st == "build":
             build(cfg, log, **opts)

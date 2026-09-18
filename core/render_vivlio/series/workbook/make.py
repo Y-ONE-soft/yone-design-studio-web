@@ -314,6 +314,29 @@ def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
     return _doc((cfg.book or {}).get("title") or "구성", "\n".join(parts_))
 
 
+def rasterize(html, build_dir, stem="make_compose", dpi=60, log=print):
+    """HTML → PDF(Vivliostyle CLI) → 면마다 PNG `<stem>_p<k>.png`. 면 수를 돌려준다.
+
+    화면에서 세로로 죽 넘겨 보는 미리보기용 — 브라우저 안 조판 대신 실제 조판 엔진의 면을 그대로 보인다.
+    """
+    import glob
+    import warnings
+    from core.render_vivlio import cli
+    warnings.filterwarnings("ignore")
+    import fitz
+    for old in glob.glob(os.path.join(build_dir, f"{stem}_p*.png")):
+        os.remove(old)
+    pdf = os.path.join(build_dir, f"{stem}.pdf")
+    secs = cli.run_build(html, pdf, log=lambda *a: None, extra=["-f", "pdf"])
+    doc = fitz.open(pdf)
+    n = doc.page_count
+    for i in range(n):
+        doc[i].get_pixmap(dpi=dpi).save(os.path.join(build_dir, f"{stem}_p{i + 1}.png"))
+    doc.close()
+    log(f"  [조립] 조판 {secs:.1f}s · {n}면 → PNG")
+    return n
+
+
 def thumbs(cfg, data, out_dir, log=print, dpi=40):
     """부품마다 대표 면 한 장 PNG. 간지 3장도 함께. → parts.json 목록."""
     import json as _json
@@ -353,26 +376,32 @@ def thumbs(cfg, data, out_dir, log=print, dpi=40):
 # ── 진입 ────────────────────────────────────────────────────────────
 
 def make(cfg, what, log=print, key=None, n=2, steps=None, limits=None, cycle=False,
-         out=None, plan=None, **_):
-    """`what` 한 칸을 `build/make_<what>[_<key>].html` 로. 경로를 돌려준다."""
+         out=None, plan=None, png=False, **_):
+    """`what` 한 칸을 `build/make_<what>[_<key>].html` 로. 경로를 돌려준다.
+
+    compose 에 `png=True` 면 PDF 로 조판해 면마다 PNG 까지(`MAKE_PAGES=<n>` 로 알린다).
+    """
     data = data_mod.load(cfg)
     build_dir = cfg.build_dir
-    if what == "compose" and plan:
-        import json as _json
-        with open(str(plan), encoding="utf-8") as f:
-            items = _json.load(f)
-        return _write(build_dir, "make_compose.html",
-                      compose_plan(cfg, data, items, bool(cycle), n, log))
     if what == "compose":
-        keys = [k.strip() for k in str(steps or "").split(",") if k.strip()]
-        lim = {}
-        for part in str(limits or "").split(","):
-            if "=" in part:
-                k, _, v = part.partition("=")
-                if v.strip().isdigit():
-                    lim[k.strip()] = int(v)
-        return _write(build_dir, "make_compose.html",
-                      compose(cfg, data, keys, lim, bool(cycle), n, log))
+        if plan:
+            import json as _json
+            with open(str(plan), encoding="utf-8") as f:
+                items = _json.load(f)
+            text = compose_plan(cfg, data, items, bool(cycle), n, log)
+        else:
+            keys = [k.strip() for k in str(steps or "").split(",") if k.strip()]
+            lim = {}
+            for part in str(limits or "").split(","):
+                if "=" in part:
+                    k, _, v = part.partition("=")
+                    if v.strip().isdigit():
+                        lim[k.strip()] = int(v)
+            text = compose(cfg, data, keys, lim, bool(cycle), n, log)
+        html = _write(build_dir, "make_compose.html", text)
+        if png:
+            log(f"MAKE_PAGES={rasterize(html, build_dir, log=log)}")
+        return html
     if what == "thumbs":
         return thumbs(cfg, data, out or os.path.join(build_dir, "parts"), log)
     if what == "parts":
