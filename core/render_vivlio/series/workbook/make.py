@@ -56,6 +56,10 @@ FRAME_NAMES = {
 }
 
 _CSS = """
+.pg.ref { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background: #f3f2f7; }
+.pg.ref img { width: 100%; height: 100%; object-fit: contain; object-position: top; }
+.pg.ref .lab { position: absolute; left: 0; right: 0; bottom: 4mm; text-align: center; font: 8pt/1.4 -apple-system, "Apple SD Gothic Neo", sans-serif; color: #6d7389; }
+.pg.ref .lab b { display: block; color: #7d2ae8; font-size: 9pt; }
 .mk-part { margin: 0 0 6mm; padding: 2mm 3mm; border: 0.3pt dashed #999; break-inside: avoid; }
 .mk-lab { font: 7pt/1.4 -apple-system, "Apple SD Gothic Neo", sans-serif; color: #888; margin-bottom: 1.5mm; }
 .mk-lab b { color: #333; }
@@ -254,6 +258,62 @@ def compose(cfg, data, steps, limits=None, cycle=False, n=2, log=print):
     return text
 
 
+def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
+    """블록 목록(순서대로) → 견본 HTML. 조판되는 부품(`key`)은 지면으로, 참고 블록(`image`)은
+    그 자리에 **자리표 면**(기준 PDF 그림 + 라벨)으로 — 구성 전체가 한 문서에서 넘겨진다.
+
+    plan: [{"key": "step1_a1", "n": 2} | {"image": "/catalog/page/…png", "label": "포켓북 · 어휘 목록"}]
+    세로(cycle)면 조판 부품만 사이클로 돌리고 참고 블록은 뒤에 붙인다(사이클 안에 끼울 자리가 없다).
+    """
+    keys = [it["key"] for it in plan if it.get("key")]
+    limits = {it["key"]: int(it["n"]) for it in plan if it.get("key") and str(it.get("n") or "").isdigit() and int(it["n"]) > 0}
+    refs = [it for it in plan if it.get("image")]
+
+    def ref_section(it):
+        lab = R.esc(str(it.get("label") or ""))
+        return (f'<section class="sec blank"><div class="pg ref"><img src="{R.esc(str(it["image"]))}" alt="">'
+                f'<div class="lab"><b>참고 블록 — 조판 연결 전</b>{lab}</div></div></section>')
+
+    if cycle or not keys:
+        if keys:
+            text = compose(cfg, data, keys, limits, True, n, log)
+            tail = "".join(ref_section(it) for it in refs)
+            return text.replace("\n</body>", tail + "\n</body>", 1)
+        _reset()
+        R.index_refs({"steps": []})
+        return _doc("구성", "".join(ref_section(it) for it in refs))
+
+    sel = {"steps": keys, "order": keys, "limits": {k: {"passages": v} for k, v in limits.items()}}
+    picked = data_mod.apply_select([dict(s) for s in data["steps"]], sel, log)
+    by = {s["key"]: s for s in picked}
+    _reset()
+    R.index_refs(data)
+    book = data.get("book") or {}
+    parts_ = ['<section class="sec blank"><div class="pg"></div></section>']
+    seen = set()
+    idx = 0
+    for it in plan:
+        if it.get("key"):
+            st = by.get(it["key"])
+            if not st:
+                log(f"  [조립] 이 원고에 없는 부품(건너뜀): {it['key']}")
+                continue
+            if n and int(n) > 0:
+                st = dict(st, groups=st["groups"][:int(n)])
+            if st["step"] not in seen:
+                seen.add(st["step"])
+                parts_.append(R.divider_section(st["step"], book.get("line1", ""), book.get("line2", "")))
+            idx += 1
+            if st["layout"] in ("flow", "s3"):
+                parts_.append(R.flow_sec(st, idx))
+            else:
+                parts_.append(R.fixed_section(st, idx)[0])
+        elif it.get("image"):
+            parts_.append(ref_section(it))
+    log(f"  [조립] 조판 부품 {len(keys)} · 참고 자리표 {len(refs)}")
+    return _doc((cfg.book or {}).get("title") or "구성", "\n".join(parts_))
+
+
 def thumbs(cfg, data, out_dir, log=print, dpi=40):
     """부품마다 대표 면 한 장 PNG. 간지 3장도 함께. → parts.json 목록."""
     import json as _json
@@ -293,10 +353,16 @@ def thumbs(cfg, data, out_dir, log=print, dpi=40):
 # ── 진입 ────────────────────────────────────────────────────────────
 
 def make(cfg, what, log=print, key=None, n=2, steps=None, limits=None, cycle=False,
-         out=None, **_):
+         out=None, plan=None, **_):
     """`what` 한 칸을 `build/make_<what>[_<key>].html` 로. 경로를 돌려준다."""
     data = data_mod.load(cfg)
     build_dir = cfg.build_dir
+    if what == "compose" and plan:
+        import json as _json
+        with open(str(plan), encoding="utf-8") as f:
+            items = _json.load(f)
+        return _write(build_dir, "make_compose.html",
+                      compose_plan(cfg, data, items, bool(cycle), n, log))
     if what == "compose":
         keys = [k.strip() for k in str(steps or "").split(",") if k.strip()]
         lim = {}
