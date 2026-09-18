@@ -257,6 +257,7 @@ def page():
     blocks, assets = _blocks()
     return render_template("make.html", library=lib, by_item=_by_item(lib), taxonomy=TAXONOMY, items=ITEMS,
                            blocks=blocks, assets=assets, asset_by_id={a["id"]: a for a in assets},
+                           pagesets=_read_json(_cat("pagesets.json")),
                            books=bs, designs=designs,
                            fields=tpl.get("fields") or [], slot_hint=tpl.get("slot_hint", ""),
                            root=tpl.get("root", ""), compositions=_read_json(_cat("compositions.json")),
@@ -512,3 +513,89 @@ def api_level():
     name = m.group(1).strip().rsplit("/", 1)[-1]
     return jsonify({"ok": True, "doc": "/book-studio/doc/%s/%s" % (meta["bid"], name),
                     "log": r.stdout[-1200:]})
+
+
+# ── 지면 편집기 — 지면 = 틀 + 칸마다 [블록 + 원고 역할] ─────────────
+
+_FRAMES = ("a1", "sheet", "pair", "flow", "s3")
+
+
+def _clean_pages(p):
+    out = []
+    for pg in (p.get("pages") or [])[:40]:
+        if not isinstance(pg, dict):
+            continue
+        zones = []
+        for z in (pg.get("zones") or [])[:2]:
+            zz = []
+            for sp in (z or [])[:12]:
+                if isinstance(sp, dict) and _RE_KEY.match(str(sp.get("block") or "")):
+                    o = {"block": str(sp["block"])}
+                    if sp.get("role") and _RE_KEY.match(str(sp["role"])):
+                        o["role"] = str(sp["role"])
+                    zz.append(o)
+            zones.append(zz)
+        out.append({"frame": pg.get("frame") if pg.get("frame") in _FRAMES else "sheet",
+                    "step": int(pg.get("step") or 1) if str(pg.get("step") or 1) in ("1", "2", "3") else 1,
+                    "logo": str(pg.get("logo") or "")[:4], "title": str(pg.get("title") or "")[:20],
+                    "zones": zones or [[]]})
+    return out
+
+
+@bp.route("/api/make/pages/preview", methods=["POST"])
+def api_pages_preview():
+    p = request.get_json(silent=True) or {}
+    d, meta = _book_dir(p.get("b"))
+    if not d:
+        return jsonify({"error": "견본 책을 모른다"}), 404
+    pages = _clean_pages(p)
+    if not pages:
+        return jsonify({"error": "지면이 없다"}), 400
+    build = os.path.join(d, "build")
+    os.makedirs(build, exist_ok=True)
+    plan_p = os.path.join(build, "make_pages_plan.json")
+    with open(plan_p, "w", encoding="utf-8") as f:
+        json.dump(pages, f, ensure_ascii=False)
+    n = max(0, min(int(p.get("n") or 1), 99))
+    r = _run([d, "make", "--what=pages", "--plan=" + plan_p, "--png=1", "--n=%d" % n], timeout=300)
+    if r.returncode != 0:
+        return jsonify({"error": (r.stderr or r.stdout)[-1500:]}), 500
+    m = re.search(r"^MAKE_PAGES=(\d+)$", r.stdout, re.M)
+    n_pages = int(m.group(1)) if m else 0
+    stamp = int(time.time())
+    return jsonify({"ok": True, "pages": ["/book-studio/doc/%s/make_pages_p%d.png?_=%d" % (meta["bid"], k, stamp)
+                                          for k in range(1, n_pages + 1)], "log": r.stdout[-1500:]})
+
+
+@bp.route("/api/make/pagesets")
+def api_pagesets():
+    return jsonify({"pagesets": _read_json(_cat("pagesets.json"))})
+
+
+@bp.route("/api/make/pagesets", methods=["POST"])
+def api_pageset_save():
+    p = request.get_json(silent=True) or {}
+    name = str(p.get("name") or "").strip()
+    if not _RE_NAME.match(name):
+        return jsonify({"error": "이름은 1~40자, 슬래시 없이"}), 400
+    pages = _clean_pages(p)
+    if not pages:
+        return jsonify({"error": "지면이 없다"}), 400
+    path = _cat("pagesets.json")
+    sets = _read_json(path)
+    sets[name] = {"pages": pages, "n": max(0, min(int(p.get("n") or 1), 99)), "made": time.strftime("%Y-%m-%d %H:%M")}
+    _write_json(path, sets)
+    return jsonify({"ok": True, "pagesets": sets})
+
+
+@bp.route("/api/make/pagesets", methods=["DELETE"])
+def api_pageset_delete():
+    p = request.get_json(silent=True) or {}
+    name = str(p.get("name") or "")
+    path = _cat("pagesets.json")
+    sets = _read_json(path)
+    if name not in sets:
+        return jsonify({"error": "없는 지면 묶음"}), 404
+    sets.pop(name)
+    _write_json(path, sets)
+    return jsonify({"ok": True, "pagesets": sets})

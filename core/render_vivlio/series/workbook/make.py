@@ -316,6 +316,151 @@ def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
     return _doc((cfg.book or {}).get("title") or "구성", "\n".join(parts_))
 
 
+# ── 지면 편집기 — 틀 + 칸마다 [블록 + 원고 역할] ────────────────────
+# 지면 = {"frame": a1|sheet|pair|flow|s3, "step": 1|2|3, "logo": "A1", "title": "…",
+#         "zones": [[{"block": "passage", "role": "vocab_sel"}, …], …]}
+#   a1    : 칸 하나를 지문 2개에 되풀이(한 면에 지문 2개)  — zones[0] 만 쓴다
+#   sheet : 칸 하나, 지문 1개 = 한 면(길면 이어짐)          — zones[0]
+#   pair  : 상 칸 + 하 칸, 지문 1개 = 한 면                — zones[0]·zones[1]
+#   flow  : 흘림 — 지문마다 이어 붙는다                     — zones[0]
+#   s3    : 2단 흘림(실전)                                 — zones[0]
+FRAME_ZONES = {"a1": 1, "sheet": 1, "pair": 2, "flow": 1, "s3": 1}
+STEP_TAG = {1: "FRAME", 2: "BUILD UP", 3: "TEST"}
+
+
+def role_units(data):
+    """역할 → 지문 순번(0부터) → 단락 목록. 스텝이 달라도 같은 지문 순번은 같은 지문이다(원고 구조)."""
+    idx = {}
+    for st in data.get("steps") or []:
+        for gi, g in enumerate(st.get("groups") or []):
+            for key in ("units", "attach"):
+                for u in g.get(key) or []:
+                    for b in u:
+                        r = b.get("role")
+                        if r:
+                            idx.setdefault(r, {}).setdefault(gi, []).append(b)
+    return idx
+
+
+def _role_steps(data):
+    """역할 → 그 역할이 나오는 스텝 키(원고 순서). 블록이 어느 원고 흐름에서 오는지."""
+    out = {}
+    for st in data.get("steps") or []:
+        seen = set()
+        for g in st.get("groups") or []:
+            for key in ("units", "attach"):
+                for u in g.get(key) or []:
+                    for b in u:
+                        if b.get("role"):
+                            seen.add(b["role"])
+        for r in seen:
+            out.setdefault(r, []).append(st["key"])
+    return out
+
+
+def _zone_html(specs, gi, data, step, key, role_steps=None):
+    """칸 하나: 블록 명세들을 순서대로, 지문 gi 의 단락으로 그린다.
+
+    같은 원고 스텝에서 오는 잇단 블록은 **한 덩어리**로 그 유닛의 단락 순서대로 그린다 —
+    실전 세트(안내문·지문·발문·선지가 섞여 있다)처럼 순서가 곧 구조인 것을 깨지 않기 위해서다.
+    """
+    from core.render_vivlio.series.workbook import blocks as B
+    role_steps = role_steps or _role_steps(data)
+    by_key = {st["key"]: st for st in data.get("steps") or []}
+    chunks = []                                   # [(step_key, [roles…])]
+    for sp in specs:
+        blk = B.BLOCK_BY_ID.get(sp.get("block"))
+        if blk and blk.get("label"):
+            continue
+        roles = [sp["role"]] if sp.get("role") else list((blk or {}).get("roles") or [])
+        for r in roles:
+            src = (role_steps.get(r) or [None])[0]
+            if chunks and chunks[-1][0] == src:
+                chunks[-1][1].append(r)
+            else:
+                chunks.append((src, [r]))
+    out = []
+    for src, roles in chunks:
+        st = by_key.get(src)
+        if not st:
+            continue
+        gs = st.get("groups") or []
+        if gi >= len(gs):
+            continue
+        rs = set(roles)
+        paras = [b for k in ("units", "attach") for u in (gs[gi].get(k) or []) for b in u
+                 if b.get("role") in rs or (b.get("icon") and "basic" in rs)]
+        if not paras:
+            continue
+        if st.get("layout") == "s3":
+            out.append(R.s3_blocks(paras, 1)[0])
+        else:
+            out.append(R.blocks_html(paras, step, key))
+    return "".join(out)
+
+
+def _label_of(data, gi):
+    for st in data.get("steps") or []:
+        gs = st.get("groups") or []
+        if gi < len(gs) and gs[gi].get("label"):
+            return gs[gi]["label"]
+    return f"{gi + 1:02d}"
+
+
+def pages_html(cfg, data, pages, n=2, log=print):
+    """지면 명세 목록 → 견본 HTML. 지문 n개(0 이면 전부)."""
+    _reset()
+    R.index_refs(data)
+    role_steps = _role_steps(data)
+    total = max((len(st.get("groups") or []) for st in data.get("steps") or []), default=0)
+    count = total if not n or int(n) <= 0 else min(int(n), total)
+    secs = []
+    for pi, pg in enumerate(pages):
+        frame = pg.get("frame") if pg.get("frame") in FRAME_ZONES else "sheet"
+        step = int(pg.get("step") or 1)
+        logo = str(pg.get("logo") or "P")[:4]
+        title = str(pg.get("title") or f"지면 {pi + 1}")[:20]
+        key = f"custom{pi + 1}"
+        zones = pg.get("zones") or [[]]
+        run = R.running_head(step, logo, title, STEP_TAG.get(step, "FRAME"))
+        body = []
+        if frame == "a1":
+            for g0 in range(0, count, 2):
+                zs = []
+                for j, gi in enumerate((g0, g0 + 1)):
+                    if gi >= count:
+                        break
+                    lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+                    zs.append(R.zone(lbl + _zone_html(zones[0], gi, data, step, key, role_steps),
+                                     "top" if j == 0 else "bottom", "z-a1"))
+                body.append(R.page_block(zs, step=key))
+        elif frame == "pair":
+            for gi in range(count):
+                lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+                zs = [R.zone(lbl + _zone_html(zones[0], gi, data, step, key, role_steps), "top")]
+                if len(zones) > 1 and zones[1]:
+                    zs.append(R.zone(_zone_html(zones[1], gi, data, step, key, role_steps), "bottom"))
+                body.append(R.page_block(zs, step=key))
+        elif frame == "sheet":
+            for gi in range(count):
+                q_idx, (mark, tight) = R._beg()
+                lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+                body.append(f'<div class="grp{tight}">{mark}{lbl}'
+                            f'{_zone_html(zones[0], gi, data, step, key, role_steps)}<span class="bend"></span></div>')
+        else:                                          # flow · s3
+            for gi in range(count):
+                cls = "gstart" + (" first" if gi == 0 else "")
+                body.append(f'<div class="{cls}"><p class="pnum flowlbl">{R.esc(_label_of(data, gi))}</p>'
+                            + _zone_html(zones[0], gi, data, step, key, role_steps) + "</div>")
+        if frame in ("flow", "s3"):
+            secs.append(f'<section class="sec flow {"twocol" if frame == "s3" else "onecol"} s{step} k-{key}" id="sec{pi + 1}">'
+                        f'{run}<div class="flowbody">{"".join(body)}</div></section>')
+        else:
+            secs.append(f'<section class="sec fixed s{step} k-{key}" id="sec{pi + 1}">{run}{"".join(body)}</section>')
+        log(f"    지면 {pi + 1} [{frame}] {title} · 블록 {sum(len(z) for z in zones)} · 지문 {count}")
+    return _doc("지면", "\n".join(secs))
+
+
 def rasterize(html, build_dir, stem="make_compose", dpi=60, log=print):
     """HTML → PDF(Vivliostyle CLI) → 면마다 PNG `<stem>_p<k>.png`. 면 수를 돌려준다.
 
@@ -464,6 +609,14 @@ def make(cfg, what, log=print, key=None, n=2, steps=None, limits=None, cycle=Fal
         html = _write(build_dir, "make_compose.html", text)
         if png:
             log(f"MAKE_PAGES={rasterize(html, build_dir, log=log)}")
+        return html
+    if what == "pages":
+        import json as _json
+        with open(str(plan), encoding="utf-8") as f:
+            pages = _json.load(f)
+        html = _write(build_dir, "make_pages.html", pages_html(cfg, data, pages, n, log))
+        if png:
+            log(f"MAKE_PAGES={rasterize(html, build_dir, stem='make_pages', log=log)}")
         return html
     if what == "thumbs":
         return thumbs(cfg, data, out or os.path.join(build_dir, "parts"), log)
