@@ -46,10 +46,9 @@ fly volumes create studio_data --region nrt --size 10   # 책·디자인·잡·�
 
 # ② 비밀값 — 2절
 fly secrets set \
-  YOS_LINK_SECRET=$(openssl rand -base64 24 | tr -d '=+/') \
+  YONE_PASSWORD=<스튜디오 로그인 비밀번호> \
   SERVICE_TOKEN=$(openssl rand -base64 24 | tr -d '=+/') \
   YONE_SECRET_KEY=$(openssl rand -hex 32) \
-  YOS_LOGIN_URL=https://yos-design-web.vercel.app/studio \
   YOS_ORIGINS=https://yos-contents-web.vercel.app,https://yos-design-web.vercel.app,https://yos-core-web.vercel.app \
   BLOB_READ_WRITE_TOKEN=<contents 의 Blob 스토어 토큰> \
   ANTHROPIC_API_KEY=<키>
@@ -84,10 +83,11 @@ fly ssh console -C "/app/deploy/entrypoint.sh doctor"  # 서체 37/37 · gs · C
 
 | 키 | 뜻 | Y.OS 쪽 짝 |
 |---|---|---|
-| `YOS_LINK_SECRET` | 사람 표 서명 + 웹훅 서명. **있으면 인증이 켜진다** | `STUDIO_LINK_SECRET` (같은 값) |
+| `YONE_PASSWORD` | **스튜디오 자체 로그인 비밀번호** (`/auth/login`). `fly.toml` 의 `YONE_AUTH=password` 와 짝 — 2026-09-18 부터 이게 기본 | — |
+| `YOS_LINK_SECRET` | (안 씀 — Y.OS 계정으로 들어오게 할 때만, 3절) 사람 표 서명 + 웹훅 서명 | `STUDIO_LINK_SECRET` (같은 값) |
 | `SERVICE_TOKEN` | contents·design·core → 스튜디오 호출 토큰(콤마로 여러 개) | `STUDIO_SERVICE_TOKEN` (같은 값) |
 | `YONE_SECRET_KEY` | 세션 쿠키·임베드 토큰 서명. `openssl rand -hex 32` | — |
-| `YOS_LOGIN_URL` | 미인증 브라우저를 보낼 Y.OS 진입 라우트(3절). `?next=` 를 붙여 보낸다 | `deploy/yos/studio-entry-route.ts` |
+| `YOS_LOGIN_URL` | (안 씀 — link 방식일 때만) 미인증 브라우저를 보낼 Y.OS 진입 라우트(3절) | `deploy/yos/studio-entry-route.ts` |
 | `YOS_ORIGINS` | CORS · iframe 허용 출처(콤마) | — |
 | `BLOB_READ_WRITE_TOKEN` | contents 와 **같은 Blob 스토어**의 토큰 (Vercel → Storage → Blob → 토큰). 없으면 Blob 안 씀 | contents 의 같은 변수 |
 | `YOS_WEBHOOK_URL` | 조판 끝·디자인 바뀜 알림 받는 곳 (없으면 안 보냄) | `deploy/yos/studio-webhook-route.ts` |
@@ -95,7 +95,18 @@ fly ssh console -C "/app/deploy/entrypoint.sh doctor"  # 서체 37/37 · gs · C
 | `ANTHROPIC_API_KEY` | PDF 판정·작업대 클로드 칸 | 같은 키 |
 | `YONE_ALLOWED_ROLES` | (선택) 이 역할만. 비우면 로그인한 누구나 | Auth.js user.role |
 
-## 3. 로그인 — Y.OS 가 유일한 ID 제공자, 표는 `signWidgetToken` 과 같은 꼴
+## 3. 로그인
+
+**기본(2026-09-18~): 스튜디오 자체 로그인.** yos-design-web 과는 별개 프로젝트로 본다 — Y.OS 쪽에 넣을 것 없음.
+`fly.toml` 의 `YONE_AUTH=password` + 비밀값 `YONE_PASSWORD` 하나. 미인증 브라우저는 `/auth/login?next=…` 로 가고,
+비밀번호가 맞으면 세션 쿠키(12h). 실패 5회면 10분 잠금. `YONE_PASSWORD` 가 비어 있으면 아무도 못 들어간다(503).
+```
+디자이너 → https://yos-studio.fly.dev/catalog → 302 /auth/login?next=/catalog → 비밀번호 → /catalog
+```
+확인: `GET /auth/me` → `{"mode":"password",…}`. 비밀번호 바꾸기: `fly secrets set YONE_PASSWORD=… -a yos-studio`.
+API·시스템은 아래와 같이 `Authorization: Bearer <SERVICE_TOKEN>`.
+
+**(안 씀) link — Y.OS 가 ID 제공자, 표는 `signWidgetToken` 과 같은 꼴.** 나중에 Y.OS 계정으로 들어오게 하려면 `YONE_AUTH=link` 로 바꾸고 아래대로.
 
 ```
 표 = base64url(JSON {u: 사용자id, e: 만료ms, n?: 이름, m?: 이메일, r?: 역할}) + "." + base64url(HMAC-SHA256(STUDIO_LINK_SECRET, payload))

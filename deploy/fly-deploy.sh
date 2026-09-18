@@ -6,7 +6,8 @@
 #   deploy/fly-deploy.sh fonts           # 서체 올리기 (fonts.tgz → /data/fonts)  — 최초 1회
 #
 # 비밀값은 없는 것만 만든다. 이미 있으면 건드리지 않는다. 밖에서 줄 수 있는 것:
-#   BLOB_READ_WRITE_TOKEN  ANTHROPIC_API_KEY  YOS_LOGIN_URL  YOS_ORIGINS  YOS_WEBHOOK_URL  (환경변수로)
+#   YONE_PASSWORD  BLOB_READ_WRITE_TOKEN  ANTHROPIC_API_KEY  YOS_ORIGINS  YOS_WEBHOOK_URL  (환경변수로)
+#   YONE_PASSWORD(스튜디오 로그인 비밀번호)를 안 주면 만들어서 한 번 보여 준다 — 그때 적어 둘 것.
 #   ANTHROPIC_API_KEY 는 이 맥의 ~/.config/yone/env (로컬 bin/studio 가 쓰는 같은 키) 에서 읽는다.
 # 올라가는 것은 **커밋된 HEAD** 뿐이다 (git archive). 다른 세션의 커밋 안 된 변경이 메인에 있어도 섞이지 않는다.
 set -e
@@ -43,16 +44,18 @@ set_if_missing() {
   [ -n "$2" ] || return 0
   fly secrets set -a "$APP" --stage "$1=$2" >/dev/null && staged=1
   case "$1" in
-    YOS_LINK_SECRET|SERVICE_TOKEN)
-      echo "■ 새로 만든 $1 (Vercel 의 STUDIO_LINK_SECRET / STUDIO_SERVICE_TOKEN 에 같은 값을 넣는다 — 지금만 보인다):"
+    YONE_PASSWORD)
+      echo "■ 새로 만든 $1 (스튜디오 로그인 비밀번호 — 지금만 보인다, 적어 둘 것):"
+      echo "    $2" ;;
+    SERVICE_TOKEN)
+      echo "■ 새로 만든 $1 (contents 의 STUDIO_SERVICE_TOKEN 에 같은 값을 넣는다 — 지금만 보인다):"
       echo "    $2" ;;
     *) echo "■ 비밀값 설정: $1" ;;
   esac
 }
-set_if_missing YOS_LINK_SECRET   "$(openssl rand -base64 24 | tr -d '=+/')"
+set_if_missing YONE_PASSWORD     "${YONE_PASSWORD:-$(openssl rand -base64 12 | tr -d '=+/')}"
 set_if_missing SERVICE_TOKEN     "$(openssl rand -base64 24 | tr -d '=+/')"
 set_if_missing YONE_SECRET_KEY   "$(openssl rand -hex 32)"
-set_if_missing YOS_LOGIN_URL     "${YOS_LOGIN_URL:-https://yos-design-web.vercel.app/studio}"
 set_if_missing YOS_ORIGINS       "${YOS_ORIGINS:-https://yos-contents-web.vercel.app,https://yos-design-web.vercel.app,https://yos-core-web.vercel.app}"
 set_if_missing BLOB_READ_WRITE_TOKEN "$BLOB_READ_WRITE_TOKEN"
 set_if_missing ANTHROPIC_API_KEY "$ANTHROPIC_API_KEY"

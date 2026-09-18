@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Y.OS 계정으로 스튜디오를 지킨다 — **로그인 화면은 Y.OS 에 있고, 여기는 표(토큰)만 검사한다.**
+"""스튜디오 인증 — 두 가지 방식 중 하나.
+
+**password** (2026-09-18 기본): 스튜디오 **자체 로그인 화면**(`/auth/login`), 비밀번호 하나(`YONE_PASSWORD`).
+Y.OS 웹과는 별개의 프로젝트로 본다 — Y.OS 쪽에 아무것도 넣을 필요 없다.
+
+**link**: Y.OS 계정으로 지킨다 — 로그인 화면은 Y.OS 에 있고, 여기는 표(토큰)만 검사한다.
 
 Y.OS 앱들(core·contents·design)은 Auth.js(구글)로 로그인하고, 앱 사이는 **공유 비밀로 서명한 표**를
 주고받는다(core `src/server/widget/token.ts` 의 `signWidgetToken`, `CHAT_LINK_SECRET`). 스튜디오도 같은 꼴이다:
@@ -20,7 +25,8 @@ Y.OS 앱들(core·contents·design)은 Auth.js(구글)로 로그인하고, 앱 �
     YOS_LOGIN_URL        미인증 브라우저를 보낼 곳(Y.OS 의 스튜디오 진입 라우트). `?next=<돌아올 URL>` 을 붙인다
     YOS_ORIGINS          CORS · iframe 허용 출처(콤마) 예: https://yos-contents-web.vercel.app,https://yos-design-web.vercel.app
     YONE_SECRET_KEY      세션 쿠키·임베드 토큰 서명 키 — 인증 켠 상태에서 **필수**
-    YONE_AUTH            off | link   기본: YOS_LINK_SECRET 이 있으면 link, 없으면 off(로컬)
+    YONE_PASSWORD        스튜디오 자체 로그인 비밀번호 — 있으면 password 방식이 켜진다
+    YONE_AUTH            off | password | link   기본: YOS_LINK_SECRET 이 있으면 link, YONE_PASSWORD 가 있으면 password, 둘 다 없으면 off(로컬)
     YONE_SESSION_HOURS   세션 쿠키 수명(기본 12)
     YONE_ALLOWED_ROLES   (선택) 이 역할만 통과(콤마). 비우면 로그인한 누구나
     YONE_COOKIE_SECURE   1 이면 https 뒤가 아니어도 Secure 쿠키(프록시가 TLS 를 벗기는 경우 — Fly 가 그렇다)
@@ -57,9 +63,11 @@ def _env(k, default=""):
 
 def mode():
     m = _env("YONE_AUTH").lower()
-    if m in ("off", "link"):
+    if m in ("off", "link", "password"):
         return m
-    return "link" if _env("YOS_LINK_SECRET") else "off"
+    if _env("YOS_LINK_SECRET"):
+        return "link"
+    return "password" if _env("YONE_PASSWORD") else "off"
 
 
 def origins():
@@ -79,8 +87,8 @@ def _secret(app):
     s = _env("YONE_SECRET_KEY")
     if s:
         return s
-    if mode() == "link":
-        raise RuntimeError("인증이 켜졌는데(YOS_LINK_SECRET) YONE_SECRET_KEY 가 없다 — 세션 쿠키를 서명할 수 없다")
+    if mode() != "off":
+        raise RuntimeError("인증이 켜졌는데 YONE_SECRET_KEY 가 없다 — 세션 쿠키를 서명할 수 없다")
     # 로컬(off): 프로세스마다 임의 키. 쿠키를 쓰지 않으니 상관없다.
     return app.secret_key or secrets.token_hex(32)
 
@@ -209,6 +217,48 @@ def _safe_next(n, default="/catalog"):
 
 
 # ── 라우트 ──────────────────────────────────────────────────────
+_LOGIN_HTML = """<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>로그인 — Y.ONE STUDIO</title>
+<style>body{background:#111;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
+.box{background:#1a1a1a;padding:40px;border-radius:16px;text-align:center;min-width:280px}
+h2{margin:0 0 24px;font-size:18px;letter-spacing:.5px}h2 span{color:#6366f1}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #444;border-radius:8px;background:#111;color:#fff;font-size:14px;outline:none;margin-bottom:14px}
+button{width:100%;padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer}
+.err{color:#f87171;font-size:12px;margin-bottom:8px}</style></head>
+<body><div class="box"><h2>Y.ONE <span>STUDIO</span></h2>{err}
+<form method="POST"><input type="hidden" name="next" value="{next}">
+<input type="password" name="password" placeholder="비밀번호" autofocus autocomplete="current-password">
+<button type="submit">로그인</button></form></div></body></html>"""
+
+
+@bp.route("/auth/login", methods=["GET", "POST"])
+def login():
+    """스튜디오 자체 로그인(password 방식). 비밀번호 하나(`YONE_PASSWORD`) — 맞으면 세션 쿠키."""
+    from markupsafe import escape
+    if mode() != "password":
+        return jsonify({"error": "자체 로그인이 꺼져 있다", "mode": mode()}), 404
+    if not _env("YONE_PASSWORD"):
+        # 비밀번호가 비어 있으면 빈 입력이 통과해 버린다 — 아예 잠근다
+        return jsonify({"error": "YONE_PASSWORD 가 없다 — fly secrets set YONE_PASSWORD=…"}), 503
+    nxt = _safe_next(request.values.get("next"))
+    err = ""
+    if request.method == "POST":
+        # 실패 5회 → 10분 잠금 (routes/auth.py 의 것을 그대로 쓴다)
+        from routes.auth import _client_ip, _clear_failures, _is_locked, _record_failure
+        ip = _client_ip()
+        if _is_locked(ip, "studio"):
+            err = "로그인 시도가 너무 많다 — 10분 뒤 다시"
+        elif hmac.compare_digest(request.form.get("password", ""), _env("YONE_PASSWORD")):
+            _clear_failures(ip, "studio")
+            return set_session(redirect(nxt), {"sub": "studio", "name": "스튜디오", "role": "admin"})
+        else:
+            _record_failure(ip, "studio")
+            err = "비밀번호가 틀렸다"
+    html = _LOGIN_HTML.replace("{err}", f'<div class="err">{escape(err)}</div>' if err else "") \
+                      .replace("{next}", str(escape(nxt)))
+    return html, (401 if err else 200), {"Content-Type": "text/html; charset=utf-8"}
+
+
 @bp.route("/auth/callback", methods=["GET", "POST"])
 def callback():
     """Y.OS 로그인 뒤 여기로: `?token=<표>&next=/catalog` (또는 POST JSON {token, next})."""
@@ -246,7 +296,7 @@ def embed():
 
 @bp.route("/auth/logout", methods=["GET", "POST"])
 def logout():
-    resp = redirect(_env("YOS_LOGIN_URL") or "/") if request.method == "GET" else jsonify({"ok": True})
+    resp = redirect(_login_url() or "/") if request.method == "GET" else jsonify({"ok": True})
     return clear_session(resp)
 
 
@@ -265,12 +315,17 @@ def _wants_json():
     return "application/json" in acc and "text/html" not in acc
 
 
+def _login_url():
+    return "/auth/login" if mode() == "password" else _env("YOS_LOGIN_URL")
+
+
 def _deny(msg, code=401):
-    if _wants_json() or not _env("YOS_LOGIN_URL"):
-        return jsonify({"error": msg, "login": _env("YOS_LOGIN_URL") or None}), code
-    back = request.url
-    return redirect(_env("YOS_LOGIN_URL") + ("&" if "?" in _env("YOS_LOGIN_URL") else "?")
-                    + "next=" + urllib.parse.quote(back, safe=""))
+    login = _login_url()
+    if _wants_json() or not login:
+        return jsonify({"error": msg, "login": login or None}), code
+    # 자체 로그인은 같은 서버 안 경로만, Y.OS 로그인은 돌아올 전체 주소를 준다
+    back = request.full_path.rstrip("?") if mode() == "password" else request.url
+    return redirect(login + ("&" if "?" in login else "?") + "next=" + urllib.parse.quote(back, safe=""))
 
 
 def _cors(resp):
@@ -340,7 +395,7 @@ def _after(resp):
 def install(app):
     """앱에 인증·CORS·보안 헤더를 건다. `studio_server.create_app()` 이 부른다."""
     app.secret_key = _secret(app)
-    if mode() == "link":
+    if mode() != "off":
         # 프록시(Fly·Caddy) 뒤에서 https 인지 알아야 Secure 쿠키를 낸다
         from werkzeug.middleware.proxy_fix import ProxyFix
         app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -354,5 +409,7 @@ def describe():
     """기동 배너용 한 줄."""
     if mode() == "off":
         return "꺼짐 (로컬 — 로그인 없음)"
+    if mode() == "password":
+        return f"켜짐 — 자체 로그인 /auth/login (YONE_PASSWORD); 서비스 토큰 {len(_service_tokens())}개"
     return (f"켜짐 — Y.OS 링크 토큰(YOS_LINK_SECRET); 서비스 토큰 {len(_service_tokens())}개; "
             f"출처 {', '.join(origins()) or '없음'}")
