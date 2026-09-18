@@ -276,14 +276,24 @@ def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
         return (f'<section class="sec blank"><div class="pg ref"><img src="{R.esc(str(it["image"]))}" alt="">'
                 f'<div class="lab"><b>참고 블록 — 조판 연결 전</b>{lab}</div></div></section>')
 
+    pages = [it["page"] for it in plan if it.get("page")]
     if cycle or not keys:
         if keys:
             text = compose(cfg, data, keys, limits, True, n, log)
-            tail = "".join(ref_section(it) for it in refs)
+            rs = _role_steps(data)
+            tail = "".join(ref_section(it) for it in refs) + "".join(
+                page_section(cfg, data, pg, i + 1, n, rs, log) for i, pg in enumerate(pages))
             return text.replace("\n</body>", tail + "\n</body>", 1)
         _reset()
-        R.index_refs({"steps": []})
-        return _doc("구성", "".join(ref_section(it) for it in refs))
+        R.index_refs(data)
+        rs = _role_steps(data)
+        body = []
+        for it in plan:
+            if it.get("image"):
+                body.append(ref_section(it))
+            elif it.get("page"):
+                body.append(page_section(cfg, data, it["page"], len(body) + 1, n, rs, log))
+        return _doc("구성", "".join(body))
 
     sel = {"steps": keys, "order": keys, "limits": {k: {"passages": v} for k, v in limits.items()}}
     picked = data_mod.apply_select([dict(s) for s in data["steps"]], sel, log)
@@ -294,6 +304,7 @@ def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
     parts_ = ['<section class="sec blank"><div class="pg"></div></section>']
     seen = set()
     idx = 0
+    role_steps = _role_steps(data)
     for it in plan:
         if it.get("key"):
             st = by.get(it["key"])
@@ -312,6 +323,9 @@ def compose_plan(cfg, data, plan, cycle=False, n=2, log=print):
                 parts_.append(R.fixed_section(st, idx)[0])
         elif it.get("image"):
             parts_.append(ref_section(it))
+        elif it.get("page"):
+            idx += 1
+            parts_.append(page_section(cfg, data, it["page"], idx, n, role_steps, log))
     log(f"  [조립] 조판 부품 {len(keys)} · 참고 자리표 {len(refs)}")
     return _doc((cfg.book or {}).get("title") or "구성", "\n".join(parts_))
 
@@ -408,72 +422,75 @@ def _label_of(data, gi):
     return f"{gi + 1:02d}"
 
 
+def page_section(cfg, data, pg, pi, n=2, role_steps=None, log=print):
+    """편집 지면 명세 하나 → <section>. 지문 n개(0 이면 전부)."""
+    role_steps = role_steps or _role_steps(data)
+    total = max((len(st.get("groups") or []) for st in data.get("steps") or []), default=0)
+    count = total if not n or int(n) <= 0 else min(int(n), total)
+    frame = pg.get("frame") if pg.get("frame") in FRAME_ZONES else "sheet"
+    step = int(pg.get("step") or 1)
+    logo = str(pg.get("logo") or "P")[:4]
+    title = str(pg.get("title") or f"지면 {pi + 1}")[:20]
+    key = f"custom{pi + 1}"
+    zones = pg.get("zones") or [[]]
+    run = R.running_head(step, logo, title, STEP_TAG.get(step, "FRAME"))
+    body = []
+    if frame == "a1":
+        for g0 in range(0, count, 2):
+            zs = []
+            for j, gi in enumerate((g0, g0 + 1)):
+                if gi >= count:
+                    break
+                lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+                zs.append(R.zone(lbl + _zone_html(zones[0], gi, data, step, key, role_steps),
+                                 "top" if j == 0 else "bottom", "z-a1"))
+            body.append(R.page_block(zs, step=key))
+    elif frame == "pair":
+        for gi in range(count):
+            lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+            zs = [R.zone(lbl + _zone_html(zones[0], gi, data, step, key, role_steps), "top")]
+            if len(zones) > 1 and zones[1]:
+                zs.append(R.zone(_zone_html(zones[1], gi, data, step, key, role_steps), "bottom"))
+            body.append(R.page_block(zs, step=key))
+    elif frame == "free":
+        for gi in range(count):
+            inner = []
+            for sp in zones[0]:
+                x = max(0.0, min(float(sp.get("x") or 0), 168.0))
+                y = max(0.0, min(float(sp.get("y") or 0), 260.0))
+                w = max(20.0, min(float(sp.get("w") or 168), 168.0 - x))
+                if sp.get("block") == "pnum":
+                    html_s = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+                else:
+                    html_s = _zone_html([sp], gi, data, step, key, role_steps)
+                if html_s:
+                    inner.append(f'<div class="free" style="position:absolute;left:{x:.1f}mm;top:{y:.1f}mm;'
+                                 f'width:{w:.1f}mm">{html_s}</div>')
+            body.append(R.page_block(["".join(inner) + '<span class="zend"></span>'], step=key))
+    elif frame == "sheet":
+        for gi in range(count):
+            q_idx, (mark, tight) = R._beg()
+            lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
+            body.append(f'<div class="grp{tight}">{mark}{lbl}'
+                        f'{_zone_html(zones[0], gi, data, step, key, role_steps)}<span class="bend"></span></div>')
+    else:                                          # flow · s3
+        for gi in range(count):
+            cls = "gstart" + (" first" if gi == 0 else "")
+            body.append(f'<div class="{cls}"><p class="pnum flowlbl">{R.esc(_label_of(data, gi))}</p>'
+                        + _zone_html(zones[0], gi, data, step, key, role_steps) + "</div>")
+    log(f"    지면 {pi + 1} [{frame}] {title} · 블록 {sum(len(z) for z in zones)} · 지문 {count}")
+    if frame in ("flow", "s3"):
+        return (f'<section class="sec flow {"twocol" if frame == "s3" else "onecol"} s{step} k-{key}" id="sec{pi + 1}">'
+                f'{run}<div class="flowbody">{"".join(body)}</div></section>')
+    return f'<section class="sec fixed s{step} k-{key}" id="sec{pi + 1}">{run}{"".join(body)}</section>'
+
+
 def pages_html(cfg, data, pages, n=2, log=print):
-    """지면 명세 목록 → 견본 HTML. 지문 n개(0 이면 전부)."""
+    """편집 지면 명세 목록 → 견본 HTML."""
     _reset()
     R.index_refs(data)
     role_steps = _role_steps(data)
-    total = max((len(st.get("groups") or []) for st in data.get("steps") or []), default=0)
-    count = total if not n or int(n) <= 0 else min(int(n), total)
-    secs = []
-    for pi, pg in enumerate(pages):
-        frame = pg.get("frame") if pg.get("frame") in FRAME_ZONES else "sheet"
-        step = int(pg.get("step") or 1)
-        logo = str(pg.get("logo") or "P")[:4]
-        title = str(pg.get("title") or f"지면 {pi + 1}")[:20]
-        key = f"custom{pi + 1}"
-        zones = pg.get("zones") or [[]]
-        run = R.running_head(step, logo, title, STEP_TAG.get(step, "FRAME"))
-        body = []
-        if frame == "a1":
-            for g0 in range(0, count, 2):
-                zs = []
-                for j, gi in enumerate((g0, g0 + 1)):
-                    if gi >= count:
-                        break
-                    lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
-                    zs.append(R.zone(lbl + _zone_html(zones[0], gi, data, step, key, role_steps),
-                                     "top" if j == 0 else "bottom", "z-a1"))
-                body.append(R.page_block(zs, step=key))
-        elif frame == "pair":
-            for gi in range(count):
-                lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
-                zs = [R.zone(lbl + _zone_html(zones[0], gi, data, step, key, role_steps), "top")]
-                if len(zones) > 1 and zones[1]:
-                    zs.append(R.zone(_zone_html(zones[1], gi, data, step, key, role_steps), "bottom"))
-                body.append(R.page_block(zs, step=key))
-        elif frame == "free":
-            for gi in range(count):
-                inner = []
-                for sp in zones[0]:
-                    x = max(0.0, min(float(sp.get("x") or 0), 168.0))
-                    y = max(0.0, min(float(sp.get("y") or 0), 260.0))
-                    w = max(20.0, min(float(sp.get("w") or 168), 168.0 - x))
-                    if sp.get("block") == "pnum":
-                        html_s = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
-                    else:
-                        html_s = _zone_html([sp], gi, data, step, key, role_steps)
-                    if html_s:
-                        inner.append(f'<div class="free" style="position:absolute;left:{x:.1f}mm;top:{y:.1f}mm;'
-                                     f'width:{w:.1f}mm">{html_s}</div>')
-                body.append(R.page_block(["".join(inner) + '<span class="zend"></span>'], step=key))
-        elif frame == "sheet":
-            for gi in range(count):
-                q_idx, (mark, tight) = R._beg()
-                lbl = f'<span class="pnum">{R.esc(_label_of(data, gi))}</span>'
-                body.append(f'<div class="grp{tight}">{mark}{lbl}'
-                            f'{_zone_html(zones[0], gi, data, step, key, role_steps)}<span class="bend"></span></div>')
-        else:                                          # flow · s3
-            for gi in range(count):
-                cls = "gstart" + (" first" if gi == 0 else "")
-                body.append(f'<div class="{cls}"><p class="pnum flowlbl">{R.esc(_label_of(data, gi))}</p>'
-                            + _zone_html(zones[0], gi, data, step, key, role_steps) + "</div>")
-        if frame in ("flow", "s3"):
-            secs.append(f'<section class="sec flow {"twocol" if frame == "s3" else "onecol"} s{step} k-{key}" id="sec{pi + 1}">'
-                        f'{run}<div class="flowbody">{"".join(body)}</div></section>')
-        else:
-            secs.append(f'<section class="sec fixed s{step} k-{key}" id="sec{pi + 1}">{run}{"".join(body)}</section>')
-        log(f"    지면 {pi + 1} [{frame}] {title} · 블록 {sum(len(z) for z in zones)} · 지문 {count}")
+    secs = [page_section(cfg, data, pg, pi, n, role_steps, log) for pi, pg in enumerate(pages)]
     return _doc("지면", "\n".join(secs))
 
 

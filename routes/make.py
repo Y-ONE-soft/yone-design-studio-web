@@ -90,6 +90,7 @@ def _library():
                 "label": label, "kind": kind, "codes": _RE_CODES.findall(label),
                 "thumb": f"/catalog/page/{t['series']}/{d['id']}/{lay['n']}.png?dpi=40",
                 "page": lay["n"], "pages": lay.get("count", 1), "renderable": False,
+                "page_list": (lay.get("pages") or [])[:400],       # 지면 매치: 기준 PDF 면 → 이 블록
             })
         if t["series"] == SERIES:
             for p in wb_parts:
@@ -101,7 +102,7 @@ def _library():
                 })
         out.append({"series": t["series"], "name": t["name"], "dir": t.get("dir_name") or "",
                     "design": d["id"], "design_name": d.get("name", d["id"]), "blocks": blocks,
-                    "renderable": t["series"] == SERIES})
+                    "renderable": t["series"] == SERIES, "total": int(L.get("total") or 0)})
     out.sort(key=lambda t: not t["renderable"])          # 조판되는 틀을 맨 위에
     for t in out:
         for b in t["blocks"]:
@@ -304,7 +305,13 @@ def _clean_items(p):
     for it in p.get("items") or []:
         if not isinstance(it, dict) or not it.get("id"):
             continue
-        o = {k: it[k] for k in ("id", "series", "design", "key", "label", "kind", "thumb", "page", "item") if k in it}
+        o = {k: it[k] for k in ("id", "series", "design", "key", "label", "kind", "thumb", "item") if k in it}
+        if isinstance(it.get("page"), dict):
+            pgs = _clean_pages({"pages": [it["page"]]})
+            if pgs:
+                o["page"] = pgs[0]
+        elif it.get("page") is not None:
+            o["page"] = it["page"]                        # 기준 PDF 면 번호(참고 블록)
         if it.get("n") and str(it["n"]).isdigit():
             o["n"] = int(it["n"])
         out.append(o)
@@ -360,6 +367,10 @@ def api_preview():
             continue
         if it.get("key") and _RE_KEY.match(str(it["key"])):
             plan.append({"key": str(it["key"]), "n": lim.get(str(it["key"]), 0)})
+        elif isinstance(it.get("page"), dict):
+            pgs = _clean_pages({"pages": [it["page"]]})
+            if pgs:
+                plan.append({"page": pgs[0]})
         elif str(it.get("thumb") or "").startswith("/catalog/page/"):
             png = _ref_png(str(it["thumb"]))
             if png:
