@@ -97,7 +97,10 @@ fly ssh console -C "/app/deploy/entrypoint.sh doctor"  # 서체 37/37 · gs · C
 
 ## 3. 로그인
 
-**기본(2026-09-18~): 스튜디오 자체 로그인.** yos-design-web 과는 별개 프로젝트로 본다 — Y.OS 쪽에 넣을 것 없음.
+**지금(2026-09-18 결정): 로그인 없음** — `fly.toml` 의 `YONE_AUTH=off`. 주소를 아는 누구나 들어온다(책·조판·클로드 키 포함).
+잠가야 하면 `YONE_AUTH=password` 로 바꿔 배포 — 아래.
+
+**password: 스튜디오 자체 로그인.** yos-design-web 과는 별개 프로젝트로 본다 — Y.OS 쪽에 넣을 것 없음.
 `fly.toml` 의 `YONE_AUTH=password` + 비밀값 `YONE_PASSWORD` 하나. 미인증 브라우저는 `/auth/login?next=…` 로 가고,
 비밀번호가 맞으면 세션 쿠키(12h). 실패 5회면 10분 잠금. `YONE_PASSWORD` 가 비어 있으면 아무도 못 들어간다(503).
 ```
