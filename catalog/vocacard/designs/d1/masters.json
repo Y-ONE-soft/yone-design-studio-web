@@ -1,0 +1,32 @@
+{
+ "source": "이의1보카",
+ "pdf": "이의1_이의1보카01_내지_최종.pdf",
+ "pages": [
+  {
+   "file": "master_1.png",
+   "label": "앞 간지",
+   "page": 1
+  },
+  {
+   "file": "master_2.png",
+   "label": "시작면",
+   "page": 2
+  },
+  {
+   "file": "master_3.png",
+   "label": "본문 왼쪽 면",
+   "page": 100
+  },
+  {
+   "file": "master_4.png",
+   "label": "본문 오른쪽 면",
+   "page": 101
+  },
+  {
+   "file": "master_5.png",
+   "label": "뒤 간지",
+   "page": 199
+  }
+ ],
+ "date": "2026-09-18"
+}

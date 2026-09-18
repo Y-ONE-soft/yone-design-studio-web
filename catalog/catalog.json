@@ -130,5 +130,13 @@
     "root": "분석본/스텝업",
     "ready": "manual",
     "base": "analysis/분석본__스텝업__26-2-중간__배재고1"
+  },
+  "mockexam": {
+    "name": "동형모의고사",
+    "dir": "mock",
+    "desc": "학교 시험지 틀 그대로(B4 257×364) 찍는 동형모의고사. 코드는 리포에 다 있다 — core/render_vivlio/series/mockexam/ + 학교 프로파일 16곳(강동·명일·배재·상일·성덕·세종·한영). 원고(hwpx·docx, 학교키는 파일명)만 있으면 `python3 -m core.render_vivlio.series.mockexam.run <원고>` 로 돌아간다. 이 맥엔 기출정본 캐시·원고·완성본(nhj 맥 조판/교재/동형모의고사/)이 없어 아직 못 돌리고, 디자인 견본도 그 완성본 PDF 를 받아야 등록된다.",
+    "root": "동형모의고사",
+    "ready": "manual",
+    "base": "mockexam/동형모의고사__26-2-중간__배재1"
   }
 }
