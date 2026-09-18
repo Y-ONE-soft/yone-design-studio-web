@@ -165,6 +165,7 @@
                 <div data-cmd="new">/ 새 틀 요청<small>면 구성이 다른 것 — 클로드 세션에서 만들 요청을 남김</small></div>
                 <div data-cmd="search">/ 디자인 검색<small>적은 말로 템플릿 탭을 거름</small></div>
                 <div data-cmd="load">/ 불러오기<small>결정 대기 · 새 틀 요청 불러오기</small></div>
+                <div data-cmd="reset">/ 새 대화<small>지금 스레드를 닫고 새 세션으로</small></div>
               </div></span>
             <span class="grow"></span>
             <span class="model">{{ model if claude else '클로드 꺼짐' }}</span>
@@ -269,7 +270,7 @@
     // ── AI: 프롬프트 + 명령(/ 틀 등록하기 · 새 틀 요청 · 디자인 검색 · 불러오기) + 스레드 ──
     var SERIES = {{ series_map|tojson }};   // 틀 → {name, dir, dir_name}
     var aiText = document.getElementById('ai-text'), aiFile = document.getElementById('ai-file'), aiSend = document.getElementById('ai-send');
-    var thread = document.getElementById('ai-thread'), cmd = '', hist = [], CMD = { register: '/ 틀 등록하기', new: '/ 새 틀 요청', search: '/ 디자인 검색', load: '/ 불러오기' };
+    var thread = document.getElementById('ai-thread'), cmd = '', hist = [], CMD = { register: '/ 틀 등록하기', new: '/ 새 틀 요청', search: '/ 디자인 검색', load: '/ 불러오기', reset: '/ 새 대화' };
     function setCmd(c) { cmd = c || ''; var b = document.getElementById('ai-cmd'); b.textContent = (cmd ? CMD[cmd] : '/ 명령') + ' ▾'; b.classList.toggle('on', !!cmd); document.getElementById('ai-menu').classList.remove('on'); }
     document.getElementById('ai-cmd').addEventListener('click', function (e) { e.stopPropagation(); document.getElementById('ai-menu').classList.toggle('on'); });
     document.querySelectorAll('#ai-menu div').forEach(function (d) { d.addEventListener('click', function () { setCmd(d.dataset.cmd); }); });
@@ -303,7 +304,7 @@
     // 패널 어디에 놓아도 첨부
     var panelEl = document.querySelector('#tab-ai .ai');
     panelEl.addEventListener('dragover', function (e) { e.preventDefault(); }); panelEl.addEventListener('drop', function (e) { e.preventDefault(); pickFiles(e.dataTransfer.files); });
-    aiText.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend.click(); } if (e.key === '/' && !aiText.value) { e.preventDefault(); document.getElementById('ai-menu').classList.add('on'); } });
+    aiText.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); aiSend.click(); } if (e.key === '/' && !aiText.value) { document.getElementById('ai-menu').classList.add('on'); } });
     function say(cls, html) { var m = document.createElement('div'); m.className = 'msg ' + cls; m.innerHTML = html; thread.appendChild(m); m.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); return m; }
     function esc(t) { return String(t || '').replace(/</g, '&lt;'); }
     function tplOptions(sel) { return Object.keys(SERIES).map(function (k) { return '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(SERIES[k].name) + '</option>'; }).join(''); }
@@ -424,37 +425,62 @@
         .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`\n]+)`/g, '<code>$1</code>').split(/\n{2,}/).map(function (p) { return '<p>' + p.replace(/\n/g, '<br>') + '</p>'; }).join('');
     }
     // ── 기본 프롬프트 = 이 스레드에 붙은 Claude Code 세션 (새 틀 라운드와 같은 방식). 첨부는 아무 턴에나. ──
-    var TID = null;   // 스레드 id — 첫 턴에 서버가 준다. 이후 턴은 같은 세션(--resume)
+    // 스레드 = 세션 하나. id 는 브라우저에 남겨 새로고침해도 이어진다. RUNNING 중에 보낸 말은 줄을 서서 차례로 간다.
+    var TID = null, RUNNING = false, QUEUE = [];
+    try { TID = localStorage.getItem('ai-tid') || null; } catch (e) {}
     function askClaude(text, f) {
       if (!text && !ATT.length) return;
-      say('me', esc(text || '(첨부)') + (ATT.length ? '<small>📎 ' + ATT.map(function (x) { return esc(x.name); }).join(' · ') + '</small>' : ''));
-      var fd = new FormData(); fd.append('text', text); if (TID) fd.append('tid', TID);
-      ATT.forEach(function (x) { fd.append('files', x); }); ATT = []; drawAtt();
-      aiText.value = ''; aiSend.disabled = true;
-      fetch('/api/catalog/chat', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
-        .then(function (j) { if (j.error) { aiSend.disabled = false; say('bot', '⚠ ' + esc(j.error)); return; } TID = j.tid; watchChat(j.tid); })
-        .catch(function (e) { aiSend.disabled = false; say('bot', '실패: ' + e); });
+      var files = ATT.slice(); ATT = []; drawAtt(); aiText.value = '';
+      if (RUNNING) { QUEUE.push({ text: text, files: files }); say('me', esc(text || '(첨부)') + '<small>⏳ 앞 턴이 끝나면 보냄</small>'); return; }
+      sendTurn(text, files);
     }
-    function watchChat(tid) {   // 턴 진행 — 도구 호출 로그(접힘) → 끝나면 말 + (있으면) 카드
-      var m = say('bot', '<details><summary style="cursor:pointer;color:#8b8fa3;font-size:12px">작업 중… (로그)</summary><pre class="flog" style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:#fff;border:1px solid #e8e6ef;border-radius:8px;padding:8px;margin:6px 0 0"></pre></details><div class="ans"></div>');
-      var pre = m.querySelector('.flog'), ans = m.querySelector('.ans'), sum = m.querySelector('summary');
+    function sendTurn(text, files) {
+      RUNNING = true;
+      say('me', esc(text || '(첨부)') + (files.length ? '<small>📎 ' + files.map(function (x) { return esc(x.name); }).join(' · ') + '</small>' : ''));
+      var fd = new FormData(); fd.append('text', text); if (TID) fd.append('tid', TID);
+      files.forEach(function (x) { fd.append('files', x); });
+      fetch('/api/catalog/chat', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j.error) { RUNNING = false; say('bot', '⚠ ' + esc(j.error)); return; }
+          TID = j.tid; try { localStorage.setItem('ai-tid', TID); } catch (e) {}
+          watchChat(j.tid);
+        })
+        .catch(function (e) { RUNNING = false; say('bot', '실패: ' + e); });
+    }
+    function watchChat(tid) {   // 턴 진행 — 말은 오는 대로 바로, 도구 호출은 접힌 로그에. [멈춤] 으로 중간에 끊을 수 있다.
+      var m = say('bot', '<div class="ans live"></div><details><summary style="cursor:pointer;color:#8b8fa3;font-size:12px">작업 중… <button class="stop" style="margin-left:8px;border:1px solid #cfc8e6;background:#fff;border-radius:999px;padding:2px 10px;font-size:11px;cursor:pointer">■ 멈춤</button></summary><pre class="flog" style="white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:#fff;border:1px solid #e8e6ef;border-radius:8px;padding:8px;margin:6px 0 0"></pre></details>');
+      var pre = m.querySelector('.flog'), ans = m.querySelector('.ans'), sum = m.querySelector('summary'), stop = m.querySelector('.stop');
+      stop.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); stop.disabled = true; fetch('/api/catalog/chat/' + tid + '/stop', { method: 'POST' }); });
+      function live(log) {   // 로그의 💬 줄 = 지금까지의 말
+        var said = (log || '').split('\n').filter(function (l) { return l.indexOf('💬 ') === 0; }).map(function (l) { return l.slice(2); });
+        if (said.length) ans.innerHTML = '<p>' + said.map(esc).join('</p><p>') + '</p>';
+      }
       (function poll() {
         fetch('/api/catalog/chat/' + tid).then(function (r) { return r.json(); }).then(function (s) {
-          pre.textContent = (s.log || '').slice(-3000) || '(시작)'; pre.scrollTop = pre.scrollHeight;
-          if (s.status === 'running') { setTimeout(poll, 3000); return; }
-          aiSend.disabled = false;
-          sum.textContent = (s.turn || '') + '턴 로그';
-          if (s.status !== 'done') { ans.innerHTML = '⚠ 중단됨 (rc ' + s.rc + ') — 로그를 펼쳐 보세요.'; return; }
-          ans.innerHTML = (s.text ? md(s.text) : '') + (s.card ? '<div class="msg ok" style="margin-top:8px">' + cardHtml('/catalog/chat/' + tid + '/', s.card) + '</div>' : '');
+          var seg = (s.log || '').split('══ ' + s.turn + '턴').pop();       // 이번 턴 부분만
+          pre.textContent = seg.slice(-3000) || '(시작)'; pre.scrollTop = pre.scrollHeight; live(seg);
+          if (s.status === 'running') { setTimeout(poll, 2500); return; }
+          RUNNING = false; stop.remove(); sum.textContent = (s.turn || '') + '턴 로그';
+          if (s.status === 'stopped') ans.innerHTML += '<p style="color:#8a5a00">■ 멈췄음 — 이어서 말하면 같은 세션이 계속함</p>';
+          else if (s.status !== 'done') ans.innerHTML += '<p style="color:#c0263a">⚠ 중단됨 (rc ' + s.rc + ') — 로그를 펼쳐 보세요.</p>';
+          else ans.innerHTML = (s.text ? md(s.text) : ans.innerHTML) + (s.card ? '<div class="msg ok" style="margin-top:8px">' + cardHtml('/catalog/chat/' + tid + '/', s.card) + '</div>' : '');
           m.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          if (QUEUE.length) { var q = QUEUE.shift(); sendTurn(q.text, q.files); }
         }).catch(function () { setTimeout(poll, 6000); });
       })();
     }
+    // 새로고침 뒤: 지난 스레드가 있으면 마지막 답을 보여주고 이어간다
+    if (TID) fetch('/api/catalog/chat/' + TID).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
+      if (!s) { TID = null; return; }
+      say('bot', '<small style="color:#8b8fa3">이전 대화 이어서 (' + (s.turn || 0) + '턴) — 새로 시작하려면 / 새 대화</small>' + (s.text ? md(s.text) : ''));
+      if (s.status === 'running') watchChat(TID);
+    }).catch(function () {});
     aiSend.addEventListener('click', function () {
       var text = aiText.value.trim(), f = aiFile._f;
       if (!cmd && FORGE) { if (!text) return; aiText.value = ''; forgeSay(FORGE.jid, text); return; }   // 새 틀 세션이 열려 있으면 그쪽으로
       if (!cmd) { askClaude(text, f); return; }
       if (cmd === 'load') { say('me', CMD.load); loadList(); setCmd(''); return; }
+      if (cmd === 'reset') { TID = null; try { localStorage.removeItem('ai-tid'); } catch (e) {} QUEUE = []; say('bot', '새 세션. 이제부터는 새 대화입니다.'); setCmd(''); return; }
       if (cmd === 'search') { if (!text) return; say('me', CMD.search + '<small>' + esc(text) + '</small>'); document.getElementById('q').value = text; filt(); document.querySelector('.rail button[data-tab="tpl"]').click(); setCmd(''); return; }
       if (!f) { say('bot', '+ 로 완성본 PDF 나 지면 이미지를 첨부하세요.'); return; }
       say('me', CMD[cmd] + '<small>📎 ' + esc(f.name) + (extraFiles().length ? ' + 원고 ' + extraFiles().length + '개' : '') + (text ? ' · ' + esc(text) : '') + '</small>');
