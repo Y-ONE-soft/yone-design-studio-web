@@ -106,3 +106,11 @@ def _analysis():
 
 
 register("analysis", _analysis)
+
+
+def _mockexam():
+    from core.render_vivlio.series.mockexam import MockexamSeries
+    return MockexamSeries()
+
+
+register("mockexam", _mockexam)
