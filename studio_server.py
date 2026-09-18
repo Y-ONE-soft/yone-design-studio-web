@@ -70,6 +70,21 @@ def create_app():
         from routes.books import projects
         return render_template("home.html", books=projects(), active_nav="홈")
 
+    @app.route("/api/studio/restart", methods=["POST"])
+    def restart():
+        """새 틀 코드가 main 에 머지된 뒤 서버를 다시 띄운다 — 같은 명령줄로 자기 자신을 다시 실행(exec).
+        로컬(인증 꺼짐)에서만. 응답을 보내고 1초 뒤 바꾼다."""
+        import threading
+        if webauth.mode() != "off":
+            return jsonify({"error": "배포 서버에선 못 한다 — fly deploy"}), 400
+
+        def _exec():
+            import time
+            time.sleep(1)
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+        threading.Thread(target=_exec, daemon=True).start()
+        return jsonify({"ok": True, "note": "2~3초 뒤 새로고침"})
+
     @app.errorhandler(404)
     def _lost(_e):
         # 주소를 잘못 쳤거나 링크에 글자가 딸려 온 경우(`/book-studio)에서도` 같은 것) —

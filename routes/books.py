@@ -164,7 +164,7 @@ def page_projects():
 def page_project_new():
     """새 프로젝트 — Canva 편집기 꼴의 전체화면. 왼쪽에서 디자인(틀의 모습)을 고르면 가운데에 그 페이지 틀이
     보이고, [만들기] 가 그 디자인의 원고 넣기 화면(/catalog/<틀>/<디자인>)으로 보낸다. 새 창으로 연다."""
-    from routes.catalog import design_images, templates
+    from routes.catalog import _dirs, design_images, templates
     from routes.intake import MODEL, have_key
     allt = templates()
     ts = [t for t in allt if t["designs"]]
@@ -172,8 +172,8 @@ def page_project_new():
         for d in t["designs"]:
             d["images"] = design_images(t["series"], d)   # 타일·지면 그림 [{src, label}]
     series_map = {t["series"]: {"name": t["name"], "dir": t["dir"], "dir_name": t["dir_name"]} for t in allt}
-    return render_template("project_new.html", templates=ts, claude=have_key(), model=MODEL,
-                           series_map=series_map, n=sum(len(t["designs"]) for t in ts))
+    return render_template("project_new.html", templates=ts, claude=have_key(), model=MODEL, series_map=series_map,
+                           dirs=[{"id": d["id"], "name": d["name"]} for d in _dirs()], n=sum(len(t["designs"]) for t in ts))
 
 
 @bp.route("/design/<series>/<design>")

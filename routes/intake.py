@@ -555,9 +555,16 @@ def intake():
     else:                                   # 키 없음 + 틀 지정 — 판정 없이 사람이 고른 틀
         verdict = {"verdict": "design", "series": series, "confidence": 0, "design_name": os.path.splitext(pdf_name)[0],
                    "reasons": ["클로드 키가 없어 판정을 건너뜀 — 사람이 고른 틀"], "knobs": {}, "skipped": True}
+    # 원고 견본(docx·hwpx·xlsx·json…) — 새 틀을 만들 때 파서가 볼 것. `원고/` 에 그대로 둔다.
+    manuscripts = []
+    for x in request.files.getlist("extra"):
+        if x and x.filename:
+            os.makedirs(os.path.join(d, "원고"), exist_ok=True)
+            x.save(os.path.join(d, "원고", os.path.basename(x.filename)))
+            manuscripts.append(os.path.basename(x.filename))
     state = {"id": jid, "pdf": pdf_name, "hint": hint, "measured": measured, "verdict": verdict,
              "pages": [{"label": p["label"], "page": p["page"], "file": os.path.basename(p["file"])} for p in pages],
-             "date": datetime.date.today().isoformat(), "status": "judged"}
+             "manuscripts": manuscripts, "date": datetime.date.today().isoformat(), "status": "judged"}
     json.dump(state, open(os.path.join(d, "state.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     return jsonify({**state, "templates": [{"series": k, "name": v["name"]} for k, v in _meta().items()]})
 
@@ -637,8 +644,8 @@ def new_requests():
         if not os.path.exists(sp):
             continue
         st = json.load(open(sp, encoding="utf-8"))
-        if st.get("status") == "new_request":
-            out.append({"id": jid, "name": st.get("name"), "pdf": st.get("pdf"), "date": st.get("date"),
+        if st.get("status") in ("new_request", "forging", "forged", "forge_failed"):
+            out.append({"id": jid, "name": st.get("name"), "pdf": st.get("pdf"), "date": st.get("date"), "status": st.get("status"),
                         "note": st.get("note", ""), "trim": st["measured"].get("trim_mm"), "pages": st["measured"].get("pages"),
                         "judged": st["verdict"].get("series"), "confidence": st["verdict"].get("confidence"),
                         "reasons": st["verdict"].get("reasons", [])[:3], "path": f"catalog/_intake/{jid}/ref.pdf"})
@@ -670,6 +677,107 @@ def intake_img(jid, name):
     if not re.match(r"^[0-9a-f]{8}$", jid) or not re.match(r"^page_[a-z0-9]+\.png$", name):
         abort(404)
     return send_from_directory(os.path.join(INTAKE, jid), name)
+
+
+# ── 새 틀 자동 생성 (forge) — 이 맥에서 Claude Code 를 headless 로 돌린다 ───────────────
+# 배포 서버(Fly)엔 claude CLI 가 없으니 로컬(bin/studio)에서만 켜진다. 잡 하나 = claude -p 프로세스 하나.
+_FORGE = {}          # jid → {"proc", "started"}
+
+
+def _claude_cli():
+    return shutil.which("claude")
+
+
+def _forge_prompt(jid, state, name, did, dir_name):
+    """새 틀을 만들 Claude Code 세션에 줄 지시 — 이 저장소의 절차(CLAUDE.md·인계 문서·블록 지도)를 그대로 따르게 한다."""
+    d = os.path.join(INTAKE, jid)
+    ms = [os.path.join(d, "원고", m) for m in state.get("manuscripts", [])]
+    v = state.get("verdict") or {}
+    return f"""새 틀(계열)을 만든다 — 이름 「{name}」, 카탈로그 폴더(디렉토리) `{did}`({dir_name}). 끝까지 스스로 진행하고, 사람에게 묻지 않는다.
+
+## 재료
+- 완성본 PDF(기준 디자인 · 실측 대상): {os.path.join(d, 'ref.pdf')}  (원본 이름 {state.get('pdf')})
+- 원고 견본(파서가 읽을 입력): {json.dumps(ms, ensure_ascii=False) if ms else '없음 — 그러면 PDF 텍스트에서 원고 형식을 추정하고, config.manuscript 에 필요한 파일 형식을 적어 둔다'}
+- 요청 메모: {state.get('note') or state.get('hint') or '(없음)'}
+- 판정 근거(가장 가까운 기존 틀 `{v.get('series')}`, 신뢰도 {v.get('confidence')}): {' / '.join((v.get('reasons') or [])[:4])}
+
+## 절차 (이 저장소 규칙)
+1. 먼저 읽는다: CLAUDE.md, docs/인계_20260914/02_계열별_현황.md §14(새 계열 판단 순서)와 가장 가까운 기존 계열 절, docs/참고자료/교재_블록_지도/README.md(블록 11종·2층 조합), docs/인계_20260914/07_틀별_디자인·원고_자료.md.
+2. 워크트리에서 작업한다(EnterWorktree, 이름 new-series-<영문키>). 메인 체크아웃은 편집이 막혀 있다.
+3. PDF 를 PyMuPDF 로 실측한다 — 판형·도련·여백·서체(name 테이블)·크기·색·자간. 면 구성(구성 단위·반복 단위·좌우)을 블록 11종으로 적는다. 디자인은 지어내지 않고 완성본을 그대로 옮긴다.
+4. 계열 코드를 만든다: `core/render_vivlio/series/<영문키>/`(가장 가까운 계열을 본떠 `__init__.py`·`data.py`·`render.py`·`verify.py`) + `core/render_vivlio/themes/<영문키>.css` + `core/render_vivlio/series/__init__.py` 의 register 한 줄. 파서는 구조 판정(라벨 화이트리스트 금지). 원고 견본이 있으면 그것을 실제로 파싱해 data.json 이 나와야 한다.
+5. 카탈로그에 넣는다: `catalog/catalog.json` 에 `"<영문키>": {{"name": "{name}", "desc": …, "root": "<책 폴더 계열>", "ready": "auto", "dir": "{did}"}}` (Read 후 Edit — 기존 항목 삭제 금지). 디자인 `catalog/<영문키>/designs/d1/` 에 `config.json`(계열 기본 config, options.expect 없이)·`design.json`(name·desc·source "PDF: …"·date)·`참고/reference.pdf`(위 PDF 복사).
+6. 원고 견본으로 시험 책을 만들어 조판해 본다(`bin/viv` 또는 `python -m core.render_vivlio.book`). 쪽수·게이트 결과를 확인하고, 완성본 PDF 와 지면을 대조해 큰 차이를 줄인다. 견본 사진 `preview_1..N.png` 을 디자인 폴더에 남긴다(bin/catalog snap 또는 fitz 로 앞 5면).
+7. 커밋하고 main 에 머지한다(ExitWorktree(keep) → main 에서 `git merge --no-edit worktree-new-series-<영문키>` → 워크트리·브랜치 삭제). 커밋 메시지는 평문. 서버 재시작은 하지 않는다(사용자가 한다).
+8. 마지막 출력은 딱 5줄: 영문키 / 만든 파일 목록 / 시험 조판 결과(쪽수·게이트) / 완성본과 남은 차이 / 다음에 필요한 것.
+
+제약: 요청 밖 리팩터링 금지. 기존 계열·틀·디자인 파일은 건드리지 않는다. 비밀값·키를 파일에 적지 않는다. 막히면 그 지점까지 커밋·머지하고 마지막 줄에 막힌 이유를 적는다."""
+
+
+@bp.route("/api/catalog/intake/<jid>/forge", methods=["POST"])
+def forge_start(jid):
+    """새 틀 요청을 Claude Code(headless)로 실제로 만든다. 로컬에서만."""
+    import subprocess
+    import threading
+    if not re.match(r"^[0-9a-f]{8}$", jid):
+        abort(404)
+    d = os.path.join(INTAKE, jid)
+    sp = os.path.join(d, "state.json")
+    if not os.path.exists(sp):
+        abort(404)
+    cli = _claude_cli()
+    if not cli:
+        return jsonify({"error": "이 서버에는 claude CLI 가 없다 — 이 맥의 bin/studio 에서만 된다"}), 400
+    if jid in _FORGE and _FORGE[jid]["proc"].poll() is None:
+        return jsonify({"ok": True, "status": "forging", "already": True})
+    state = json.load(open(sp, encoding="utf-8"))
+    body = request.get_json(silent=True) or {}
+    from routes.catalog import _dirs
+    dirs = {x["id"]: x["name"] for x in _dirs()}
+    did = body.get("dir") if body.get("dir") in dirs else "etc"
+    name = (body.get("name") or state.get("name") or os.path.splitext(state.get("pdf", "새 틀"))[0]).strip()
+    prompt = _forge_prompt(jid, state, name, did, dirs[did])
+    open(os.path.join(d, "forge_prompt.md"), "w", encoding="utf-8").write(prompt)
+    log = open(os.path.join(d, "forge.log"), "w", encoding="utf-8")
+    env = dict(os.environ)
+    env.pop("CLAUDECODE", None)              # 안에서 또 세션이라고 오해하지 않게
+    # 권한은 좁게: 파일 편집은 자동 승인, 셸은 git·python·bin/*·복사 정도만. 나머지(네트워크·삭제·배포)는 headless 라 거부된다.
+    allowed = ("Read Edit Write Glob Grep EnterWorktree ExitWorktree "
+               "Bash(git *) Bash(python3 *) Bash(python *) Bash(bin/*) Bash(ls *) Bash(cp *) Bash(mkdir *) Bash(cat *) Bash(head *) Bash(wc *)")
+    proc = subprocess.Popen([cli, "-p", prompt, "--permission-mode", "acceptEdits", "--allowedTools", allowed,
+                             "--output-format", "text", "--max-budget-usd", os.environ.get("YONE_FORGE_BUDGET_USD", "40")],
+                            cwd=REPO, stdout=log, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+    _FORGE[jid] = {"proc": proc, "started": datetime.datetime.now().isoformat(timespec="seconds")}
+    state.update({"status": "forging", "name": name, "dir": did, "forge_started": _FORGE[jid]["started"]})
+    json.dump(state, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+    def _wait():
+        rc = proc.wait()
+        log.close()
+        st = json.load(open(sp, encoding="utf-8"))
+        st.update({"status": "forged" if rc == 0 else "forge_failed", "forge_rc": rc,
+                   "forge_ended": datetime.datetime.now().isoformat(timespec="seconds")})
+        json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    threading.Thread(target=_wait, daemon=True).start()
+    return jsonify({"ok": True, "status": "forging", "id": jid})
+
+
+@bp.route("/api/catalog/intake/<jid>/forge")
+def forge_status(jid):
+    if not re.match(r"^[0-9a-f]{8}$", jid):
+        abort(404)
+    d = os.path.join(INTAKE, jid)
+    sp = os.path.join(d, "state.json")
+    if not os.path.exists(sp):
+        abort(404)
+    st = json.load(open(sp, encoding="utf-8"))
+    lp = os.path.join(d, "forge.log")
+    tail = ""
+    if os.path.exists(lp):
+        with open(lp, encoding="utf-8", errors="replace") as f:
+            tail = f.read()[-6000:]
+    return jsonify({"status": st.get("status"), "rc": st.get("forge_rc"), "started": st.get("forge_started"),
+                    "ended": st.get("forge_ended"), "log": tail, "name": st.get("name"), "dir": st.get("dir")})
 
 
 @bp.route("/api/catalog/intake/<jid>", methods=["DELETE"])
