@@ -143,20 +143,22 @@ def page_projects():
     did = _nfc(request.args.get("dir", "")).strip()
     q = _nfc(request.args.get("q", "")).strip().lower()
     folder = next((f for f in folders if f["id"] == did), None) if did else None
-    designs = []
+    designs, bare = [], []
     if folder:
         bs = [b for b in bs if b["dir"] == did]
         from routes.catalog import design_images, templates     # 이 폴더의 틀·디자인 — 여기서 바로 만들 수 있게
         for t in templates():
             if t["dir"] != did:
                 continue
+            if not t["designs"]:                             # 틀은 있는데 디자인이 아직 없는 것 — 카드로 보여야 등록하러 간다
+                bare.append(t)
             for d in t["designs"]:
                 imgs = design_images(t["series"], d)      # 견본 > 페이지 틀 > 기준 PDF 앞 면
                 designs.append({"series": t["series"], "tname": t["name"], "ready": t["ready"], "id": d["id"], "name": d["name"],
                                 "draft": d.get("draft", False), "n": len(imgs), "img": imgs[0]["src"] if imgs else ""})
     if q:
         bs = [b for b in bs if q in " ".join((b["title"], b["key"], b["series_name"] or "", b["design"])).lower()]
-    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs,
+    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs, bare=bare,
                            total=sum(counts.values()), active_nav="프로젝트")
 
 
