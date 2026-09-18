@@ -517,7 +517,7 @@ def api_level():
 
 # ── 지면 편집기 — 지면 = 틀 + 칸마다 [블록 + 원고 역할] ─────────────
 
-_FRAMES = ("a1", "sheet", "pair", "flow", "s3")
+_FRAMES = ("a1", "sheet", "pair", "flow", "s3", "free")
 
 
 def _clean_pages(p):
@@ -533,6 +533,12 @@ def _clean_pages(p):
                     o = {"block": str(sp["block"])}
                     if sp.get("role") and _RE_KEY.match(str(sp["role"])):
                         o["role"] = str(sp["role"])
+                    for k, lo, hi in (("x", 0, 168), ("y", 0, 260), ("w", 20, 168)):
+                        try:
+                            if sp.get(k) is not None:
+                                o[k] = round(max(lo, min(float(sp[k]), hi)), 1)
+                        except (TypeError, ValueError):
+                            pass
                     zz.append(o)
             zones.append(zz)
         out.append({"frame": pg.get("frame") if pg.get("frame") in _FRAMES else "sheet",
