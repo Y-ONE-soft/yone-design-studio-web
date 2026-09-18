@@ -122,5 +122,13 @@
     "root": "중등부/내신 정규 교재",
     "ready": "auto",
     "base": "middle/중등부__내신 정규 교재__중2_천재소_L5"
+  },
+  "analysis": {
+    "name": "스텝업 분석본 (민트·A4)",
+    "dir": "analysis",
+    "desc": "모의고사 지문 한 편에 짝면 2쪽 — 왼쪽 구문분석·한글 해석·GRAMMAR POINT, 오른쪽 주제/요약·핵심기출문제·FLOW NOTE·기출포인트 12칸·VOCA 표. A4·청록 머리띠. 원고 견본이 없어 파서는 아직 미구현 — data.json 스키마는 core/render_vivlio/series/analysis/data.py 상단 주석 참조.",
+    "root": "분석본/스텝업",
+    "ready": "manual",
+    "base": "analysis/분석본__스텝업__26-2-중간__배재고1"
   }
 }

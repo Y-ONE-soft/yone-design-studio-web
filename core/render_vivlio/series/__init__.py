@@ -98,3 +98,11 @@ def _seseo():
 
 
 register("seseo", _seseo)
+
+
+def _analysis():
+    from core.render_vivlio.series.analysis import AnalysisSeries
+    return AnalysisSeries()
+
+
+register("analysis", _analysis)
