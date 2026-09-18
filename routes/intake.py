@@ -730,6 +730,9 @@ def forge_start(jid):
         return jsonify({"error": "이 서버에는 claude CLI 가 없다 — 이 맥의 bin/studio 에서만 된다"}), 400
     if jid in _FORGE and _FORGE[jid]["proc"].poll() is None:
         return jsonify({"ok": True, "status": "forging", "already": True})
+    other = _forging_other(jid)               # 한 번에 하나만 — 둘이 같은 틀을 만들면 워크트리·머지가 엉킨다
+    if other:
+        return jsonify({"error": f"이미 새 틀을 만드는 중이다 ({other}). 끝난 뒤 다시."}), 409
     state = json.load(open(sp, encoding="utf-8"))
     body = request.get_json(silent=True) or {}
     from routes.catalog import _dirs
@@ -744,22 +747,67 @@ def forge_start(jid):
     # 권한은 좁게: 파일 편집은 자동 승인, 셸은 git·python·bin/*·복사 정도만. 나머지(네트워크·삭제·배포)는 headless 라 거부된다.
     allowed = ("Read Edit Write Glob Grep EnterWorktree ExitWorktree "
                "Bash(git *) Bash(python3 *) Bash(python *) Bash(bin/*) Bash(ls *) Bash(cp *) Bash(mkdir *) Bash(cat *) Bash(head *) Bash(wc *)")
+    # stream-json 으로 받아 사람이 읽을 줄(도구 호출·말)로 바꿔 forge.log 에 쓴다 — text 모드는 끝날 때까지 아무것도 안 보였다.
     proc = subprocess.Popen([cli, "-p", prompt, "--permission-mode", "acceptEdits", "--allowedTools", allowed,
-                             "--output-format", "text", "--max-budget-usd", os.environ.get("YONE_FORGE_BUDGET_USD", "40")],
-                            cwd=REPO, stdout=log, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+                             "--output-format", "stream-json", "--verbose",
+                             "--max-budget-usd", os.environ.get("YONE_FORGE_BUDGET_USD", "40")],
+                            cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, start_new_session=True, text=True)
     _FORGE[jid] = {"proc": proc, "started": datetime.datetime.now().isoformat(timespec="seconds")}
-    state.update({"status": "forging", "name": name, "dir": did, "forge_started": _FORGE[jid]["started"]})
+    state.update({"status": "forging", "name": name, "dir": did, "forge_started": _FORGE[jid]["started"], "forge_pid": proc.pid})
     json.dump(state, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
-    def _wait():
+    def _pump():
+        for line in proc.stdout:
+            for out in _forge_lines(line):
+                log.write(out + "\n")
+            log.flush()
         rc = proc.wait()
         log.close()
         st = json.load(open(sp, encoding="utf-8"))
         st.update({"status": "forged" if rc == 0 else "forge_failed", "forge_rc": rc,
                    "forge_ended": datetime.datetime.now().isoformat(timespec="seconds")})
         json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    threading.Thread(target=_wait, daemon=True).start()
+    threading.Thread(target=_pump, daemon=True).start()
     return jsonify({"ok": True, "status": "forging", "id": jid})
+
+
+def _forge_lines(line):
+    """stream-json 한 줄 → 읽을 수 있는 로그 줄들. 도구 호출은 이름+대상, 말은 앞 300자, 결과는 5줄 요약."""
+    try:
+        ev = json.loads(line)
+    except ValueError:
+        return [line.rstrip()] if line.strip() else []
+    t = ev.get("type")
+    out = []
+    if t == "assistant":
+        for b in (ev.get("message") or {}).get("content") or []:
+            if b.get("type") == "text" and b.get("text", "").strip():
+                out.append("💬 " + b["text"].strip()[:300].replace("\n", " "))
+            elif b.get("type") == "tool_use":
+                i = b.get("input") or {}
+                tgt = i.get("command") or i.get("file_path") or i.get("pattern") or i.get("name") or ""
+                out.append(f"🔧 {b.get('name')}  {str(tgt)[:120]}")
+    elif t == "result":
+        out.append(f"■ 끝 ({ev.get('subtype')}) · {ev.get('num_turns')}턴 · ${ev.get('total_cost_usd', 0):.2f}")
+        if ev.get("result"):
+            out.append(str(ev["result"])[:2000])
+    return out
+
+
+def _forging_other(jid):
+    """지금 만드는 중인 다른 요청 id. 프로세스가 살아 있을 때만."""
+    for j, f in _FORGE.items():
+        if j != jid and f["proc"].poll() is None:
+            return j
+    return None
+
+
+def _alive(pid):
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except (OSError, TypeError, ValueError):
+        return False
 
 
 @bp.route("/api/catalog/intake/<jid>/forge")
@@ -771,6 +819,11 @@ def forge_status(jid):
     if not os.path.exists(sp):
         abort(404)
     st = json.load(open(sp, encoding="utf-8"))
+    # 서버가 도중에 재시작되면 기다리던 스레드가 없어진다 — 프로세스가 죽어 있으면 끝난 것으로 본다(결과는 로그 마지막 줄).
+    if st.get("status") == "forging" and jid not in _FORGE and not _alive(st.get("forge_pid")):
+        st.update({"status": "forged", "forge_rc": None, "forge_ended": datetime.datetime.now().isoformat(timespec="seconds"),
+                   "note": (st.get("note") or "") + " (서버 재시작으로 종료 코드를 못 받음 — 로그 확인)"})
+        json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     lp = os.path.join(d, "forge.log")
     tail = ""
     if os.path.exists(lp):
