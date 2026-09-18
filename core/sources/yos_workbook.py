@@ -112,7 +112,7 @@ def _content_summary(c, passage):
 
 def _sentence_order(c):
     lines = [_block("arr_line", f"({o.get('tag')}) {o.get('text') or ''}") for o in c.get("options") or []]
-    return [lines], None
+    return ([lines], None) if lines else (None, None)
 
 
 def _blank_rows(c, role):
@@ -145,7 +145,7 @@ def _grammar_choice(c, passage):
 def _grammar_ox(c):
     lines = [_block("gram_ox", f"{s.get('no')}.  {s.get('text') or ''}", icon="TF 버튼")
              for s in c.get("sentences") or []]
-    return [lines], None
+    return ([lines], None) if lines else (None, None)
 
 
 def _grammar_fix(c):
@@ -227,10 +227,12 @@ def _convert(key, content, passage):
         return _blank_rows(c, "blank_vocab")
     if key == "grammar-choice":
         return _grammar_choice(c, passage)
-    if key == "grammar-ox":
+    if key in ("grammar-ox", "grammar-fix"):
+        # 같은 면(어법 O/X)에 두 모양이 온다 — 번호 문장 목록(grammar-ox) / 본문에 n[word] 표시(grammar-fix).
+        # 시스템 생성 어법OX 는 key 가 grammar-ox 인데 모양은 grammar-fix 다 → key 아닌 **kind** 로 가른다.
+        if kind == "grammar-fix" or (not c.get("sentences") and c.get("text")):
+            return _grammar_fix(c)
         return _grammar_ox(c)
-    if key == "grammar-fix":
-        return _grammar_fix(c)
     if key == "grammar-blank":
         return _blank_rows(c, "blank_gram")
     if key == "writing-order":
