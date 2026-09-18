@@ -644,11 +644,12 @@ def new_requests():
         if not os.path.exists(sp):
             continue
         st = json.load(open(sp, encoding="utf-8"))
-        if st.get("status") in ("new_request", "forging", "forged", "forge_failed"):
+        if st.get("status") in ("new_request", "forging", "forge_paused", "forged", "forge_failed"):
             out.append({"id": jid, "name": st.get("name"), "pdf": st.get("pdf"), "date": st.get("date"), "status": st.get("status"),
                         "note": st.get("note", ""), "trim": st["measured"].get("trim_mm"), "pages": st["measured"].get("pages"),
                         "judged": st["verdict"].get("series"), "confidence": st["verdict"].get("confidence"),
-                        "reasons": st["verdict"].get("reasons", [])[:3], "path": f"catalog/_intake/{jid}/ref.pdf"})
+                        "reasons": st["verdict"].get("reasons", [])[:3], "path": f"catalog/_intake/{jid}/ref.pdf",
+                        "forge_round": st.get("forge_round")})
     return out
 
 
@@ -670,17 +671,19 @@ def intake_get(jid):
     return jsonify({**state, "templates": [{"series": k, "name": v["name"]} for k, v in _meta().items()]})
 
 
-@bp.route("/catalog/intake/<jid>/<name>")
+@bp.route("/catalog/intake/<jid>/<path:name>")
 def intake_img(jid, name):
-    """판정에 쓴 면 그림(page_*.png)."""
+    """판정에 쓴 면 그림(page_*.png)과 라운드 대조 그림(round_N/*.png)."""
     from flask import send_from_directory
-    if not re.match(r"^[0-9a-f]{8}$", jid) or not re.match(r"^page_[a-z0-9]+\.png$", name):
+    if not re.match(r"^[0-9a-f]{8}$", jid) or not re.match(r"^(page_[a-z0-9]+|round_\d+/[A-Za-z0-9_\-]+)\.png$", name):
         abort(404)
     return send_from_directory(os.path.join(INTAKE, jid), name)
 
 
-# ── 새 틀 자동 생성 (forge) — 이 맥에서 Claude Code 를 headless 로 돌린다 ───────────────
-# 배포 서버(Fly)엔 claude CLI 가 없으니 로컬(bin/studio)에서만 켜진다. 잡 하나 = claude -p 프로세스 하나.
+# ── 새 틀 만들기 (forge) — 이 맥에서 Claude Code 를 headless 로, **라운드**로 돌린다 ───────────────
+# 배포 서버(Fly)엔 claude CLI 가 없으니 로컬(bin/studio)에서만. 요청 하나 = 세션 하나(--session-id), 라운드마다 --resume.
+# 라운드 끝에 에이전트가 `round.json` 을 쓰고 멈춘다 → 사람이 스레드에서 답하면 다음 라운드. 예전 개발자와 밤새 왕복하던
+# 방식을 그대로 옮긴 것 — 실측·조판·대조는 기계가, 판정은 사람이.
 _FORGE = {}          # jid → {"proc", "started"}
 
 
@@ -688,35 +691,54 @@ def _claude_cli():
     return shutil.which("claude")
 
 
-def _forge_prompt(jid, state, name, did, dir_name):
-    """새 틀을 만들 Claude Code 세션에 줄 지시 — 이 저장소의 절차(CLAUDE.md·인계 문서·블록 지도)를 그대로 따르게 한다."""
+def _forge_protocol(jid, state, name, did, dir_name):
+    """세션 첫 라운드에 주는 규칙 — 라운드 프로토콜 + 이 저장소의 새 계열 절차."""
     d = os.path.join(INTAKE, jid)
     ms = [os.path.join(d, "원고", m) for m in state.get("manuscripts", [])]
     v = state.get("verdict") or {}
-    return f"""새 틀(계열)을 만든다 — 이름 「{name}」, 카탈로그 폴더(디렉토리) `{did}`({dir_name}). 끝까지 스스로 진행하고, 사람에게 묻지 않는다.
+    return f"""너는 이 스튜디오의 조판 개발자다. 사람과 **라운드**로 일해서 새 틀(계열) 「{name}」 을 만든다. 카탈로그 폴더 `{did}`({dir_name}).
+
+## 라운드 규칙 (반드시)
+- 한 라운드 = 이 세션의 한 번 응답. 라운드 끝에 `{d}/round.json` 을 쓰고 멈춘다. 다음 라운드는 사람의 답으로 이어진다(같은 세션).
+- round.json 형식: {{"round": N, "stage": "measure|code|fix|register", "summary": "3~6줄(무엇을 했고 무엇이 맞고 무엇이 미심쩍은지)",
+  "ask": "사람에게 확인받을 것 한 줄(없으면 \\"\\")", "compare": [{{"ref": "round_N/ref_p3.png", "out": "round_N/out_p3.png", "note": "이 면에서 다른 점"}}], "done": false}}
+  - 그림은 `{d}/round_N/` 에 png 로 — ref = 완성본 면(fitz, dpi 60), out = 내가 조판한 면(같은 자리). 1라운드는 ref 만.
+  - compare 는 구성(면 유형)마다 대표 1면씩. 지문만 다른 면은 넣지 않는다.
+- 사람이 "등록해" 라고 하면: 카탈로그 등록·커밋·main 머지까지 하고 done: true. 그 전엔 main 에 머지하지 않는다(워크트리에만).
+- 사람에게 묻는 건 대조로도 못 가르는 것만. 판단이 필요하면 완성본을 열어 맞춘다(정본 = 완성본).
 
 ## 재료
-- 완성본 PDF(기준 디자인 · 실측 대상): {os.path.join(d, 'ref.pdf')}  (원본 이름 {state.get('pdf')})
-- 원고 견본(파서가 읽을 입력): {json.dumps(ms, ensure_ascii=False) if ms else '없음 — 그러면 PDF 텍스트에서 원고 형식을 추정하고, config.manuscript 에 필요한 파일 형식을 적어 둔다'}
+- 완성본 PDF: {os.path.join(d, 'ref.pdf')}  (원본 이름 {state.get('pdf')})
+- 원고 견본: {json.dumps(ms, ensure_ascii=False) if ms else '없음 — PDF 글에서 원고 형식을 추정하고 config.manuscript 에 필요한 형식을 적는다. 견본이 오면 다음 라운드에 파서를 붙인다'}
 - 요청 메모: {state.get('note') or state.get('hint') or '(없음)'}
-- 판정 근거(가장 가까운 기존 틀 `{v.get('series')}`, 신뢰도 {v.get('confidence')}): {' / '.join((v.get('reasons') or [])[:4])}
+- 판정 근거(가장 가까운 기존 틀 `{v.get('series')}`): {' / '.join((v.get('reasons') or [])[:4])}
 
-## 절차 (이 저장소 규칙)
-1. 먼저 읽는다: CLAUDE.md, docs/인계_20260914/02_계열별_현황.md §14(새 계열 판단 순서)와 가장 가까운 기존 계열 절, docs/참고자료/교재_블록_지도/README.md(블록 11종·2층 조합), docs/인계_20260914/07_틀별_디자인·원고_자료.md.
-2. 워크트리에서 작업한다(EnterWorktree, 이름 new-series-<영문키>). 메인 체크아웃은 편집이 막혀 있다.
-3. PDF 를 PyMuPDF 로 실측한다 — 판형·도련·여백·서체(name 테이블)·크기·색·자간. 면 구성(구성 단위·반복 단위·좌우)을 블록 11종으로 적는다. 디자인은 지어내지 않고 완성본을 그대로 옮긴다.
-4. 계열 코드를 만든다: `core/render_vivlio/series/<영문키>/`(가장 가까운 계열을 본떠 `__init__.py`·`data.py`·`render.py`·`verify.py`) + `core/render_vivlio/themes/<영문키>.css` + `core/render_vivlio/series/__init__.py` 의 register 한 줄. 파서는 구조 판정(라벨 화이트리스트 금지). 원고 견본이 있으면 그것을 실제로 파싱해 data.json 이 나와야 한다.
-5. 카탈로그에 넣는다: `catalog/catalog.json` 에 `"<영문키>": {{"name": "{name}", "desc": …, "root": "<책 폴더 계열>", "ready": "auto", "dir": "{did}"}}` (Read 후 Edit — 기존 항목 삭제 금지). 디자인 `catalog/<영문키>/designs/d1/` 에 `config.json`(계열 기본 config, options.expect 없이)·`design.json`(name·desc·source "PDF: …"·date)·`참고/reference.pdf`(위 PDF 복사).
-6. 원고 견본으로 시험 책을 만들어 조판해 본다(`bin/viv` 또는 `python -m core.render_vivlio.book`). 쪽수·게이트 결과를 확인하고, 완성본 PDF 와 지면을 대조해 큰 차이를 줄인다. 견본 사진 `preview_1..N.png` 을 디자인 폴더에 남긴다(bin/catalog snap 또는 fitz 로 앞 5면).
-7. 커밋하고 main 에 머지한다(ExitWorktree(keep) → main 에서 `git merge --no-edit worktree-new-series-<영문키>` → 워크트리·브랜치 삭제). 커밋 메시지는 평문. 서버 재시작은 하지 않는다(사용자가 한다).
-8. 마지막 출력은 딱 5줄: 영문키 / 만든 파일 목록 / 시험 조판 결과(쪽수·게이트) / 완성본과 남은 차이 / 다음에 필요한 것.
+## 이 저장소의 새 계열 절차
+1. 먼저 읽는다: CLAUDE.md, docs/인계_20260914/02_계열별_현황.md §14 와 가장 가까운 계열 절, docs/참고자료/교재_블록_지도/README.md, docs/인계_20260914/07_틀별_디자인·원고_자료.md.
+2. 코드는 워크트리에서(EnterWorktree, 이름 new-series-<영문키>). 메인 체크아웃은 편집이 막혀 있다. 라운드가 바뀌어도 같은 워크트리를 쓴다.
+3. 실측: PyMuPDF 로 판형·도련·여백·서체(name 테이블)·크기·색·자간. 면 구성을 블록 11종(B1~B11)으로.
+4. 계열 코드: `core/render_vivlio/series/<영문키>/`(`__init__.py`·`data.py`·`render.py`·`verify.py`) + `themes/<영문키>.css` + `series/__init__.py` register. 파서는 구조 판정(라벨 화이트리스트 금지).
+5. 등록: `catalog/catalog.json` 에 `"<영문키>": {{"name": "{name}", "desc": …, "root": …, "ready": "auto", "dir": "{did}"}}` (Read 후 Edit, 기존 항목 삭제 금지) + `catalog/<영문키>/designs/d1/` 에 config.json·design.json·참고/reference.pdf·preview_1..5.png.
+6. 시험 조판은 `bin/viv` 또는 `python -m core.render_vivlio.book`. 게이트 결과와 쪽수를 summary 에.
+제약: 요청 밖 리팩터링 금지, 다른 계열·틀·디자인 파일 불변, 비밀값 금지. 막히면 그 지점에서 round.json 에 적고 멈춘다.
+이미 같은 틀의 계열 코드가 있으면(지난 시도 — `catalog/catalog.json` 과 `core/render_vivlio/series/` 확인) 새로 만들지 않고 그것을 이어서 고친다.
 
-제약: 요청 밖 리팩터링 금지. 기존 계열·틀·디자인 파일은 건드리지 않는다. 비밀값·키를 파일에 적지 않는다. 막히면 그 지점까지 커밋·머지하고 마지막 줄에 막힌 이유를 적는다."""
+## 1라운드 (지금)
+실측 + 구성 판독 + 가장 가까운 기존 계열 + 만들 계획만. **코드는 아직 쓰지 않는다.** 구성마다 대표 면을 `round_1/ref_pN.png` 로 뽑아 compare 에 ref 만 넣고, ask 에 확인받을 것을 적는다."""
+
+
+def _forge_round_prompt(state, message):
+    """2라운드 이후 — 사람의 답 + 라운드 규칙 상기."""
+    n = int(state.get("forge_round") or 1) + 1
+    d = os.path.join(INTAKE, state["id"])
+    return f"""[{n}라운드] 사람의 답: {message.strip() or '계속'}
+
+이어서 진행한다. 이번 라운드 끝에 `{d}/round.json` 을 다시 쓴다(round: {n}, 그림은 `{d}/round_{n}/`). 조판했으면 compare 에 완성본(ref)과 조판본(out)을 같은 면끼리 짝지어 넣고 note 에 차이를 적는다. "등록해" 였으면 카탈로그 등록·커밋·main 머지 후 done: true."""
 
 
 @bp.route("/api/catalog/intake/<jid>/forge", methods=["POST"])
 def forge_start(jid):
-    """새 틀 요청을 Claude Code(headless)로 실제로 만든다. 로컬에서만."""
+    """새 틀 요청을 Claude Code(headless)로 라운드 진행. body {dir, name} = 첫 라운드, {message} = 다음 라운드(같은 세션 --resume)."""
     import subprocess
     import threading
     if not re.match(r"^[0-9a-f]{8}$", jid):
@@ -737,23 +759,32 @@ def forge_start(jid):
     body = request.get_json(silent=True) or {}
     from routes.catalog import _dirs
     dirs = {x["id"]: x["name"] for x in _dirs()}
-    did = body.get("dir") if body.get("dir") in dirs else "etc"
-    name = (body.get("name") or state.get("name") or os.path.splitext(state.get("pdf", "새 틀"))[0]).strip()
-    prompt = _forge_prompt(jid, state, name, did, dirs[did])
-    open(os.path.join(d, "forge_prompt.md"), "w", encoding="utf-8").write(prompt)
-    log = open(os.path.join(d, "forge.log"), "w", encoding="utf-8")
     env = dict(os.environ)
     env.pop("CLAUDECODE", None)              # 안에서 또 세션이라고 오해하지 않게
     # 권한은 좁게: 파일 편집은 자동 승인, 셸은 git·python·bin/*·복사 정도만. 나머지(네트워크·삭제·배포)는 headless 라 거부된다.
     allowed = ("Read Edit Write Glob Grep EnterWorktree ExitWorktree "
                "Bash(git *) Bash(python3 *) Bash(python *) Bash(bin/*) Bash(ls *) Bash(cp *) Bash(mkdir *) Bash(cat *) Bash(head *) Bash(wc *)")
-    # stream-json 으로 받아 사람이 읽을 줄(도구 호출·말)로 바꿔 forge.log 에 쓴다 — text 모드는 끝날 때까지 아무것도 안 보였다.
-    proc = subprocess.Popen([cli, "-p", prompt, "--permission-mode", "acceptEdits", "--allowedTools", allowed,
-                             "--output-format", "stream-json", "--verbose",
-                             "--max-budget-usd", os.environ.get("YONE_FORGE_BUDGET_USD", "40")],
-                            cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, start_new_session=True, text=True)
+    common = ["--permission-mode", "acceptEdits", "--allowedTools", allowed, "--output-format", "stream-json", "--verbose",
+              "--max-budget-usd", os.environ.get("YONE_FORGE_BUDGET_USD", "40")]
+    if state.get("forge_session"):            # 다음 라운드 — 같은 세션에 이어 붙인다
+        prompt = _forge_round_prompt(state, body.get("message") or "")
+        args = [cli, "-p", prompt, "--resume", state["forge_session"]] + common
+        rnd = int(state.get("forge_round") or 1) + 1
+    else:                                     # 첫 라운드
+        did = body.get("dir") if body.get("dir") in dirs else "etc"
+        name = (body.get("name") or state.get("name") or os.path.splitext(state.get("pdf", "새 틀"))[0]).strip()
+        prompt = _forge_protocol(jid, state, name, did, dirs[did])
+        state.update({"name": name, "dir": did, "forge_session": str(uuid.uuid4())})
+        args = [cli, "-p", prompt, "--session-id", state["forge_session"]] + common
+        rnd = 1
+    open(os.path.join(d, f"forge_prompt_{rnd}.md"), "w", encoding="utf-8").write(prompt)
+    log = open(os.path.join(d, "forge.log"), "a", encoding="utf-8")
+    log.write(f"\n══ {rnd}라운드 {datetime.datetime.now().isoformat(timespec='seconds')} ══\n"); log.flush()
+    # stream-json 으로 받아 사람이 읽을 줄(도구 호출·말)로 바꿔 forge.log 에 쓴다.
+    proc = subprocess.Popen(args, cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env, start_new_session=True, text=True)
     _FORGE[jid] = {"proc": proc, "started": datetime.datetime.now().isoformat(timespec="seconds")}
-    state.update({"status": "forging", "name": name, "dir": did, "forge_started": _FORGE[jid]["started"], "forge_pid": proc.pid})
+    state.update({"status": "forging", "forge_round": rnd, "forge_started": _FORGE[jid]["started"], "forge_pid": proc.pid})
+    state.pop("round", None)
     json.dump(state, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 
     def _pump():
@@ -764,11 +795,28 @@ def forge_start(jid):
         rc = proc.wait()
         log.close()
         st = json.load(open(sp, encoding="utf-8"))
-        st.update({"status": "forged" if rc == 0 else "forge_failed", "forge_rc": rc,
-                   "forge_ended": datetime.datetime.now().isoformat(timespec="seconds")})
+        st.update(_forge_end(d, rc))
         json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     threading.Thread(target=_pump, daemon=True).start()
-    return jsonify({"ok": True, "status": "forging", "id": jid})
+    return jsonify({"ok": True, "status": "forging", "id": jid, "round": rnd})
+
+
+def _forge_end(d, rc):
+    """라운드가 끝난 뒤 상태 — round.json 이 있으면 그것(done 이면 forged, 아니면 forge_paused), 없으면 종료 코드로."""
+    out = {"forge_rc": rc, "forge_ended": datetime.datetime.now().isoformat(timespec="seconds")}
+    rp = os.path.join(d, "round.json")
+    r = None
+    if os.path.exists(rp):
+        try:
+            r = json.load(open(rp, encoding="utf-8"))
+        except ValueError:
+            r = None
+    if r:
+        out["round"] = r
+        out["status"] = "forged" if r.get("done") else "forge_paused"
+    else:
+        out["status"] = "forged" if rc == 0 else "forge_failed"
+    return out
 
 
 def _forge_lines(line):
@@ -821,8 +869,8 @@ def forge_status(jid):
     st = json.load(open(sp, encoding="utf-8"))
     # 서버가 도중에 재시작되면 기다리던 스레드가 없어진다 — 프로세스가 죽어 있으면 끝난 것으로 본다(결과는 로그 마지막 줄).
     if st.get("status") == "forging" and jid not in _FORGE and not _alive(st.get("forge_pid")):
-        st.update({"status": "forged", "forge_rc": None, "forge_ended": datetime.datetime.now().isoformat(timespec="seconds"),
-                   "note": (st.get("note") or "") + " (서버 재시작으로 종료 코드를 못 받음 — 로그 확인)"})
+        st.update(_forge_end(d, None))
+        st["note"] = (st.get("note") or "") + " (서버 재시작으로 종료 코드를 못 받음 — 로그 확인)"
         json.dump(st, open(sp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     lp = os.path.join(d, "forge.log")
     tail = ""
@@ -830,7 +878,8 @@ def forge_status(jid):
         with open(lp, encoding="utf-8", errors="replace") as f:
             tail = f.read()[-6000:]
     return jsonify({"status": st.get("status"), "rc": st.get("forge_rc"), "started": st.get("forge_started"),
-                    "ended": st.get("forge_ended"), "log": tail, "name": st.get("name"), "dir": st.get("dir")})
+                    "ended": st.get("forge_ended"), "log": tail, "name": st.get("name"), "dir": st.get("dir"),
+                    "round": st.get("round"), "round_no": st.get("forge_round"), "session": bool(st.get("forge_session"))})
 
 
 @bp.route("/api/catalog/intake/<jid>", methods=["DELETE"])
