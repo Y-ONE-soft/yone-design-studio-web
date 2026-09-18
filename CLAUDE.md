@@ -102,7 +102,7 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 - 건너뛰는 경우: 문서·CLAUDE.md·docs/ 만 바뀐 커밋. 사용자가 "로컬만"이라고 한 경우.
 - 서버 확인만: `fly status -a yos-studio` · `fly logs -a yos-studio` · `fly secrets list -a yos-studio`(이름만 보임). 키 값은 리포·채팅에 적지 않는다.
 - Claude Code 자동 모드는 `fly secrets set/import`·`fly ssh` 를 막는다. 비밀값이 새로 필요하면 사용자가 터미널에서 `deploy/fly-deploy.sh` 를 직접 돌린다(없는 것만 채우고 배포까지).
-- 카탈로그(틀·디자인)는 첫 기동 때만 리포에서 `/data/catalog` 로 복사된다. 리포의 `catalog/` 를 고쳐도 배포서버는 안 바뀐다 — 볼륨이 정본(`deploy/README.md` 1절).
+- 카탈로그(틀·디자인)는 볼륨 `/data/catalog` 이 정본. 기동마다 `deploy/catalog_sync.py` 가 리포에 **새로 생긴 틀·디자인만** 보탠다(있는 파일은 안 건드림). 기존 디자인의 config·css 를 고쳤으면 배포로는 안 옮겨진다 — `fly ssh` 로 따로.
 
 ## 운영 규칙 (MANDATORY)
 
