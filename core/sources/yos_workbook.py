@@ -27,6 +27,7 @@ contents 항목 key → 스튜디오 스텝:
     grammar-blank       step2_c1     빈칸 어법        `n[ ]` + 정답 → `n[answer]` (힌트 없음)
     writing-order       step2_c2     영작 배열        한글 + ( 조각 / 조각 )
     mock-exam · outline · content-summary(문항형)  step3  실전 문제
+    kind=outline-text (시스템 생성 산문)  step1_b1  본문 정리   본문 박스 + 정리 줄
     interpretation-1/2 · raw · 그 밖  → 건너뛴다(로그에 남긴다). 없는 것을 지어내지 않는다.
 """
 import re
@@ -177,6 +178,20 @@ def _writing_order(c):
     return [blocks], None
 
 
+def _outline_text(c, passage):
+    """본문 정리(시스템 생성 산문) — 본문 박스 + 정리 줄. 마크다운 머리표·목록 기호는 뗀다."""
+    lines = []
+    for ln in str(c.get("text") or "").splitlines():
+        t = re.sub(r"^\s*(?:#{1,6}\s+|[-*•]\s+|\d+[.)]\s+)", "", ln).strip()
+        if t:
+            lines.append(t)
+    if not lines:
+        return None, None
+    blocks = [_block("box_body", passage)] if passage else []
+    blocks += [_block("sum_line", t) for t in lines]
+    return [blocks], None
+
+
 def _step3(c, passage):
     blocks = []
     for q in c.get("questions") or []:
@@ -257,8 +272,13 @@ def to_data(raw, log=None):
             key = str(it.get("key") or "")
             step = _KEY_STEP.get(key)
             units, attach = (None, None)
-            if step:
-                units, attach = _convert(key, it.get("content"), body)
+            c = it.get("content") if isinstance(it.get("content"), dict) else {}
+            if c.get("kind") == "outline-text":
+                # 시스템 생성 본문 정리(산문) — key 가 outline 이든 content-summary 든 본문 정리 면으로
+                step = "step1_b1"
+                units, attach = _outline_text(c, body)
+            elif step:
+                units, attach = _convert(key, c, body)
             if not step or (units is None and attach is None):
                 skipped.append(f"{label or '?'}·{it.get('label') or key}")
                 continue
