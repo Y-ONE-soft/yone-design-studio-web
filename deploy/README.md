@@ -72,6 +72,7 @@ fly ssh console -C "/app/deploy/entrypoint.sh doctor"  # 서체 37/37 · gs · C
 - 주소는 `https://yos-studio.fly.dev`. 도메인을 붙이려면 `fly certs add studio.<도메인>` + `fly.toml` 의 `YONE_PUBLIC_URL`.
 - 업데이트: `deploy/fly-deploy.sh` (커밋된 HEAD 만 올라간다 — `git archive`; 비밀값은 없는 것만 채움). 돌던 조판은 끊기고 `lost` 로 표시된다(다시 누르면 됨). 볼륨(/data)은 그대로. 규칙: 리포 `CLAUDE.md` "배포 규칙".
 - 카탈로그(틀·디자인)는 첫 기동 때 리포의 `catalog/` 가 `/data/catalog` 로 복사되고 **그 뒤로는 볼륨이 정본**이다.
+  기동마다 `deploy/catalog_sync.py` 가 리포에 새로 생긴 틀(catalog.json 키)·디자인 폴더만 보탠다 — 있는 파일은 손대지 않는다.
 - 백업: `fly volumes snapshots list studio_data` (Fly 가 매일 자동 스냅샷). 파일로 받으려면 `fly ssh sftp get`.
 - 운영: `fly logs` · `fly status` · `fly machine restart <id>` · `fly ssh console`.
 - 로컬 개발은 그대로 `bin/studio`(인증 꺼짐). 인증까지 로컬에서 보려면 `YOS_LINK_SECRET=… YONE_SECRET_KEY=… bin/studio`

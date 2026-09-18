@@ -7,10 +7,13 @@ for d in "$YONE_STUDIO_ROOT/조판/교재" "$YONE_STUDIO_ROOT/_jobs" "$YONE_CATA
   mkdir -p "$d"
 done
 
-# 카탈로그(틀·디자인)는 볼륨이 정본. 처음 한 번만 리포 사본으로 채운다.
+# 카탈로그(틀·디자인)는 볼륨이 정본. 처음 한 번만 리포 사본으로 채우고,
+# 그 뒤 기동마다 리포에 **새로 생긴 틀·디자인만** 보탠다(있는 파일은 안 건드림 — deploy/catalog_sync.py).
 if [ ! -f "$YONE_CATALOG_DIR/catalog.json" ]; then
   echo "■ 카탈로그 볼륨이 비어 있다 → 리포의 catalog/ 로 채운다"
   cp -a /app/catalog.seed/. "$YONE_CATALOG_DIR/"
+else
+  python3 /app/deploy/catalog_sync.py /app/catalog.seed "$YONE_CATALOG_DIR" || echo "■ 카탈로그 보탬 실패(무시)"
 fi
 
 # 서체 캐시(chromium 폴백용) — 우리 조판은 build/ 에 서체를 복사해 @font-face 로 쓰므로 필수는 아니다
