@@ -84,3 +84,13 @@ def test_resolve_adapts_by_format_marker(raw):
         resolve({"type": "data", "data": raw}, "vocabook")
     with pytest.raises(SourceError):
         resolve({"type": "data", "data": dict(raw, passages=[])}, "workbook")
+
+
+def test_outline_text_goes_to_summary_step(raw):
+    raw["passages"][0]["items"] = [
+        {"key": "outline", "label": "본문정리",
+         "content": {"kind": "outline-text", "text": "## 주제\n- Sharing personal stories bonds an audience.\n\n1. Keep it short."}}]
+    d = yw.to_data(raw)
+    blocks = _step(d, "step1_b1")["groups"][0]["units"][0]
+    assert [b["role"] for b in blocks] == ["box_body", "sum_line", "sum_line", "sum_line"]
+    assert blocks[1]["text"] == "주제" and blocks[3]["text"] == "Keep it short."
