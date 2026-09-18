@@ -3,443 +3,288 @@
 {% block theme %}light{% endblock %}
 {% block content %}
 <style>
-  .asm { display: flex; height: 100vh; background: #f6f5fa; color: #1f2330; font-size: 13.5px; }
-  .asm h1 { font-size: 18px; font-weight: 700; margin: 0; padding: 18px 16px 2px; letter-spacing: -.01em; }
-  .asm .lede { margin: 0; padding: 0 16px 10px; color: var(--mute); font-size: 12px; line-height: 1.5; }
-  .asm h3 { font-size: 11.5px; color: var(--mute); margin: 12px 0 6px; font-weight: 600; letter-spacing: .04em; }
-  .asm code { background: #f1f0f6; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
-  .asm select, .asm input[type=text], .asm input[type=number] { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 7px 9px; font-size: 13px; }
-  .asm select, .asm input[type=text] { width: 100%; }
-  .btn { display: inline-block; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600; text-decoration: none; }
+  .mk { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; }
+  .mk h3 { font-size: 11.5px; color: var(--mute); margin: 12px 0 6px; font-weight: 600; letter-spacing: .04em; }
+  .mk select, .mk input[type=text], .mk input[type=number] { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 6px 8px; font-size: 12.5px; }
+  .mk select, .mk input[type=text] { width: 100%; }
+  .btn { display: inline-block; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
   .btn:hover { background: #6a1fd0; }
   .btn.sub { background: #ecebf3; color: #1f2330; font-weight: 500; }
   .btn.sub:hover { background: #e2e0ec; }
-  .btn.sm { padding: 5px 10px; font-size: 12px; }
+  .btn.sm { padding: 4px 9px; font-size: 12px; }
   .btn:disabled { opacity: .5; cursor: default; }
-  .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
-  .note { color: var(--mute); font-size: 12px; line-height: 1.5; margin: 6px 0; }
-  .err { color: #c0263a; font-size: 12.5px; margin-top: 8px; white-space: pre-wrap; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+  .note { color: var(--mute); font-size: 11.5px; line-height: 1.5; margin: 4px 0; }
+  .err { color: #c0263a; font-size: 12px; margin-top: 6px; white-space: pre-wrap; }
+  .tabs { display: flex; gap: 3px; }
+  .tabs button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: #3c4043; }
+  .tabs button.on { background: var(--pp-bg); border-color: var(--pp); color: var(--pp); font-weight: 600; }
+  .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 5px 3px 10px; font-size: 12px; cursor: pointer; }
+  .chip:hover { border-color: var(--pp); color: var(--pp); }
+  .chip i { font-style: normal; color: #a0a4b5; font-size: 11px; padding: 0 3px; }
+  .chip i:hover { color: #c0263a; }
+  details > summary { list-style: none; cursor: pointer; padding: 7px 4px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); }
+  details > summary::-webkit-details-marker { display: none; }
+  summary .arr { color: #a0a4b5; font-size: 10px; width: 10px; }
+  details[open] > summary .arr { transform: rotate(90deg); }
+  summary small { font-weight: 400; color: var(--mute); margin-left: auto; font-size: 11px; }
+  summary .cd2 { font-weight: 400; color: var(--mute); font-size: 11px; margin-left: 4px; }
 
-  /* 왼쪽 — 부품 라이브러리 */
-  .lib { width: 270px; flex: none; overflow: auto; background: #fff; border-right: 1px solid var(--line); }
-  .lib details { border-top: 1px solid var(--line); }
-  .lib summary { list-style: none; cursor: pointer; padding: 9px 14px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-  .lib summary::-webkit-details-marker { display: none; }
-  .lib summary .arr { color: #a0a4b5; font-size: 10px; width: 10px; }
-  .lib details[open] summary .arr { transform: rotate(90deg); }
-  .lib summary small { font-weight: 400; color: var(--mute); margin-left: auto; font-size: 11px; }
-  .lib summary .rd { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: #d9f2e3; color: #1d6b3a; font-weight: 700; }
-  .lib summary .ref { font-size: 9.5px; padding: 1px 6px; border-radius: 999px; background: #f1f0f6; color: var(--mute); font-weight: 600; }
-  .lib .grp { padding: 0 12px 10px; }
-  .codes { display: flex; gap: 4px; flex-wrap: wrap; padding: 8px 14px 10px; }
-  .codes button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 2px 8px; font-size: 10.5px; cursor: pointer; color: #3c4043; }
-  .codes button.on { background: var(--pp); border-color: var(--pp); color: #fff; }
-  .card .cd { display: inline-block; font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: #eef0f5; color: #3c4043; margin-right: 2px; font-weight: 600; }
-  .card.ref { cursor: grab; }
-  .card.ref .nm::after { content: " 참고"; font-size: 9.5px; color: #a0a4b5; font-weight: 500; }
-  .card.hide { display: none; }
-  .card.k표지간지 { border-left: 4px solid #9aa3b5; } .card.k간지 { border-left: 4px solid #c9c2dd; }
-  .card { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 6px; margin-bottom: 6px; background: #fff; cursor: grab; }
-  .card:hover { border-color: #cfc8e6; box-shadow: 0 2px 8px rgba(30,20,60,.06); }
-  .card img { width: 46px; height: 64px; object-fit: cover; object-position: top; border-radius: 4px; background: #eceef3; border: 1px solid #e3e1ec; flex: none; }
-  .card .t { flex: 1; min-width: 0; }
-  .card .nm { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .card .ds { font-size: 11px; color: var(--mute); line-height: 1.35; margin-top: 2px; }
-  .card .add { width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--pp-bg); color: var(--pp); font-size: 18px; line-height: 1; cursor: pointer; flex: none; }
-  .card .add:hover { background: var(--pp); color: #fff; }
-  .card.s1 { border-left: 4px solid #77a1c4; } .card.s2 { border-left: 4px solid #cba56f; } .card.s3 { border-left: 4px solid #bc736c; }
-
-  /* 블록별 보기 */
-  .views { display: flex; gap: 4px; padding: 0 14px 6px; }
-  .views button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: #3c4043; }
-  .views button.on { background: var(--pp-bg); border-color: var(--pp); color: var(--pp); font-weight: 600; }
-  .item { border: 1px solid var(--line); border-radius: 10px; padding: 8px 8px 6px; margin: 0 12px 8px; background: #fff; }
-  .item .ihead { display: flex; align-items: center; gap: 8px; }
-  .item .ihead .t { flex: 1; min-width: 0; }
+  /* 왼쪽 — 추가 / 블록 */
+  .left { width: 300px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .left .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
+  .left .hd .tabs button { padding: 7px 0; font-size: 12.5px; }
+  .left .body { flex: 1; overflow: auto; padding: 4px 12px 16px; }
+  .item { border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px 6px; margin: 6px 0; background: #fff; }
   .item .nm { font-weight: 600; font-size: 12.5px; }
   .item .ds { font-size: 11px; color: var(--mute); margin-top: 1px; }
-  .item .vars { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; }
-  .item .var { width: 36px; height: 50px; object-fit: cover; object-position: top; border-radius: 4px; border: 1.5px solid #e3e1ec; background: #eceef3; cursor: pointer; }
-  .item .var:hover { border-color: var(--pp); transform: translateY(-1px); }
-  .item .var.rd { border-color: #7fcf9d; }
-  .item .vcnt { font-size: 10.5px; color: var(--mute); align-self: center; }
-  .item.hide { display: none; }
-  .lib summary .cd2 { font-weight: 400; color: var(--mute); font-size: 11px; margin-left: 4px; }
-  /* 블록·에셋(지면 안) */
-  .blk { border: 1px solid var(--line); border-radius: 10px; margin: 0 12px 8px; background: #fff; overflow: hidden; }
-  .blk img { display: block; width: 100%; max-height: 120px; object-fit: contain; object-position: left top; background: #fafafa; border-bottom: 1px solid var(--line); padding: 6px; box-sizing: border-box; }
-  .blk .bd { padding: 7px 9px 8px; }
-  .blk .nm { font-weight: 600; font-size: 12.5px; }
-  .blk .ds { font-size: 11px; color: var(--mute); margin-top: 1px; }
-  .blk .fl { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 3px; }
-  .blk .fl span { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: #eef0f5; color: #3c4043; }
-  .blk .fl span.as { background: #f2ecff; color: #5b2bb0; }
-  .blk .fl b { font-size: 10px; color: var(--mute); font-weight: 600; margin-right: 2px; align-self: center; }
-  .as-list { list-style: none; margin: 0 12px 10px; padding: 0; }
-  .as-list li { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-bottom: 1px dashed var(--line); font-size: 12px; }
-  .as-list li .k { font-size: 9.5px; padding: 1px 6px; border-radius: 4px; background: #eef0f5; color: #3c4043; flex: none; width: 34px; text-align: center; }
-  .as-list li .r { margin-left: auto; font-size: 10.5px; color: var(--mute); font-family: ui-monospace, Menlo, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
-  .as-list li .sw { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #d8d3ea; flex: none; }
-  /* 가운데 — 구성 캔버스 */
-  .cv { width: 360px; flex: none; overflow: auto; background: #fbfafd; border-right: 1px solid var(--line); padding: 0 0 20px; }
-  .cv .box { padding: 0 14px; }
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 6px; }
-  .chip { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 12px; cursor: pointer; }
-  .chip:hover { border-color: var(--pp); color: var(--pp); }
-  .chip i { font-style: normal; color: #a0a4b5; font-size: 11px; padding: 0 4px; }
-  .chip i:hover { color: #c0263a; }
-  .seq { list-style: none; margin: 0; padding: 0; min-height: 120px; border: 1.5px dashed #d8d3ea; border-radius: 12px; padding: 8px; background: #fff; }
-  .seq.over { border-color: var(--pp); background: #faf7ff; }
-  .seq .empty { color: var(--mute); font-size: 12.5px; text-align: center; padding: 30px 10px; }
-  .seq li { display: flex; gap: 8px; align-items: center; padding: 6px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; background: #fff; }
-  .seq li.drag { opacity: .4; }
-  .seq li img { width: 30px; height: 42px; object-fit: cover; object-position: top; border-radius: 3px; border: 1px solid #e3e1ec; background: #eceef3; }
-  .seq li .t { flex: 1; min-width: 0; }
-  .seq li .nm { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .seq li .k { font-size: 10.5px; color: var(--mute); }
-  .seq li input[type=number] { width: 52px; padding: 3px 5px; font-size: 12px; }
-  .seq li button { background: #f1f0f6; color: #3c4043; border: 0; border-radius: 6px; width: 22px; height: 22px; cursor: pointer; font-size: 11px; }
-  .seq li button:hover { background: var(--pp-bg); color: var(--pp); }
-  .seq li button.x:hover { background: #fde8e8; color: #c0263a; }
-  .seq li.div { background: #f6f5fa; border-style: dashed; color: var(--mute); font-size: 11.5px; padding: 4px 8px; }
-  .seq li .k .sr { color: var(--pp); font-weight: 600; }
-  .seq li.ref { border-left: 3px solid #c9c2dd; }
-  .seq li.div .nm { font-weight: 500; color: var(--mute); }
-  .cv .sum { font-size: 12px; color: var(--mute); margin: 6px 0; }
-  .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
-  .acts .btn { text-align: center; }
-
-  /* 지면 편집기 */
-  .cvtabs { display: flex; gap: 4px; padding: 0 14px 6px; }
-  .cvtabs button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: #3c4043; }
-  .cvtabs button.on { background: var(--pp-bg); border-color: var(--pp); color: var(--pp); font-weight: 600; }
-  .pgl { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0 8px; }
-  .pgl .pgc { width: 62px; border: 1px solid var(--line); border-radius: 8px; padding: 4px; text-align: center; cursor: pointer; background: #fff; font-size: 10.5px; color: #3c4043; }
-  .pgl .pgc.on { border-color: var(--pp); box-shadow: 0 0 0 1px var(--pp); background: #faf7ff; }
-  .pgl .pgc .fr { height: 44px; border: 1px solid #cfc8e6; border-radius: 3px; margin-bottom: 3px; display: flex; flex-direction: column; gap: 2px; padding: 3px; background: #fff; }
-  .pgl .pgc .fr i { display: block; flex: 1; background: #e8e4f5; border-radius: 2px; }
-  .pgl .pgc .fr.s3 { flex-direction: row; }
-  .pgl .pgc .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
-  .pgl .pgc.add { border-style: dashed; color: var(--pp); font-weight: 600; display: grid; place-items: center; height: 68px; font-size: 20px; }
-  .frpick { display: none; gap: 6px; flex-wrap: wrap; margin: 0 0 8px; }
-  .frpick.on { display: flex; }
-  .frpick button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 8px; font-size: 11.5px; cursor: pointer; }
-  .frpick button:hover { border-color: var(--pp); color: var(--pp); }
-  .pgset { display: grid; grid-template-columns: 82px 1fr 1.4fr; gap: 6px; margin: 6px 0; }
-  .pgset select, .pgset input { padding: 5px 7px; font-size: 12px; }
-  .zone { border: 1.5px dashed #d8d3ea; border-radius: 10px; padding: 6px; margin: 6px 0; min-height: 44px; background: #fff; }
-  .zone.over { border-color: var(--pp); background: #faf7ff; }
-  .zone.on { border-color: #b39ddb; }
-  .zone .zh { font-size: 10.5px; color: var(--mute); margin: 0 2px 4px; display: flex; justify-content: space-between; }
-  .zone .zh b { color: var(--pp); font-weight: 600; }
-  .zone .empty { color: #a0a4b5; font-size: 11.5px; text-align: center; padding: 6px; }
-  .zone li { display: flex; align-items: center; gap: 5px; padding: 4px 4px; border: 1px solid var(--line); border-radius: 6px; margin-bottom: 4px; font-size: 12px; background: #fff; }
-  .zone ul { list-style: none; margin: 0; padding: 0; }
-  .zone li .bn { font-weight: 600; white-space: nowrap; }
-  .zone li select { flex: 1; min-width: 0; padding: 2px 4px; font-size: 11px; }
-  .zone li button { background: #f1f0f6; color: #3c4043; border: 0; border-radius: 5px; width: 20px; height: 20px; cursor: pointer; font-size: 10px; }
-  .zone li button:hover { background: var(--pp-bg); color: var(--pp); }
-  .blk .addto { display: inline-block; margin-top: 6px; background: var(--pp-bg); color: var(--pp); border: 0; border-radius: 6px; padding: 4px 9px; font-size: 11.5px; cursor: pointer; font-weight: 600; }
+  .item .vars { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .var { width: 38px; height: 52px; object-fit: cover; object-position: top; border-radius: 4px; border: 1.5px solid #e3e1ec; background: #eceef3; cursor: pointer; }
+  .var:hover { border-color: var(--pp); transform: translateY(-1px); }
+  .var.rd { border-color: #7fcf9d; }
+  .card { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line); border-radius: 9px; padding: 5px; margin: 5px 0; background: #fff; cursor: pointer; }
+  .card:hover { border-color: var(--pp); }
+  .card img { width: 40px; height: 56px; object-fit: cover; object-position: top; border-radius: 4px; background: #eceef3; border: 1px solid #e3e1ec; flex: none; }
+  .card .t { flex: 1; min-width: 0; }
+  .card .nm { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .ds { font-size: 10.5px; color: var(--mute); }
+  .card .cd { display: inline-block; font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: #eef0f5; color: #3c4043; margin-right: 2px; font-weight: 600; }
+  .card.rd { border-left: 4px solid #7fcf9d; }
+  .frames { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 6px 0; }
+  .frames button { border: 1px solid var(--line); background: #fff; border-radius: 9px; padding: 8px 6px; font-size: 11.5px; cursor: pointer; text-align: left; display: flex; gap: 8px; align-items: center; }
+  .frames button:hover { border-color: var(--pp); color: var(--pp); }
+  .frames .fr { width: 26px; height: 36px; border: 1px solid #cfc8e6; border-radius: 3px; display: flex; flex-direction: column; gap: 2px; padding: 3px; flex: none; }
+  .frames .fr i { display: block; flex: 1; background: #e8e4f5; border-radius: 2px; }
+  .frames .fr.s3 { flex-direction: row; }
+  .pgpick { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; max-height: 420px; overflow: auto; }
+  .pgpick .pp { width: 62px; text-align: center; font-size: 10px; color: var(--mute); cursor: pointer; }
+  .pgpick .pp img { width: 62px; height: 86px; object-fit: cover; object-position: top; border: 1.5px solid #e3e1ec; border-radius: 4px; background: #fff; display: block; margin-bottom: 2px; }
+  .pgpick .pp:hover img { border-color: var(--pp); }
+  .blk { border: 1px solid var(--line); border-radius: 10px; margin: 6px 0; background: #fff; overflow: hidden; cursor: grab; }
+  .blk img { display: block; width: 100%; max-height: 90px; object-fit: contain; object-position: left top; background: #fafafa; border-bottom: 1px solid var(--line); padding: 5px; box-sizing: border-box; }
+  .blk .bd { padding: 6px 8px 7px; display: flex; align-items: center; gap: 6px; }
+  .blk .nm { font-weight: 600; font-size: 12px; flex: 1; }
+  .blk .ds { font-size: 10.5px; color: var(--mute); }
+  .blk .addto { background: var(--pp-bg); color: var(--pp); border: 0; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; font-weight: 600; white-space: nowrap; }
   .blk .addto:hover { background: var(--pp); color: #fff; }
-  /* 지면 캔버스 — 실제 조판 면 위에 블록을 끌어 놓는다 */
-  .canvas { flex: 1; overflow: auto; background: #ecebf3; padding: 18px; display: none; }
-  .canvas.on { display: block; }
-  .cwrap { display: flex; gap: 18px; align-items: flex-start; }
-  .cpage { position: relative; background: #fff; box-shadow: 0 4px 18px rgba(30,20,60,.18); flex: none; overflow: hidden; }
-  .cpage img.bg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
-  .cpage .trim { position: absolute; border: 1px dashed rgba(125,42,232,.35); pointer-events: none; }
-  .cpage .content { position: absolute; }
-  .cpage .content.over { outline: 2px dashed var(--pp); outline-offset: 2px; }
+
+  /* 가운데 — 문서(지면 나열) */
+  .doc { flex: 1; overflow: auto; padding: 18px 24px 60px; min-width: 0; }
+  .doc .top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 12.5px; color: #3c4043; }
+  .doc .top .nm { font-weight: 700; font-size: 15px; color: var(--ink); }
+  .doc .top .sp { flex: 1; }
+  .doc .top #msg { color: #b26a00; }
+  .pages { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+  .pgc { width: 320px; position: relative; }
+  .pgc .no { position: absolute; left: -30px; top: 4px; font-size: 11px; color: var(--mute); width: 24px; text-align: right; }
+  .pgc .sheet { position: relative; background: #fff; box-shadow: 0 2px 10px rgba(30,20,60,.12); border: 2px solid transparent; border-radius: 3px; overflow: hidden; cursor: pointer; }
+  .pgc.on .sheet { border-color: var(--pp); box-shadow: 0 0 0 3px rgba(125,42,232,.18); }
+  .pgc .sheet > img.pg { display: block; width: 100%; aspect-ratio: 216 / 303; object-fit: cover; object-position: top; }
+  .pgc .cap { font-size: 11px; color: var(--mute); margin: 4px 2px 0; display: flex; gap: 6px; align-items: center; }
+  .pgc .cap b { color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pgc .cap .k { font-size: 9.5px; padding: 0 5px; border-radius: 4px; background: #eef0f5; }
+  .pgc .cap .k.rd { background: #d9f2e3; color: #1d6b3a; } .pgc .cap .k.pg { background: var(--pp-bg); color: var(--pp); }
+  .pgc .tools { position: absolute; right: 6px; top: 6px; display: none; gap: 3px; }
+  .pgc:hover .tools, .pgc.on .tools { display: flex; }
+  .pgc .tools button { width: 22px; height: 22px; border: 0; border-radius: 6px; background: rgba(255,255,255,.95); color: #3c4043; cursor: pointer; font-size: 11px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .pgc .tools button:hover { color: var(--pp); }
+  .pgc.drag { opacity: .4; }
+  .pgc.dover .sheet { outline: 2px dashed var(--pp); outline-offset: 3px; }
+  .addpg { width: 320px; border: 1.5px dashed #c9c2dd; border-radius: 10px; padding: 12px; text-align: center; color: var(--pp); font-weight: 600; cursor: pointer; background: rgba(255,255,255,.6); }
+  .addpg:hover { background: #faf7ff; border-color: var(--pp); }
+  .divrow { width: 320px; font-size: 10.5px; color: var(--mute); text-align: center; }
+  /* 편집 지면 캔버스(문서 안) */
+  .cv { position: relative; aspect-ratio: 216 / 303; width: 100%; background: #fff; }
+  .cv img.bg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .cv .content { position: absolute; }
+  .cv .content.over { outline: 2px dashed var(--pp); outline-offset: 2px; }
   .czone { position: absolute; left: 0; width: 100%; border: 1px dashed rgba(125,42,232,.35); border-radius: 3px; box-sizing: border-box; }
-  .czone.on { border-color: var(--pp); background: rgba(125,42,232,.04); }
-  .czone .zl { position: absolute; right: 3px; top: 2px; font-size: 9px; color: rgba(125,42,232,.7); }
-  .citem { position: absolute; box-sizing: border-box; border: 1.5px solid rgba(125,42,232,.55); background: rgba(255,255,255,.35); border-radius: 3px; cursor: grab; overflow: hidden; }
-  .citem:hover { border-color: var(--pp); background: rgba(125,42,232,.06); }
-  .citem.on { border-color: var(--pp); box-shadow: 0 0 0 2px rgba(125,42,232,.25); background: rgba(125,42,232,.05); }
-  .citem.drag { opacity: .5; }
-  .citem .lab { position: absolute; left: 0; top: 0; background: var(--pp); color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 0 0 4px 0; white-space: nowrap; pointer-events: none; }
-  .citem img { width: 100%; display: block; opacity: .25; pointer-events: none; }
-  .cpage.hasbg .citem img { display: none; }
-  .cside { width: 230px; flex: none; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 12.5px; }
-  .cside h4 { margin: 0 0 6px; font-size: 12px; color: var(--mute); font-weight: 600; }
-  .cside .kv { display: grid; grid-template-columns: 44px 1fr; gap: 5px 6px; align-items: center; font-size: 12px; }
-  .cside .kv input, .cside .kv select { padding: 4px 6px; font-size: 12px; }
-  .cside .st { color: var(--mute); font-size: 11.5px; margin-top: 8px; line-height: 1.5; }
-  .cside .btn { margin-top: 8px; }
-  .cbusy { position: absolute; left: 0; right: 0; top: 0; padding: 4px 8px; background: rgba(125,42,232,.85); color: #fff; font-size: 11px; display: none; }
+  .czone.on { border-color: var(--pp); background: rgba(125,42,232,.05); }
+  .czone .zl { position: absolute; right: 2px; top: 1px; font-size: 8px; color: rgba(125,42,232,.7); }
+  .citem { position: absolute; box-sizing: border-box; border: 1.5px solid rgba(125,42,232,.5); background: rgba(255,255,255,.25); border-radius: 3px; cursor: grab; overflow: hidden; }
+  .citem:hover { border-color: var(--pp); }
+  .citem.on { border-color: var(--pp); box-shadow: 0 0 0 2px rgba(125,42,232,.25); }
+  .citem .lab { position: absolute; left: 0; top: 0; background: var(--pp); color: #fff; font-size: 8px; padding: 0 4px; border-radius: 0 0 3px 0; white-space: nowrap; pointer-events: none; }
+  .citem img { width: 100%; display: block; opacity: .3; pointer-events: none; }
+  .cv.hasbg .citem img { display: none; }
+  .cbusy { position: absolute; left: 0; right: 0; top: 0; padding: 2px 6px; background: rgba(125,42,232,.85); color: #fff; font-size: 10px; display: none; }
   .cbusy.on { display: block; }
-  /* 책 만들기 판 */
-  .mkbook { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 6px; }
-  .dz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .dz label { display: block; border: 1px solid var(--line); border-radius: 8px; padding: 4px; cursor: pointer; text-align: center; font-size: 10.5px; color: #3c4043; position: relative; background: #fff; }
+  .empty { color: var(--mute); text-align: center; padding: 40px 10px; font-size: 13px; }
+  /* 전체 미리보기 */
+  .rendered { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  .rendered .p { width: min(46%, 460px); }
+  .rendered .p img { width: 100%; background: #fff; border: 1px solid #d8d3ea; border-radius: 4px; box-shadow: 0 2px 6px rgba(30,20,60,.08); display: block; }
+  .rendered .p .no { text-align: center; font-size: 10px; color: var(--mute); margin-top: 3px; }
+
+  /* 오른쪽 — 속성 */
+  .right { width: 270px; flex: none; background: #fff; border-left: 1px solid var(--line); overflow: auto; padding: 12px 14px 20px; }
+  .right h2 { font-size: 13.5px; margin: 0 0 4px; }
+  .right .kv { display: grid; grid-template-columns: 56px 1fr; gap: 6px 8px; align-items: center; font-size: 12px; margin: 6px 0; }
+  .right .kv span:first-child { color: var(--mute); }
+  .files { list-style: none; margin: 0; padding: 0; font-size: 11.5px; }
+  .files li { padding: 3px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+  .dz label { display: block; border: 1px solid var(--line); border-radius: 8px; padding: 3px; cursor: pointer; text-align: center; font-size: 10px; position: relative; background: #fff; }
   .dz label.on { border-color: var(--pp); box-shadow: 0 0 0 1px var(--pp); background: #faf7ff; }
   .dz label input { display: none; }
-  .dz label img { width: 100%; aspect-ratio: 210 / 297; object-fit: cover; border-radius: 4px; background: #eceef3; display: block; margin-bottom: 3px; }
-  .dz label .nm { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dz label .draft { position: absolute; top: 6px; right: 6px; background: #f0a441; color: #1a1300; font-size: 9px; padding: 0 5px; border-radius: 999px; font-weight: 700; }
-  .fx { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .fx label { display: block; font-size: 11px; color: var(--mute); margin-bottom: 2px; }
-  .drop { border: 1.5px dashed #cfc8e6; border-radius: 10px; padding: 12px; text-align: center; color: var(--mute); font-size: 12px; cursor: pointer; background: #fff; }
+  .dz label img { width: 100%; aspect-ratio: 210 / 297; object-fit: cover; border-radius: 4px; background: #eceef3; display: block; margin-bottom: 2px; }
+  .dz label .draft { position: absolute; top: 5px; right: 5px; background: #f0a441; color: #1a1300; font-size: 8.5px; padding: 0 4px; border-radius: 999px; font-weight: 700; }
+  .fx { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .fx label { display: block; font-size: 10.5px; color: var(--mute); margin-bottom: 2px; }
+  .drop { border: 1.5px dashed #cfc8e6; border-radius: 9px; padding: 10px; text-align: center; color: var(--mute); font-size: 11.5px; cursor: pointer; background: #fff; }
   .drop:hover, .drop.over { border-color: var(--pp); background: #faf7ff; color: var(--pp); }
   .drop input { display: none; }
-  .drop b { color: var(--ink); display: block; font-size: 12.5px; margin-bottom: 2px; }
-  .picked { font-size: 11.5px; color: #3c4043; margin: 4px 0 0; padding: 0; list-style: none; max-height: 90px; overflow: auto; }
+  .drop b { color: var(--ink); display: block; font-size: 12px; }
+  .picked { font-size: 11px; color: #3c4043; margin: 4px 0 0; padding: 0; list-style: none; max-height: 80px; overflow: auto; }
   .picked li { padding: 2px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .files { list-style: none; margin: 0; padding: 0; font-size: 12px; }
-  .files li { padding: 3px 0; border-bottom: 1px dashed var(--line); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  /* 무대 — 늘 세로 스크롤. 지면 순서(기준 그림) / 조판 미리보기(실제 조판 면) */
-  .board { flex: 1; overflow: auto; background: #ecebf3; padding: 16px; }
-  .board .pgs { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
-  .board.big .p { width: min(46%, 520px); }
-  .board.big .p img { width: 100%; }
-  .board .wait { padding: 30px; text-align: center; color: var(--mute); font-size: 13px; }
-  .bar button.on { background: var(--pp-bg); color: var(--pp); font-weight: 600; }
-  .board .p { width: 150px; text-align: center; font-size: 11px; color: #3c4043; }
-  .board .p img { width: 150px; aspect-ratio: 210 / 297; object-fit: cover; object-position: top; background: #fff; border: 1px solid #d8d3ea; border-radius: 4px; box-shadow: 0 2px 6px rgba(30,20,60,.08); display: block; margin-bottom: 4px; }
-  .board .p .no { color: var(--mute); font-size: 10px; }
-  .board .p.auto img { opacity: .75; }
-  .board .p .tl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .board .p .tl b { display: block; font-size: 10px; color: var(--pp); font-weight: 600; }
-  /* 오른쪽 — 미리보기 */
-  .stage { flex: 1; position: relative; display: flex; flex-direction: column; min-width: 0; }
-  .bar { display: flex; gap: 8px; align-items: center; padding: 9px 14px; background: #fff; border-bottom: 1px solid var(--line); font-size: 12.5px; color: #3c4043; }
-  .bar #what { font-weight: 600; color: var(--ink); }
-  .bar .sp { flex: 1; }
-  .bar button { background: #f1f0f6; color: #1f2330; border: 0; border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 12.5px; }
-  .bar button:hover { background: var(--pp-bg); color: var(--pp); }
-  .bar #msg { color: #b26a00; }
-  .bar #pg { min-width: 56px; text-align: center; color: var(--mute); }
-  .bar select { width: auto; padding: 4px 8px; font-size: 12px; }
-  pre#log { max-height: 120px; overflow: auto; background: #fff; color: var(--mute); font-size: 11px; margin: 0; padding: 8px 14px; border-top: 1px solid var(--line); white-space: pre-wrap; }
+  pre#log { max-height: 90px; overflow: auto; background: #f6f5fa; color: var(--mute); font-size: 10.5px; margin: 8px 0 0; padding: 6px 8px; border-radius: 6px; white-space: pre-wrap; }
 </style>
 
-<div class="asm">
-  <!-- 왼쪽: 부품 -->
-  <aside class="lib">
-    <h1>🧩 부품</h1>
-    <p class="lede">프로젝트 &gt; 틀의 모든 블록. + 를 누르거나 가운데로 끌어다 놓으면 구성에 담긴다.</p>
-    <div class="views"><button data-view="item" class="on">항목별</button><button data-view="tpl">틀별</button><button data-view="blk">지면 안 블록·에셋</button></div>
-    <div id="view-blk" hidden>
-      <p class="note" style="padding:0 16px 8px">지면(틀) 아래 두 층 — <b>블록</b>은 원고가 들어가는 덩어리(워크북 {{ blocks|length }}종), <b>에셋</b>은 블록을 그리는 상자·마크·색·서체({{ assets|length }}종). 그림은 한영고 원고로 실제 렌더러가 그린 것. 다음 단계에서 지면에 끌어 놓는 단위가 된다.</p>
-      <details open>
-        <summary><span class="arr">▶</span>블록<span class="cd2">콘텐츠가 들어가는 덩어리</span><small>{{ blocks|length }}</small></summary>
+<div class="mk">
+  <!-- 왼쪽: 추가 / 블록 -->
+  <aside class="left">
+    <div class="hd">
+      <div class="tabs"><button data-l="add" class="on">＋ 지면 추가</button><button data-l="blk">🧩 블록 (지면 안)</button></div>
+      <div class="tabs" id="addtabs" style="margin-top:6px"><button data-a="item" class="on">항목별</button><button data-a="tpl">틀별</button><button data-a="match">지면 매치</button></div>
+    </div>
+    <div class="body">
+      <!-- 항목별 -->
+      <div id="l-item">
+        <p class="note">책과 무관한 항목. 작은 그림이 그 항목의 「옷」(틀마다 다른 모양) — 누르면 그 지면이 문서 끝에 붙는다. 초록 = 조판됨.</p>
+        {% for cat, cdesc, its in taxonomy %}
+        <details open><summary><span class="arr">▶</span>{{ cat }}<span class="cd2">{{ cdesc }}</span></summary>
+          {% for iid, iname, idesc in its %}{% set vs = by_item.get(iid) or [] %}{% if vs %}
+          <div class="item"><div class="nm">{{ iname }}</div><div class="ds">{{ idesc }}</div>
+            <div class="vars">{% for b in vs %}<img class="var {% if b.renderable %}rd{% endif %}" src="{{ b.thumb }}" data-id="{{ b.id }}" title="{{ b.tpl }} · {{ b.label }}{% if b.renderable %} · 조판{% endif %}" loading="lazy">{% endfor %}</div></div>
+          {% endif %}{% endfor %}
+        </details>
+        {% endfor %}
+      </div>
+      <!-- 틀별 -->
+      <div id="l-tpl" hidden>
+        <p class="note">프로젝트 &gt; 틀의 지면 형태 그대로. 「조판」 틀은 원고를 넣으면 실제로 조판된다.</p>
+        {% for t in library %}
+        <details {% if t.renderable %}open{% endif %}><summary><span class="arr">▶</span>{{ t.name }}<small>{{ t.blocks|length }}{% if t.renderable %} · 조판{% endif %}</small></summary>
+          {% for p in t.blocks %}
+          <div class="card {% if p.renderable %}rd{% endif %}" data-id="{{ p.id }}">
+            <img src="{{ p.thumb }}" alt="" loading="lazy"><div class="t"><div class="nm">{{ p.label }}</div><div class="ds">{% for c in p.codes %}<span class="cd">{{ c }}</span>{% endfor %}{{ p.desc or '' }}{% if p.pages and p.pages > 1 %} · 기준 {{ p.pages }}면{% endif %}</div></div>
+          </div>
+          {% endfor %}
+        </details>
+        {% endfor %}
+      </div>
+      <!-- 지면 매치 -->
+      <div id="l-match" hidden>
+        <h3>빈 지면 — 틀만 고르고 블록을 직접 놓는다</h3>
+        <div class="frames">
+          <button data-frame="sheet"><span class="fr"><i></i></span>한 칸</button>
+          <button data-frame="a1"><span class="fr"><i></i><i></i></span>상·하 두 칸</button>
+          <button data-frame="pair"><span class="fr"><i style="flex:2"></i><i></i></span>상 지문·하 문제</button>
+          <button data-frame="flow"><span class="fr"><i style="opacity:.5"></i></span>흘림</button>
+          <button data-frame="s3"><span class="fr s3"><i></i><i></i></span>2단 흘림</button>
+          <button data-frame="free" style="border-color:var(--pp);color:var(--pp)"><span class="fr" style="border-style:dashed"><i style="flex:0 0 30%"></i></span>자유 배치</button>
+        </div>
+        <h3>기준 책의 면을 골라 넣기 — 어느 지면 형태인지 맞춰서 넣는다</h3>
+        <select id="m-tpl">{% for t in library %}<option value="{{ t.series }}" data-design="{{ t.design }}" data-total="{{ t.total }}">{{ t.name }} · 기준 {{ t.total }}면</option>{% endfor %}</select>
+        <div class="pgpick" id="m-pages"></div>
+      </div>
+      <!-- 블록 -->
+      <div id="l-blk" hidden>
+        <p class="note">편집 지면을 고른 뒤, 블록을 지면 위로 끌어다 놓거나 「담기」. 그림은 한영고 원고로 실제 렌더러가 그린 것.</p>
         {% for b in blocks %}
         <div class="blk" data-block="{{ b.id }}" data-name="{{ b.name }}" data-roles="{{ b.roles|join(',') }}" draggable="true">
           <img src="/make/blocks/{{ b.thumb }}" alt="" loading="lazy">
-          <div class="bd"><div class="nm">{{ b.name }} <span style="font-weight:400;color:var(--mute);font-size:10.5px">{{ b.id }}</span></div><div class="ds">{{ b.desc }}</div>
-            <div class="fl"><b>필드</b>{% for f in b.fields %}<span>{{ f }}</span>{% endfor %}</div>
-            <div class="fl"><b>에셋</b>{% for a in b.assets %}<span class="as" title="{{ asset_by_id[a].ref if a in asset_by_id else a }}">{{ asset_by_id[a].name if a in asset_by_id else a }}</span>{% endfor %}</div>
-            <div class="fl"><b>원고</b>{% for r in b.roles %}<span>{{ r }}</span>{% endfor %}{% if not b.roles %}<span>(원고 없음)</span>{% endif %}</div>
-            <button class="addto" data-block="{{ b.id }}">+ 지면에 담기</button>
-          </div>
+          <div class="bd"><div><div class="nm">{{ b.name }}</div><div class="ds">{{ b.desc }}</div></div><button class="addto">담기</button></div>
         </div>
         {% endfor %}
-      </details>
-      <details>
-        <summary><span class="arr">▶</span>에셋<span class="cd2">블록을 그리는 것</span><small>{{ assets|length }}</small></summary>
-        <ul class="as-list">
-          {% for a in assets %}
-          <li><span class="k">{{ a.kind }}</span>{% if a.kind == 'color' %}<span class="sw" data-knob="{{ a.knob }}"></span>{% endif %}<span>{{ a.name }}</span><span class="r" title="{{ a.ref }}{% if a.knob %} · {{ a.knob }}{% endif %}">{{ a.ref }}</span></li>
-          {% endfor %}
-        </ul>
-        <p class="note" style="padding:0 16px 12px">에셋의 색·서체는 내지 작업대 손잡이(knob)와 같은 키. 상자·마크는 <code>themes/workbook.css</code> 의 클래스.</p>
-      </details>
-    </div>
-    <div id="view-item">
-      {% for cat, cdesc, its in taxonomy %}
-      {% set have = its|selectattr(0, 'in', by_item)|list %}
-      <details open>
-        <summary><span class="arr">▶</span>{{ cat }}<span class="cd2">{{ cdesc }}</span></summary>
-        {% for iid, iname, idesc in its %}{% set vs = by_item.get(iid) or [] %}
-        <div class="item {% if not vs %}hide{% endif %}" data-item="{{ iid }}">
-          <div class="ihead"><div class="t"><div class="nm">{{ iname }}</div><div class="ds">{{ idesc }}</div></div>
-            {% if vs %}<button class="add" data-add="{{ vs[0].id }}" title="담기 (기본 옷: {{ vs[0].tpl }})">+</button>{% endif %}</div>
-          {% if vs %}<div class="vars">{% for b in vs %}<img class="var {% if b.renderable %}rd{% endif %}" src="{{ b.thumb }}" data-id="{{ b.id }}" title="{{ b.tpl }} · {{ b.label }}{% if b.renderable %} · 조판{% endif %}" loading="lazy">{% endfor %}<span class="vcnt">옷 {{ vs|length }}</span></div>{% endif %}
-        </div>
-        {% endfor %}
-      </details>
-      {% endfor %}
-      <p class="note" style="padding:8px 16px 12px">항목은 책과 무관한 공통 갈래. 아래 작은 그림이 그 항목의 「옷」(틀마다 다른 모양) — 그림을 누르면 그 옷으로 담기고, + 는 기본 옷(조판되는 것 우선). 초록 테두리 = 조판됨.</p>
-    </div>
-    <div id="view-tpl" hidden>
-    <div class="codes" id="codes">
-      <button data-code="" class="on">전부</button>
-      <button data-code="표지·간지">표지·간지</button>
-      {% for c in ['B1','B2','B3','B4','B5','B6','B7','B8','B9','B10','B11'] %}<button data-code="{{ c }}">{{ c }}</button>{% endfor %}
-    </div>
-    {% for t in library %}
-    <details {% if t.renderable %}open{% endif %}>
-      <summary><span class="arr">▶</span>{{ t.name }}<small>{{ t.blocks|length }}</small>{% if t.renderable %}<span class="rd">조판</span>{% else %}<span class="ref">참고</span>{% endif %}</summary>
-      <div class="grp">
-      {% for p in t.blocks %}
-      <div class="card {% if p.step %}s{{ p.step }}{% endif %} {% if not p.renderable %}ref{% endif %} k{{ p.kind|replace('·','') }}" draggable="true"
-           data-id="{{ p.id }}" data-series="{{ p.series }}" data-design="{{ p.design }}" data-key="{{ p.key or '' }}" data-label="{{ p.label }}"
-           data-kind="{{ p.kind }}" data-thumb="{{ p.thumb }}" data-step="{{ p.step or '' }}" data-page="{{ p.page or '' }}" data-codes="{{ p.codes|join(',') }}" data-tpl="{{ t.name }}" data-item="{{ p.item }}" data-itemname="{{ items[p.item].name if p.item in items else p.item }}">
-        <img src="{{ p.thumb }}" alt="" loading="lazy">
-        <div class="t"><div class="nm">{{ p.label }}</div>
-          <div class="ds">{% for c in p.codes %}<span class="cd">{{ c }}</span>{% endfor %}{% if p.kind != '본문' %}<span class="cd">{{ p.kind }}</span>{% endif %} {{ p.desc or '' }}{% if p.pages and p.pages > 1 %} · 기준 {{ p.pages }}면{% endif %}</div></div>
-        <button class="add" title="구성에 담기">+</button>
+        <details><summary><span class="arr">▶</span>에셋<small>{{ assets|length }}</small></summary>
+          <ul class="files">{% for a in assets %}<li><span class="cd" style="font-size:9.5px;padding:0 5px;border-radius:4px;background:#eef0f5">{{ a.kind }}</span> {{ a.name }} <span style="color:var(--mute);font-family:ui-monospace,Menlo,monospace;font-size:10px">{{ a.ref }}</span></li>{% endfor %}</ul>
+        </details>
       </div>
-      {% endfor %}
-      </div>
-    </details>
-    {% endfor %}
-    <p class="note" style="padding:10px 16px 16px">「조판」 틀의 부품은 원고를 넣으면 실제로 조판된다. 「참고」 틀의 블록은 기준 PDF 의 지면 형태 — 구성에 담아 순서를 짤 수 있고, 그 틀이 조판 연결되면 그대로 살아난다.</p>
     </div>
   </aside>
 
-  <!-- 가운데: 구성 -->
-  <section class="cv">
-    <h1>🪜 구성</h1>
-    <div class="cvtabs"><button data-cv="comp" class="on">부품으로 구성</button><button data-cv="pages">지면 편집 (블록 배치)</button></div>
-    <div class="box" id="cv-pages" hidden>
-      <p class="lede" style="padding:0 0 8px">Canva 처럼 — 지면을 추가하고 틀을 고른 뒤, 왼쪽 '지면 안 블록·에셋'의 블록을 칸에 끌어다 놓는다. 블록마다 어느 원고 흐름(역할)에서 채울지 고른다.</p>
-      <h3>저장된 지면 묶음</h3>
-      <div class="chips" id="pagesets"></div>
-      <h3>지면</h3>
-      <div class="pgl" id="pgl"><div class="pgc add" id="pg-add" title="지면 추가">+</div></div>
-      <div class="frpick" id="frpick">
-        <button data-frame="sheet">한 칸 (지문 1)</button><button data-frame="a1">상·하 두 칸 (지문 2)</button>
-        <button data-frame="pair">상 지문 · 하 문제</button><button data-frame="flow">흘림</button><button data-frame="s3">2단 흘림 (실전)</button>
-        <button data-frame="free" style="border-color:var(--pp);color:var(--pp)">자유 배치 — 블록을 아무 데나</button>
-      </div>
-      <div id="pg-edit" hidden>
-        <div class="pgset">
-          <select id="pg-step" title="STEP 색·껍데기"><option value="1">STEP 1</option><option value="2">STEP 2</option><option value="3">STEP 3</option></select>
-          <input type="text" id="pg-logo" placeholder="로고 (A1)" maxlength="4">
-          <input type="text" id="pg-title" placeholder="제목 (어휘 선택)" maxlength="20">
-        </div>
-        <div id="zones"></div>
-        <div class="row"><button class="btn sub sm" id="pg-del">이 지면 빼기</button><span class="note" id="pg-frame-note"></span></div>
-      </div>
-      <div class="row" style="margin-top:8px"><label>지문 <input type="number" id="pg-n" value="1" min="0" max="99" style="width:56px"> 개로 미리보기 (0 = 전부)</label></div>
-      <div class="row"><input type="text" id="pgset-name" placeholder="지면 묶음 이름 (예: 리테 주차판)" style="flex:1"><button class="btn sub sm" id="pgset-save">저장</button></div>
-      <div class="acts"><button class="btn" id="pg-preview">조판 미리보기</button><button class="btn sub" id="pg-clear">비우기</button></div>
-      <p class="note">터미널: <code>book &lt;책&gt; make --what=pages --plan=&lt;json&gt; --n=1 --png=1</code></p>
-    </div>
-    <div class="box" id="cv-comp">
-    <p class="lede" style="padding:0 0 8px">부품을 순서대로 쌓은 것이 구성이다. 여러 틀의 블록을 섞어 담을 수 있다. 저장하면 다음 책에서 그대로 쓴다.</p>
-      <h3>저장된 구성</h3>
-      <div class="chips" id="comps"></div>
-      <h3>규칙</h3>
-      <div class="row"><label><input type="radio" name="order" value="step" checked> 가로 — 부품 차례대로</label>
-        <label><input type="radio" name="order" value="cycle"> 세로 — 지문마다 부품을 돎</label></div>
-      <div class="row" style="gap:6px">
-        <select id="r-repeat" style="flex:1" title="반복 단위"><option value="">반복 단위</option><option>지문마다</option><option>과마다</option><option>DAY마다</option><option>WEEK마다</option><option>회차마다</option><option>주차마다</option></select>
-        <select id="r-answers" style="flex:1" title="정답 위치"><option value="">정답 위치</option><option>문항 옆</option><option>다음 면</option><option>파트 끝</option><option>권말</option><option>별책</option><option>없음</option></select>
-        <select id="r-mode" style="flex:1" title="모드"><option value="">모드</option><option>학습본</option><option>빈칸본</option><option>둘 다</option></select>
-      </div>
-      <h3>담은 부품 <span id="cnt" style="font-weight:400;color:var(--mute)"></span></h3>
-      <ul class="seq" id="seq"><li class="empty">비어 있다 — 왼쪽에서 부품을 담을 것</li></ul>
-      <div class="sum" id="sum"></div>
-      <div class="row"><input type="text" id="cname" placeholder="구성 이름 (예: 한영고 가로 13스텝)" style="flex:1"><button class="btn sub sm" id="csave">저장</button></div>
-      <div class="acts">
-        <button class="btn sub" id="preview">미리보기 새로</button>
-        <button class="btn" id="mkbook-open">이 구성으로 책 만들기 ▸</button>
-      </div>
-      <p class="note">미리보기는 견본 원고(오른쪽 위에서 고름)로 스텝마다 지문 2개만.</p>
-
-      <div class="mkbook" id="mkbook" hidden>
-        <h3>어느 책에</h3>
-        <div class="row">
-          <select id="target">
-            <option value="__new__">새 책 — 디자인·이름·원고</option>
-            {% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}
-          </select>
-        </div>
-        <div id="existing-box" hidden>
-          <p class="note">그 책의 구성(select)을 이 구성으로 바꾸고 data 를 다시 뽑아 견본을 앉힌다. 원고는 그대로.</p>
-          <button class="btn" id="apply-existing">적용 → 견본</button>
-        </div>
-        <form id="new-form" autocomplete="off">
-          <h3>디자인</h3>
-          <div class="dz">
-            {% for d in designs %}
-            <label class="{{ 'on' if loop.first else '' }}"><input type="radio" name="design" value="{{ d.id }}" {{ 'checked' if loop.first else '' }}>
-              {% if d.preview %}<img src="/catalog/preview/workbook/{{ d.id }}/{{ d.preview }}" alt="">{% else %}<img alt="">{% endif %}
-              <span class="nm" title="{{ d.name }}">{{ d.name }}</span>{% if d.draft %}<span class="draft">초안</span>{% endif %}</label>
-            {% endfor %}
-          </div>
-          <h3>이름</h3>
-          <div class="fx">
-            <div><label>교재명 *</label><input type="text" name="name" placeholder="워크북"></div>
-            <div><label>학기 *</label><input type="text" name="period" placeholder="26-2"></div>
-            <div><label>학교</label><input type="text" name="school" placeholder="한영고"></div>
-            <div><label>제목</label><input type="text" name="title" placeholder="비우면 교재명"></div>
-          </div>
-          <p class="note" style="margin:4px 0 0">폴더: <code>조판/교재/{{ root }}/&lt;교재명&gt;/&lt;학기&gt;/</code></p>
-          <h3>원고</h3>
-          <div class="fx">
-            {% for f in fields %}<div><label>{{ f.label }}</label><input type="text" name="f_{{ f.key }}" value="{{ f.default }}" placeholder="{{ f.placeholder }}"></div>{% endfor %}
-          </div>
-          <label class="drop" id="drop" style="display:block;margin-top:6px">
-            <input type="file" name="slot_folder" id="new-files" multiple accept=".docx,.hwp,.hwpx,.pdf,.xlsx">
-            <b>원고 파일 올리기</b>클릭 또는 끌어다 놓기 — docx · hwp · hwpx (정답지 포함)
-          </label>
-          <ul class="picked" id="new-picked"></ul>
-          <div style="margin-top:6px"><label style="font-size:11px;color:var(--mute)">또는 이 맥의 폴더 경로</label><input type="text" name="folder_path" placeholder="~/Downloads/교재/워크북 원고"></div>
-          <div class="row" style="margin-top:10px"><button type="submit" class="btn" id="new-go">책 만들기 → 구성 적용 → 견본</button></div>
-          <div class="err" id="new-err"></div>
-          <p class="note">원고 읽기 → data → 구성 적용 → 견본 (30~60초). 전권 PDF 는 만든 뒤 아래에서.</p>
-        </form>
-        <div id="made" hidden>
-          <h3>만든 책</h3>
-          <div class="note" id="made-name"></div>
-          <div class="row">
-            <button class="btn" id="build-pdf">전권 PDF 만들기</button>
-            <a class="btn sub" id="to-studio" href="#" target="_blank">작업대에서 열기</a>
-          </div>
-          <div class="note" id="build-status"></div>
-          <ul class="files" id="made-pdfs"></ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- 오른쪽: 미리보기 -->
-  <section class="stage">
-    <div class="bar">
-      <button id="mode-board" class="on" data-mode="board">지면 순서</button>
-      <button id="mode-render" data-mode="render">조판 미리보기</button>
-      <button id="mode-canvas" title="지면 캔버스로">지면 캔버스</button>
-      <span id="what">—</span>
+  <!-- 가운데: 문서 -->
+  <main class="doc" id="doc">
+    <div class="top">
+      <span class="nm" id="docname">새 문서</span>
+      <span class="chips" id="docs"></span>
       <span class="sp"></span>
       <span id="msg"></span>
       <label style="color:var(--mute)">견본 원고</label>
-      <select id="sample">{% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}</select>
+      <select id="sample" style="width:auto">{% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}</select>
+      <button class="btn sub sm" id="render-all">전체 조판 미리보기</button>
+      <button class="btn sub sm" id="back-edit" hidden>편집으로</button>
     </div>
-    <div class="board" id="board"><div class="pgs" id="board-pgs"></div></div>
-    <div class="canvas" id="canvas">
-      <div class="cwrap">
-        <div>
-          <div class="cpage" id="cpage">
-            <img class="bg" id="cbg" alt="">
-            <div class="trim" id="ctrim"></div>
-            <div class="content" id="ccontent"></div>
-            <div class="cbusy" id="cbusy">조판 중…</div>
-          </div>
-        </div>
-        <div class="cside">
-          <h4 id="cs-title">지면</h4>
-          <div class="note" id="cs-hint" style="margin:0 0 8px">왼쪽 블록을 지면 위로 끌어다 놓는다. 놓인 블록은 끌어서 옮기고, 누르면 아래에서 원고 역할·폭을 바꾼다.</div>
-          <div id="cs-item" hidden>
-            <h4>고른 블록</h4>
-            <div class="kv">
-              <span>블록</span><b id="cs-name"></b>
-              <span>원고</span><select id="cs-role"></select>
-              <span>폭</span><select id="cs-w"><option value="168">전체 (168mm)</option><option value="82">반 (82mm)</option><option value="110">2/3 (110mm)</option><option value="56">1/3 (56mm)</option></select>
-              <span>위치</span><span id="cs-xy" style="color:var(--mute);font-size:11px"></span>
-            </div>
-            <button class="btn sub sm" id="cs-del">이 블록 빼기</button>
-          </div>
-          <div class="st" id="cs-state"></div>
-          <button class="btn sm" id="cs-rerender">지금 조판해서 배경 갱신</button>
-        </div>
+    <div class="pages" id="pages"></div>
+    <div class="rendered" id="rendered" hidden></div>
+  </main>
+
+  <!-- 오른쪽: 속성 -->
+  <aside class="right">
+    <div id="r-none"><h2>문서</h2><p class="note">왼쪽에서 지면을 추가하면 가운데에 쌓인다. 지면을 누르면 여기서 속성을 바꾼다.</p></div>
+    <div id="r-part" hidden>
+      <h2 id="rp-name"></h2><div class="note" id="rp-tpl"></div>
+      <div class="kv"><span>지문 수</span><input type="number" id="rp-n" min="1" max="99" placeholder="전부"></div>
+      <button class="btn sub sm" id="rp-del">이 지면 빼기</button>
+    </div>
+    <div id="r-ref" hidden>
+      <h2 id="rr-name"></h2><div class="note" id="rr-tpl"></div>
+      <p class="note">참고 지면 — 기준 PDF 의 모양. 이 틀이 조판 연결되면 그대로 살아난다.</p>
+      <button class="btn sub sm" id="rr-del">이 지면 빼기</button>
+    </div>
+    <div id="r-page" hidden>
+      <h2>편집 지면</h2>
+      <div class="kv">
+        <span>틀</span><select id="rg-frame"><option value="sheet">한 칸</option><option value="a1">상·하 두 칸</option><option value="pair">상 지문·하 문제</option><option value="flow">흘림</option><option value="s3">2단 흘림</option><option value="free">자유 배치</option></select>
+        <span>STEP</span><select id="rg-step"><option value="1">STEP 1</option><option value="2">STEP 2</option><option value="3">STEP 3</option></select>
+        <span>로고</span><input type="text" id="rg-logo" maxlength="4" placeholder="A1">
+        <span>제목</span><input type="text" id="rg-title" maxlength="20" placeholder="어휘 선택">
       </div>
+      <div id="rg-block" hidden>
+        <h3>고른 블록</h3>
+        <div class="kv">
+          <span>블록</span><b id="rb-name"></b>
+          <span>원고</span><select id="rb-role"></select>
+          <span>폭</span><select id="rb-w"><option value="168">전체 168mm</option><option value="110">2/3 110mm</option><option value="82">반 82mm</option><option value="56">1/3 56mm</option></select>
+          <span>위치</span><span id="rb-xy" style="color:var(--mute);font-size:11px"></span>
+        </div>
+        <button class="btn sub sm" id="rb-del">이 블록 빼기</button>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="btn sub sm" id="rg-del">이 지면 빼기</button><button class="btn sub sm" id="rg-rerender">다시 조판</button></div>
     </div>
+
+    <h3>문서 규칙</h3>
+    <div class="row"><label><input type="radio" name="order" value="step" checked> 가로</label><label><input type="radio" name="order" value="cycle"> 세로(지문마다 돎)</label></div>
+    <div class="row" style="gap:4px">
+      <select id="r-repeat" style="flex:1"><option value="">반복 단위</option><option>지문마다</option><option>과마다</option><option>DAY마다</option><option>WEEK마다</option><option>회차마다</option><option>주차마다</option></select>
+      <select id="r-answers" style="flex:1"><option value="">정답 위치</option><option>문항 옆</option><option>다음 면</option><option>파트 끝</option><option>권말</option><option>별책</option><option>없음</option></select>
+    </div>
+    <div class="row"><label>미리보기 지문 <input type="number" id="pv-n" value="1" min="0" max="99" style="width:54px"> 개</label></div>
+
+    <h3>저장</h3>
+    <div class="row"><input type="text" id="cname" placeholder="문서 이름 (예: 한영고 가로 13스텝)" style="flex:1"><button class="btn sub sm" id="csave">저장</button></div>
+
+    <h3>책 만들기</h3>
+    <p class="note">조판되는 지면(워크북 부품)으로 책을 만든다. 편집 지면·참고 지면은 아직 미리보기까지.</p>
+    <select id="target"><option value="__new__">새 책 — 디자인·이름·원고</option>{% for b in books %}<option value="{{ b.key }}">{{ b.title }}{% if b.school %} · {{ b.school }}{% endif %} · {{ b.period }}</option>{% endfor %}</select>
+    <div id="existing-box" hidden style="margin-top:6px"><button class="btn sm" id="apply-existing">이 구성 적용 → 견본</button></div>
+    <form id="new-form" autocomplete="off" style="margin-top:6px">
+      <div class="dz">{% for d in designs %}<label class="{{ 'on' if loop.first else '' }}"><input type="radio" name="design" value="{{ d.id }}" {{ 'checked' if loop.first else '' }}>{% if d.preview %}<img src="/catalog/preview/workbook/{{ d.id }}/{{ d.preview }}" alt="">{% else %}<img alt="">{% endif %}<span title="{{ d.name }}">{{ d.id }}</span>{% if d.draft %}<span class="draft">초안</span>{% endif %}</label>{% endfor %}</div>
+      <div class="fx" style="margin-top:6px"><div><label>교재명 *</label><input type="text" name="name" placeholder="워크북"></div><div><label>학기 *</label><input type="text" name="period" placeholder="26-2"></div><div><label>학교</label><input type="text" name="school" placeholder="한영고"></div><div><label>제목</label><input type="text" name="title" placeholder="비우면 교재명"></div></div>
+      <div class="fx" style="margin-top:4px">{% for f in fields %}<div><label>{{ f.label }}</label><input type="text" name="f_{{ f.key }}" value="{{ f.default }}"></div>{% endfor %}</div>
+      <label class="drop" id="drop" style="display:block;margin-top:6px"><input type="file" name="slot_folder" id="new-files" multiple accept=".docx,.hwp,.hwpx,.pdf,.xlsx"><b>원고 파일 올리기</b>docx · hwp · hwpx</label>
+      <ul class="picked" id="new-picked"></ul>
+      <input type="text" name="folder_path" placeholder="또는 이 맥의 폴더 경로" style="margin-top:4px">
+      <div class="row" style="margin-top:6px"><button type="submit" class="btn sm" id="new-go">책 만들기 → 구성 적용 → 견본</button></div>
+      <div class="err" id="new-err"></div>
+    </form>
+    <div id="made" hidden style="margin-top:8px"><div class="note" id="made-name"></div>
+      <div class="row"><button class="btn sm" id="build-pdf">전권 PDF</button><a class="btn sub sm" id="to-studio" href="#" target="_blank">작업대</a></div>
+      <div class="note" id="build-status"></div><ul class="files" id="made-pdfs"></ul></div>
     <pre id="log"></pre>
-  </section>
+  </aside>
 </div>
 {% endblock %}
 
@@ -447,539 +292,315 @@
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var PARTS = {};
-  document.querySelectorAll('.lib .card').forEach(function (c) { PARTS[c.dataset.id] = c.dataset; });
+  var LIB = {};                                         // 블록(옷) id → 카드 데이터
+  {% for t in library %}{% for p in t.blocks %}LIB[{{ p.id|tojson }}] = { id: {{ p.id|tojson }}, series: {{ p.series|tojson }}, design: {{ p.design|tojson }}, key: {{ (p.key or '')|tojson }}, label: {{ p.label|tojson }}, kind: {{ p.kind|tojson }}, tpl: {{ t.name|tojson }}, thumb: {{ p.thumb|tojson }}, page: {{ (p.page or 0)|tojson }}, pages: {{ (p.page_list or [])|tojson }}, step: {{ (p.step or 0)|tojson }}, item: {{ p.item|tojson }}, itemname: {{ (items[p.item].name if p.item in items else p.item)|tojson }} };
+  {% endfor %}{% endfor %}
+  var BLOCKS = {};
+  document.querySelectorAll('.blk[data-block]').forEach(function (b) { BLOCKS[b.dataset.block] = { name: b.dataset.name, roles: (b.dataset.roles || '').split(',').filter(Boolean) }; });
   var comps = {{ compositions|tojson }};
-  var timer = null, madeKey = '', madeBid = '';
+  var DOC = { items: [] }, sel = -1, selBlk = { zi: 0, si: -1 }, curZone = 0, timer = null, bgTimers = {}, madeKey = '', madeBid = '';
+  var FRAME_NM = { a1: '상·하 두 칸', sheet: '한 칸', pair: '상 지문 · 하 문제', flow: '흘림', s3: '2단 흘림', free: '자유 배치' };
+  var FRAME_ZN = { a1: ['칸 (지문 2개에 되풀이)'], sheet: ['칸'], pair: ['상 칸 — 지문', '하 칸 — 문제'], flow: ['흘림 칸'], s3: ['2단 흘림 칸'], free: ['자유 배치'] };
+  var ZONES_MM = { a1: [[1, 128], [130, 130]], pair: [[1, 128], [130, 130]], sheet: [[0, 260]], flow: [[0, 260]], s3: [[0, 260]], free: [[0, 260]] };
+  var PAGE_W = 216, BLEED = 3, CX = 26, CY = 29.5, CW = 168, CH = 260;
+  var THUMB_AR = {};
+  document.querySelectorAll('.blk[data-block] img').forEach(function (im) { var id = im.parentNode.dataset.block, f = function () { if (im.naturalWidth) THUMB_AR[id] = im.naturalHeight / im.naturalWidth; }; if (im.complete) f(); else im.onload = f; });
 
   function msg(t) { $('msg').textContent = t || ''; }
   function log(t) { $('log').textContent = t || ''; }
-  function api(u, body, method) {
-    return fetch(u, body ? { method: method || 'POST', headers: { 'Content-Type': 'application/json' },
-                             body: JSON.stringify(body) } : undefined).then(function (r) { return r.json(); });
-  }
-  var mode = 'board';                                    // board(지면 순서) | render(조판 미리보기) — 사용자가 누를 때만 바뀐다
-  var rendered = null;                                   // 마지막 조판 면 그림 목록
+  function api(u, body, method) { return fetch(u, body ? { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : undefined).then(function (r) { return r.json(); }); }
+  function esc(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
-  // ── 구성 상태 ──
-  function items() {
-    return Array.prototype.map.call($('seq').querySelectorAll('li[data-id]'), function (li) {
-      var p = PARTS[li.dataset.id] || {};
-      return { id: li.dataset.id, series: p.series, design: p.design, key: p.key || '', label: p.label, kind: p.kind,
-               item: p.item, tpl: p.tpl, thumb: p.thumb, page: p.page, n: li.querySelector('input[type=number]').value };
-    });
+  // ── 왼쪽 패널 ──
+  function setLeft(m) {
+    document.querySelectorAll('.left .hd .tabs:first-child button').forEach(function (b) { b.classList.toggle('on', b.dataset.l === m); });
+    $('addtabs').style.display = m === 'add' ? '' : 'none';
+    $('l-blk').hidden = m !== 'blk';
+    if (m === 'add') setAdd(document.querySelector('#addtabs button.on').dataset.a); else ['l-item', 'l-tpl', 'l-match'].forEach(function (id) { $(id).hidden = true; });
   }
-  function rules() {
-    return { repeat: $('r-repeat').value, answers: $('r-answers').value, mode: $('r-mode').value };
+  function setAdd(a) {
+    document.querySelectorAll('#addtabs button').forEach(function (b) { b.classList.toggle('on', b.dataset.a === a); });
+    $('l-item').hidden = a !== 'item'; $('l-tpl').hidden = a !== 'tpl'; $('l-match').hidden = a !== 'match';
+    if (a === 'match') drawMatchPages();
   }
-  function composition() {
-    var its = items(), limits = {};
-    its.forEach(function (it) { if (it.key && it.n) limits[it.key] = parseInt(it.n, 10); });
-    return { items: its, steps: its.filter(function (it) { return it.key; }).map(function (it) { return it.key; }), limits: limits,
-             cycle: document.querySelector('input[name=order]:checked').value === 'cycle', rules: rules() };
+  document.querySelectorAll('.left .hd .tabs:first-child button').forEach(function (b) { b.onclick = function () { setLeft(b.dataset.l); }; });
+  document.querySelectorAll('#addtabs button').forEach(function (b) { b.onclick = function () { setAdd(b.dataset.a); }; });
+  document.querySelectorAll('#l-item .var').forEach(function (v) { v.onclick = function () { addLib(v.dataset.id); }; });
+  document.querySelectorAll('#l-tpl .card').forEach(function (c) { c.onclick = function () { addLib(c.dataset.id); }; });
+  document.querySelectorAll('#l-match .frames button').forEach(function (b) { b.onclick = function () { addPage(b.dataset.frame); }; });
+  $('m-tpl').onchange = drawMatchPages;
+  function drawMatchPages() {
+    var o = $('m-tpl').selectedOptions[0], box = $('m-pages'); box.innerHTML = '';
+    if (!o) return;
+    var series = o.value, design = o.dataset.design, total = Math.min(parseInt(o.dataset.total || '0', 10), 120);
+    for (var n = 1; n <= total; n++) {
+      (function (n) {
+        var d = document.createElement('div'); d.className = 'pp';
+        d.innerHTML = '<img src="/catalog/page/' + series + '/' + design + '/' + n + '.png?dpi=24" loading="lazy" alt="">' + n;
+        d.onclick = function () {
+          // 이 면이 어느 지면 형태인가 — 라이브러리 블록의 page_list 로 맞춘다
+          var hit = null;
+          Object.keys(LIB).forEach(function (id) { var b = LIB[id]; if (b.series === series && b.design === design && (b.pages || []).indexOf(n) >= 0) hit = hit || b; });
+          if (!hit) Object.keys(LIB).forEach(function (id) { var b = LIB[id]; if (!hit && b.series === series && b.design === design && !b.key) hit = b; });
+          if (!hit) { msg('맞는 지면 형태가 없다'); return; }
+          var it = addLib(hit.id, true);
+          it.label = hit.label + ' (매치 · ' + n + '면)'; it.thumb = '/catalog/page/' + series + '/' + design + '/' + n + '.png?dpi=40'; it.page = n;
+          drawDoc();
+          msg('매치: ' + hit.itemname + ' — ' + hit.label);
+        };
+        box.appendChild(d);
+      })(n);
+    }
   }
-  function redrawDividers() {
-    var seq = $('seq'), seen = {};
-    seq.querySelectorAll('li.div').forEach(function (d) { d.remove(); });
-    var lis = seq.querySelectorAll('li[data-id]');
-    lis.forEach(function (li) {
-      var p = PARTS[li.dataset.id] || {};
-      if (!p.key) return;                                // 간지 자동 삽입은 조판되는 워크북 부품에만
-      var st = p.step;
-      if (st && !seen[st]) {
-        seen[st] = 1;
-        var d = document.createElement('li'); d.className = 'div';
-        d.innerHTML = '<span class="nm">▮ STEP 0' + st + ' 간지 2면 (조판 때 자동)</span>';
-        seq.insertBefore(d, li);
-      }
-    });
-    var e = seq.querySelector('.empty');
-    if (lis.length && e) e.remove();
-    if (!lis.length && !e) { seq.innerHTML = '<li class="empty">비어 있다 — 왼쪽에서 부품을 담을 것</li>'; }
-    $('cnt').textContent = lis.length ? lis.length + '개' : '';
-    var c = composition(), nr = c.items.filter(function (it) { return !it.key && it.kind === '본문'; }).length;
-    $('sum').textContent = lis.length ? ((c.cycle ? '세로' : '가로') + ' · 블록 ' + lis.length + '개 · 조판 ' + c.steps.length + '개'
-      + (nr ? ' · 참고(조판 연결 전) ' + nr + '개' : '') + (Object.keys(c.limits).length ? ' · 지문 수 제한 ' + Object.keys(c.limits).length : '')
-      + [c.rules.repeat, c.rules.answers ? '정답 ' + c.rules.answers : '', c.rules.mode].filter(Boolean).map(function (x) { return ' · ' + x; }).join('')) : '';
-    $('mkbook-open').disabled = !c.steps.length;
-    $('mkbook-open').title = c.steps.length ? '' : '조판되는 부품(워크북)이 있어야 책을 만든다';
-  }
-  function changed() { redrawDividers(); clearTimeout(timer); timer = setTimeout(preview, 600); }
-  function addItem(id, n, at) {
-    var p = PARTS[id]; if (!p) return;
-    var li = document.createElement('li'); li.dataset.id = id; li.draggable = true;
-    if (!p.key) li.className = 'ref';
-    li.innerHTML = '<img src="' + p.thumb + '" alt="">' +
-      '<div class="t"><div class="nm">' + (p.itemname || p.label) + '</div><div class="k"><span class="sr">' + p.tpl + '</span> · ' + p.label + (p.key ? '' : ' · 참고') + '</div></div>' +
-      (p.key ? '<input type="number" min="1" max="99" placeholder="전부" value="' + (n || '') + '" title="지문 수 제한">' : '<input type="number" hidden>') +
-      '<button class="up" title="위로">▲</button><button class="dn" title="아래로">▼</button><button class="x" title="빼기">✕</button>';
-    li.querySelector('.up').onclick = function () { var prev = li.previousElementSibling; while (prev && prev.classList.contains('div')) prev = prev.previousElementSibling; if (prev) li.parentNode.insertBefore(li, prev); changed(); };
-    li.querySelector('.dn').onclick = function () { var nx = li.nextElementSibling; while (nx && nx.classList.contains('div')) nx = nx.nextElementSibling; if (nx) li.parentNode.insertBefore(nx, li); changed(); };
-    li.querySelector('.x').onclick = function () { li.remove(); changed(); };
-    li.querySelector('input').onchange = changed;
-    li.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/move', id); li.classList.add('drag'); });
-    li.addEventListener('dragend', function () { li.classList.remove('drag'); });
-    var seq = $('seq');
-    if (at && at.parentNode === seq) seq.insertBefore(li, at); else seq.appendChild(li);
-    changed();
-  }
-  function load(c) {
-    $('seq').innerHTML = '';
-    document.querySelector('input[name=order][value=' + (c.cycle ? 'cycle' : 'step') + ']').checked = true;
-    var r = c.rules || {}; $('r-repeat').value = r.repeat || ''; $('r-answers').value = r.answers || ''; $('r-mode').value = r.mode || '';
-    if (c.items && c.items.length) c.items.forEach(function (it) { addItem(it.id, it.n); });
-    else (c.steps || []).forEach(function (k) { addItem('workbook:' + k, (c.limits || {})[k]); });
-    redrawDividers();
-  }
-  document.querySelectorAll('input[name=order]').forEach(function (r) { r.onchange = changed; });
-  ['r-repeat', 'r-answers', 'r-mode'].forEach(function (id) { $(id).onchange = redrawDividers; });
 
-  // 보기 전환: 블록별 / 틀별
-  document.querySelectorAll('.views button').forEach(function (b) {
-    b.onclick = function () {
-      document.querySelectorAll('.views button').forEach(function (x) { x.classList.toggle('on', x === b); });
-      $('view-item').hidden = b.dataset.view !== 'item'; $('view-tpl').hidden = b.dataset.view !== 'tpl'; $('view-blk').hidden = b.dataset.view !== 'blk';
-    };
-  });
-  // 블록별: + 는 기본 옷, 작은 그림은 그 옷
-  document.querySelectorAll('#view-item .add').forEach(function (b) { b.onclick = function () { addItem(b.dataset.add); }; });
-  document.querySelectorAll('#view-item .var').forEach(function (v) {
-    v.onclick = function () { addItem(v.dataset.id); };
-    v.draggable = true;
-    v.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/add', v.dataset.id); });
-  });
+  // ── 문서 ──
+  function addLib(id, quiet) {
+    var b = LIB[id]; if (!b) return null;
+    var it = b.key ? { type: 'part', id: id, key: b.key, label: b.label, tpl: b.tpl, thumb: b.thumb, item: b.item, itemname: b.itemname, step: b.step }
+                   : { type: 'ref', id: id, series: b.series, design: b.design, page: b.page, label: b.label, tpl: b.tpl, thumb: b.thumb, item: b.item, itemname: b.itemname, kind: b.kind };
+    DOC.items.push(it); sel = DOC.items.length - 1;
+    if (!quiet) drawDoc();
+    return it;
+  }
+  function addPage(frame) {
+    DOC.items.push({ type: 'page', spec: { frame: frame, step: 1, logo: '', title: '', zones: frame === 'pair' ? [[], []] : [[]] } });
+    sel = DOC.items.length - 1; selBlk = { zi: 0, si: -1 }; curZone = 0;
+    drawDoc(); setLeft('blk');
+  }
+  function drawDoc() {
+    var box = $('pages'); box.innerHTML = '';
+    if (!DOC.items.length) box.innerHTML = '<div class="empty">아직 지면이 없다 — 왼쪽에서 항목·틀·지면 매치로 추가하거나, 빈 지면을 만들어 블록을 놓는다.</div>';
+    var seen = {};
+    DOC.items.forEach(function (it, i) {
+      if (it.type === 'part' && it.step && !seen[it.step]) { seen[it.step] = 1; var dv = document.createElement('div'); dv.className = 'divrow'; dv.textContent = '▮ STEP 0' + it.step + ' 간지 2면 — 조판 때 자동'; box.appendChild(dv); }
+      var c = document.createElement('div'); c.className = 'pgc' + (i === sel ? ' on' : ''); c.dataset.i = i; c.draggable = true;
+      var kind = it.type === 'part' ? '<span class="k rd">조판</span>' : (it.type === 'ref' ? '<span class="k">참고</span>' : '<span class="k pg">편집</span>');
+      var cap = it.type === 'page' ? ((it.spec.title || FRAME_NM[it.spec.frame]) + ' · ' + FRAME_NM[it.spec.frame]) : ((it.itemname ? it.itemname + ' · ' : '') + it.tpl + ' · ' + it.label);
+      var sheet = '';
+      if (it.type === 'page') sheet = '<div class="cv" data-i="' + i + '"><img class="bg" alt=""><div class="content"></div><div class="cbusy">조판 중…</div></div>';
+      else sheet = '<img class="pg" src="' + (it.rendered || it.thumb) + '" alt="">';
+      c.innerHTML = '<span class="no">' + (i + 1) + '</span><div class="sheet">' + sheet + '</div>' +
+        '<div class="tools"><button class="up" title="위로">▲</button><button class="dn" title="아래로">▼</button><button class="x" title="빼기">✕</button></div>' +
+        '<div class="cap">' + kind + '<b title="' + esc(cap) + '">' + esc(cap) + '</b>' + (it.type === 'part' && it.n ? '<span class="k">지문 ' + it.n + '</span>' : '') + '</div>';
+      c.querySelector('.sheet').onclick = function (e) { if (e.target.closest && e.target.closest('.citem,.czone')) return; select(i); };
+      c.querySelector('.up').onclick = function (e) { e.stopPropagation(); if (i > 0) { DOC.items.splice(i - 1, 0, DOC.items.splice(i, 1)[0]); sel = i - 1; drawDoc(); } };
+      c.querySelector('.dn').onclick = function (e) { e.stopPropagation(); if (i < DOC.items.length - 1) { DOC.items.splice(i + 1, 0, DOC.items.splice(i, 1)[0]); sel = i + 1; drawDoc(); } };
+      c.querySelector('.x').onclick = function (e) { e.stopPropagation(); DOC.items.splice(i, 1); sel = -1; drawDoc(); };
+      c.addEventListener('dragstart', function (e) { if (e.target.closest && e.target.closest('.citem')) return; e.dataTransfer.setData('text/pgmove', String(i)); c.classList.add('drag'); });
+      c.addEventListener('dragend', function () { c.classList.remove('drag'); });
+      c.addEventListener('dragover', function (e) { if (e.dataTransfer.types.indexOf('text/pgmove') >= 0) { e.preventDefault(); c.classList.add('dover'); } });
+      c.addEventListener('dragleave', function () { c.classList.remove('dover'); });
+      c.addEventListener('drop', function (e) { c.classList.remove('dover'); var f = e.dataTransfer.getData('text/pgmove'); if (f === '') return; e.preventDefault(); var fi = +f; if (fi === i) return; var it2 = DOC.items.splice(fi, 1)[0]; DOC.items.splice(i, 0, it2); sel = i; drawDoc(); });
+      box.appendChild(c);
+      if (it.type === 'page') drawCanvas(i, c.querySelector('.cv'));
+    });
+    var add = document.createElement('div'); add.className = 'addpg'; add.textContent = '＋ 지면 추가'; add.onclick = function () { setLeft('add'); }; box.appendChild(add);
+    drawRight();
+  }
+  function select(i) { sel = i; selBlk = { zi: 0, si: -1 }; drawDoc(); if (DOC.items[i] && DOC.items[i].type === 'page') setLeft('blk'); }
 
-  // 코드 필터
-  document.querySelectorAll('#codes button').forEach(function (b) {
-    b.onclick = function () {
-      document.querySelectorAll('#codes button').forEach(function (x) { x.classList.toggle('on', x === b); });
-      var code = b.dataset.code;
-      document.querySelectorAll('.lib .card').forEach(function (c) {
-        var hit = !code || (code === '표지·간지' ? c.dataset.kind !== '본문' : (',' + c.dataset.codes + ',').indexOf(',' + code + ',') >= 0);
-        c.classList.toggle('hide', !hit);
-      });
-      if (code) document.querySelectorAll('.lib details').forEach(function (d) { d.open = !!d.querySelector('.card:not(.hide)'); });
-    };
-  });
-
-  // 라이브러리 → 캔버스: + 단추, 끌어놓기
-  document.querySelectorAll('.lib .card').forEach(function (c) {
-    c.querySelector('.add').onclick = function () { addItem(c.dataset.id); };
-    c.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/add', c.dataset.id); });
-  });
-  var seq = $('seq');
-  seq.addEventListener('dragover', function (e) { e.preventDefault(); seq.classList.add('over'); });
-  seq.addEventListener('dragleave', function () { seq.classList.remove('over'); });
-  seq.addEventListener('drop', function (e) {
-    e.preventDefault(); seq.classList.remove('over');
-    var at = e.target.closest ? e.target.closest('li[data-id]') : null;
-    var add = e.dataTransfer.getData('text/add'), mv = e.dataTransfer.getData('text/move');
-    if (add) addItem(add, '', at);
-    else if (mv) { var li = seq.querySelector('li[data-id="' + mv + '"]'); if (li && at && at !== li) { seq.insertBefore(li, at); changed(); } else if (li && !at) { seq.appendChild(li); changed(); } }
-  });
-
-  // ── 무대: 지면 순서(기준 그림, 즉시) / 조판 미리보기(실제 조판 면, 몇 초) — 둘 다 세로 스크롤 ──
-  function board() {
-    var its = items(), box = $('board-pgs'); box.innerHTML = '';
-    $('board').classList.remove('big');
-    var no = 0, seen = {};
-    its.forEach(function (it) {
-      var p = PARTS[it.id] || {};
-      if (p.key && p.step && !seen[p.step]) {           // 조판 때 자동으로 붙는 간지
-        seen[p.step] = 1; no += 2;
-        var dv = document.createElement('div'); dv.className = 'p auto';
-        dv.innerHTML = '<img src="/make/parts/divider_' + p.step + '.png" alt=""><div class="no">' + (no - 1) + '~' + no + '</div><div class="tl"><b>자동</b>STEP 0' + p.step + ' 간지</div>';
-        box.appendChild(dv);
-      }
-      no += 1;
-      var d = document.createElement('div'); d.className = 'p' + (p.key ? '' : ' ref');
-      d.innerHTML = '<img src="' + (p.key ? p.thumb : p.thumb.replace('dpi=40', 'dpi=56')) + '" alt=""><div class="no">' + no + (p.key ? ' …' : '') + '</div><div class="tl"><b>' + (p.itemname || '') + '</b>' + p.tpl + ' · ' + p.label + (it.n ? ' · 지문 ' + it.n : '') + '</div>';
-      box.appendChild(d);
-    });
-    if (!its.length) box.innerHTML = '<div class="note">부품을 담으면 지면 순서가 여기 놓인다.</div>';
-    $('what').textContent = its.length ? '지면 순서 · ' + its.length + '개 블록' : '—';
-  }
-  function drawRendered() {
-    var box = $('board-pgs'); box.innerHTML = '';
-    $('board').classList.add('big');
-    if (!rendered) { box.innerHTML = '<div class="wait">조판 중… 몇 초 걸린다</div>'; return; }
-    rendered.forEach(function (u, i) {
-      var d = document.createElement('div'); d.className = 'p';
-      d.innerHTML = '<img src="' + u + '" alt="" loading="lazy"><div class="no">' + (i + 1) + '</div>';
-      box.appendChild(d);
-    });
-    if (!rendered.length) box.innerHTML = '<div class="note">조판된 면이 없다.</div>';
-  }
-  function render() {
-    var c = composition();
-    if (!c.items.length) { rendered = []; drawRendered(); $('what').textContent = '—'; return; }
-    c.b = $('sample').value; c.n = 2;
-    rendered = null; drawRendered(); msg('조판 중…');
-    api('/api/make/preview', c).then(function (d) {
-      if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); rendered = []; drawRendered(); return; }
-      msg(''); log(d.log || '');
-      rendered = d.pages || [];
-      if (mode === 'render') drawRendered();
-      $('what').textContent = '조판 미리보기 · ' + rendered.length + '면 · 부품 ' + c.steps.length + '개' + (c.items.length > c.steps.length ? ' + 참고 블록 ' + (c.items.length - c.steps.length) + '개(자리표 면)' : '');
-    });
-  }
-  function preview() {
-    if (mode === 'render') render(); else board();
-  }
-  function setMode(m) {
-    mode = m;
-    $('mode-board').classList.toggle('on', m === 'board'); $('mode-render').classList.toggle('on', m === 'render');
-    preview();
-  }
-  $('mode-board').onclick = function () { canvasOn(false); setMode('board'); };
-  $('mode-render').onclick = function () { canvasOn(false); setMode('render'); };
-  $('mode-canvas').onclick = function () { if (cvMode !== 'pages') setCv('pages'); canvasOn(true); drawCanvas(); };
-  $('preview').onclick = function () { rendered = null; preview(); };
-  $('sample').onchange = function () { rendered = null; preview(); };
-
-  // ── 저장된 구성 ──
-  function drawComps() {
-    var box = $('comps'); box.innerHTML = '';
-    var names = Object.keys(comps || {});
-    if (!names.length) { box.innerHTML = '<span class="note">아직 없다 — 아래에서 이름 붙여 저장</span>'; return; }
-    names.forEach(function (n) {
-      var c = comps[n];
-      var el = document.createElement('span'); el.className = 'chip'; el.title = ((c.items || c.steps || []).length) + '개 블록 · ' + (c.cycle ? '세로' : '가로') + ' · ' + (c.made || '');
-      el.innerHTML = n + ' <i title="지우기">✕</i>';
-      el.onclick = function (e) {
-        if (e.target.tagName === 'I') {
-          if (!confirm('구성 “' + n + '” 을 지울까?')) return;
-          api('/api/make/compositions', { name: n }, 'DELETE').then(function (d) { if (!d.error) { comps = d.compositions; drawComps(); } });
-          return;
-        }
-        $('cname').value = n; load(c);
-      };
-      box.appendChild(el);
-    });
-  }
-  $('csave').onclick = function () {
-    var name = $('cname').value.trim(); if (!name) { $('cname').focus(); return; }
-    var c = composition(); if (!c.items.length) { msg('부품이 하나도 없다'); return; }
-    c.name = name;
-    api('/api/make/compositions', c).then(function (d) { if (d.error) { msg('✗ ' + d.error); return; } comps = d.compositions; drawComps(); msg('저장했다: ' + name); });
-  };
-  drawComps();
-  board();
-  // 색 에셋 스와치 — 견본 책의 손잡이 값으로
-  (function () {
-    var sws = document.querySelectorAll('.as-list .sw[data-knob]'); if (!sws.length) return;
-    api('/api/book-studio/knobs?b=' + encodeURIComponent($('sample').value)).then(function (d) {
-      var v = {}; (d.knobs || []).forEach(function (k) { v[k.key] = k.value; });
-      sws.forEach(function (el) { if (v[el.dataset.knob]) el.style.background = v[el.dataset.knob]; });
-    }).catch(function () {});
-  })();
-
-  // ── 지면 편집기 ──
-  var PAGES = [], curPg = -1, curZone = 0, pagesets = {{ pagesets|tojson }}, cvMode = 'comp';
-  var BLOCKS = {};
-  document.querySelectorAll('.blk[data-block]').forEach(function (b) { BLOCKS[b.dataset.block] = { name: b.dataset.name, roles: (b.dataset.roles || '').split(',').filter(Boolean) }; });
-  var FRAME_ZONES = { a1: ['칸 (지문 2개에 되풀이)'], sheet: ['칸'], pair: ['상 칸 — 지문', '하 칸 — 문제'], flow: ['흘림 칸'], s3: ['2단 흘림 칸'], free: ['자유 배치'] };
-  var FRAME_NM = { a1: '상·하 두 칸', sheet: '한 칸', pair: '상 지문 · 하 문제', flow: '흘림', s3: '2단 흘림', free: '자유 배치' };
-  function frameIcon(fr) {
-    if (fr === 'a1') return '<div class="fr"><i></i><i></i></div>';
-    if (fr === 'pair') return '<div class="fr"><i style="flex:2"></i><i></i></div>';
-    if (fr === 's3') return '<div class="fr s3"><i></i><i></i></div>';
-    if (fr === 'flow') return '<div class="fr"><i style="opacity:.5"></i></div>';
-    if (fr === 'free') return '<div class="fr" style="border-style:dashed"><i style="flex:0 0 30%;margin:2px 30% 0 0"></i><i style="flex:0 0 20%;margin-left:40%"></i></div>';
-    return '<div class="fr"><i></i></div>';
-  }
-  function drawPages() {
-    var box = $('pgl'); box.querySelectorAll('.pgc:not(.add)').forEach(function (x) { x.remove(); });
-    PAGES.forEach(function (pg, i) {
-      var c = document.createElement('div'); c.className = 'pgc' + (i === curPg ? ' on' : '');
-      c.innerHTML = frameIcon(pg.frame) + '<span class="nm">' + (i + 1) + ' · ' + (pg.title || FRAME_NM[pg.frame]) + '</span>';
-      c.onclick = function () { selectPage(i); };
-      box.insertBefore(c, $('pg-add'));
-    });
-    $('pg-edit').hidden = curPg < 0;
-  }
-  function selectPage(i) {
-    curPg = i; curZone = 0; drawPages();
-    if (i < 0) return;
-    var pg = PAGES[i];
-    $('pg-step').value = pg.step || 1; $('pg-logo').value = pg.logo || ''; $('pg-title').value = pg.title || '';
-    $('pg-frame-note').textContent = (FRAME_NM[pg.frame] || '자유 배치') + ' 틀';
-    curItem = -1; cBgKey = '';
-    drawZones(); canvasOn(true); drawCanvas();
-  }
-  function drawZones() {
-    var pg = PAGES[curPg], box = $('zones'); box.innerHTML = '';
-    var names = FRAME_ZONES[pg.frame] || ['칸'];
-    while (pg.zones.length < names.length) pg.zones.push([]);
-    pg.zones.length = names.length;
-    names.forEach(function (nm, zi) {
-      var z = document.createElement('div'); z.className = 'zone' + (zi === curZone ? ' on' : ''); z.dataset.zi = zi;
-      z.innerHTML = '<div class="zh"><span>' + nm + '</span><b>' + (zi === curZone ? '담을 칸' : '') + '</b></div><ul></ul>';
-      var ul = z.querySelector('ul');
-      if (!pg.zones[zi].length) ul.innerHTML = '<li class="empty" style="border:0;justify-content:center">블록을 끌어다 놓거나 왼쪽 「+ 지면에 담기」</li>';
-      pg.zones[zi].forEach(function (sp, si) {
-        var b = BLOCKS[sp.block] || { name: sp.block, roles: [] };
-        var li = document.createElement('li');
-        var opts = b.roles.map(function (r) { return '<option value="' + r + '"' + (sp.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('');
-        li.innerHTML = '<span class="bn">' + b.name + '</span>' + (b.roles.length ? '<select title="원고 역할">' + opts + '</select>' : '<span class="note" style="margin:0">원고 없음</span>') +
-          '<button class="up">▲</button><button class="dn">▼</button><button class="x">✕</button>';
-        var sel = li.querySelector('select'); if (sel) sel.onchange = function () { sp.role = sel.value; drawCanvas(); scheduleBg(); };
-        li.querySelector('.up').onclick = function () { if (si > 0) { pg.zones[zi].splice(si - 1, 0, pg.zones[zi].splice(si, 1)[0]); afterCanvasChange(); } };
-        li.querySelector('.dn').onclick = function () { if (si < pg.zones[zi].length - 1) { pg.zones[zi].splice(si + 1, 0, pg.zones[zi].splice(si, 1)[0]); afterCanvasChange(); } };
-        li.querySelector('.x').onclick = function () { pg.zones[zi].splice(si, 1); curItem = -1; afterCanvasChange(); };
-        ul.appendChild(li);
-      });
-      z.addEventListener('dragover', function (e) { e.preventDefault(); z.classList.add('over'); });
-      z.addEventListener('dragleave', function () { z.classList.remove('over'); });
-      z.addEventListener('drop', function (e) { e.preventDefault(); z.classList.remove('over'); var id = e.dataTransfer.getData('text/block'); if (id) { curZone = zi; addBlock(id); } });
-      z.onclick = function (e) { if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'BUTTON') { curZone = zi; drawZones(); drawCanvas(); } };
-      box.appendChild(z);
-    });
-  }
-  function addBlock(id) {
-    if (curPg < 0) { msg('먼저 지면을 추가할 것'); setCv('pages'); return; }
-    var b = BLOCKS[id]; if (!b) return;
-    var pg = PAGES[curPg], it = { block: id, role: b.roles[0] || '' };
-    if (pg.frame === 'free') { var n0 = pg.zones[0].length; it.x = 0; it.y = Math.min(240, 4 + n0 * 40); it.w = 168; }
-    pg.zones[curZone].push(it);
-    curItem = pg.zones[curZone].length - 1; curItemZone = curZone;
-    afterCanvasChange();
-  }
-  $('pg-add').onclick = function () { $('frpick').classList.toggle('on'); };
-  document.querySelectorAll('#frpick button').forEach(function (b) {
-    b.onclick = function () {
-      $('frpick').classList.remove('on');
-      PAGES.push({ frame: b.dataset.frame, step: 1, logo: '', title: '', zones: [[]] });
-      selectPage(PAGES.length - 1);
-    };
-  });
-  $('pg-step').onchange = function () { if (curPg >= 0) PAGES[curPg].step = parseInt(this.value, 10); };
-  $('pg-logo').oninput = function () { if (curPg >= 0) PAGES[curPg].logo = this.value; };
-  $('pg-title').oninput = function () { if (curPg >= 0) { PAGES[curPg].title = this.value; drawPages(); } };
-  $('pg-del').onclick = function () { if (curPg < 0) return; PAGES.splice(curPg, 1); selectPage(PAGES.length ? Math.min(curPg, PAGES.length - 1) : -1); };
-  $('pg-clear').onclick = function () { PAGES = []; selectPage(-1); rendered = []; drawRendered(); };
-  document.querySelectorAll('.blk .addto').forEach(function (b) { b.onclick = function () { addBlock(b.dataset.block); }; });
-  document.querySelectorAll('.blk[data-block]').forEach(function (c) { c.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/block', c.dataset.block); }); });
-  function pagesBody() { return { b: $('sample').value, pages: PAGES, n: parseInt($('pg-n').value || '1', 10) }; }
-  function renderPages() {
-    if (!PAGES.length) { msg('지면이 없다'); return; }
-    canvasOn(false);
-    rendered = null; setMode('render'); drawRendered(); msg('지면 조판 중…');
-    api('/api/make/pages/preview', pagesBody()).then(function (d) {
-      if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); rendered = []; drawRendered(); return; }
-      msg(''); log(d.log || ''); rendered = d.pages || []; drawRendered();
-      $('what').textContent = '지면 편집 미리보기 · 지면 ' + PAGES.length + '장 → ' + rendered.length + '면';
-    });
-  }
-  $('pg-preview').onclick = renderPages;
-  function drawPagesets() {
-    var box = $('pagesets'); box.innerHTML = '';
-    var names = Object.keys(pagesets || {});
-    if (!names.length) { box.innerHTML = '<span class="note">아직 없다</span>'; return; }
-    names.forEach(function (n) {
-      var el = document.createElement('span'); el.className = 'chip'; el.innerHTML = n + ' <i title="지우기">✕</i>';
-      el.title = (pagesets[n].pages || []).length + '장 · ' + (pagesets[n].made || '');
-      el.onclick = function (e) {
-        if (e.target.tagName === 'I') { if (!confirm('지면 묶음 “' + n + '” 을 지울까?')) return; api('/api/make/pagesets', { name: n }, 'DELETE').then(function (d) { if (!d.error) { pagesets = d.pagesets; drawPagesets(); } }); return; }
-        PAGES = JSON.parse(JSON.stringify(pagesets[n].pages || [])); $('pg-n').value = pagesets[n].n || 1; $('pgset-name').value = n; selectPage(PAGES.length ? 0 : -1);
-      };
-      box.appendChild(el);
-    });
-  }
-  $('pgset-save').onclick = function () {
-    var name = $('pgset-name').value.trim(); if (!name) { $('pgset-name').focus(); return; }
-    if (!PAGES.length) { msg('지면이 없다'); return; }
-    var body = pagesBody(); body.name = name;
-    api('/api/make/pagesets', body).then(function (d) { if (d.error) { msg('✗ ' + d.error); return; } pagesets = d.pagesets; drawPagesets(); msg('저장했다: ' + name); });
-  };
-  drawPagesets();
-  function setCv(m) {
-    cvMode = m;
-    document.querySelectorAll('.cvtabs button').forEach(function (x) { x.classList.toggle('on', x.dataset.cv === m); });
-    $('cv-comp').hidden = m !== 'comp'; $('cv-pages').hidden = m !== 'pages';
-    canvasOn(m === 'pages');
-    if (m === 'pages') { document.querySelector('.views button[data-view=blk]').click(); drawCanvas(); }
-  }
-  document.querySelectorAll('.cvtabs button').forEach(function (b) { b.onclick = function () { setCv(b.dataset.cv); }; });
-
-  // ── 지면 캔버스: 실제 조판 면(PNG) 위에 블록을 끌어 놓는다 ──
-  var S = 2.0;                                           // px / mm
-  var PAGE_W = 216, PAGE_H = 303, BLEED = 3;             // 조판 PNG 는 도련 포함
-  var CX = 3 + 23, CY = 3 + 26.5, CW = 168, CH = 260;     // 판면(왼쪽 면 기준) — 도련 3mm 더한 좌표
-  var ZONES_MM = { a1: [[1, 128], [130, 130]], pair: [[1, 128], [130, 130]], sheet: [[0, 260]], flow: [[0, 260]], s3: [[0, 260]], free: [[0, 260]] };
-  var THUMB_AR = {};                                     // 블록 썸네일 가로/세로 비
-  document.querySelectorAll('.blk[data-block] img').forEach(function (im) {
-    var id = im.parentNode.dataset.block, done = function () { if (im.naturalWidth) THUMB_AR[id] = im.naturalHeight / im.naturalWidth; };
-    if (im.complete) done(); else im.onload = done;
-  });
-  var curItem = -1, curItemZone = 0, cTimer = null, cBgKey = '';
-  function canvasOn(on) { $('canvas').classList.toggle('on', on); $('board').style.display = on ? 'none' : ''; }
+  // ── 편집 지면 캔버스(문서 안) ──
   function estH(id, wmm) { return Math.max(8, Math.min(120, (THUMB_AR[id] || 0.3) * wmm)); }
-  function pageOf() { return curPg >= 0 ? PAGES[curPg] : null; }
-  function drawCanvas() {
-    var pg = pageOf(), cp = $('cpage'), cc = $('ccontent');
-    cp.style.width = (PAGE_W * S) + 'px'; cp.style.height = (PAGE_H * S) + 'px';
-    $('ctrim').style.left = (BLEED * S) + 'px'; $('ctrim').style.top = (BLEED * S) + 'px';
-    $('ctrim').style.width = ((PAGE_W - 2 * BLEED) * S) + 'px'; $('ctrim').style.height = ((PAGE_H - 2 * BLEED) * S) + 'px';
+  function drawCanvas(i, cv) {
+    var it = DOC.items[i], pg = it.spec, S = cv.getBoundingClientRect().width / PAGE_W || 1.48;
+    var cc = cv.querySelector('.content');
     cc.style.left = (CX * S) + 'px'; cc.style.top = (CY * S) + 'px'; cc.style.width = (CW * S) + 'px'; cc.style.height = (CH * S) + 'px';
     cc.innerHTML = '';
-    if (!pg) { $('cs-title').textContent = '지면 없음 — + 로 추가'; $('cs-item').hidden = true; cp.classList.remove('hasbg'); $('cbg').removeAttribute('src'); return; }
-    $('cs-title').textContent = (curPg + 1) + ' · ' + (pg.title || FRAME_NM[pg.frame] || pg.frame) + ' (' + (FRAME_NM[pg.frame] || '자유 배치') + ')';
-    var zs = ZONES_MM[pg.frame] || [[0, 260]];
+    var on = i === sel;
     if (pg.frame === 'free') {
       (pg.zones[0] || []).forEach(function (sp, si) {
-        var w = sp.w || 168, x = sp.x || 0, y = sp.y || 0, h = estH(sp.block, w);
-        var el = document.createElement('div'); el.className = 'citem' + (si === curItem ? ' on' : ''); el.dataset.si = si;
-        el.style.left = (x * S) + 'px'; el.style.top = (y * S) + 'px'; el.style.width = (w * S) + 'px'; el.style.height = (h * S) + 'px';
-        el.innerHTML = '<span class="lab">' + ((BLOCKS[sp.block] || {}).name || sp.block) + (sp.role ? ' · ' + sp.role : '') + '</span><img src="/make/blocks/' + sp.block + '.png" alt="">';
-        el.addEventListener('mousedown', function (e) { startMove(e, sp, si, el); });
+        var w = sp.w || 168, h = estH(sp.block, w);
+        var el = document.createElement('div'); el.className = 'citem' + (on && selBlk.si === si ? ' on' : '');
+        el.style.left = ((sp.x || 0) * S) + 'px'; el.style.top = ((sp.y || 0) * S) + 'px'; el.style.width = (w * S) + 'px'; el.style.height = (h * S) + 'px';
+        el.innerHTML = '<span class="lab">' + esc((BLOCKS[sp.block] || {}).name || sp.block) + '</span><img src="/make/blocks/' + sp.block + '.png" alt="">';
+        el.addEventListener('mousedown', function (e) { startMove(e, i, sp, si, el, S); });
         cc.appendChild(el);
       });
     } else {
-      zs.forEach(function (z, zi) {
-        var zd = document.createElement('div'); zd.className = 'czone' + (zi === curZone ? ' on' : ''); zd.dataset.zi = zi;
+      (ZONES_MM[pg.frame] || [[0, 260]]).forEach(function (z, zi) {
+        var zd = document.createElement('div'); zd.className = 'czone' + (on && curZone === zi ? ' on' : '');
         zd.style.top = (z[0] * S) + 'px'; zd.style.height = (z[1] * S) + 'px';
-        zd.innerHTML = '<span class="zl">' + (FRAME_ZONES[pg.frame] || ['칸'])[zi] + '</span>';
-        var y = 4;
+        zd.innerHTML = '<span class="zl">' + (FRAME_ZN[pg.frame] || ['칸'])[zi] + '</span>';
+        var y = 3;
         (pg.zones[zi] || []).forEach(function (sp, si) {
           var h = estH(sp.block, 168);
-          var el = document.createElement('div'); el.className = 'citem' + (zi === curItemZone && si === curItem ? ' on' : ''); el.dataset.si = si; el.dataset.zi = zi;
+          var el = document.createElement('div'); el.className = 'citem' + (on && selBlk.zi === zi && selBlk.si === si ? ' on' : ''); el.draggable = true;
           el.style.left = '0'; el.style.top = (y * S) + 'px'; el.style.width = '100%'; el.style.height = (h * S) + 'px';
-          el.innerHTML = '<span class="lab">' + ((BLOCKS[sp.block] || {}).name || sp.block) + (sp.role ? ' · ' + sp.role : '') + '</span><img src="/make/blocks/' + sp.block + '.png" alt="">';
-          el.draggable = true;
-          el.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/citem', zi + ':' + si); el.classList.add('drag'); });
-          el.addEventListener('dragend', function () { el.classList.remove('drag'); });
-          el.onclick = function (e) { e.stopPropagation(); curItem = si; curItemZone = zi; curZone = zi; drawCanvas(); drawZones(); };
-          zd.appendChild(el);
-          y += h + 2;
+          el.innerHTML = '<span class="lab">' + esc((BLOCKS[sp.block] || {}).name || sp.block) + '</span><img src="/make/blocks/' + sp.block + '.png" alt="">';
+          el.addEventListener('dragstart', function (e) { e.stopPropagation(); e.dataTransfer.setData('text/citem', i + ':' + zi + ':' + si); });
+          el.onclick = function (e) { e.stopPropagation(); sel = i; selBlk = { zi: zi, si: si }; curZone = zi; drawDoc(); };
+          zd.appendChild(el); y += h + 2;
         });
-        zd.addEventListener('dragover', function (e) { e.preventDefault(); zd.classList.add('on'); });
-        zd.addEventListener('dragleave', function () { zd.classList.remove('on'); });
+        zd.addEventListener('dragover', function (e) { e.preventDefault(); e.stopPropagation(); zd.classList.add('on'); });
         zd.addEventListener('drop', function (e) {
           e.preventDefault(); e.stopPropagation();
           var id = e.dataTransfer.getData('text/block'), mv = e.dataTransfer.getData('text/citem');
-          if (id) { curZone = zi; pg.zones[zi].push({ block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '' }); curItem = pg.zones[zi].length - 1; curItemZone = zi; }
-          else if (mv) { var a = mv.split(':'), fz = +a[0], fi = +a[1]; var it = pg.zones[fz].splice(fi, 1)[0]; pg.zones[zi].push(it); curItem = pg.zones[zi].length - 1; curItemZone = zi; curZone = zi; }
-          afterCanvasChange();
+          if (id) { pg.zones[zi].push({ block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '' }); sel = i; curZone = zi; selBlk = { zi: zi, si: pg.zones[zi].length - 1 }; }
+          else if (mv) { var a = mv.split(':').map(Number); if (a[0] !== i) return; var t = pg.zones[a[1]].splice(a[2], 1)[0]; pg.zones[zi].push(t); sel = i; curZone = zi; selBlk = { zi: zi, si: pg.zones[zi].length - 1 }; }
+          pageChanged(i);
         });
-        zd.onclick = function () { curZone = zi; curItem = -1; drawCanvas(); drawZones(); };
+        zd.onclick = function (e) { e.stopPropagation(); sel = i; curZone = zi; selBlk = { zi: zi, si: -1 }; drawDoc(); };
         cc.appendChild(zd);
       });
     }
-    drawSide();
-    if (cBgKey !== JSON.stringify([curPg, pg.frame])) { cBgKey = JSON.stringify([curPg, pg.frame]); scheduleBg(); }
-  }
-  function drawSide() {
-    var pg = pageOf(); if (!pg) return;
-    var zi = pg.frame === 'free' ? 0 : curItemZone;
-    var sp = curItem >= 0 && pg.zones[zi] ? pg.zones[zi][curItem] : null;
-    $('cs-item').hidden = !sp;
-    if (!sp) { $('cs-state').textContent = '블록 ' + pg.zones.reduce(function (a, z) { return a + z.length; }, 0) + '개'; return; }
-    var b = BLOCKS[sp.block] || { name: sp.block, roles: [] };
-    $('cs-name').textContent = b.name;
-    var rs = $('cs-role'); rs.innerHTML = b.roles.map(function (r) { return '<option value="' + r + '"' + (sp.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') || '<option value="">(원고 없음)</option>';
-    rs.onchange = function () { sp.role = rs.value; afterCanvasChange(); };
-    var ws = $('cs-w'); ws.parentNode.style.display = ''; ws.value = String(Math.round(sp.w || 168)); if (ws.value !== String(Math.round(sp.w || 168))) ws.value = '168';
-    ws.onchange = function () { sp.w = parseFloat(ws.value); afterCanvasChange(); };
-    ws.disabled = pg.frame !== 'free';
-    $('cs-xy').textContent = pg.frame === 'free' ? ('x ' + Math.round(sp.x || 0) + 'mm · y ' + Math.round(sp.y || 0) + 'mm') : ((FRAME_ZONES[pg.frame] || ['칸'])[zi] + ' · ' + (curItem + 1) + '번째');
-    $('cs-del').onclick = function () { pg.zones[zi].splice(curItem, 1); curItem = -1; afterCanvasChange(); };
-    $('cs-state').textContent = '';
-  }
-  function afterCanvasChange() { drawZones(); drawCanvas(); scheduleBg(); }
-  function scheduleBg() { clearTimeout(cTimer); cTimer = setTimeout(renderBg, 900); }
-  function renderBg() {
-    var pg = pageOf(); if (!pg) return;
-    var has = pg.zones.some(function (z) { return z.length; });
-    if (!has) { $('cpage').classList.remove('hasbg'); $('cbg').removeAttribute('src'); return; }
-    $('cbusy').classList.add('on');
-    var body = { b: $('sample').value, pages: [pg], n: 1 };
-    api('/api/make/pages/preview', body).then(function (d) {
-      $('cbusy').classList.remove('on');
-      if (d.error || !(d.pages || []).length) { msg('✗ ' + (d.error || '조판 면이 없다').slice(0, 160)); log(d.error || ''); return; }
-      $('cbg').src = d.pages[0]; $('cpage').classList.add('hasbg'); msg('');
-      $('cs-state').textContent = '배경 = 실제 조판 (지문 1개 기준, 면 ' + d.pages.length + ')';
-    }).catch(function () { $('cbusy').classList.remove('on'); });
-  }
-  $('cs-rerender').onclick = renderBg;
-  // 자유 배치: 끌어서 옮기기
-  function startMove(e, sp, si, el) {
-    e.preventDefault();
-    var pg = pageOf(); curItem = si; curItemZone = 0;
-    var sx = e.clientX, sy = e.clientY, ox = sp.x || 0, oy = sp.y || 0;
-    document.querySelectorAll('.citem').forEach(function (x) { x.classList.toggle('on', x === el); });
-    function mv(ev) {
-      var nx = Math.max(0, Math.min(168 - (sp.w || 168), ox + (ev.clientX - sx) / S)), ny = Math.max(0, Math.min(255, oy + (ev.clientY - sy) / S));
-      sp.x = Math.round(nx); sp.y = Math.round(ny);
-      el.style.left = (sp.x * S) + 'px'; el.style.top = (sp.y * S) + 'px';
-      $('cs-xy').textContent = 'x ' + sp.x + 'mm · y ' + sp.y + 'mm';
-    }
-    function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); drawSide(); scheduleBg(); }
-    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
-  }
-  // 라이브러리 → 캔버스 놓기 (자유 배치는 놓은 자리에)
-  (function () {
-    var cc = $('ccontent');
-    cc.addEventListener('dragover', function (e) { e.preventDefault(); cc.classList.add('over'); });
+    cc.addEventListener('dragover', function (e) { if (e.dataTransfer.types.indexOf('text/block') >= 0) { e.preventDefault(); cc.classList.add('over'); } });
     cc.addEventListener('dragleave', function () { cc.classList.remove('over'); });
     cc.addEventListener('drop', function (e) {
-      cc.classList.remove('over');
-      var pg = pageOf(); if (!pg) return;
-      var id = e.dataTransfer.getData('text/block'); if (!id) return;
-      if (pg.frame !== 'free') return;                 // 칸 틀은 칸이 받는다
-      e.preventDefault();
-      var r = cc.getBoundingClientRect();
-      var x = Math.max(0, Math.min(168, (e.clientX - r.left) / S)), y = Math.max(0, Math.min(255, (e.clientY - r.top) / S));
-      var w = 168; if (x > 84) { w = Math.max(20, 168 - Math.round(x)); }
-      pg.zones[0].push({ block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '', x: Math.round(x), y: Math.round(y), w: w });
-      curItem = pg.zones[0].length - 1; curItemZone = 0;
-      afterCanvasChange();
+      cc.classList.remove('over'); var id = e.dataTransfer.getData('text/block'); if (!id || pg.frame !== 'free') return;
+      e.preventDefault(); var r = cc.getBoundingClientRect();
+      var x = Math.round(Math.max(0, Math.min(168, (e.clientX - r.left) / S))), y = Math.round(Math.max(0, Math.min(255, (e.clientY - r.top) / S)));
+      pg.zones[0].push({ block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '', x: x, y: y, w: x > 84 ? Math.max(20, 168 - x) : 168 });
+      sel = i; selBlk = { zi: 0, si: pg.zones[0].length - 1 }; pageChanged(i);
     });
-    $('cpage').onclick = function () { curItem = -1; drawCanvas(); };
-  })();
-
-  // ── 책 만들기 ──
-  $('mkbook-open').onclick = function () { var b = $('mkbook'); b.hidden = !b.hidden; if (!b.hidden) b.scrollIntoView({ behavior: 'smooth' }); };
-  function targetChanged() {
-    var isNew = $('target').value === '__new__';
-    $('new-form').hidden = !isNew; $('existing-box').hidden = isNew;
+    var key = JSON.stringify(pg);
+    if (it.bg && it.bgKey === key) { cv.querySelector('img.bg').src = it.bg; cv.classList.add('hasbg'); }
+    else if (pg.zones.some(function (z) { return z.length; })) scheduleBg(i);
   }
-  $('target').onchange = targetChanged; targetChanged();
+  function startMove(e, i, sp, si, el, S) {
+    e.preventDefault(); e.stopPropagation();
+    sel = i; selBlk = { zi: 0, si: si };
+    var sx = e.clientX, sy = e.clientY, ox = sp.x || 0, oy = sp.y || 0;
+    function mv(ev) { sp.x = Math.round(Math.max(0, Math.min(168 - (sp.w || 168), ox + (ev.clientX - sx) / S))); sp.y = Math.round(Math.max(0, Math.min(255, oy + (ev.clientY - sy) / S))); el.style.left = (sp.x * S) + 'px'; el.style.top = (sp.y * S) + 'px'; }
+    function up() { document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); pageChanged(i); }
+    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+  }
+  function pageChanged(i) { drawDoc(); scheduleBg(i); }
+  function scheduleBg(i) { clearTimeout(bgTimers[i]); bgTimers[i] = setTimeout(function () { renderBg(i); }, 900); }
+  function renderBg(i) {
+    var it = DOC.items[i]; if (!it || it.type !== 'page') return;
+    var key = JSON.stringify(it.spec), cv = document.querySelector('.cv[data-i="' + i + '"]');
+    if (!it.spec.zones.some(function (z) { return z.length; })) { it.bg = null; if (cv) { cv.classList.remove('hasbg'); cv.querySelector('img.bg').removeAttribute('src'); } return; }
+    if (cv) cv.querySelector('.cbusy').classList.add('on');
+    api('/api/make/pages/preview', { b: $('sample').value, pages: [it.spec], n: 1 }).then(function (d) {
+      var cv2 = document.querySelector('.cv[data-i="' + i + '"]');
+      if (cv2) cv2.querySelector('.cbusy').classList.remove('on');
+      if (d.error || !(d.pages || []).length) { msg('✗ ' + (d.error || '조판 면이 없다').slice(0, 160)); log(d.error || ''); return; }
+      it.bg = d.pages[0]; it.bgKey = key;
+      if (cv2 && JSON.stringify(it.spec) === key) { cv2.querySelector('img.bg').src = it.bg; cv2.classList.add('hasbg'); }
+      msg('');
+    }).catch(function () {});
+  }
+  // 블록 라이브러리 → 편집 지면
+  document.querySelectorAll('.blk[data-block]').forEach(function (c) {
+    c.addEventListener('dragstart', function (e) { e.dataTransfer.setData('text/block', c.dataset.block); });
+    c.querySelector('.addto').onclick = function () {
+      var it = DOC.items[sel];
+      if (!it || it.type !== 'page') { msg('편집 지면을 먼저 고르거나 만들 것 (지면 매치 → 빈 지면)'); return; }
+      var pg = it.spec, id = c.dataset.block, sp = { block: id, role: (BLOCKS[id] || { roles: [] }).roles[0] || '' };
+      if (pg.frame === 'free') { sp.x = 0; sp.y = Math.min(240, 4 + pg.zones[0].length * 40); sp.w = 168; pg.zones[0].push(sp); selBlk = { zi: 0, si: pg.zones[0].length - 1 }; }
+      else { pg.zones[curZone].push(sp); selBlk = { zi: curZone, si: pg.zones[curZone].length - 1 }; }
+      pageChanged(sel);
+    };
+  });
 
-  function afterMade(key, bid) {
-    madeKey = key; madeBid = bid;
-    $('made').hidden = false; $('made-name').textContent = key;
-    $('to-studio').href = '/book-studio?b=' + encodeURIComponent(key);
-    api('/api/make/book-info?b=' + encodeURIComponent(key)).then(function (d) {
-      var ul = $('made-pdfs'); ul.innerHTML = '';
-      (d.pdfs || []).forEach(function (n) { var li = document.createElement('li'); var a = document.createElement('a'); a.href = '/catalog/out/' + bid + '/' + encodeURIComponent(n); a.target = '_blank'; a.textContent = n; li.appendChild(a); ul.appendChild(li); });
+  // ── 오른쪽 속성 ──
+  function drawRight() {
+    var it = DOC.items[sel];
+    $('r-none').hidden = !!it; $('r-part').hidden = !(it && it.type === 'part'); $('r-ref').hidden = !(it && it.type === 'ref'); $('r-page').hidden = !(it && it.type === 'page');
+    if (!it) return;
+    if (it.type === 'part') { $('rp-name').textContent = it.itemname + ' — ' + it.label; $('rp-tpl').textContent = it.tpl + ' · ' + it.key; $('rp-n').value = it.n || ''; $('rp-n').onchange = function () { it.n = this.value; drawDoc(); }; $('rp-del').onclick = function () { DOC.items.splice(sel, 1); sel = -1; drawDoc(); }; }
+    if (it.type === 'ref') { $('rr-name').textContent = it.itemname + ' — ' + it.label; $('rr-tpl').textContent = it.tpl + (it.page ? ' · 기준 ' + it.page + '면' : ''); $('rr-del').onclick = function () { DOC.items.splice(sel, 1); sel = -1; drawDoc(); }; }
+    if (it.type === 'page') {
+      var pg = it.spec;
+      $('rg-frame').value = pg.frame; $('rg-step').value = pg.step || 1; $('rg-logo').value = pg.logo || ''; $('rg-title').value = pg.title || '';
+      $('rg-frame').onchange = function () { var f = this.value; var all = [].concat.apply([], pg.zones); pg.frame = f; pg.zones = f === 'pair' ? [all, []] : [all]; if (f === 'free') all.forEach(function (sp, k) { if (sp.x == null) { sp.x = 0; sp.y = 4 + k * 40; sp.w = 168; } }); curZone = 0; pageChanged(sel); };
+      $('rg-step').onchange = function () { pg.step = parseInt(this.value, 10); scheduleBg(sel); };
+      $('rg-logo').oninput = function () { pg.logo = this.value; scheduleBg(sel); };
+      $('rg-title').oninput = function () { pg.title = this.value; scheduleBg(sel); var c = document.querySelector('.pgc[data-i="' + sel + '"] .cap b'); if (c) c.textContent = (pg.title || FRAME_NM[pg.frame]) + ' · ' + FRAME_NM[pg.frame]; };
+      $('rg-del').onclick = function () { DOC.items.splice(sel, 1); sel = -1; drawDoc(); };
+      $('rg-rerender').onclick = function () { renderBg(sel); };
+      var zi = pg.frame === 'free' ? 0 : selBlk.zi, sp = selBlk.si >= 0 && pg.zones[zi] ? pg.zones[zi][selBlk.si] : null;
+      $('rg-block').hidden = !sp;
+      if (sp) {
+        var b = BLOCKS[sp.block] || { name: sp.block, roles: [] };
+        $('rb-name').textContent = b.name;
+        var rs = $('rb-role'); rs.innerHTML = b.roles.map(function (r) { return '<option value="' + r + '"' + (sp.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') || '<option value="">(원고 없음)</option>';
+        rs.onchange = function () { sp.role = rs.value; scheduleBg(sel); };
+        var ws = $('rb-w'); ws.disabled = pg.frame !== 'free'; ws.value = String(Math.round(sp.w || 168)); if (!ws.value) ws.value = '168';
+        ws.onchange = function () { sp.w = parseFloat(ws.value); pageChanged(sel); };
+        $('rb-xy').textContent = pg.frame === 'free' ? ('x ' + (sp.x || 0) + ' · y ' + (sp.y || 0) + ' mm') : ((FRAME_ZN[pg.frame] || ['칸'])[zi] + ' · ' + (selBlk.si + 1) + '번째');
+        $('rb-del').onclick = function () { pg.zones[zi].splice(selBlk.si, 1); selBlk.si = -1; pageChanged(sel); };
+      }
+    }
+  }
+
+  // ── 미리보기(전체) · 저장 · 책 ──
+  function composition() {
+    var items = DOC.items.map(function (it) {
+      if (it.type === 'part') return { id: it.id, key: it.key, label: it.label, tpl: it.tpl, thumb: it.thumb, item: it.item, n: it.n || '' };
+      if (it.type === 'ref') return { id: it.id, series: it.series, design: it.design, label: it.label, tpl: it.tpl, thumb: it.thumb, item: it.item, kind: it.kind, page: it.page };
+      return { id: 'page', page: it.spec, label: it.spec.title || '' };
     });
+    var limits = {}; DOC.items.forEach(function (it) { if (it.type === 'part' && it.n) limits[it.key] = parseInt(it.n, 10); });
+    return { items: items, steps: DOC.items.filter(function (it) { return it.type === 'part'; }).map(function (it) { return it.key; }), limits: limits,
+             cycle: document.querySelector('input[name=order]:checked').value === 'cycle', rules: { repeat: $('r-repeat').value, answers: $('r-answers').value } };
+  }
+  $('render-all').onclick = function () {
+    if (!DOC.items.length) { msg('지면이 없다'); return; }
+    var c = composition(); c.b = $('sample').value; c.n = parseInt($('pv-n').value || '1', 10);
+    $('pages').hidden = true; $('rendered').hidden = false; $('back-edit').hidden = false; $('rendered').innerHTML = '<div class="empty">조판 중… 몇 초</div>'; msg('조판 중…');
+    api('/api/make/preview', c).then(function (d) {
+      if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); $('rendered').innerHTML = '<div class="empty">실패</div>'; return; }
+      msg(''); log(d.log || '');
+      $('rendered').innerHTML = (d.pages || []).map(function (u, k) { return '<div class="p"><img src="' + u + '" loading="lazy" alt=""><div class="no">' + (k + 1) + '</div></div>'; }).join('') || '<div class="empty">면이 없다</div>';
+    });
+  };
+  $('back-edit').onclick = function () { $('pages').hidden = false; $('rendered').hidden = true; $('back-edit').hidden = true; };
+  $('sample').onchange = function () { DOC.items.forEach(function (it) { if (it.type === 'page') { it.bg = null; } }); drawDoc(); };
+
+  function drawDocs() {
+    var box = $('docs'); box.innerHTML = '';
+    Object.keys(comps || {}).forEach(function (n) {
+      var el = document.createElement('span'); el.className = 'chip'; el.innerHTML = esc(n) + ' <i title="지우기">✕</i>';
+      el.onclick = function (e) {
+        if (e.target.tagName === 'I') { if (!confirm('문서 “' + n + '” 을 지울까?')) return; api('/api/make/compositions', { name: n }, 'DELETE').then(function (d) { if (!d.error) { comps = d.compositions; drawDocs(); } }); return; }
+        loadDoc(n);
+      };
+      box.appendChild(el);
+    });
+  }
+  function loadDoc(n) {
+    var c = comps[n]; if (!c) return;
+    DOC.items = (c.items || []).map(function (x) {
+      if (x.page && typeof x.page === 'object') return { type: 'page', spec: x.page };
+      var b = LIB[x.id] || {};
+      if (x.key) return { type: 'part', id: x.id, key: x.key, label: x.label || b.label, tpl: x.tpl || b.tpl, thumb: x.thumb || b.thumb, item: x.item || b.item, itemname: b.itemname || x.item, step: b.step, n: (c.limits || {})[x.key] ? (c.limits[x.key].passages || c.limits[x.key]) : '' };
+      return { type: 'ref', id: x.id, series: x.series, design: x.design, page: x.page, label: x.label || b.label, tpl: x.tpl || b.tpl, thumb: x.thumb || b.thumb, item: x.item || b.item, itemname: b.itemname || x.item, kind: x.kind };
+    });
+    document.querySelector('input[name=order][value=' + (c.cycle ? 'cycle' : 'step') + ']').checked = true;
+    $('r-repeat').value = (c.rules || {}).repeat || ''; $('r-answers').value = (c.rules || {}).answers || '';
+    $('docname').textContent = n; $('cname').value = n; sel = -1; drawDoc();
+  }
+  $('csave').onclick = function () {
+    var name = $('cname').value.trim(); if (!name) { $('cname').focus(); return; }
+    if (!DOC.items.length) { msg('지면이 없다'); return; }
+    var c = composition(); c.name = name;
+    api('/api/make/compositions', c).then(function (d) { if (d.error) { msg('✗ ' + d.error); return; } comps = d.compositions; drawDocs(); $('docname').textContent = name; msg('저장했다: ' + name); });
+  };
+  drawDocs();
+
+  // 책 만들기
+  function targetChanged() { var isNew = $('target').value === '__new__'; $('new-form').hidden = !isNew; $('existing-box').hidden = isNew; }
+  $('target').onchange = targetChanged; targetChanged();
+  function afterMade(key, bid) {
+    madeKey = key; madeBid = bid; $('made').hidden = false; $('made-name').textContent = key; $('to-studio').href = '/book-studio?b=' + encodeURIComponent(key);
+    api('/api/make/book-info?b=' + encodeURIComponent(key)).then(function (d) { var ul = $('made-pdfs'); ul.innerHTML = ''; (d.pdfs || []).forEach(function (n) { var li = document.createElement('li'); var a = document.createElement('a'); a.href = '/catalog/out/' + bid + '/' + encodeURIComponent(n); a.target = '_blank'; a.textContent = n; li.appendChild(a); ul.appendChild(li); }); });
   }
   function applyTo(key) {
-    var c = composition(); if (!c.steps.length) { msg('조판되는 부품(워크북)이 없다'); return Promise.resolve(null); }
+    var c = composition(); if (!c.steps.length) { msg('조판되는 지면(워크북 부품)이 없다'); return Promise.resolve(null); }
     c.b = key; msg('구성 적용 · data · 견본 조판 중…');
     return api('/api/make/apply', c).then(function (d) {
       if (d.error) { msg('✗ ' + d.error.slice(0, 200)); log(d.error); return null; }
-      log(d.log || '');
-      afterMade(d.key, d.bid);
-      // 만든 책을 견본 원고로 골라 그 원고로 조판 미리보기
-      var sel = $('sample');
-      if (!Array.prototype.some.call(sel.options, function (o) { return o.value === d.key; })) { var o = document.createElement('option'); o.value = d.key; o.textContent = d.key.split('/').slice(-2).join(' · '); sel.appendChild(o); }
-      sel.value = d.key; rendered = null; setMode('render');
-      return d;
+      msg(''); log(d.log || ''); afterMade(d.key, d.bid);
+      var s = $('sample'); if (!Array.prototype.some.call(s.options, function (o) { return o.value === d.key; })) { var o = document.createElement('option'); o.value = d.key; o.textContent = d.key.split('/').slice(-2).join(' · '); s.appendChild(o); }
+      s.value = d.key; $('render-all').click(); return d;
     });
   }
   $('apply-existing').onclick = function () { $('apply-existing').disabled = true; applyTo($('target').value).then(function () { $('apply-existing').disabled = false; }); };
-
-  // 새 책 폼
   (function () {
     var form = $('new-form'), files = $('new-files'), picked = $('new-picked'), err = $('new-err'), dropped = null;
     form.querySelectorAll('.dz label').forEach(function (l) { l.onclick = function () { form.querySelectorAll('.dz label').forEach(function (x) { x.classList.toggle('on', x === l); }); }; });
-    function listFiles(fl) {
-      picked.innerHTML = '';
-      Array.prototype.forEach.call(fl || [], function (f) { var li = document.createElement('li'); li.textContent = (f.webkitRelativePath || f.name) + ' · ' + Math.round(f.size / 1024) + 'KB'; picked.appendChild(li); });
-      $('drop').querySelector('b').textContent = (fl && fl.length) ? '원고 ' + fl.length + '개' : '원고 파일 올리기';
-    }
+    function listFiles(fl) { picked.innerHTML = ''; Array.prototype.forEach.call(fl || [], function (f) { var li = document.createElement('li'); li.textContent = (f.webkitRelativePath || f.name); picked.appendChild(li); }); $('drop').querySelector('b').textContent = (fl && fl.length) ? '원고 ' + fl.length + '개' : '원고 파일 올리기'; }
     files.onchange = function () { dropped = null; listFiles(files.files); };
     var drop = $('drop');
     drop.ondragover = function (e) { e.preventDefault(); drop.classList.add('over'); };
@@ -987,9 +608,8 @@
     drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove('over'); try { files.files = e.dataTransfer.files; dropped = null; } catch (x) { dropped = e.dataTransfer.files; } listFiles(files.files.length ? files.files : dropped); };
     form.onsubmit = function (e) {
       e.preventDefault(); err.textContent = '';
-      if (!composition().steps.length) { err.textContent = '조판되는 부품(워크북)을 하나 이상 담을 것'; return; }
-      var fd = new FormData();
-      fd.append('series', 'workbook'); fd.append('nobuild', '1');
+      if (!composition().steps.length) { err.textContent = '조판되는 지면(워크북 부품)을 하나 이상 넣을 것'; return; }
+      var fd = new FormData(); fd.append('series', 'workbook'); fd.append('nobuild', '1');
       fd.append('design', (form.querySelector('[name=design]:checked') || {}).value || 'd1');
       ['name', 'period', 'school', 'title', 'folder_path'].forEach(function (k) { fd.append(k, form.querySelector('[name=' + k + ']').value.trim()); });
       form.querySelectorAll('[name^=f_]').forEach(function (i) { fd.append(i.name, i.value.trim()); });
@@ -999,15 +619,12 @@
       if (!fl.length && !fd.get('folder_path')) { err.textContent = '원고 파일을 올리거나 폴더 경로를 적을 것'; return; }
       $('new-go').disabled = true; msg('원고 읽는 중 → data (10~40초)…');
       fetch('/api/catalog/create', { method: 'POST', body: fd }).then(function (r) { return r.json(); }).then(function (d) {
-        if (d.error) { $('new-go').disabled = false; msg('✗ 실패'); err.textContent = d.error + (d.log ? '\n\n' + d.log : ''); log(d.log || ''); return; }
-        // 책이 생겼다 — 구성을 그 책에 적용하고 견본을 앉힌다
+        if (d.error) { $('new-go').disabled = false; msg('✗ 실패'); err.textContent = d.error + (d.log ? '\n\n' + d.log : ''); return; }
         var opt = document.createElement('option'); opt.value = d.key; opt.textContent = d.key.split('/').slice(-2).join(' · '); $('target').appendChild(opt);
         return applyTo(d.key).then(function () { $('new-go').disabled = false; $('target').value = d.key; targetChanged(); });
       }).catch(function (x) { $('new-go').disabled = false; msg('✗ ' + x); });
     };
   })();
-
-  // 전권 PDF
   $('build-pdf').onclick = function () {
     if (!madeKey) return;
     if (!confirm('전권 PDF 를 만든다 — data → 조판 → 인쇄본 → 검수. 몇 분 걸린다. 진행할까?')) return;
@@ -1017,8 +634,7 @@
       var jid = d.job, since = 0, lines = [];
       (function poll() {
         fetch('/api/catalog/job/' + jid + '?since=' + since).then(function (r) { return r.json(); }).then(function (j) {
-          (j.log || []).forEach(function (l) { lines.push(l); }); since = j.n || since;
-          log(lines.slice(-40).join('\n'));
+          (j.log || []).forEach(function (l) { lines.push(l); }); since = j.n || since; log(lines.slice(-30).join('\n'));
           $('build-status').textContent = (j.status === 'running' ? '조판 중… ' : (j.status === 'done' ? '완료 · ' : (j.status === 'done_warn' ? '완료(검수 경고) · ' : '실패 · '))) + j.elapsed + '초';
           if (j.status === 'running') return setTimeout(poll, 2000);
           $('build-pdf').disabled = false; afterMade(madeKey, madeBid);
@@ -1026,6 +642,8 @@
       })();
     });
   };
+
+  drawDoc();
 })();
 </script>
 {% endblock %}
