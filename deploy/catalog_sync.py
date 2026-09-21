@@ -5,6 +5,7 @@
   · 볼륨에 없는 틀(catalog.json 의 키)          → 항목을 더한다
   · 볼륨에 없는 디자인 폴더(<틀>/designs/<id>/)  → 폴더째 복사한다
   · 볼륨에 없는 틀 폴더                          → 폴더째 복사한다
+  · 볼륨에 없는 디자인 단위 시드(_units/<kind>.json) → 파일만 복사한다
 이미 있는 파일은 손대지 않는다 — 리포에서 디자인을 고쳤으면(overrides.css 등) 화면의
 「디자인 등록」이나 fly ssh 로 따로 옮긴다.
 
@@ -55,6 +56,15 @@ def main(seed, vol):
             if os.path.isdir(os.path.join(sdes, d)) and not os.path.exists(os.path.join(vdes, d)):
                 shutil.copytree(os.path.join(sdes, d), os.path.join(vdes, d))
                 added_designs.append(f"{series}/{d}")
+
+    # ③ 디자인 단위 시드(_units/<kind>.json) — 볼륨에 없는 파일만. 화면에서 고친 라이브러리는 그대로
+    su, vu = os.path.join(seed, "_units"), os.path.join(vol, "_units")
+    if os.path.isdir(su):
+        os.makedirs(vu, exist_ok=True)
+        for f in sorted(os.listdir(su)):
+            if f.endswith(".json") and not os.path.exists(os.path.join(vu, f)):
+                shutil.copy2(os.path.join(su, f), os.path.join(vu, f))
+                added_designs.append(f"_units/{f}")
 
     if added_series or added_designs:
         print("■ 카탈로그 보탬 — 틀:", ", ".join(added_series) or "-", "· 디자인:", ", ".join(added_designs) or "-")
