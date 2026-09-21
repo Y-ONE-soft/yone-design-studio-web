@@ -130,6 +130,8 @@
         "mirror": {"type": "boolean", "description": "오른쪽 면에서 좌우 반전"},
         "background": {"$ref": "#/definitions/token"},
         "spec": {"$ref": "#/definitions/id", "description": "이 지면을 그린 규격(캔버스용). 틀에 들어가면 틀의 규격을 따른다"},
+        "layout": {"enum": ["one", "pair", "two", "none"], "description": "캔버스 레이아웃 — 1단 · 상하 · 2단 · 없음(간지·표지). 칸(zones)은 이것과 여백으로 만든다"},
+        "margins": {"type": "object", "description": "캔버스 여백(mm) — 칸을 만드는 기준", "properties": {"top": {"$ref": "#/definitions/mm"}, "bottom": {"$ref": "#/definitions/mm"}, "left": {"$ref": "#/definitions/mm"}, "right": {"$ref": "#/definitions/mm"}}},
         "blocks": {"type": "array", "description": "캔버스에서 칸에 놓은 블록(견본 배치). 실제 콘텐츠는 세트로 흘러 들어오고, 이건 지면을 설계·미리볼 때 쓴다",
                    "items": {"type": "object", "required": ["zone", "block"], "properties": {"zone": {"$ref": "#/definitions/id"}, "block": {"$ref": "#/definitions/id"}}}}
       }

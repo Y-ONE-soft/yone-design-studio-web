@@ -313,7 +313,7 @@ def _items(ctx, sets):
                 "part": part, "block": blk["id"], "set_kind": s.get("kind"), "set_id": s.get("id"),
                 "values": sample.fill(blk, b.get("fields")),
                 "types": {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()},
-                "first": bi == 0, "last": bi == len(blocks) - 1,
+                "first": bi == 0, "last": bi == len(blocks) - 1, "idx": b.get("_i"),   # _i: 캔버스가 page.blocks 번호를 따라오게
             })
     return items
 
@@ -368,7 +368,7 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
                 if empty and h > z["h"] + 0.01:
                     ctx.warn(f"{page['id']}/{z['id']}: 블록 {it['block']} ({h:.1f}mm) 이 칸({z['h']:.1f}mm)보다 크다")
                 frags.append(f'<g transform="translate({z["x"]:.3f},{z["cur"] + gap:.3f})" data-block="{esc(it["block"])}" '
-                             f'data-set="{esc(it["set_id"])}">{frag}</g>')
+                             f'data-set="{esc(it["set_id"])}"{"" if it.get("idx") is None else f' data-i="{it["idx"]}"'}>{frag}</g>')
                 z["cur"] += gap + h
                 if z["flow"] == "fixed" and it["last"]:
                     z["closed"] = True
@@ -393,14 +393,14 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     old = ctx.sys
     ctx.sys = sysv
     chrome = []
-    for c in page.get("chrome") or []:
+    for ci, c in enumerate(page.get("chrome") or []):
         part = ctx.parts.get(c.get("part"))
         if not part:
             ctx.warn(f"{page['id']}: 고정 부품 {c.get('part')} 없음")
             continue
         frag, _h = part_svg(ctx, part, {})
         x = W - c["x"] - part.get("w", 0) if mirror else c["x"]
-        chrome.append(f'<g transform="translate({x:.3f},{c["y"]:.3f})" data-chrome="{esc(part["id"])}">{frag}</g>')
+        chrome.append(f'<g transform="translate({x:.3f},{c["y"]:.3f})" data-chrome="{esc(part["id"])}" data-ci="{ci}">{frag}</g>')
     ctx.sys = old
     guides = "".join(f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
                      f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
@@ -422,7 +422,7 @@ def page_canvas_svgs(ctx, page, spec):
     for z in pg.get("zones") or []:
         kind = "_canvas:" + z["id"]
         z["accepts"] = [kind]
-        blocks = [{"block": b["block"], "fields": {}} for b in (pg.get("blocks") or []) if b.get("zone") == z["id"]]
+        blocks = [{"block": b["block"], "fields": {}, "_i": i} for i, b in enumerate(pg.get("blocks") or []) if b.get("zone") == z["id"]]
         if blocks:
             sets.append({"kind": kind, "id": z["id"], "blocks": blocks})
     ctx.sys.setdefault("section", "STEP 2")

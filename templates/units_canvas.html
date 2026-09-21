@@ -4,105 +4,129 @@
 {% block content %}
 <style>
   .cv { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; user-select: none; }
-  .cv h3 { font-size: 11.5px; color: var(--mute); margin: 12px 0 6px; font-weight: 600; letter-spacing: .04em; }
-  .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
-  .btn { display: inline-block; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
+  .cv h3 { font-size: 11.5px; color: var(--mute); margin: 14px 0 6px; font-weight: 600; letter-spacing: .04em; }
+  .cv input[type=text], .cv input[type=number], .cv select { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
+  .btn { display: inline-flex; align-items: center; gap: 5px; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
   .btn:hover { background: #6a1fd0; }
-  .btn.sub { background: #ecebf3; color: #1f2330; font-weight: 500; }
+  .btn.sub { background: #f1f0f6; color: #1f2330; font-weight: 500; }
   .btn.sub:hover { background: #e2e0ec; }
-  .btn.sub.on { background: var(--pp-bg); color: var(--pp); outline: 1px solid var(--pp); }
+  .btn.sub.on { background: var(--pp-bg); color: var(--pp); outline: 1.5px solid var(--pp); }
   .btn.sm { padding: 4px 9px; font-size: 12px; }
   .btn.danger { background: #fff; color: #c0263a; border: 1px solid #f0c4cb; }
-  .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
   .note { color: var(--mute); font-size: 11.5px; line-height: 1.5; margin: 4px 0; }
   .err { color: #c0263a; font-size: 12px; white-space: pre-wrap; }
-  .tabs { display: flex; gap: 3px; }
-  .tabs button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: #3c4043; }
-  .tabs button.on { background: var(--pp-bg); border-color: var(--pp); color: var(--pp); font-weight: 600; }
 
-  /* 팔레트 */
-  .pal { width: 250px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
-  .pal .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
-  .pal .body { flex: 1; overflow: auto; padding: 8px 12px 16px; }
-  .card { border: 1px solid var(--line); border-radius: 10px; padding: 6px; margin: 6px 0; background: #fff; cursor: grab; }
-  .card:hover { border-color: var(--pp); }
-  .card .th { background: #f7f6fb; border-radius: 6px; overflow: hidden; max-height: 90px; display: flex; align-items: center; }
+  /* 지면 띠 */
+  .pages { width: 132px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .pages .hd { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); position: relative; }
+  .pages .hd .btn { width: 100%; justify-content: center; }
+  .pages .list { flex: 1; overflow: auto; padding: 8px 10px; }
+  .pg { border: 2px solid transparent; border-radius: 8px; padding: 4px; margin-bottom: 8px; cursor: pointer; background: #f7f6fb; }
+  .pg:hover { border-color: #cfc8e6; }
+  .pg.on { border-color: var(--pp); background: var(--pp-bg); }
+  .pg .th { background: #fff; box-shadow: 0 1px 4px rgba(30,20,60,.15); aspect-ratio: 210 / 297; overflow: hidden; display: flex; align-items: flex-start; }
+  .pg .th svg { width: 100%; height: auto; display: block; }
+  .pg .nm { font-size: 11px; margin-top: 4px; text-align: center; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .menu { position: absolute; left: 10px; right: 10px; top: 46px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); padding: 6px; z-index: 30; display: none; }
+  .menu.on { display: block; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; }
+  .menu button:hover { background: #f1eff8; }
+  .menu button small { display: block; color: var(--mute); font-size: 10.5px; }
+
+  /* 요소 */
+  .els { width: 250px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .els .hd { padding: 12px 12px 6px; font-weight: 700; font-size: 13.5px; border-bottom: 1px solid var(--line); }
+  .els .hd small { display: block; font-weight: 400; color: var(--mute); font-size: 11px; margin-top: 2px; }
+  .els .body { flex: 1; overflow: auto; padding: 4px 12px 16px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 5px; background: #fff; cursor: pointer; }
+  .card:hover { border-color: var(--pp); box-shadow: 0 2px 8px rgba(125,42,232,.15); }
+  .card .th { background: #f7f6fb; border-radius: 6px; overflow: hidden; height: 54px; display: flex; align-items: center; }
   .card .th svg { width: 100%; height: auto; display: block; }
-  .card .nm { font-size: 12px; font-weight: 600; margin-top: 4px; }
-  .card .nm code { font-weight: 400; color: #7a6aa8; font-size: 10.5px; }
+  .card .nm { font-size: 11.5px; font-weight: 600; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .els .ft { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 11.5px; }
 
   /* 무대 */
   .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .stage .bar { display: flex; gap: 8px; align-items: center; padding: 8px 14px; background: #fff; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-  .stage .bar label { font-size: 12px; color: var(--mute); }
-  .stage .area { flex: 1; overflow: auto; padding: 26px; }
-  .paper { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 2px 14px rgba(30,20,60,.16); }
-  .paper.zone-mode { cursor: crosshair; }
-  .paper .svgwrap svg { display: block; width: 100%; height: auto; pointer-events: none; }
-  .ov { position: absolute; inset: 0; }
-  .zone { position: absolute; border: 1.5px dashed #a58cf0; background: rgba(125,42,232,.03); box-sizing: border-box; cursor: move; }
-  .zone:hover { background: rgba(125,42,232,.07); }
-  .zone.on { border: 2px solid var(--pp); background: rgba(125,42,232,.06); }
-  .zone .lb { position: absolute; left: 0; top: -17px; font-size: 10.5px; color: var(--pp); background: #fff; padding: 0 5px; border-radius: 4px; white-space: nowrap; }
-  .zone .rs { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--pp); border-radius: 3px; cursor: nwse-resize; }
-  .chrome { position: absolute; border: 1.5px dashed #f0a441; box-sizing: border-box; cursor: move; }
-  .chrome.on { border: 2px solid #e08a00; background: rgba(240,164,65,.08); }
-  .chrome .lb { position: absolute; left: 0; top: -17px; font-size: 10.5px; color: #b36a00; background: #fff; padding: 0 5px; border-radius: 4px; white-space: nowrap; }
-  .drawing { position: absolute; border: 2px solid var(--pp); background: rgba(125,42,232,.1); pointer-events: none; }
+  .stage .bar { display: flex; gap: 10px; align-items: center; padding: 8px 16px; background: #fff; border-bottom: 1px solid var(--line); }
+  .stage .bar input[type=text] { width: 220px; font-weight: 600; }
+  .stage .bar .st { color: var(--mute); font-size: 11.5px; margin-left: auto; }
+  .stage .area { flex: 1; overflow: auto; padding: 28px; }
+  .paper { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 3px 18px rgba(30,20,60,.18); }
+  .paper .svgwrap svg { display: block; width: 100%; height: auto; }
+  .paper .svgwrap svg g[data-i], .paper .svgwrap svg g[data-ci] { cursor: pointer; }
+  .paper .svgwrap svg g[data-i]:hover, .paper .svgwrap svg g[data-ci]:hover { outline: 1.5px dashed #b39cf5; }
+  .paper .svgwrap svg g[data-ci] { cursor: move; }
+  .selbox { position: absolute; border: 2px solid var(--pp); border-radius: 2px; pointer-events: none; display: none; }
+  .tools { position: absolute; display: none; gap: 3px; background: #1f2330; border-radius: 8px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 20; }
+  .tools button { border: 0; background: transparent; color: #fff; font-size: 12px; padding: 3px 7px; border-radius: 6px; cursor: pointer; }
+  .tools button:hover { background: #3a3f52; }
+  .tools button.x:hover { background: #c0263a; }
   .warn { background: #fff7e6; border: 1px solid #f0d9a8; color: #6b4d00; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin: 0 auto 12px; max-width: 760px; white-space: pre-wrap; }
+  .empty { color: var(--mute); text-align: center; padding: 80px 20px; font-size: 14px; line-height: 1.7; }
 
-  /* 속성 */
-  .props { width: 300px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
-  .props .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); font-weight: 600; display: flex; gap: 8px; align-items: center; }
-  .props .hd small { margin-left: auto; color: var(--mute); font-weight: 400; }
-  .props .body { flex: 1; overflow: auto; padding: 6px 12px 14px; }
-  .f { display: grid; grid-template-columns: 62px 1fr; gap: 6px; align-items: center; margin: 5px 0; font-size: 12px; color: var(--mute); }
+  /* 오른쪽 */
+  .side { width: 270px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .side .hd { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); font-weight: 700; }
+  .side .body { flex: 1; overflow: auto; padding: 4px 14px 16px; }
+  .lay { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .lay button { border: 1.5px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 2px 4px; cursor: pointer; font-size: 10.5px; color: #3c4043; }
+  .lay button.on { border-color: var(--pp); background: var(--pp-bg); color: var(--pp); font-weight: 600; }
+  .lay button svg { display: block; margin: 0 auto 3px; }
+  .f { display: grid; grid-template-columns: 58px 1fr; gap: 6px; align-items: center; margin: 6px 0; font-size: 12px; color: var(--mute); }
   .f input, .f select { width: 100%; }
-  .f4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-  .f4 label { font-size: 10.5px; color: var(--mute); }
-  .f4 input { width: 100%; }
-  .li { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; margin: 4px 0; font-size: 12px; background: #fff; }
-  .li.on { border-color: var(--pp); background: var(--pp-bg); }
-  .li .g { flex: 1; cursor: pointer; }
-  .li button { border: 0; background: transparent; cursor: pointer; color: #7a6aa8; font-size: 12px; padding: 0 3px; }
-  .li button:hover { color: var(--pp); }
-  .props textarea { width: 100%; height: 200px; font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
-  details.j > summary { cursor: pointer; font-size: 12px; color: var(--mute); padding: 8px 0 4px; }
+  .m4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .m4 label { font-size: 10.5px; color: var(--mute); }
+  .m4 input { width: 100%; padding: 4px 5px; }
+  .colors { display: flex; flex-wrap: wrap; gap: 6px; }
+  .colors label { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--mute); width: 44px; }
+  .colors input[type=color] { width: 36px; height: 30px; border: 1px solid var(--line); border-radius: 8px; padding: 1px; background: #fff; cursor: pointer; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
 </style>
 
 <div class="cv">
-  <!-- 팔레트 -->
-  <div class="pal">
+  <!-- 지면 띠 -->
+  <div class="pages">
     <div class="hd">
-      <div class="tabs"><button class="on" data-pal="blocks">블록</button><button data-pal="parts">고정 부품</button></div>
-      <div class="note" id="palnote">칸 안으로 끌어다 놓는다. 칸을 고른 뒤 누르면 그 칸에 들어간다.</div>
+      <button class="btn" id="btn-add">＋ 지면</button>
+      <div class="menu" id="menu">
+        <button data-new="one">본문 · 1단<small>머리말·쪽번호 붙은 빈 면</small></button>
+        <button data-new="pair">본문 · 상·하<small>위 지문 · 아래 문제</small></button>
+        <button data-new="two">본문 · 2단<small>시험지 꼴</small></button>
+        <button data-new="divider">간지<small>구간 앞 전면 색</small></button>
+        <button data-new="cover">표지</button>
+        <button data-new="dup">지금 지면 복제</button>
+      </div>
     </div>
-    <div class="body" id="pal"></div>
-    <div style="padding:8px 12px;border-top:1px solid var(--line);font-size:12px"><a href="/units/library">라이브러리 · 분해(PDF·그림·프롬프트) →</a></div>
+    <div class="list" id="plist"></div>
+  </div>
+
+  <!-- 요소 -->
+  <div class="els">
+    <div class="hd">요소<small>누르면 지면에 들어간다. 끌어다 놓아도 된다.</small></div>
+    <div class="body" id="els"></div>
+    <div class="ft"><a href="/units/library">더 만들기 — 라이브러리 · 분해(PDF·그림·프롬프트) →</a></div>
   </div>
 
   <!-- 무대 -->
   <div class="stage">
     <div class="bar">
-      <label>지면</label><select id="pgsel"></select>
-      <button class="btn sm sub" id="btn-new">새 지면</button>
-      <label>판형</label><select id="spec"></select>
-      <label>옷</label><select id="skin"></select>
-      <button class="btn sm sub" id="btn-zone" title="면 위에서 끌어 칸을 그린다">▭ 칸 그리기</button>
-      <button class="btn sm" id="btn-save">저장</button>
-      <span class="note" id="info"></span>
-      <span class="err" id="err"></span>
+      <input type="text" id="pname" placeholder="지면 이름">
+      <label class="note">옷</label><select id="skin"></select>
+      <span class="st" id="st"></span>
     </div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
-      <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div><div class="ov" id="ov"></div></div>
+      <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div><div class="selbox" id="selbox"></div>
+        <div class="tools" id="tools"><button id="t-up" title="위로">▲</button><button id="t-dn" title="아래로">▼</button><button id="t-x" class="x" title="지우기">✕</button></div>
+      </div>
     </div>
   </div>
 
-  <!-- 속성 -->
-  <div class="props">
-    <div class="hd"><span id="ptitle">지면</span><small id="psub"></small></div>
-    <div class="body" id="props"></div>
+  <!-- 오른쪽 -->
+  <div class="side">
+    <div class="hd" id="stitle">지면</div>
+    <div class="body" id="side"></div>
   </div>
 </div>
 {% endblock %}
@@ -118,55 +142,81 @@ const api = async (url, body, method) => {
   return j;
 };
 const byId = (k) => Object.fromEntries((LIB[k] || []).map(x => [x.id, x]));
-const snap = (v) => Math.round(v * 2) / 2;
 const clone = (o) => JSON.parse(JSON.stringify(o));
+const snap = (v) => Math.round(v * 2) / 2;
+const DEF_M = {top: 44, bottom: 43, left: 20, right: 20};
+const LAYOUTS = [["one", "1단"], ["pair", "상·하"], ["two", "2단"], ["none", "없음"]];
+const MN = {top: "위", left: "왼", right: "오른", bottom: "아래"};
+const GROUPS = [["지문", ["B1", "B2", "B3", "B7"]], ["문항", ["B6"]], ["드릴", ["B5", "B8"]], ["머리 · 꼬리 · 간지 · 표지", ["B10", "B11"]]];
 
-let page = null, sel = null, scale = 3, mode = "select", dirty = false, thumbs = {blocks: {}, parts: {}}, palTab = "blocks";
+let page = null, sel = null, scale = 3, thumbs = {blocks: {}, parts: {}}, pageSvg = {};
 
-function specOf() { return byId("specs")[page && page.spec] || byId("specs").a4 || {w: 210, h: 297}; }
-function partOf(id) { return byId("parts")[id] || {w: 40, h: 8, name: id}; }
+const specOf = (p) => byId("specs")[(p || page || {}).spec] || byId("specs").a4 || {w: 210, h: 297};
+const partOf = (id) => byId("parts")[id] || {w: 40, h: 8, name: id};
+const skin = () => byId("skins")[$("#skin").value] || LIB.skins[0];
+const firstPart = (blk) => ((blk.variants || [])[0] || {}).part;
 
-// ── 위 막대 ──
-function fillBars() {
-  const ps = $("#pgsel"); ps.innerHTML = LIB.pages.map(p => `<option value="${p.id}">${p.name} (${p.id})</option>`).join("");
-  if (page && !LIB.pages.some(p => p.id === page.id)) ps.innerHTML += `<option value="${page.id}">(저장 전) ${page.name} (${page.id})</option>`;
-  if (page) ps.value = page.id;
-  $("#spec").innerHTML = LIB.specs.map(s => `<option value="${s.id}">${s.id} ${s.w}×${s.h}</option>`).join("");
-  if (page) $("#spec").value = page.spec || "a4";
-  const sk = $("#skin"); const v = sk.value; sk.innerHTML = LIB.skins.map(s => `<option value="${s.id}">${s.name}</option>`).join(""); if (v) sk.value = v;
+// ── 레이아웃 → 칸 ──
+function computeZones(p) {
+  const sp = specOf(p), m = Object.assign({}, DEF_M, p.margins || {});
+  const x = m.left, y = m.top, w = sp.w - m.left - m.right, h = sp.h - m.top - m.bottom;
+  if (p.layout === "one") return [{id: "main", x, y, w, h, flow: "continue"}];
+  if (p.layout === "two") return [{id: "main", x, y, w, h, flow: "columns", cols: 2, gutter: 8}];
+  if (p.layout === "pair") { const h1 = Math.round(h * 0.45); return [{id: "top", x, y, w, h: h1, flow: "fixed"}, {id: "bottom", x, y: y + h1 + 6, w, h: h - h1 - 6, flow: "continue"}]; }
+  if (p.layout === "none") return [];
+  return p.zones || [];                                   // 라이브러리에서 직접 짠 칸
 }
-$("#pgsel").onchange = () => { if (dirty && !confirm("저장 안 한 변경이 있다. 버릴까?")) { $("#pgsel").value = page.id; return; } load(byId("pages")[$("#pgsel").value]); };
-$("#btn-new").onclick = () => {
-  if (dirty && !confirm("저장 안 한 변경이 있다. 버릴까?")) return;
-  let n = 1; while (byId("pages")["page_" + n]) n++;
-  load({id: "page_" + n, name: "새 지면 " + n, spec: $("#spec").value || "a4", mirror: false, zones: [], chrome: [], blocks: []}, true);
-};
-$("#spec").onchange = () => { page.spec = $("#spec").value; touch(); layout(); render(); };
-$("#skin").onchange = () => { render(); loadThumbs(); };
-$("#btn-zone").onclick = () => { mode = mode === "zone" ? "select" : "zone"; $("#btn-zone").classList.toggle("on", mode === "zone"); $("#paper").classList.toggle("zone-mode", mode === "zone"); };
-$("#btn-save").onclick = async () => {
-  const j = await api("/api/units/pages", page);
-  if (j.error) { $("#err").textContent = j.error; return; }
-  $("#err").textContent = ""; dirty = false;
-  const lj = await api("/api/units/library"); LIB.pages = lj.pages; fillBars(); $("#info").textContent = "저장됨 · " + page.id; props();
-};
-function touch() { dirty = true; $("#info").textContent = "변경됨 (저장 안 함)"; }
+function applyLayout() {
+  page.zones = computeZones(page);
+  const ids = page.zones.map(z => z.id);
+  page.blocks.forEach(b => { if (!ids.includes(b.zone)) b.zone = ids[0]; });
+  page.blocks = page.blocks.filter(b => b.zone);
+}
 
-// ── 불러오기 · 그리기 ──
-function load(p, isNew) {
-  page = clone(p); page.zones = page.zones || []; page.chrome = page.chrome || []; page.blocks = page.blocks || [];
-  sel = null; dirty = !!isNew; fillBars(); $("#info").textContent = isNew ? "새 지면 — 저장 전" : ""; $("#err").textContent = "";
-  location.hash = page.id; layout(); render(); props();
+// ── 지면 만들기 ──
+function newPage(kind) {
+  let n = 1; while (byId("pages")["page_" + n] || (page && page.id === "page_" + n)) n++;
+  const sp = $("#skin").value; const spec = (page && page.spec) || "a4";
+  const p = {id: "page_" + n, name: "", spec, mirror: true, layout: "one", margins: clone(DEF_M), zones: [], chrome: [], blocks: []};
+  const names = {one: "본문 1단", pair: "본문 상·하", two: "본문 2단", divider: "간지", cover: "표지"};
+  p.name = (names[kind] || "지면") + " " + n;
+  if (kind === "dup" && page) { const d = clone(page); d.id = "page_" + n; d.name = page.name + " 복사"; return d; }
+  if (kind === "divider" || kind === "cover") {
+    p.layout = "none"; p.mirror = false;
+    const blk = byId("blocks")[kind]; if (blk && firstPart(blk)) p.chrome.push({part: firstPart(blk), x: 0, y: 0});
+  } else {
+    p.layout = kind;
+    const rh = byId("blocks").running_head, fo = byId("blocks").folio; const S = specOf(p);
+    if (rh && firstPart(rh)) p.chrome.push({part: firstPart(rh), x: DEF_M.left, y: 14});
+    if (fo && firstPart(fo)) p.chrome.push({part: firstPart(fo), x: DEF_M.left, y: S.h - 19});
+  }
+  return p;
+}
+$("#btn-add").onclick = (e) => { e.stopPropagation(); $("#menu").classList.toggle("on"); };
+document.addEventListener("click", () => $("#menu").classList.remove("on"));
+document.querySelectorAll("[data-new]").forEach(b => b.onclick = async (e) => {
+  e.stopPropagation(); $("#menu").classList.remove("on");
+  const p = newPage(b.dataset.new); if (!p) return;
+  applyLayoutFor(p); LIB.pages.push(p); await api("/api/units/pages", p);
+  open(p);
+});
+function applyLayoutFor(p) { const keep = page; page = p; applyLayout(); page = keep; }
+
+// ── 열기 · 그리기 ──
+function open(p) {
+  page = byId("pages")[p.id] || p; sel = null;
+  if (!page.blocks) page.blocks = []; if (!page.chrome) page.chrome = [];
+  if (page.layout) applyLayout();
+  $("#pname").value = page.name || ""; location.hash = page.id;
+  drawPages(); layout(); render(); side();
 }
 function layout() {
-  const sp = specOf(); const area = $("#area");
-  scale = Math.min(3.4, (area.clientWidth - 60) / sp.w);
+  const sp = specOf(); scale = Math.min(3.4, ($("#area").clientWidth - 60) / sp.w);
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
-  overlay();
 }
-window.addEventListener("resize", () => { if (page) { layout(); } });
+window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
 let rt = null;
-async function render() {
+function render() {
   if (!page) return;
   clearTimeout(rt);
   rt = setTimeout(async () => {
@@ -175,191 +225,195 @@ async function render() {
     if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
     const svg = (j.svgs[0] || {}).svg || "";
     $("#svgwrap").innerHTML = svg; const el = $("#svgwrap svg"); if (el) { el.removeAttribute("width"); el.removeAttribute("height"); }
+    pageSvg[page.id] = svg; const th = document.querySelector(`.pg[data-id="${page.id}"] .th`); if (th) { th.innerHTML = svg; strip(th); }
     const msgs = [...(j.warnings || [])]; if (j.svgs.length > 1) msgs.unshift(`넘침 — 이 배치는 ${j.svgs.length}면이 된다 (첫 면만 보임)`);
     w.style.display = msgs.length ? "" : "none"; w.textContent = msgs.join("\n");
-  }, 60);
+    wire(); selbox();
+  }, 50);
 }
-function overlay() {
-  const ov = $("#ov"); ov.innerHTML = "";
-  page.zones.forEach((z, i) => {
-    const d = document.createElement("div"); d.className = "zone" + (sel && sel.type === "zone" && sel.i === i ? " on" : ""); d.dataset.zone = i;
-    d.style.left = z.x * scale + "px"; d.style.top = z.y * scale + "px"; d.style.width = z.w * scale + "px"; d.style.height = z.h * scale + "px";
-    const n = page.blocks.filter(b => b.zone === z.id).length;
-    d.innerHTML = `<span class="lb">${z.id} · ${z.flow}${z.flow === "columns" ? " " + (z.cols || 2) : ""} · 블록 ${n}</span><span class="rs"></span>`;
-    ov.appendChild(d);
-  });
-  page.chrome.forEach((c, i) => {
-    const p = partOf(c.part);
-    const d = document.createElement("div"); d.className = "chrome" + (sel && sel.type === "chrome" && sel.i === i ? " on" : ""); d.dataset.chrome = i;
-    d.style.left = c.x * scale + "px"; d.style.top = c.y * scale + "px"; d.style.width = p.w * scale + "px"; d.style.height = p.h * scale + "px";
-    d.innerHTML = `<span class="lb">고정 · ${p.name}</span>`;
-    ov.appendChild(d);
-  });
-}
+function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); } }
 
-// ── 마우스: 고르기 · 옮기기 · 크기 · 칸 그리기 ──
-const mm = (e) => { const r = $("#paper").getBoundingClientRect(); return {x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale}; };
-let drag = null;
-$("#paper").addEventListener("pointerdown", (e) => {
-  if (!page || e.button !== 0) return;
-  const m = mm(e);
-  if (mode === "zone") {
-    const d = document.createElement("div"); d.className = "drawing"; $("#ov").appendChild(d);
-    drag = {kind: "draw", sx: m.x, sy: m.y, el: d}; $("#paper").setPointerCapture(e.pointerId); return;
-  }
-  const zEl = e.target.closest(".zone"), cEl = e.target.closest(".chrome");
-  if (zEl) {
-    const i = +zEl.dataset.zone; sel = {type: "zone", i}; const z = page.zones[i];
-    drag = {kind: e.target.classList.contains("rs") ? "resize" : "move", obj: z, sx: m.x, sy: m.y, ox: z.x, oy: z.y, ow: z.w, oh: z.h, moved: false};
-  } else if (cEl) {
-    const i = +cEl.dataset.chrome; sel = {type: "chrome", i}; const c = page.chrome[i];
-    drag = {kind: "move", obj: c, sx: m.x, sy: m.y, ox: c.x, oy: c.y, moved: false};
-  } else { sel = null; drag = null; }
-  if (drag) $("#paper").setPointerCapture(e.pointerId);
-  overlay(); props();
-});
-$("#paper").addEventListener("pointermove", (e) => {
-  if (!drag) return;
-  const m = mm(e), dx = m.x - drag.sx, dy = m.y - drag.sy;
-  if (drag.kind === "draw") {
-    const x = Math.min(drag.sx, m.x), y = Math.min(drag.sy, m.y), w = Math.abs(dx), h = Math.abs(dy);
-    Object.assign(drag.el.style, {left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); return;
-  }
-  if (Math.abs(dx) + Math.abs(dy) < 0.3) return;
-  drag.moved = true;
-  if (drag.kind === "move") { drag.obj.x = snap(drag.ox + dx); drag.obj.y = snap(drag.oy + dy); }
-  else { drag.obj.w = Math.max(5, snap(drag.ow + dx)); drag.obj.h = Math.max(5, snap(drag.oh + dy)); }
-  overlay(); props(true);
-});
-$("#paper").addEventListener("pointerup", (e) => {
-  if (!drag) return;
-  if (drag.kind === "draw") {
-    const m = mm(e); const x = snap(Math.min(drag.sx, m.x)), y = snap(Math.min(drag.sy, m.y)), w = snap(Math.abs(m.x - drag.sx)), h = snap(Math.abs(m.y - drag.sy));
-    drag.el.remove();
-    if (w >= 5 && h >= 5) { let n = 1; while (page.zones.some(z => z.id === "z" + n)) n++;
-      page.zones.push({id: "z" + n, x, y, w, h, flow: "continue"}); sel = {type: "zone", i: page.zones.length - 1}; touch(); render(); }
-    mode = "select"; $("#btn-zone").classList.remove("on"); $("#paper").classList.remove("zone-mode");
-  } else if (drag.moved) { touch(); render(); }
-  drag = null; overlay(); props();
-});
-document.addEventListener("keydown", (e) => {
-  if (!sel || e.target.matches("input,textarea,select")) return;
-  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); }
-});
-function removeSel() {
-  if (!sel) return;
-  if (sel.type === "zone") { const z = page.zones[sel.i]; page.zones.splice(sel.i, 1); page.blocks = page.blocks.filter(b => b.zone !== z.id); }
-  else page.chrome.splice(sel.i, 1);
-  sel = null; touch(); overlay(); render(); props();
-}
-
-// ── 팔레트: 끌어 놓기 ──
-async function loadThumbs() {
-  thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); palette();
-}
-function palette() {
-  const box = $("#pal"); box.innerHTML = "";
-  const items = palTab === "blocks" ? LIB.blocks : LIB.parts;
-  $("#palnote").textContent = palTab === "blocks" ? "칸 안으로 끌어다 놓는다. 칸을 고른 뒤 누르면 그 칸에 들어간다." : "면 위 아무 데나 끌어다 놓는다 — 좌표에 고정된다(러닝헤드·쪽번호·간지).";
-  for (const it of items) {
-    const d = document.createElement("div"); d.className = "card"; d.draggable = true;
-    d.innerHTML = `<div class="th">${(thumbs[palTab] || {})[it.id] || ""}</div><div class="nm">${it.name} <code>${it.id}</code></div>`;
-    const s = d.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); }
-    d.ondragstart = (e) => e.dataTransfer.setData("text/plain", JSON.stringify({kind: palTab, id: it.id}));
-    d.onclick = () => {
-      if (palTab === "blocks") { if (sel && sel.type === "zone") { page.blocks.push({zone: page.zones[sel.i].id, block: it.id}); touch(); overlay(); render(); props(); } else $("#err").textContent = "먼저 칸을 고르거나, 칸 안으로 끌어다 놓는다"; }
-      else { page.chrome.push({part: it.id, x: 20, y: 14}); sel = {type: "chrome", i: page.chrome.length - 1}; touch(); overlay(); render(); props(); }
-    };
+// ── 지면 띠 ──
+async function drawPages() {
+  const box = $("#plist"); box.innerHTML = "";
+  for (const p of LIB.pages) {
+    const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id;
+    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><div class="nm">${p.name || p.id}</div>`; strip(d);
+    d.onclick = () => open(p);
     box.appendChild(d);
   }
-}
-document.querySelectorAll("[data-pal]").forEach(b => b.onclick = () => { palTab = b.dataset.pal; document.querySelectorAll("[data-pal]").forEach(x => x.classList.toggle("on", x === b)); palette(); });
-$("#paper").addEventListener("dragover", (e) => { e.preventDefault(); });
-$("#paper").addEventListener("drop", (e) => {
-  e.preventDefault(); if (!page) return;
-  let d; try { d = JSON.parse(e.dataTransfer.getData("text/plain")); } catch (_) { return; }
-  const m = mm(e); $("#err").textContent = "";
-  if (d.kind === "blocks") {
-    const zi = page.zones.findIndex(z => m.x >= z.x && m.x <= z.x + z.w && m.y >= z.y && m.y <= z.y + z.h);
-    if (zi < 0) { $("#err").textContent = "블록은 칸 안에 놓는다 — ▭ 칸 그리기로 먼저 칸을"; return; }
-    page.blocks.push({zone: page.zones[zi].id, block: d.id}); sel = {type: "zone", i: zi};
-  } else {
-    page.chrome.push({part: d.id, x: snap(m.x), y: snap(m.y)}); sel = {type: "chrome", i: page.chrome.length - 1};
+  for (const p of LIB.pages) {
+    if (pageSvg[p.id]) continue;
+    const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec});
+    pageSvg[p.id] = ((j.svgs || [])[0] || {}).svg || "";
+    const th = document.querySelector(`.pg[data-id="${p.id}"] .th`); if (th) { th.innerHTML = pageSvg[p.id]; strip(th); }
   }
-  touch(); overlay(); render(); props();
+}
+
+// ── 고르기 · 옮기기 ──
+function wire() {
+  const svg = $("#svgwrap svg"); if (!svg) return;
+  svg.querySelectorAll("g[data-i]").forEach(g => g.addEventListener("click", (e) => { e.stopPropagation(); sel = {type: "block", i: +g.dataset.i}; selbox(); side(); }));
+  svg.querySelectorAll("g[data-ci]").forEach(g => {
+    g.addEventListener("click", (e) => e.stopPropagation());
+    g.addEventListener("pointerdown", (e) => {
+      e.stopPropagation(); const i = +g.dataset.ci; sel = {type: "chrome", i}; selbox(); side();
+      const c = page.chrome[i]; const r = $("#paper").getBoundingClientRect();
+      const st = {x: e.clientX, y: e.clientY, ox: c.x, oy: c.y, moved: false};
+      const mv = (ev) => { const dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale; if (Math.abs(dx) + Math.abs(dy) < 0.3) return; st.moved = true;
+        c.x = snap(st.ox + dx); c.y = snap(st.oy + dy);
+        g.setAttribute("transform", `translate(${c.x},${c.y})`); selbox(); };
+      const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); if (st.moved) { save(); render(); side(); } };
+      window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+    });
+  });
+  svg.addEventListener("click", () => { sel = null; selbox(); side(); });
+}
+function selbox() {
+  const box = $("#selbox"), tools = $("#tools");
+  const g = selG(); if (!g) { box.style.display = "none"; tools.style.display = "none"; return; }
+  const r = g.getBoundingClientRect(), pr = $("#paper").getBoundingClientRect();
+  Object.assign(box.style, {display: "", left: (r.left - pr.left - 2) + "px", top: (r.top - pr.top - 2) + "px", width: (r.width + 4) + "px", height: (r.height + 4) + "px"});
+  Object.assign(tools.style, {display: "flex", left: Math.max(0, r.right - pr.left - 96) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
+  $("#t-up").style.display = $("#t-dn").style.display = sel.type === "block" ? "" : "none";
+}
+function selG() {
+  if (!sel) return null;
+  return $("#svgwrap svg") && $("#svgwrap svg").querySelector(sel.type === "block" ? `g[data-i="${sel.i}"]` : `g[data-ci="${sel.i}"]`);
+}
+function move(d) {
+  if (!sel || sel.type !== "block") return;
+  const zid = page.blocks[sel.i].zone; const idx = page.blocks.map((b, k) => b.zone === zid ? k : -1).filter(k => k >= 0);
+  const pos = idx.indexOf(sel.i), j = idx[pos + d]; if (j === undefined) return;
+  [page.blocks[sel.i], page.blocks[j]] = [page.blocks[j], page.blocks[sel.i]]; sel.i = j; save(); render();
+}
+function removeSel() {
+  if (!sel) return;
+  if (sel.type === "block") page.blocks.splice(sel.i, 1); else page.chrome.splice(sel.i, 1);
+  sel = null; save(); render(); side();
+}
+$("#t-up").onclick = (e) => { e.stopPropagation(); move(-1); };
+$("#t-dn").onclick = (e) => { e.stopPropagation(); move(1); };
+$("#t-x").onclick = (e) => { e.stopPropagation(); removeSel(); };
+document.addEventListener("keydown", (e) => {
+  if (e.target.matches("input,textarea,select")) return;
+  if (sel && (e.key === "Delete" || e.key === "Backspace")) { e.preventDefault(); removeSel(); }
+  if (e.key === "Escape") { sel = null; selbox(); side(); }
 });
 
-// ── 속성 ──
-function props(light) {
-  const box = $("#props");
-  if (!page) { box.innerHTML = ""; return; }
-  const blocksOf = (zid) => page.blocks.map((b, i) => ({...b, i})).filter(b => b.zone === zid);
-  const blockList = (zid) => blocksOf(zid).map((b, k, arr) => `<div class="li"><span class="g">${(byId("blocks")[b.block] || {}).name || b.block} <code>${b.block}</code></span>
-      <button data-mv="${b.i}:-1" ${k === 0 ? "disabled" : ""}>↑</button><button data-mv="${b.i}:1" ${k === arr.length - 1 ? "disabled" : ""}>↓</button><button data-rm="${b.i}">✕</button></div>`).join("") || `<div class="note">비어 있음 — 팔레트에서 블록을 끌어 놓는다</div>`;
+// ── 요소 넣기 ──
+function zoneFor(blockId, atY) {
+  const zs = page.zones || []; if (!zs.length) return null;
+  if (atY != null) { const z = zs.find(z => atY >= z.y && atY <= z.y + z.h); if (z) return z.id; }
+  if (sel && sel.type === "block" && page.blocks[sel.i]) return page.blocks[sel.i].zone;
+  const acc = zs.find(z => (z.accepts || []).includes(blockId)); if (acc) return acc.id;
+  const open = zs.find(z => !z.accepts); return (open || zs[0]).id;
+}
+function addBlock(id, at) {
+  const blk = byId("blocks")[id]; if (!blk) return;
+  if (blk.source === "system") {                          // 머리·꼬리·간지·표지 → 좌표에 고정
+    const part = firstPart(blk); if (!part) return; const S = specOf(); const m = Object.assign({}, DEF_M, page.margins || {});
+    const pos = at ? {x: snap(at.x), y: snap(at.y)} : (id === "folio" ? {x: m.left, y: S.h - 19} : (blk.family === "B10" && /divider|cover/.test(id) ? {x: 0, y: 0} : {x: m.left, y: 14}));
+    page.chrome.push({part, ...pos}); sel = {type: "chrome", i: page.chrome.length - 1}; save(); render(); side(); return;
+  }
+  const zid = zoneFor(id, at && at.y);
+  if (!zid) { $("#st").textContent = "이 지면엔 칸이 없다 — 오른쪽에서 레이아웃을 고른다"; return; }
+  let idx = page.blocks.length;
+  if (at) {                                               // 놓은 자리 아래 첫 블록 앞에
+    const svg = $("#svgwrap svg"); const pr = $("#paper").getBoundingClientRect();
+    for (const g of svg ? svg.querySelectorAll("g[data-i]") : []) { const i = +g.dataset.i; if (page.blocks[i].zone !== zid) continue;
+      const r = g.getBoundingClientRect(); if ((r.top + r.height / 2 - pr.top) / scale > at.y) { idx = i; break; } }
+  } else if (sel && sel.type === "block") idx = sel.i + 1;
+  page.blocks.splice(idx, 0, {zone: zid, block: id}); sel = {type: "block", i: idx}; save(); render(); side();
+}
+function elements() {
+  const box = $("#els"); box.innerHTML = "";
+  const groups = GROUPS.map(([nm, fams]) => [nm, LIB.blocks.filter(b => (b.source === "system" ? nm.startsWith("머리") : fams.includes(b.family)))]);
+  const used = new Set(groups.flatMap(g => g[1].map(b => b.id))); const rest = LIB.blocks.filter(b => !used.has(b.id)); if (rest.length) groups.push(["기타", rest]);
+  for (const [nm, items] of groups) {
+    if (!items.length) continue;
+    box.insertAdjacentHTML("beforeend", `<h3>${nm}</h3>`); const g = document.createElement("div"); g.className = "grid";
+    for (const it of items) {
+      const d = document.createElement("div"); d.className = "card"; d.draggable = true; d.title = it.name;
+      d.innerHTML = `<div class="th">${thumbs.blocks[it.id] || ""}</div><div class="nm">${it.name}</div>`; strip(d);
+      d.onclick = () => { if (page) addBlock(it.id); };
+      d.ondragstart = (e) => e.dataTransfer.setData("text/plain", it.id);
+      g.appendChild(d);
+    }
+    box.appendChild(g);
+  }
+}
+$("#paper").addEventListener("dragover", (e) => e.preventDefault());
+$("#paper").addEventListener("drop", (e) => {
+  e.preventDefault(); const id = e.dataTransfer.getData("text/plain"); if (!id || !page) return;
+  const r = $("#paper").getBoundingClientRect(); addBlock(id, {x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale});
+});
+
+// ── 오른쪽 ──
+function side() {
+  const box = $("#side"); if (!page) { box.innerHTML = ""; return; }
   let h = "";
-  if (sel && sel.type === "zone" && page.zones[sel.i]) {
-    const z = page.zones[sel.i];
-    $("#ptitle").textContent = "칸"; $("#psub").textContent = z.id;
-    h += `<div class="f"><span>id</span><input data-z="id" type="text" value="${z.id}"></div>
-      <div class="f"><span>흐름</span><select data-z="flow"><option value="continue" ${z.flow === "continue" ? "selected" : ""}>이어짐 — 넘치면 다음 면</option><option value="fixed" ${z.flow === "fixed" ? "selected" : ""}>고정 — 세트 1개</option><option value="columns" ${z.flow === "columns" ? "selected" : ""}>단 나눔</option></select></div>
-      ${z.flow === "columns" ? `<div class="f"><span>단 수</span><input data-z="cols" type="number" min="2" value="${z.cols || 2}"></div><div class="f"><span>단 간격</span><input data-z="gutter" type="number" step="0.5" value="${z.gutter || 5}"></div>` : ""}
-      <div class="f4"><label>x<input data-z="x" type="number" step="0.5" value="${z.x}"></label><label>y<input data-z="y" type="number" step="0.5" value="${z.y}"></label><label>w<input data-z="w" type="number" step="0.5" value="${z.w}"></label><label>h<input data-z="h" type="number" step="0.5" value="${z.h}"></label></div>
-      <div class="f"><span>받는 것</span><input data-z="accepts" type="text" placeholder="비우면 전부 · 블록 id, 세트 kind" value="${(z.accepts || []).join(", ")}"></div>
-      <h3>이 칸의 블록 (위에서 아래)</h3>${blockList(z.id)}
-      <div class="row" style="margin-top:10px"><button class="btn sm danger" id="btn-rm">칸 지우기</button></div>`;
+  if (sel && sel.type === "block" && page.blocks[sel.i]) {
+    const b = page.blocks[sel.i], blk = byId("blocks")[b.block] || {name: b.block, variants: []};
+    const cur = (skin().variants || {})[b.block] || (blk.variants[0] || {}).id;
+    $("#stitle").textContent = blk.name;
+    h += `<div class="note">${blk.family || ""} · 칸 <b>${b.zone}</b> · 필드 ${Object.keys(blk.fields || {}).join(", ") || "없음"}</div>
+      <div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${v.name || v.id}</option>`).join("")}</select></div>
+      <div class="note">모양은 옷(${skin().name})에 저장된다 — 같은 옷의 모든 지면에 적용.</div>
+      <div class="row"><button class="btn sm sub" id="s-up">▲ 위로</button><button class="btn sm sub" id="s-dn">▼ 아래로</button><button class="btn sm danger" id="s-x">지우기</button></div>`;
   } else if (sel && sel.type === "chrome" && page.chrome[sel.i]) {
     const c = page.chrome[sel.i], p = partOf(c.part);
-    $("#ptitle").textContent = "고정 부품"; $("#psub").textContent = c.part;
-    h += `<div class="note">${p.name} · ${p.w}×${p.h}mm. 좌표에 고정된다. mirror 지면이면 오른쪽 면에서 좌우 반전.</div>
-      <div class="f4"><label>x<input data-c="x" type="number" step="0.5" value="${c.x}"></label><label>y<input data-c="y" type="number" step="0.5" value="${c.y}"></label></div>
-      <div class="row" style="margin-top:10px"><button class="btn sm danger" id="btn-rm">지우기</button></div>`;
+    $("#stitle").textContent = p.name;
+    h += `<div class="note">좌표에 고정된다 (${p.w}×${p.h}mm). 끌어서 옮긴다.</div>
+      <div class="m4"><label>x<input data-c="x" type="number" step="0.5" value="${c.x}"></label><label>y<input data-c="y" type="number" step="0.5" value="${c.y}"></label></div>
+      <div class="row"><button class="btn sm danger" id="s-x">지우기</button></div>`;
   } else {
-    $("#ptitle").textContent = "지면"; $("#psub").textContent = page.id;
-    h += `<div class="f"><span>id</span><input data-p="id" type="text" value="${page.id}"></div>
-      <div class="f"><span>이름</span><input data-p="name" type="text" value="${page.name || ""}"></div>
-      <div class="f"><span>좌우 반전</span><label><input data-p="mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 오른쪽 면에서 고정 부품·칸을 뒤집는다</label></div>
-      <h3>칸 ${page.zones.length}</h3>${page.zones.map((z, i) => `<div class="li"><span class="g" data-selz="${i}">${z.id} · ${z.flow} · ${z.w}×${z.h}mm · 블록 ${blocksOf(z.id).length}</span></div>`).join("") || `<div class="note">칸이 없다 — 위의 ▭ 칸 그리기</div>`}
-      <h3>고정 부품 ${page.chrome.length}</h3>${page.chrome.map((c, i) => `<div class="li"><span class="g" data-selc="${i}">${partOf(c.part).name} @ ${c.x},${c.y}</span></div>`).join("") || `<div class="note">없음 — 팔레트「고정 부품」에서</div>`}`;
-  }
-  h += `<details class="j"><summary>JSON</summary><textarea id="pjson">${JSON.stringify(page, null, 1).replace(/</g, "&lt;")}</textarea><div class="row"><button class="btn sm sub" id="btn-json">JSON 적용</button></div></details>`;
-  if (light) { // 끄는 중엔 숫자만 갱신
-    box.querySelectorAll("[data-z]").forEach(i => { const z = page.zones[sel.i]; if (["x", "y", "w", "h"].includes(i.dataset.z)) i.value = z[i.dataset.z]; });
-    box.querySelectorAll("[data-c]").forEach(i => { i.value = page.chrome[sel.i][i.dataset.c]; });
-    return;
+    $("#stitle").textContent = "지면";
+    const icons = {one: "M2 2h20v26H2z", pair: "M2 2h20v11H2zM2 16h20v12H2z", two: "M2 2h9v26H2zM13 2h9v26h-9z", none: "M2 2h20v26H2z"};
+    h += `<h3>레이아웃</h3><div class="lay">${LAYOUTS.map(([k, nm]) => `<button data-lay="${k}" class="${page.layout === k ? "on" : ""}"><svg width="24" height="30" viewBox="0 0 24 30"><path d="${icons[k]}" fill="${k === "none" ? "none" : "#c9b8ff"}" stroke="#7d2ae8" stroke-width="1.2" ${k === "none" ? 'stroke-dasharray="2 2"' : ""}/></svg>${nm}</button>`).join("")}</div>
+      ${page.layout ? "" : `<div class="note">칸을 라이브러리에서 직접 짠 지면이다. 레이아웃을 고르면 그 칸으로 바뀐다.</div>`}
+      <h3>여백 (mm)</h3><div class="m4">${["top", "left", "right", "bottom"].map(k => `<label>${MN[k]}<input data-m="${k}" type="number" step="1" value="${(page.margins || DEF_M)[k]}"></label>`).join("")}</div>
+      <div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
+      <div class="f"><span>좌우 반전</span><label><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 오른쪽 면은 뒤집힌다</label></div>
+      <h3>색 — 옷 ${skin().name}</h3><div class="colors">${Object.entries((skin().tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
+      <div class="note">바꾸면 이 옷을 쓰는 모든 지면·책이 같이 바뀐다.</div>
+      <h3>지면</h3><div class="row"><button class="btn sm danger" id="s-del">이 지면 지우기</button></div>`;
   }
   box.innerHTML = h;
-  box.querySelectorAll("[data-z]").forEach(i => i.addEventListener(i.tagName === "SELECT" ? "change" : "input", () => {
-    const z = page.zones[sel.i]; const k = i.dataset.z;
-    if (k === "accepts") { const v = i.value.split(",").map(s => s.trim()).filter(Boolean); if (v.length) z.accepts = v; else delete z.accepts; }
-    else if (k === "id") { const old = z.id; if (!/^[a-z][a-z0-9_]{0,39}$/.test(i.value)) return; z.id = i.value; page.blocks.forEach(b => { if (b.zone === old) b.zone = z.id; }); }
-    else if (k === "flow") { z.flow = i.value; props(); }
-    else z[k] = +i.value;
-    touch(); overlay(); render();
-  }));
-  box.querySelectorAll("[data-c]").forEach(i => i.oninput = () => { page.chrome[sel.i][i.dataset.c] = +i.value; touch(); overlay(); render(); });
-  box.querySelectorAll("[data-p]").forEach(i => i.oninput = () => {
-    const k = i.dataset.p; if (k === "mirror") page.mirror = i.checked; else if (k === "id") { if (/^[a-z][a-z0-9_]{0,39}$/.test(i.value)) page.id = i.value; } else page[k] = i.value;
-    touch(); $("#psub").textContent = page.id; render();
+  const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
+  on("#var", "change", async (e) => { const sk = skin(); sk.variants = sk.variants || {}; sk.variants[page.blocks[sel.i].block] = e.target.value; await api("/api/units/skins", sk); render(); thumbsLoad(); });
+  on("#s-up", "click", () => move(-1)); on("#s-dn", "click", () => move(1)); on("#s-x", "click", removeSel);
+  box.querySelectorAll("[data-c]").forEach(i => i.oninput = () => { page.chrome[sel.i][i.dataset.c] = +i.value; save(); render(); });
+  box.querySelectorAll("[data-lay]").forEach(b => b.onclick = () => { page.layout = b.dataset.lay; page.margins = page.margins || clone(DEF_M); applyLayout(); save(); render(); side(); });
+  box.querySelectorAll("[data-m]").forEach(i => i.onchange = () => { page.margins = Object.assign({}, DEF_M, page.margins || {}); page.margins[i.dataset.m] = +i.value; if (!page.layout) page.layout = "one"; applyLayout(); save(); render(); });
+  on("#s-spec", "change", (e) => { page.spec = e.target.value; if (page.layout) applyLayout(); save(); layout(); render(); });
+  on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
+  box.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { const sk = skin(); sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
+  on("#s-del", "click", async () => {
+    if (!confirm(`지면 「${page.name || page.id}」 을 지울까?`)) return;
+    await api("/api/units/pages", {id: page.id}, "DELETE"); LIB.pages = LIB.pages.filter(p => p.id !== page.id); delete pageSvg[page.id];
+    if (LIB.pages.length) open(LIB.pages[0]); else { page = null; $("#svgwrap").innerHTML = ""; $("#plist").innerHTML = ""; side(); }
   });
-  box.querySelectorAll("[data-selz]").forEach(s => s.onclick = () => { sel = {type: "zone", i: +s.dataset.selz}; overlay(); props(); });
-  box.querySelectorAll("[data-selc]").forEach(s => s.onclick = () => { sel = {type: "chrome", i: +s.dataset.selc}; overlay(); props(); });
-  box.querySelectorAll("[data-mv]").forEach(b => b.onclick = () => {
-    const [i, d] = b.dataset.mv.split(":").map(Number); const zid = page.blocks[i].zone;
-    const idx = page.blocks.map((x, k) => x.zone === zid ? k : -1).filter(k => k >= 0); const pos = idx.indexOf(i); const j = idx[pos + d];
-    if (j === undefined) return; [page.blocks[i], page.blocks[j]] = [page.blocks[j], page.blocks[i]]; touch(); render(); props();
-  });
-  box.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { page.blocks.splice(+b.dataset.rm, 1); touch(); overlay(); render(); props(); });
-  const rm = $("#btn-rm"); if (rm) rm.onclick = removeSel;
-  $("#btn-json").onclick = () => { try { const p = JSON.parse($("#pjson").value); page = p; page.zones = page.zones || []; page.chrome = page.chrome || []; page.blocks = page.blocks || []; sel = null; touch(); fillBars(); layout(); render(); props(); } catch (e) { $("#err").textContent = "JSON 아님: " + e.message; } };
 }
+$("#pname").oninput = () => { if (page) { page.name = $("#pname").value; save(); const nm = document.querySelector(`.pg[data-id="${page.id}"] .nm`); if (nm) nm.textContent = page.name || page.id; } };
+
+// ── 저장 ──
+let st = null, skt = null;
+function save() {
+  if (!page) return; $("#st").textContent = "저장 중…";
+  clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page); $("#st").textContent = j.error ? "저장 실패: " + j.error : "저장됨 " + new Date().toLocaleTimeString("ko-KR", {hour: "2-digit", minute: "2-digit"}); }, 600);
+}
+function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { await api("/api/units/skins", skin()); thumbsLoad(); pageSvg = {}; drawPages(); }, 800); }
+async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); elements(); }
+$("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawPages(); render(); side(); };
 
 // ── 시작 ──
-fillBars();
-loadThumbs();
+$("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+thumbsLoad();
 (() => {
   const id = decodeURIComponent(location.hash.replace(/^#/, ""));
   const p = byId("pages")[id] || LIB.pages[0];
-  if (p) load(p); else $("#btn-new").click();
+  if (p) open(p); else { drawPages(); $("#svgwrap").innerHTML = '<div class="empty">지면이 없다.<br>왼쪽 위 「＋ 지면」으로 시작.</div>'; }
 })();
 </script>
 {% endblock %}
