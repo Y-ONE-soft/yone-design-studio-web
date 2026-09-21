@@ -1,0 +1,15 @@
+[
+ {"id": "workbook_mini", "name": "워크북 (STEP 2 만)", "spec": "a4",
+  "front": ["cover"],
+  "sections": [
+   {"id": "step2", "name": "STEP 2", "divider": "divider",
+    "pages": [{"page": "pair", "repeat": "each_set", "sets": ["passage"]}]}
+  ],
+  "back": []},
+ {"id": "exam_sheet", "name": "시험지 (2단 이어짐)", "spec": "a4",
+  "front": [],
+  "sections": [
+   {"id": "r1", "name": "1회", "pages": [{"page": "two_col", "repeat": "once", "sets": ["passage"]}]}
+  ],
+  "back": []}
+]

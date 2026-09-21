@@ -1,0 +1,5 @@
+[
+ {"id": "a4", "w": 210, "h": 297, "bleed": 3, "binding": "perfect", "colors": 4},
+ {"id": "a5", "w": 148, "h": 210, "bleed": 3, "binding": "spiral", "colors": 4},
+ {"id": "b4_exam", "w": 257, "h": 364, "bleed": 0, "binding": "loose", "colors": 1}
+]
