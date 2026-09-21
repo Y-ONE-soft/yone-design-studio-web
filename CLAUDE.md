@@ -9,6 +9,8 @@
 > 인증 `core/webauth.py`(**2026-09-18 결정: 배포서버도 로그인 없음 `YONE_AUTH=off`**; 자체 로그인 `/auth/login`+`YONE_PASSWORD` 와 Y.OS HMAC 링크 토큰은 코드에 남아 있으나 안 씀 — yos-design-web 과 별개 프로젝트), 바깥 API `routes/api_v1.py`(`/api/v1`), 잡 `core/jobs.py`,
 > Vercel Blob `core/blob.py`, 웹훅 `core/yos_hooks.py`, contents 데이터 어댑터 `core/sources/`, Y.OS 쪽 드롭인 `deploy/yos/*.ts`.
 > (`core/notify.py` 는 예전 macOS 알림 모듈 — 웹훅과 다르다.) 테스트 `tests/test_webauth.py`·`tests/test_api_v1.py`.
+> **디자인 단위(2026-09-21)**: 원자(인디자인 오브젝트) → 부품 → 블록 → 지면 → 구간 → 틀 · 옷 · 세트. 스키마 `core/schema/units.schema.json`, 설명 `docs/디자인_단위_스키마.md`,
+> 코드 `core/units/`(store·render·decompose·sample), 화면 `/units`(`routes/units.py`), 시드 `catalog/_units/`. 기존 계열 렌더러(`core/render_vivlio/series/*`)와 독립 — 납품 중인 책은 안 건드린다.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 

@@ -1,0 +1,23 @@
+[
+ {"kind": "passage", "id": "20",
+  "blocks": [
+   {"block": "pnum", "fields": {"pnum": "20"}},
+   {"block": "passage", "fields": {"passage": ["Many people believe that creativity is a gift that only a few are born with. ", {"t": "However", "b": true}, ", research over the past decades has shown that creative thinking can be trained like any other skill. When students are encouraged to ask questions, tolerate ambiguity, and connect ideas from different fields, their ability to generate original solutions ", {"t": "improve", "u": true}, " steadily. What matters is not talent but the habit of looking at a familiar problem from an unfamiliar angle."]}},
+   {"block": "prompt", "fields": {"no": 1, "prompt": "윗글의 밑줄 친 부분 중, 어법상 틀린 것은?"}},
+   {"block": "choices", "fields": {"choices": ["However", "has shown", "are encouraged", "improve", "looking"], "answer": "④"}},
+   {"block": "gram_ox", "fields": {"no": 1, "sentence": ["Many people believe that creativity ", {"t": "is", "u": true}, " a gift that only a few are born with."], "answer": "O"}},
+   {"block": "gram_ox", "fields": {"no": 2, "sentence": ["Their ability to generate original solutions ", {"t": "improve", "u": true}, " steadily."], "answer": "X → improves"}},
+   {"block": "gram_ox", "fields": {"no": 3, "sentence": ["What matters is not talent but the habit of ", {"t": "looking", "u": true}, " at a familiar problem from an unfamiliar angle."], "answer": "O"}}
+  ]},
+ {"kind": "passage", "id": "21",
+  "blocks": [
+   {"block": "pnum", "fields": {"pnum": "21"}},
+   {"block": "passage", "fields": {"passage": "The idea that cities should be built around cars took hold in the middle of the twentieth century. Wide roads and large parking lots replaced neighborhoods where people once walked to shops and schools. Today many planners are reversing this trend, narrowing streets and adding bike lanes so that residents can move around without driving. The change is slow, but the benefits for health and for the environment are becoming difficult to ignore."}},
+   {"block": "prompt", "fields": {"no": 2, "prompt": "윗글의 주제로 가장 적절한 것은?"}},
+   {"block": "choices", "fields": {"choices": ["the history of car manufacturing", "why parking lots are expensive to build", "how city planning is shifting away from cars", "the dangers of cycling in large cities", "the cost of maintaining wide roads"], "answer": "③"}},
+   {"block": "blank", "fields": {"no": 1, "sentence": "Wide roads and large parking lots r________ neighborhoods where people once walked.", "kr": "넓은 도로와 큰 주차장이 사람들이 걸어 다니던 동네를 대체했다.", "answer": "replaced"}},
+   {"block": "blank", "fields": {"no": 2, "sentence": "Many planners are r________ this trend, narrowing streets and adding bike lanes.", "kr": "많은 도시 계획가들이 이 흐름을 되돌리고 있다.", "answer": "reversing"}},
+   {"block": "ox", "fields": {"no": 1, "sentence": "Cities were built around cars from the very beginning of the twentieth century.", "answer": false}},
+   {"block": "ox", "fields": {"no": 2, "sentence": "Planners today are adding bike lanes to reduce driving.", "answer": true}}
+  ]}
+]

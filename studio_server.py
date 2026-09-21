@@ -29,6 +29,7 @@ from routes.catalog import bp as catalog_bp  # noqa: E402
 from routes.intake import bp as intake_bp, have_key  # noqa: E402
 from routes.books import bp as books_bp  # noqa: E402
 from routes.make import bp as make_bp  # noqa: E402
+from routes.units import bp as units_bp  # noqa: E402
 from routes import api_v1  # noqa: E402
 from core import jobs, webauth  # noqa: E402
 
@@ -43,6 +44,7 @@ def create_app():
                                      FileSystemLoader(os.path.join(REPO, "templates"))])
     # 업로드 상한 — 원고 폴더째(docx·pdf 수십 개)가 온다.
     app.config["MAX_CONTENT_LENGTH"] = int(os.environ.get("YONE_MAX_UPLOAD_MB", "512")) * 1024 * 1024
+    app.json.sort_keys = False          # 단위 JSON 편집기가 id·name 을 앞에 보이게 — 적은 순서 그대로
     # 인증·CORS·보안 헤더 — YOS_LINK_SECRET 이 없으면 꺼짐(로컬 그대로)
     webauth.install(app)
     app.register_blueprint(bp)
@@ -50,6 +52,7 @@ def create_app():
     app.register_blueprint(intake_bp)
     app.register_blueprint(books_bp)
     app.register_blueprint(make_bp)
+    app.register_blueprint(units_bp)
     api_v1.install(app)                 # /api/v1 — contents·core·앱이 부르는 계약
     jobs.mark_lost_on_boot()            # 재시작 전에 돌던 잡은 lost 로
 

@@ -1,0 +1,219 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "yone/units-v1",
+  "title": "디자인 단위 v1 — 원자 → 부품 → 블록 → 지면 → 틀 · 옷 · 세트",
+  "description": "치수는 mm(원점 = 부모의 왼쪽 위), 글자 크기·선 굵기는 pt. 색·서체는 값이 아니라 토큰 이름($이름)으로만 적고 값은 옷(skin)이 준다. PDF·이미지·프롬프트 분해기의 출력도 같은 원자(atom) 형식이다. 설명과 보기는 docs/디자인_단위_스키마.md.",
+  "definitions": {
+
+    "mm": {"type": "number"},
+    "pt": {"type": "number", "minimum": 0},
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$"},
+    "token": {"type": "string", "pattern": "^\\$[a-z][a-z0-9_]*$", "description": "토큰 참조. 옷의 tokens.color / tokens.font 에서 값을 찾는다"},
+    "bind": {"type": "string", "pattern": "^(sys\\.)?[a-z][a-z0-9_]*$", "description": "이 원자에 들어갈 필드 이름. sys.page_no · sys.section · sys.title 은 책이 채운다"},
+
+    "box": {
+      "type": "object", "required": ["x", "y", "w", "h"],
+      "properties": {"x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"}}
+    },
+    "stroke": {
+      "type": "object",
+      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "dash": {"type": "array", "items": {"$ref": "#/definitions/pt"}}}
+    },
+
+    "atom": {
+      "description": "원자 — 인디자인 오브젝트 하나. 콘텐츠는 bind 로만 들어온다",
+      "oneOf": [
+        {"$ref": "#/definitions/atom_text"}, {"$ref": "#/definitions/atom_line"}, {"$ref": "#/definitions/atom_rect"},
+        {"$ref": "#/definitions/atom_ellipse"}, {"$ref": "#/definitions/atom_image"}
+      ]
+    },
+    "atom_text": {
+      "type": "object", "required": ["t", "x", "y", "w", "h", "font", "size"],
+      "properties": {
+        "t": {"const": "text"},
+        "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"},
+        "h": {"$ref": "#/definitions/mm", "description": "최소 높이. 글이 길면 아래로 늘어난다"},
+        "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
+        "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
+        "align": {"enum": ["left", "center", "right", "justify"]},
+        "text": {"type": "string", "description": "고정 글 또는 견본 글(bind 가 있으면 견본)"},
+        "bind": {"$ref": "#/definitions/bind"}
+      }
+    },
+    "atom_line": {
+      "type": "object", "required": ["t", "x1", "y1", "x2", "y2"],
+      "properties": {
+        "t": {"const": "line"},
+        "x1": {"$ref": "#/definitions/mm"}, "y1": {"$ref": "#/definitions/mm"}, "x2": {"$ref": "#/definitions/mm"}, "y2": {"$ref": "#/definitions/mm"},
+        "stroke": {"$ref": "#/definitions/stroke"}
+      }
+    },
+    "atom_rect": {
+      "type": "object", "required": ["t", "x", "y", "w", "h"],
+      "properties": {
+        "t": {"const": "rect"},
+        "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"}, "radius": {"$ref": "#/definitions/mm"}
+      }
+    },
+    "atom_ellipse": {
+      "type": "object", "required": ["t", "x", "y", "w", "h"],
+      "properties": {
+        "t": {"const": "ellipse"},
+        "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"}
+      }
+    },
+    "atom_image": {
+      "type": "object", "required": ["t", "x", "y", "w", "h"],
+      "properties": {
+        "t": {"const": "image"},
+        "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+        "src": {"type": "string", "description": "옷의 images 키. 옷마다 파일을 바꿔 끼운다"},
+        "bind": {"$ref": "#/definitions/bind"}
+      }
+    },
+
+    "part": {
+      "description": "부품 — 원자 묶음. 콘텐츠 자리는 원자의 bind 로 열린다. 부품 안에 부품 없음",
+      "type": "object", "required": ["id", "name", "w", "h", "atoms"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm", "description": "최소 높이"},
+        "atoms": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/atom"}},
+        "from": {"type": "string", "description": "분해기가 만들었으면 출처 — 'pdf:<파일>#<면>' · 'image:<파일>' · 'prompt'"}
+      }
+    },
+
+    "field": {
+      "type": "object", "required": ["type"],
+      "properties": {
+        "type": {"enum": ["text", "rich", "number", "choices", "answer", "image", "bool"], "description": "rich = 서식 조각 목록(core/render_vivlio/richtext.py 형식)"},
+        "label": {"type": "string"}, "required": {"type": "boolean"}
+      }
+    },
+
+    "block": {
+      "description": "블록 — 유형 1개. 필드 스키마 + 그리는 부품(모양) 1개 이상. 콘텐츠 연동 단위",
+      "type": "object", "required": ["id", "name", "source", "fields", "variants"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "family": {"type": "string", "pattern": "^B(1[01]|[1-9])$", "description": "블록 지도 갈래 B1~B11 (참고용)"},
+        "source": {"enum": ["content", "system", "none"], "description": "content = 콘텐츠팀이 채움 · system = 책이 채움(쪽번호·러닝헤드·간지) · none = 장식만"},
+        "fields": {"type": "object", "additionalProperties": {"$ref": "#/definitions/field"}},
+        "variants": {
+          "type": "array", "minItems": 1,
+          "items": {"type": "object", "required": ["id", "part"], "properties": {"id": {"$ref": "#/definitions/id"}, "name": {"type": "string"}, "part": {"$ref": "#/definitions/id", "description": "이 모양으로 그릴 부품. 부품의 bind 이름 = 필드 이름"}}}
+        }
+      }
+    },
+
+    "zone": {
+      "description": "칸 — 지면 안 영역. 세트가 흘러 든다",
+      "type": "object", "required": ["id", "x", "y", "w", "h", "flow"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"},
+        "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+        "flow": {"enum": ["fixed", "continue", "columns"], "description": "fixed = 세트 1개 고정(넘치면 줄임) · continue = 넘치면 다음 면 같은 칸으로 · columns = 단 나눔"},
+        "cols": {"type": "integer", "minimum": 2}, "gutter": {"$ref": "#/definitions/mm"},
+        "accepts": {"type": "array", "items": {"type": "string"}, "description": "받는 블록 id 또는 세트 kind. 없으면 전부"}
+      }
+    },
+
+    "page": {
+      "description": "지면 — 칸 배치 + 고정 부품(러닝헤드·쪽번호). PDF 한 면 = 지면 하나",
+      "type": "object", "required": ["id", "name", "zones"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "zones": {"type": "array", "items": {"$ref": "#/definitions/zone"}},
+        "chrome": {"type": "array", "items": {"type": "object", "required": ["part", "x", "y"], "properties": {"part": {"$ref": "#/definitions/id"}, "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}}}},
+        "mirror": {"type": "boolean", "description": "오른쪽 면에서 좌우 반전"},
+        "background": {"$ref": "#/definitions/token"}
+      }
+    },
+
+    "section": {
+      "description": "구간 — 지면 반복 규칙 + 앞 간지. STEP·PART·DAY·회차",
+      "type": "object", "required": ["id", "name", "pages"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "divider": {"$ref": "#/definitions/id", "description": "앞에 오는 간지 지면"},
+        "pages": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["page", "repeat"], "properties": {
+          "page": {"$ref": "#/definitions/id"},
+          "repeat": {"enum": ["once", "each_set"], "description": "each_set = 세트마다 이 지면"},
+          "sets": {"type": "array", "items": {"type": "string"}, "description": "받는 세트 kind"}
+        }}}
+      }
+    },
+
+    "spec": {
+      "description": "규격 — 판형·도련·제본·도수",
+      "type": "object", "required": ["id", "w", "h"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"}, "bleed": {"$ref": "#/definitions/mm"},
+        "binding": {"enum": ["perfect", "saddle", "spiral", "loose"]}, "colors": {"enum": [1, 4]},
+        "page_multiple": {"type": "integer", "description": "면수 배수 규칙(중철 4)"}
+      }
+    },
+
+    "plan": {
+      "description": "틀 — 구간 순서 + 앞뒤 면. 라인업 이름이 붙는 곳",
+      "type": "object", "required": ["id", "name", "spec", "sections"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"}, "spec": {"$ref": "#/definitions/id"},
+        "front": {"type": "array", "items": {"$ref": "#/definitions/id"}},
+        "sections": {"type": "array", "minItems": 1, "items": {"$ref": "#/definitions/section"}},
+        "back": {"type": "array", "items": {"$ref": "#/definitions/id"}}
+      }
+    },
+
+    "skin": {
+      "description": "옷 — 토큰 값 + 블록별 모양 선택 + 이미지 교체. 브랜드·학교·강사",
+      "type": "object", "required": ["id", "name", "tokens"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "tokens": {"type": "object", "properties": {
+          "color": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}},
+          "font": {"type": "object", "additionalProperties": {"type": "string", "description": "서체 family 이름"}}
+        }},
+        "variants": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"}, "description": "블록 id → 모양 id. 없으면 첫 모양"},
+        "images": {"type": "object", "additionalProperties": {"type": "string"}, "description": "image 원자의 src → 파일 경로"}
+      }
+    },
+
+    "set": {
+      "description": "세트 — 콘텐츠가 오는 단위. 함께 오고 함께 놓인다. contents 는 이것만 보낸다",
+      "type": "object", "required": ["kind", "id", "blocks"],
+      "properties": {
+        "kind": {"type": "string", "description": "passage · exam · day …"}, "id": {"type": "string", "description": "지문 번호·회차"},
+        "keep": {"type": "boolean", "description": "면 넘어가며 쪼개지 말 것"},
+        "blocks": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["block", "fields"], "properties": {
+          "block": {"$ref": "#/definitions/id"}, "fields": {"type": "object"}
+        }}}
+      }
+    },
+
+    "decomposed": {
+      "description": "분해기 출력 — PDF 한 면 / 이미지 / 프롬프트 → 원자 목록 + 부품 후보(원자 번호 묶음)",
+      "type": "object", "required": ["from", "atoms"],
+      "properties": {
+        "from": {"type": "string"},
+        "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+        "atoms": {"type": "array", "items": {"$ref": "#/definitions/atom"}},
+        "tokens": {"type": "object", "description": "잰 값 — 토큰 이름 → 색·서체 (옷 후보)"},
+        "parts": {"type": "array", "items": {"type": "object", "required": ["name", "atoms"], "properties": {"name": {"type": "string"}, "atoms": {"type": "array", "items": {"type": "integer"}}, "like": {"$ref": "#/definitions/id", "description": "닮은 기존 부품"}}}}
+      }
+    }
+  },
+
+  "type": "object",
+  "properties": {
+    "parts": {"type": "array", "items": {"$ref": "#/definitions/part"}},
+    "blocks": {"type": "array", "items": {"$ref": "#/definitions/block"}},
+    "pages": {"type": "array", "items": {"$ref": "#/definitions/page"}},
+    "specs": {"type": "array", "items": {"$ref": "#/definitions/spec"}},
+    "plans": {"type": "array", "items": {"$ref": "#/definitions/plan"}},
+    "skins": {"type": "array", "items": {"$ref": "#/definitions/skin"}},
+    "sets": {"type": "array", "items": {"$ref": "#/definitions/set"}}
+  }
+}

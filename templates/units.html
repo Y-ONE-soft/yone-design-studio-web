@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% block title %}단위{% endblock %}
+{% block theme %}light{% endblock %}
+{% block content %}
+<style>
+  .un { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; }
+  .un h3 { font-size: 11.5px; color: var(--mute); margin: 12px 0 6px; font-weight: 600; letter-spacing: .04em; }
+  .un input[type=text], .un input[type=number], .un select, .un textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 6px 8px; font-size: 12.5px; }
+  .un input[type=text], .un select, .un textarea { width: 100%; }
+  .btn { display: inline-block; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
+  .btn:hover { background: #6a1fd0; }
+  .btn.sub { background: #ecebf3; color: #1f2330; font-weight: 500; }
+  .btn.sub:hover { background: #e2e0ec; }
+  .btn.sm { padding: 4px 9px; font-size: 12px; }
+  .btn.danger { background: #fff; color: #c0263a; border: 1px solid #f0c4cb; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+  .note { color: var(--mute); font-size: 11.5px; line-height: 1.5; margin: 4px 0; }
+  .err { color: #c0263a; font-size: 12px; margin-top: 6px; white-space: pre-wrap; }
+  .tabs { display: flex; gap: 3px; }
+  .tabs button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: #3c4043; }
+  .tabs button.on { background: var(--pp-bg); border-color: var(--pp); color: var(--pp); font-weight: 600; }
+  details > summary { list-style: none; cursor: pointer; padding: 7px 4px; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; border-top: 1px solid var(--line); }
+  details > summary::-webkit-details-marker { display: none; }
+  summary small { font-weight: 400; color: var(--mute); margin-left: auto; font-size: 11px; }
+  summary .add { margin-left: 6px; font-weight: 400; color: var(--pp); font-size: 11.5px; }
+
+  .left { width: 320px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .left .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
+  .left .body { flex: 1; overflow: auto; padding: 4px 12px 16px; }
+  .item { border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; margin: 5px 0; background: #fff; cursor: pointer; }
+  .item:hover { border-color: var(--pp); }
+  .item.on { border-color: var(--pp); background: var(--pp-bg); }
+  .item .nm { font-weight: 600; font-size: 12.5px; }
+  .item .ds { color: var(--mute); font-size: 11px; margin-top: 1px; }
+  .item code { font-size: 10.5px; color: #7a6aa8; }
+  .cand { border: 1px solid var(--line); border-radius: 9px; padding: 5px 8px; margin: 5px 0; background: #fff; }
+  .cand.on { border-color: var(--pp); background: var(--pp-bg); }
+  .cand label { display: flex; gap: 6px; align-items: center; font-size: 12.5px; cursor: pointer; }
+  .cand .atoms { margin: 4px 0 0 18px; display: none; }
+  .cand.open .atoms { display: block; }
+  .cand .atoms label { font-size: 11.5px; color: #3c4043; }
+  .cand .atoms code { color: #7a6aa8; font-size: 10.5px; }
+
+  .mid { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .mid .bar { display: flex; gap: 8px; align-items: center; padding: 8px 14px; background: #fff; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .mid .bar label { font-size: 12px; color: var(--mute); }
+  .mid .bar select { width: auto; }
+  .mid .view { flex: 1; overflow: auto; padding: 16px; }
+  .sheet { background: #fff; box-shadow: 0 2px 12px rgba(30,20,60,.14); margin: 0 auto 18px; position: relative; max-width: 760px; }
+  .sheet svg { display: block; width: 100%; height: auto; }
+  .sheet .lb { position: absolute; left: 0; top: -16px; font-size: 11px; color: var(--mute); }
+  .sheet .hl { position: absolute; border: 2px solid var(--pp); background: rgba(125,42,232,.08); pointer-events: none; }
+  .warn { background: #fff7e6; border: 1px solid #f0d9a8; color: #6b4d00; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin-bottom: 10px; white-space: pre-wrap; }
+  .empty { color: var(--mute); text-align: center; padding: 60px 0; }
+
+  .right { width: 400px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .right .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .right .hd small { color: var(--mute); font-weight: 400; margin-left: auto; }
+  .right textarea { flex: 1; font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; line-height: 1.45; border: 0; border-radius: 0; resize: none; padding: 10px 12px; }
+  .right .ft { padding: 8px 12px; border-top: 1px solid var(--line); }
+  .kbd { font-family: ui-monospace, Menlo, monospace; font-size: 11px; background: #f1f0f6; border-radius: 4px; padding: 1px 4px; }
+</style>
+
+<div class="un">
+  <!-- ── 왼쪽: 분해 · 라이브러리 ── -->
+  <div class="left">
+    <div class="hd">
+      <div class="tabs"><button class="on" data-tab="lib">라이브러리</button><button data-tab="dec">분해 (PDF·그림·프롬프트)</button></div>
+    </div>
+    <div class="body">
+      <div id="tab-lib">
+        <div class="note">원자 → 부품 → 블록 → 지면 → 틀. 옷은 색·서체·모양 선택, 세트는 콘텐츠. 항목을 누르면 가운데에 그려지고 오른쪽에서 JSON 을 고친다.</div>
+        <div id="lib"></div>
+      </div>
+      <div id="tab-dec" style="display:none">
+        <h3>1. 올리기</h3>
+        <div class="row"><input type="file" id="file" accept=".pdf,.png,.jpg,.jpeg,.webp"></div>
+        <div class="row" id="uprow" style="display:none">
+          <span id="upname" class="note"></span>
+          <label class="note">면 <input type="number" id="upage" value="1" min="1" style="width:64px"></label>
+          <button class="btn sm" id="btn-dec">분해</button>
+        </div>
+        <h3>또는 프롬프트</h3>
+        <textarea id="prompt" rows="3" placeholder="예: 어법 O/X 줄 — 번호, 문장, 오른쪽에 O X 동그라미, 아래 점선. 폭 170mm"></textarea>
+        <div class="row"><button class="btn sm sub" id="btn-dec-prompt">프롬프트로 분해</button><span class="note">클로드가 그린다 (키 필요)</span></div>
+        <div id="decerr" class="err"></div>
+        <div id="decout" style="display:none">
+          <h3>2. 후보 고르기 <small id="decstat"></small></h3>
+          <div id="cands"></div>
+          <h3>3. 부품으로 저장</h3>
+          <div class="row"><input type="text" id="pid" placeholder="id (영문 소문자·숫자·_)" style="width:48%"><input type="text" id="pname" placeholder="이름" style="width:48%"></div>
+          <div class="row"><button class="btn sm" id="btn-save-part">고른 원자를 부품으로</button><span class="note" id="selcount"></span></div>
+          <div class="note">잰 색·서체는 옷 <code id="decskin"></code> 에 저장됐다. 부품은 <code>$c1</code> <code>$f1</code> 같은 토큰을 쓴다 — 다른 옷을 입히려면 그 옷에 같은 이름의 토큰을 적는다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 가운데: 미리보기 ── -->
+  <div class="mid">
+    <div class="bar">
+      <label>옷</label><select id="skin"></select>
+      <label>세트</label><span id="setpick"></span>
+      <button class="btn sm sub" id="btn-refresh">다시 그리기</button>
+      <span class="note" id="midinfo"></span>
+    </div>
+    <div class="view" id="view"><div class="empty">왼쪽에서 항목을 고르거나 PDF 를 분해해 보자</div></div>
+  </div>
+
+  <!-- ── 오른쪽: JSON ── -->
+  <div class="right">
+    <div class="hd"><span id="edkind">—</span><span id="edid" class="kbd"></span><small id="edhint"></small></div>
+    <textarea id="ed" spellcheck="false" placeholder="항목을 고르면 JSON 이 여기 온다"></textarea>
+    <div class="ft">
+      <div class="row">
+        <button class="btn sm" id="btn-save">저장</button>
+        <button class="btn sm sub" id="btn-preview">이대로 그려보기</button>
+        <button class="btn sm sub" id="btn-block" style="display:none">이 부품으로 블록 만들기</button>
+        <button class="btn sm danger" id="btn-del" style="margin-left:auto">삭제</button>
+      </div>
+      <div id="ederr" class="err"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const LIB = {{ library | tojson }};
+const KINDS = {{ kinds | tojson }};
+const KN = {parts: "부품", blocks: "블록", pages: "지면", plans: "틀", skins: "옷", specs: "규격", sets: "세트"};
+const NEW = {
+  parts: {id: "new_part", name: "새 부품", w: 170, h: 10, atoms: [
+    {t: "text", x: 0, y: 0, w: 8, h: 5, font: "$num", size: 8.5, color: "$sel", bind: "no", text: "1"},
+    {t: "text", x: 9, y: 0, w: 160, h: 5, font: "$body", size: 8, color: "$ink", bind: "sentence"},
+    {t: "line", x1: 9, y1: 8, x2: 170, y2: 8, stroke: {w: 0.3, color: "$rule"}}]},
+  blocks: {id: "new_block", family: "B8", name: "새 블록", source: "content", fields: {no: {type: "number"}, sentence: {type: "rich"}}, variants: [{id: "v1", name: "기본", part: "new_part"}]},
+  pages: {id: "new_page", name: "새 지면", mirror: true, zones: [{id: "main", x: 20, y: 44, w: 170, h: 210, flow: "continue"}], chrome: [{part: "running_head", x: 20, y: 14}, {part: "folio", x: 20, y: 278}]},
+  plans: {id: "new_plan", name: "새 틀", spec: "a4", front: ["cover"], sections: [{id: "s1", name: "STEP 1", divider: "divider", pages: [{page: "sheet", repeat: "each_set", sets: ["passage"]}]}], back: []},
+  skins: {id: "new_skin", name: "새 옷", tokens: {color: {s1: "#667fb4", sel: "#00559f", pnum: "#af9d81", ink: "#231f20", mute: "#58595b", rule: "#b8b8b8", cream: "#f6f1e6", sky: "#e4eef6", white: "#ffffff", s2: "#cba56f", s3: "#bc736c"}, font: {body: "Noto Sans CJK KR", disp: "Elice DX Neolli", label: "Gmarket Sans", num: "URW DIN"}}, variants: {}, images: {}},
+  specs: {id: "new_spec", w: 210, h: 297, bleed: 3, binding: "perfect", colors: 4},
+  sets: {kind: "passage", id: "99", blocks: [{block: "prompt", fields: {no: 1, prompt: "다음 글의 제목으로 가장 적절한 것은?"}}, {block: "choices", fields: {choices: ["a", "b", "c", "d", "e"]}}]},
+};
+let cur = {kind: null, id: null};       // 오른쪽에 열린 것
+let dec = null;                          // 분해 결과
+let upload = null;
+const $ = (s) => document.querySelector(s);
+const api = async (url, body, method) => {
+  const r = await fetch(url, {method: method || (body ? "POST" : "GET"), headers: {"Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json().catch(() => ({error: r.status + " " + r.statusText}));
+  if (!r.ok && !j.error) j.error = r.status + " " + r.statusText;
+  return j;
+};
+
+// ── 라이브러리 ──
+function label(kind, it) {
+  if (kind === "sets") return {nm: `${it.kind} · ${it.id}`, ds: (it.blocks || []).map(b => b.block).join(" + ")};
+  if (kind === "parts") return {nm: it.name, ds: `${it.w}×${it.h}mm · 원자 ${(it.atoms || []).length}` + (it.from ? " · " + it.from : "")};
+  if (kind === "blocks") return {nm: it.name, ds: `${it.family || ""} ${it.source} · 필드 ${Object.keys(it.fields || {}).join(", ") || "없음"} · 모양 ${(it.variants || []).length}`};
+  if (kind === "pages") return {nm: it.name, ds: `칸 ${(it.zones || []).map(z => z.id + "(" + z.flow + ")").join(", ") || "없음"}`};
+  if (kind === "plans") return {nm: it.name, ds: `${it.spec} · 구간 ${(it.sections || []).map(s => s.name).join(" → ")}`};
+  if (kind === "skins") return {nm: it.name, ds: `색 ${Object.keys((it.tokens || {}).color || {}).length} · 서체 ${Object.keys((it.tokens || {}).font || {}).length}`};
+  if (kind === "specs") return {nm: it.id, ds: `${it.w}×${it.h}mm 도련 ${it.bleed || 0} · ${it.binding || ""}`};
+  return {nm: it.id, ds: ""};
+}
+function drawLib() {
+  const box = $("#lib"); box.innerHTML = "";
+  for (const k of KINDS) {
+    const d = document.createElement("details"); d.open = (k === "parts" || k === "blocks");
+    d.innerHTML = `<summary>${KN[k]} <span class="add" data-new="${k}">+ 새로</span><small>${LIB[k].length}</small></summary>`;
+    for (const it of LIB[k]) {
+      const l = label(k, it);
+      const el = document.createElement("div"); el.className = "item" + (cur.kind === k && cur.id === it.id ? " on" : "");
+      el.innerHTML = `<div class="nm">${l.nm} <code>${it.id}</code></div><div class="ds">${l.ds}</div>`;
+      el.onclick = () => open(k, it);
+      d.appendChild(el);
+    }
+    box.appendChild(d);
+  }
+  box.querySelectorAll("[data-new]").forEach(a => a.onclick = (e) => { e.preventDefault(); e.stopPropagation(); open(a.dataset.new, JSON.parse(JSON.stringify(NEW[a.dataset.new])), true); });
+  const sk = $("#skin"); const v = sk.value;
+  sk.innerHTML = LIB.skins.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  if (v && LIB.skins.some(s => s.id === v)) sk.value = v;
+  const sp = $("#setpick");
+  sp.innerHTML = LIB.sets.map(s => `<label style="margin-right:6px"><input type="checkbox" value="${s.id}" checked> ${s.id}</label>`).join("");
+}
+function reload() { return api("/api/units/library").then(j => { for (const k of KINDS) LIB[k] = j[k] || []; drawLib(); }); }
+
+// ── 열기 · 편집 ──
+function open(kind, it, isNew) {
+  cur = {kind, id: isNew ? null : it.id};
+  $("#edkind").textContent = KN[kind]; $("#edid").textContent = it.id || "";
+  $("#edhint").textContent = isNew ? "새 항목 — 저장하면 목록에 든다" : "";
+  $("#ed").value = JSON.stringify(it, null, 1);
+  $("#ederr").textContent = "";
+  $("#btn-block").style.display = kind === "parts" ? "" : "none";
+  drawLib();
+  preview(kind, it);
+}
+function edited() { try { return JSON.parse($("#ed").value); } catch (e) { $("#ederr").textContent = "JSON 아님: " + e.message; return null; } }
+$("#btn-save").onclick = async () => {
+  const it = edited(); if (!it || !cur.kind) return;
+  const j = await api("/api/units/" + cur.kind, it);
+  if (j.error) { $("#ederr").textContent = j.error; return; }
+  $("#ederr").textContent = ""; cur.id = it.id; $("#edid").textContent = it.id; $("#edhint").textContent = "저장됨";
+  await reload(); preview(cur.kind, it);
+};
+$("#btn-preview").onclick = () => { const it = edited(); if (it && cur.kind) preview(cur.kind, it); };
+$("#btn-refresh").onclick = () => { const it = edited(); if (it && cur.kind) preview(cur.kind, it); };
+$("#skin").onchange = $("#btn-refresh").onclick;
+$("#setpick").onchange = $("#btn-refresh").onclick;
+$("#btn-del").onclick = async () => {
+  if (!cur.kind || !cur.id) return;
+  if (!confirm(`${KN[cur.kind]} ${cur.id} 를 지울까?`)) return;
+  const j = await api("/api/units/" + cur.kind, {id: cur.id}, "DELETE");
+  if (j.error) { $("#ederr").textContent = j.error; return; }
+  cur = {kind: null, id: null}; $("#ed").value = ""; $("#edkind").textContent = "—"; $("#edid").textContent = "";
+  $("#view").innerHTML = '<div class="empty">지웠다</div>'; await reload();
+};
+$("#btn-block").onclick = () => {
+  const p = edited(); if (!p) return;
+  const fields = {};
+  for (const a of p.atoms || []) if (a.bind && !a.bind.startsWith("sys.")) fields[a.bind] = {type: a.bind === "no" ? "number" : (a.bind === "choices" ? "choices" : (a.bind === "answer" ? "answer" : "rich"))};
+  const b = {id: p.id.replace(/_row$|_box$/, ""), family: "B8", name: p.name, source: Object.keys(fields).length ? "content" : "system", fields, variants: [{id: "v1", name: "기본", part: p.id}]};
+  open("blocks", b, true);
+};
+
+// ── 미리보기 ──
+function mount(svgs, warnings, hl) {
+  const v = $("#view"); v.innerHTML = "";
+  if (warnings && warnings.length) { const w = document.createElement("div"); w.className = "warn"; w.textContent = warnings.join("\n"); v.appendChild(w); }
+  if (!svgs.length) { v.innerHTML += '<div class="empty">그릴 것이 없다</div>'; return; }
+  for (const s of svgs) {
+    const d = document.createElement("div"); d.className = "sheet"; d.style.marginTop = "22px";
+    d.innerHTML = `<div class="lb">${s.label || ""}${s.page_no ? " · " + s.page_no + "쪽" : ""}</div>` + s.svg;
+    const svg = d.querySelector("svg"); if (svg) { svg.removeAttribute("width"); svg.removeAttribute("height"); }
+    if (hl && svg) { const vb = svg.viewBox.baseVal; const h = document.createElement("div"); h.className = "hl";
+      h.style.left = (hl[0] / vb.width * 100) + "%"; h.style.top = (hl[1] / vb.height * 100) + "%"; h.style.width = (hl[2] / vb.width * 100) + "%"; h.style.height = (hl[3] / vb.height * 100) + "%"; d.appendChild(h); }
+    v.appendChild(d);
+  }
+}
+async function preview(kind, it) {
+  const sets = [...$("#setpick").querySelectorAll("input:checked")].map(i => i.value);
+  $("#midinfo").textContent = "그리는 중…";
+  const j = await api("/api/units/preview", {kind, item: it, skin: $("#skin").value, sets});
+  $("#midinfo").textContent = "";
+  if (j.error) { mount([], [j.error].concat(j.warnings || [])); return; }
+  mount(j.svgs, j.warnings);
+  $("#midinfo").textContent = `${j.svgs.length}장`;
+}
+
+// ── 분해 ──
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+  $("#tab-lib").style.display = b.dataset.tab === "lib" ? "" : "none"; $("#tab-dec").style.display = b.dataset.tab === "dec" ? "" : "none";
+});
+$("#file").onchange = async () => {
+  const f = $("#file").files[0]; if (!f) return;
+  const fd = new FormData(); fd.append("file", f);
+  const r = await fetch("/api/units/upload", {method: "POST", body: fd}); const j = await r.json();
+  if (j.error) { $("#decerr").textContent = j.error; return; }
+  upload = j; $("#uprow").style.display = ""; $("#upname").textContent = `${j.name} · ${j.pages}면`;
+  $("#upage").max = j.pages; $("#upage").value = 1; $("#decerr").textContent = "";
+  if (j.kind === "pdf") $("#view").innerHTML = `<div class="sheet"><div class="lb">올린 PDF · 1쪽</div><img src="/api/units/upload/${j.id}/page/1.png?dpi=70" style="width:100%;display:block"></div>`;
+};
+$("#upage").onchange = () => { if (upload && upload.kind === "pdf") $("#view").innerHTML = `<div class="sheet"><div class="lb">올린 PDF · ${$("#upage").value}쪽</div><img src="/api/units/upload/${upload.id}/page/${$("#upage").value}.png?dpi=70" style="width:100%;display:block"></div>`; };
+async function runDec(body) {
+  $("#decerr").textContent = ""; $("#decout").style.display = "none"; $("#midinfo").textContent = "분해 중…";
+  const j = await api("/api/units/decompose", body);
+  $("#midinfo").textContent = "";
+  if (j.error) { $("#decerr").textContent = j.error; return; }
+  dec = j; drawDec();
+}
+$("#btn-dec").onclick = () => { if (upload) runDec({upload: upload.id, page: parseInt($("#upage").value || "1"), prompt: $("#prompt").value}); };
+$("#btn-dec-prompt").onclick = () => { const p = $("#prompt").value.trim(); if (p) runDec({prompt: p}); };
+function atomLabel(a, i) {
+  const t = a.t === "text" ? `"${(a.text || "").slice(0, 26)}"${a.bind ? " ⇐ " + a.bind : ""}` : (a.t === "line" ? `${a.x1},${a.y1}→${a.x2},${a.y2}` : `${a.w}×${a.h} @${a.x},${a.y}`);
+  return `<code>#${i} ${a.t}</code> ${t}`;
+}
+function drawDec() {
+  $("#decout").style.display = ""; $("#decskin").textContent = dec.skin;
+  $("#decstat").textContent = `원자 ${dec.atoms.length} · 후보 ${dec.parts.length}${dec.note ? " · " + dec.note : ""}`;
+  const c = $("#cands"); c.innerHTML = "";
+  dec.parts.forEach((p, pi) => {
+    const d = document.createElement("div"); d.className = "cand";
+    d.innerHTML = `<label><input type="checkbox" data-cand="${pi}"> <b>${p.name}</b> <small style="color:#888;margin-left:auto">${p.atoms.length}</small> <span style="cursor:pointer;color:#7a6aa8;font-size:11px" data-open>펼치기</span></label>
+      <div class="atoms">${p.atoms.map(i => `<label><input type="checkbox" data-atom="${i}"> ${atomLabel(dec.atoms[i], i)}</label>`).join("")}</div>`;
+    d.querySelector("[data-open]").onclick = (e) => { e.preventDefault(); d.classList.toggle("open"); };
+    d.querySelector("[data-cand]").onchange = (e) => { d.querySelectorAll("[data-atom]").forEach(x => x.checked = e.target.checked); d.classList.toggle("on", e.target.checked); selChanged(); };
+    d.querySelectorAll("[data-atom]").forEach(x => x.onchange = selChanged);
+    d.querySelector("b").onclick = (e) => { e.preventDefault(); mount([{svg: dec.svg, label: dec.from}], dec.warnings, p.box); };
+    c.appendChild(d);
+  });
+  mount([{svg: dec.svg, label: dec.from + " — 원자 그대로 다시 그린 것 (오른쪽 원본과 비교)"}], dec.warnings);
+  if (upload && upload.kind === "pdf") $("#view").innerHTML += `<div class="sheet"><div class="lb">원본 PDF 면</div><img src="/api/units/upload/${upload.id}/page/${$("#upage").value}.png?dpi=70" style="width:100%;display:block"></div>`;
+  $("#pid").value = "part_" + (LIB.parts.length + 1); $("#pname").value = "";
+  selChanged();
+}
+function selected() { return [...$("#cands").querySelectorAll("[data-atom]:checked")].map(x => parseInt(x.dataset.atom)); }
+async function selChanged() {
+  const idx = [...new Set(selected())]; $("#selcount").textContent = idx.length ? `원자 ${idx.length}개 고름` : "";
+  if (!idx.length) return;
+  // 고른 원자만 부품으로 미리 그려 본다 (저장 전)
+  const j = await api("/api/units/part_from_preview", {dec: {atoms: dec.atoms, from: dec.from}, atoms: idx, skin_item: {id: dec.skin, tokens: dec.tokens}});
+  if (!j.error) { const v = $("#view"); const old = v.querySelector(".sheet.sel"); if (old) old.remove();
+    const d = document.createElement("div"); d.className = "sheet sel"; d.style.marginTop = "22px"; d.innerHTML = `<div class="lb">고른 원자 → 부품 (${j.item.w}×${j.item.h}mm)</div>` + j.svg;
+    const svg = d.querySelector("svg"); svg.removeAttribute("width"); svg.removeAttribute("height"); v.insertBefore(d, v.firstChild); }
+}
+$("#btn-save-part").onclick = async () => {
+  const idx = [...new Set(selected())]; if (!idx.length) { $("#decerr").textContent = "원자를 고르지 않았다"; return; }
+  const j = await api("/api/units/part_from", {dec: {atoms: dec.atoms, from: dec.from}, atoms: idx, id: $("#pid").value.trim(), name: $("#pname").value.trim() || $("#pid").value.trim()});
+  if (j.error) { $("#decerr").textContent = j.error; return; }
+  $("#decerr").textContent = ""; await reload();
+  $("#skin").value = dec.skin;
+  document.querySelector('.tabs button[data-tab="lib"]').click();
+  open("parts", j.item);
+};
+
+drawLib();
+// 깊은 링크 — /units#plans/workbook_mini
+(() => { const m = location.hash.match(/^#(\w+)\/(.+)$/); if (!m) return; const it = (LIB[m[1]] || []).find(x => x.id === decodeURIComponent(m[2])); if (it) open(m[1], it); })();
+</script>
+{% endblock %}
