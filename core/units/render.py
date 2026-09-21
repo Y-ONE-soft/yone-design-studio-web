@@ -338,9 +338,39 @@ def _accepts(z, it):
     return not acc or it["block"] in acc or (it["set_kind"] and it["set_kind"] in acc)
 
 
+def _fill_items(pg, sample_set):
+    """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장."""
+    queue = {}
+    for b in sample_set.get("blocks") or []:
+        queue.setdefault(b.get("block"), []).append(b.get("fields") or {})
+    for it in pg.get("items") or []:
+        q = queue.get(it.get("block"))
+        if q and not it.get("fields"):
+            it["fields"] = q.pop(0) if len(q) > 1 else q[0]
+
+
 def page_svgs(ctx, page, sets, spec, pno=1, label=""):
-    """지면 하나에 세트들을 흘린다 → [{svg, label, page_no}]. 넘치면 같은 지면을 새 면으로."""
+    """지면 하나에 세트들을 흘린다 → [{svg, label, page_no}]. 넘치면 같은 지면을 새 면으로.
+
+    캔버스에서 만든 지면(콘텐츠 블록 자리 = items)은 **슬롯 모드**: 세트마다 한 면, 자리에 값을 끼운다.
+    글이 길어 자리가 자라면 아래 요소를 민다(_page_wrap). 칸(zones) 흐름은 옛 지면용.
+    """
     W, H = float(spec["w"]), float(spec["h"])
+    slots = [it for it in page.get("items") or [] if it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"]
+    if slots:
+        out = []
+        for s in (sets or [None]):
+            pg = json.loads(json.dumps(page))
+            pg["_noguides"] = True
+            if s is not None and not page.get("_canvas"):
+                _fill_items(pg, s)
+                pg["_canvas"] = True
+            mirror = bool(pg.get("mirror")) and pno % 2 == 0
+            zones = _zones(pg, W, mirror)
+            out.append({"svg": _page_wrap(ctx, pg, zones, [], W, H, pno, mirror),
+                        "label": label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else ""), "page_no": pno})
+            pno += 1
+        return out
     items = _items(ctx, sets)
     out = []
     idx = 0
@@ -405,16 +435,29 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     # 콘텐츠 블록 자리는 캔버스에서만 그린다(실제 콘텐츠는 세트로 흘러 든다). 머리말·쪽번호 같은
     # system 블록과 부품은 언제나 그린다.
     canvas = bool(page.get("_canvas"))
+    placed = []                                   # (fi, it, frag, w, 실제 높이, 설계 높이)
     for fi, it in enumerate(page.get("items") or []):
         blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
         if not canvas and blk is not None and blk.get("source") == "content":
             continue
-        frag, part, w = _item_frag(ctx, it)
+        frag, part, w, h = _item_frag(ctx, it)
         if frag is None:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
             continue
+        placed.append((fi, it, frag, w, h, float(part.get("h") or h)))
+    # 흐름 — 글이 길어 자리가 자라면(실제 높이 > 설계 높이) **그 아래, 가로로 겹치는** 요소를 그만큼 민다.
+    # 부품 안 원자와 같은 규칙. 머리말·쪽번호·간지(system 블록)는 자리가 고정이라 밀지 않는다.
+    grown = [(fi, it["x"], it["x"] + w, it["y"] + h0, h - h0) for fi, it, _f, w, h, h0 in placed if h > h0 + 0.01]
+    for fi, it, frag, w, h, h0 in placed:
+        blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
+        fixed = blk is not None and blk.get("source") == "system"
+        dy = 0.0 if fixed else sum(d for gi, gx0, gx1, gb, d in grown
+                                   if gi != fi and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + w > gx0 + 0.01)
+        y = it["y"] + dy
+        if y + h > H + 0.01:
+            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({y + h:.0f}mm > {H:.0f}mm) — 다음 면으로 흘리기는 아직")
         x = W - it["x"] - w if mirror else it["x"]
-        chrome.append(f'<g transform="translate({x:.3f},{it["y"]:.3f})" data-fi="{fi}">{frag}</g>')
+        chrome.append(f'<g transform="translate({x:.3f},{y:.3f})" data-fi="{fi}" data-dy="{dy:.2f}">{frag}</g>')
     ctx.sys = old
     guides = "" if not zones or page.get("_noguides") else "".join(
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
@@ -434,28 +477,28 @@ def atom_part(atom):
 
 
 def _item_frag(ctx, it):
-    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품."""
+    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭, 실제 높이). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품."""
     if it.get("atom"):
         part = atom_part(it["atom"])
         w = float(it.get("w") or part["w"])
-        frag, _h = part_svg(ctx, part, {}, width=w)
-        return frag, part, w
+        frag, h = part_svg(ctx, part, {}, width=w)
+        return frag, part, w, h
     if it.get("block"):
         blk = ctx.blocks.get(it["block"])
         v = variant_of(ctx, blk) if blk else None
         part = ctx.parts.get(v.get("part")) if v else None
         if not part:
-            return None, None, 0
+            return None, None, 0, 0
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
-        frag, _h = part_svg(ctx, part, sample.fill(blk, it.get("fields")), types, width=w)
-        return frag, part, w
+        frag, h = part_svg(ctx, part, sample.fill(blk, it.get("fields")), types, width=w)
+        return frag, part, w, h
     part = ctx.parts.get(it.get("part"))
     if not part:
-        return None, None, 0
+        return None, None, 0, 0
     w = float(it.get("w") or part.get("w") or 0)
-    frag, _h = part_svg(ctx, part, {}, width=w)
-    return frag, part, w
+    frag, h = part_svg(ctx, part, {}, width=w)
+    return frag, part, w, h
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
@@ -471,13 +514,7 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
     pg["_noguides"] = True                     # 캔버스는 자유 배치 — 칸 안내선은 안 보인다
     pg["_canvas"] = True                       # 콘텐츠 블록 자리(items)도 견본으로 그린다
     if sample_set:
-        queue = {}
-        for b in sample_set.get("blocks") or []:
-            queue.setdefault(b.get("block"), []).append(b.get("fields") or {})
-        for it in pg.get("items") or []:
-            q = queue.get(it.get("block"))
-            if q and not it.get("fields"):
-                it["fields"] = q.pop(0) if len(q) > 1 else q[0]
+        _fill_items(pg, sample_set)
     sets = []
     for z in pg.get("zones") or []:
         kind = "_canvas:" + z["id"]

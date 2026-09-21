@@ -73,7 +73,7 @@ def test_plan_pages_and_columns(lib):
     assert [p["label"] for p in pages] == ["앞", "STEP 2 간지", "STEP 2 · 20", "STEP 2 · 21"]
     assert pages[2]["page_no"] == 3 and ">3<" in pages[2]["svg"]          # 쪽번호가 이어진다
     exam = render.plan_svgs(ctx, store.by_id(lib["plans"])["exam_sheet"], lib["sets"], lib)
-    assert len(exam) == 1 and exam[0]["svg"].count('data-set="') == 15   # 두 세트 15블록이 2단 한 면에 다 들어간다
+    assert len(exam) == 2 and "creativity" in exam[0]["svg"] and "cars" in exam[1]["svg"]   # 슬롯 모드: 세트마다 한 면, 값이 자리에 들어간다
     assert not ctx.warnings, ctx.warnings
 
 
@@ -110,7 +110,7 @@ def test_decompose_pdf(tmp_path):
 
 
 def test_free_items_canvas_vs_flow(lib):
-    """자유 배치 요소: 캔버스 모드엔 콘텐츠 블록도 견본으로, 책 흐름 모드엔 system 블록(머리말·쪽번호)만."""
+    """자유 배치 요소: 캔버스는 견본 값, 책(세트)에선 슬롯에 세트 값, 세트가 없으면 system 블록만."""
     from core.units import render, store
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
     pg = store.by_id(lib["pages"])["pair"]
@@ -118,5 +118,7 @@ def test_free_items_canvas_vs_flow(lib):
     canvas = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)[0]["svg"]
     flow = render.page_svgs(ctx, pg, lib["sets"][:1], render.DEFAULT_SPEC)[0]["svg"]
     assert canvas.count("data-fi=") == len(pg["items"]) and 'class="zone"' not in canvas
-    assert flow.count("data-fi=") == 2 and 'data-set="20"' in flow            # 머리말·쪽번호 + 세트가 칸에 흐른다
+    assert flow.count("data-fi=") == len(pg["items"]) and "creativity" in flow   # 세트 20의 값이 자리에 끼워진다
+    empty = render.page_svgs(ctx, pg, [], render.DEFAULT_SPEC)[0]["svg"]
+    assert empty.count("data-fi=") == 2                                        # 세트가 없으면 머리말·쪽번호만
     assert not ctx.warnings, ctx.warnings

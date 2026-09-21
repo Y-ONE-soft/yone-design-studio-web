@@ -120,12 +120,14 @@
   <!-- 왼쪽: 단위 탭 -->
   <div class="left">
     <div class="utabs">
-      <button data-tab="blocks" class="on"><span class="ic">🧩</span>블록<span class="lv">③ 콘텐츠 자리</span></button>
-      <button data-tab="parts"><span class="ic">🔩</span>부품<span class="lv">② 원자 묶음</span></button>
-      <button data-tab="atoms"><span class="ic">⚛</span>원자<span class="lv">① 오브젝트</span></button>
+      <button data-tab="atoms"><span class="ic">⚛</span>① 원자<span class="lv">오브젝트</span></button>
+      <button data-tab="parts"><span class="ic">🔩</span>② 부품<span class="lv">그룹</span></button>
+      <button data-tab="blocks"><span class="ic">🧩</span>③ 블록<span class="lv">콘텐츠 자리</span></button>
+      <button data-tab="pages"><span class="ic">📄</span>④ 지면<span class="lv">페이지</span></button>
+      <button data-tab="plans"><span class="ic">📚</span>⑤ 틀<span class="lv">책 구성</span></button>
+      <div style="flex:1"></div>
       <button data-tab="skins"><span class="ic">👕</span>옷<span class="lv">색·서체·모양</span></button>
-      <button data-tab="sets"><span class="ic">📄</span>세트<span class="lv">콘텐츠</span></button>
-      <button data-tab="plans"><span class="ic">📚</span>틀<span class="lv">책 구성</span></button>
+      <button data-tab="sets"><span class="ic">📝</span>세트<span class="lv">콘텐츠(원고)</span></button>
     </div>
     <div class="upanel">
       <div class="hd" id="phd"></div>
@@ -154,7 +156,7 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span>④ 지면 — ←/→ 이동 · 썸네일 끌어 순서 · Shift+클릭으로 여러 원자 고르기</span>
+        <span>④ 지면 띠 — ←/→ 이동 · 썸네일 끌어 순서 · Shift+클릭으로 여러 원자 고르기</span>
         <span class="cnt" id="cnt"></span>
         <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
       </div>
@@ -303,9 +305,9 @@ function wire() {
       const i = +g.dataset.fi;
       if (e.shiftKey) { if (sel != null) sels.add(sel); if (sels.has(i)) sels.delete(i); else sels.add(i); sel = i; markSels(); selbox(); side(); return; }
       sel = i; sels.clear(); markSels(); selbox(); side();
-      const it = page.items[i]; const st = {x: e.clientX, y: e.clientY, ox: it.x, oy: it.y, moved: false};
+      const it = page.items[i]; const st = {x: e.clientX, y: e.clientY, ox: it.x, oy: it.y, moved: false, push: +(g.dataset.dy || 0)};
       const mv = (ev) => { const dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale; if (!st.moved && Math.abs(dx) + Math.abs(dy) < 0.4) return;
-        st.moved = true; it.x = snap(st.ox + dx); it.y = snap(st.oy + dy); g.setAttribute("transform", `translate(${it.x},${it.y})`); selbox(); };
+        st.moved = true; it.x = snap(st.ox + dx); it.y = snap(st.oy + dy); g.setAttribute("transform", `translate(${it.x},${it.y + st.push})`); selbox(); };
       const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); if (st.moved) { save(); side(); } };
       window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
     });
@@ -487,13 +489,39 @@ function panel() {
     $("#sk-dup").onclick = async () => { const name = prompt("새 옷 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
+  } else if (tab === "pages") {
+    hd.innerHTML = `<b>④ 지면</b> <span class="tag">페이지</span><div class="note">요소를 놓은 면. 인디자인의 페이지. 아래 띠와 같다 — 「+」로 지금 지면 뒤에 끼운다.</div>`;
+    LIB.pages.forEach((p, i) => { const d = document.createElement("div"); d.className = "li" + (page && p.id === page.id ? " on" : "");
+      const its = p.items || []; const n = {atom: 0, part: 0, block: 0}; its.forEach(it => n[unitOf(it)]++);
+      d.innerHTML = `<b>${i + 1}. ${esc(p.name || p.id)}</b><div class="ds">${p.spec || "a4"} · <span class="tag a">①</span>${n.atom} <span class="tag p">②</span>${n.part} <span class="tag b">③</span>${n.block}</div>`;
+      d.onclick = () => open(p); body.appendChild(d); });
+    body.insertAdjacentHTML("beforeend", `<h3>흐름</h3><div class="note">블록 자리에 긴 글이 들어오면 자리가 자라고 <b>그 아래 요소가 밀린다</b>. 머리말·쪽번호는 안 밀린다. 면 아래로 넘치면 경고(다음 면으로 흘리기는 아직).</div>
+      <h3>책이 될 때</h3><div class="note">이 지면을 틀에 「세트마다」로 넣으면 세트(지문) 하나에 한 면씩, 블록 자리에 그 세트의 값이 들어간다. 세트가 없는 면(표지·간지)은 머리말·쪽번호만 그린다.</div>`);
   } else if (tab === "sets") {
     hd.innerHTML = `<b>📄 세트</b> <span class="tag">콘텐츠</span><div class="note">콘텐츠팀이 보내는 단위 — 지문 하나 + 딸린 블록 값. 고르면 지면의 블록 자리에 그 값이 들어간다.</div>`;
     const none = document.createElement("div"); none.className = "li" + (curSet ? "" : " on"); none.innerHTML = `<b>견본 값</b><div class="ds">지어낸 글로 채운다</div>`; none.onclick = () => { curSet = ""; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(none);
     for (const s of LIB.sets) { const d = document.createElement("div"); d.className = "li" + (curSet === s.id ? " on" : "");
       d.innerHTML = `<b>${esc(s.kind)} · ${esc(s.id)}</b><div class="ds">${(s.blocks || []).map(b => (byId("blocks")[b.block] || {name: b.block}).name).join(" + ")}</div>`;
       d.onclick = () => { curSet = s.id; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(d); }
-    body.insertAdjacentHTML("beforeend", `<div class="note" style="margin-top:10px">세트는 <code>{kind, id, blocks:[{block, fields}]}</code>. 새 세트는 <a href="/units/library">라이브러리</a>에서.</div>`);
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-new">＋ 이 지면의 블록 자리로 세트 만들기</button></div><div id="setform"></div>
+      <div class="note" style="margin-top:10px">세트 = 원고 한 덩어리 <code>{kind, id, blocks:[{block, fields}]}</code>. 실제로는 콘텐츠팀(contents)이 보낸다.</div>`);
+    $("#set-new").onclick = () => {
+      const slots = (page ? page.items : []).filter(it => it.block && (byId("blocks")[it.block] || {}).source === "content");
+      if (!slots.length) { $("#setform").innerHTML = `<div class="note">이 지면에 콘텐츠 블록 자리가 없다</div>`; return; }
+      let n = 1; while (byId("sets")[String(n)] || LIB.sets.some(x => x.id === String(n))) n++;
+      $("#setform").innerHTML = `<div class="f"><span>종류</span><input type="text" id="sf-kind" value="passage"></div><div class="f"><span>id</span><input type="text" id="sf-id" value="${n}"></div>` +
+        slots.map((it, k) => { const b = byId("blocks")[it.block]; return `<h3>${k + 1}. ${esc(b.name)}</h3>` + Object.entries(b.fields || {}).map(([f, d]) => `<div class="f"><span>${f}</span>${d.type === "rich" || d.type === "text" ? `<textarea rows="2" data-sf="${k}:${f}"></textarea>` : `<input type="text" data-sf="${k}:${f}" placeholder="${d.type === "choices" ? "선지를 | 로 나눈다" : d.type}">`}</div>`).join(""); }).join("") +
+        `<div class="row"><button class="btn sm" id="sf-save">저장하고 지면에 끼우기</button></div>`;
+      $("#sf-save").onclick = async () => {
+        const blocks = slots.map((it, k) => { const b = byId("blocks")[it.block]; const fields = {};
+          $("#setform").querySelectorAll(`[data-sf^="${k}:"]`).forEach(i => { const f = i.dataset.sf.split(":")[1]; const d = (b.fields || {})[f] || {}; let v = i.value; if (!v) return;
+            if (d.type === "number") v = +v; else if (d.type === "choices") v = v.split("|").map(x => x.trim()).filter(Boolean); else if (d.type === "bool") v = /^(o|true|1|yes)$/i.test(v); fields[f] = v; });
+          return {block: it.block, fields}; });
+        const st = {kind: $("#sf-kind").value.trim() || "passage", id: $("#sf-id").value.trim() || String(n), blocks};
+        const j = await api("/api/units/sets", st); if (j.error) { $("#st").textContent = j.error; return; }
+        LIB.sets = LIB.sets.filter(x => x.id !== st.id).concat([st]); curSet = st.id; pageSvg = {}; render(); drawRail(); panel();
+      };
+    };
   } else if (tab === "plans") {
     hd.innerHTML = `<b>📚 틀</b> <span class="tag">책 구성</span><div class="note">구간(STEP·회차) 순서 + 어느 지면을 세트마다 반복할지. 라인업 이름이 붙는 곳.</div>`;
     for (const p of LIB.plans) { const d = document.createElement("div"); d.className = "li"; d.style.cursor = "default";
