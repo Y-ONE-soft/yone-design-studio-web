@@ -10,6 +10,7 @@
     /api/units/upload  POST        PDF·이미지 올리기 → {id, pages}
     /api/units/decompose POST      {upload, page} | {upload(이미지)} | {prompt} → decomposed (+ 임시 옷 src_<id> 저장)
     /api/units/part_from POST      {dec, atoms:[번호], id, name} → 부품 저장
+    /api/units/make POST           {prompt, skin} → 클로드가 그린 부품 + 블록 저장 (캔버스의 "설명으로 만들기")
 
 화면은 얇다 — 그리는 일은 전부 core/units/render, 분해는 core/units/decompose.
 """
@@ -254,6 +255,56 @@ def api_part_from():
         return jsonify({"error": err}), 400
     store.put("parts", part)
     return jsonify({"ok": True, "item": part})
+
+
+@bp.route("/api/units/make", methods=["POST"])
+def api_make():
+    """프롬프트 한 줄 → 클로드가 원자로 그림 → 부품 + 블록으로 저장 → 캔버스가 바로 넣는다. body {prompt, skin}."""
+    body = request.get_json(silent=True) or {}
+    prompt = (body.get("prompt") or "").strip()
+    if not prompt:
+        return jsonify({"error": "설명이 비었다"}), 400
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return jsonify({"error": "클로드가 그린다 — ANTHROPIC_API_KEY 필요"}), 400
+    skin = store.get("skins", body.get("skin") or "") or (store.load("skins") or [{}])[0]
+    try:
+        dec = decompose.from_ai(prompt, tokens=skin.get("tokens"))
+    except Exception as e:
+        return jsonify({"error": f"{type(e).__name__}: {e}"}), 500
+    if not dec.get("atoms"):
+        return jsonify({"error": "원자가 하나도 안 나왔다 — 설명을 더 구체적으로"}), 500
+    n = 1
+    have = store.by_id(store.load("parts")) | store.by_id(store.load("blocks"))
+    while f"ai_{n}" in have:
+        n += 1
+    uid = f"ai_{n}"
+    name = prompt[:16] + ("…" if len(prompt) > 16 else "")
+    part = decompose.to_part(dec, list(range(len(dec["atoms"]))), uid, name)
+    fields = {}
+    for a in part["atoms"]:
+        b = a.get("bind")
+        if b and not b.startswith("sys."):
+            fields[b] = {"type": "number" if b == "no" else ("choices" if b == "choices" else ("answer" if b == "answer" else "rich"))}
+    block = {"id": uid, "name": name, "source": "content" if fields else "system", "fields": fields,
+             "variants": [{"id": "v1", "name": "기본", "part": uid}]}
+    for kind, it in (("parts", part), ("blocks", block)):
+        err = store.validate(kind, it)
+        if err:
+            return jsonify({"error": f"{kind}: {err}"}), 500
+    # 클로드가 새 토큰 이름을 썼으면 옷에 값을 보탠다(있는 이름은 안 건드림)
+    if skin.get("id"):
+        tk = skin.setdefault("tokens", {})
+        added = False
+        for k in ("color", "font"):
+            for nm, val in (dec.get("tokens") or {}).get(k, {}).items():
+                if nm not in tk.setdefault(k, {}):
+                    tk[k][nm] = val
+                    added = True
+        if added:
+            store.put("skins", skin)
+    store.put("parts", part)
+    store.put("blocks", block)
+    return jsonify({"ok": True, "block": block, "part": part, "note": dec.get("note", "")})
 
 
 @bp.route("/api/units/part_from_preview", methods=["POST"])

@@ -16,28 +16,12 @@
   .note { color: var(--mute); font-size: 11.5px; line-height: 1.5; margin: 4px 0; }
   .row { display: flex; gap: 6px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
 
-  /* 지면 띠 — 파워포인트의 슬라이드 목록 */
-  .pages { width: 136px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
-  .pages .hd { padding: 10px 10px 8px; border-bottom: 1px solid var(--line); position: relative; }
-  .pages .hd .btn { width: 100%; justify-content: center; }
-  .pages .list { flex: 1; overflow: auto; padding: 8px 10px; }
-  .pg { display: flex; gap: 5px; align-items: flex-start; border: 2px solid transparent; border-radius: 8px; padding: 4px; cursor: pointer; }
-  .pg:hover { background: #f7f6fb; }
-  .pg.on { border-color: var(--pp); background: var(--pp-bg); }
-  .pg .no { font-size: 10.5px; color: var(--mute); width: 14px; text-align: right; padding-top: 2px; }
-  .pg .th { flex: 1; background: #fff; box-shadow: 0 1px 4px rgba(30,20,60,.15); aspect-ratio: 210 / 297; overflow: hidden; display: flex; align-items: flex-start; }
-  .pg .th svg { width: 100%; height: auto; display: block; }
-  .nm { font-size: 10.5px; margin: 2px 0 8px 23px; color: #3c4043; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .menu { position: absolute; left: 10px; right: 10px; top: 46px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); padding: 6px; z-index: 30; display: none; }
-  .menu.on { display: block; }
-  .menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; }
-  .menu button:hover { background: #f1eff8; }
-  .menu button small { display: block; color: var(--mute); font-size: 10.5px; }
-
-  /* 요소 */
-  .els { width: 250px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
-  .els .hd { padding: 12px 12px 6px; font-weight: 700; font-size: 13.5px; border-bottom: 1px solid var(--line); }
-  .els .hd small { display: block; font-weight: 400; color: var(--mute); font-size: 11px; margin-top: 2px; }
+  /* 왼쪽 — 설명으로 만들기 + 요소 */
+  .els { width: 272px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .els .ai { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); }
+  .els .ai .box { display: flex; gap: 6px; }
+  .els .ai input { flex: 1; border-radius: 10px; padding: 9px 11px; font-size: 13px; }
+  .els .ai .btn { border-radius: 10px; }
   .els .body { flex: 1; overflow: auto; padding: 4px 12px 16px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .card { border: 1px solid var(--line); border-radius: 10px; padding: 5px; background: #fff; cursor: pointer; }
@@ -47,12 +31,16 @@
   .card .nm { font-size: 11.5px; font-weight: 600; margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .els .ft { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 11.5px; }
 
-  /* 무대 — 지금 지면 */
-  .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .stage .bar { display: flex; gap: 10px; align-items: center; padding: 8px 16px; background: #fff; border-bottom: 1px solid var(--line); }
-  .stage .bar input[type=text] { width: 220px; font-weight: 600; }
-  .stage .bar .st { color: var(--mute); font-size: 11.5px; margin-left: auto; }
-  .stage .area { flex: 1; overflow: auto; padding: 28px; }
+  /* 가운데 — 지금 지면 + 아래 지면 띠 */
+  .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+  .stage .area { flex: 1; overflow: auto; padding: 64px 28px 28px; }
+  .ptool { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; align-items: center; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(30,20,60,.16); padding: 5px 6px; z-index: 15; }
+  .ptool input[type=text] { border: 0; width: 180px; font-weight: 600; padding: 4px 8px; }
+  .ptool button { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; }
+  .ptool button:hover { background: #f1eff8; }
+  .ptool .sep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; }
+  .ptool select { border: 0; font-size: 12.5px; }
+  .ptool .st { font-size: 11px; color: var(--mute); padding: 0 8px; white-space: nowrap; }
   .paper { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 3px 18px rgba(30,20,60,.18); }
   .paper .svgwrap svg { display: block; width: 100%; height: auto; }
   .paper .svgwrap svg g[data-fi] { cursor: move; }
@@ -66,8 +54,28 @@
   .warn { background: #fff7e6; border: 1px solid #f0d9a8; color: #6b4d00; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin: 0 auto 12px; max-width: 760px; white-space: pre-wrap; }
   .empty { color: var(--mute); text-align: center; padding: 80px 20px; font-size: 14px; line-height: 1.7; }
 
+  .strip { flex: none; background: #f4f3f9; border-top: 1px solid var(--line); display: flex; flex-direction: column; }
+  .strip .rail { display: flex; gap: 10px; align-items: flex-end; padding: 12px 16px 6px; overflow-x: auto; }
+  .pg { flex: none; width: 84px; position: relative; cursor: pointer; }
+  .pg .th { background: #fff; border: 2.5px solid #e2e0ec; border-radius: 6px; aspect-ratio: 210 / 297; overflow: hidden; display: flex; align-items: flex-start; }
+  .pg .th svg { width: 100%; height: auto; display: block; }
+  .pg:hover .th { border-color: #b39cf5; }
+  .pg.on .th { border-color: var(--pp); box-shadow: 0 0 0 2px rgba(125,42,232,.18); }
+  .pg .no { position: absolute; left: 5px; bottom: 4px; font-size: 10.5px; color: #3c4043; background: rgba(255,255,255,.85); padding: 0 4px; border-radius: 4px; }
+  .pg.dragover .th { border-color: var(--pp); border-left-width: 6px; }
+  .addpg { flex: none; width: 84px; aspect-ratio: 210 / 297; border: 2px dashed #cfc8e6; border-radius: 6px; background: #fff; display: grid; place-items: center; font-size: 26px; color: var(--pp); cursor: pointer; position: relative; }
+  .addpg:hover { border-color: var(--pp); background: var(--pp-bg); }
+  .menu { position: absolute; left: 0; bottom: calc(100% + 6px); width: 190px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); padding: 6px; z-index: 30; display: none; text-align: left; }
+  .menu.on { display: block; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; color: #1f2330; }
+  .menu button:hover { background: #f1eff8; }
+  .menu button small { display: block; color: var(--mute); font-size: 10.5px; }
+  .strip .foot { display: flex; align-items: center; gap: 12px; padding: 2px 16px 8px; font-size: 12px; color: var(--mute); }
+  .strip .foot .cnt { margin-left: auto; font-weight: 600; color: #1f2330; }
+  .strip .foot input[type=range] { width: 140px; }
+
   /* 오른쪽 */
-  .side { width: 260px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .side { width: 250px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
   .side .hd { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); font-weight: 700; }
   .side .body { flex: 1; overflow: auto; padding: 4px 14px 16px; }
   .f { display: grid; grid-template-columns: 58px 1fr; gap: 6px; align-items: center; margin: 6px 0; font-size: 12px; color: var(--mute); }
@@ -81,39 +89,39 @@
 </style>
 
 <div class="cv">
-  <!-- 지면 띠 -->
-  <div class="pages">
-    <div class="hd">
-      <button class="btn" id="btn-add">＋ 지면</button>
-      <div class="menu" id="menu">
-        <button data-new="body">본문<small>머리말·쪽번호만 있는 빈 면</small></button>
-        <button data-new="blank">빈 면</button>
-        <button data-new="divider">간지<small>구간 앞 전면 색</small></button>
-        <button data-new="cover">표지</button>
-        <button data-new="dup">지금 지면 복제</button>
-      </div>
-    </div>
-    <div class="list" id="plist"></div>
-  </div>
-
-  <!-- 요소 -->
+  <!-- 왼쪽 -->
   <div class="els">
-    <div class="hd">요소<small>누르면 지금 지면에 들어간다. 원하는 자리에 끌어다 놓아도 된다.</small></div>
+    <div class="ai">
+      <div class="box"><input type="text" id="ai" placeholder="원하는 요소를 설명해 주세요"><button class="btn" id="btn-ai">만들기</button></div>
+      <div class="note" id="ainote">예: 번호와 영어 문장, 오른쪽에 O X 동그라미, 아래 점선. 클로드가 그려서 지금 지면에 넣는다.</div>
+    </div>
     <div class="body" id="els"></div>
-    <div class="ft"><a href="/units/library">요소 더 만들기 — 라이브러리 · 분해(PDF·그림·프롬프트) →</a></div>
+    <div class="ft"><a href="/units/library">라이브러리 · PDF/그림에서 요소 뽑기 →</a></div>
   </div>
 
-  <!-- 무대 -->
+  <!-- 가운데 -->
   <div class="stage">
-    <div class="bar">
+    <div class="ptool">
       <input type="text" id="pname" placeholder="지면 이름">
+      <span class="sep"></span>
       <label class="note">옷</label><select id="skin"></select>
+      <span class="sep"></span>
+      <button id="p-dup" title="지면 복제">⧉ 복제</button>
+      <button id="p-del" title="지면 지우기">🗑</button>
       <span class="st" id="st"></span>
     </div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div><div class="selbox" id="selbox"><span class="rs" id="rs" title="폭 바꾸기"></span></div>
         <div class="tools" id="tools"><button id="t-dup" title="복제">⧉</button><button id="t-x" class="x" title="지우기">✕</button></div>
+      </div>
+    </div>
+    <div class="strip">
+      <div class="rail" id="rail"></div>
+      <div class="foot">
+        <span>←/→ 지면 이동 · 썸네일을 끌어 순서 바꾸기</span>
+        <span class="cnt" id="cnt"></span>
+        <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
       </div>
     </div>
   </div>
@@ -142,10 +150,11 @@ const snap = (v) => Math.round(v * 2) / 2;
 const M = {left: 20, right: 20, top: 44, bottom: 20};
 const GROUPS = [["지문", ["B1", "B2", "B3", "B7"]], ["문항", ["B6"]], ["드릴", ["B5", "B8"]], ["머리 · 꼬리 · 간지 · 표지", ["B10", "B11"]]];
 
-let page = null, sel = null, scale = 3, thumbs = {blocks: {}, parts: {}}, pageSvg = {};
+let page = null, sel = null, scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {};
 const specOf = (p) => byId("specs")[(p || page || {}).spec] || byId("specs").a4 || {w: 210, h: 297};
 const skin = () => byId("skins")[$("#skin").value] || LIB.skins[0];
 const nameOf = (it) => it.block ? (byId("blocks")[it.block] || {name: it.block}).name : (byId("parts")[it.part] || {name: it.part}).name;
+const idx = () => LIB.pages.findIndex(x => page && x.id === page.id);
 
 // ── 지면 만들기 · 순서 ──
 function newPage(kind) {
@@ -157,22 +166,24 @@ function newPage(kind) {
   if (kind === "divider" || kind === "cover") { p.mirror = false; if (byId("blocks")[kind]) p.items.push({block: kind, x: 0, y: 0}); }
   return p;
 }
-$("#btn-add").onclick = (e) => { e.stopPropagation(); $("#menu").classList.toggle("on"); };
-document.addEventListener("click", () => $("#menu").classList.remove("on"));
-document.querySelectorAll("[data-new]").forEach(b => b.onclick = async (e) => {
-  e.stopPropagation(); $("#menu").classList.remove("on");
-  const p = newPage(b.dataset.new); if (!p) return;
+async function addPage(kind) {
+  const p = newPage(kind); if (!p) return;
   const after = page ? page.id : "";
   const j = await api("/api/units/pages?after=" + encodeURIComponent(after), p); if (j.error) { $("#st").textContent = j.error; return; }
-  const i = page ? LIB.pages.findIndex(x => x.id === page.id) + 1 : 0; LIB.pages.splice(i, 0, p);
+  LIB.pages.splice(page ? idx() + 1 : 0, 0, p);
   open(p);
-});
-async function movePage(d) {
-  const i = LIB.pages.findIndex(x => x.id === page.id), j = i + d; if (j < 0 || j >= LIB.pages.length) return;
-  const after = d < 0 ? (j > 0 ? LIB.pages[j - 1].id : "") : LIB.pages[j].id;
-  LIB.pages.splice(i, 1); LIB.pages.splice(j, 0, page);
-  await api("/api/units/pages?after=" + encodeURIComponent(after), page); drawPages(); side();
 }
+async function movePageTo(fromId, toIndex) {
+  const i = LIB.pages.findIndex(x => x.id === fromId); if (i < 0) return;
+  const [p] = LIB.pages.splice(i, 1); const j = Math.max(0, Math.min(toIndex, LIB.pages.length)); LIB.pages.splice(j, 0, p);
+  await api("/api/units/pages?after=" + encodeURIComponent(j > 0 ? LIB.pages[j - 1].id : ""), p); drawRail(); side();
+}
+$("#p-dup").onclick = () => addPage("dup");
+$("#p-del").onclick = async () => {
+  if (!page || !confirm(`지면 「${page.name || page.id}」 을 지울까?`)) return;
+  const i = idx(); await api("/api/units/pages", {id: page.id}, "DELETE"); LIB.pages.splice(i, 1); delete pageSvg[page.id];
+  if (LIB.pages.length) open(LIB.pages[Math.min(i, LIB.pages.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; }
+};
 
 // ── 열기 · 그리기 ──
 function open(p) {
@@ -180,14 +191,16 @@ function open(p) {
   if (!page.items) page.items = [];
   if (page.chrome && page.chrome.length) { page.items = page.chrome.map(c => ({part: c.part, x: c.x, y: c.y})).concat(page.items); delete page.chrome; }   // 옛 형식
   $("#pname").value = page.name || ""; location.hash = page.id;
-  drawPages(); layout(); render(); side();
-  const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({block: "nearest"});
+  drawRail(); layout(); render(); side();
+  const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
 function layout() {
-  const sp = specOf(); scale = Math.min(3.4, ($("#area").clientWidth - 60) / sp.w);
+  const sp = specOf(); const fit = Math.min(3.4, ($("#area").clientWidth - 60) / sp.w, ($("#area").clientHeight - 90) / sp.h);
+  scale = fit * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
 }
 window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
+$("#zoom").oninput = () => { zoom = $("#zoom").value / 100; $("#zoomv").textContent = zoom === 1 ? "맞춤" : Math.round(zoom * 100) + "%"; layout(); selbox(); };
 let rt = null;
 function render() {
   if (!page) return;
@@ -205,16 +218,31 @@ function render() {
 }
 function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); } }
 
-// ── 지면 띠 ──
-async function drawPages() {
-  const box = $("#plist"); box.innerHTML = "";
+// ── 아래 지면 띠 ──
+let dragId = null;
+async function drawRail() {
+  const rail = $("#rail"); rail.innerHTML = "";
   LIB.pages.forEach((p, i) => {
-    const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id;
-    d.innerHTML = `<span class="no">${i + 1}</span><div class="th">${pageSvg[p.id] || ""}</div>`; strip(d);
+    const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id; d.draggable = true; d.title = p.name || p.id;
+    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span>`; strip(d);
     d.onclick = () => open(p);
-    const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = p.name || p.id;
-    box.appendChild(d); box.appendChild(nm);
+    d.ondragstart = (e) => { dragId = p.id; e.dataTransfer.effectAllowed = "move"; };
+    d.ondragover = (e) => { if (dragId) { e.preventDefault(); d.classList.add("dragover"); } };
+    d.ondragleave = () => d.classList.remove("dragover");
+    d.ondrop = (e) => { e.preventDefault(); d.classList.remove("dragover"); if (dragId && dragId !== p.id) { const to = LIB.pages.findIndex(x => x.id === p.id); movePageTo(dragId, to); } dragId = null; };
+    rail.appendChild(d);
   });
+  const add = document.createElement("div"); add.className = "addpg"; add.title = "지금 지면 뒤에 새 지면"; add.textContent = "+";
+  add.innerHTML = `+<div class="menu" id="menu">
+      <button data-new="body">본문<small>머리말·쪽번호만 있는 빈 면</small></button>
+      <button data-new="blank">빈 면</button>
+      <button data-new="divider">간지<small>구간 앞 전면 색</small></button>
+      <button data-new="cover">표지</button>
+      <button data-new="dup">지금 지면 복제</button></div>`;
+  add.onclick = (e) => { e.stopPropagation(); add.querySelector(".menu").classList.toggle("on"); };
+  add.querySelectorAll("[data-new]").forEach(b => b.onclick = (e) => { e.stopPropagation(); add.querySelector(".menu").classList.remove("on"); addPage(b.dataset.new); });
+  rail.appendChild(add);
+  $("#cnt").textContent = page ? `${idx() + 1} / ${LIB.pages.length}` : `0 / ${LIB.pages.length}`;
   for (const p of LIB.pages) {
     if (pageSvg[p.id]) continue;
     const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec});
@@ -222,6 +250,7 @@ async function drawPages() {
     const th = document.querySelector(`.pg[data-id="${p.id}"] .th`); if (th) { th.innerHTML = pageSvg[p.id]; strip(th); }
   }
 }
+document.addEventListener("click", () => document.querySelectorAll(".menu.on").forEach(m => m.classList.remove("on")));
 
 // ── 고르기 · 옮기기 · 폭 ──
 const mmOf = (e) => { const r = $("#paper").getBoundingClientRect(); return {x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale}; };
@@ -262,7 +291,12 @@ function dupSel() { if (sel == null) return; const c = clone(page.items[sel]); c
 $("#t-x").onclick = (e) => { e.stopPropagation(); removeSel(); };
 $("#t-dup").onclick = (e) => { e.stopPropagation(); dupSel(); };
 document.addEventListener("keydown", (e) => {
-  if (e.target.matches("input,textarea,select") || sel == null || !page.items[sel]) return;
+  if (e.target.matches("input,textarea,select") || !page) return;
+  if (sel == null || !page.items[sel]) {                              // 아무것도 안 골랐으면 ←/→ 로 지면 이동
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(); if (i > 0) open(LIB.pages[i - 1]); e.preventDefault(); }
+    if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(); if (i < LIB.pages.length - 1) open(LIB.pages[i + 1]); e.preventDefault(); }
+    return;
+  }
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); return; }
   if (e.key === "Escape") { sel = null; selbox(); side(); return; }
   const step = e.shiftKey ? 5 : 0.5; const it = page.items[sel];
@@ -289,7 +323,7 @@ function addItem(id, at) {
 function elements() {
   const box = $("#els"); box.innerHTML = "";
   const groups = GROUPS.map(([nm, fams]) => [nm, LIB.blocks.filter(b => (b.source === "system" ? nm.startsWith("머리") : fams.includes(b.family)))]);
-  const used = new Set(groups.flatMap(g => g[1].map(b => b.id))); const rest = LIB.blocks.filter(b => !used.has(b.id)); if (rest.length) groups.push(["기타", rest]);
+  const used = new Set(groups.flatMap(g => g[1].map(b => b.id))); const rest = LIB.blocks.filter(b => !used.has(b.id)); if (rest.length) groups.push(["내가 만든 것 · 기타", rest]);
   for (const [nm, items] of groups) {
     if (!items.length) continue;
     box.insertAdjacentHTML("beforeend", `<h3>${nm}</h3>`); const g = document.createElement("div"); g.className = "grid";
@@ -297,14 +331,27 @@ function elements() {
       const d = document.createElement("div"); d.className = "card"; d.draggable = true; d.title = it.name;
       d.innerHTML = `<div class="th">${thumbs.blocks[it.id] || ""}</div><div class="nm">${it.name}</div>`; strip(d);
       d.onclick = () => addItem(it.id);
-      d.ondragstart = (e) => e.dataTransfer.setData("text/plain", it.id);
+      d.ondragstart = (e) => { dragId = null; e.dataTransfer.setData("text/plain", it.id); };
       g.appendChild(d);
     }
     box.appendChild(g);
   }
 }
 $("#paper").addEventListener("dragover", (e) => e.preventDefault());
-$("#paper").addEventListener("drop", (e) => { e.preventDefault(); const id = e.dataTransfer.getData("text/plain"); if (id && page) addItem(id, mmOf(e)); });
+$("#paper").addEventListener("drop", (e) => { e.preventDefault(); const id = e.dataTransfer.getData("text/plain"); if (id && page && byId("blocks")[id]) addItem(id, mmOf(e)); });
+
+// ── 설명으로 만들기 (클로드) ──
+$("#btn-ai").onclick = async () => {
+  const prompt = $("#ai").value.trim(); if (!prompt || !page) return;
+  $("#btn-ai").disabled = true; $("#ainote").textContent = "그리는 중… (15초쯤)";
+  const j = await api("/api/units/make", {prompt, skin: $("#skin").value});
+  $("#btn-ai").disabled = false;
+  if (j.error) { $("#ainote").textContent = j.error; return; }
+  const lj = await api("/api/units/library"); LIB.blocks = lj.blocks; LIB.parts = lj.parts; LIB.skins = lj.skins;
+  await thumbsLoad(); $("#ainote").textContent = `「${j.block.name}」 을 요소에 넣었다.` + (j.note ? " " + j.note : ""); $("#ai").value = "";
+  addItem(j.block.id);
+};
+$("#ai").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#btn-ai").click(); });
 
 // ── 오른쪽 ──
 function side() {
@@ -320,43 +367,34 @@ function side() {
       <div class="note">끌어서 옮기고, 오른쪽 손잡이로 폭을. 화살표 키로 0.5mm(Shift 5mm).</div>
       <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm danger" id="s-x">지우기</button></div>`;
   } else {
-    const i = LIB.pages.findIndex(x => x.id === page.id);
-    $("#stitle").textContent = `지면 ${i + 1} / ${LIB.pages.length}`;
+    $("#stitle").textContent = `지면 ${idx() + 1} / ${LIB.pages.length}`;
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><label><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 책에서 오른쪽 면은 뒤집힌다</label></div>
       <h3>요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0">· ${nameOf(it)} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 「요소」를 누른다</div>`}
       <h3>색 — 옷 ${skin().name}</h3><div class="colors">${Object.entries((skin().tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
-      <div class="note">바꾸면 이 옷을 쓰는 모든 지면·책이 같이 바뀐다.</div>
-      <h3>지면 순서</h3><div class="row"><button class="btn sm sub" id="s-prev" ${i <= 0 ? "disabled" : ""}>▲ 앞으로</button><button class="btn sm sub" id="s-next" ${i >= LIB.pages.length - 1 ? "disabled" : ""}>▼ 뒤로</button><button class="btn sm danger" id="s-del" style="margin-left:auto">지우기</button></div>`;
+      <div class="note">바꾸면 이 옷을 쓰는 모든 지면·책이 같이 바뀐다.</div>`;
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
   box.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else it[k] = +i.value; save(); render(); });
-  on("#var", "change", async (e) => { const sk = skin(); sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawPages(); });
+  on("#var", "change", async (e) => { const sk = skin(); sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); });
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel);
   box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => { sel = +d.dataset.seli; selbox(); side(); });
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
   box.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { const sk = skin(); sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
-  on("#s-prev", "click", () => movePage(-1)); on("#s-next", "click", () => movePage(1));
-  on("#s-del", "click", async () => {
-    if (!confirm(`지면 「${page.name || page.id}」 을 지울까?`)) return;
-    const i = LIB.pages.findIndex(x => x.id === page.id);
-    await api("/api/units/pages", {id: page.id}, "DELETE"); LIB.pages.splice(i, 1); delete pageSvg[page.id];
-    if (LIB.pages.length) open(LIB.pages[Math.min(i, LIB.pages.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; $("#plist").innerHTML = ""; $("#side").innerHTML = ""; }
-  });
 }
-$("#pname").oninput = () => { if (page) { page.name = $("#pname").value; save(); const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el && el.nextSibling) el.nextSibling.textContent = page.name || page.id; } };
+$("#pname").oninput = () => { if (page) { page.name = $("#pname").value; save(); const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.title = page.name || page.id; } };
 
 // ── 저장 ──
 let st = null, skt = null;
 function save() {
   if (!page) return; $("#st").textContent = "저장 중…";
-  clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page); $("#st").textContent = j.error ? "저장 실패: " + j.error : "저장됨 " + new Date().toLocaleTimeString("ko-KR", {hour: "2-digit", minute: "2-digit"}); }, 500);
+  clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page); $("#st").textContent = j.error ? "저장 실패: " + j.error : "저장됨"; }, 500);
 }
-function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { await api("/api/units/skins", skin()); thumbsLoad(); pageSvg = {}; drawPages(); }, 800); }
+function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { await api("/api/units/skins", skin()); thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
 async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); elements(); }
-$("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawPages(); render(); side(); };
+$("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawRail(); render(); side(); };
 
 // ── 시작 ──
 $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
@@ -364,7 +402,7 @@ thumbsLoad();
 (() => {
   const id = decodeURIComponent(location.hash.replace(/^#/, ""));
   const p = byId("pages")[id] || LIB.pages[0];
-  if (p) open(p); else { $("#svgwrap").innerHTML = '<div class="empty">지면이 없다.<br>왼쪽 위 「＋ 지면」으로 시작.</div>'; }
+  if (p) open(p); else { drawRail(); $("#svgwrap").innerHTML = '<div class="empty">지면이 없다.<br>아래 「+」로 시작.</div>'; }
 })();
 </script>
 {% endblock %}

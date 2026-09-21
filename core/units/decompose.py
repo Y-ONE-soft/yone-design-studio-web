@@ -297,9 +297,16 @@ w h 는 전체 캔버스 크기(mm). 그림이면 실제 비율로, 설명이면
 지어내지 말고 보이는 것만. 미심쩍은 것은 note 에 한 줄."""
 
 
-def from_ai(prompt="", image=None, media_type="image/png", name=""):
+def from_ai(prompt="", image=None, media_type="image/png", name="", tokens=None):
+    """tokens(옷의 tokens)를 주면 그 이름만 쓰게 한다 — 새 요소가 지금 옷을 그대로 입는다."""
     import anthropic
     content = []
+    sys_extra = ""
+    if tokens:
+        cs = ", ".join(sorted((tokens.get("color") or {}).keys()))
+        fs = ", ".join(sorted((tokens.get("font") or {}).keys()))
+        sys_extra = (f"\n\n색 토큰은 이 이름만 쓴다: {cs} (ink=본문 먹, mute=회색 글, rule=괘선, sel=강조 파랑, s1~s3=구간 주색, cream/sky=상자 바탕, white). "
+                     f"서체 토큰은 이 이름만: {fs} (body=본문, disp=발문, label=라벨, num=번호). tokens 에는 새로 만든 이름만 넣는다.")
     if image:
         import base64
         content.append({"type": "image", "source": {"type": "base64", "media_type": media_type, "data": base64.b64encode(image).decode()}})
@@ -308,7 +315,7 @@ def from_ai(prompt="", image=None, media_type="image/png", name=""):
         content.append({"type": "text", "text": "이 설명대로 원자를 그려라:\n" + prompt})
     # 구조화 출력(json_schema)은 원자 스키마가 "too complex" 로 거절된다 — 글로 받아 JSON 만 잘라 읽는다
     r = anthropic.Anthropic().messages.create(
-        model=MODEL, max_tokens=16000, system=AI_SYSTEM + "\n\n답은 JSON 하나뿐(코드 펜스·설명 없이). 형식:\n" + json.dumps(AI_SCHEMA, ensure_ascii=False),
+        model=MODEL, max_tokens=16000, system=AI_SYSTEM + sys_extra + "\n\n답은 JSON 하나뿐(코드 펜스·설명 없이). 형식:\n" + json.dumps(AI_SCHEMA, ensure_ascii=False),
         messages=[{"role": "user", "content": content}],
     )
     text = "".join(b.text for b in r.content if b.type == "text")
