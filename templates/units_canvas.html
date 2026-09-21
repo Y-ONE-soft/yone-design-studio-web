@@ -148,7 +148,7 @@
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div><div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rs" id="rs" title="폭 바꾸기"></span></div>
-        <div class="tools" id="tools"><button id="t-group" title="고른 원자들을 부품으로">🔩 부품으로 묶기</button><button id="t-dup" title="복제">⧉</button><button id="t-x" class="x" title="지우기">✕</button></div>
+        <div class="tools" id="tools"><button id="t-group" title="고른 원자들을 그룹으로 (Ctrl+G)">↑ 묶기 → ② 부품</button><button id="t-up" title="부품에 콘텐츠 자리 이름표를 붙인다">↑ 올리기 → ③ 블록</button><button id="t-down" title="한 단계 아래로 푼다 (Ctrl+Shift+G)">↓ 풀기</button><button id="t-dup" title="복제">⧉</button><button id="t-x" class="x" title="지우기">✕</button></div>
       </div>
     </div>
     <div class="strip">
@@ -329,14 +329,20 @@ function selbox() {
   const r = g.getBoundingClientRect(), pr = $("#paper").getBoundingClientRect(); const it = page.items[sel];
   Object.assign(box.style, {display: "", left: (r.left - pr.left - 2) + "px", top: (r.top - pr.top - 2) + "px", width: (r.width + 4) + "px", height: (Math.max(r.height, 2) + 4) + "px"});
   $("#sellb").textContent = ({atom: "① 원자", part: "② 부품", block: "③ 블록"})[unitOf(it)] + " · " + nameOf(it);
-  Object.assign(tools.style, {display: "flex", left: Math.max(0, r.right - pr.left - 200) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
-  $("#t-group").style.display = [...sels, sel].every(i => page.items[i] && page.items[i].atom) ? "" : "none";
+  Object.assign(tools.style, {display: "flex", left: Math.max(0, r.left - pr.left) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
+  const u = unitOf(it), allAtoms = [...sels, sel].every(i => page.items[i] && page.items[i].atom);
+  $("#t-group").style.display = allAtoms ? "" : "none";
+  $("#t-up").style.display = u === "part" ? "" : "none";
+  $("#t-down").style.display = u === "atom" ? "none" : "";
+  $("#t-down").textContent = u === "block" ? "↓ 풀기 → ② 부품" : "↓ 풀기 → ① 원자";
 }
 function removeSel() { if (sel == null) return; const rm = new Set([...sels, sel]); page.items = page.items.filter((_, i) => !rm.has(i)); sel = null; sels.clear(); save(); render(); side(); }
 function dupSel() { if (sel == null) return; const c = clone(page.items[sel]); c.y = snap(c.y + 6); page.items.push(c); sel = page.items.length - 1; sels.clear(); save(); render(); side(); }
 $("#t-x").onclick = (e) => { e.stopPropagation(); removeSel(); };
 $("#t-dup").onclick = (e) => { e.stopPropagation(); dupSel(); };
 $("#t-group").onclick = (e) => { e.stopPropagation(); groupToPart(); };
+$("#t-up").onclick = (e) => { e.stopPropagation(); if (sel != null) partToBlock(sel); };
+$("#t-down").onclick = (e) => { e.stopPropagation(); ungroup(); };
 document.addEventListener("keydown", (e) => {
   if (e.target.matches("input,textarea,select") || !page) return;
   if (sel == null || !page.items[sel]) {
@@ -345,6 +351,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); return; }
+  if ((e.metaKey || e.ctrlKey) && (e.key === "g" || e.key === "G")) { e.preventDefault(); if (e.shiftKey) ungroup(); else groupToPart(); return; }
   if (e.key === "Escape") { sel = null; sels.clear(); markSels(); selbox(); side(); return; }
   const step = e.shiftKey ? 5 : 0.5; const it = page.items[sel];
   if (e.key === "ArrowUp") it.y = snap(it.y - step); else if (e.key === "ArrowDown") it.y = snap(it.y + step);
@@ -397,6 +404,25 @@ async function groupToPart() {
   const j = await api("/api/units/parts", part); if (j.error) { $("#st").textContent = j.error; return; }
   LIB.parts.push(part); page.items = page.items.filter((_, i) => !ids.includes(i)); page.items.push({part: pid, x: x0, y: y0});
   sel = page.items.length - 1; sels.clear(); save(); render(); thumbsLoad(); side();
+}
+function ungroup() {
+  if (sel == null || !page.items[sel]) return;
+  const it = page.items[sel];
+  if (it.block) {                                            // ③ 블록 → ② 부품 (지금 옷의 모양)
+    const part = partOfBlock(it.block); if (!part) return;
+    page.items[sel] = {part: part.id, x: it.x, y: it.y, w: it.w}; save(); render(); side(); return;
+  }
+  if (it.part) {                                             // ② 부품 → ① 원자들 (자리·폭 그대로)
+    const part = byId("parts")[it.part]; if (!part) return;
+    const sx = it.w && part.w ? it.w / part.w : 1; const out = [];
+    for (const a0 of part.atoms) {
+      const a = clone(a0);
+      if (a.t === "line") { const x0 = Math.min(a.x1, a.x2) * sx, y0 = Math.min(a.y1, a.y2); const len = Math.abs(a.x2 - a.x1) * sx, dy = a.y2 - a.y1;
+        out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: snap(len), y2: dy < 0 ? 0 : snap(dy)}), x: snap(it.x + x0), y: snap(it.y + y0)}); }
+      else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = snap(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: snap(x), y: snap(y)}); }
+    }
+    page.items.splice(sel, 1, ...out); sels = new Set(out.map((_, k) => sel + k)); sel = sel + out.length - 1; save(); render(); side();
+  }
 }
 async function partToBlock(i) {
   const it = page.items[i]; const part = byId("parts")[it.part]; if (!part) return;
@@ -501,18 +527,18 @@ function side() {
     $("#stitle").textContent = nameOf(it);
     if (u === "block") {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
-      h += `<div class="chain"><div class="cur"><span class="tag b">③ 블록</span> ${esc(blk.name)} — 필드 ${Object.keys(blk.fields || {}).join(", ") || "없음"}</div>
+      h += `<div class="chain"><div class="cur"><span class="tag b">③ 블록</span> ${esc(blk.name)} — 필드 ${Object.keys(blk.fields || {}).join(", ") || "없음"} <button class="btn sm sub" id="s-down">↓ 풀기 → 부품</button></div>
         <div><span class="tag">모양</span> <select id="var" style="width:auto">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select> <small class="note" style="display:inline">옷 ${esc(sk.name)} 에 저장</small></div>
         <div><span class="tag p">② 부품</span> ${part ? esc(part.name) : "?"} <a href="/units/library#parts/${part ? part.id : ""}">고치기 →</a></div>
         <div><span class="tag a">① 원자</span> ${part ? part.atoms.length : 0}개 ${part ? "(" + Object.entries(part.atoms.reduce((m, a) => (m[ATOM_NM[a.t]] = (m[ATOM_NM[a.t]] || 0) + 1, m), {})).map(([k, v]) => k + " " + v).join(" · ") + ")" : ""}</div></div>`;
     } else if (u === "part") {
       const part = byId("parts")[it.part] || {atoms: []};
       h += `<div class="chain"><div><span class="tag b">③ 블록</span> 아직 아님 — <button class="btn sm" id="s-toblock">블록으로 만들기</button><div class="note">글상자의 콘텐츠 이름(bind)이 필드가 된다</div></div>
-        <div class="cur"><span class="tag p">② 부품</span> ${esc(part.name)} <a href="/units/library#parts/${it.part}">고치기 →</a></div>
+        <div class="cur"><span class="tag p">② 부품</span> ${esc(part.name)} <a href="/units/library#parts/${it.part}">고치기 →</a> <button class="btn sm sub" id="s-down">↓ 풀기 → 원자</button></div>
         <div><span class="tag a">① 원자</span> ${part.atoms.length}개</div></div>`;
     } else {
       const a = it.atom;
-      h += `<div class="chain"><div><span class="tag p">② 부품</span> Shift+클릭으로 원자를 고른 뒤 「부품으로 묶기」</div><div class="cur"><span class="tag a">① 원자</span> ${ATOM_NM[a.t]}</div></div>`;
+      h += `<div class="chain"><div><span class="tag p">② 부품</span> <button class="btn sm sub" id="s-group">↑ 묶기 → 부품</button> <small class="note" style="display:inline">Shift+클릭으로 여럿 고르고 (Ctrl+G)</small></div><div class="cur"><span class="tag a">① 원자</span> ${ATOM_NM[a.t]}${sels.size ? ` — ${sels.size + 1}개 고름` : ""}</div></div>`;
       if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(a.text || "")}</textarea></div>
         <div class="f"><span>콘텐츠 이름</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="예: sentence · no · prompt"></div>
         <div class="f"><span>서체</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
@@ -533,7 +559,7 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><label><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 책에서 오른쪽 면은 뒤집힌다</label></div>
       <h3>이 지면의 요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0"><span class="tag ${({atom: "a", part: "p", block: "b"})[unitOf(it)]}">${({atom: "①", part: "②", block: "③"})[unitOf(it)]}</span> ${esc(nameOf(it))} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 탭에서 블록·부품·원자를 누른다</div>`}
-      <h3>단위</h3><div class="chain"><div><span class="tag a">①</span> 원자 — 글상자·선·면·원·그림</div><div><span class="tag p">②</span> 부품 — 원자 묶음</div><div><span class="tag b">③</span> 블록 — 부품 + 필드 = 유형</div><div class="cur">④ 지면 — 요소를 놓은 면</div><div>📚 틀 — 지면 순서·반복</div><div>👕 옷 · 📄 세트 — 겉모습 · 콘텐츠</div></div>`;
+      <h3>단위 — 인디자인의 그룹처럼 묶고 푼다</h3><div class="chain"><div><span class="tag a">①</span> 원자 — 글상자·선·면·원·그림 (오브젝트 하나)</div><div class="note" style="margin:0">↑ 묶기 (Ctrl+G) · ↓ 풀기 (Ctrl+Shift+G)</div><div><span class="tag p">②</span> 부품 — 원자를 그룹한 것</div><div class="note" style="margin:0">↑ 올리기 = 콘텐츠 자리 이름표 · ↓ 풀기</div><div><span class="tag b">③</span> 블록 — 부품 + 필드 = 콘텐츠가 들어오는 유형</div><div class="cur">④ 지면 — 요소를 놓은 면</div><div>📚 틀 — 지면 순서·반복 · 👕 옷 — 색·서체·모양 · 📄 세트 — 콘텐츠</div></div>`;
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
@@ -548,7 +574,7 @@ function side() {
     save(); render(); side();
   }));
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
-  on("#s-toblock", "click", () => partToBlock(sel));
+  on("#s-toblock", "click", () => partToBlock(sel)); on("#s-down", "click", ungroup); on("#s-group", "click", groupToPart);
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel);
   box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => { sel = +d.dataset.seli; sels.clear(); markSels(); selbox(); side(); });
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
