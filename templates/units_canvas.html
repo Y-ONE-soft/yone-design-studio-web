@@ -1,0 +1,365 @@
+{% extends "base.html" %}
+{% block title %}단위 캔버스{% endblock %}
+{% block theme %}light{% endblock %}
+{% block content %}
+<style>
+  .cv { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; user-select: none; }
+  .cv h3 { font-size: 11.5px; color: var(--mute); margin: 12px 0 6px; font-weight: 600; letter-spacing: .04em; }
+  .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
+  .btn { display: inline-block; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
+  .btn:hover { background: #6a1fd0; }
+  .btn.sub { background: #ecebf3; color: #1f2330; font-weight: 500; }
+  .btn.sub:hover { background: #e2e0ec; }
+  .btn.sub.on { background: var(--pp-bg); color: var(--pp); outline: 1px solid var(--pp); }
+  .btn.sm { padding: 4px 9px; font-size: 12px; }
+  .btn.danger { background: #fff; color: #c0263a; border: 1px solid #f0c4cb; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+  .note { color: var(--mute); font-size: 11.5px; line-height: 1.5; margin: 4px 0; }
+  .err { color: #c0263a; font-size: 12px; white-space: pre-wrap; }
+  .tabs { display: flex; gap: 3px; }
+  .tabs button { flex: 1; border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 0; font-size: 12px; cursor: pointer; color: #3c4043; }
+  .tabs button.on { background: var(--pp-bg); border-color: var(--pp); color: var(--pp); font-weight: 600; }
+
+  /* 팔레트 */
+  .pal { width: 250px; flex: none; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+  .pal .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
+  .pal .body { flex: 1; overflow: auto; padding: 8px 12px 16px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 6px; margin: 6px 0; background: #fff; cursor: grab; }
+  .card:hover { border-color: var(--pp); }
+  .card .th { background: #f7f6fb; border-radius: 6px; overflow: hidden; max-height: 90px; display: flex; align-items: center; }
+  .card .th svg { width: 100%; height: auto; display: block; }
+  .card .nm { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .card .nm code { font-weight: 400; color: #7a6aa8; font-size: 10.5px; }
+
+  /* 무대 */
+  .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .stage .bar { display: flex; gap: 8px; align-items: center; padding: 8px 14px; background: #fff; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .stage .bar label { font-size: 12px; color: var(--mute); }
+  .stage .area { flex: 1; overflow: auto; padding: 26px; }
+  .paper { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 2px 14px rgba(30,20,60,.16); }
+  .paper.zone-mode { cursor: crosshair; }
+  .paper .svgwrap svg { display: block; width: 100%; height: auto; pointer-events: none; }
+  .ov { position: absolute; inset: 0; }
+  .zone { position: absolute; border: 1.5px dashed #a58cf0; background: rgba(125,42,232,.03); box-sizing: border-box; cursor: move; }
+  .zone:hover { background: rgba(125,42,232,.07); }
+  .zone.on { border: 2px solid var(--pp); background: rgba(125,42,232,.06); }
+  .zone .lb { position: absolute; left: 0; top: -17px; font-size: 10.5px; color: var(--pp); background: #fff; padding: 0 5px; border-radius: 4px; white-space: nowrap; }
+  .zone .rs { position: absolute; right: -6px; bottom: -6px; width: 12px; height: 12px; background: #fff; border: 2px solid var(--pp); border-radius: 3px; cursor: nwse-resize; }
+  .chrome { position: absolute; border: 1.5px dashed #f0a441; box-sizing: border-box; cursor: move; }
+  .chrome.on { border: 2px solid #e08a00; background: rgba(240,164,65,.08); }
+  .chrome .lb { position: absolute; left: 0; top: -17px; font-size: 10.5px; color: #b36a00; background: #fff; padding: 0 5px; border-radius: 4px; white-space: nowrap; }
+  .drawing { position: absolute; border: 2px solid var(--pp); background: rgba(125,42,232,.1); pointer-events: none; }
+  .warn { background: #fff7e6; border: 1px solid #f0d9a8; color: #6b4d00; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin: 0 auto 12px; max-width: 760px; white-space: pre-wrap; }
+
+  /* 속성 */
+  .props { width: 300px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .props .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); font-weight: 600; display: flex; gap: 8px; align-items: center; }
+  .props .hd small { margin-left: auto; color: var(--mute); font-weight: 400; }
+  .props .body { flex: 1; overflow: auto; padding: 6px 12px 14px; }
+  .f { display: grid; grid-template-columns: 62px 1fr; gap: 6px; align-items: center; margin: 5px 0; font-size: 12px; color: var(--mute); }
+  .f input, .f select { width: 100%; }
+  .f4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .f4 label { font-size: 10.5px; color: var(--mute); }
+  .f4 input { width: 100%; }
+  .li { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; margin: 4px 0; font-size: 12px; background: #fff; }
+  .li.on { border-color: var(--pp); background: var(--pp-bg); }
+  .li .g { flex: 1; cursor: pointer; }
+  .li button { border: 0; background: transparent; cursor: pointer; color: #7a6aa8; font-size: 12px; padding: 0 3px; }
+  .li button:hover { color: var(--pp); }
+  .props textarea { width: 100%; height: 200px; font-family: ui-monospace, Menlo, monospace; font-size: 11px; }
+  details.j > summary { cursor: pointer; font-size: 12px; color: var(--mute); padding: 8px 0 4px; }
+</style>
+
+<div class="cv">
+  <!-- 팔레트 -->
+  <div class="pal">
+    <div class="hd">
+      <div class="tabs"><button class="on" data-pal="blocks">블록</button><button data-pal="parts">고정 부품</button></div>
+      <div class="note" id="palnote">칸 안으로 끌어다 놓는다. 칸을 고른 뒤 누르면 그 칸에 들어간다.</div>
+    </div>
+    <div class="body" id="pal"></div>
+    <div style="padding:8px 12px;border-top:1px solid var(--line);font-size:12px"><a href="/units/library">라이브러리 · 분해(PDF·그림·프롬프트) →</a></div>
+  </div>
+
+  <!-- 무대 -->
+  <div class="stage">
+    <div class="bar">
+      <label>지면</label><select id="pgsel"></select>
+      <button class="btn sm sub" id="btn-new">새 지면</button>
+      <label>판형</label><select id="spec"></select>
+      <label>옷</label><select id="skin"></select>
+      <button class="btn sm sub" id="btn-zone" title="면 위에서 끌어 칸을 그린다">▭ 칸 그리기</button>
+      <button class="btn sm" id="btn-save">저장</button>
+      <span class="note" id="info"></span>
+      <span class="err" id="err"></span>
+    </div>
+    <div class="area" id="area">
+      <div id="warn" class="warn" style="display:none"></div>
+      <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div><div class="ov" id="ov"></div></div>
+    </div>
+  </div>
+
+  <!-- 속성 -->
+  <div class="props">
+    <div class="hd"><span id="ptitle">지면</span><small id="psub"></small></div>
+    <div class="body" id="props"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const LIB = {{ library_json | safe }};
+const $ = (s) => document.querySelector(s);
+const api = async (url, body, method) => {
+  const r = await fetch(url, {method: method || (body ? "POST" : "GET"), headers: {"Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json().catch(() => ({error: r.status + " " + r.statusText}));
+  if (!r.ok && !j.error) j.error = r.status + " " + r.statusText;
+  return j;
+};
+const byId = (k) => Object.fromEntries((LIB[k] || []).map(x => [x.id, x]));
+const snap = (v) => Math.round(v * 2) / 2;
+const clone = (o) => JSON.parse(JSON.stringify(o));
+
+let page = null, sel = null, scale = 3, mode = "select", dirty = false, thumbs = {blocks: {}, parts: {}}, palTab = "blocks";
+
+function specOf() { return byId("specs")[page && page.spec] || byId("specs").a4 || {w: 210, h: 297}; }
+function partOf(id) { return byId("parts")[id] || {w: 40, h: 8, name: id}; }
+
+// ── 위 막대 ──
+function fillBars() {
+  const ps = $("#pgsel"); ps.innerHTML = LIB.pages.map(p => `<option value="${p.id}">${p.name} (${p.id})</option>`).join("");
+  if (page && !LIB.pages.some(p => p.id === page.id)) ps.innerHTML += `<option value="${page.id}">(저장 전) ${page.name} (${page.id})</option>`;
+  if (page) ps.value = page.id;
+  $("#spec").innerHTML = LIB.specs.map(s => `<option value="${s.id}">${s.id} ${s.w}×${s.h}</option>`).join("");
+  if (page) $("#spec").value = page.spec || "a4";
+  const sk = $("#skin"); const v = sk.value; sk.innerHTML = LIB.skins.map(s => `<option value="${s.id}">${s.name}</option>`).join(""); if (v) sk.value = v;
+}
+$("#pgsel").onchange = () => { if (dirty && !confirm("저장 안 한 변경이 있다. 버릴까?")) { $("#pgsel").value = page.id; return; } load(byId("pages")[$("#pgsel").value]); };
+$("#btn-new").onclick = () => {
+  if (dirty && !confirm("저장 안 한 변경이 있다. 버릴까?")) return;
+  let n = 1; while (byId("pages")["page_" + n]) n++;
+  load({id: "page_" + n, name: "새 지면 " + n, spec: $("#spec").value || "a4", mirror: false, zones: [], chrome: [], blocks: []}, true);
+};
+$("#spec").onchange = () => { page.spec = $("#spec").value; touch(); layout(); render(); };
+$("#skin").onchange = () => { render(); loadThumbs(); };
+$("#btn-zone").onclick = () => { mode = mode === "zone" ? "select" : "zone"; $("#btn-zone").classList.toggle("on", mode === "zone"); $("#paper").classList.toggle("zone-mode", mode === "zone"); };
+$("#btn-save").onclick = async () => {
+  const j = await api("/api/units/pages", page);
+  if (j.error) { $("#err").textContent = j.error; return; }
+  $("#err").textContent = ""; dirty = false;
+  const lj = await api("/api/units/library"); LIB.pages = lj.pages; fillBars(); $("#info").textContent = "저장됨 · " + page.id; props();
+};
+function touch() { dirty = true; $("#info").textContent = "변경됨 (저장 안 함)"; }
+
+// ── 불러오기 · 그리기 ──
+function load(p, isNew) {
+  page = clone(p); page.zones = page.zones || []; page.chrome = page.chrome || []; page.blocks = page.blocks || [];
+  sel = null; dirty = !!isNew; fillBars(); $("#info").textContent = isNew ? "새 지면 — 저장 전" : ""; $("#err").textContent = "";
+  location.hash = page.id; layout(); render(); props();
+}
+function layout() {
+  const sp = specOf(); const area = $("#area");
+  scale = Math.min(3.4, (area.clientWidth - 60) / sp.w);
+  const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
+  overlay();
+}
+window.addEventListener("resize", () => { if (page) { layout(); } });
+let rt = null;
+async function render() {
+  if (!page) return;
+  clearTimeout(rt);
+  rt = setTimeout(async () => {
+    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, mode: "canvas", spec: page.spec});
+    const w = $("#warn");
+    if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
+    const svg = (j.svgs[0] || {}).svg || "";
+    $("#svgwrap").innerHTML = svg; const el = $("#svgwrap svg"); if (el) { el.removeAttribute("width"); el.removeAttribute("height"); }
+    const msgs = [...(j.warnings || [])]; if (j.svgs.length > 1) msgs.unshift(`넘침 — 이 배치는 ${j.svgs.length}면이 된다 (첫 면만 보임)`);
+    w.style.display = msgs.length ? "" : "none"; w.textContent = msgs.join("\n");
+  }, 60);
+}
+function overlay() {
+  const ov = $("#ov"); ov.innerHTML = "";
+  page.zones.forEach((z, i) => {
+    const d = document.createElement("div"); d.className = "zone" + (sel && sel.type === "zone" && sel.i === i ? " on" : ""); d.dataset.zone = i;
+    d.style.left = z.x * scale + "px"; d.style.top = z.y * scale + "px"; d.style.width = z.w * scale + "px"; d.style.height = z.h * scale + "px";
+    const n = page.blocks.filter(b => b.zone === z.id).length;
+    d.innerHTML = `<span class="lb">${z.id} · ${z.flow}${z.flow === "columns" ? " " + (z.cols || 2) : ""} · 블록 ${n}</span><span class="rs"></span>`;
+    ov.appendChild(d);
+  });
+  page.chrome.forEach((c, i) => {
+    const p = partOf(c.part);
+    const d = document.createElement("div"); d.className = "chrome" + (sel && sel.type === "chrome" && sel.i === i ? " on" : ""); d.dataset.chrome = i;
+    d.style.left = c.x * scale + "px"; d.style.top = c.y * scale + "px"; d.style.width = p.w * scale + "px"; d.style.height = p.h * scale + "px";
+    d.innerHTML = `<span class="lb">고정 · ${p.name}</span>`;
+    ov.appendChild(d);
+  });
+}
+
+// ── 마우스: 고르기 · 옮기기 · 크기 · 칸 그리기 ──
+const mm = (e) => { const r = $("#paper").getBoundingClientRect(); return {x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale}; };
+let drag = null;
+$("#paper").addEventListener("pointerdown", (e) => {
+  if (!page || e.button !== 0) return;
+  const m = mm(e);
+  if (mode === "zone") {
+    const d = document.createElement("div"); d.className = "drawing"; $("#ov").appendChild(d);
+    drag = {kind: "draw", sx: m.x, sy: m.y, el: d}; $("#paper").setPointerCapture(e.pointerId); return;
+  }
+  const zEl = e.target.closest(".zone"), cEl = e.target.closest(".chrome");
+  if (zEl) {
+    const i = +zEl.dataset.zone; sel = {type: "zone", i}; const z = page.zones[i];
+    drag = {kind: e.target.classList.contains("rs") ? "resize" : "move", obj: z, sx: m.x, sy: m.y, ox: z.x, oy: z.y, ow: z.w, oh: z.h, moved: false};
+  } else if (cEl) {
+    const i = +cEl.dataset.chrome; sel = {type: "chrome", i}; const c = page.chrome[i];
+    drag = {kind: "move", obj: c, sx: m.x, sy: m.y, ox: c.x, oy: c.y, moved: false};
+  } else { sel = null; drag = null; }
+  if (drag) $("#paper").setPointerCapture(e.pointerId);
+  overlay(); props();
+});
+$("#paper").addEventListener("pointermove", (e) => {
+  if (!drag) return;
+  const m = mm(e), dx = m.x - drag.sx, dy = m.y - drag.sy;
+  if (drag.kind === "draw") {
+    const x = Math.min(drag.sx, m.x), y = Math.min(drag.sy, m.y), w = Math.abs(dx), h = Math.abs(dy);
+    Object.assign(drag.el.style, {left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); return;
+  }
+  if (Math.abs(dx) + Math.abs(dy) < 0.3) return;
+  drag.moved = true;
+  if (drag.kind === "move") { drag.obj.x = snap(drag.ox + dx); drag.obj.y = snap(drag.oy + dy); }
+  else { drag.obj.w = Math.max(5, snap(drag.ow + dx)); drag.obj.h = Math.max(5, snap(drag.oh + dy)); }
+  overlay(); props(true);
+});
+$("#paper").addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  if (drag.kind === "draw") {
+    const m = mm(e); const x = snap(Math.min(drag.sx, m.x)), y = snap(Math.min(drag.sy, m.y)), w = snap(Math.abs(m.x - drag.sx)), h = snap(Math.abs(m.y - drag.sy));
+    drag.el.remove();
+    if (w >= 5 && h >= 5) { let n = 1; while (page.zones.some(z => z.id === "z" + n)) n++;
+      page.zones.push({id: "z" + n, x, y, w, h, flow: "continue"}); sel = {type: "zone", i: page.zones.length - 1}; touch(); render(); }
+    mode = "select"; $("#btn-zone").classList.remove("on"); $("#paper").classList.remove("zone-mode");
+  } else if (drag.moved) { touch(); render(); }
+  drag = null; overlay(); props();
+});
+document.addEventListener("keydown", (e) => {
+  if (!sel || e.target.matches("input,textarea,select")) return;
+  if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); }
+});
+function removeSel() {
+  if (!sel) return;
+  if (sel.type === "zone") { const z = page.zones[sel.i]; page.zones.splice(sel.i, 1); page.blocks = page.blocks.filter(b => b.zone !== z.id); }
+  else page.chrome.splice(sel.i, 1);
+  sel = null; touch(); overlay(); render(); props();
+}
+
+// ── 팔레트: 끌어 놓기 ──
+async function loadThumbs() {
+  thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); palette();
+}
+function palette() {
+  const box = $("#pal"); box.innerHTML = "";
+  const items = palTab === "blocks" ? LIB.blocks : LIB.parts;
+  $("#palnote").textContent = palTab === "blocks" ? "칸 안으로 끌어다 놓는다. 칸을 고른 뒤 누르면 그 칸에 들어간다." : "면 위 아무 데나 끌어다 놓는다 — 좌표에 고정된다(러닝헤드·쪽번호·간지).";
+  for (const it of items) {
+    const d = document.createElement("div"); d.className = "card"; d.draggable = true;
+    d.innerHTML = `<div class="th">${(thumbs[palTab] || {})[it.id] || ""}</div><div class="nm">${it.name} <code>${it.id}</code></div>`;
+    const s = d.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); }
+    d.ondragstart = (e) => e.dataTransfer.setData("text/plain", JSON.stringify({kind: palTab, id: it.id}));
+    d.onclick = () => {
+      if (palTab === "blocks") { if (sel && sel.type === "zone") { page.blocks.push({zone: page.zones[sel.i].id, block: it.id}); touch(); overlay(); render(); props(); } else $("#err").textContent = "먼저 칸을 고르거나, 칸 안으로 끌어다 놓는다"; }
+      else { page.chrome.push({part: it.id, x: 20, y: 14}); sel = {type: "chrome", i: page.chrome.length - 1}; touch(); overlay(); render(); props(); }
+    };
+    box.appendChild(d);
+  }
+}
+document.querySelectorAll("[data-pal]").forEach(b => b.onclick = () => { palTab = b.dataset.pal; document.querySelectorAll("[data-pal]").forEach(x => x.classList.toggle("on", x === b)); palette(); });
+$("#paper").addEventListener("dragover", (e) => { e.preventDefault(); });
+$("#paper").addEventListener("drop", (e) => {
+  e.preventDefault(); if (!page) return;
+  let d; try { d = JSON.parse(e.dataTransfer.getData("text/plain")); } catch (_) { return; }
+  const m = mm(e); $("#err").textContent = "";
+  if (d.kind === "blocks") {
+    const zi = page.zones.findIndex(z => m.x >= z.x && m.x <= z.x + z.w && m.y >= z.y && m.y <= z.y + z.h);
+    if (zi < 0) { $("#err").textContent = "블록은 칸 안에 놓는다 — ▭ 칸 그리기로 먼저 칸을"; return; }
+    page.blocks.push({zone: page.zones[zi].id, block: d.id}); sel = {type: "zone", i: zi};
+  } else {
+    page.chrome.push({part: d.id, x: snap(m.x), y: snap(m.y)}); sel = {type: "chrome", i: page.chrome.length - 1};
+  }
+  touch(); overlay(); render(); props();
+});
+
+// ── 속성 ──
+function props(light) {
+  const box = $("#props");
+  if (!page) { box.innerHTML = ""; return; }
+  const blocksOf = (zid) => page.blocks.map((b, i) => ({...b, i})).filter(b => b.zone === zid);
+  const blockList = (zid) => blocksOf(zid).map((b, k, arr) => `<div class="li"><span class="g">${(byId("blocks")[b.block] || {}).name || b.block} <code>${b.block}</code></span>
+      <button data-mv="${b.i}:-1" ${k === 0 ? "disabled" : ""}>↑</button><button data-mv="${b.i}:1" ${k === arr.length - 1 ? "disabled" : ""}>↓</button><button data-rm="${b.i}">✕</button></div>`).join("") || `<div class="note">비어 있음 — 팔레트에서 블록을 끌어 놓는다</div>`;
+  let h = "";
+  if (sel && sel.type === "zone" && page.zones[sel.i]) {
+    const z = page.zones[sel.i];
+    $("#ptitle").textContent = "칸"; $("#psub").textContent = z.id;
+    h += `<div class="f"><span>id</span><input data-z="id" type="text" value="${z.id}"></div>
+      <div class="f"><span>흐름</span><select data-z="flow"><option value="continue" ${z.flow === "continue" ? "selected" : ""}>이어짐 — 넘치면 다음 면</option><option value="fixed" ${z.flow === "fixed" ? "selected" : ""}>고정 — 세트 1개</option><option value="columns" ${z.flow === "columns" ? "selected" : ""}>단 나눔</option></select></div>
+      ${z.flow === "columns" ? `<div class="f"><span>단 수</span><input data-z="cols" type="number" min="2" value="${z.cols || 2}"></div><div class="f"><span>단 간격</span><input data-z="gutter" type="number" step="0.5" value="${z.gutter || 5}"></div>` : ""}
+      <div class="f4"><label>x<input data-z="x" type="number" step="0.5" value="${z.x}"></label><label>y<input data-z="y" type="number" step="0.5" value="${z.y}"></label><label>w<input data-z="w" type="number" step="0.5" value="${z.w}"></label><label>h<input data-z="h" type="number" step="0.5" value="${z.h}"></label></div>
+      <div class="f"><span>받는 것</span><input data-z="accepts" type="text" placeholder="비우면 전부 · 블록 id, 세트 kind" value="${(z.accepts || []).join(", ")}"></div>
+      <h3>이 칸의 블록 (위에서 아래)</h3>${blockList(z.id)}
+      <div class="row" style="margin-top:10px"><button class="btn sm danger" id="btn-rm">칸 지우기</button></div>`;
+  } else if (sel && sel.type === "chrome" && page.chrome[sel.i]) {
+    const c = page.chrome[sel.i], p = partOf(c.part);
+    $("#ptitle").textContent = "고정 부품"; $("#psub").textContent = c.part;
+    h += `<div class="note">${p.name} · ${p.w}×${p.h}mm. 좌표에 고정된다. mirror 지면이면 오른쪽 면에서 좌우 반전.</div>
+      <div class="f4"><label>x<input data-c="x" type="number" step="0.5" value="${c.x}"></label><label>y<input data-c="y" type="number" step="0.5" value="${c.y}"></label></div>
+      <div class="row" style="margin-top:10px"><button class="btn sm danger" id="btn-rm">지우기</button></div>`;
+  } else {
+    $("#ptitle").textContent = "지면"; $("#psub").textContent = page.id;
+    h += `<div class="f"><span>id</span><input data-p="id" type="text" value="${page.id}"></div>
+      <div class="f"><span>이름</span><input data-p="name" type="text" value="${page.name || ""}"></div>
+      <div class="f"><span>좌우 반전</span><label><input data-p="mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 오른쪽 면에서 고정 부품·칸을 뒤집는다</label></div>
+      <h3>칸 ${page.zones.length}</h3>${page.zones.map((z, i) => `<div class="li"><span class="g" data-selz="${i}">${z.id} · ${z.flow} · ${z.w}×${z.h}mm · 블록 ${blocksOf(z.id).length}</span></div>`).join("") || `<div class="note">칸이 없다 — 위의 ▭ 칸 그리기</div>`}
+      <h3>고정 부품 ${page.chrome.length}</h3>${page.chrome.map((c, i) => `<div class="li"><span class="g" data-selc="${i}">${partOf(c.part).name} @ ${c.x},${c.y}</span></div>`).join("") || `<div class="note">없음 — 팔레트「고정 부품」에서</div>`}`;
+  }
+  h += `<details class="j"><summary>JSON</summary><textarea id="pjson">${JSON.stringify(page, null, 1).replace(/</g, "&lt;")}</textarea><div class="row"><button class="btn sm sub" id="btn-json">JSON 적용</button></div></details>`;
+  if (light) { // 끄는 중엔 숫자만 갱신
+    box.querySelectorAll("[data-z]").forEach(i => { const z = page.zones[sel.i]; if (["x", "y", "w", "h"].includes(i.dataset.z)) i.value = z[i.dataset.z]; });
+    box.querySelectorAll("[data-c]").forEach(i => { i.value = page.chrome[sel.i][i.dataset.c]; });
+    return;
+  }
+  box.innerHTML = h;
+  box.querySelectorAll("[data-z]").forEach(i => i.addEventListener(i.tagName === "SELECT" ? "change" : "input", () => {
+    const z = page.zones[sel.i]; const k = i.dataset.z;
+    if (k === "accepts") { const v = i.value.split(",").map(s => s.trim()).filter(Boolean); if (v.length) z.accepts = v; else delete z.accepts; }
+    else if (k === "id") { const old = z.id; if (!/^[a-z][a-z0-9_]{0,39}$/.test(i.value)) return; z.id = i.value; page.blocks.forEach(b => { if (b.zone === old) b.zone = z.id; }); }
+    else if (k === "flow") { z.flow = i.value; props(); }
+    else z[k] = +i.value;
+    touch(); overlay(); render();
+  }));
+  box.querySelectorAll("[data-c]").forEach(i => i.oninput = () => { page.chrome[sel.i][i.dataset.c] = +i.value; touch(); overlay(); render(); });
+  box.querySelectorAll("[data-p]").forEach(i => i.oninput = () => {
+    const k = i.dataset.p; if (k === "mirror") page.mirror = i.checked; else if (k === "id") { if (/^[a-z][a-z0-9_]{0,39}$/.test(i.value)) page.id = i.value; } else page[k] = i.value;
+    touch(); $("#psub").textContent = page.id; render();
+  });
+  box.querySelectorAll("[data-selz]").forEach(s => s.onclick = () => { sel = {type: "zone", i: +s.dataset.selz}; overlay(); props(); });
+  box.querySelectorAll("[data-selc]").forEach(s => s.onclick = () => { sel = {type: "chrome", i: +s.dataset.selc}; overlay(); props(); });
+  box.querySelectorAll("[data-mv]").forEach(b => b.onclick = () => {
+    const [i, d] = b.dataset.mv.split(":").map(Number); const zid = page.blocks[i].zone;
+    const idx = page.blocks.map((x, k) => x.zone === zid ? k : -1).filter(k => k >= 0); const pos = idx.indexOf(i); const j = idx[pos + d];
+    if (j === undefined) return; [page.blocks[i], page.blocks[j]] = [page.blocks[j], page.blocks[i]]; touch(); render(); props();
+  });
+  box.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { page.blocks.splice(+b.dataset.rm, 1); touch(); overlay(); render(); props(); });
+  const rm = $("#btn-rm"); if (rm) rm.onclick = removeSel;
+  $("#btn-json").onclick = () => { try { const p = JSON.parse($("#pjson").value); page = p; page.zones = page.zones || []; page.chrome = page.chrome || []; page.blocks = page.blocks || []; sel = null; touch(); fillBars(); layout(); render(); props(); } catch (e) { $("#err").textContent = "JSON 아님: " + e.message; } };
+}
+
+// ── 시작 ──
+fillBars();
+loadThumbs();
+(() => {
+  const id = decodeURIComponent(location.hash.replace(/^#/, ""));
+  const p = byId("pages")[id] || LIB.pages[0];
+  if (p) load(p); else $("#btn-new").click();
+})();
+</script>
+{% endblock %}

@@ -70,7 +70,7 @@
     </div>
     <div class="body">
       <div id="tab-lib">
-        <div class="note">원자 → 부품 → 블록 → 지면 → 틀. 옷은 색·서체·모양 선택, 세트는 콘텐츠. 항목을 누르면 가운데에 그려지고 오른쪽에서 JSON 을 고친다.</div>
+        <div class="note"><a href="/units">← 캔버스(지면 만들기)</a> · 원자 → 부품 → 블록 → 지면 → 틀. 옷은 색·서체·모양 선택, 세트는 콘텐츠. 항목을 누르면 가운데에 그려지고 오른쪽에서 JSON 을 고친다.</div>
         <div id="lib"></div>
       </div>
       <div id="tab-dec" style="display:none">
@@ -318,7 +318,7 @@ $("#btn-save-part").onclick = async () => {
 };
 
 drawLib();
-// 깊은 링크 — /units#plans/workbook_mini
+// 깊은 링크 — /units/library#plans/workbook_mini
 (() => { const m = location.hash.match(/^#(\w+)\/(.+)$/); if (!m) return; const it = (LIB[m[1]] || []).find(x => x.id === decodeURIComponent(m[2])); if (it) open(m[1], it); })();
 </script>
 {% endblock %}

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """단위 — 원자로 부품을, 부품으로 블록을, 블록으로 지면·틀을 만든다. 옷을 갈아입히고 세트(콘텐츠)를 흘려 본다.
 
-    /units                         화면 — 왼쪽 분해·라이브러리, 가운데 미리보기(SVG), 오른쪽 JSON 편집
+    /units                         캔버스 — 지면 고르기·칸 그리기·블록/부품 끌어 놓기·옷 바꾸기 (사용자 화면)
+    /units/library                 라이브러리·분해·JSON — 왼쪽 분해·라이브러리, 가운데 미리보기(SVG), 오른쪽 JSON 편집
+    /api/units/thumbs              팔레트 썸네일 {blocks:{id:svg}, parts:{id:svg}}
     /api/units/library             전부
     /api/units/<kind>  POST        하나 저장(스키마 대조) · DELETE {id}
     /api/units/preview POST        {kind, item|id, skin, sets} → {svgs:[{svg,label}], warnings}
@@ -31,12 +33,36 @@ def _updir():
     return d
 
 
-@bp.route("/units")
-def page():
-    lib = store.library()
+def _lib_json(lib):
     # tojson 필터는 키를 정렬한다 — 편집기에 id·name 이 앞에 오도록 적은 순서 그대로 내보낸다
-    lib_json = json.dumps(lib, ensure_ascii=False).replace("</", "<\\/")
-    return render_template("units.html", library_json=lib_json, kinds=store.KINDS, active_nav="단위")
+    return json.dumps(lib, ensure_ascii=False).replace("</", "<\\/")
+
+
+@bp.route("/units")
+def canvas():
+    """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
+    lib = store.library()
+    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="단위")
+
+
+@bp.route("/units/library")
+def page():
+    """라이브러리·분해·JSON — 데이터를 들여다보는 화면."""
+    lib = store.library()
+    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="단위")
+
+
+@bp.route("/api/units/thumbs")
+def api_thumbs():
+    """팔레트 썸네일 — 블록은 견본 값으로, 부품은 그대로. 옷은 ?skin="""
+    lib = store.library()
+    ctx = _ctx(lib, request.args.get("skin"))
+    out = {"blocks": {}, "parts": {}}
+    for b in lib["blocks"]:
+        out["blocks"][b["id"]] = render.block_standalone(ctx, b)
+    for p in lib["parts"]:
+        out["parts"][p["id"]] = render.part_standalone(ctx, p)
+    return jsonify(out)
 
 
 @bp.route("/api/units/library")
@@ -107,8 +133,11 @@ def api_preview():
                 out.append({"svg": render.block_standalone(c2, item), "label": f"모양 {v.get('id')} · {v.get('name', '')}"})
                 ctx.warnings.extend(w for w in c2.warnings if w not in ctx.warnings)
         elif kind == "pages":
-            spec = store.by_id(lib["specs"]).get(body.get("spec") or "a4") or render.DEFAULT_SPEC
-            out.extend(render.page_svgs(ctx, item, sets, spec, 1, item.get("name", "")))
+            spec = store.by_id(lib["specs"]).get(body.get("spec") or item.get("spec") or "a4") or render.DEFAULT_SPEC
+            if body.get("mode") == "canvas":            # 지면에 놓은 블록(견본 배치)으로
+                out.extend(render.page_canvas_svgs(ctx, item, spec))
+            else:
+                out.extend(render.page_svgs(ctx, item, sets, spec, 1, item.get("name", "")))
         elif kind == "plans":
             out.extend(render.plan_svgs(ctx, item, sets, lib))
         elif kind == "sets":

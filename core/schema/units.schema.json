@@ -128,7 +128,10 @@
         "zones": {"type": "array", "items": {"$ref": "#/definitions/zone"}},
         "chrome": {"type": "array", "items": {"type": "object", "required": ["part", "x", "y"], "properties": {"part": {"$ref": "#/definitions/id"}, "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}}}},
         "mirror": {"type": "boolean", "description": "오른쪽 면에서 좌우 반전"},
-        "background": {"$ref": "#/definitions/token"}
+        "background": {"$ref": "#/definitions/token"},
+        "spec": {"$ref": "#/definitions/id", "description": "이 지면을 그린 규격(캔버스용). 틀에 들어가면 틀의 규격을 따른다"},
+        "blocks": {"type": "array", "description": "캔버스에서 칸에 놓은 블록(견본 배치). 실제 콘텐츠는 세트로 흘러 들어오고, 이건 지면을 설계·미리볼 때 쓴다",
+                   "items": {"type": "object", "required": ["zone", "block"], "properties": {"zone": {"$ref": "#/definitions/id"}, "block": {"$ref": "#/definitions/id"}}}}
       }
     },
 

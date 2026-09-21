@@ -9,6 +9,7 @@
 넘침: 칸(zone) 의 flow 가 continue 면 다음 면 같은 칸으로, fixed 면 세트 하나 놓고 칸을 닫는다.
 어느 칸에도 안 들어가는 항목은 경고에 적고 건너뛴다(무한 루프 금지).
 """
+import json
 import math
 import re
 from xml.sax.saxutils import escape as _x
@@ -408,6 +409,24 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
+
+
+def page_canvas_svgs(ctx, page, spec):
+    """캔버스 미리보기 — 지면에 놓은 블록(page.blocks, 칸별 순서)을 견본 값으로 흘린다.
+
+    칸마다 세트 하나를 지어 그 칸만 받게 한다(accepts 를 덮어쓴 사본). 넘치면 다음 면이 생기므로
+    돌려주는 면이 여러 장일 수 있다 — 캔버스는 첫 장을 보이고 장수를 알린다.
+    """
+    pg = json.loads(json.dumps(page))
+    sets = []
+    for z in pg.get("zones") or []:
+        kind = "_canvas:" + z["id"]
+        z["accepts"] = [kind]
+        blocks = [{"block": b["block"], "fields": {}} for b in (pg.get("blocks") or []) if b.get("zone") == z["id"]]
+        if blocks:
+            sets.append({"kind": kind, "id": z["id"], "blocks": blocks})
+    ctx.sys.setdefault("section", "STEP 2")
+    return page_svgs(ctx, pg, sets, spec, 1, pg.get("name", ""))
 
 
 def plan_svgs(ctx, plan, sets, lib):
