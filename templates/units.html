@@ -127,7 +127,7 @@
 
 {% block scripts %}
 <script>
-const LIB = {{ library | tojson }};
+const LIB = {{ library_json | safe }};
 const KINDS = {{ kinds | tojson }};
 const KN = {parts: "부품", blocks: "블록", pages: "지면", plans: "틀", skins: "옷", specs: "규격", sets: "세트"};
 const NEW = {

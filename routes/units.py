@@ -34,7 +34,9 @@ def _updir():
 @bp.route("/units")
 def page():
     lib = store.library()
-    return render_template("units.html", library=lib, kinds=store.KINDS, active_nav="단위")
+    # tojson 필터는 키를 정렬한다 — 편집기에 id·name 이 앞에 오도록 적은 순서 그대로 내보낸다
+    lib_json = json.dumps(lib, ensure_ascii=False).replace("</", "<\\/")
+    return render_template("units.html", library_json=lib_json, kinds=store.KINDS, active_nav="단위")
 
 
 @bp.route("/api/units/library")
