@@ -72,7 +72,15 @@
   .paper .svgwrap svg g.sel2 { outline: 2px dashed var(--pp); }
   .selbox { position: absolute; border: 2px solid var(--pp); border-radius: 2px; pointer-events: none; display: none; }
   .selbox .lb { position: absolute; left: -2px; top: -18px; font-size: 10px; background: var(--pp); color: #fff; padding: 1px 6px; border-radius: 4px 4px 0 0; white-space: nowrap; }
-  .selbox .rs { position: absolute; right: -6px; top: 50%; margin-top: -8px; width: 10px; height: 16px; background: #fff; border: 2px solid var(--pp); border-radius: 4px; cursor: ew-resize; pointer-events: auto; }
+  .selbox span[data-h] { position: absolute; background: #fff; border: 2px solid var(--pp); border-radius: 4px; pointer-events: auto; }
+  .selbox .hd-e { right: -6px; top: 50%; margin-top: -8px; width: 8px; height: 16px; cursor: ew-resize; }
+  .selbox .hd-s { bottom: -6px; left: 50%; margin-left: -8px; width: 16px; height: 8px; cursor: ns-resize; }
+  .selbox .hd-se { right: -6px; bottom: -6px; width: 10px; height: 10px; cursor: nwse-resize; }
+  .selbox.multi { border-style: dashed; }
+  .marq { position: absolute; border: 1.5px dashed var(--pp); background: rgba(125,42,232,.07); display: none; pointer-events: none; }
+  .gv, .gh { position: absolute; background: #ff3ea5; display: none; pointer-events: none; }
+  .gv { width: 1px; top: 0; bottom: 0; } .gh { height: 1px; left: 0; right: 0; }
+  .tools .sep { width: 1px; height: 16px; background: #4a5068; margin: 0 2px; align-self: center; }
   .tools { position: absolute; display: none; gap: 3px; background: #1f2330; border-radius: 8px; padding: 4px; box-shadow: 0 6px 18px rgba(0,0,0,.25); z-index: 20; }
   .tools button { border: 0; background: transparent; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
   .tools button:hover { background: #3a3f52; }
@@ -149,14 +157,22 @@
     </div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
-      <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div><div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rs" id="rs" title="폭 바꾸기"></span></div>
-        <div class="tools" id="tools"><button id="t-group" title="고른 원자들을 그룹으로 (Ctrl+G)">↑ 묶기 → ② 부품</button><button id="t-up" title="부품에 콘텐츠 자리 이름표를 붙인다">↑ 올리기 → ③ 블록</button><button id="t-down" title="한 단계 아래로 푼다 (Ctrl+Shift+G)">↓ 풀기</button><button id="t-dup" title="복제">⧉</button><button id="t-x" class="x" title="지우기">✕</button></div>
+      <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
+        <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="hd-e" data-h="e" title="폭"></span><span class="hd-s" data-h="s" title="높이"></span><span class="hd-se" data-h="se" title="폭·높이"></span></div>
+        <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
+        <div class="tools" id="tools">
+          <button id="t-group" title="고른 원자들을 그룹으로 (Ctrl+G)">↑ 묶기</button><button id="t-up" title="부품에 콘텐츠 자리 이름표 (블록으로)">↑ 블록으로</button><button id="t-down" title="한 단계 아래로 (Ctrl+Shift+G)">↓ 풀기</button>
+          <span class="sep"></span>
+          <button data-al="l" title="왼쪽 맞춤">⇤</button><button data-al="c" title="가로 가운데">⇹</button><button data-al="r" title="오른쪽 맞춤">⇥</button><button data-al="t" title="위 맞춤">⤒</button><button data-al="m" title="세로 가운데">⇳</button><button data-al="b" title="아래 맞춤">⤓</button>
+          <span class="sep"></span>
+          <button id="t-front" title="맨 앞으로 (Ctrl+])">⬆</button><button id="t-back" title="맨 뒤로 (Ctrl+[)">⬇</button><button id="t-dup" title="복제 (Ctrl+D)">⧉</button><button id="t-x" class="x" title="지우기 (Delete)">✕</button>
+        </div>
       </div>
     </div>
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span>④ 지면 띠 — ←/→ 이동 · 썸네일 끌어 순서 · Shift+클릭으로 여러 원자 고르기</span>
+        <span>빈 곳 끌기 = 영역 선택 · Shift+클릭 = 더 고르기 · Ctrl+Z 되돌리기 · Ctrl+C/V · Ctrl+D 복제 · Ctrl+A 전체 · Ctrl+]/[ 앞뒤 · Alt 끌기 = 안 붙음 · ←/→ 지면 이동</span>
         <span class="cnt" id="cnt"></span>
         <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
       </div>
@@ -234,7 +250,7 @@ $("#p-del").onclick = async () => {
 
 // ── 열기 · 그리기 ──
 function open(p) {
-  page = byId("pages")[p.id] || p; sel = null; sels.clear();
+  page = byId("pages")[p.id] || p; sel = null; sels = new Set();
   if (!page.items) page.items = [];
   if (page.chrome && page.chrome.length) { page.items = page.chrome.map(c => ({part: c.part, x: c.x, y: c.y})).concat(page.items); delete page.chrome; }
   $("#pname").value = page.name || ""; location.hash = page.id;
@@ -294,71 +310,147 @@ async function drawRail() {
 }
 document.addEventListener("click", () => document.querySelectorAll(".menu.on").forEach(m => m.classList.remove("on")));
 
-// ── 고르기 · 옮기기 · 폭 ──
+// ── 고르기 · 옮기기 · 영역 · 손잡이 · 안내선 · 정렬 · 순서 · 복사 · 되돌리기 ──
+// 선택 모델: sels = 고른 것 전부(번호), sel = 대표(마지막에 고른 것). 도구 막대·속성은 대표 기준, 옮기기·정렬·지우기는 전부.
 const mmOf = (e) => { const r = $("#paper").getBoundingClientRect(); return {x: (e.clientX - r.left) / scale, y: (e.clientY - r.top) / scale}; };
+function select(ids, primary) { sels = new Set(ids); sel = primary != null ? primary : (ids.length ? ids[ids.length - 1] : null); markSels(); selbox(); side(); }
+function gOf(i) { const s = $("#svgwrap svg"); return s ? s.querySelector(`g[data-fi="${i}"]`) : null; }
+function bboxOf(i) {                                   // 화면에 그려진 대로의 상자 (mm, 밀린 만큼 포함)
+  const g = gOf(i); if (!g) return null; const r = g.getBoundingClientRect(), pr = $("#paper").getBoundingClientRect();
+  return {x: (r.left - pr.left) / scale, y: (r.top - pr.top) / scale, w: r.width / scale, h: Math.max(r.height / scale, 0.5), dy: +(g.dataset.dy || 0)};
+}
 function wire() {
   const svg = $("#svgwrap svg"); if (!svg) return;
   svg.querySelectorAll("g[data-fi]").forEach(g => {
     g.addEventListener("click", (e) => e.stopPropagation());
+    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && it.atom && it.atom.t === "text") { const v = prompt("글", it.atom.text || ""); if (v != null) { hist(); it.atom.text = v; save(); render(); side(); } } });
     g.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return; e.stopPropagation();
       const i = +g.dataset.fi;
-      if (e.shiftKey) { if (sel != null) sels.add(sel); if (sels.has(i)) sels.delete(i); else sels.add(i); sel = i; markSels(); selbox(); side(); return; }
-      sel = i; sels.clear(); markSels(); selbox(); side();
-      const it = page.items[i]; const st = {x: e.clientX, y: e.clientY, ox: it.x, oy: it.y, moved: false, push: +(g.dataset.dy || 0)};
-      const mv = (ev) => { const dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale; if (!st.moved && Math.abs(dx) + Math.abs(dy) < 0.4) return;
-        st.moved = true; it.x = snap(st.ox + dx); it.y = snap(st.oy + dy); g.setAttribute("transform", `translate(${it.x},${it.y + st.push})`); selbox(); };
-      const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); if (st.moved) { save(); side(); } };
-      window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+      if (e.shiftKey) { const ids = new Set(sels); if (ids.has(i)) ids.delete(i); else ids.add(i); select([...ids], ids.has(i) ? i : null); return; }
+      if (!sels.has(i)) select([i], i); else { sel = i; markSels(); selbox(); side(); }
+      dragItems(e);
     });
   });
-  svg.addEventListener("click", () => { sel = null; sels.clear(); markSels(); selbox(); side(); });
   markSels();
 }
 function markSels() { const svg = $("#svgwrap svg"); if (!svg) return; svg.querySelectorAll("g[data-fi]").forEach(g => g.classList.toggle("sel2", sels.has(+g.dataset.fi) && +g.dataset.fi !== sel)); }
-$("#rs").addEventListener("pointerdown", (e) => {
-  if (sel == null) return; e.stopPropagation(); e.preventDefault();
-  const it = page.items[sel]; const g = selG(); const w0 = it.w || (g ? g.getBoundingClientRect().width / scale : 170);
-  const st = {x: e.clientX, w0}; const box = $("#selbox");
-  const mv = (ev) => { it.w = Math.max(5, snap(w0 + (ev.clientX - st.x) / scale)); box.style.width = (it.w * scale + 4) + "px"; };
-  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); save(); render(); side(); };
+// 끌어 옮기기 — 고른 것 전부, 안내선(다른 요소의 왼·가운데·오른 / 위·가운데·아래, 여백선)에 붙는다
+function dragItems(e) {
+  const ids = [...sels]; const st = {x: e.clientX, y: e.clientY, moved: false, before: JSON.stringify(page.items), o: ids.map(i => ({i, x: page.items[i].x, y: page.items[i].y, g: gOf(i), b: bboxOf(i)}))};
+  const S = specOf(); const others = page.items.map((_, i) => i).filter(i => !sels.has(i)).map(i => bboxOf(i)).filter(Boolean);
+  const xs = [M.left, S.w - M.right, S.w / 2].concat(others.flatMap(b => [b.x, b.x + b.w / 2, b.x + b.w]));
+  const ys = [M.top, S.h - M.bottom, S.h / 2].concat(others.flatMap(b => [b.y, b.y + b.h / 2, b.y + b.h]));
+  const lead = st.o.find(o => o.i === sel) || st.o[0];
+  const mv = (ev) => {
+    let dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
+    if (!st.moved && Math.abs(dx) + Math.abs(dy) < 0.4) return; st.moved = true;
+    let gx = null, gy = null;
+    if (!ev.altKey && lead && lead.b) {                       // Alt 를 누르면 안 붙는다
+      const L = lead.b.x + dx, R = L + lead.b.w, C = L + lead.b.w / 2, T = lead.b.y + dy, B = T + lead.b.h, Mi = T + lead.b.h / 2;
+      let best = 1.2, sx = 0; for (const x of xs) for (const v of [L, C, R]) { const d = Math.abs(v - x); if (d < best) { best = d; sx = x - v; gx = x; } }
+      dx += sx;
+      best = 1.2; let sy = 0; for (const y of ys) for (const v of [T, Mi, B]) { const d = Math.abs(v - y); if (d < best) { best = d; sy = y - v; gy = y; } }
+      dy += sy;
+    }
+    for (const o of st.o) { const it = page.items[o.i]; it.x = snap(o.x + dx); it.y = snap(o.y + dy); if (o.g) o.g.setAttribute("transform", `translate(${it.x},${it.y + (o.b ? o.b.dy : 0)})`); }
+    guide(gx, gy); selbox();
+  };
+  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); guide(null, null); if (st.moved) { hist(st.before); save(); render(); side(); } };
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+}
+function guide(gx, gy) { const v = $("#gv"), h = $("#gh"); if (gx == null) v.style.display = "none"; else { v.style.display = ""; v.style.left = (gx * scale) + "px"; } if (gy == null) h.style.display = "none"; else { h.style.display = ""; h.style.top = (gy * scale) + "px"; } }
+// 영역 선택 — 빈 곳에서 끌면 상자, 상자에 걸치는 요소를 고른다. 안 끌면 선택 해제
+$("#paper").addEventListener("pointerdown", (e) => {
+  if (e.button !== 0 || !page || e.target.closest("g[data-fi], .selbox, .tools")) return;
+  const s0 = mmOf(e); const m = $("#marq"); let moved = false;
+  const mv = (ev) => { const m1 = mmOf(ev); if (!moved && Math.abs(m1.x - s0.x) + Math.abs(m1.y - s0.y) < 0.6) return; moved = true;
+    const x = Math.min(s0.x, m1.x), y = Math.min(s0.y, m1.y), w = Math.abs(m1.x - s0.x), h = Math.abs(m1.y - s0.y);
+    Object.assign(m.style, {display: "", left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); m._r = {x, y, w, h}; };
+  const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); m.style.display = "none";
+    if (!moved) { select([]); return; }
+    const r = m._r; const ids = page.items.map((_, i) => i).filter(i => { const b = bboxOf(i); return b && b.x < r.x + r.w && b.x + b.w > r.x && b.y < r.y + r.h && b.y + b.h > r.y; });
+    select(ev.shiftKey ? [...new Set([...sels, ...ids])] : ids); };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 });
-function selG() { const s = $("#svgwrap svg"); return (sel != null && s) ? s.querySelector(`g[data-fi="${sel}"]`) : null; }
+// 손잡이 — 폭(E) · 높이(S, 원자만) · 둘 다(SE)
+document.querySelectorAll("#selbox [data-h]").forEach(hd => hd.addEventListener("pointerdown", (e) => {
+  if (sel == null) return; e.stopPropagation(); e.preventDefault();
+  const it = page.items[sel], b = bboxOf(sel); if (!b) return; const k = hd.dataset.h; const a = it.atom;
+  const st = {x: e.clientX, y: e.clientY, w0: it.w || b.w, h0: a ? (a.t === "line" ? Math.abs(a.y2 - a.y1) : a.h) : b.h}; const box = $("#selbox"); const before = JSON.stringify(page.items);
+  const mv = (ev) => { const dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
+    if (k !== "s") { it.w = Math.max(3, snap(st.w0 + dx)); box.style.width = (it.w * scale + 4) + "px"; }
+    if (k !== "e" && a) { const h = Math.max(1, snap(st.h0 + dy)); if (a.t === "line") a.y2 = a.y1 + h; else a.h = h; box.style.height = (h * scale + 4) + "px"; } };
+  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); hist(before); save(); render(); side(); };
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+}));
+function selG() { return sel != null ? gOf(sel) : null; }
 function selbox() {
   const box = $("#selbox"), tools = $("#tools"), g = selG();
-  if (!g) { box.style.display = "none"; tools.style.display = "none"; return; }
+  if (!g || !page.items[sel]) { box.style.display = "none"; tools.style.display = "none"; return; }
   const r = g.getBoundingClientRect(), pr = $("#paper").getBoundingClientRect(); const it = page.items[sel];
   Object.assign(box.style, {display: "", left: (r.left - pr.left - 2) + "px", top: (r.top - pr.top - 2) + "px", width: (r.width + 4) + "px", height: (Math.max(r.height, 2) + 4) + "px"});
-  $("#sellb").textContent = ({atom: "① 원자", part: "② 부품", block: "③ 블록"})[unitOf(it)] + " · " + nameOf(it);
+  box.classList.toggle("multi", sels.size > 1);
+  $("#sellb").textContent = (sels.size > 1 ? `${sels.size}개 · ` : "") + ({atom: "① 원자", part: "② 부품", block: "③ 블록"})[unitOf(it)] + " · " + nameOf(it);
+  box.querySelector(".hd-s").style.display = box.querySelector(".hd-se").style.display = it.atom && it.atom.t !== "ellipse" ? "" : "none";
   Object.assign(tools.style, {display: "flex", left: Math.max(0, r.left - pr.left) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
-  const u = unitOf(it), allAtoms = [...sels, sel].every(i => page.items[i] && page.items[i].atom);
+  const u = unitOf(it), allAtoms = [...sels].every(i => page.items[i] && page.items[i].atom);
   $("#t-group").style.display = allAtoms ? "" : "none";
-  $("#t-up").style.display = u === "part" ? "" : "none";
-  $("#t-down").style.display = u === "atom" ? "none" : "";
-  $("#t-down").textContent = u === "block" ? "↓ 풀기 → ② 부품" : "↓ 풀기 → ① 원자";
+  $("#t-up").style.display = u === "part" && sels.size === 1 ? "" : "none";
+  $("#t-down").style.display = u === "atom" || sels.size > 1 ? "none" : "";
+  $("#t-down").textContent = u === "block" ? "↓ 풀기 → 부품" : "↓ 풀기 → 원자";
+  tools.querySelectorAll("[data-al]").forEach(b => b.style.display = sels.size > 1 ? "" : "none");
 }
-function removeSel() { if (sel == null) return; const rm = new Set([...sels, sel]); page.items = page.items.filter((_, i) => !rm.has(i)); sel = null; sels.clear(); save(); render(); side(); }
-function dupSel() { if (sel == null) return; const c = clone(page.items[sel]); c.y = snap(c.y + 6); page.items.push(c); sel = page.items.length - 1; sels.clear(); save(); render(); side(); }
+function removeSel() { if (!sels.size) return; hist(); page.items = page.items.filter((_, i) => !sels.has(i)); select([]); save(); render(); }
+function dupSel() { if (!sels.size) return; hist(); const ids = [...sels].sort((a, b) => a - b); const n0 = page.items.length; ids.forEach(i => { const c = clone(page.items[i]); c.x = snap(c.x + 5); c.y = snap(c.y + 5); page.items.push(c); }); select(page.items.map((_, i) => i).filter(i => i >= n0)); save(); render(); }
+function zorder(front) { if (!sels.size) return; hist(); const keep = page.items.filter((_, i) => !sels.has(i)), mine = page.items.filter((_, i) => sels.has(i)); page.items = front ? keep.concat(mine) : mine.concat(keep); const n = page.items.length; select(front ? mine.map((_, k) => n - mine.length + k) : mine.map((_, k) => k)); save(); render(); }
+function align(k) {
+  if (sels.size < 2) return; hist(); const bs = [...sels].map(i => ({i, b: bboxOf(i)})).filter(o => o.b);
+  const L = Math.min(...bs.map(o => o.b.x)), R = Math.max(...bs.map(o => o.b.x + o.b.w)), T = Math.min(...bs.map(o => o.b.y)), B = Math.max(...bs.map(o => o.b.y + o.b.h));
+  for (const {i, b} of bs) { const it = page.items[i];
+    if (k === "l") it.x = snap(L); else if (k === "r") it.x = snap(R - b.w); else if (k === "c") it.x = snap((L + R) / 2 - b.w / 2);
+    else if (k === "t") it.y = snap(T - b.dy); else if (k === "b") it.y = snap(B - b.h - b.dy); else if (k === "m") it.y = snap((T + B) / 2 - b.h / 2 - b.dy); }
+  save(); render(); side();
+}
+let clip = [];
+function copySel() { if (!sels.size) return; clip = [...sels].sort((a, b) => a - b).map(i => clone(page.items[i])); $("#st").textContent = `${clip.length}개 복사`; }
+function paste() { if (!clip.length || !page) return; hist(); const n0 = page.items.length; clip.forEach(c => { const d = clone(c); d.x = snap(d.x + 5); d.y = snap(d.y + 5); page.items.push(d); }); clip = clip.map(c => ({...c, x: c.x + 5, y: c.y + 5})); select(page.items.map((_, i) => i).filter(i => i >= n0)); save(); render(); }
+// 되돌리기 — 바꾸기 전 items 를 쌓아 둔다 (지면마다 50개)
+const undo = {}, redo = {};
+function hist(snap) { if (!page) return; const u = undo[page.id] = undo[page.id] || []; u.push(snap || JSON.stringify(page.items)); if (u.length > 50) u.shift(); redo[page.id] = []; }
+function undoIt(back) {
+  if (!page) return; const from = (back ? undo : redo)[page.id] || [], to = (back ? redo : undo)[page.id] = (back ? redo : undo)[page.id] || [];
+  if (!from.length) { $("#st").textContent = back ? "되돌릴 것 없음" : "다시 할 것 없음"; return; }
+  to.push(JSON.stringify(page.items)); page.items = JSON.parse(from.pop()); select([]); save(); render();
+}
 $("#t-x").onclick = (e) => { e.stopPropagation(); removeSel(); };
 $("#t-dup").onclick = (e) => { e.stopPropagation(); dupSel(); };
+$("#t-front").onclick = (e) => { e.stopPropagation(); zorder(true); };
+$("#t-back").onclick = (e) => { e.stopPropagation(); zorder(false); };
+document.querySelectorAll("#tools [data-al]").forEach(b => b.onclick = (e) => { e.stopPropagation(); align(b.dataset.al); });
 $("#t-group").onclick = (e) => { e.stopPropagation(); groupToPart(); };
 $("#t-up").onclick = (e) => { e.stopPropagation(); if (sel != null) partToBlock(sel); };
 $("#t-down").onclick = (e) => { e.stopPropagation(); ungroup(); };
 document.addEventListener("keydown", (e) => {
-  if (e.target.matches("input,textarea,select") || !page) return;
-  if (sel == null || !page.items[sel]) {
+  if ((e.target.matches && e.target.matches("input,textarea,select")) || !page) return;
+  const mod = e.metaKey || e.ctrlKey, k = (e.key || "").toLowerCase();
+  if (mod && k === "z") { e.preventDefault(); undoIt(!e.shiftKey); return; }
+  if (mod && k === "y") { e.preventDefault(); undoIt(false); return; }
+  if (mod && k === "a") { e.preventDefault(); select(page.items.map((_, i) => i)); return; }
+  if (mod && k === "c") { e.preventDefault(); copySel(); return; }
+  if (mod && k === "v") { e.preventDefault(); paste(); return; }
+  if (mod && k === "d") { e.preventDefault(); dupSel(); return; }
+  if (mod && k === "g") { e.preventDefault(); if (e.shiftKey) ungroup(); else groupToPart(); return; }
+  if (mod && (e.key === "]" || e.key === "[")) { e.preventDefault(); zorder(e.key === "]"); return; }
+  if (!sels.size) {
     if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(); if (i > 0) open(LIB.pages[i - 1]); e.preventDefault(); }
     if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(); if (i < LIB.pages.length - 1) open(LIB.pages[i + 1]); e.preventDefault(); }
     return;
   }
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); return; }
-  if ((e.metaKey || e.ctrlKey) && (e.key === "g" || e.key === "G")) { e.preventDefault(); if (e.shiftKey) ungroup(); else groupToPart(); return; }
-  if (e.key === "Escape") { sel = null; sels.clear(); markSels(); selbox(); side(); return; }
-  const step = e.shiftKey ? 5 : 0.5; const it = page.items[sel];
-  if (e.key === "ArrowUp") it.y = snap(it.y - step); else if (e.key === "ArrowDown") it.y = snap(it.y + step);
-  else if (e.key === "ArrowLeft") it.x = snap(it.x - step); else if (e.key === "ArrowRight") it.x = snap(it.x + step); else return;
-  e.preventDefault(); save(); render(); side();
+  if (e.key === "Escape") { select([]); return; }
+  const step = e.shiftKey ? 5 : 0.5; const d = {ArrowUp: [0, -step], ArrowDown: [0, step], ArrowLeft: [-step, 0], ArrowRight: [step, 0]}[e.key]; if (!d) return;
+  e.preventDefault(); hist(); for (const i of sels) { page.items[i].x = snap(page.items[i].x + d[0]); page.items[i].y = snap(page.items[i].y + d[1]); } save(); render(); side();
 });
 
 // ── 요소 넣기 (블록 · 부품 · 원자) ──
@@ -373,13 +465,13 @@ function place(it, at, stretch) {
   if (stretch) it.w = S.w - M.left - M.right;
   it.x = M.left; it.y = snap(Math.min(bottomOf() + 3, S.h - 20));
   if (at) { it.x = snap(Math.max(0, at.x)); it.y = snap(Math.max(0, at.y)); }
-  page.items.push(it); sel = page.items.length - 1; sels.clear(); save(); render(); side();
+  hist(); page.items.push(it); select([page.items.length - 1]); save(); render();
 }
 function addBlock(id, at) {
   const blk = byId("blocks")[id]; if (!blk || !page) return;
   const S = specOf();
   if (blk.source === "system") { const it = {block: id, x: M.left, y: 14}; if (id === "folio") it.y = S.h - 19; else if (/divider|cover/.test(id)) { it.x = 0; it.y = 0; }
-    if (at) { it.x = snap(at.x); it.y = snap(at.y); } page.items.push(it); sel = page.items.length - 1; save(); render(); side(); return; }
+    if (at) { it.x = snap(at.x); it.y = snap(at.y); } hist(); page.items.push(it); select([page.items.length - 1]); save(); render(); return; }
   place({block: id}, at, true);
 }
 function addPart(id, at) { if (byId("parts")[id] && page) place({part: id}, at, false); }
@@ -392,7 +484,7 @@ $("#paper").addEventListener("drop", (e) => {
 
 // ── 원자들 → 부품 · 부품 → 블록 (단위를 올린다) ──
 async function groupToPart() {
-  const ids = [...new Set([...sels, sel])].filter(i => page.items[i] && page.items[i].atom).sort((a, b) => a - b); if (!ids.length) return;
+  const ids = [...sels].filter(i => page.items[i] && page.items[i].atom).sort((a, b) => a - b); if (!ids.length) return;
   const name = prompt("부품 이름", "새 부품"); if (name == null) return;
   let n = 1; while (byId("parts")["p_" + n]) n++; const pid = "p_" + n;
   const its = ids.map(i => page.items[i]);
@@ -404,15 +496,15 @@ async function groupToPart() {
   const W = Math.max(...its.map(it => bb(it).x + bb(it).w)) - x0, H = Math.max(...its.map(it => bb(it).y + bb(it).h)) - y0;
   const part = {id: pid, name, w: snap(Math.max(W, 1)), h: snap(Math.max(H, 1)), atoms};
   const j = await api("/api/units/parts", part); if (j.error) { $("#st").textContent = j.error; return; }
-  LIB.parts.push(part); page.items = page.items.filter((_, i) => !ids.includes(i)); page.items.push({part: pid, x: x0, y: y0});
-  sel = page.items.length - 1; sels.clear(); save(); render(); thumbsLoad(); side();
+  hist(); LIB.parts.push(part); page.items = page.items.filter((_, i) => !ids.includes(i)); page.items.push({part: pid, x: x0, y: y0});
+  select([page.items.length - 1]); save(); render(); thumbsLoad();
 }
 function ungroup() {
   if (sel == null || !page.items[sel]) return;
   const it = page.items[sel];
   if (it.block) {                                            // ③ 블록 → ② 부품 (지금 옷의 모양)
     const part = partOfBlock(it.block); if (!part) return;
-    page.items[sel] = {part: part.id, x: it.x, y: it.y, w: it.w}; save(); render(); side(); return;
+    hist(); page.items[sel] = {part: part.id, x: it.x, y: it.y, w: it.w}; save(); render(); side(); return;
   }
   if (it.part) {                                             // ② 부품 → ① 원자들 (자리·폭 그대로)
     const part = byId("parts")[it.part]; if (!part) return;
@@ -423,7 +515,7 @@ function ungroup() {
         out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: snap(len), y2: dy < 0 ? 0 : snap(dy)}), x: snap(it.x + x0), y: snap(it.y + y0)}); }
       else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = snap(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: snap(x), y: snap(y)}); }
     }
-    page.items.splice(sel, 1, ...out); sels = new Set(out.map((_, k) => sel + k)); sel = sel + out.length - 1; save(); render(); side();
+    hist(); const at = sel; page.items.splice(at, 1, ...out); select(out.map((_, k) => at + k)); save(); render();
   }
 }
 async function partToBlock(i) {
@@ -433,7 +525,7 @@ async function partToBlock(i) {
   let bid = part.id; if (byId("blocks")[bid]) { let n = 1; while (byId("blocks")[part.id + "_" + n]) n++; bid = part.id + "_" + n; }
   const block = {id: bid, name, source: Object.keys(fields).length ? "content" : "system", fields, variants: [{id: "v1", name: "기본", part: part.id}]};
   const j = await api("/api/units/blocks", block); if (j.error) { $("#st").textContent = j.error; return; }
-  LIB.blocks.push(block); page.items[i] = {block: bid, x: it.x, y: it.y, w: it.w}; save(); render(); thumbsLoad(); side();
+  hist(); LIB.blocks.push(block); page.items[i] = {block: bid, x: it.x, y: it.y, w: it.w}; save(); render(); thumbsLoad(); side();
 }
 
 // ── 왼쪽 탭 ──
@@ -566,7 +658,7 @@ function side() {
         <div><span class="tag a">① 원자</span> ${part.atoms.length}개</div></div>`;
     } else {
       const a = it.atom;
-      h += `<div class="chain"><div><span class="tag p">② 부품</span> <button class="btn sm sub" id="s-group">↑ 묶기 → 부품</button> <small class="note" style="display:inline">Shift+클릭으로 여럿 고르고 (Ctrl+G)</small></div><div class="cur"><span class="tag a">① 원자</span> ${ATOM_NM[a.t]}${sels.size ? ` — ${sels.size + 1}개 고름` : ""}</div></div>`;
+      h += `<div class="chain"><div><span class="tag p">② 부품</span> <button class="btn sm sub" id="s-group">↑ 묶기 → 부품</button> <small class="note" style="display:inline">Shift+클릭으로 여럿 고르고 (Ctrl+G)</small></div><div class="cur"><span class="tag a">① 원자</span> ${ATOM_NM[a.t]}${sels.size > 1 ? ` — ${sels.size}개 고름` : ""}</div></div>`;
       if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(a.text || "")}</textarea></div>
         <div class="f"><span>콘텐츠 이름</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="예: sentence · no · prompt"></div>
         <div class="f"><span>서체</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
@@ -591,9 +683,9 @@ function side() {
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
-  box.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else it[k] = +i.value; save(); render(); });
+  box.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { hist(); const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else it[k] = +i.value; save(); render(); });
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
-    const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
+    hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
     if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
     else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"}; a.stroke[kk] = v; } }
     else if (k === "fill" && !v) delete a.fill;
@@ -604,7 +696,7 @@ function side() {
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
   on("#s-toblock", "click", () => partToBlock(sel)); on("#s-down", "click", ungroup); on("#s-group", "click", groupToPart);
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel);
-  box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => { sel = +d.dataset.seli; sels.clear(); markSels(); selbox(); side(); });
+  box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => select([+d.dataset.seli]));
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
 }
