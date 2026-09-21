@@ -78,7 +78,7 @@ def api_put(kind):
     err = store.validate(kind, item)
     if err:
         return jsonify({"error": err}), 400
-    store.put(kind, item)
+    store.put(kind, item, after=request.args.get("after"))      # ?after=<id> 그 뒤로 · ?after= 맨 앞
     return jsonify({"ok": True, "item": item})
 
 

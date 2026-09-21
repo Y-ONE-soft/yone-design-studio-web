@@ -55,8 +55,11 @@ def get(kind, uid):
     return by_id(load(kind)).get(uid)
 
 
-def put(kind, item):
-    """같은 id 는 덮어쓴다(자리 유지). 없으면 끝에."""
+def put(kind, item, after=None):
+    """같은 id 는 덮어쓴다(자리 유지). 없으면 끝에.
+
+    after 를 주면 그 id 바로 뒤로 옮긴다("" 이면 맨 앞). 목록 순서 = 문서 순서(지면 띠).
+    """
     items = load(kind)
     for i, x in enumerate(items):
         if x.get("id") == item["id"]:
@@ -64,6 +67,10 @@ def put(kind, item):
             break
     else:
         items.append(item)
+    if after is not None:
+        items = [x for x in items if x.get("id") != item["id"]]
+        pos = 0 if after == "" else next((i + 1 for i, x in enumerate(items) if x.get("id") == after), len(items))
+        items.insert(pos, item)
     save(kind, items)
     return item
 

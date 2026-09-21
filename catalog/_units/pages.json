@@ -13,56 +13,61 @@
     "flow": "continue"
    }
   ],
-  "chrome": [
+  "spec": "a4",
+  "items": [
    {
-    "part": "running_head",
+    "block": "folio",
+    "x": 20,
+    "y": 278
+   },
+   {
+    "block": "running_head",
     "x": 20,
     "y": 14
    },
    {
-    "part": "folio",
-    "x": 20,
-    "y": 278
+    "block": "pnum",
+    "x": 20.0,
+    "y": 44.0,
+    "w": 170
+   },
+   {
+    "block": "passage",
+    "x": 20.0,
+    "y": 52.5,
+    "w": 170
+   },
+   {
+    "block": "prompt",
+    "x": 20.0,
+    "y": 84.0,
+    "w": 170
+   },
+   {
+    "block": "choices",
+    "x": 20.0,
+    "y": 92.5,
+    "w": 170
+   },
+   {
+    "block": "gram_ox",
+    "x": 20.0,
+    "y": 116.0,
+    "w": 170
+   },
+   {
+    "block": "gram_ox",
+    "x": 20.0,
+    "y": 128.7,
+    "w": 170
+   },
+   {
+    "block": "gram_ox",
+    "x": 20.0,
+    "y": 141.4,
+    "w": 170
    }
-  ],
-  "spec": "a4",
-  "blocks": [
-   {
-    "zone": "main",
-    "block": "pnum"
-   },
-   {
-    "zone": "main",
-    "block": "passage"
-   },
-   {
-    "zone": "main",
-    "block": "prompt"
-   },
-   {
-    "zone": "main",
-    "block": "choices"
-   },
-   {
-    "zone": "main",
-    "block": "gram_ox"
-   },
-   {
-    "zone": "main",
-    "block": "gram_ox"
-   },
-   {
-    "zone": "main",
-    "block": "gram_ox"
-   }
-  ],
-  "layout": "one",
-  "margins": {
-   "top": 44,
-   "bottom": 43,
-   "left": 20,
-   "right": 20
-  }
+  ]
  },
  {
   "id": "pair",
@@ -90,60 +95,67 @@
     "flow": "continue"
    }
   ],
-  "chrome": [
+  "spec": "a4",
+  "items": [
    {
-    "part": "running_head",
+    "block": "folio",
+    "x": 20,
+    "y": 278
+   },
+   {
+    "block": "running_head",
     "x": 20,
     "y": 14
    },
    {
-    "part": "folio",
-    "x": 20,
-    "y": 278
+    "block": "pnum",
+    "x": 20.0,
+    "y": 44.0,
+    "w": 170
+   },
+   {
+    "block": "passage",
+    "x": 20.0,
+    "y": 52.5,
+    "w": 170
+   },
+   {
+    "block": "prompt",
+    "x": 20.0,
+    "y": 144.0,
+    "w": 170
+   },
+   {
+    "block": "choices",
+    "x": 20.0,
+    "y": 152.5,
+    "w": 170
+   },
+   {
+    "block": "blank",
+    "x": 20.0,
+    "y": 176.0,
+    "w": 170
+   },
+   {
+    "block": "blank",
+    "x": 20.0,
+    "y": 192.2,
+    "w": 170
+   },
+   {
+    "block": "ox",
+    "x": 20.0,
+    "y": 208.4,
+    "w": 170
+   },
+   {
+    "block": "ox",
+    "x": 20.0,
+    "y": 218.1,
+    "w": 170
    }
-  ],
-  "spec": "a4",
-  "blocks": [
-   {
-    "zone": "top",
-    "block": "pnum"
-   },
-   {
-    "zone": "top",
-    "block": "passage"
-   },
-   {
-    "zone": "bottom",
-    "block": "prompt"
-   },
-   {
-    "zone": "bottom",
-    "block": "choices"
-   },
-   {
-    "zone": "bottom",
-    "block": "blank"
-   },
-   {
-    "zone": "bottom",
-    "block": "blank"
-   },
-   {
-    "zone": "bottom",
-    "block": "ox"
-   },
-   {
-    "zone": "bottom",
-    "block": "ox"
-   }
-  ],
-  "layout": "pair",
-  "margins": {
-   "top": 44,
-   "bottom": 43,
-   "left": 20,
-   "right": 20
-  }
+  ]
  },
  {
   "id": "two_col",
@@ -161,96 +173,87 @@
     "gutter": 8
    }
   ],
-  "chrome": [
+  "spec": "a4",
+  "items": [
    {
-    "part": "folio",
+    "block": "folio",
     "x": 15,
     "y": 282
+   },
+   {
+    "block": "pnum",
+    "x": 15.0,
+    "y": 24.0,
+    "w": 86.0
+   },
+   {
+    "block": "passage",
+    "x": 15.0,
+    "y": 32.5,
+    "w": 86.0
+   },
+   {
+    "block": "prompt",
+    "x": 15.0,
+    "y": 78.7,
+    "w": 86.0
+   },
+   {
+    "block": "choices",
+    "x": 15.0,
+    "y": 87.2,
+    "w": 86.0
+   },
+   {
+    "block": "gram_ox",
+    "x": 15.0,
+    "y": 110.7,
+    "w": 86.0
+   },
+   {
+    "block": "gram_ox",
+    "x": 15.0,
+    "y": 131.6,
+    "w": 86.0
+   },
+   {
+    "block": "blank",
+    "x": 15.0,
+    "y": 152.5,
+    "w": 86.0
+   },
+   {
+    "block": "blank",
+    "x": 15.0,
+    "y": 172.8,
+    "w": 86.0
    }
-  ],
-  "spec": "a4",
-  "blocks": [
-   {
-    "zone": "main",
-    "block": "pnum"
-   },
-   {
-    "zone": "main",
-    "block": "passage"
-   },
-   {
-    "zone": "main",
-    "block": "prompt"
-   },
-   {
-    "zone": "main",
-    "block": "choices"
-   },
-   {
-    "zone": "main",
-    "block": "gram_ox"
-   },
-   {
-    "zone": "main",
-    "block": "gram_ox"
-   },
-   {
-    "zone": "main",
-    "block": "blank"
-   },
-   {
-    "zone": "main",
-    "block": "blank"
-   }
-  ],
-  "layout": "two",
-  "margins": {
-   "top": 24,
-   "bottom": 23,
-   "left": 15,
-   "right": 15
-  }
+  ]
  },
  {
   "id": "divider",
   "name": "간지",
   "zones": [],
-  "chrome": [
+  "spec": "a4",
+  "items": [
    {
-    "part": "divider_art",
+    "block": "divider",
     "x": 0,
     "y": 0
    }
-  ],
-  "spec": "a4",
-  "blocks": [],
-  "layout": "none",
-  "margins": {
-   "top": 44,
-   "bottom": 43,
-   "left": 20,
-   "right": 20
-  }
+  ]
  },
  {
   "id": "cover",
   "name": "표지",
   "zones": [],
-  "chrome": [
+  "spec": "a4",
+  "items": [
    {
-    "part": "cover_art",
+    "block": "cover",
     "x": 0,
     "y": 0
    }
-  ],
-  "spec": "a4",
-  "blocks": [],
-  "layout": "none",
-  "margins": {
-   "top": 44,
-   "bottom": 43,
-   "left": 20,
-   "right": 20
-  }
+  ]
  }
 ]

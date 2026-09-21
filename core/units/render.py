@@ -401,11 +401,46 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         frag, _h = part_svg(ctx, part, {})
         x = W - c["x"] - part.get("w", 0) if mirror else c["x"]
         chrome.append(f'<g transform="translate({x:.3f},{c["y"]:.3f})" data-chrome="{esc(part["id"])}" data-ci="{ci}">{frag}</g>')
+    # 자유 배치 — 캔버스에서 좌표에 놓은 요소(블록은 견본 값으로, 부품은 그대로). 파워포인트의 개체.
+    # 콘텐츠 블록 자리는 캔버스에서만 그린다(실제 콘텐츠는 세트로 흘러 든다). 머리말·쪽번호 같은
+    # system 블록과 부품은 언제나 그린다.
+    canvas = bool(page.get("_canvas"))
+    for fi, it in enumerate(page.get("items") or []):
+        blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
+        if not canvas and blk is not None and blk.get("source") == "content":
+            continue
+        frag, part, w = _item_frag(ctx, it)
+        if frag is None:
+            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
+            continue
+        x = W - it["x"] - w if mirror else it["x"]
+        chrome.append(f'<g transform="translate({x:.3f},{it["y"]:.3f})" data-fi="{fi}">{frag}</g>')
     ctx.sys = old
-    guides = "".join(f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
-                     f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
+    guides = "" if not zones or page.get("_noguides") else "".join(
+        f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
+        f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
     return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, f'data-page="{pno}" data-tpl="{esc(page["id"])}"')
+
+
+def _item_frag(ctx, it):
+    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭). 블록이면 옷이 고른 모양의 부품 + 견본 값."""
+    if it.get("block"):
+        blk = ctx.blocks.get(it["block"])
+        v = variant_of(ctx, blk) if blk else None
+        part = ctx.parts.get(v.get("part")) if v else None
+        if not part:
+            return None, None, 0
+        types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
+        w = float(it.get("w") or part.get("w") or 0)
+        frag, _h = part_svg(ctx, part, sample.fill(blk, it.get("fields")), types, width=w)
+        return frag, part, w
+    part = ctx.parts.get(it.get("part"))
+    if not part:
+        return None, None, 0
+    w = float(it.get("w") or part.get("w") or 0)
+    frag, _h = part_svg(ctx, part, {}, width=w)
+    return frag, part, w
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
@@ -418,6 +453,8 @@ def page_canvas_svgs(ctx, page, spec):
     돌려주는 면이 여러 장일 수 있다 — 캔버스는 첫 장을 보이고 장수를 알린다.
     """
     pg = json.loads(json.dumps(page))
+    pg["_noguides"] = True                     # 캔버스는 자유 배치 — 칸 안내선은 안 보인다
+    pg["_canvas"] = True                       # 콘텐츠 블록 자리(items)도 견본으로 그린다
     sets = []
     for z in pg.get("zones") or []:
         kind = "_canvas:" + z["id"]

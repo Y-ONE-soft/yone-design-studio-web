@@ -107,3 +107,16 @@ def test_decompose_pdf(tmp_path):
     assert len(dec["parts"]) == 3                                         # 상자+단락 / 선 / 번호 (세로 3mm 넘게 떨어지면 다른 후보)
     part = decompose.to_part(dec, dec["parts"][0]["atoms"], "cand", "후보")
     assert part["atoms"][0]["x"] == 0 and part["atoms"][0]["y"] == 0
+
+
+def test_free_items_canvas_vs_flow(lib):
+    """자유 배치 요소: 캔버스 모드엔 콘텐츠 블록도 견본으로, 책 흐름 모드엔 system 블록(머리말·쪽번호)만."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = store.by_id(lib["pages"])["pair"]
+    assert any(it.get("block") == "passage" for it in pg["items"])
+    canvas = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)[0]["svg"]
+    flow = render.page_svgs(ctx, pg, lib["sets"][:1], render.DEFAULT_SPEC)[0]["svg"]
+    assert canvas.count("data-fi=") == len(pg["items"]) and 'class="zone"' not in canvas
+    assert flow.count("data-fi=") == 2 and 'data-set="20"' in flow            # 머리말·쪽번호 + 세트가 칸에 흐른다
+    assert not ctx.warnings, ctx.warnings
