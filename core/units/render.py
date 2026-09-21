@@ -423,8 +423,23 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, f'data-page="{pno}" data-tpl="{esc(page["id"])}"')
 
 
+def atom_part(atom):
+    """원자 하나를 임시 부품으로 — 캔버스에 낱개로 놓은 글상자·선·면·원·그림."""
+    a = dict(atom)
+    if a.get("t") == "line":
+        w, h = abs(a.get("x2", 0) - a.get("x1", 0)), abs(a.get("y2", 0) - a.get("y1", 0))
+    else:
+        w, h = a.get("w", 10), a.get("h", 10)
+    return {"id": "_atom", "name": "원자", "w": max(w, 0.5), "h": max(h, 0.5), "atoms": [a]}
+
+
 def _item_frag(ctx, it):
-    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭). 블록이면 옷이 고른 모양의 부품 + 견본 값."""
+    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품."""
+    if it.get("atom"):
+        part = atom_part(it["atom"])
+        w = float(it.get("w") or part["w"])
+        frag, _h = part_svg(ctx, part, {}, width=w)
+        return frag, part, w
     if it.get("block"):
         blk = ctx.blocks.get(it["block"])
         v = variant_of(ctx, blk) if blk else None
@@ -446,15 +461,23 @@ def _item_frag(ctx, it):
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
 
 
-def page_canvas_svgs(ctx, page, spec):
-    """캔버스 미리보기 — 지면에 놓은 블록(page.blocks, 칸별 순서)을 견본 값으로 흘린다.
+def page_canvas_svgs(ctx, page, spec, sample_set=None):
+    """캔버스 미리보기 — 자유 배치 요소(items)를 그린다. 콘텐츠 블록 자리는 견본 값으로.
 
-    칸마다 세트 하나를 지어 그 칸만 받게 한다(accepts 를 덮어쓴 사본). 넘치면 다음 면이 생기므로
-    돌려주는 면이 여러 장일 수 있다 — 캔버스는 첫 장을 보이고 장수를 알린다.
+    sample_set(세트)을 주면 같은 블록의 값을 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
+    (옛 형식: 칸 흐름 배치 page.blocks 도 아직 그린다.) 넘치면 여러 면이 되므로 캔버스는 첫 장만 보인다.
     """
     pg = json.loads(json.dumps(page))
     pg["_noguides"] = True                     # 캔버스는 자유 배치 — 칸 안내선은 안 보인다
     pg["_canvas"] = True                       # 콘텐츠 블록 자리(items)도 견본으로 그린다
+    if sample_set:
+        queue = {}
+        for b in sample_set.get("blocks") or []:
+            queue.setdefault(b.get("block"), []).append(b.get("fields") or {})
+        for it in pg.get("items") or []:
+            q = queue.get(it.get("block"))
+            if q and not it.get("fields"):
+                it["fields"] = q.pop(0) if len(q) > 1 else q[0]
     sets = []
     for z in pg.get("zones") or []:
         kind = "_canvas:" + z["id"]

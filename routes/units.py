@@ -135,8 +135,9 @@ def api_preview():
                 ctx.warnings.extend(w for w in c2.warnings if w not in ctx.warnings)
         elif kind == "pages":
             spec = store.by_id(lib["specs"]).get(body.get("spec") or item.get("spec") or "a4") or render.DEFAULT_SPEC
-            if body.get("mode") == "canvas":            # 지면에 놓은 블록(견본 배치)으로
-                out.extend(render.page_canvas_svgs(ctx, item, spec))
+            if body.get("mode") == "canvas":            # 자유 배치 요소를 견본(또는 고른 세트) 값으로
+                ss = store.get("sets", body["set"]) if body.get("set") else None
+                out.extend(render.page_canvas_svgs(ctx, item, spec, sample_set=ss))
             else:
                 out.extend(render.page_svgs(ctx, item, sets, spec, 1, item.get("name", "")))
         elif kind == "plans":
