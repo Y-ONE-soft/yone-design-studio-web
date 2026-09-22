@@ -723,5 +723,76 @@
     "text": "Y.ONE STUDIO"
    }
   ]
+ },
+ {
+  "id": "answer_row",
+  "name": "정답 줄",
+  "w": 170,
+  "h": 7,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 9,
+    "h": 5.5,
+    "fill": "$pnum",
+    "radius": 2.75
+   },
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0.4,
+    "w": 9,
+    "h": 5,
+    "font": "$num",
+    "size": 7.5,
+    "color": "$white",
+    "align": "center",
+    "bind": "no",
+    "text": "21"
+   },
+   {
+    "t": "text",
+    "x": 12,
+    "y": 0.2,
+    "w": 158,
+    "h": 5.5,
+    "font": "$body",
+    "size": 7.5,
+    "leading": 11,
+    "color": "$ink",
+    "style": "sentence",
+    "bind": "answers",
+    "text": [
+     {
+      "t": "발문 ",
+      "b": true
+     },
+     "1. ③   ",
+     {
+      "t": "빈칸 줄 ",
+      "b": true
+     },
+     "1. replaced  2. reversing   ",
+     {
+      "t": "본문 O/X 줄 ",
+      "b": true
+     },
+     "1. X  2. O"
+    ]
+   },
+   {
+    "t": "line",
+    "x1": 0,
+    "y1": 6.8,
+    "x2": 170,
+    "y2": 6.8,
+    "stroke": {
+     "w": 0.3,
+     "color": "$rule"
+    }
+   }
+  ]
  }
 ]

@@ -528,6 +528,53 @@ def _fill_items(pg, sample_set):
             it["fields"] = q.pop(0) if len(q) > 1 else q[0]
 
 
+def _stack_pages(ctx, page, sets, spec):
+    """쌓기 자리(item.flow) — 세트마다(세트 안 같은 블록마다) 자리 사본을 아래로 쌓는다. 한계선을 넘으면 새 면(고정·장식 요소는 그대로)."""
+    H = float(spec["h"])
+    limit = H - float((page.get("margins") or {}).get("bottom") or 20)
+    items = page.get("items") or []
+    flows = [i for i, it in enumerate(items) if it.get("flow") and not it.get("hide")]
+    static = [json.loads(json.dumps(it)) for i, it in enumerate(items) if i not in flows and not it.get("hide")
+              and not ((ctx.blocks.get(it.get("block")) or {}).get("source") == "content" and it.get("block"))]
+    pages = []
+    cur = None
+    for fi in flows:
+        base = items[fi]
+        gap = float(base.get("gap") or 2)
+        y = float(base["y"])
+        for s in sets:
+            for b in (s.get("blocks") or []):
+                if b.get("block") != base.get("block"):
+                    continue
+                it = json.loads(json.dumps(base))
+                it["fields"] = b.get("fields") or {}
+                it.pop("flow", None)
+                _f, _p, _w, h = _item_frag(ctx, it)
+                if cur is not None and y + h > limit + 0.01 and any(x.get("_stacked") for x in cur["items"]):
+                    pages.append(cur)
+                    cur = None
+                if cur is None:
+                    cur = json.loads(json.dumps(page))
+                    cur["items"] = [json.loads(json.dumps(x)) for x in static]
+                    cur["_canvas"] = True
+                    cur["_noguides"] = True
+                    cur["_flowed"] = True
+                    y = float(base["y"])
+                it["y"] = round(y, 3)
+                it["_stacked"] = True
+                cur["items"].append(it)
+                y += h + gap
+    if cur is not None:
+        pages.append(cur)
+    if not pages:
+        pg = json.loads(json.dumps(page))
+        pg["items"] = static
+        pg["_canvas"] = True
+        pg["_noguides"] = True
+        pages.append(pg)
+    return pages
+
+
 def page_svgs(ctx, page, sets, spec, pno=1, label=""):
     """지면 하나에 세트들을 흘린다 → [{svg, label, page_no}]. 넘치면 같은 지면을 새 면으로.
 
@@ -536,6 +583,14 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
     """
     W, H = float(spec["w"]), float(spec["h"])
     slots = [it for it in page.get("items") or [] if it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"]
+    if slots and any(it.get("flow") for it in slots) and sets and not page.get("_canvas"):
+        out = []
+        for k, fp in enumerate(_stack_pages(ctx, page, sets, spec)):        # 쌓기 자리 — 세트를 아래로 쌓고 차면 다음 면
+            mirror = bool(fp.get("mirror")) and pno % 2 == 0
+            out.append({"svg": _page_wrap(ctx, fp, _zones(fp, W, mirror), [], W, H, pno, mirror),
+                        "label": label + (f" ({k + 1})" if k else ""), "page_no": pno})
+            pno += 1
+        return out
     if slots:
         out = []
         from core.units import flow
@@ -746,6 +801,9 @@ def plan_svgs(ctx, plan, sets, lib):
 
     for pid in plan.get("front") or []:
         emit(pid, [], "앞")
+    if any("answers" in (pg.get("sets") or []) for sec in plan.get("sections") or [] for pg in sec.get("pages") or []):
+        from core.units import answers as _answers
+        sets = list(sets or []) + _answers.answer_sets(sets, list(ctx.blocks.values()))      # 정답지 — 세트의 정답을 모아 정답 세트로
     for sec in plan.get("sections") or []:
         ctx.sys["section"] = sec.get("name", "")
         if sec.get("divider"):

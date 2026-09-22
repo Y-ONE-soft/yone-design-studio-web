@@ -1059,6 +1059,7 @@ function side() {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
       const flds = Object.keys(blk.fields || {});
       h += `<div class="note">${flds.length ? `원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (쪽번호·구간명)" : "장식")}</div>
+        ${blk.source === "content" ? `<div class="f"><span>책에서</span><label title="정답지·어휘 목록처럼 세트를 하나씩 아래로 쌓고, 면이 차면 다음 면에 이어 쌓는다"><input type="checkbox" id="s-flow" ${it.flow ? "checked" : ""} style="width:auto"> 세트마다 아래로 쌓기</label></div>${it.flow ? `<div class="f"><span>쌓기 간격</span><input type="number" id="s-gap" step="0.5" value="${it.gap == null ? 2 : it.gap}"></div>` : ""}` : ""}
         ${(blk.variants || []).length > 1 ? `<div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>` : ""}
         <div class="row"><button class="btn sm" id="s-edit" title="더블클릭과 같다">✎ 편집</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다">그룹 해제</button></div>`;
     } else if (u === "part") {
@@ -1104,7 +1105,7 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
-      <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 없으면 한 번">${page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
+      <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 쌓기 자리가 있으면 세트를 쌓아 채움, 없으면 한 번">${page.items.some(it => it.flow) ? "세트를 쌓아 채움" : page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
       ${layersHtml()}`;
   }
   box.innerHTML = h;
@@ -1134,6 +1135,8 @@ function side() {
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
+  on("#s-flow", "change", (e) => { hist(); const it = page.items[sel]; if (e.target.checked) it.flow = true; else { delete it.flow; delete it.gap; } save(); side(); });
+  on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });

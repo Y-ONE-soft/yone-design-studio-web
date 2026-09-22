@@ -70,8 +70,10 @@ def test_plan_pages_and_columns(lib):
     from core.units import render, store
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
     pages = render.plan_svgs(ctx, store.by_id(lib["plans"])["workbook_mini"], lib["sets"], lib)
-    assert [p["label"] for p in pages] == ["앞", "STEP 2 간지", "STEP 2 · 20", "STEP 2 · 21"]
+    assert [p["label"] for p in pages] == ["앞", "STEP 2 간지", "STEP 2 · 20", "STEP 2 · 21", "정답 간지", "정답"]
     assert pages[2]["page_no"] == 3 and ">3<" in pages[2]["svg"]          # 쪽번호가 이어진다
+    ans = pages[-1]["svg"]
+    assert ans.count("data-fi=") == 5 and "replaced" in ans and "④" in ans    # 정답지: 세트 2개의 정답 줄이 쌓인다 (머리말·쪽번호·제목 + 2)
     exam = render.plan_svgs(ctx, store.by_id(lib["plans"])["exam_sheet"], lib["sets"], lib)
     assert len(exam) == 2 and "creativity" in exam[0]["svg"] and "cars" in exam[1]["svg"]   # 슬롯 모드: 세트마다 한 면, 값이 자리에 들어간다
     assert not ctx.warnings, ctx.warnings
@@ -419,3 +421,22 @@ def test_paragraph_style_from_skin(lib):
     ctx3 = render.Ctx({"id": "x", "tokens": skin["tokens"]}, lib)
     render.part_svg(ctx3, part)
     assert any("단락 스타일 없음 prompt" in w for w in ctx3.warnings)
+
+
+def test_stack_flow_pages(lib):
+    """쌓기 자리(flow): 세트를 아래로 쌓고 면이 차면 다음 면에 이어 쌓는다."""
+    from core.units import answers, render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = store.by_id(lib["pages"])["answers"]
+    many = []
+    for i in range(80):
+        s = json.loads(json.dumps(lib["sets"][i % 2]))
+        s["id"] = str(i + 1)
+        many.append(s)
+    asets = answers.answer_sets(many, lib["blocks"])
+    assert len(asets) == 80 and asets[0]["blocks"][0]["fields"]["no"] == "1"
+    out = render.page_svgs(ctx, pg, asets, render.DEFAULT_SPEC, 1, "정답")
+    assert len(out) >= 3 and out[1]["label"] == "정답 (2)"
+    rows = [o["svg"].count("data-fi=") - 3 for o in out]
+    assert sum(rows) == 80 and all(r > 10 for r in rows[:-1])
+    assert not any("넘친다" in w for w in ctx.warnings), ctx.warnings

@@ -230,5 +230,28 @@
     "part": "cover_art"
    }
   ]
+ },
+ {
+  "id": "answer_row",
+  "family": "B9",
+  "name": "정답 줄",
+  "source": "content",
+  "fields": {
+   "no": {
+    "type": "text",
+    "label": "지문 번호"
+   },
+   "answers": {
+    "type": "rich",
+    "label": "정답"
+   }
+  },
+  "variants": [
+   {
+    "id": "v1",
+    "name": "기본",
+    "part": "answer_row"
+   }
+  ]
  }
 ]
