@@ -17,14 +17,27 @@
     },
     "stroke": {
       "type": "object",
-      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "dash": {"type": "array", "items": {"$ref": "#/definitions/pt"}}}
+      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "dash": {"type": "array", "items": {"$ref": "#/definitions/pt"}},
+                     "cap": {"enum": ["butt", "round", "square"], "description": "선 끝 모양(인디자인 Cap). 없으면 butt"}}
     },
+    "rotate": {"type": "number", "minimum": -360, "maximum": 360, "description": "회전 각도(°, 시계 방향, 원자의 가운데를 축으로). 없으면 0"},
+    "opacity": {"type": "number", "minimum": 0, "maximum": 1, "description": "불투명도 0~1. 없으면 1"},
+    "run": {
+      "description": "서식 조각 — 글 안에서 굵게·기울임·밑줄·위첨자·다른 색·서체·크기가 섞인 부분(인디자인 문자 스타일). core/render_vivlio/richtext.py 형식 + color·font·size",
+      "type": "object", "required": ["t"],
+      "properties": {
+        "t": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"},
+        "sup": {"type": "boolean"}, "sub": {"type": "boolean"},
+        "color": {"$ref": "#/definitions/token"}, "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}
+      }
+    },
+    "rich": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/run"}]}},
 
     "atom": {
-      "description": "원자 — 인디자인 오브젝트 하나. 콘텐츠는 bind 로만 들어온다",
+      "description": "원자 — 인디자인 오브젝트 하나: text(글상자) line(선) rect(면) ellipse(원) image(그림) path(도형). 콘텐츠는 bind 로만 들어온다. 모두 rotate·opacity 를 가질 수 있다",
       "oneOf": [
         {"$ref": "#/definitions/atom_text"}, {"$ref": "#/definitions/atom_line"}, {"$ref": "#/definitions/atom_rect"},
-        {"$ref": "#/definitions/atom_ellipse"}, {"$ref": "#/definitions/atom_image"}
+        {"$ref": "#/definitions/atom_ellipse"}, {"$ref": "#/definitions/atom_image"}, {"$ref": "#/definitions/atom_path"}
       ]
     },
     "atom_text": {
@@ -36,8 +49,9 @@
         "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
         "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
         "align": {"enum": ["left", "center", "right", "justify"]},
-        "text": {"type": "string", "description": "고정 글 또는 견본 글(bind 가 있으면 견본)"},
-        "bind": {"$ref": "#/definitions/bind"}
+        "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich)"},
+        "bind": {"$ref": "#/definitions/bind"},
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
     "atom_line": {
@@ -45,7 +59,8 @@
       "properties": {
         "t": {"const": "line"},
         "x1": {"$ref": "#/definitions/mm"}, "y1": {"$ref": "#/definitions/mm"}, "x2": {"$ref": "#/definitions/mm"}, "y2": {"$ref": "#/definitions/mm"},
-        "stroke": {"$ref": "#/definitions/stroke"}
+        "stroke": {"$ref": "#/definitions/stroke"},
+        "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
     "atom_rect": {
@@ -53,7 +68,8 @@
       "properties": {
         "t": {"const": "rect"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
-        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"}, "radius": {"$ref": "#/definitions/mm"}
+        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"}, "radius": {"$ref": "#/definitions/mm"},
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
     "atom_ellipse": {
@@ -61,7 +77,8 @@
       "properties": {
         "t": {"const": "ellipse"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
-        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"}
+        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"},
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
     "atom_image": {
@@ -70,7 +87,21 @@
         "t": {"const": "image"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
         "src": {"type": "string", "description": "옷의 images 키. 옷마다 파일을 바꿔 끼운다"},
-        "bind": {"$ref": "#/definitions/bind"}
+        "bind": {"$ref": "#/definitions/bind"},
+        "fit": {"enum": ["contain", "cover"], "description": "contain = 틀 안에 다 보이게(기본) · cover = 틀을 채우고 넘치는 쪽을 자른다(인디자인 '비율에 맞게 프레임 채우기')"},
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
+      }
+    },
+    "atom_path": {
+      "description": "도형 — 인디자인 Polygon·펜 패스(화살표·체크·말풍선·삼각형·로고). 좌표는 x y w h 상자 안의 0~1 비율이라 폭·높이를 바꾸면 따라 늘어난다",
+      "type": "object", "required": ["t", "x", "y", "w", "h", "d"],
+      "properties": {
+        "t": {"const": "path"},
+        "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+        "d": {"type": "string", "pattern": "^[MLCQZmlcqz0-9 .,-]+$", "description": "SVG path 문법(M L C Q Z 만), 좌표는 0~1 비율. 예: 삼각형 \"M0 0 L1 0.5 L0 1 Z\""},
+        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"},
+        "evenodd": {"type": "boolean", "description": "구멍 뚫린 도형(짝홀 채움)"},
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
 

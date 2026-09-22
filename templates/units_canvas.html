@@ -214,8 +214,14 @@ const ATOMS = [
   ["rect", "면", {t: "rect", x: 0, y: 0, w: 60, h: 20, fill: "$cream", radius: 1}],
   ["ellipse", "원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$sel"}}],
   ["image", "그림", {t: "image", x: 0, y: 0, w: 40, h: 30, src: "img1"}],
+  ["path", "도형", {t: "path", x: 0, y: 0, w: 12, h: 8, d: "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", fill: "$sel"}],
 ];
 const ATOM_NM = Object.fromEntries(ATOMS.map(a => [a[0], a[1]]));
+// 도형 견본 — 좌표는 0~1 비율. 인디자인 Polygon·펜 패스 대신 여기서 고르거나 d 를 직접 적는다
+const SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", "삼각형": "M0.5 0 L1 1 L0 1 Z", "체크": "M0.05 0.55 L0.35 0.9 L0.95 0.1",
+  "별": "M0.5 0 L0.62 0.38 L1 0.38 L0.69 0.6 L0.81 1 L0.5 0.76 L0.19 1 L0.31 0.6 L0 0.38 L0.38 0.38 Z", "말풍선": "M0.1 0 L0.9 0 C0.95 0 1 0.05 1 0.1 L1 0.65 C1 0.7 0.95 0.75 0.9 0.75 L0.35 0.75 L0.2 1 L0.22 0.75 L0.1 0.75 C0.05 0.75 0 0.7 0 0.65 L0 0.1 C0 0.05 0.05 0 0.1 0 Z",
+  "마름모": "M0.5 0 L1 0.5 L0.5 1 L0 0.5 Z", "육각형": "M0.25 0 L0.75 0 L1 0.5 L0.75 1 L0.25 1 L0 0.5 Z"};
+const plainText = (t) => Array.isArray(t) ? t.map(r => typeof r === "string" ? r : (r.t || "")).join("") : (t || "");
 
 let page = null, sel = null, sels = new Set(), scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {}, curSet = "";
 let tab = new URLSearchParams(location.search).get("tab") || "blocks";      // ?tab=atoms 로 바로 열기
@@ -334,7 +340,7 @@ function wire() {
   const svg = $("#svgwrap svg"); if (!svg) return;
   svg.querySelectorAll("g[data-fi]").forEach(g => {
     g.addEventListener("click", (e) => e.stopPropagation());
-    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && it.atom && it.atom.t === "text") { const v = prompt("글", it.atom.text || ""); if (v != null) { hist(); it.atom.text = v; save(); render(); side(); } } });
+    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && it.atom && it.atom.t === "text") { const v = prompt(Array.isArray(it.atom.text) ? "글 (서식이 섞인 글 — 고치면 서식은 사라진다)" : "글", plainText(it.atom.text)); if (v != null) { hist(); it.atom.text = v; save(); render(); side(); } } });
     g.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return; e.stopPropagation();
       const i = +g.dataset.fi;
@@ -565,13 +571,14 @@ function panel() {
     for (const p of LIB.parts) { const d = card(thumbs.parts[p.id], p.name, `원자 ${(p.atoms || []).length} · ${p.w}×${p.h}mm`, {k: "part", id: p.id}); d.onclick = () => addPart(p.id); g.appendChild(d); }
     body.appendChild(g);
   } else if (tab === "atoms") {
-    hd.innerHTML = `<b>① 원자</b> <span class="tag a">인디자인 오브젝트</span><div class="note">가장 작은 단위. 놓고 → 고쳐서 → Shift+클릭으로 여럿 고른 뒤 「부품으로 묶기」.</div>`;
+    hd.innerHTML = `<b>① 원자</b> <span class="tag a">인디자인 오브젝트</span><div class="note">가장 작은 단위 = 인디자인 오브젝트 6종(글상자·선·면·원·그림·도형). 모두 회전·불투명을 가진다. 놓고 → 고쳐서 → Shift+클릭으로 여럿 고른 뒤 「부품으로 묶기」.</div>`;
     const g = document.createElement("div"); g.className = "atoms5";
     const icons = {text: '<svg width="36" height="22"><rect x="1" y="1" width="34" height="20" fill="none" stroke="#7d2ae8" stroke-dasharray="2 2"/><text x="6" y="15" font-size="10" fill="#1f2330">Aa</text></svg>',
       line: '<svg width="36" height="22"><line x1="2" y1="11" x2="34" y2="11" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
       rect: '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="#e9e0ff" stroke="#7d2ae8"/></svg>',
       ellipse: '<svg width="36" height="22"><ellipse cx="18" cy="11" rx="10" ry="9" fill="none" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
-      image: '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="#eee" stroke="#999"/><path d="M6 17l8-8 6 6 4-3 6 5z" fill="#bbb"/></svg>'};
+      image: '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="#eee" stroke="#999"/><path d="M6 17l8-8 6 6 4-3 6 5z" fill="#bbb"/></svg>',
+      path: '<svg width="36" height="22"><path d="M3 7 L20 7 L20 2 L33 11 L20 20 L20 15 L3 15 Z" fill="#e9e0ff" stroke="#7d2ae8"/></svg>'};
     for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = icons[t] + nm; b.draggable = true; b.onclick = () => addAtom(t);
       b.ondragstart = (e) => { dragId = null; e.dataTransfer.setData("text/plain", JSON.stringify({k: "atom", id: t})); }; g.appendChild(b); }
     body.appendChild(g);
@@ -671,7 +678,7 @@ function side() {
     } else {
       const a = it.atom;
       h += `<div class="chain"><div><span class="tag p">② 부품</span> <button class="btn sm sub" id="s-group">↑ 묶기 → 부품</button> <small class="note" style="display:inline">Shift+클릭으로 여럿 고르고 (Ctrl+G)</small></div><div class="cur"><span class="tag a">① 원자</span> ${ATOM_NM[a.t]}${sels.size > 1 ? ` — ${sels.size}개 고름` : ""}</div></div>`;
-      if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(a.text || "")}</textarea></div>
+      if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(plainText(a.text))}</textarea></div>${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
         <div class="f"><span>콘텐츠 이름</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="예: sentence · no · prompt"></div>
         <div class="f"><span>서체</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
@@ -679,10 +686,14 @@ function side() {
         <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
         <div class="f"><span>높이 mm</span><input type="number" data-a="h" step="0.5" value="${a.h}"></div>`;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
-        <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>`;
-      else if (a.t === "rect" || a.t === "ellipse") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label>${a.t === "rect" ? `<label>모서리<input type="number" data-a="radius" step="0.5" value="${a.radius || 0}"></label>` : ""}</div>
+        <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>
+        <div class="f"><span>선 끝</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>`;
+      else if (a.t === "rect" || a.t === "ellipse" || a.t === "path") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label>${a.t === "rect" ? `<label>모서리<input type="number" data-a="radius" step="0.5" value="${a.radius || 0}"></label>` : ""}</div>
+        ${a.t === "path" ? `<div class="f"><span>모양</span><select data-a="d"><option value="">직접</option>${Object.entries(SHAPES).map(([n, d]) => `<option value="${d}" ${a.d === d ? "selected" : ""}>${n}</option>`).join("")}</select></div><div class="f"><span>경로 d</span><input type="text" data-a="d" value="${esc(a.d || "")}" placeholder="M L C Q Z · 0~1 비율"></div>` : ""}
         <div class="f"><span>채움</span>${colorSel("fill", a.fill, true)}</div><div class="f"><span>테두리</span>${colorSel("stroke.color", (a.stroke || {}).color, true)}</div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0}"></div>`;
-      else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림 키</span><input type="text" data-a="src" value="${esc(a.src || "")}"></div><div class="note">파일은 옷의 images 에 키→경로로 적는다.</div>`;
+      else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림 키</span><input type="text" data-a="src" value="${esc(a.src || "")}"></div>
+        <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div><div class="note">파일은 옷의 images 에 키→경로로 적는다.</div>`;
+      h += `<div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label></div>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
       <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm danger" id="s-x">지우기</button></div>`;
@@ -691,7 +702,7 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><label><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 책에서 오른쪽 면은 뒤집힌다</label></div>
       <h3>이 지면의 요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0"><span class="tag ${({atom: "a", part: "p", block: "b"})[unitOf(it)]}">${({atom: "①", part: "②", block: "③"})[unitOf(it)]}</span> ${esc(nameOf(it))} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 탭에서 블록·부품·원자를 누른다</div>`}
-      <h3>단위 — 인디자인의 그룹처럼 묶고 푼다</h3><div class="chain"><div><span class="tag a">①</span> 원자 — 글상자·선·면·원·그림 (오브젝트 하나)</div><div class="note" style="margin:0">↑ 묶기 (Ctrl+G) · ↓ 풀기 (Ctrl+Shift+G)</div><div><span class="tag p">②</span> 부품 — 원자를 그룹한 것</div><div class="note" style="margin:0">↑ 올리기 = 콘텐츠 자리 이름표 · ↓ 풀기</div><div><span class="tag b">③</span> 블록 — 부품 + 필드 = 콘텐츠가 들어오는 유형</div><div class="cur">④ 지면 — 요소를 놓은 면</div><div>📚 틀 — 지면 순서·반복 · 👕 옷 — 색·서체·모양 · 📄 세트 — 콘텐츠</div></div>`;
+      <h3>단위 — 인디자인의 그룹처럼 묶고 푼다</h3><div class="chain"><div><span class="tag a">①</span> 원자 — 글상자·선·면·원·그림·도형 (오브젝트 하나)</div><div class="note" style="margin:0">↑ 묶기 (Ctrl+G) · ↓ 풀기 (Ctrl+Shift+G)</div><div><span class="tag p">②</span> 부품 — 원자를 그룹한 것</div><div class="note" style="margin:0">↑ 올리기 = 콘텐츠 자리 이름표 · ↓ 풀기</div><div><span class="tag b">③</span> 블록 — 부품 + 필드 = 콘텐츠가 들어오는 유형</div><div class="cur">④ 지면 — 요소를 놓은 면</div><div>📚 틀 — 지면 순서·반복 · 👕 옷 — 색·서체·모양 · 📄 세트 — 콘텐츠</div></div>`;
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
@@ -699,9 +710,13 @@ function side() {
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
     if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
-    else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"}; a.stroke[kk] = v; } }
+    else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"}; if (kk === "cap" && v === "butt") delete a.stroke.cap; else a.stroke[kk] = v; } }
     else if (k === "fill" && !v) delete a.fill;
     else if (k === "bind" && !v) delete a.bind;
+    else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }
+    else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
+    else if (k === "fit") { if (v === "cover") a.fit = "cover"; else delete a.fit; }
+    else if (k === "d") { if (v) a.d = v; }
     else a[k] = v;
     save(); render(); side();
   }));

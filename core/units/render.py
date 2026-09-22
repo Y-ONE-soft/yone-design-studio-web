@@ -79,21 +79,35 @@ def font_family(name):
 
 
 # ── 글 ─────────────────────────────────────────────────────────────
-def rich_html(v):
+def rich_html(v, ctx=None):
+    """서식 조각 → HTML. 조각(run)의 b·i·u·sup·sub 는 태그로, color·font·size(토큰)는 인라인 style 로."""
     if v is None:
         return ""
     if isinstance(v, str):
         return esc(v).replace("\n", "<br/>")
     if isinstance(v, list):
-        return "".join(rich_html(x) for x in v)
+        return "".join(rich_html(x, ctx) for x in v)
     if isinstance(v, dict):
-        t = esc(v.get("t", ""))
+        t = esc(v.get("t", "")).replace("\n", "<br/>")
         if v.get("u"):
             t = "<u>" + t + "</u>"
         if v.get("b"):
             t = "<b>" + t + "</b>"
         if v.get("i"):
             t = "<i>" + t + "</i>"
+        if v.get("sup"):
+            t = "<sup>" + t + "</sup>"
+        elif v.get("sub"):
+            t = "<sub>" + t + "</sub>"
+        st = ""
+        if v.get("color"):
+            st += f"color:{ctx.color(v['color']) if ctx else v['color']};"
+        if v.get("font"):
+            st += f"font-family:{esc(ctx.font(v['font']) if ctx else v['font'])};"
+        if v.get("size"):
+            st += f"font-size:{float(v['size']) * PT:.3f}px;"
+        if st:
+            t = f'<span style="{st}">' + t + "</span>"
         return t
     return esc(v)
 
@@ -110,7 +124,7 @@ def rich_plain(v):
     return str(v)
 
 
-def fmt(v, ftype):
+def fmt(v, ftype, ctx=None):
     """필드 값 → (html, plain). choices 는 ①~ 줄로."""
     if ftype == "choices" and isinstance(v, list):
         rows = [(CIRC[i] if i < len(CIRC) else str(i + 1)) + " " + rich_plain(x) for i, x in enumerate(v)]
@@ -118,7 +132,7 @@ def fmt(v, ftype):
     if ftype == "bool":
         s = "✓" if v else ""
         return s, s
-    return rich_html(v), rich_plain(v)
+    return rich_html(v, ctx), rich_plain(v)
 
 
 def text_h(plain, w_mm, size_pt, leading_pt=None):
@@ -139,22 +153,52 @@ def _stroke(ctx, st):
     s = f'stroke="{ctx.color(st.get("color"), "#000000")}" stroke-width="{(st.get("w") or 0.5) * PT:.3f}"'
     if st.get("dash"):
         s += ' stroke-dasharray="' + " ".join(f"{d * PT:.3f}" for d in st["dash"]) + '"'
+    if st.get("cap") in ("round", "square"):
+        s += f' stroke-linecap="{st["cap"]}"'
     return s
+
+
+def path_d(d, x, y, w, h):
+    """0~1 비율 path → mm path. 숫자만 x·y 번갈아 상자에 맞춰 편다(M L C Q Z 만 쓴다)."""
+    out, k = [], 0
+    for tok in re.findall(r"[MLCQZmlcqz]|-?\d*\.?\d+(?:e-?\d+)?", d or ""):
+        if tok.isalpha():
+            out.append(tok.upper())
+            k = 0
+        else:
+            v = float(tok)
+            out.append(f"{x + v * w:.3f}" if k % 2 == 0 else f"{y + v * h:.3f}")
+            k += 1
+    return " ".join(out)
+
+
+def _wrap_atom(a, svg, cx, cy):
+    """회전·불투명 — 원자 공통. 회전축은 원자의 가운데."""
+    rot = float(a.get("rotate") or 0)
+    op = a.get("opacity")
+    if not rot and (op is None or float(op) >= 1):
+        return svg
+    attrs = ""
+    if rot:
+        attrs += f' transform="rotate({rot:.2f} {cx:.3f} {cy:.3f})"'
+    if op is not None and float(op) < 1:
+        attrs += f' opacity="{float(op):.3f}"'
+    return f"<g{attrs}>{svg}</g>"
 
 
 def _text_content(ctx, a, values, types):
     """글 원자의 (html, plain). bind → 값 → 없으면 sys → 없으면 견본 글 → 없으면 {bind} 회색."""
     b = a.get("bind")
     if not b:
-        return rich_html(a.get("text", "")), a.get("text", "")
+        return rich_html(a.get("text", ""), ctx), rich_plain(a.get("text", ""))
     v = values.get(b)
     if v is None and b.startswith("sys."):
         v = ctx.sys.get(b[4:])
     if v is None:
         if a.get("text"):
-            return rich_html(a["text"]), a["text"]
+            return rich_html(a["text"], ctx), rich_plain(a["text"])
         return f'<span style="color:#b0b0b0">{{{esc(b)}}}</span>', "{" + b + "}"
-    return fmt(v, types.get(b, "text"))
+    return fmt(v, types.get(b, "text"), ctx)
 
 
 def _bounds(a):
@@ -227,6 +271,15 @@ def part_svg(ctx, part, values=None, types=None, width=None):
 
 
 def _atom_svg(ctx, a, dy, h, html):
+    svg = _atom_svg_raw(ctx, a, dy, h, html)
+    if a.get("t") == "line":
+        cx, cy = (a["x1"] + a["x2"]) / 2, (a["y1"] + a["y2"]) / 2 + dy
+    else:
+        cx, cy = a["x"] + a["w"] / 2, a["y"] + dy + h / 2
+    return _wrap_atom(a, svg, cx, cy)
+
+
+def _atom_svg_raw(ctx, a, dy, h, html):
     t = a.get("t")
     if t == "text":
         lead = (a.get("leading") or a["size"] * 1.45) * PT
@@ -237,7 +290,12 @@ def _atom_svg(ctx, a, dy, h, html):
                 f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{html or ""}</div></foreignObject>')
     if t == "line":
         return (f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
-                f'{_stroke(ctx, a.get("stroke"))} stroke-linecap="butt"/>')
+                f'{_stroke(ctx, a.get("stroke"))}/>')
+    if t == "path":
+        fill = ctx.color(a["fill"]) if a.get("fill") else "none"
+        rule = ' fill-rule="evenodd"' if a.get("evenodd") else ""
+        return (f'<path d="{path_d(a.get("d"), a["x"], a["y"] + dy, a["w"], h)}" fill="{fill}"{rule} '
+                f'{_stroke(ctx, a.get("stroke"))} stroke-linejoin="round"/>')
     if t == "rect":
         fill = ctx.color(a["fill"]) if a.get("fill") else "none"
         return (f'<rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" rx="{a.get("radius", 0)}" '
@@ -250,8 +308,9 @@ def _atom_svg(ctx, a, dy, h, html):
         src = a.get("src") or ""
         if ctx.image(src):
             href = f"/api/units/image/{esc(ctx.skin.get('id', ''))}/{esc(src)}"
+            par = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
             return (f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" '
-                    f'href="{href}" preserveAspectRatio="xMidYMid meet"/>')
+                    f'href="{href}" preserveAspectRatio="{par}"/>')
         if src:
             ctx.warn(f"이미지 없음 {src} — 옷 {ctx.skin.get('id') or '(없음)'}.images 에 파일을 적을 것")
         return (f'<g><rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" fill="#e6e6e6"/>'
@@ -467,7 +526,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
 
 
 def atom_part(atom):
-    """원자 하나를 임시 부품으로 — 캔버스에 낱개로 놓은 글상자·선·면·원·그림."""
+    """원자 하나를 임시 부품으로 — 캔버스에 낱개로 놓은 글상자·선·면·원·그림·도형."""
     a = dict(atom)
     if a.get("t") == "line":
         w, h = abs(a.get("x2", 0) - a.get("x1", 0)), abs(a.get("y2", 0) - a.get("y1", 0))
