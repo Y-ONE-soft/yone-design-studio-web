@@ -96,6 +96,13 @@ try:
     def grect(i):
         return js(f"(() => {{ const g = gOf({i}); if (!g) return null; const r = g.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }})()")
     def item(i): return js(f"JSON.stringify(page.items[{i}] || null)")
+    def ensure(i):
+        for _ in range(3):
+            r, a = grect(i), rect("#area")
+            if r and a and r[1] >= a[1] and r[1] + r[3] <= a[1] + a[3]: return r
+            js(f"(() => {{ const g = gOf({i}), a = document.querySelector('#area'); if (!g) return; const r = g.getBoundingClientRect(), ar = a.getBoundingClientRect(); a.scrollTop += (r.top + r.height / 2) - (ar.top + a.clientHeight / 2); flowLock = Date.now() + 1200; }})()")
+            time.sleep(0.5)
+        return grect(i)
     def pick(i):
         """요소 i 가 실제로 마우스에 잡히는 점 — 떠 있는 도구 막대·손잡이에 가리지 않은 곳"""
         r = grect(i)
@@ -258,7 +265,7 @@ try:
         return (js(f"page.items[{RECT}].x") == x0 and js("sels.size") >= 1, f"moved={js(f'page.items[{RECT}].x') != x0} sels={js('sels.size')}")
     step("D5 요소 위에서 Ctrl+끌기 = 옮기지 않고 범위 선택", d5)
     def d6():
-        js("document.querySelector('#area').scrollTop = 0"); time.sleep(0.2)
+        js("scrollToActive()"); time.sleep(0.5)
         p = None
         for mmx, mmy in ((150, 60), (100, 90), (180, 120), (60, 150), (190, 20)):
             q = paper_pt(mmx, mmy); a = at(*q) or ""
@@ -342,8 +349,7 @@ try:
     # ───────── G. 글 바로 고치기 ─────────
     TXT = js("page.items.findIndex(it => it.atom && it.atom.t === 'text')"); RECT = js("page.items.findIndex(it => it.atom && it.atom.t === 'rect')"); PAS = js("page.items.findIndex(it => it.block === 'passage')")
     def g1():
-        js("select([])"); js(f"gOf({TXT}).scrollIntoView({{block: 'center'}})"); time.sleep(0.3)
-        r = grect(TXT); pt = pick(TXT) or (r[0] + 6, r[1] + 6); dbl(*pt)
+        js("select([])"); r = ensure(TXT); pt = pick(TXT) or (r[0] + 6, r[1] + 6); dbl(*pt)
         ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3)
         if not ok: return (False, f"TXT={TXT} r={r} at={at(*pt)}")
         exp = js(f"(() => {{ const pr = document.querySelector('#paper').getBoundingClientRect(), b = bboxOf({TXT}); return [pr.left + b.x * scale, pr.top + b.y * scale]; }})()")
@@ -369,7 +375,7 @@ try:
 
     # ───────── H. 오른쪽 클릭 메뉴 ─────────
     def h1():
-        js("select([])"); r = grect(RECT); click(r[0] + 8, r[1] + 8, button="right")
+        js("select([])"); r = ensure(RECT); pt = pick(RECT) or (r[0] + 8, r[1] + 8); click(pt[0], pt[1], button="right")
         ok = wait("getComputedStyle(document.querySelector('#cmenu')).display !== 'none'", 3)
         n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('#cmenu button')].find(b => /복제/.test(b.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if b: click(*b)
@@ -380,7 +386,7 @@ try:
 
     # ───────── I. 자·안내선·격자·확대·손 ─────────
     def i1():
-        js("document.querySelector('#area').scrollTop = 0"); time.sleep(0.2); rt = rect("#rt")
+        js("scrollToActive()"); time.sleep(0.5); rt = rect("#rt")
         if not rt or rt[3] == 0: return (False, "가로 자 안 보임")
         hit = at(rt[0] + 300, rt[1] + 5)
         n0 = js("((page.guides || {}).h || []).length"); drag(rt[0] + 300, rt[1] + 5, rt[0] + 300, rt[1] + 200)
@@ -410,6 +416,7 @@ try:
     def i5():
         js("setZoom(2)"); time.sleep(0.4); js("document.querySelector('#area').scrollTop = 100"); s0 = js("document.querySelector('#area').scrollTop"); ar = rect("#area"); p = (ar[0] + ar[2] / 2, ar[1] + ar[3] / 2)
         drag(p[0], p[1], p[0], p[1] - 120, button="middle"); s1 = js("document.querySelector('#area').scrollTop"); js("setZoom(1)"); time.sleep(0.3)
+        js("scrollToActive()"); time.sleep(0.5)
         return (s1 > s0, f"scrollTop {s0}→{s1}")
     step("I5 가운데 버튼 끌기 손 도구", i5)
 
@@ -506,6 +513,54 @@ try:
         js("document.querySelector('#ai').value = '파란 제목 띠와 번호 원'"); click(*center("#btn-ai")); ok = wait("document.querySelector('#ainote') && /만드|없|오류|키|error/i.test(document.querySelector('#ainote').textContent) || LIB.blocks.some(b => b.id.startsWith('ai_'))", 60)
         return (ok, js("(document.querySelector('#ainote') || {}).textContent || ''")[:80])
     step("M2 설명으로 요소 만들기 (클로드) — 응답 또는 안내", m2)
+
+    # ───────── N. 세로로 이어 보기 · 도형 모양 ─────────
+    def n1():
+        if not js("!!view.flow"): click(*center("#tg-flow")); time.sleep(0.6)
+        if js("docPages().length") < 2: click(*center("#f-addpg")); wait("docPages().length >= 2", 10)
+        js("scrollToActive()"); time.sleep(0.6)
+        slots = js("document.querySelectorAll('#pages .pslot').length"); n = js("docPages().length")
+        i0 = js("idx()")
+        js("(() => { const a = document.querySelector('#area'); a.scrollTop += a.clientHeight + 20; })()")
+        ok = wait(f"idx() !== {i0}", 8)
+        paper_in = js("!!document.querySelector('#pages .pslot.cur #paper')")
+        return (ok and slots == n and paper_in, f"칸 {slots}개(쪽 {n}) · {i0 + 1}쪽에서 굴리니 {js('idx()') + 1}쪽 · 지면이 그 칸에={paper_in}")
+    step("N1 굴리면 다음 쪽 (세로 이어 보기)", n1)
+    def n2():
+        js("setZoom(0.5)"); time.sleep(0.8); js("scrollToActive()"); time.sleep(0.7)
+        cur = js("String(idx())")
+        seen = js("(() => { const a = document.querySelector('#area').getBoundingClientRect(); return [...document.querySelectorAll('#pages .pslot')].filter(d => { const r = d.getBoundingClientRect(); return Math.min(r.bottom, a.bottom) - Math.max(r.top, a.top) > 60; }).map(d => d.dataset.i); })()")
+        other = [x for x in seen if x != cur]
+        if not other:
+            js("setZoom(1)"); return (False, f"줄여도 이웃 칸이 안 보인다 (보임={seen} 지금={cur})")
+        r, a = rect(f'#pages .pslot[data-i="{other[0]}"]'), rect("#area")
+        top, bot = max(r[1], a[1] + 4), min(r[1] + r[3], a[1] + a[3] - 4)
+        click(r[0] + r[2] / 2, (top + bot) / 2)
+        ok = wait(f"idx() === {int(other[0])}", 6); at2 = js("idx()")
+        js("setZoom(1)"); time.sleep(0.6)
+        return (ok, f"50% 로 줄이니 {len(seen)}칸 보임 · 이웃 눌러 {at2 + 1}쪽")
+    step("N2 이웃 쪽 눌러서 열기", n2)
+    def n3():
+        click(*center("#tg-flow")); time.sleep(0.6)
+        one = js("[...document.querySelectorAll('#pages .pslot')].filter(d => getComputedStyle(d).display !== 'none').length")
+        click(*center("#tg-flow")); time.sleep(0.6)
+        many = js("[...document.querySelectorAll('#pages .pslot')].filter(d => getComputedStyle(d).display !== 'none').length")
+        return (one == 1 and many > 1, f"끄면 {one}칸 · 켜면 {many}칸")
+    step("N3 연속 껐다 켜기", n3)
+    def n4():
+        click(*center('#trail [data-tool="path"]')); time.sleep(0.5)
+        btns = js("[...document.querySelectorAll('#thint [data-shp]')].map(b => b.textContent)")
+        if not btns: return (False, "모양 고르개가 안 나온다")
+        b = center('#thint [data-shp]:nth-child(4)')                      # 별
+        nm = js("(document.querySelector('#thint [data-shp]:nth-child(4)') || {}).textContent")
+        click(*b); time.sleep(0.2)
+        n0 = n_items(); pr = rect("#paper"); sc = js("scale")
+        drag(pr[0] + 40 * sc, pr[1] + 150 * sc, pr[0] + 70 * sc, pr[1] + 175 * sc, steps=8)
+        ok = wait(f"page.items.length === {n0 + 1}", 6)
+        d = js("(() => { const it = page.items[page.items.length - 1]; return it && it.atom ? it.atom.d || '' : ''; })()")
+        star = js("(() => { const it = page.items[page.items.length - 1]; return !!(it && it.atom && it.atom.t === 'path'); })()")
+        return (ok and star and d.startswith("M0.5 0 L0.62"), f"모양 {len(btns)}개 · 고른 것={nm} · 그린 것 d={d[:22]}")
+    step("N4 도형 — 모양 고르고 그리면 그 모양", n4)
 
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
