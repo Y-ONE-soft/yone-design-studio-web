@@ -107,6 +107,9 @@
   .pv .sheet { width: 300px; background: #fff; box-shadow: 0 2px 10px rgba(30,20,60,.15); position: relative; }
   .pv .sheet svg { width: 100%; height: auto; display: block; }
   .pv .sheet .lb { position: absolute; left: 0; top: -16px; font-size: 11px; color: var(--mute); }
+  .editbar { display: flex; gap: 10px; align-items: center; background: #1f2330; color: #fff; border-radius: 10px; padding: 8px 14px; margin: 0 auto 12px; max-width: 900px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+  .editbar .note { color: #c9cbe0; flex: 1; margin: 0; }
+  .paper.editing .svgwrap svg g[data-fi]:not(.edt) { opacity: .25; pointer-events: none; }
   .warn { background: #fff7e6; border: 1px solid #f0d9a8; color: #6b4d00; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin: 0 auto 12px; max-width: 760px; white-space: pre-wrap; }
   .empty { color: var(--mute); text-align: center; padding: 80px 20px; font-size: 14px; line-height: 1.7; }
 
@@ -192,6 +195,7 @@
     <div class="pv" id="pv" style="display:none"><div class="pvbar"><b id="pvtitle"></b><span class="note" id="pvinfo"></span><a class="btn sm" id="pvpdf" target="_blank">⬇ PDF</a><button class="btn sm sub" id="pvclose">닫기</button></div><div class="pvbody" id="pvbody"></div></div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
+      <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">요소 안 편집 중 — 글상자·선·면을 고치거나 더 그린다. 자리 이름도 여기서. 저장하면 이 요소를 쓴 모든 페이지가 바뀐다.</span><button class="btn sm" id="edit-done">저장하고 나가기</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
         <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="hd-e" data-h="e" title="폭"></span><span class="hd-s" data-h="s" title="높이"></span><span class="hd-se" data-h="se" title="폭·높이"></span></div>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
@@ -306,7 +310,7 @@ $("#p-del").onclick = () => deletePage();
 function openPlan(pl) {
   plan = byId("plans")[pl.id] || pl; page = null; sel = null; sels = new Set();
   $("#start").style.display = "none"; $(".ptool").style.display = ""; $("#plname").value = plan.name || plan.id;
-  const dp = docPages(); const want = decodeURIComponent(location.hash.replace(/^#/, ""));
+  const dp = docPages(); const want = new URLSearchParams(location.search).get("page") || decodeURIComponent(location.hash.replace(/^#/, ""));   // ?page= 도 받는다(# 를 못 넘기는 곳)
   history.replaceState(null, "", "?plan=" + encodeURIComponent(plan.id) + (want ? "#" + want : ""));
   if (dp.length) open(dp.find(x => x.id === want) || dp[0]); else { $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); }
   panel();
@@ -360,6 +364,7 @@ $("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
 function open(p) {
   page = byId("pages")[p.id] || p; sel = null; sels = new Set();
   if (!page.items) page.items = [];
+  editing = null; $("#paper").classList.remove("editing"); $("#editbar").style.display = "none"; page.items.forEach(it => delete it._edit);
   if (page.chrome && page.chrome.length) { page.items = page.chrome.map(c => ({part: c.part, x: c.x, y: c.y})).concat(page.items); delete page.chrome; }
   $("#pname").value = page.name || ""; history.replaceState(null, "", (plan ? "?plan=" + encodeURIComponent(plan.id) : "") + "#" + page.id);
   const pp = $("#paper"); pp.style.background = ""; pp.style.boxShadow = "";
@@ -434,7 +439,8 @@ function wire() {
   const svg = $("#svgwrap svg"); if (!svg) return;
   svg.querySelectorAll("g[data-fi]").forEach(g => {
     g.addEventListener("click", (e) => e.stopPropagation());
-    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && it.atom && it.atom.t === "text") { const v = prompt(Array.isArray(it.atom.text) ? "글 (서식이 섞인 글 — 고치면 서식은 사라진다)" : "글", plainText(it.atom.text)); if (v != null) { hist(); it.atom.text = v; save(); render(); side(); } } });
+    if (editing && page.items[+g.dataset.fi] && page.items[+g.dataset.fi]._edit) g.classList.add("edt");
+    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && (it.block || it.part) && !editing) { enterEdit(+g.dataset.fi); return; } if (it && it.atom && it.atom.t === "text") { const v = prompt(Array.isArray(it.atom.text) ? "글 (서식이 섞인 글 — 고치면 서식은 사라진다)" : "글", plainText(it.atom.text)); if (v != null) { hist(); it.atom.text = v; save(); render(); side(); } } });
     g.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return; e.stopPropagation();
       const i = +g.dataset.fi;
@@ -479,7 +485,7 @@ $("#paper").addEventListener("pointerdown", (e) => {
     const x = Math.min(s0.x, m1.x), y = Math.min(s0.y, m1.y), w = Math.abs(m1.x - s0.x), h = Math.abs(m1.y - s0.y);
     Object.assign(m.style, {display: "", left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); m._r = {x, y, w, h}; };
   const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); m.style.display = "none";
-    if (!moved) { select([]); return; }
+    if (!moved) { if (editing) exitEdit(true); else select([]); return; }
     const r = m._r; const ids = page.items.map((_, i) => i).filter(i => { const b = bboxOf(i); return b && b.x < r.x + r.w && b.x + b.w > r.x && b.y < r.y + r.h && b.y + b.h > r.y; });
     select(ev.shiftKey ? [...new Set([...sels, ...ids])] : ids); };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
@@ -559,7 +565,7 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); return; }
-  if (e.key === "Escape") { select([]); return; }
+  if (e.key === "Escape") { if (editing) exitEdit(true); else select([]); return; }
   const step = e.shiftKey ? 5 : 0.5; const d = {ArrowUp: [0, -step], ArrowDown: [0, step], ArrowLeft: [-step, 0], ArrowRight: [step, 0]}[e.key]; if (!d) return;
   e.preventDefault(); hist(); for (const i of sels) { page.items[i].x = snap(page.items[i].x + d[0]); page.items[i].y = snap(page.items[i].y + d[1]); } save(); render(); side();
 });
@@ -576,6 +582,7 @@ function place(it, at, stretch) {
   if (stretch) it.w = S.w - M.left - M.right;
   it.x = M.left; it.y = snap(Math.min(bottomOf() + 3, S.h - 20));
   if (at) { it.x = snap(Math.max(0, at.x)); it.y = snap(Math.max(0, at.y)); }
+  if (editing) it._edit = true;
   hist(); page.items.push(it); select([page.items.length - 1]); save(); render();
 }
 function addBlock(id, at) {
@@ -646,6 +653,43 @@ function ungroup() {
     hist(); const at = sel; page.items.splice(at, 1, ...out); select(out.map((_, k) => at + k)); save(); render();
   }
 }
+// ── 요소 안 편집 (더블클릭) — 파워포인트 그룹 안 편집. 풀어서 고치고, 나가면 같은 요소로 다시 묶어 라이브러리를 갱신한다 ──
+let editing = null;
+function enterEdit(i) {
+  const it = page.items[i]; if (!it || !(it.block || it.part)) return;
+  const part = it.block ? partOfBlock(it.block) : byId("parts")[it.part]; if (!part) return;
+  editing = {block: it.block || null, part: part.id, name: it.block ? (byId("blocks")[it.block] || {}).name : part.name, snap: JSON.stringify(page.items), w: it.w};
+  select([i]); ungroup(); if (it.block) ungroup();                     // 블록 → 그룹 → 원자들 (자리 그대로)
+  for (const k of sels) page.items[k]._edit = true;
+  $("#paper").classList.add("editing"); $("#editbar").style.display = ""; $("#editnm").textContent = "「" + (editing.name || part.id) + "」";
+  render(); side();
+}
+async function exitEdit(saveIt) {
+  if (!editing) return; const ed = editing; editing = null;
+  $("#paper").classList.remove("editing"); $("#editbar").style.display = "none";
+  if (!saveIt) { page.items = JSON.parse(ed.snap); select([]); save(); render(); return; }
+  const ids = page.items.map((it, k) => it._edit && it.atom ? k : -1).filter(k => k >= 0);
+  if (!ids.length) { page.items.forEach(it => delete it._edit); select([]); save(); render(); return; }
+  const its = ids.map(i => page.items[i]);
+  const bb = (it) => { const a = it.atom; const w = a.t === "line" ? Math.abs(a.x2 - a.x1) : a.w, h = a.t === "line" ? Math.abs(a.y2 - a.y1) : a.h; const sx = it.w && w ? it.w / w : 1; return {x: it.x, y: it.y, w: w * sx, h, sx}; };
+  const x0 = Math.min(...its.map(it => bb(it).x)), y0 = Math.min(...its.map(it => bb(it).y));
+  const atoms = its.map(it => { const a = clone(it.atom), b = bb(it), dx = it.x - x0, dy = it.y - y0;
+    if (a.t === "line") { a.x1 = snap(a.x1 * b.sx + dx); a.x2 = snap(a.x2 * b.sx + dx); a.y1 = snap(a.y1 + dy); a.y2 = snap(a.y2 + dy); }
+    else { a.x = snap(a.x * b.sx + dx); a.y = snap(a.y + dy); if (a.t !== "ellipse") a.w = snap(a.w * b.sx); } return a; });
+  const W = Math.max(...its.map(it => bb(it).x + bb(it).w)) - x0, H = Math.max(...its.map(it => bb(it).y + bb(it).h)) - y0;
+  const part = byId("parts")[ed.part]; part.atoms = atoms; part.w = snap(Math.max(W, 1)); part.h = snap(Math.max(H, 1));
+  let j = await api("/api/units/parts", part); if (j.error) { $("#st").textContent = j.error; return; }
+  if (ed.block) {                                                     // 자리 이름이 바뀌었으면 요소의 자리 목록도
+    const blk = byId("blocks")[ed.block]; const fields = {};
+    for (const a of atoms) if (a.bind && !a.bind.startsWith("sys.")) fields[a.bind] = (blk.fields || {})[a.bind] || {type: a.bind === "no" ? "number" : (a.bind === "choices" ? "choices" : (a.bind === "answer" ? "answer" : "rich"))};
+    if (JSON.stringify(fields) !== JSON.stringify(blk.fields || {})) { blk.fields = fields; blk.source = Object.keys(fields).length ? "content" : (blk.source === "system" ? "system" : "none"); j = await api("/api/units/blocks", blk); if (j.error) $("#st").textContent = j.error; }
+  }
+  page.items = page.items.filter((_, i) => !ids.includes(i)); page.items.forEach(it => delete it._edit);
+  page.items.push(ed.block ? {block: ed.block, x: x0, y: y0} : {part: ed.part, x: x0, y: y0});
+  select([page.items.length - 1]); save(); pageSvg = {}; render(); thumbsLoad(); drawRail();
+}
+$("#edit-done").onclick = () => exitEdit(true); $("#edit-cancel").onclick = () => exitEdit(false);
+
 async function saveAsElement() {
   // 고른 것 → 요소 패널의 항목. 원자 여럿이면 먼저 그룹(부품)으로 묶는다. 글상자의 자리 이름 = 원고가 들어올 자리.
   const name = prompt("요소 이름 (요소 패널에 이 이름으로)", "새 요소"); if (name == null) return;
@@ -772,7 +816,7 @@ function side() {
       const flds = Object.keys(blk.fields || {});
       h += `<div class="note">요소 「${esc(blk.name)}」${flds.length ? ` — 원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? " — 책이 자동으로 채운다(쪽번호·구간명)" : " — 장식")}</div>
         ${(blk.variants || []).length > 1 ? `<div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div><div class="note">모양은 브랜드(${esc(sk.name)})에 저장된다.</div>` : ""}
-        <div class="row"><button class="btn sm sub" id="s-down" title="그룹을 풀어 낱개로 고친다. 고친 뒤 다시 「요소로 저장」">그룹 해제해서 고치기</button></div>`;
+        <div class="row"><button class="btn sm" id="s-edit">✎ 안 편집 (더블클릭)</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다 (요소는 그대로)">그룹 해제</button></div>`;
     } else if (u === "part") {
       const part = byId("parts")[it.part] || {atoms: []};
       h += `<div class="note">그룹 — 오브젝트 ${part.atoms.length}개. 요소 패널엔 아직 없다.</div>
@@ -839,7 +883,7 @@ function side() {
     save(); render(); side();
   }));
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
-  on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
+  on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel);
   box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => select([+d.dataset.seli]));
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
