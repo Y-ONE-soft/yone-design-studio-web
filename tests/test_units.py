@@ -180,3 +180,56 @@ def test_decompose_keeps_indesign_objects(tmp_path):
     assert mixed["text"][0] == "Plain " and mixed["text"][1]["t"] == "Bold" and mixed["text"][1]["b"] is True
     part = decompose.to_part(dec, list(range(len(dec["atoms"]))), "all", "all")
     assert store.validate("parts", part) is None
+
+
+def test_text_atom_paragraph_and_frame_options(lib):
+    """글 원자 = 인디자인 단락·문자 스타일 + 텍스트 프레임 옵션: 자간·들여쓰기·내어쓰기·단락 간격·안쪽 여백·세로 정렬·다단·취소선."""
+    from core.units import render, store
+    a = {"t": "text", "x": 0, "y": 0, "w": 60, "h": 20, "font": "$body", "size": 8, "color": "$ink",
+         "text": ["① The boy ", {"t": "who", "u": True}, " I met\n② ", {"t": "gone", "s": True}, " away"],
+         "tracking": 50, "indent": 4, "indent_first": -4, "indent_right": 1, "space_before": 1, "space_after": 0.5,
+         "inset": [1, 2, 1, 2], "valign": "center", "columns": 2, "gutter": 3}
+    part = {"id": "t", "name": "t", "w": 60, "h": 20, "atoms": [a]}
+    assert store.validate("parts", part) is None
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib)
+    frag, _h = render.part_svg(ctx, part)
+    assert "white-space:normal;letter-spacing:0.0500em" in frag
+    assert frag.count("<p ") == 2 and "padding-left:4.000px;padding-right:1.000px;text-indent:-4.000px;margin-top:1.000px;margin-bottom:0.500px" in frag
+    assert "padding:1.000px 2.000px 1.000px 2.000px" in frag and "justify-content:center" in frag
+    assert "column-count:2;column-gap:3.000px" in frag
+    assert "<u>who</u>" in frag and "<s>gone</s>" in frag
+    assert not ctx.warnings, ctx.warnings
+    # 높이 어림: 여백·단락 간격이 더해진다
+    assert render.text_h("a\nb", 60, 8, None, {"space_after": 2, "inset": 1}) == render.text_h("a\nb", 60, 8) + 2 + 2
+
+
+def test_decompose_underline_paragraph_hanging(tmp_path):
+    """밑줄은 선 원자가 아니라 글 조각(u), 끝이 이른 줄 다음은 새 단락, 둘째 줄부터 들여 있으면 내어쓰기. 제목 밑 긴 괘선은 그대로 선."""
+    import fitz
+    from core.units import decompose
+    doc = fitz.open()
+    page = doc.new_page(width=595, height=842)
+    font = fitz.Font("helv")
+    # 1) 밑줄 친 단어 — 글자 바로 밑 얇은 선
+    page.insert_text(fitz.Point(60, 100), "Choose the wrong one here.", fontsize=9, fontname="helv")
+    x0 = 60 + font.text_length("Choose the ", 9)
+    x1 = x0 + font.text_length("wrong", 9)
+    page.draw_line(fitz.Point(x0, 101.2), fitz.Point(x1, 101.2), color=(0, 0, 0), width=0.5)
+    # 2) 제목 밑 긴 괘선 — 밑줄 아님
+    page.insert_text(fitz.Point(60, 130), "STEP 1", fontsize=9, fontname="helv")
+    page.draw_line(fitz.Point(56, 132), fitz.Point(540, 132), color=(0.5, 0.5, 0.5), width=0.5)
+    # 3) 내어쓰기 + 단락: 첫 줄은 번호부터, 둘째 줄은 들여서. 짧게 끝난 뒤 다음 줄은 새 단락
+    page.insert_text(fitz.Point(60, 200), "1. The quick brown fox jumps over the lazy dog and keeps running far", fontsize=9, fontname="helv")
+    page.insert_text(fitz.Point(72, 212), "beyond the hill.", fontsize=9, fontname="helv")
+    page.insert_text(fitz.Point(60, 224), "2. Second item that is short.", fontsize=9, fontname="helv")
+    p = tmp_path / "t.pdf"
+    doc.save(str(p))
+    dec = decompose.from_pdf(str(p), 1)
+    texts = [a for a in dec["atoms"] if a["t"] == "text"]
+    ul = next(a for a in texts if "Choose" in (a["text"] if isinstance(a["text"], str) else "".join(r if isinstance(r, str) else r["t"] for r in a["text"])))
+    assert isinstance(ul["text"], list) and {"t": "wrong", "u": True} in ul["text"]
+    assert sum(1 for a in dec["atoms"] if a["t"] == "line") == 1                       # 밑줄은 사라지고 괘선만 남는다
+    hang = next(a for a in texts if a.get("indent"))
+    assert hang["indent_first"] == -hang["indent"] and abs(hang["indent"] - 12 * 25.4 / 72) < 0.3
+    assert hang["text"].count("\n") == 1 and hang["text"].split("\n")[1].startswith("2.")   # 짧게 끝난 줄 다음 = 새 단락
+    assert hang["x"] == pytest.approx(60 * 25.4 / 72, abs=0.1)

@@ -26,7 +26,7 @@
       "description": "서식 조각 — 글 안에서 굵게·기울임·밑줄·위첨자·다른 색·서체·크기가 섞인 부분(인디자인 문자 스타일). core/render_vivlio/richtext.py 형식 + color·font·size",
       "type": "object", "required": ["t"],
       "properties": {
-        "t": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"},
+        "t": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"}, "s": {"type": "boolean", "description": "취소선"},
         "sup": {"type": "boolean"}, "sub": {"type": "boolean"},
         "color": {"$ref": "#/definitions/token"}, "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}
       }
@@ -49,8 +49,19 @@
         "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
         "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
         "align": {"enum": ["left", "center", "right", "justify"]},
-        "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich)"},
+        "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich). 줄바꿈(\\n) = 단락"},
         "bind": {"$ref": "#/definitions/bind"},
+        "tracking": {"type": "number", "description": "자간 — 인디자인 단위(1/1000 em). 없으면 0"},
+        "indent": {"$ref": "#/definitions/mm", "description": "왼쪽 들여쓰기(단락 전체)"},
+        "indent_first": {"type": "number", "description": "첫 줄 들여쓰기(mm). 음수 = 내어쓰기(선지 ①~⑤ 둘째 줄이 글머리 뒤에서 시작)"},
+        "indent_right": {"$ref": "#/definitions/mm", "description": "오른쪽 들여쓰기"},
+        "space_before": {"$ref": "#/definitions/mm", "description": "단락 앞 간격"},
+        "space_after": {"$ref": "#/definitions/mm", "description": "단락 뒤 간격"},
+        "inset": {"oneOf": [{"$ref": "#/definitions/mm"}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/definitions/mm"}}],
+                  "description": "글상자 안쪽 여백(인디자인 텍스트 프레임 옵션). 하나 또는 [위, 오른쪽, 아래, 왼쪽]"},
+        "valign": {"enum": ["top", "center", "bottom"], "description": "세로 정렬. 없으면 top"},
+        "columns": {"type": "integer", "minimum": 1, "maximum": 6, "description": "글상자 안 단 수. 없으면 1"},
+        "gutter": {"$ref": "#/definitions/mm", "description": "단 사이 간격"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },

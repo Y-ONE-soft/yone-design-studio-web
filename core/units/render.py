@@ -95,6 +95,8 @@ def rich_html(v, ctx=None):
             t = "<b>" + t + "</b>"
         if v.get("i"):
             t = "<i>" + t + "</i>"
+        if v.get("s"):
+            t = "<s>" + t + "</s>"
         if v.get("sup"):
             t = "<sup>" + t + "</sup>"
         elif v.get("sub"):
@@ -135,15 +137,58 @@ def fmt(v, ftype, ctx=None):
     return rich_html(v, ctx), rich_plain(v)
 
 
-def text_h(plain, w_mm, size_pt, leading_pt=None):
-    """글이 차지할 높이(mm) 어림 — 한글·한자는 1em, 로마자는 0.52em."""
+def insets(a):
+    """글상자 안쪽 여백 (위, 오른쪽, 아래, 왼쪽) mm."""
+    v = a.get("inset")
+    if v is None:
+        return 0.0, 0.0, 0.0, 0.0
+    if isinstance(v, (list, tuple)) and len(v) == 4:
+        return tuple(float(x or 0) for x in v)
+    return (float(v),) * 4
+
+
+def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
+    """글이 차지할 높이(mm) 어림 — 한글·한자는 1em, 로마자는 0.52em. 자간·들여쓰기·여백·다단·단락 간격을 넣는다."""
+    a = a or {}
     em = size_pt * PT
     lead = (leading_pt or size_pt * 1.45) * PT
+    it, ir, ib, il = insets(a)
+    cols = max(int(a.get("columns") or 1), 1)
+    gutter = float(a.get("gutter") or 0) if cols > 1 else 0.0
+    col_w = (w_mm - il - ir - gutter * (cols - 1)) / cols - float(a.get("indent") or 0) - float(a.get("indent_right") or 0)
+    track = em * float(a.get("tracking") or 0) / 1000.0
     lines = 0
-    for para in (plain or "").split("\n"):
-        width = sum(em * (1.0 if ord(c) > 0x2E7F else 0.52) for c in para)
-        lines += max(1, int(math.ceil(width / max(w_mm, 0.1))))
-    return lines * lead
+    paras = (plain or "").split("\n")
+    for para in paras:
+        width = sum(em * (1.0 if ord(c) > 0x2E7F else 0.52) + track for c in para)
+        lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
+    gaps = (len(paras) - 1) * (float(a.get("space_before") or 0) + float(a.get("space_after") or 0))
+    return math.ceil(lines / float(cols)) * lead + gaps + it + ib
+
+
+def _text_html(a, html, h):
+    """글상자 안 HTML — 단락(<p>)마다 들여쓰기·앞뒤 간격, 상자엔 여백·세로 정렬·다단·자간. px = mm (viewBox 가 mm)."""
+    ps = ""
+    if a.get("indent"):
+        ps += f"padding-left:{float(a['indent']):.3f}px;"
+    if a.get("indent_right"):
+        ps += f"padding-right:{float(a['indent_right']):.3f}px;"
+    if a.get("indent_first"):
+        ps += f"text-indent:{float(a['indent_first']):.3f}px;"
+    if a.get("space_before"):
+        ps += f"margin-top:{float(a['space_before']):.3f}px;"
+    if a.get("space_after"):
+        ps += f"margin-bottom:{float(a['space_after']):.3f}px;"
+    paras = (html or "").split("<br/>")
+    inner = "".join(f'<p style="margin:0;{ps}">{x or "&#160;"}</p>' for x in paras)
+    it, ir, ib, il = insets(a)
+    cols = int(a.get("columns") or 1)
+    box = f"height:{h:.3f}px;box-sizing:border-box;padding:{it:.3f}px {ir:.3f}px {ib:.3f}px {il:.3f}px;"
+    if a.get("valign") in ("center", "bottom"):
+        box += "display:flex;flex-direction:column;justify-content:" + ("center" if a["valign"] == "center" else "flex-end") + ";"
+    if cols > 1:
+        inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;column-fill:balance">{inner}</div>'
+    return f'<div style="{box}">{inner}</div>'
 
 
 # ── 부품 ────────────────────────────────────────────────────────────
@@ -243,7 +288,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
             continue
         html, plain = _text_content(ctx, a, values, types)
         content[i] = html
-        need = text_h(plain, a["w"], a["size"], a.get("leading"))
+        need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
         heights[i] = max(a["h"], need)
         if need > a["h"] + 0.01:
             grown.append((i, a["y"], a["y"] + a["h"], a["x"], a["x"] + a["w"], need - a["h"]))
@@ -286,8 +331,10 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         style = (f"margin:0;font-family:{esc(ctx.font(a.get('font')))};font-size:{a['size'] * PT:.3f}px;"
                  f"line-height:{lead:.3f}px;color:{ctx.color(a.get('color'))};text-align:{a.get('align', 'left')};"
                  f"overflow:hidden;word-break:break-word;white-space:normal")
+        if a.get("tracking"):
+            style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
         return (f'<foreignObject x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}">'
-                f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{html or ""}</div></foreignObject>')
+                f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h)}</div></foreignObject>')
     if t == "line":
         return (f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
                 f'{_stroke(ctx, a.get("stroke"))}/>')
