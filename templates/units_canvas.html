@@ -142,7 +142,7 @@
   .guide { max-width: 560px; margin: 60px auto; background: #fff; border-radius: 16px; padding: 26px 30px; box-shadow: 0 6px 24px rgba(30,20,60,.1); }
   .guide h3 { font-size: 16px; margin: 0 0 12px; color: #1f2330; }
   .guide ol { margin: 0; padding-left: 20px; line-height: 1.9; font-size: 13.5px; }
-  .pv { position: absolute; inset: 0; background: #ecebf3; z-index: 14; display: flex; flex-direction: column; }
+  .pv { position: absolute; inset: 0; background: #ecebf3; z-index: 20; display: flex; flex-direction: column; }
   .pv .pvbar { display: flex; gap: 10px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line); }
   .pv .pvbar .note { flex: 1; }
   .pv .pvbody { flex: 1; overflow: auto; padding: 20px; display: flex; flex-wrap: wrap; gap: 18px; align-content: flex-start; justify-content: center; }
@@ -183,7 +183,8 @@
   .menu button small { display: block; color: var(--mute); font-size: 10.5px; }
   .strip .foot { display: flex; align-items: center; gap: 5px; padding: 1px 10px 2px; font-size: 11.5px; color: var(--mute); flex-wrap: nowrap; white-space: nowrap; overflow-x: auto; }
   .strip .foot .btn { flex: none; }
-  .strip .foot .cnt { margin-left: auto; font-weight: 600; color: #1f2330; }
+  .strip .foot .cnt { font-weight: 600; color: #1f2330; }
+  .strip .foot #f-cnt { margin-left: auto; padding: 2px 7px; }
   .strip .foot .help { cursor: help; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; background: #fff; }
   .strip .foot select { padding: 2px 4px; font-size: 11.5px; }
   .strip .foot .btn.sub.on { background: var(--pp-bg); color: var(--pp); }
@@ -276,8 +277,6 @@
       <button id="p-check" title="원고 빠진 자리·안 실린 원고·넘침·없는 토큰을 찾는다">✓ 검수</button>
       <button id="p-pdf" title="화면용 PDF (RGB)">⬇ PDF</button>
       <button id="p-print" title="인쇄용 PDF — 도련 3mm·재단선·CMYK(무채색은 K 단색)·TrimBox">🖨 인쇄용</button>
-      <button id="p-dup" title="페이지 복제" style="display:none">⧉</button>
-      <button id="p-del" title="페이지 지우기" style="display:none">🗑</button>
       <input type="text" id="pname" placeholder="페이지 이름" style="display:none">
       <span class="sep" id="ctrl-sep" style="display:none"></span>
       <span class="ctrl" id="ctrl"></span>
@@ -326,7 +325,8 @@
       <div class="rail" id="rail"></div>
       <div class="foot">
         <span class="help" title="도구: V 선택 · H 손 · T 글상자 · R 면 · O 원 · L 선 · P 도형 · I 그림 — 고르고 지면에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 요소 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 쪽 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
-        <span class="cnt" id="cnt"></span>
+        <button class="btn sm sub" id="f-cnt" title="쪽 띠 펴기·접기 (Ctrl+Alt+\\)"><span class="cnt" id="cnt"></span></button>
+        <button class="btn sm sub" id="f-addpg" title="이 페이지 뒤에 새 본문 페이지">＋ 쪽</button>
         <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 요소 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
         <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 요소·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button>
@@ -413,7 +413,6 @@ async function movePageTo(fromId, toIndex) {
   const ids = planIds(plan); const i = ids.indexOf(fromId); if (i < 0) return;
   ids.splice(i, 1); ids.splice(Math.max(0, Math.min(toIndex, ids.length)), 0, fromId); setPlanIds(ids); await savePlan(); drawRail(); side();
 }
-$("#p-dup").onclick = () => addPage("dup");
 async function deletePage(p) {
   p = p || page; if (!p || !plan) return;
   const n = (p.items || []).length; const shared = usedElsewhere(p.id);
@@ -424,7 +423,6 @@ async function deletePage(p) {
   if (!page || p.id === page.id) { if (dp.length) openPage(dp[Math.min(Math.max(i, 0), dp.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); } }
   else drawRail();
 }
-$("#p-del").onclick = () => deletePage();
 
 // ── 틀(문서) 고르기 · 만들기 ──
 function openPlan(pl) {
@@ -477,6 +475,8 @@ $("#p-preview").onclick = async () => {
   for (const sh of j.svgs) { const d = document.createElement("div"); d.className = "sheet"; d.innerHTML = `<span class="lb">${esc(sh.label || "")} · ${sh.page_no}쪽</span>${sh.svg}`; strip(d); $("#pvbody").appendChild(d); }
 };
 $("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
+$("#f-cnt").onclick = () => togglePanel("strip");
+$("#f-addpg").onclick = () => addPage("body");
 // 검수 — 책을 그려 보고 문제 목록
 async function runCheck() {
   if (!plan) return; let box = $("#chk"); if (!box) { box = document.createElement("div"); box.className = "chk"; box.id = "chk"; document.body.appendChild(box); }
