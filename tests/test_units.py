@@ -122,3 +122,61 @@ def test_free_items_canvas_vs_flow(lib):
     empty = render.page_svgs(ctx, pg, [], render.DEFAULT_SPEC)[0]["svg"]
     assert empty.count("data-fi=") == 2                                        # 세트가 없으면 머리말·쪽번호만
     assert not ctx.warnings, ctx.warnings
+
+
+def test_atom_kinds_cover_indesign_objects(lib):
+    """원자 = 인디자인 오브젝트 전부: 도형(path)·회전·불투명·선 끝·그림 맞춤·글 안의 서식 조각이 스키마에 맞고 SVG 로 그려진다."""
+    from core.units import render, store
+    part = {"id": "all", "name": "all", "w": 60, "h": 40, "atoms": [
+        {"t": "path", "x": 0, "y": 0, "w": 12, "h": 8, "d": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", "fill": "$sel", "rotate": 45, "opacity": 0.5},
+        {"t": "line", "x1": 0, "y1": 12, "x2": 30, "y2": 12, "stroke": {"w": 1, "color": "$rule", "cap": "round"}},
+        {"t": "image", "x": 20, "y": 0, "w": 10, "h": 10, "src": "logo", "fit": "cover", "rotate": -90},
+        {"t": "text", "x": 0, "y": 15, "w": 60, "h": 5, "font": "$body", "size": 8, "color": "$ink",
+         "text": ["The ", {"t": "boy", "b": True, "color": "$sel"}, {"t": "2", "sup": True}, " who"]},
+    ]}
+    assert store.validate("parts", part) is None
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib)
+    frag, _h = render.part_svg(ctx, part)
+    assert '<path d="M 0.000 2.400 L 7.200 2.400' in frag and 'rotate(45.00 6.000 4.000)' in frag and 'opacity="0.500"' in frag
+    assert 'stroke-linecap="round"' in frag
+    assert 'rotate(-90.00 25.000 5.000)' in frag
+    assert "<b>boy</b>" in frag and "<sup>2</sup>" in frag and "color:#00559f" in frag
+    assert not [w for w in ctx.warnings if "이미지 없음" not in w], ctx.warnings
+
+
+def test_decompose_keeps_indesign_objects(tmp_path):
+    """인디자인 PDF 에 실제로 있는 것을 잃지 않는다 — 삼각형은 path 로, 둥근 모서리는 반지름으로, 반투명·둥근 선 끝·회전한 글·그림·굵은 조각까지."""
+    import fitz
+    from core.units import decompose, store
+    doc = fitz.open()
+    page = doc.new_page(width=595, height=842)
+    page.draw_rect(fitz.Rect(56, 100, 300, 200), color=None, fill=(0.2, 0.4, 0.8), fill_opacity=0.5)
+    page.draw_polyline([fitz.Point(320, 100), fitz.Point(400, 150), fitz.Point(320, 200)], color=None, fill=(1, 0, 0), closePath=True)
+    page.draw_line(fitz.Point(56, 220), fitz.Point(300, 220), color=(0.7, 0.7, 0.7), width=2, lineCap=1)
+    page.draw_rect(fitz.Rect(56, 240, 300, 300), color=(0, 0, 0), width=1, radius=0.2)
+    page.draw_oval(fitz.Rect(320, 240, 420, 300), color=(0, 0, 1), width=1)
+    tw = fitz.TextWriter(page.rect)
+    tw.append(fitz.Point(60, 130), "Plain ", font=fitz.Font("helv"), fontsize=9)
+    tw.append(fitz.Point(60 + fitz.Font("helv").text_length("Plain ", 9), 130), "Bold", font=fitz.Font("hebo"), fontsize=9)   # 한 줄에 잇달아
+    tw.write_text(page, color=(0.1, 0.1, 0.1))
+    page.insert_text(fitz.Point(500, 400), "Vertical tab", fontsize=10, rotate=90)
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 40, 20), 0)
+    page.insert_image(fitz.Rect(100, 500, 200, 550), pixmap=pix, rotate=90)
+    p = tmp_path / "t.pdf"
+    doc.save(str(p))
+    dec = decompose.from_pdf(str(p), 1)
+    by = {}
+    for a in dec["atoms"]:
+        by.setdefault(a["t"], []).append(a)
+    assert sorted(by) == ["ellipse", "image", "line", "path", "rect", "text"]
+    assert by["rect"][0]["opacity"] == 0.5 and "radius" in by["rect"][1] and abs(by["rect"][1]["radius"] - 4.23) < 0.1
+    tri = by["path"][0]
+    assert tri["d"].startswith("M 0.0000 0.0000 L 1.0000 0.5000 L 0.0000 1.0000") and tri["fill"].startswith("$c")
+    assert by["line"][0]["stroke"]["cap"] == "round"
+    assert by["image"][0]["rotate"] == -90.0 and abs(by["image"][0]["w"] - 17.64) < 0.1     # 돌린 그림은 원래 폭·높이 + 회전
+    vert = next(a for a in by["text"] if a.get("rotate"))
+    assert vert["rotate"] == -90.0 and vert["w"] > vert["h"]                                 # 세로 글도 원래 폭·높이 + 회전
+    mixed = next(a for a in by["text"] if isinstance(a["text"], list))
+    assert mixed["text"][0] == "Plain " and mixed["text"][1]["t"] == "Bold" and mixed["text"][1]["b"] is True
+    part = decompose.to_part(dec, list(range(len(dec["atoms"]))), "all", "all")
+    assert store.validate("parts", part) is None

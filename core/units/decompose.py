@@ -1,6 +1,8 @@
 """입력 → 원자 목록(`decomposed`). PDF 면은 PyMuPDF 로 직접, 이미지·프롬프트는 클로드가 같은 형식으로 그린다.
 
-    from_pdf(path, pno)          벡터(선·면)·글(span)·이미지가 이미 오브젝트다 — 그대로 원자로
+    from_pdf(path, pno)          벡터(선·면·도형)·글(span)·이미지가 이미 오브젝트다 — 그대로 원자로.
+                                 인디자인 PDF 에 실제로 있는 것을 잃지 않는다: 회전(글·그림)·불투명·선 끝·
+                                 자유 도형(화살표·체크·말풍선·로고 → path)·둥근 모서리 반지름·글 안의 굵게·기울임·위첨자·다른 색(rich)
     from_ai(prompt, image=...)   클로드 — 결과 형식은 같다 (JSON 글로 받는다)
     to_part(dec, indices, ...)   후보(원자 번호 묶음) → 부품 (원점을 묶음의 왼쪽 위로 옮긴다)
 
@@ -9,6 +11,7 @@
 """
 import collections
 import json
+import math
 import os
 
 PT = 25.4 / 72.0
@@ -56,6 +59,13 @@ class _Tokens(object):
                 st["color"] = "$" + cmap[st["color"]]
             if a.get("font") in fmap:
                 a["font"] = "$" + fmap[a["font"]]
+            if isinstance(a.get("text"), list):
+                for r in a["text"]:
+                    if isinstance(r, dict):
+                        if r.get("color") in cmap:
+                            r["color"] = "$" + cmap[r["color"]]
+                        if r.get("font") in fmap:
+                            r["font"] = "$" + fmap[r["font"]]
         return {"color": {v: k for k, v in cmap.items()}, "font": {v: k for k, v in fmap.items()}}
 
 
@@ -85,70 +95,81 @@ def from_pdf(path, pno=1):
             if not spans:
                 continue
             main = max(spans, key=lambda s: len(s.get("text", "")))
-            key = (main.get("font"), round(main.get("size", 0), 1), _hex(main.get("color")))
+            dv = ln.get("dir") or (1, 0)
+            ang = round(math.degrees(math.atan2(dv[1], dv[0])), 1)      # 글 방향 → 회전(°, 시계 방향, y 아래)
+            if abs(ang) < 0.5:
+                ang = 0.0
+            key = (main.get("font"), round(main.get("size", 0), 1), _hex(main.get("color")), main.get("flags", 0) & 19, ang)
             x0, y0, x1, y1 = ln["bbox"]
-            text = "".join(s.get("text", "") for s in spans)
-            # 같은 서체·크기·색이고 줄 머리 간격이 두 글자 높이 안이면 같은 단락 — 브라우저가 다시 흘린다
-            if (cur and cur["key"] == key and 0 < y0 - cur["last_y0"] < key[1] * 2.0
+            runs = _runs(spans, main, tk)
+            # 같은 서체·크기·색이고 줄 머리 간격이 두 글자 높이 안이면 같은 단락 — 브라우저가 다시 흘린다. 회전한 줄은 줄마다 원자
+            if (cur and not ang and cur["key"] == key and 0 < y0 - cur["last_y0"] < key[1] * 2.0
                     and x0 < cur["x1"] and x1 > cur["x0"]):
-                cur["text"] += (" " if not cur["text"].endswith(" ") else "") + text
+                cur["runs"] = _runs_join(cur["runs"], runs)
                 cur["x0"], cur["x1"], cur["y1"] = min(cur["x0"], x0), max(cur["x1"], x1), max(cur["y1"], y1)
                 cur["lines"] += 1
                 cur["last_y0"] = y0
             else:
                 if cur:
                     texts.append(_text_atom(cur, ox, oy, tk))
-                cur = {"key": key, "text": text, "x0": x0, "y0": y0, "x1": x1, "y1": y1, "lines": 1, "last_y0": y0,
-                       "bold": bool(main.get("flags", 0) & 16)}
+                cur = {"key": key, "runs": runs, "x0": x0, "y0": y0, "x1": x1, "y1": y1, "lines": 1, "last_y0": y0}
     if cur:
         texts.append(_text_atom(cur, ox, oy, tk))
 
-    # ── 도형
+    # ── 도형 — 선·네모·원·둥근 네모는 그 원자로, 나머지(삼각형·화살표·체크·말풍선·로고)는 path 로 잃지 않고
     page_area = tb.width * tb.height
     for d in page.get_drawings():
+        items = d.get("items") or []
         r = d.get("rect")
-        kinds = {it[0] for it in d.get("items", [])}
-        if r is None or (r.is_empty and "l" not in kinds):             # 가로·세로 선은 rect 가 납작하다
+        if r is None or not items:
             continue
+        kinds = {it[0] for it in items}
         fill, stroke = _hex(d.get("fill")), _hex(d.get("color"))
         width = float(d.get("width") or 0)
         if fill in ("#ffffff",) and r.width * r.height > page_area * 0.9:
             continue                                                  # 면 바탕
         if not fill and (not stroke or width <= 0):
             continue
-        dash = None
-        ds = d.get("dashes")
-        if ds and ds not in ("[] 0", "[]", "", None):
-            try:
-                dash = [float(x) * PT for x in ds.strip("[] 0").replace("]", "").split()] or None
-            except ValueError:
-                dash = None
-        st = {"w": round(max(width, 0.2), 2), "color": tk.c(stroke)} if stroke and width > 0 else None
-        if st and dash:
-            st["dash"] = [round(x, 2) for x in dash]
+        st = _stroke_of(d, stroke, width, tk)
+        extra = {}
+        ops = [v for v in ((d.get("fill_opacity") if fill else None), (d.get("stroke_opacity") if st else None))
+               if v is not None and float(v) < 0.995]
+        if ops:
+            extra["opacity"] = round(float(min(ops)), 3)
         x, y, w, h = mm(r.x0 - ox), mm(r.y0 - oy), mm(r.width), mm(r.height)
-        if kinds <= {"l"} and len(d.get("items", [])) == 1 and st:
-            _t, p1, p2 = d["items"][0]
-            shapes.append({"t": "line", "x1": mm(p1.x - ox), "y1": mm(p1.y - oy), "x2": mm(p2.x - ox), "y2": mm(p2.y - oy), "stroke": st})
+        lines = [it for it in items if it[0] == "l"]
+        if kinds == {"l"} and len(items) == 1 and st:
+            _t, p1, p2 = items[0]
+            shapes.append(dict({"t": "line", "x1": mm(p1.x - ox), "y1": mm(p1.y - oy), "x2": mm(p2.x - ox), "y2": mm(p2.y - oy), "stroke": st}, **extra))
             continue
-        if kinds <= {"l"} and (w < 0.3 or h < 0.3) and st:
+        if kinds == {"l"} and (w < 0.3 or h < 0.3) and st:
             # 가로·세로 한 줄로 이어진 선들 — 한 선으로
             if w >= h:
-                shapes.append({"t": "line", "x1": x, "y1": round(y + h / 2, 2), "x2": round(x + w, 2), "y2": round(y + h / 2, 2), "stroke": st})
+                a = {"t": "line", "x1": x, "y1": round(y + h / 2, 2), "x2": round(x + w, 2), "y2": round(y + h / 2, 2), "stroke": st}
             else:
-                shapes.append({"t": "line", "x1": round(x + w / 2, 2), "y1": y, "x2": round(x + w / 2, 2), "y2": round(y + h, 2), "stroke": st})
+                a = {"t": "line", "x1": round(x + w / 2, 2), "y1": y, "x2": round(x + w / 2, 2), "y2": round(y + h, 2), "stroke": st}
+            shapes.append(dict(a, **extra))
             continue
         a = {"t": "rect", "x": x, "y": y, "w": max(w, 0.1), "h": max(h, 0.1)}
-        if "c" in kinds:
-            ratio = (w / h) if h else 9
-            if 0.6 <= ratio <= 1.6 and len(kinds) == 1:
-                a["t"] = "ellipse"
-            else:
-                a["radius"] = round(min(w, h) / 4, 2)
+        if kinds == {"re"} and len(items) == 1:
+            pass
+        elif kinds == {"l"} and 3 <= len(items) <= 4 and _on_box(lines, r):
+            pass                                                      # 축에 나란한 네 변 = 네모
+        elif kinds == {"c"} and len(items) == 4:
+            a["t"] = "ellipse"                                        # 인디자인 원·타원 = 곡선 4개
+        elif kinds == {"l", "c"} and len(items) == 8 and _on_box(lines, r):
+            cs = [it for it in items if it[0] == "c"]
+            a["radius"] = round(sum(abs(it[1].x - it[4].x) for it in cs) / len(cs) * PT, 2)   # 둥근 모서리 반지름
+        else:
+            a["t"] = "path"
+            a["d"] = _unit_path(items, r, bool(d.get("closePath")))
+            if d.get("even_odd"):
+                a["evenodd"] = True
         if fill:
             a["fill"] = tk.c(fill)
         if st:
             a["stroke"] = st
+        a.update(extra)
         shapes.append(a)
 
     # ── 이미지
@@ -158,7 +179,14 @@ def from_pdf(path, pno=1):
         if bx.is_empty or bx.width < 2 or bx.height < 2:
             continue
         n += 1
-        imgs.append({"t": "image", "x": mm(bx.x0 - ox), "y": mm(bx.y0 - oy), "w": mm(bx.width), "h": mm(bx.height), "src": f"img{n}"})
+        ma, mb, mc, md = (info.get("transform") or (1, 0, 0, 1, 0, 0))[:4]
+        ang = round(math.degrees(math.atan2(mb, ma)), 1)               # 그림의 x 축 방향 → 회전
+        iw, ih = math.hypot(ma, mb), math.hypot(mc, md)
+        if abs(ang) >= 0.5 and iw > 0 and ih > 0:
+            cx, cy = (bx.x0 + bx.x1) / 2 - ox, (bx.y0 + bx.y1) / 2 - oy
+            imgs.append({"t": "image", "x": mm(cx - iw / 2), "y": mm(cy - ih / 2), "w": mm(iw), "h": mm(ih), "src": f"img{n}", "rotate": ang})
+        else:
+            imgs.append({"t": "image", "x": mm(bx.x0 - ox), "y": mm(bx.y0 - oy), "w": mm(bx.width), "h": mm(bx.height), "src": f"img{n}"})
 
     # 재단 밖(도련)은 잘라 내고, 밖에만 있는 것은 버린다
     atoms = [a for a in shapes + imgs + texts if _clip(a, W, H)]
@@ -181,22 +209,144 @@ def _clip(a, W, H):
     x0, y0, x1, y1 = a["x"], a["y"], a["x"] + a["w"], a["y"] + a["h"]
     if x1 <= 0 or y1 <= 0 or x0 >= W or y0 >= H:
         return False
-    if a["t"] != "text":                          # 글은 자르면 글이 준다 — 자리만 둔다
+    if a["t"] not in ("text", "path") and not a.get("rotate"):   # 글·도형·회전한 것은 자르면 모양이 준다 — 자리만 둔다
         x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, W), min(y1, H)
         a["x"], a["y"], a["w"], a["h"] = round(x0, 2), round(y0, 2), round(max(x1 - x0, 0.1), 2), round(max(y1 - y0, 0.1), 2)
     return True
 
 
 def _text_atom(cur, ox, oy, tk):
-    font, size, color = cur["key"]
-    h = (cur["y1"] - cur["y0"]) * PT
-    lead = round(h / max(cur["lines"], 1) / PT, 1) if cur["lines"] > 1 else None
-    a = {"t": "text", "x": round((cur["x0"] - ox) * PT, 2), "y": round((cur["y0"] - oy) * PT, 2),
-         "w": round((cur["x1"] - cur["x0"]) * PT + 1.5, 2), "h": round(h, 2),       # 브라우저 서체가 조금 넓어도 줄이 안 늘게
-         "font": tk.f(font), "size": round(size, 1), "color": tk.c(color) or "#000000", "text": cur["text"]}
+    font, size, color, _flags, ang = cur["key"]
+    bw, bh = cur["x1"] - cur["x0"], cur["y1"] - cur["y0"]
+    if ang:
+        # 회전한 줄의 bbox 는 축에 나란한 테두리 — 원래 폭·높이를 되짚는다 (45° 근처는 글자 높이로 어림)
+        c, sn = abs(math.cos(math.radians(ang))), abs(math.sin(math.radians(ang)))
+        det = c * c - sn * sn
+        if abs(det) > 0.1:
+            w_pt, h_pt = (bw * c - bh * sn) / det, (bh * c - bw * sn) / det
+        else:
+            h_pt = size * 1.3
+            w_pt = (bw - h_pt * sn) / max(c, 0.01)
+        w_pt, h_pt = max(w_pt, size), max(h_pt, size)
+        cx, cy = (cur["x0"] + cur["x1"]) / 2 - ox, (cur["y0"] + cur["y1"]) / 2 - oy
+        x0, y0, w_mm, h_mm = (cx - w_pt / 2) * PT, (cy - h_pt / 2) * PT, w_pt * PT + 1.5, h_pt * PT
+    else:
+        x0, y0, w_mm, h_mm = (cur["x0"] - ox) * PT, (cur["y0"] - oy) * PT, bw * PT + 1.5, bh * PT   # 브라우저 서체가 조금 넓어도 줄이 안 늘게
+    lead = round(h_mm / max(cur["lines"], 1) / PT, 1) if cur["lines"] > 1 else None
+    a = {"t": "text", "x": round(x0, 2), "y": round(y0, 2), "w": round(w_mm, 2), "h": round(h_mm, 2),
+         "font": tk.f(font), "size": round(size, 1), "color": tk.c(color) or "#000000", "text": _runs_finish(cur["runs"])}
     if lead:
         a["leading"] = lead
+    if ang:
+        a["rotate"] = ang
     return a
+
+
+def _runs(spans, main, tk):
+    """줄의 span 들 → 조각. 단락의 서체·크기·색(main)과 같으면 그냥 글, 다르면 {t, b, i, u, sup, color, font, size}."""
+    mfont, msize, mcol, mfl = main.get("font"), round(main.get("size", 0), 1), _hex(main.get("color")), main.get("flags", 0)
+    out = []
+    for sp in spans:
+        r = {"t": sp.get("text", "")}
+        fl = sp.get("flags", 0)
+        if sp.get("font") != mfont:
+            r["font"] = tk.f(sp.get("font"))
+        if round(sp.get("size", 0), 1) != msize:
+            r["size"] = round(sp.get("size", 0), 1)
+        if _hex(sp.get("color")) != mcol:
+            r["color"] = tk.c(_hex(sp.get("color")))
+        if fl & 16 and not mfl & 16:
+            r["b"] = True
+        if fl & 2 and not mfl & 2:
+            r["i"] = True
+        if fl & 1:
+            r["sup"] = True
+        out.append(r)
+    return out
+
+
+def _runs_join(a, b):
+    """줄과 줄 사이에 띄어쓰기 하나."""
+    if a and not a[-1]["t"].endswith(" ") and b and not b[0]["t"].startswith(" "):
+        b = [dict(b[0], t=" " + b[0]["t"])] + b[1:]
+    return a + b
+
+
+def _runs_finish(runs):
+    """이웃한 같은 서식은 합치고, 서식이 하나도 없으면 그냥 글(str)."""
+    merged = []
+    for r in runs:
+        attrs = {k: v for k, v in r.items() if k != "t"}
+        if merged and {k: v for k, v in merged[-1].items() if k != "t"} == attrs:
+            merged[-1]["t"] += r["t"]
+        else:
+            merged.append(dict(r))
+    if all(len(r) == 1 for r in merged):
+        return "".join(r["t"] for r in merged)
+    return [r["t"] if len(r) == 1 else r for r in merged]
+
+
+def _stroke_of(d, stroke, width, tk):
+    if not stroke or width <= 0:
+        return None
+    st = {"w": round(max(width, 0.2), 2), "color": tk.c(stroke)}
+    ds = d.get("dashes")
+    if ds and ds not in ("[] 0", "[]", "", None):
+        try:
+            dash = [float(x) * PT for x in ds.strip("[] 0").replace("]", "").split()] or None
+        except ValueError:
+            dash = None
+        if dash:
+            st["dash"] = [round(x, 2) for x in dash]
+    cap = d.get("lineCap")
+    cap = cap[0] if isinstance(cap, (tuple, list)) and cap else cap
+    if cap in (1, 2):
+        st["cap"] = "round" if cap == 1 else "square"
+    return st
+
+
+def _on_box(lines, r, tol=0.05):
+    """선들이 모두 축에 나란하고 점이 전부 상자 테두리 위에 있으면 네모(둥근 네모의 변)다."""
+    if not lines:
+        return False
+    for _t, p1, p2 in lines:
+        if abs(p1.x - p2.x) > tol and abs(p1.y - p2.y) > tol:
+            return False
+        for p in (p1, p2):
+            on_x = abs(p.x - r.x0) <= tol or abs(p.x - r.x1) <= tol
+            on_y = abs(p.y - r.y0) <= tol or abs(p.y - r.y1) <= tol
+            if not (on_x or on_y):
+                return False
+    return True
+
+
+def _unit_path(items, r, close):
+    """PyMuPDF 경로 항목 → 상자 안 0~1 비율의 SVG path (M L C Z). 폭·높이를 바꾸면 따라 늘어난다."""
+    W, H = max(r.width, 1e-3), max(r.height, 1e-3)
+
+    def u(p):
+        return f"{(p.x - r.x0) / W:.4f} {(p.y - r.y0) / H:.4f}"
+
+    out, cur = [], None
+    for it in items:
+        k = it[0]
+        if k in ("l", "c"):
+            p1, p2 = it[1], it[-1]
+            if cur is None or abs(cur.x - p1.x) > 0.01 or abs(cur.y - p1.y) > 0.01:
+                out.append("M " + u(p1))
+            out.append(("L " + u(p2)) if k == "l" else ("C " + u(it[2]) + " " + u(it[3]) + " " + u(p2)))
+            cur = p2
+        elif k == "re":
+            rr = it[1]
+            out.append(f"M {u(rr.top_left)} L {u(rr.top_right)} L {u(rr.bottom_right)} L {u(rr.bottom_left)} Z")
+            cur = None
+        elif k == "qu":
+            q = it[1]
+            out.append(f"M {u(q.ul)} L {u(q.ur)} L {u(q.lr)} L {u(q.ll)} Z")
+            cur = None
+    if close and out and not out[-1].endswith("Z"):
+        out.append("Z")
+    return " ".join(out)
 
 
 def _top(a):
@@ -219,7 +369,7 @@ def group(dec, gap=3.0):
     atoms = dec.get("atoms") or []
     W, H = float(dec.get("w") or 210), float(dec.get("h") or 297)
     idx = [i for i, a in enumerate(atoms)
-           if not (a["t"] in ("rect", "image") and a["w"] * a["h"] > W * H * 0.5)]
+           if not (a["t"] in ("rect", "image", "path") and a["w"] * a["h"] > W * H * 0.5)]
     idx.sort(key=lambda i: _top(atoms[i]))
     groups = []
     cur, cur_bottom = [], None
@@ -234,10 +384,14 @@ def group(dec, gap=3.0):
         groups.append(cur)
     out = []
     for n, g in enumerate(groups, 1):
-        texts = [atoms[i]["text"] for i in g if atoms[i]["t"] == "text" and atoms[i].get("text")]
+        texts = [_plain(atoms[i]["text"]) for i in g if atoms[i]["t"] == "text" and atoms[i].get("text")]
         hint = (texts[0][:18] + "…") if texts and len(texts[0]) > 18 else (texts[0] if texts else "")
         out.append({"name": f"후보 {n}" + (f" · {hint}" if hint else ""), "atoms": g, "box": _box([atoms[i] for i in g])})
     return out
+
+
+def _plain(t):
+    return t if isinstance(t, str) else "".join(r if isinstance(r, str) else r.get("t", "") for r in (t or []))
 
 
 def to_part(dec, indices, pid, name):
@@ -259,13 +413,14 @@ def to_part(dec, indices, pid, name):
 _FLAT_ATOM = {
     "type": "object",
     "properties": {
-        "t": {"enum": ["text", "line", "rect", "ellipse", "image"]},
+        "t": {"enum": ["text", "line", "rect", "ellipse", "image", "path"]},
         "x": {"type": "number"}, "y": {"type": "number"}, "w": {"type": "number"}, "h": {"type": "number"},
         "x1": {"type": "number"}, "y1": {"type": "number"}, "x2": {"type": "number"}, "y2": {"type": "number"},
         "font": {"type": "string"}, "size": {"type": "number"}, "color": {"type": "string"},
         "fill": {"type": "string"}, "stroke_color": {"type": "string"}, "stroke_w": {"type": "number"}, "dashed": {"type": "boolean"},
         "align": {"enum": ["left", "center", "right", "justify"]}, "text": {"type": "string"}, "bind": {"type": "string"},
         "radius": {"type": "number"}, "src": {"type": "string"},
+        "d": {"type": "string"}, "rotate": {"type": "number"}, "opacity": {"type": "number"},
     },
     "required": ["t"], "additionalProperties": False,
 }
@@ -286,11 +441,13 @@ AI_SCHEMA = {
 
 AI_SYSTEM = """너는 인쇄 교재 조판 디자이너다. 받은 그림 또는 설명을 **인디자인 오브젝트(원자)** 로 분해해 JSON 으로만 답한다.
 
-원자 5종: text(글상자) · line(선) · rect(면) · ellipse(원) · image(그림). 단위는 mm, 원점은 왼쪽 위. 글자 크기·선 굵기는 pt.
+원자 6종: text(글상자) · line(선) · rect(면) · ellipse(원) · image(그림) · path(도형). 단위는 mm, 원점은 왼쪽 위. 글자 크기·선 굵기는 pt.
+모든 원자에 rotate(°, 시계 방향, 가운데 축)·opacity(0~1)를 붙일 수 있다 — 기울어진 배지, 반투명 상자.
 - text: x y w h font size color [align text bind]. 콘텐츠가 들어갈 자리는 bind 에 필드 이름(영문 소문자: no, prompt, passage, sentence, choices, answer, kr …)을 적고 text 에는 견본 글을 넣는다. 고정 글(라벨 "O", "정답")은 bind 없이 text 만.
 - line: x1 y1 x2 y2 stroke_color stroke_w [dashed]
 - rect: x y w h [fill stroke_color stroke_w radius]  · ellipse: x y w h [fill stroke_color stroke_w]
 - image: x y w h src
+- path: x y w h d [fill stroke_color stroke_w] — 화살표·체크·별·말풍선·삼각형처럼 네모·원이 아닌 도형. d 는 SVG path(M L C Q Z 만), 좌표는 x y w h 상자 안의 0~1 비율. 예: 오른쪽 화살표 "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z"
 색·서체는 값이 아니라 **토큰 이름**으로 적고(color: "ink", font: "body" 처럼) tokens 에 이름→값을 준다(색은 #rrggbb, 서체는 family 이름).
 parts 는 원자를 부품(뜻이 있는 묶음: 지문 상자, 발문+선지, O/X 줄, 러닝헤드…)으로 묶은 것 — atoms 는 원자 번호(0부터).
 w h 는 전체 캔버스 크기(mm). 그림이면 실제 비율로, 설명이면 기본 폭 170mm 안에서.
@@ -346,8 +503,18 @@ def from_ai(prompt="", image=None, media_type="image/png", name="", tokens=None)
                 o["radius"] = a["radius"]
         elif t == "image":
             o = {"t": "image", "x": a.get("x", 0), "y": a.get("y", 0), "w": a.get("w", 20), "h": a.get("h", 20), "src": a.get("src") or "img1"}
+        elif t == "path" and a.get("d"):
+            o = {"t": "path", "x": a.get("x", 0), "y": a.get("y", 0), "w": a.get("w", 10), "h": a.get("h", 10), "d": a["d"]}
+            if a.get("fill"):
+                o["fill"] = "$" + a["fill"]
+            if st:
+                o["stroke"] = st
         else:
             continue
+        if a.get("rotate"):
+            o["rotate"] = float(a["rotate"])
+        if a.get("opacity") is not None and 0 <= float(a["opacity"]) < 1:
+            o["opacity"] = float(a["opacity"])
         atoms.append(o)
     tokens = {"color": {x["name"]: x["value"] for x in raw["tokens"].get("color", [])},
               "font": {x["name"]: x["value"] for x in raw["tokens"].get("font", [])}}

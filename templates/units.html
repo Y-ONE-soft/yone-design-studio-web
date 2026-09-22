@@ -275,7 +275,8 @@ async function runDec(body) {
 $("#btn-dec").onclick = () => { if (upload) runDec({upload: upload.id, page: parseInt($("#upage").value || "1"), prompt: $("#prompt").value}); };
 $("#btn-dec-prompt").onclick = () => { const p = $("#prompt").value.trim(); if (p) runDec({prompt: p}); };
 function atomLabel(a, i) {
-  const t = a.t === "text" ? `"${(a.text || "").slice(0, 26)}"${a.bind ? " ⇐ " + a.bind : ""}` : (a.t === "line" ? `${a.x1},${a.y1}→${a.x2},${a.y2}` : `${a.w}×${a.h} @${a.x},${a.y}`);
+  const plain = Array.isArray(a.text) ? a.text.map(r => typeof r === "string" ? r : (r.t || "")).join("") : (a.text || "");
+  const t = a.t === "text" ? `"${plain.slice(0, 26)}"${a.bind ? " ⇐ " + a.bind : ""}` : (a.t === "line" ? `${a.x1},${a.y1}→${a.x2},${a.y2}` : `${a.w}×${a.h} @${a.x},${a.y}`);
   return `<code>#${i} ${a.t}</code> ${t}`;
 }
 function drawDec() {
