@@ -84,14 +84,30 @@ def from_pdf(path, pno=1):
     def mm(v):
         return round(v * PT, 2)
 
-    # ── 글: 줄 단위로 읽어 같은 서체·크기·색이 이어지면 단락 하나로. 인디자인 PDF 는 줄마다
-    #    블록이 갈리는 일이 많아 블록 경계를 넘어 잇는다 (줄 머리 간격 + 가로 겹침으로 판단)
+    # ── 밑줄 후보: 얇은 가로 선·납작한 채운 네모. 글자 바로 밑에 있으면 글 조각의 u 가 되고 선 원자로는 안 나온다
+    drawings = page.get_drawings()
+    ul = {}
+    for d in drawings:
+        r = d.get("rect")
+        if r is None or r.height > 1.6 or r.width < 2:
+            continue
+        if d.get("fill") or (d.get("color") and 0 < float(d.get("width") or 0) <= 1.6):
+            ul[d.get("seqno")] = (r.x0, r.x1, (r.y0 + r.y1) / 2)
+    consumed = set()
+
+    # ── 글: 줄 단위로 읽어 같은 서체·크기·색이 이어지면 한 글상자로. 인디자인 PDF 는 줄마다
+    #    블록이 갈리는 일이 많아 블록 경계를 넘어 잇는다 (줄 머리 간격 + 가로 겹침으로 판단).
+    #    끝이 이른 줄 다음은 새 단락(\n), 둘째 줄부터 들여 있으면 내어쓰기(indent + 음수 indent_first)
     cur = None
-    for b in page.get_text("dict").get("blocks", []):
+    for b in page.get_text("rawdict").get("blocks", []):
         if b.get("type") != 0:
             continue
         for ln in b.get("lines", []):
-            spans = [s for s in ln.get("spans", []) if s.get("text", "").strip()]
+            spans = []
+            for sp in ln.get("spans", []):
+                sp["text"] = "".join(ch.get("c", "") for ch in sp.get("chars", []))
+                if sp["text"].strip():
+                    spans.append(sp)
             if not spans:
                 continue
             main = max(spans, key=lambda s: len(s.get("text", "")))
@@ -101,27 +117,28 @@ def from_pdf(path, pno=1):
                 ang = 0.0
             key = (main.get("font"), round(main.get("size", 0), 1), _hex(main.get("color")), main.get("flags", 0) & 19, ang)
             x0, y0, x1, y1 = ln["bbox"]
-            runs = _runs(spans, main, tk)
-            # 같은 서체·크기·색이고 줄 머리 간격이 두 글자 높이 안이면 같은 단락 — 브라우저가 다시 흘린다. 회전한 줄은 줄마다 원자
+            # 밑줄 후보 중 이 줄보다 두 글자 넘게 긴 것(제목 밑 괘선)은 밑줄이 아니다
+            cand = {k: v for k, v in ul.items() if v[1] - v[0] <= (x1 - x0) + 2 * key[1]} if not ang else None
+            line = {"runs": _runs(spans, main, tk, cand, consumed), "x0": x0, "x1": x1}
+            # 같은 서체·크기·색이고 줄 머리 간격이 두 글자 높이 안이면 같은 글상자. 회전한 줄은 줄마다 원자
             if (cur and not ang and cur["key"] == key and 0 < y0 - cur["last_y0"] < key[1] * 2.0
                     and x0 < cur["x1"] and x1 > cur["x0"]):
-                cur["runs"] = _runs_join(cur["runs"], runs)
+                cur["lines_"].append(line)
                 cur["x0"], cur["x1"], cur["y1"] = min(cur["x0"], x0), max(cur["x1"], x1), max(cur["y1"], y1)
-                cur["lines"] += 1
                 cur["last_y0"] = y0
             else:
                 if cur:
                     texts.append(_text_atom(cur, ox, oy, tk))
-                cur = {"key": key, "runs": runs, "x0": x0, "y0": y0, "x1": x1, "y1": y1, "lines": 1, "last_y0": y0}
+                cur = {"key": key, "lines_": [line], "x0": x0, "y0": y0, "x1": x1, "y1": y1, "last_y0": y0}
     if cur:
         texts.append(_text_atom(cur, ox, oy, tk))
 
     # ── 도형 — 선·네모·원·둥근 네모는 그 원자로, 나머지(삼각형·화살표·체크·말풍선·로고)는 path 로 잃지 않고
     page_area = tb.width * tb.height
-    for d in page.get_drawings():
+    for d in drawings:
         items = d.get("items") or []
         r = d.get("rect")
-        if r is None or not items:
+        if r is None or not items or d.get("seqno") in consumed:
             continue
         kinds = {it[0] for it in items}
         fill, stroke = _hex(d.get("fill")), _hex(d.get("color"))
@@ -217,6 +234,7 @@ def _clip(a, W, H):
 
 def _text_atom(cur, ox, oy, tk):
     font, size, color, _flags, ang = cur["key"]
+    lines = cur["lines_"]
     bw, bh = cur["x1"] - cur["x0"], cur["y1"] - cur["y0"]
     if ang:
         # 회전한 줄의 bbox 는 축에 나란한 테두리 — 원래 폭·높이를 되짚는다 (45° 근처는 글자 높이로 어림)
@@ -232,37 +250,102 @@ def _text_atom(cur, ox, oy, tk):
         x0, y0, w_mm, h_mm = (cx - w_pt / 2) * PT, (cy - h_pt / 2) * PT, w_pt * PT + 1.5, h_pt * PT
     else:
         x0, y0, w_mm, h_mm = (cur["x0"] - ox) * PT, (cur["y0"] - oy) * PT, bw * PT + 1.5, bh * PT   # 브라우저 서체가 조금 넓어도 줄이 안 늘게
-    lead = round(h_mm / max(cur["lines"], 1) / PT, 1) if cur["lines"] > 1 else None
+    # 단락: 끝이 이른 줄(오른쪽 끝이 글상자 오른쪽보다 1.5글자 넘게 짧다) 다음은 새 단락
+    maxx1 = max(l["x1"] for l in lines)
+    paras = [[lines[0]]]
+    for prev, ln in zip(lines, lines[1:]):
+        if prev["x1"] < maxx1 - 1.5 * size:
+            paras.append([ln])
+        else:
+            paras[-1].append(ln)
+    runs, indent = [], None
+    for pi, para in enumerate(paras):
+        if pi:
+            runs.append({"t": "\n"})
+        pr = para[0]["runs"]
+        for ln in para[1:]:
+            pr = _runs_join(pr, ln["runs"])
+        runs.extend(pr)
+        if len(para) > 1 and indent is None:
+            indent = min(l["x0"] for l in para[1:]) - para[0]["x0"]         # 둘째 줄부터 들여 있으면 내어쓰기
+    lead = round(h_mm / max(len(lines), 1) / PT, 1) if len(lines) > 1 else None
     a = {"t": "text", "x": round(x0, 2), "y": round(y0, 2), "w": round(w_mm, 2), "h": round(h_mm, 2),
-         "font": tk.f(font), "size": round(size, 1), "color": tk.c(color) or "#000000", "text": _runs_finish(cur["runs"])}
+         "font": tk.f(font), "size": round(size, 1), "color": tk.c(color) or "#000000", "text": _runs_finish(runs)}
     if lead:
         a["leading"] = lead
+    if indent is not None and indent > 1.0:
+        a["indent"] = round(indent * PT, 2)
+        a["indent_first"] = -a["indent"]
+    elif indent is not None and indent < -1.0:
+        a["indent_first"] = round(-indent * PT, 2)
     if ang:
         a["rotate"] = ang
     return a
 
 
-def _runs(spans, main, tk):
-    """줄의 span 들 → 조각. 단락의 서체·크기·색(main)과 같으면 그냥 글, 다르면 {t, b, i, u, sup, color, font, size}."""
+def _runs(spans, main, tk, ul=None, consumed=None):
+    """줄의 span 들 → 조각. 단락의 서체·크기·색(main)과 같으면 그냥 글, 다르면 {t, b, i, u, sup, color, font, size}.
+    ul(밑줄 후보 seqno → (x0, x1, y))이 있으면 글자마다 바로 밑에 선이 있는지 보고 u 를 붙인다."""
     mfont, msize, mcol, mfl = main.get("font"), round(main.get("size", 0), 1), _hex(main.get("color")), main.get("flags", 0)
     out = []
     for sp in spans:
-        r = {"t": sp.get("text", "")}
+        base = {}
         fl = sp.get("flags", 0)
         if sp.get("font") != mfont:
-            r["font"] = tk.f(sp.get("font"))
+            base["font"] = tk.f(sp.get("font"))
         if round(sp.get("size", 0), 1) != msize:
-            r["size"] = round(sp.get("size", 0), 1)
+            base["size"] = round(sp.get("size", 0), 1)
         if _hex(sp.get("color")) != mcol:
-            r["color"] = tk.c(_hex(sp.get("color")))
+            base["color"] = tk.c(_hex(sp.get("color")))
         if fl & 16 and not mfl & 16:
-            r["b"] = True
+            base["b"] = True
         if fl & 2 and not mfl & 2:
-            r["i"] = True
+            base["i"] = True
         if fl & 1:
-            r["sup"] = True
-        out.append(r)
-    return out
+            base["sup"] = True
+        chars = sp.get("chars") or []
+        if not ul or not chars:
+            out.append(dict(base, t=sp.get("text", "")))
+            continue
+        base_y = chars[0].get("origin", (0, sp["bbox"][3]))[1]
+        for ch in chars:
+            r = dict(base, t=ch.get("c", ""))
+            cx = (ch["bbox"][0] + ch["bbox"][2]) / 2
+            for seq, (ux0, ux1, uy) in ul.items():
+                if ux0 - 0.5 <= cx <= ux1 + 0.5 and base_y - 0.3 <= uy <= sp["bbox"][3] + 1.5:
+                    r["u"] = True
+                    consumed.add(seq)
+                    break
+            out.append(r)
+    return _merge_runs(out)
+
+
+def _tags_to_runs(text):
+    """클로드가 적은 <u>…</u> <b>…</b> <i>…</i> → 조각. 태그가 없으면 그대로 글."""
+    import re as _re
+    if not isinstance(text, str) or "<" not in text:
+        return text
+    runs, flags = [], {}
+    for tok in _re.split(r"(</?[ubi]>)", text):
+        if not tok:
+            continue
+        m = _re.fullmatch(r"<(/?)([ubi])>", tok)
+        if m:
+            flags[m.group(2)] = not m.group(1)
+            continue
+        runs.append(dict({k: True for k, v in flags.items() if v}, t=tok))
+    return _runs_finish(runs)
+
+
+def _merge_runs(runs):
+    merged = []
+    for r in runs:
+        attrs = {k: v for k, v in r.items() if k != "t"}
+        if merged and {k: v for k, v in merged[-1].items() if k != "t"} == attrs:
+            merged[-1]["t"] += r["t"]
+        else:
+            merged.append(dict(r))
+    return merged
 
 
 def _runs_join(a, b):
@@ -274,13 +357,7 @@ def _runs_join(a, b):
 
 def _runs_finish(runs):
     """이웃한 같은 서식은 합치고, 서식이 하나도 없으면 그냥 글(str)."""
-    merged = []
-    for r in runs:
-        attrs = {k: v for k, v in r.items() if k != "t"}
-        if merged and {k: v for k, v in merged[-1].items() if k != "t"} == attrs:
-            merged[-1]["t"] += r["t"]
-        else:
-            merged.append(dict(r))
+    merged = _merge_runs(runs)
     if all(len(r) == 1 for r in merged):
         return "".join(r["t"] for r in merged)
     return [r["t"] if len(r) == 1 else r for r in merged]
@@ -421,6 +498,7 @@ _FLAT_ATOM = {
         "align": {"enum": ["left", "center", "right", "justify"]}, "text": {"type": "string"}, "bind": {"type": "string"},
         "radius": {"type": "number"}, "src": {"type": "string"},
         "d": {"type": "string"}, "rotate": {"type": "number"}, "opacity": {"type": "number"},
+        "indent": {"type": "number"}, "indent_first": {"type": "number"}, "tracking": {"type": "number"}, "inset": {"type": "number"},
     },
     "required": ["t"], "additionalProperties": False,
 }
@@ -443,7 +521,7 @@ AI_SYSTEM = """너는 인쇄 교재 조판 디자이너다. 받은 그림 또는
 
 원자 6종: text(글상자) · line(선) · rect(면) · ellipse(원) · image(그림) · path(도형). 단위는 mm, 원점은 왼쪽 위. 글자 크기·선 굵기는 pt.
 모든 원자에 rotate(°, 시계 방향, 가운데 축)·opacity(0~1)를 붙일 수 있다 — 기울어진 배지, 반투명 상자.
-- text: x y w h font size color [align text bind]. 콘텐츠가 들어갈 자리는 bind 에 필드 이름(영문 소문자: no, prompt, passage, sentence, choices, answer, kr …)을 적고 text 에는 견본 글을 넣는다. 고정 글(라벨 "O", "정답")은 bind 없이 text 만.
+- text: x y w h font size color [align text bind indent indent_first tracking inset]. 밑줄·굵게는 따로 선을 긋지 말고 text 안에서 <u>…</u> <b>…</b> 로 적는다(조각으로 바뀐다). 콘텐츠가 들어갈 자리는 bind 에 필드 이름(영문 소문자: no, prompt, passage, sentence, choices, answer, kr …)을 적고 text 에는 견본 글을 넣는다. 고정 글(라벨 "O", "정답")은 bind 없이 text 만.
 - line: x1 y1 x2 y2 stroke_color stroke_w [dashed]
 - rect: x y w h [fill stroke_color stroke_w radius]  · ellipse: x y w h [fill stroke_color stroke_w]
 - image: x y w h src
@@ -488,9 +566,11 @@ def from_ai(prompt="", image=None, media_type="image/png", name="", tokens=None)
         if t == "text":
             o = {"t": "text", "x": a.get("x", 0), "y": a.get("y", 0), "w": a.get("w", 50), "h": a.get("h", 5),
                  "font": "$" + (a.get("font") or "body"), "size": float(a.get("size") or 8), "color": "$" + (a.get("color") or "ink")}
-            for k in ("align", "text", "bind"):
+            for k in ("align", "bind", "indent", "indent_first", "tracking", "inset"):
                 if a.get(k):
                     o[k] = a[k]
+            if a.get("text"):
+                o["text"] = _tags_to_runs(a["text"])
         elif t == "line":
             o = {"t": "line", "x1": a.get("x1", 0), "y1": a.get("y1", 0), "x2": a.get("x2", 10), "y2": a.get("y2", 0), "stroke": st or {"w": 0.5, "color": "$ink"}}
         elif t in ("rect", "ellipse"):

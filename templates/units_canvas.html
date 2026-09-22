@@ -147,7 +147,7 @@
   .f input, .f select { width: 100%; }
   .m3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
   .m3 label { font-size: 10.5px; color: var(--mute); }
-  .m3 input { width: 100%; padding: 4px 5px; }
+  .m3 input, .m3 select { width: 100%; padding: 4px 5px; }
 </style>
 
 <div class="cv">
@@ -779,7 +779,11 @@ function side() {
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
         <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
-        <div class="f"><span>높이 mm</span><input type="number" data-a="h" step="0.5" value="${a.h}"></div>`;
+        <div class="m3"><label>높이 mm<input type="number" data-a="h" step="0.5" value="${a.h}"></label><label>행간 pt<input type="number" data-a="leading" step="0.5" value="${a.leading || ""}" placeholder="자동"></label><label>자간 ‰<input type="number" data-a="tracking" step="10" value="${a.tracking || 0}"></label></div>
+        <div class="m3"><label>들여쓰기<input type="number" data-a="indent" step="0.5" value="${a.indent || 0}"></label><label>첫 줄<input type="number" data-a="indent_first" step="0.5" value="${a.indent_first || 0}" title="음수 = 내어쓰기"></label><label>오른쪽<input type="number" data-a="indent_right" step="0.5" value="${a.indent_right || 0}"></label></div>
+        <div class="m3"><label>단락 앞<input type="number" data-a="space_before" step="0.5" value="${a.space_before || 0}"></label><label>단락 뒤<input type="number" data-a="space_after" step="0.5" value="${a.space_after || 0}"></label><label>안쪽 여백<input type="number" data-a="inset" step="0.5" value="${Array.isArray(a.inset) ? a.inset[0] : (a.inset || 0)}"></label></div>
+        <div class="m3"><label>세로 정렬<select data-a="valign">${[["top", "위"], ["center", "가운데"], ["bottom", "아래"]].map(([v, n]) => `<option value="${v}" ${(a.valign || "top") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>단 수<input type="number" data-a="columns" min="1" max="6" step="1" value="${a.columns || 1}"></label><label>단 간격<input type="number" data-a="gutter" step="0.5" value="${a.gutter || 0}"></label></div>
+        <div class="note">mm. 줄바꿈 = 단락. 인디자인 단락·문자 스타일과 텍스트 프레임 옵션에 맞춘 것 — 탭 위치는 없다(칸을 나눠 글상자 여럿으로).</div>`;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
         <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>
         <div class="f"><span>선 끝</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>`;
@@ -812,6 +816,9 @@ function side() {
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
     else if (k === "fit") { if (v === "cover") a.fit = "cover"; else delete a.fit; }
     else if (k === "d") { if (v) a.d = v; }
+    else if (["tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "inset", "gutter", "leading"].includes(k)) { if (v) a[k] = v; else delete a[k]; }
+    else if (k === "columns") { if (v > 1) a.columns = Math.round(v); else delete a.columns; }
+    else if (k === "valign") { if (v === "top") delete a.valign; else a.valign = v; }
     else a[k] = v;
     save(); render(); side();
   }));
