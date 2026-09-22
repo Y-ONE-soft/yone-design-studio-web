@@ -62,7 +62,7 @@
 
   /* 가운데 */
   .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-  .stage .area { flex: 1; overflow: auto; padding: 64px 60px 40px; }
+  .stage .area { flex: 1; overflow: auto; padding: 84px 60px 40px; }
   .ptool { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; align-items: center; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(30,20,60,.16); padding: 5px 6px; z-index: 15; }
   .ptool input[type=text] { border: 0; width: 170px; font-weight: 600; padding: 4px 8px; }
   .ptool button { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
@@ -124,6 +124,7 @@
   .strip { flex: none; background: #f4f3f9; border-top: 1px solid var(--line); display: flex; flex-direction: column; }
   .strip .rail { display: flex; gap: 10px; align-items: flex-end; padding: 12px 16px 6px; overflow-x: auto; }
   .pg { flex: none; width: 84px; position: relative; cursor: pointer; }
+  .pg.ghost { position: fixed; z-index: 99; opacity: .85; pointer-events: none; width: 84px; } .pg.dragging { opacity: .4; } .pg.dragover .th { outline: 3px solid var(--pp); }
   .pg .th { background: #fff; border: 2.5px solid #e2e0ec; border-radius: 6px; aspect-ratio: 210 / 297; overflow: hidden; display: flex; align-items: flex-start; }
   .pg .th svg { width: 100%; height: auto; display: block; }
   .pg:hover .th { border-color: #b39cf5; }
@@ -152,10 +153,10 @@
   .selbox .hd[data-h="nw"] { left: -5px; top: -5px; cursor: nwse-resize; } .selbox .hd[data-h="n"] { left: 50%; margin-left: -5px; top: -5px; cursor: ns-resize; } .selbox .hd[data-h="ne"] { right: -5px; top: -5px; cursor: nesw-resize; }
   .selbox .hd[data-h="w"] { left: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; } .selbox .hd[data-h="e"] { right: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; }
   .selbox .hd[data-h="sw"] { left: -5px; bottom: -5px; cursor: nesw-resize; } .selbox .hd[data-h="s"] { left: 50%; margin-left: -5px; bottom: -5px; cursor: ns-resize; } .selbox .hd[data-h="se"] { right: -5px; bottom: -5px; cursor: nwse-resize; }
-  .selbox .rot { position: absolute; left: 50%; top: -26px; margin-left: -6px; width: 12px; height: 12px; border: 2px solid var(--pp); border-radius: 50%; background: #fff; pointer-events: auto; cursor: grab; box-sizing: border-box; }
+  .selbox .rot { position: absolute; left: 50%; bottom: -28px; margin-left: -6px; width: 12px; height: 12px; border: 2px solid var(--pp); border-radius: 50%; background: #fff; pointer-events: auto; cursor: grab; box-sizing: border-box; }
   .selbox .rot::before { content: ""; position: absolute; left: 4px; top: 10px; width: 2px; height: 10px; background: var(--pp); }
   .selbox .lb { top: -18px; left: auto; right: -2px; }
-  .selbox.rs .lb { top: auto; bottom: -26px; left: 50%; right: auto; transform: translateX(-50%); font-size: 12px; padding: 3px 9px; border-radius: 5px; }   /* 크기 조절 중엔 아래 가운데 크게 (피그마) */
+  .selbox.rs .lb { top: auto; bottom: -28px; left: auto; right: -2px; font-size: 12px; padding: 3px 9px; border-radius: 5px; }   /* 크기 조절 중엔 아래 가운데 크게 (피그마) */
   .selbox.multi .rot { display: none; }
   /* 자 · 안내선 · 격자 · 여백 */
   .ruler { position: absolute; background: #fbfafd; color: #8b91a5; font-size: 9px; display: none; user-select: none; }
@@ -343,7 +344,7 @@ async function addPage(kind) {
   const j = await api("/api/units/pages", p); if (j.error) { $("#st").textContent = j.error; return; }
   LIB.pages.push(p);
   const ids = planIds(plan); const i = page ? ids.indexOf(page.id) : -1; ids.splice(i + 1, 0, p.id); setPlanIds(ids); await savePlan();
-  open(p);
+  openPage(p);
 }
 async function movePageTo(fromId, toIndex) {
   const ids = planIds(plan); const i = ids.indexOf(fromId); if (i < 0) return;
@@ -357,7 +358,7 @@ async function deletePage(p) {
   const ids = planIds(plan); const i = ids.indexOf(p.id); ids.splice(i, 1); setPlanIds(ids); await savePlan();
   if (!shared) { await api("/api/units/pages", {id: p.id}, "DELETE"); LIB.pages = LIB.pages.filter(x => x.id !== p.id); delete pageSvg[p.id]; }
   const dp = docPages();
-  if (!page || p.id === page.id) { if (dp.length) open(dp[Math.min(Math.max(i, 0), dp.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); } }
+  if (!page || p.id === page.id) { if (dp.length) openPage(dp[Math.min(Math.max(i, 0), dp.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); } }
   else drawRail();
 }
 $("#p-del").onclick = () => deletePage();
@@ -368,7 +369,7 @@ function openPlan(pl) {
   $("#start").style.display = "none"; $(".ptool").style.display = ""; $("#plname").value = plan.name || plan.id;
   const dp = docPages(); const want = new URLSearchParams(location.search).get("page") || decodeURIComponent(location.hash.replace(/^#/, ""));   // ?page= 도 받는다(# 를 못 넘기는 곳)
   history.replaceState(null, "", "?plan=" + encodeURIComponent(plan.id) + (want ? "#" + want : ""));
-  if (dp.length) open(dp.find(x => x.id === want) || dp[0]); else { $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); }
+  if (dp.length) openPage(dp.find(x => x.id === want) || dp[0]); else { $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); }
   panel();
 }
 function emptyGuide() {
@@ -424,7 +425,7 @@ async function runCheck() {
 $("#p-check").onclick = runCheck;
 
 // ── 열기 · 그리기 ──
-function open(p) {
+function openPage(p) {                                  // ⚠ 이름이 open 이면 window.open 을 가린다(PDF 열기가 죽는다)
   page = byId("pages")[p.id] || p; sel = null; sels = new Set();
   if (!page.items) page.items = [];
   editing = null; $("#paper").classList.remove("editing"); $("#editbar").style.display = "none"; page.items.forEach(it => delete it._edit);
@@ -451,7 +452,7 @@ function render() {
   if (!page) return;
   clearTimeout(rt);
   rt = setTimeout(async () => {
-    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, mode: "canvas", spec: page.spec, set: curSet});
+    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: curSet});
     const w = $("#warn");
     if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
     const svg = (j.svgs[0] || {}).svg || "";
@@ -470,13 +471,19 @@ async function drawRail() {
   dp.forEach((p, i) => {
     const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id; d.draggable = true; d.title = p.name || p.id;
     d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span><span class="pgact"><button data-pg-dup title="이 지면 복제">⧉</button><button data-pg-del title="이 지면 지우기">✕</button></span>`; strip(d);
-    d.onclick = () => open(p);
     d.querySelector("[data-pg-del]").onclick = (e) => { e.stopPropagation(); deletePage(p); };
-    d.querySelector("[data-pg-dup]").onclick = async (e) => { e.stopPropagation(); if (!page || page.id !== p.id) { open(p); await new Promise(r => setTimeout(r, 200)); } addPage("dup"); };
-    d.ondragstart = (e) => { dragId = p.id; e.dataTransfer.effectAllowed = "move"; };
-    d.ondragover = (e) => { if (dragId) { e.preventDefault(); d.classList.add("dragover"); } };
-    d.ondragleave = () => d.classList.remove("dragover");
-    d.ondrop = (e) => { e.preventDefault(); d.classList.remove("dragover"); if (dragId && dragId !== p.id) movePageTo(dragId, planIds(plan).indexOf(p.id)); dragId = null; };
+    d.querySelector("[data-pg-dup]").onclick = async (e) => { e.stopPropagation(); if (!page || page.id !== p.id) { openPage(p); await new Promise(r => setTimeout(r, 200)); } addPage("dup"); };
+    d.draggable = false;
+    d.addEventListener("pointerdown", (e) => {                      // 끌어서 순서 바꾸기 (6px 넘게 움직이면 끌기, 아니면 클릭)
+      if (e.button !== 0 || e.target.tagName === "BUTTON") return; const sx = e.clientX; let ghost = null, over = null;
+      const mv = (ev) => { if (!ghost) { if (Math.abs(ev.clientX - sx) < 6) return; ghost = d.cloneNode(true); ghost.className = "pg ghost"; document.body.appendChild(ghost); d.classList.add("dragging"); }
+        ghost.style.left = (ev.clientX - 42) + "px"; ghost.style.top = (ev.clientY - 30) + "px";
+        rail.querySelectorAll(".pg").forEach(x => x.classList.remove("dragover")); over = [...rail.querySelectorAll(".pg")].find(x => { const r = x.getBoundingClientRect(); return ev.clientX >= r.left && ev.clientX <= r.right; }); if (over && over !== d) over.classList.add("dragover"); };
+      const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); if (!ghost) return; ghost.remove(); d.classList.remove("dragging"); rail.querySelectorAll(".pg").forEach(x => x.classList.remove("dragover"));
+        if (over && over !== d) { const to = planIds(plan).indexOf(over.dataset.id); movePageTo(p.id, to); } d._dragged = true; setTimeout(() => { d._dragged = false; }, 0); };
+      window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+    });
+    d.onclick = () => { if (!d._dragged) openPage(p); };
     rail.appendChild(d);
   });
   const add = document.createElement("div"); add.className = "addpg"; add.title = "이 페이지 뒤에 새 페이지";
@@ -546,7 +553,7 @@ function dragItems(e) {
   const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); guide(null, null); if (st.moved) { hist(st.before); save(); render(); side(); } };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 }
-function guide(gx, gy) { const v = $("#gv"), h = $("#gh"); if (gx == null) v.style.display = "none"; else { v.style.display = ""; v.style.left = (gx * scale) + "px"; } if (gy == null) h.style.display = "none"; else { h.style.display = ""; h.style.top = (gy * scale) + "px"; } }
+function guide(gx, gy) { const v = $("#gv"), h = $("#gh"); if (gx == null) v.style.display = "none"; else { v.style.display = "block"; v.style.left = (gx * scale) + "px"; } if (gy == null) h.style.display = "none"; else { h.style.display = "block"; h.style.top = (gy * scale) + "px"; } }
 // 영역 선택 — 빈 곳에서 끌면 상자, 상자에 걸치는 요소를 고른다. 안 끌면 선택 해제
 $("#area").addEventListener("pointerdown", (e) => {
   if (e.button !== 0 || !page || spaceDown || e.target.closest(".selbox, .tools, .ptool, .editbar, .ruler, .guide, .warn, .start, .pv, #tedit, .cmenu")) return;
@@ -554,7 +561,7 @@ $("#area").addEventListener("pointerdown", (e) => {
   const s0 = mmOf(e); const m = $("#marq"); let moved = false;
   const mv = (ev) => { const m1 = mmOf(ev); if (!moved && Math.abs(m1.x - s0.x) + Math.abs(m1.y - s0.y) < 0.6) return; moved = true;
     const x = Math.min(s0.x, m1.x), y = Math.min(s0.y, m1.y), w = Math.abs(m1.x - s0.x), h = Math.abs(m1.y - s0.y);
-    Object.assign(m.style, {display: "", left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); m._r = {x, y, w, h}; };
+    Object.assign(m.style, {display: "block", left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); m._r = {x, y, w, h}; };
   const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); m.style.display = "none";
     if (!moved) { if (editing) exitEdit(true); else select([]); return; }
     const r = m._r; const ids = page.items.map((_, i) => i).filter(i => { if (page.items[i].lock || page.items[i].hide) return false; const b = bboxOf(i); return b && b.x < r.x + r.w && b.x + b.w > r.x && b.y < r.y + r.h && b.y + b.h > r.y; });
@@ -696,8 +703,8 @@ document.addEventListener("keydown", (e) => {
   if (mod && (e.key === "]" || e.key === "[" || e.key === "}" || e.key === "{")) { e.preventDefault(); const fwd = e.key === "]" || e.key === "}"; if (e.shiftKey) zorder(fwd); else zstep(fwd); return; }
   if (!sels.size) {
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePage(); return; }
-    if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(), dp = docPages(); if (i > 0) open(dp[i - 1]); e.preventDefault(); }
-    if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(), dp = docPages(); if (i < dp.length - 1) open(dp[i + 1]); e.preventDefault(); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(), dp = docPages(); if (i > 0) openPage(dp[i - 1]); e.preventDefault(); }
+    if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(), dp = docPages(); if (i < dp.length - 1) openPage(dp[i + 1]); e.preventDefault(); }
     return;
   }
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); return; }
@@ -795,7 +802,7 @@ function cmenu(e) {
     : [["붙여넣기", "Ctrl+V", paste], ["전체 선택", "Ctrl+A", () => select(page.items.map((_, i) => i))], null, ["페이지 복제", "", () => addPage("dup")], ["페이지 지우기", "", () => deletePage()]];
   m.innerHTML = rows.map(r => r ? `<button>${r[0]}<span>${r[1]}</span></button>` : "<hr>").join("");
   [...m.querySelectorAll("button")].forEach((b, k) => { const r = rows.filter(Boolean)[k]; b.onclick = (ev) => { ev.stopPropagation(); m.style.display = "none"; r[2](); }; });
-  m.style.display = ""; m.style.left = Math.min(e.clientX, innerWidth - 200) + "px"; m.style.top = Math.min(e.clientY, innerHeight - m.offsetHeight - 10) + "px";
+  m.style.display = "block"; m.style.left = Math.min(e.clientX, innerWidth - 200) + "px"; m.style.top = Math.min(e.clientY, innerHeight - m.offsetHeight - 10) + "px";
 }
 $("#paper").addEventListener("contextmenu", cmenu);
 document.addEventListener("click", () => { $("#cmenu").style.display = "none"; });
@@ -1199,7 +1206,7 @@ function save() {
   if (!page) return; $("#st").textContent = "저장 중…";
   clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page); $("#st").textContent = j.error ? "저장 실패: " + j.error : "저장됨"; }, 500);
 }
-function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { await api("/api/units/skins", skin()); thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
+function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { const j = await api("/api/units/skins", skin()); if (j.error) $("#st").textContent = "브랜드 저장 실패: " + j.error; thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
 async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); panel(); }
 $("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawRail(); render(); side(); };
 
