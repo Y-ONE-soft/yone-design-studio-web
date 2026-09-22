@@ -970,10 +970,20 @@ function panel() {
     body.insertAdjacentHTML("beforeend", `<div class="row"><button class="btn sm sub" id="sk-dup">⧉ 이 브랜드 복제해 새 브랜드</button></div>
       <h3>색 — ${esc(sk.name)}</h3><div class="colors">${Object.entries((sk.tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
       <h3>서체</h3>${Object.entries((sk.tokens || {}).font || {}).map(([k, v]) => `<div class="f"><span>${k}</span><input type="text" data-font="${k}" value="${esc(v)}"></div>`).join("")}
+      <h3>단락 스타일 <span class="note" style="display:inline">글상자의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 자리도 맞춰진다</span></h3>
+      ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
+        <div class="m3"><label>서체<select data-st="${n}:font"><option value="">-</option>${Object.keys(sk.tokens.font || {}).map(f => `<option value="$${f}" ${st.font === "$" + f ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
+        <div class="m3"><label>색<select data-st="${n}:color"><option value="">-</option>${Object.entries(sk.tokens.color || {}).map(([c, v]) => `<option value="$${c}" ${st.color === "$" + c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
+        <div class="m3"><label>첫 줄 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div></div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="st-new">＋ 단락 스타일</button></div>
       ${LIB.blocks.filter(b => (b.variants || []).length > 1).length ? `<h3>요소 모양 고르기</h3>${LIB.blocks.filter(b => (b.variants || []).length > 1).map(b => `<div class="f"><span>${esc(b.name)}</span><select data-var="${b.id}">${b.variants.map(v => `<option value="${v.id}" ${((sk.variants || {})[b.id] || b.variants[0].id) === v.id ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>`).join("")}` : ""}`);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-font]").forEach(i => i.onchange = () => { sk.tokens.font[i.dataset.font] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-var]").forEach(i => i.onchange = () => { sk.variants = sk.variants || {}; sk.variants[i.dataset.var] = i.value; saveSkin(); render(); });
+    body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = i.dataset.st.split(":"); const st = sk.styles[n]; const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
+      if (v === "" || v == null || v === false) delete st[k]; else st[k] = v; saveSkin(); pageSvg = {}; render(); });
+    body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 지울까요? 이 스타일을 쓰는 글상자는 자기 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
+    $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (영문 소문자·숫자·_ · 원고 docx 스타일 이름과 맞추려면 자리 이름과 같게)", ""); if (!n || !/^[a-z][a-z0-9_]*$/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
     $("#sk-dup").onclick = async () => { const name = prompt("새 브랜드 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
@@ -1060,6 +1070,8 @@ function side() {
       h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `` : ""}`;
       if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(plainText(a.text))}</textarea></div>${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
         <div class="f"><span>자리 이름</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="예: passage · prompt · no" title="원고가 들어올 자리. 비우면 고정 글"></div>
+        <div class="f"><span>스타일</span><select data-a="style"><option value="">(직접)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span>서체</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
@@ -1104,6 +1116,7 @@ function side() {
     else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"}; if (kk === "cap" && v === "butt") delete a.stroke.cap; else a.stroke[kk] = v; } }
     else if (k === "fill" && !v) delete a.fill;
     else if (k === "bind" && !v) delete a.bind;
+    else if (k === "style") { if (v) a.style = v; else delete a.style; }
     else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
     else if (k === "fit") { if (v === "cover") a.fit = "cover"; else delete a.fit; }

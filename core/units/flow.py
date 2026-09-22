@@ -34,7 +34,7 @@ def _text_atoms(ctx, it):
     if not part:
         return None, []
     types = blk.get("fields") or {}
-    atoms = [a for a in part["atoms"] if a.get("t") == "text" and a.get("bind") and (types.get(a["bind"]) or {}).get("type") in ("rich", "text")]
+    atoms = [ctx.styled(a) for a in part["atoms"] if a.get("t") == "text" and a.get("bind") and (types.get(a["bind"]) or {}).get("type") in ("rich", "text")]
     return part, atoms
 
 

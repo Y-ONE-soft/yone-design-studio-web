@@ -365,3 +365,57 @@ def test_manuscript_api(lib, monkeypatch, tmp_path):
     assert r.status_code == 200 and j["sets"][0]["id"] == "7" and j["log"] == []
     from core.units import store
     assert store.get("sets", "7")["blocks"][-1]["fields"]["answer"] == "②"
+
+
+def _mini_docx(path, paras):
+    """[(스타일 id, [(글, {u,b})])] → 최소 docx (styles.xml 에 이름 = id 로 등록)."""
+    import zipfile
+    W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+    body = ""
+    for sid, runs in paras:
+        rr = "".join(f"<w:r><w:rPr>{'<w:u w:val=\"single\"/>' if f.get('u') else ''}{'<w:b/>' if f.get('b') else ''}</w:rPr><w:t xml:space=\"preserve\">{t}</w:t></w:r>" for t, f in runs)
+        body += f"<w:p>{f'<w:pPr><w:pStyle w:val=\"{sid}\"/></w:pPr>' if sid else ''}{rr}</w:p>"
+    styles = "".join(f'<w:style w:styleId="{sid}"><w:name w:val="{sid}"/></w:style>' for sid, _ in paras if sid)
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>')
+        z.writestr("word/document.xml", f'<?xml version="1.0"?><w:document {W}><w:body>{body}</w:body></w:document>')
+        z.writestr("word/styles.xml", f'<?xml version="1.0"?><w:styles {W}>{styles}</w:styles>')
+
+
+def test_manuscript_docx_styles_map_to_slots(lib, tmp_path):
+    """docx 단락 스타일 이름(지문·발문·선지·빈칸 줄)이 블록·자리 이름과 맞으면 규칙 없이도 그 자리로. 밑줄·굵게는 서식 조각."""
+    from core.units import manuscript
+    p = tmp_path / "m.docx"
+    _mini_docx(str(p), [
+        ("Normal", [("# 5", {})]),
+        ("지문", [("Cities were built around cars. ", {}), ("However", {"b": True}), (", planners are reversing this.", {})]),
+        ("지문", [("Second paragraph of the passage.", {})]),
+        ("발문", [("윗글의 요지로 가장 적절한 것은?", {})]),
+        ("선지", [("① one", {})]), ("선지", [("② two", {})]), ("선지", [("③ three", {})]),
+        ("Normal", [("답: ②", {})]),
+        ("빈칸 줄", [("1. Wide roads ", {}), ("replaced", {"u": True}), (" neighborhoods.", {})]),
+        ("해석", [("넓은 도로가 동네를 대체했다.", {})]),
+    ])
+    sets, log = manuscript.from_file(str(p), lib["blocks"])
+    assert log == [] and len(sets) == 1 and sets[0]["id"] == "5"
+    b = {x["block"]: x["fields"] for x in sets[0]["blocks"]}
+    passage = b["passage"]["passage"]
+    assert isinstance(passage, list) and {"t": "However", "b": True} in passage and "Second paragraph" in "".join(x if isinstance(x, str) else x["t"] for x in passage)
+    assert b["prompt"]["prompt"].endswith("?") and b["choices"]["choices"] == ["one", "two", "three"] and b["choices"]["answer"] == "②"
+    assert b["blank"]["no"] == 1 and {"t": "replaced", "u": True} in b["blank"]["sentence"] and b["blank"]["kr"].startswith("넓은")
+
+
+def test_paragraph_style_from_skin(lib):
+    """글 원자의 style → 옷의 styles 값이 원자 값보다 우선. 옷을 바꾸면 그 스타일의 글이 다 바뀐다."""
+    from core.units import render, store
+    skin = json.loads(json.dumps(store.by_id(lib["skins"])["d2"]))
+    part = {"id": "p", "name": "p", "w": 60, "h": 10, "atoms": [{"t": "text", "x": 0, "y": 0, "w": 60, "h": 10, "font": "$body", "size": 8, "style": "prompt", "text": "hello"}]}
+    ctx = render.Ctx(skin, lib)
+    frag, _ = render.part_svg(ctx, part)
+    assert "font-size:2.999px" in frag                                   # prompt 스타일 8.5pt (원자 8pt 아님)
+    skin["styles"]["prompt"] = {"size": 12, "b": True}
+    frag2, _ = render.part_svg(render.Ctx(skin, lib), part)
+    assert "font-size:4.233px" in frag2 and "font-weight:700" in frag2
+    ctx3 = render.Ctx({"id": "x", "tokens": skin["tokens"]}, lib)
+    render.part_svg(ctx3, part)
+    assert any("단락 스타일 없음 prompt" in w for w in ctx3.warnings)

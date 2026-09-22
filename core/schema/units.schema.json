@@ -58,6 +58,7 @@
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"},
         "h": {"$ref": "#/definitions/mm", "description": "최소 높이. 글이 길면 아래로 늘어난다"},
         "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
+        "style": {"$ref": "#/definitions/id", "description": "단락 스타일 이름 — 옷의 styles 에서 서체·크기·행간·색·정렬·자간·들여쓰기·간격을 가져온다(인디자인 단락 스타일). 스타일에 있는 값이 원자 값보다 우선"},
         "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
         "align": {"enum": ["left", "center", "right", "justify"]},
         "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich). 줄바꿈(\\n) = 단락"},
@@ -244,7 +245,15 @@
           "font": {"type": "object", "additionalProperties": {"type": "string", "description": "서체 family 이름"}}
         }},
         "variants": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"}, "description": "블록 id → 모양 id. 없으면 첫 모양"},
-        "images": {"type": "object", "additionalProperties": {"type": "string"}, "description": "image 원자의 src → 파일 경로"}
+        "images": {"type": "object", "additionalProperties": {"type": "string"}, "description": "image 원자의 src → 파일 경로"},
+        "styles": {"type": "object", "description": "단락 스타일 — 이름 → 글 속성. 글 원자의 style 이 가리킨다. 원고 docx 의 단락 스타일 이름과 같으면 파서가 자리를 맞춘다",
+          "additionalProperties": {"type": "object", "properties": {
+            "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}, "leading": {"$ref": "#/definitions/pt"},
+            "color": {"$ref": "#/definitions/token"}, "align": {"enum": ["left", "center", "right", "justify"]},
+            "tracking": {"type": "number"}, "indent": {"$ref": "#/definitions/mm"}, "indent_first": {"type": "number"}, "indent_right": {"$ref": "#/definitions/mm"},
+            "space_before": {"$ref": "#/definitions/mm"}, "space_after": {"$ref": "#/definitions/mm"},
+            "b": {"type": "boolean"}, "i": {"type": "boolean"}
+          }}}
       }
     },
 

@@ -31,6 +31,9 @@ def _by_id(items):
     return {x.get("id"): x for x in (items or []) if isinstance(x, dict) and x.get("id")}
 
 
+STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
+
+
 class Ctx(object):
     def __init__(self, skin, lib, sys=None):
         self.skin = skin or {"id": "", "tokens": {}}
@@ -71,6 +74,19 @@ class Ctx(object):
     def image(self, src):
         p = ((self.skin.get("images") or {}).get(src)) if src else None
         return p
+
+    def styled(self, a):
+        """글 원자에 옷의 단락 스타일(a.style)을 입힌다 — 스타일 값이 원자 값보다 우선. 없는 스타일은 경고 + 원자 값 그대로."""
+        name = a.get("style")
+        if not name or a.get("t") != "text":
+            return a
+        st = (self.skin.get("styles") or {}).get(name)
+        if st is None:
+            self.warn(f"단락 스타일 없음 {name} — 옷 {self.skin.get('id') or '(없음)'}")
+            return a
+        out = dict(a)
+        out.update({k: v for k, v in st.items() if k in STYLE_KEYS and v is not None and v != ""})
+        return out
 
 
 def font_family(name):
@@ -321,6 +337,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     pw = float(part.get("w") or 0)
     if width and pw > 0 and abs(width - pw) > 0.01:
         atoms = _fit(atoms, float(width) / pw)
+    atoms = [ctx.styled(a) for a in atoms]                  # 단락 스타일(옷) 입히기
     # 1) 글이 자라는 만큼
     grown = []                                # (원자 번호, 원래 위, 원래 아래, 왼쪽, 오른쪽, 늘어난 양)
     content = {}
@@ -375,6 +392,10 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                  f"overflow:hidden;word-break:break-word;white-space:normal")
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
+        if a.get("b"):
+            style += ";font-weight:700"
+        if a.get("i"):
+            style += ";font-style:italic"
         return (f'<foreignObject x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}">'
                 f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h)}</div></foreignObject>')
     if t == "line":

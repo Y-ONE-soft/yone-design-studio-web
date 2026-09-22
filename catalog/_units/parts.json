@@ -149,7 +149,8 @@
     "leading": 13,
     "color": "$ink",
     "align": "justify",
-    "bind": "passage"
+    "bind": "passage",
+    "style": "passage"
    }
   ]
  },
@@ -182,7 +183,8 @@
     "leading": 13,
     "color": "$ink",
     "align": "justify",
-    "bind": "passage"
+    "bind": "passage",
+    "style": "passage"
    }
   ]
  },
@@ -213,7 +215,8 @@
     "font": "$disp",
     "size": 8.5,
     "color": "$ink",
-    "bind": "prompt"
+    "bind": "prompt",
+    "style": "prompt"
    }
   ]
  },
@@ -233,7 +236,8 @@
     "size": 8,
     "leading": 12.5,
     "color": "$ink",
-    "bind": "choices"
+    "bind": "choices",
+    "style": "choices"
    }
   ]
  },
@@ -253,7 +257,8 @@
     "size": 8.5,
     "color": "$sel",
     "bind": "no",
-    "text": "1"
+    "text": "1",
+    "style": "no"
    },
    {
     "t": "text",
@@ -264,7 +269,8 @@
     "font": "$body",
     "size": 8,
     "color": "$ink",
-    "bind": "sentence"
+    "bind": "sentence",
+    "style": "sentence"
    },
    {
     "t": "ellipse",
@@ -345,7 +351,8 @@
     "size": 8.5,
     "color": "$sel",
     "bind": "no",
-    "text": "1"
+    "text": "1",
+    "style": "no"
    },
    {
     "t": "text",
@@ -356,7 +363,8 @@
     "font": "$body",
     "size": 8,
     "color": "$ink",
-    "bind": "sentence"
+    "bind": "sentence",
+    "style": "sentence"
    },
    {
     "t": "rect",
@@ -445,7 +453,8 @@
     "size": 8.5,
     "color": "$sel",
     "bind": "no",
-    "text": "1"
+    "text": "1",
+    "style": "no"
    },
    {
     "t": "text",
@@ -456,7 +465,8 @@
     "font": "$body",
     "size": 8,
     "color": "$ink",
-    "bind": "sentence"
+    "bind": "sentence",
+    "style": "sentence"
    },
    {
     "t": "line",
@@ -478,7 +488,8 @@
     "font": "$body",
     "size": 7,
     "color": "$mute",
-    "bind": "kr"
+    "bind": "kr",
+    "style": "kr"
    }
   ]
  },
@@ -498,7 +509,8 @@
     "size": 8.5,
     "color": "$sel",
     "bind": "no",
-    "text": "1"
+    "text": "1",
+    "style": "no"
    },
    {
     "t": "text",
@@ -509,7 +521,8 @@
     "font": "$body",
     "size": 8,
     "color": "$ink",
-    "bind": "sentence"
+    "bind": "sentence",
+    "style": "sentence"
    },
    {
     "t": "rect",

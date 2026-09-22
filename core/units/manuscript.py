@@ -171,10 +171,14 @@ def _join(a, b):
 
 # ── 붙여넣은 글 / docx 단락 → 세트 ─────────────────────────────────────
 
-def from_paragraphs(paras, blocks, kind="passage", log=None):
-    """단락 목록(문자열 또는 서식 조각 목록) → 세트 목록."""
+def from_paragraphs(paras, blocks, kind="passage", log=None, styles=None):
+    """단락 목록(문자열 또는 서식 조각 목록) → 세트 목록.
+
+    styles 를 주면(단락마다 docx 단락 스타일 이름) 이름이 블록·자리와 맞는 단락은 그 자리로 간다 — 인디자인의 단락 스타일 ↔ 원고 스타일 매핑.
+    """
     B = blocks if isinstance(blocks, Blocks) else Blocks(blocks)
     log = log if log is not None else []
+    styles = list(styles or [])
     sets = []
     cur = None                       # 지금 세트
     last = None                      # 마지막으로 값을 넣은 (블록 dict, 자리)
@@ -207,11 +211,35 @@ def from_paragraphs(paras, blocks, kind="passage", log=None):
         counters[bid] = counters.get(bid, 0) + 1
         return counters[bid]
 
-    for raw in paras:
+    for pi, raw in enumerate(paras):
         plain = rich_plain(raw).strip()
         if not plain:
             continue
         val = raw if isinstance(raw, list) else plain
+        # docx 단락 스타일 이름이 블록·자리 이름과 맞으면 그 자리로
+        sname = styles[pi] if pi < len(styles) else None
+        hit = B.lookup(sname) if sname and sname.lower() not in ("normal", "본문", "기본", "표준") else None
+        if hit:
+            bid, f = hit
+            f = f or B.main_field(bid)
+            if B.ftype(bid, f) == "choices":
+                if last is not None and last["block"] == bid and "choices" in last["fields"]:
+                    last["fields"]["choices"] = list(last["fields"]["choices"]) + coerce(plain, "choices")
+                else:
+                    add(bid, {"choices": plain})
+            elif last is not None and last["block"] == bid and f not in last["fields"]:
+                last["fields"][f] = coerce(val, B.ftype(bid, f))                        # 같은 블록의 빈 자리(해석 등)를 채운다
+            elif last is not None and last["block"] == bid and f in last["fields"] and B.ftype(bid, f) in ("rich", "text") and "no" not in B.fields(bid):
+                last["fields"][f] = _join(last["fields"][f], val)                       # 같은 스타일 연속 = 단락 추가
+            else:
+                fields = {f: val}
+                mn = _RE_NUM.match(plain)
+                if "no" in B.fields(bid) and f != "no":
+                    fields["no"] = mn.group(1) if mn else next_no(bid)
+                    if mn:
+                        fields[f] = _strip_prefix(val, len(plain) - len(mn.group(2).strip())) if isinstance(val, list) else mn.group(2).strip()
+                add(bid, fields)
+            continue
         # 새 세트
         m = _RE_SET.match(plain)
         if m and (m.group(1) or m.group(2) or (m.group(3) and not m.group(4))) and len(plain) < 40:
@@ -336,13 +364,69 @@ def _runs_to_rich(runs):
     return out if any(isinstance(x, dict) for x in out) else "".join(out)
 
 
+def docx_paragraphs(path):
+    """docx → [(서식 조각 또는 문자열, 단락 스타일 이름)]. 밑줄·굵게·기울임은 조각으로, 줄바꿈(w:br)은 \n."""
+    import zipfile
+    import xml.etree.ElementTree as ET
+    W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    with zipfile.ZipFile(path) as z:
+        doc = ET.fromstring(z.read("word/document.xml"))
+        names = {}
+        try:
+            for st in ET.fromstring(z.read("word/styles.xml")).iter(W + "style"):
+                nm = st.find(W + "name")
+                if nm is not None and st.get(W + "styleId"):
+                    names[st.get(W + "styleId")] = nm.get(W + "val") or st.get(W + "styleId")
+        except KeyError:
+            pass
+    out = []
+    for p in doc.iter(W + "p"):
+        ps = p.find(W + "pPr/" + W + "pStyle")
+        sid = ps.get(W + "val") if ps is not None else None
+        runs = []
+        for r in p.iter(W + "r"):
+            if r.find(W + "footnoteReference") is not None or r.find(W + "endnoteReference") is not None:
+                continue
+            rpr = r.find(W + "rPr")
+            fmt = {}
+            if rpr is not None:
+                u = rpr.find(W + "u")
+                if u is not None and (u.get(W + "val") or "single") != "none":
+                    fmt["u"] = True
+                if rpr.find(W + "b") is not None and (rpr.find(W + "b").get(W + "val") or "true") not in ("0", "false"):
+                    fmt["b"] = True
+                if rpr.find(W + "i") is not None and (rpr.find(W + "i").get(W + "val") or "true") not in ("0", "false"):
+                    fmt["i"] = True
+            for ch in r:
+                if ch.tag == W + "t":
+                    runs.append(dict(fmt, t=ch.text or ""))
+                elif ch.tag in (W + "br", W + "cr"):
+                    runs.append({"t": "\n"})
+                elif ch.tag == W + "tab":
+                    runs.append({"t": " "})
+        rich = []
+        for r in runs:
+            if not r["t"]:
+                continue
+            if any(r.get(k) for k in ("u", "b", "i")):
+                rich.append(r)
+            elif rich and isinstance(rich[-1], str):
+                rich[-1] += r["t"]
+            else:
+                rich.append(r["t"])
+        val = rich if any(isinstance(x, dict) for x in rich) else "".join(rich)
+        out.append((val, names.get(sid, sid)))
+    return out
+
+
 def from_file(path, blocks, kind="passage"):
-    """docx / hwpx / txt → 세트. 밑줄은 서식 조각 {t, u} 로 남긴다."""
+    """docx / hwpx / txt → 세트. 밑줄·굵게는 서식 조각으로. docx 단락 스타일 이름이 자리 이름과 맞으면 그 자리로."""
     from core.extract import extractors as ex
     low = path.lower()
     if low.endswith(".docx"):
-        paras = ex._docx_extract_paragraphs(path, extract_underline=True)
-    elif low.endswith(".hwpx"):
+        pairs = docx_paragraphs(path)
+        return from_paragraphs([v for v, _ in pairs], blocks, kind, styles=[st for _, st in pairs])
+    if low.endswith(".hwpx"):
         paras = ex._hwpx_extract_paragraphs(path, extract_underline=True)
     else:
         with open(path, encoding="utf-8", errors="replace") as fh:
