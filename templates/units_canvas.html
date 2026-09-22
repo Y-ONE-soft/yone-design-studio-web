@@ -4,7 +4,7 @@
 {% block content %}
 <style>
   .cv { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; user-select: none; }
-  .cv h3 { font-size: 11.5px; color: var(--mute); margin: 14px 0 6px; font-weight: 600; letter-spacing: .04em; }
+  .cv h3 { font-size: 11.5px; color: var(--mute); margin: 10px 0 5px; font-weight: 600; letter-spacing: .04em; }
   .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
   .btn { display: inline-flex; align-items: center; gap: 5px; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
   .btn:hover { background: #6a1fd0; }
@@ -34,13 +34,13 @@
   .upanel .body { flex: 1; overflow: auto; padding: 4px 12px 16px; }
   .ai .box { display: flex; gap: 6px; margin-top: 8px; }
   .ai input { flex: 1; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .card { border: 1px solid var(--line); border-radius: 10px; padding: 5px; background: #fff; cursor: pointer; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .card { border: 1px solid var(--line); border-radius: 9px; padding: 4px; background: #fff; cursor: pointer; }
   .card:hover { border-color: var(--pp); box-shadow: 0 2px 8px rgba(125,42,232,.15); }
   .card.on { border-color: var(--pp); background: var(--pp-bg); }
-  .card .th { background: #f7f6fb; border-radius: 6px; overflow: hidden; height: 54px; display: flex; align-items: center; }
+  .card .th { background: #f7f6fb; border-radius: 6px; overflow: hidden; height: 40px; display: flex; align-items: center; }
   .card .th svg { width: 100%; height: auto; display: block; }
-  .card .nm { font-size: 11.5px; font-weight: 600; margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card .nm { font-size: 11.5px; font-weight: 600; margin: 3px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card .ds { font-size: 10.5px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ghost { position: fixed; z-index: 99; width: 120px; opacity: .85; pointer-events: none; box-shadow: 0 8px 24px rgba(30,20,60,.3); }
   .paper.dropok { outline: 3px solid var(--pp); outline-offset: -3px; }
@@ -63,8 +63,8 @@
 
   /* 가운데 */
   .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-  .stage .area { flex: 1; overflow: auto; padding: 10px 14px 10px 46px; }
-  .stage .area.rul { padding-top: 26px; }        /* 자 자리 */        /* 자를 켜면 가로 자가 위 도구 막대 아래로 내려오게 (안 그러면 안내선을 못 끈다) */
+  .stage .area { flex: 1; overflow: auto; padding: 6px 10px 6px 44px; }
+  .stage .area.rul { padding-top: 22px; }        /* 자 자리 */        /* 자를 켜면 가로 자가 위 도구 막대 아래로 내려오게 (안 그러면 안내선을 못 끈다) */
   /* 늘 보이는 도구 상자 (인디자인 도구 패널) — 패널을 접어도 남는다 */
   .trail { position: absolute; left: 6px; top: 48px; z-index: 16; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(30,20,60,.16); padding: 3px; display: flex; flex-direction: column; gap: 1px; }
   .trail button { width: 32px; height: 30px; border: 0; background: transparent; border-radius: 7px; cursor: pointer; color: #3c4043; display: grid; place-items: center; font-size: 0; }
@@ -90,9 +90,9 @@
   .utabs .fold .ic { font-size: 14px; }
   .strip .foot .vw { display: flex; gap: 3px; }
   .strip .foot .vw button { min-width: 28px; }
-  .ptool { flex: none; display: flex; gap: 2px; align-items: center; background: #fff; border-bottom: 1px solid var(--line); padding: 4px 8px; z-index: 15; }
+  .ptool { flex: none; display: flex; gap: 2px; align-items: center; background: #fff; border-bottom: 1px solid var(--line); padding: 2px 8px; z-index: 15; }
   .ptool input[type=text] { border: 0; width: 170px; font-weight: 600; padding: 4px 8px; }
-  .ptool button, .ptool a { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
+  .ptool button, .ptool a { border: 0; background: transparent; border-radius: 7px; padding: 4px 8px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
   .ptool a.btn { font-weight: 500; }
   .ptool button:hover { background: #f1eff8; }
   .ptool .sep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; }
@@ -181,7 +181,7 @@
   .menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; color: #1f2330; }
   .menu button:hover { background: #f1eff8; }
   .menu button small { display: block; color: var(--mute); font-size: 10.5px; }
-  .strip .foot { display: flex; align-items: center; gap: 6px; padding: 2px 10px 3px; font-size: 11.5px; color: var(--mute); flex-wrap: nowrap; white-space: nowrap; overflow-x: auto; }
+  .strip .foot { display: flex; align-items: center; gap: 5px; padding: 1px 10px 2px; font-size: 11.5px; color: var(--mute); flex-wrap: nowrap; white-space: nowrap; overflow-x: auto; }
   .strip .foot .btn { flex: none; }
   .strip .foot .cnt { margin-left: auto; font-weight: 600; color: #1f2330; }
   .strip .foot .help { cursor: help; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; background: #fff; }
@@ -360,7 +360,7 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 const snap = (v) => Math.round(v * 2) / 2;
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const M = {left: 20, right: 20, top: 44, bottom: 20};
-const BOARD = 40;                 // 대지(pasteboard) mm — 지면 둘레. 인디자인처럼 지면 밖에 요소를 둔다
+const BOARD = 20;                 // 대지(pasteboard) mm — 지면 둘레. 인디자인처럼 지면 밖에 요소를 둔다
 const GROUPS = [["지문", ["B1", "B2", "B3", "B7"]], ["문항", ["B6"]], ["드릴", ["B5", "B8"]], ["머리 · 꼬리 · 간지 · 표지", ["B10", "B11"]]];
 const ATOMS = [
   ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: "글상자 — 오른쪽에서 글·크기·색을"}],
@@ -502,9 +502,9 @@ function openPage(p) {                                  // ⚠ 이름이 open �
 }
 function fitScale() {
   const sp = specOf(), a = $("#area"), cs = getComputedStyle(a);
-  const rul = view.rulers ? 18 : 0;                          // 자는 지면 밖에 그려진다
-  const w = (a.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - rul - 8) / sp.w;
-  const h = (a.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - rul - 8) / sp.h;
+  // 자 자리는 area 여백(padding)에 이미 들어 있다 — 또 빼면 지면이 공연히 작아진다
+  const w = (a.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 4) / sp.w;
+  const h = (a.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - 4) / sp.h;
   return Math.max(0.3, view.fit === "width" ? w : Math.min(w, h));   // 전체 = 한 쪽이 다 보이게(스크롤 없음)
 }
 function layout() {
@@ -517,12 +517,12 @@ window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
 function setZoom(z) {
   zoom = Math.max(0.3, Math.min(3, z));
   $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%";
-  view.zoom = zoom; localStorage.setItem("units.view", JSON.stringify(view));            // 다음에 열 때 그대로
+  view.zoom = zoom; localStorage.setItem("units.view3", JSON.stringify(view));            // 다음에 열 때 그대로
   layout(); selbox();
 }
 $("#zoom").oninput = () => setZoom($("#zoom").value / 100);
 $("#zoomv").onclick = () => setZoom(1);
-function setFit(mode) { view.fit = mode; $("#fitsel").value = mode; localStorage.setItem("units.view", JSON.stringify(view)); setZoom(1); }
+function setFit(mode) { view.fit = mode; $("#fitsel").value = mode; localStorage.setItem("units.view3", JSON.stringify(view)); setZoom(1); }
 $("#fitsel").onchange = () => setFit($("#fitsel").value);
 $("#area").addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, {passive: false});
 let rt = null;
@@ -843,13 +843,13 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
-const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: false, zen: false, zoom: 1, fit: "width", lw: 232, rw: 240},
-                           JSON.parse(localStorage.getItem("units.view") || "{}"));
+const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: false, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
+                           JSON.parse(localStorage.getItem("units.view3") || "{}"));
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); $("#area").classList.toggle("rul", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
   $("#tg-rul").classList.toggle("on", view.rulers); $("#tg-grid").classList.toggle("on", view.grid); $("#tg-mg").classList.toggle("on", view.margins); $("#tg-snap").classList.toggle("on", view.snap);
   applyPanels();
-  localStorage.setItem("units.view", JSON.stringify(view)); drawRulers();
+  localStorage.setItem("units.view3", JSON.stringify(view)); drawRulers();
 }
 // 접기 — 넓게(zen)면 셋 다 접고 왼쪽 레일까지 숨긴다. 편 상태는 기억한다.
 function applyPanels() {
@@ -876,7 +876,7 @@ document.querySelectorAll("[data-rsz]").forEach(bar => {
       if (side) view.lw = w; else view.rw = w;
       applyWidths(); if (page) { layout(); selbox(); }
     };
-    const up = () => { bar.classList.remove("on"); document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up); localStorage.setItem("units.view", JSON.stringify(view)); };
+    const up = () => { bar.classList.remove("on"); document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up); localStorage.setItem("units.view3", JSON.stringify(view)); };
     document.addEventListener("pointermove", move); document.addEventListener("pointerup", up);
   };
   bar.ondblclick = () => { if (bar.dataset.rsz === "l") view.lw = 232; else view.rw = 240; applyWidths(); applyView(); };
@@ -1450,7 +1450,7 @@ $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)
 thumbsLoad();
 (() => {
   applyWidths(); applyPanels();                                    // 접어 둔 패널·폭·넓게를 그대로 (localStorage)
-  $("#fitsel").value = view.fit || "width";
+  $("#fitsel").value = view.fit || "page";
   const q = new URLSearchParams(location.search); const pl = byId("plans")[q.get("plan") || ""];
   if (pl) openPlan(pl); else showStart();
   if (view.zoom && view.zoom !== 1) setZoom(view.zoom);            // 확대도 그대로
