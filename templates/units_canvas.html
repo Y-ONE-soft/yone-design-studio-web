@@ -48,6 +48,7 @@
   .atoms5 button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 2px 4px; cursor: pointer; font-size: 10.5px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #3c4043; }
   .atoms5 button svg { width: 28px; height: 18px; }
   .atoms5 button:hover { border-color: var(--pp); }
+  .atoms5 button.on { border-color: var(--pp); background: var(--pp-bg); color: var(--pp); font-weight: 600; }
   .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.12); vertical-align: middle; }
   .colors { display: flex; flex-wrap: wrap; gap: 6px; }
   .colors label { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--mute); width: 44px; }
@@ -83,6 +84,8 @@
   .selbox .hd-se { right: -6px; bottom: -6px; width: 10px; height: 10px; cursor: nwse-resize; }
   .selbox.multi { border-style: dashed; }
   .marq { position: absolute; border: 1.5px dashed var(--pp); background: rgba(125,42,232,.07); display: none; pointer-events: none; }
+  .paper.draw .svgwrap { cursor: crosshair; }
+  .paper.draw .svgwrap svg g[data-fi] { pointer-events: none; }
   .gv, .gh { position: absolute; background: #ff3ea5; display: none; pointer-events: none; }
   .gv { width: 1px; top: 0; bottom: 0; } .gh { height: 1px; left: 0; right: 0; }
   .tools .sep { width: 1px; height: 16px; background: #4a5068; margin: 0 2px; align-self: center; }
@@ -557,6 +560,7 @@ function guide(gx, gy) { const v = $("#gv"), h = $("#gh"); if (gx == null) v.sty
 // 영역 선택 — 빈 곳에서 끌면 상자, 상자에 걸치는 요소를 고른다. 안 끌면 선택 해제
 $("#area").addEventListener("pointerdown", (e) => {
   if (e.button !== 0 || !page || spaceDown || e.target.closest(".selbox, .tools, .ptool, .editbar, .ruler, .guide, .warn, .start, .pv, #tedit, .cmenu")) return;
+  if (drawTool) { e.preventDefault(); drawStart(e); return; }                     // 도구를 골랐으면 = 그리기
   if (e.target.closest("g[data-fi]") && !(e.ctrlKey || e.metaKey)) return;        // 요소 위 = 옮기기. Ctrl/⌘ 누르면 범위 선택
   const s0 = mmOf(e); const m = $("#marq"); let moved = false;
   const mv = (ev) => { const m1 = mmOf(ev); if (!moved && Math.abs(m1.x - s0.x) + Math.abs(m1.y - s0.y) < 0.6) return; moved = true;
@@ -683,6 +687,7 @@ $("#t-down").onclick = (e) => { e.stopPropagation(); ungroup(); };
 document.addEventListener("keydown", (e) => {
   if ((e.target.matches && e.target.matches("input,textarea,select")) || !page) return;
   const mod = e.metaKey || e.ctrlKey, k = (e.key || "").toLowerCase();
+  if (e.key === "Escape" && drawTool) { armDraw(null); return; }
   if (mod && k === "z") { e.preventDefault(); undoIt(!e.shiftKey); return; }
   if (mod && k === "y") { e.preventDefault(); undoIt(false); return; }
   if (mod && k === "a") { e.preventDefault(); select(page.items.map((_, i) => i)); return; }
@@ -844,7 +849,42 @@ function addBlock(id, at) {
   place({block: id}, at, true);
 }
 function addPart(id, at) { if (byId("parts")[id] && page) place({part: id}, at, false); }
-function addAtom(t, at) { const a = ATOMS.find(x => x[0] === t); if (a && page) place({atom: clone(a[2])}, at, false); }
+function addAtom(t, at, r) {                                  // r = 끌어 그린 상자(mm). 없으면 기본 크기
+  const a = ATOMS.find(x => x[0] === t); if (!a || !page) return;
+  const atom = clone(a[2]);
+  if (r) {
+    if (t === "line") { atom.x1 = snap(r.x1 - r.x); atom.y1 = snap(r.y1 - r.y); atom.x2 = snap(r.x2 - r.x); atom.y2 = snap(r.y2 - r.y); }
+    else { atom.w = Math.max(1, r.w); atom.h = Math.max(1, r.h); }
+  }
+  place({atom}, at, false);
+}
+
+// ── 직접 그리기 — 인디자인처럼 도구를 고르고 지면에서 끌면 그만큼 크기로 그려진다 ──
+let drawTool = null;
+function armDraw(t) {
+  drawTool = (t && t !== drawTool) ? t : null;
+  $("#paper").classList.toggle("draw", !!drawTool);
+  document.querySelectorAll("[data-draw]").forEach(b => b.classList.toggle("on", b.dataset.draw === drawTool));
+  $("#st").textContent = drawTool ? `${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소` : "";
+}
+function drawStart(e) {
+  const t = drawTool, s0 = mmOf(e), m = $("#marq"); let moved = false, r = null;
+  const mv = (ev) => {
+    let dx = mmOf(ev).x - s0.x, dy = mmOf(ev).y - s0.y;
+    if (!moved && Math.abs(dx) + Math.abs(dy) < 0.6) return; moved = true;
+    if (ev.shiftKey) { if (t === "line") { if (Math.abs(dx) >= Math.abs(dy)) dy = 0; else dx = 0; }
+      else { const d = Math.max(Math.abs(dx), Math.abs(dy)); dx = (dx < 0 ? -d : d); dy = (dy < 0 ? -d : d); } }
+    r = {x: snap(Math.min(s0.x, s0.x + dx)), y: snap(Math.min(s0.y, s0.y + dy)), w: snap(Math.abs(dx)), h: snap(Math.abs(dy)),
+      x1: snap(s0.x), y1: snap(s0.y), x2: snap(s0.x + dx), y2: snap(s0.y + dy)};
+    Object.assign(m.style, {display: "block", left: r.x * scale + "px", top: r.y * scale + "px", width: r.w * scale + "px", height: r.h * scale + "px"});
+    $("#st").textContent = `${r.w} × ${r.h} mm`;
+  };
+  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); m.style.display = "none";
+    armDraw(null);
+    if (moved && r) addAtom(t, {x: r.x, y: r.y}, r); else addAtom(t, {x: snap(s0.x), y: snap(s0.y)});
+  };
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+}
 
 
 // ── 원자들 → 부품 · 부품 → 블록 (단위를 올린다) ──
@@ -1003,7 +1043,7 @@ function panel() {
       ellipse: '<svg width="36" height="22"><ellipse cx="18" cy="11" rx="10" ry="9" fill="none" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
       image: '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="#eee" stroke="#999"/><path d="M6 17l8-8 6 6 4-3 6 5z" fill="#bbb"/></svg>',
       path: '<svg width="36" height="22"><path d="M3 7 L20 7 L20 2 L33 11 L20 20 L20 15 L3 15 Z" fill="#e9e0ff" stroke="#7d2ae8"/></svg>'};
-    for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.onclick = () => addAtom(t); palDrag(b, {k: "atom", id: t}); g0.appendChild(b); }
+    for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.dataset.draw = t; b.title = nm + " — 누르고 지면에서 끌면 그 크기로 그려진다"; b.onclick = () => armDraw(t); palDrag(b, {k: "atom", id: t}); g0.appendChild(b); }
     const tb = document.createElement("button"); tb.innerHTML = '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="none" stroke="#7d2ae8"/><line x1="2" y1="8" x2="34" y2="8" stroke="#7d2ae8"/><line x1="2" y1="14" x2="34" y2="14" stroke="#7d2ae8"/><line x1="13" y1="2" x2="13" y2="20" stroke="#7d2ae8"/><line x1="24" y1="2" x2="24" y2="20" stroke="#7d2ae8"/></svg>표'; tb.onclick = makeTable; g0.appendChild(tb);
     body.appendChild(g0);
 

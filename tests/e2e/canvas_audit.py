@@ -161,9 +161,14 @@ try:
     def c1():
         n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('.g0 button, .pal button, .draw button, button')].find(b => /글상자/.test(b.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not b: return (False, "글상자 버튼 없음")
-        click(*b); ok = wait(f"page.items.length === {n0 + 1} && !!gOf({n0})", 8)
-        return (ok and js("sel") == n0, f"items {n0}→{n_items()} sel={js('sel')}")
-    step("C1 팔레트 「글상자」 누르면 페이지에 놓이고 선택된다", c1)
+        click(*b)
+        if not js("drawTool === 'text'"): return (False, "도구가 안 골라짐")
+        x0, y0 = paper_pt(25, 60); x1, y1 = paper_pt(95, 80); drag(x0, y0, x1, y1, steps=10)
+        ok = wait(f"page.items.length === {n0 + 1} && !!gOf({n0})", 8)
+        it = json.loads(item(n0)) if ok else {}; a = it.get("atom", {})
+        return (ok and a.get("t") == "text" and abs(a.get("w", 0) - 70) < 2 and abs(a.get("h", 0) - 20) < 2 and abs(it.get("x", 0) - 25) < 2 and js("sel") == n0 and not js("drawTool"),
+                f"items {n0}→{n_items()} {a.get('w')}×{a.get('h')}mm sel={js('sel')}")
+    step("C1 「글상자」 고르고 지면에서 끌면 그 크기로 그려진다 (인디자인처럼)", c1)
     def c2():
         n0 = n_items(); cardc = js("(() => { const el = [...document.querySelectorAll('.card')].find(d => /지문 상자/.test(d.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not cardc: return (False, "지문 상자 카드 없음")
@@ -175,8 +180,10 @@ try:
     def c3():
         n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('button')].find(b => /^\\s*(면|□)/.test(b.textContent) && b.closest('.upanel, .pal, #pbody')); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not b: return (False, "면 버튼 없음")
-        click(*b); ok = wait(f"page.items.length === {n0 + 1}", 8); return (ok and json.loads(item(n0)).get("atom", {}).get("t") == "rect", item(n0)[:80])
-    step("C3 팔레트 「면」(사각형) 놓기", c3)
+        click(*b); px, py = paper_pt(40, 120); click(px, py)
+        ok = wait(f"page.items.length === {n0 + 1}", 8); a = json.loads(item(n0)).get("atom", {}) if ok else {}
+        return (ok and a.get("t") == "rect" and a.get("w") == 60, item(n0)[:90])
+    step("C3 「면」 고르고 지면을 그냥 누르면 기본 크기로 놓인다", c3)
     def c4():
         n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('button')].find(b => /표/.test(b.textContent) && b.closest('.upanel, .pal, #pbody')); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not b: return (False, "표 버튼 없음")
@@ -349,8 +356,10 @@ try:
     step("I1 자에서 끌어 안내선 만들기", i1)
     def i2():
         click(*center("#tg-grid")); g1_ = js("document.querySelector('#paper').classList.contains('grid')"); click(*center("#tg-grid"))
-        click(*center("#tg-mg")); m1 = js("document.querySelector('#paper').classList.contains('margins')"); click(*center("#tg-mg"))
-        return (g1_ and not js("document.querySelector('#paper').classList.contains('grid')"), f"grid={g1_} margins-toggle={m1}")
+        m0 = js("document.querySelector('#paper').classList.contains('mg')"); click(*center("#tg-mg"))
+        m1 = js("document.querySelector('#paper').classList.contains('mg')"); click(*center("#tg-mg"))
+        m2 = js("document.querySelector('#paper').classList.contains('mg')")
+        return (g1_ and not js("document.querySelector('#paper').classList.contains('grid')") and m1 == (not m0) and m2 == m0, f"grid={g1_} 여백선 {m0}→{m1}→{m2}")
     step("I2 격자·여백 토글 버튼", i2)
     def i3():
         z0 = js("zoom"); ar = rect("#area"); p = (ar[0] + ar[2] / 2, ar[1] + ar[3] / 2); c.call("Input.dispatchMouseEvent", type="mouseWheel", x=p[0], y=p[1], deltaX=0, deltaY=-120, modifiers=CTRL); time.sleep(0.4)
