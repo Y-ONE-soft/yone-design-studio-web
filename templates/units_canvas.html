@@ -85,6 +85,27 @@
   .tools button { border: 0; background: transparent; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
   .tools button:hover { background: #3a3f52; }
   .tools button.x:hover { background: #c0263a; }
+  .start { position: absolute; inset: 0; background: #ecebf3; z-index: 12; overflow: auto; padding: 40px 48px; }
+  .start h2 { margin: 0 0 4px; font-size: 20px; }
+  .start .sub { color: var(--mute); font-size: 13px; margin-bottom: 22px; line-height: 1.6; }
+  .start .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+  .pcard { background: #fff; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; }
+  .pcard:hover { border-color: var(--pp); box-shadow: 0 6px 20px rgba(125,42,232,.14); }
+  .pcard .th { background: #f7f6fb; border-radius: 8px; aspect-ratio: 210 / 297; overflow: hidden; display: flex; align-items: flex-start; }
+  .pcard .th svg { width: 100%; height: auto; display: block; }
+  .pcard .nm { font-weight: 700; margin-top: 8px; }
+  .pcard .ds { color: var(--mute); font-size: 11.5px; margin-top: 2px; }
+  .pcard.new { border-style: dashed; display: grid; place-items: center; min-height: 300px; color: var(--pp); font-weight: 700; font-size: 15px; }
+  .guide { max-width: 560px; margin: 60px auto; background: #fff; border-radius: 16px; padding: 26px 30px; box-shadow: 0 6px 24px rgba(30,20,60,.1); }
+  .guide h3 { font-size: 16px; margin: 0 0 12px; color: #1f2330; }
+  .guide ol { margin: 0; padding-left: 20px; line-height: 1.9; font-size: 13.5px; }
+  .pv { position: absolute; inset: 0; background: #ecebf3; z-index: 14; display: flex; flex-direction: column; }
+  .pv .pvbar { display: flex; gap: 10px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line); }
+  .pv .pvbar .note { flex: 1; }
+  .pv .pvbody { flex: 1; overflow: auto; padding: 20px; display: flex; flex-wrap: wrap; gap: 18px; align-content: flex-start; justify-content: center; }
+  .pv .sheet { width: 300px; background: #fff; box-shadow: 0 2px 10px rgba(30,20,60,.15); position: relative; }
+  .pv .sheet svg { width: 100%; height: auto; display: block; }
+  .pv .sheet .lb { position: absolute; left: 0; top: -16px; font-size: 11px; color: var(--mute); }
   .warn { background: #fff7e6; border: 1px solid #f0d9a8; color: #6b4d00; border-radius: 8px; padding: 6px 10px; font-size: 12px; margin: 0 auto 12px; max-width: 760px; white-space: pre-wrap; }
   .empty { color: var(--mute); text-align: center; padding: 80px 20px; font-size: 14px; line-height: 1.7; }
 
@@ -152,14 +173,22 @@
   <!-- 가운데 -->
   <div class="stage">
     <div class="ptool">
-      <input type="text" id="pname" placeholder="지면 이름">
+      <button id="p-home" title="틀 목록으로">← 틀</button>
+      <input type="text" id="plname" placeholder="틀 이름" title="이 틀(책 구성)의 이름" style="width:150px;color:var(--pp)">
+      <span class="sep"></span>
+      <input type="text" id="pname" placeholder="지면 이름" style="width:140px;font-weight:500">
       <span class="sep"></span>
       <label class="note">옷</label><select id="skin"></select>
       <span class="sep"></span>
-      <button id="p-dup" title="지면 복제">⧉ 복제</button>
-      <button id="p-del" title="지면 지우기 (요소 없이 Delete)">🗑 지우기</button>
+      <button id="p-preview" title="세트를 끼운 책 전체를 본다">📖 책 미리보기</button>
+      <button id="p-pdf" title="비블리오처럼 PDF 로 저장 (크로미움 인쇄)">⬇ PDF</button>
+      <span class="sep"></span>
+      <button id="p-dup" title="지면 복제">⧉</button>
+      <button id="p-del" title="지면 지우기 (요소 없이 Delete)">🗑</button>
       <span class="st" id="st"></span>
     </div>
+    <div class="start" id="start" style="display:none"></div>
+    <div class="pv" id="pv" style="display:none"><div class="pvbar"><b id="pvtitle"></b><span class="note" id="pvinfo"></span><a class="btn sm" id="pvpdf" target="_blank">⬇ PDF</a><button class="btn sm sub" id="pvclose">닫기</button></div><div class="pvbody" id="pvbody"></div></div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
@@ -177,7 +206,7 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span>썸네일에 올리면 ⧉ ✕ · 끌어 순서 · ←/→ 이동 · 요소 없이 Delete = 지면 지우기 | 빈 곳 끌기 = 영역 선택 · Ctrl+Z · Ctrl+C/V · Ctrl+D · Ctrl+A · Ctrl+]/[</span>
+        <span>이 틀의 지면 — ＋ 끼우기 · 썸네일에 올리면 ⧉ ✕ · 끌어 순서 · ←/→ | 빈 곳 끌기 = 영역 선택 · Ctrl+Z · Ctrl+C/V · Ctrl+D · Ctrl+A · Ctrl+]/[</span>
         <span class="cnt" id="cnt"></span>
         <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
       </div>
@@ -217,19 +246,25 @@ const ATOMS = [
 ];
 const ATOM_NM = Object.fromEntries(ATOMS.map(a => [a[0], a[1]]));
 
-let page = null, sel = null, sels = new Set(), scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {}, curSet = "";
+let plan = null, page = null, sel = null, sels = new Set(), scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {}, curSet = "";
+// 틀 = 문서. 아래 띠·←/→·＋ 는 전부 이 틀의 지면 순서 위에서 움직인다. 지면 자체는 라이브러리(공유)에 있다.
+function planIds(pl) { const ids = [...(pl.front || [])]; for (const sc of pl.sections || []) { if (sc.divider) ids.push(sc.divider); for (const pg of sc.pages || []) ids.push(pg.page); } ids.push(...(pl.back || [])); return ids; }
+function docPages() { return plan ? planIds(plan).map(id => byId("pages")[id]).filter(Boolean) : []; }
+function setPlanIds(ids) { const s0 = (plan.sections || [])[0] || {id: "s1", name: "본문"}; plan.front = []; plan.back = []; plan.sections = [{id: s0.id, name: s0.name, pages: ids.map(id => ({page: id, repeat: "once"}))}]; }
+async function savePlan() { if (!plan) return; const j = await api("/api/units/plans", plan); if (j.error) $("#st").textContent = "틀 저장 실패: " + j.error; }
+function usedElsewhere(pid) { return LIB.plans.some(pl => pl !== plan && planIds(pl).includes(pid)); }
 let tab = new URLSearchParams(location.search).get("tab") || "blocks";      // ?tab=atoms 로 바로 열기
 const specOf = (p) => byId("specs")[(p || page || {}).spec] || byId("specs").a4 || {w: 210, h: 297};
 const skin = () => byId("skins")[$("#skin").value] || LIB.skins[0];
-const idx = () => LIB.pages.findIndex(x => page && x.id === page.id);
+const idx = () => docPages().findIndex(x => page && x.id === page.id);
 const unitOf = (it) => it.atom ? "atom" : (it.block ? "block" : "part");
 const nameOf = (it) => it.atom ? ("원자 · " + ATOM_NM[it.atom.t]) : it.block ? (byId("blocks")[it.block] || {name: it.block}).name : (byId("parts")[it.part] || {name: it.part}).name;
 const partOfBlock = (bid) => { const b = byId("blocks")[bid]; if (!b) return null; const v = (b.variants || []).find(v => v.id === (skin().variants || {})[bid]) || b.variants[0]; return v && byId("parts")[v.part]; };
 
-// ── 지면 만들기 · 순서 ──
+// ── 지면 만들기 · 순서 · 지우기 — 이 틀 안에서 ──
 function newPage(kind) {
   let n = 1; while (byId("pages")["page_" + n]) n++;
-  const S = specOf(); const p = {id: "page_" + n, name: "", spec: (page && page.spec) || "a4", mirror: true, zones: [], items: []};
+  const S = specOf(); const p = {id: "page_" + n, name: "", spec: (plan && plan.spec) || (page && page.spec) || "a4", mirror: true, zones: [], items: []};
   if (kind === "dup" && page) { const d = clone(page); d.id = "page_" + n; d.name = (page.name || page.id) + " 복사"; return d; }
   p.name = {body: "본문", blank: "빈 면", divider: "간지", cover: "표지"}[kind] + " " + n;
   if (kind === "body") { if (byId("blocks").running_head) p.items.push({block: "running_head", x: M.left, y: 14}); if (byId("blocks").folio) p.items.push({block: "folio", x: M.left, y: S.h - 19}); }
@@ -237,32 +272,90 @@ function newPage(kind) {
   return p;
 }
 async function addPage(kind) {
-  const p = newPage(kind); if (!p) return;
-  const j = await api("/api/units/pages?after=" + encodeURIComponent(page ? page.id : ""), p); if (j.error) { $("#st").textContent = j.error; return; }
-  LIB.pages.splice(page ? idx() + 1 : 0, 0, p); open(p);
+  if (!plan) return; const p = newPage(kind); if (!p) return;
+  const j = await api("/api/units/pages", p); if (j.error) { $("#st").textContent = j.error; return; }
+  LIB.pages.push(p);
+  const ids = planIds(plan); const i = page ? ids.indexOf(page.id) : -1; ids.splice(i + 1, 0, p.id); setPlanIds(ids); await savePlan();
+  open(p);
 }
 async function movePageTo(fromId, toIndex) {
-  const i = LIB.pages.findIndex(x => x.id === fromId); if (i < 0) return;
-  const [p] = LIB.pages.splice(i, 1); const j = Math.max(0, Math.min(toIndex, LIB.pages.length)); LIB.pages.splice(j, 0, p);
-  await api("/api/units/pages?after=" + encodeURIComponent(j > 0 ? LIB.pages[j - 1].id : ""), p); drawRail(); side();
+  const ids = planIds(plan); const i = ids.indexOf(fromId); if (i < 0) return;
+  ids.splice(i, 1); ids.splice(Math.max(0, Math.min(toIndex, ids.length)), 0, fromId); setPlanIds(ids); await savePlan(); drawRail(); side();
 }
 $("#p-dup").onclick = () => addPage("dup");
 async function deletePage(p) {
-  p = p || page; if (!p) return;
-  const n = (p.items || []).length;
-  if (!confirm(`지면 「${p.name || p.id}」 을 지울까?${n ? ` (요소 ${n}개도 함께)` : ""}`)) return;
-  const i = LIB.pages.findIndex(x => x.id === p.id); await api("/api/units/pages", {id: p.id}, "DELETE"); LIB.pages.splice(i, 1); delete pageSvg[p.id];
-  if (!page || p.id === page.id) { if (LIB.pages.length) open(LIB.pages[Math.min(i, LIB.pages.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; } }
+  p = p || page; if (!p || !plan) return;
+  const n = (p.items || []).length; const shared = usedElsewhere(p.id);
+  if (!confirm(`지면 「${p.name || p.id}」 을 이 틀에서 지울까?${n ? ` (요소 ${n}개도 함께)` : ""}${shared ? "\n다른 틀에서도 쓰는 지면이라 라이브러리엔 남는다." : ""}`)) return;
+  const ids = planIds(plan); const i = ids.indexOf(p.id); ids.splice(i, 1); setPlanIds(ids); await savePlan();
+  if (!shared) { await api("/api/units/pages", {id: p.id}, "DELETE"); LIB.pages = LIB.pages.filter(x => x.id !== p.id); delete pageSvg[p.id]; }
+  const dp = docPages();
+  if (!page || p.id === page.id) { if (dp.length) open(dp[Math.min(Math.max(i, 0), dp.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); } }
   else drawRail();
 }
 $("#p-del").onclick = () => deletePage();
+
+// ── 틀(문서) 고르기 · 만들기 ──
+function openPlan(pl) {
+  plan = byId("plans")[pl.id] || pl; page = null; sel = null; sels = new Set();
+  $("#start").style.display = "none"; $(".ptool").style.display = ""; $("#plname").value = plan.name || plan.id;
+  const dp = docPages(); const want = decodeURIComponent(location.hash.replace(/^#/, ""));
+  history.replaceState(null, "", "?plan=" + encodeURIComponent(plan.id) + (want ? "#" + want : ""));
+  if (dp.length) open(dp.find(x => x.id === want) || dp[0]); else { $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); }
+  panel();
+}
+function emptyGuide() {
+  $("#paper").style.width = "auto"; $("#paper").style.height = "auto"; $("#paper").style.background = "transparent"; $("#paper").style.boxShadow = "none";
+  $("#svgwrap").innerHTML = `<div class="guide"><h3>「${esc(plan.name || plan.id)}」 — 지면이 아직 없다</h3><ol>
+    <li>아래 띠의 <b>＋</b> 로 지면을 만든다 (표지 · 간지 · 본문)</li>
+    <li>왼쪽 <b>③ 블록</b>을 눌러 콘텐츠 자리를 놓는다 (지문·발문·선지·드릴…). 머리말·쪽번호는 「본문」 지면에 이미 있다</li>
+    <li>왼쪽 <b>📝 세트</b>에서 원고를 고르면 자리에 글이 들어간다 → 위의 <b>📖 책 미리보기</b> · <b>⬇ PDF</b></li></ol>
+    <div class="row" style="margin-top:14px"><button class="btn" id="g-first">＋ 첫 지면 (본문)</button><button class="btn sub" id="g-cover">표지부터</button></div></div>`;
+  $("#g-first").onclick = () => addPage("body"); $("#g-cover").onclick = () => addPage("cover");
+}
+async function showStart() {
+  plan = null; page = null; history.replaceState(null, "", location.pathname);
+  const box = $("#start"); box.style.display = ""; $(".ptool").style.display = "none"; $("#side").innerHTML = ""; $("#stitle").textContent = "틀을 고르면 여기에 속성"; $("#rail").innerHTML = ""; $("#cnt").textContent = "";
+  box.innerHTML = `<h2>무엇을 만들까?</h2><div class="sub">틀 = 책 한 권의 지면 구성. 지면에 <b>블록(콘텐츠 자리)</b>을 놓아 두면, 원고(세트)를 끼워 넣기만 해도 책이 되고 PDF 로 나온다.<br>인디자인 문서 하나 = 틀 하나.</div><div class="cards" id="pcards"></div>
+    <div class="note" style="margin-top:22px"><a href="/units/library">라이브러리 · PDF/그림에서 부품 뽑기 · JSON →</a></div>`;
+  const cards = $("#pcards");
+  const nw = document.createElement("div"); nw.className = "pcard new"; nw.textContent = "＋ 새 틀 만들기"; nw.onclick = newPlan; cards.appendChild(nw);
+  for (const pl of LIB.plans) {
+    const d = document.createElement("div"); d.className = "pcard"; const ids = planIds(pl);
+    d.innerHTML = `<div class="th"></div><div class="nm">${esc(pl.name || pl.id)}</div><div class="ds">지면 ${ids.length} · ${pl.spec || "a4"} · <code>${pl.id}</code></div>`;
+    d.onclick = () => openPlan(pl); cards.appendChild(d);
+    const first = byId("pages")[ids[0]];
+    if (first) { const j = await api("/api/units/preview", {kind: "pages", item: first, skin: $("#skin").value, mode: "canvas", spec: first.spec}); const th = d.querySelector(".th"); th.innerHTML = ((j.svgs || [])[0] || {}).svg || ""; strip(th); }
+  }
+}
+async function newPlan() {
+  const name = prompt("틀 이름 (예: 워크북 · 파이널 · 단어장)", "새 틀"); if (name == null) return;
+  let n = 1; while (byId("plans")["plan_" + n]) n++;
+  const pl = {id: "plan_" + n, name, spec: "a4", front: [], sections: [{id: "s1", name: "본문", pages: []}], back: []};
+  const j = await api("/api/units/plans", pl); if (j.error) { alert(j.error); return; }
+  LIB.plans.push(pl); openPlan(pl);
+}
+$("#p-home").onclick = showStart;
+$("#plname").oninput = () => { if (plan) { plan.name = $("#plname").value; clearTimeout(window._plt); window._plt = setTimeout(savePlan, 500); } };
+// 책 미리보기 · PDF
+$("#p-pdf").onclick = () => { if (plan) window.open(`/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`, "_blank"); };
+$("#p-preview").onclick = async () => {
+  if (!plan) return; const pv = $("#pv"); pv.style.display = ""; $("#pvtitle").textContent = plan.name || plan.id; $("#pvinfo").textContent = "그리는 중…"; $("#pvbody").innerHTML = "";
+  $("#pvpdf").href = `/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`;
+  const j = await api("/api/units/preview", {kind: "plans", item: plan, skin: $("#skin").value});
+  if (j.error) { $("#pvinfo").textContent = j.error; return; }
+  $("#pvinfo").textContent = `${j.svgs.length}면 · 세트 ${LIB.sets.length}개를 끼운 모습` + ((j.warnings || []).length ? ` · 경고 ${j.warnings.length}: ${j.warnings[0]}` : "");
+  for (const sh of j.svgs) { const d = document.createElement("div"); d.className = "sheet"; d.innerHTML = `<span class="lb">${esc(sh.label || "")} · ${sh.page_no}쪽</span>${sh.svg}`; strip(d); $("#pvbody").appendChild(d); }
+};
+$("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
 
 // ── 열기 · 그리기 ──
 function open(p) {
   page = byId("pages")[p.id] || p; sel = null; sels = new Set();
   if (!page.items) page.items = [];
   if (page.chrome && page.chrome.length) { page.items = page.chrome.map(c => ({part: c.part, x: c.x, y: c.y})).concat(page.items); delete page.chrome; }
-  $("#pname").value = page.name || ""; location.hash = page.id;
+  $("#pname").value = page.name || ""; history.replaceState(null, "", (plan ? "?plan=" + encodeURIComponent(plan.id) : "") + "#" + page.id);
+  const pp = $("#paper"); pp.style.background = ""; pp.style.boxShadow = "";
   drawRail(); layout(); render(); side();
   const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
@@ -293,8 +386,8 @@ function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttri
 // ── 아래 지면 띠 ──
 let dragId = null;
 async function drawRail() {
-  const rail = $("#rail"); rail.innerHTML = "";
-  LIB.pages.forEach((p, i) => {
+  const rail = $("#rail"); rail.innerHTML = ""; const dp = docPages();
+  dp.forEach((p, i) => {
     const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id; d.draggable = true; d.title = p.name || p.id;
     d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span><span class="pgact"><button data-pg-dup title="이 지면 복제">⧉</button><button data-pg-del title="이 지면 지우기">✕</button></span>`; strip(d);
     d.onclick = () => open(p);
@@ -303,7 +396,7 @@ async function drawRail() {
     d.ondragstart = (e) => { dragId = p.id; e.dataTransfer.effectAllowed = "move"; };
     d.ondragover = (e) => { if (dragId) { e.preventDefault(); d.classList.add("dragover"); } };
     d.ondragleave = () => d.classList.remove("dragover");
-    d.ondrop = (e) => { e.preventDefault(); d.classList.remove("dragover"); if (dragId && dragId !== p.id) movePageTo(dragId, LIB.pages.findIndex(x => x.id === p.id)); dragId = null; };
+    d.ondrop = (e) => { e.preventDefault(); d.classList.remove("dragover"); if (dragId && dragId !== p.id) movePageTo(dragId, planIds(plan).indexOf(p.id)); dragId = null; };
     rail.appendChild(d);
   });
   const add = document.createElement("div"); add.className = "addpg"; add.title = "지금 지면 뒤에 새 지면";
@@ -311,8 +404,8 @@ async function drawRail() {
   add.onclick = (e) => { e.stopPropagation(); const m = add.querySelector(".menu"), r = add.getBoundingClientRect(); m.style.left = Math.min(r.left, innerWidth - 200) + "px"; m.style.bottom = (innerHeight - r.top + 6) + "px"; m.classList.toggle("on"); };
   add.querySelectorAll("[data-new]").forEach(b => b.onclick = (e) => { e.stopPropagation(); add.querySelector(".menu").classList.remove("on"); addPage(b.dataset.new); });
   rail.appendChild(add);
-  $("#cnt").textContent = page ? `${idx() + 1} / ${LIB.pages.length}` : `0 / ${LIB.pages.length}`;
-  for (const p of LIB.pages) {
+  $("#cnt").textContent = page ? `${idx() + 1} / ${dp.length}` : `0 / ${dp.length}`;
+  for (const p of dp) {
     if (pageSvg[p.id]) continue;
     const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec, set: curSet});
     pageSvg[p.id] = ((j.svgs || [])[0] || {}).svg || "";
@@ -455,8 +548,8 @@ document.addEventListener("keydown", (e) => {
   if (mod && (e.key === "]" || e.key === "[")) { e.preventDefault(); zorder(e.key === "]"); return; }
   if (!sels.size) {
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePage(); return; }
-    if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(); if (i > 0) open(LIB.pages[i - 1]); e.preventDefault(); }
-    if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(); if (i < LIB.pages.length - 1) open(LIB.pages[i + 1]); e.preventDefault(); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(), dp = docPages(); if (i > 0) open(dp[i - 1]); e.preventDefault(); }
+    if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(), dp = docPages(); if (i < dp.length - 1) open(dp[i + 1]); e.preventDefault(); }
     return;
   }
   if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSel(); return; }
@@ -594,13 +687,13 @@ function panel() {
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
   } else if (tab === "pages") {
-    hd.innerHTML = `<b>④ 지면</b> <span class="tag">페이지</span><div class="note">요소를 놓은 면. 인디자인의 페이지. 아래 띠와 같다 — 「+」로 지금 지면 뒤에 끼운다.</div>`;
-    LIB.pages.forEach((p, i) => { const d = document.createElement("div"); d.className = "li" + (page && p.id === page.id ? " on" : "");
+    hd.innerHTML = `<b>④ 지면</b> <span class="tag">페이지</span><div class="note">이 틀 「${esc(plan ? plan.name || plan.id : "—")}」 의 지면. 아래 띠와 같다 — 「+」로 지금 지면 뒤에 끼운다.</div>`;
+    docPages().forEach((p, i) => { const d = document.createElement("div"); d.className = "li" + (page && p.id === page.id ? " on" : "");
       const its = p.items || []; const n = {atom: 0, part: 0, block: 0}; its.forEach(it => n[unitOf(it)]++);
       d.innerHTML = `<b>${i + 1}. ${esc(p.name || p.id)}</b><div class="ds">${p.spec || "a4"} · <span class="tag a">①</span>${n.atom} <span class="tag p">②</span>${n.part} <span class="tag b">③</span>${n.block}</div>`;
       d.onclick = () => open(p); body.appendChild(d); });
     body.insertAdjacentHTML("beforeend", `<h3>흐름</h3><div class="note">블록 자리에 긴 글이 들어오면 자리가 자라고 <b>그 아래 요소가 밀린다</b>. 머리말·쪽번호는 안 밀린다. 면 아래로 넘치면 경고(다음 면으로 흘리기는 아직).</div>
-      <h3>책이 될 때</h3><div class="note">이 지면을 틀에 「세트마다」로 넣으면 세트(지문) 하나에 한 면씩, 블록 자리에 그 세트의 값이 들어간다. 세트가 없는 면(표지·간지)은 머리말·쪽번호만 그린다.</div>`);
+      <h3>책이 될 때</h3><div class="note">콘텐츠 자리가 있는 지면은 세트(지문) 하나에 한 면씩 반복된다. 세트가 없는 면(표지·간지)은 한 번. 위 「📖 책 미리보기」·「⬇ PDF」.</div>`);
   } else if (tab === "sets") {
     hd.innerHTML = `<b>📄 세트</b> <span class="tag">콘텐츠</span><div class="note">콘텐츠팀이 보내는 단위 — 지문 하나 + 딸린 블록 값. 고르면 지면의 블록 자리에 그 값이 들어간다.</div>`;
     const none = document.createElement("div"); none.className = "li" + (curSet ? "" : " on"); none.innerHTML = `<b>견본 값</b><div class="ds">지어낸 글로 채운다</div>`; none.onclick = () => { curSet = ""; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(none);
@@ -627,16 +720,18 @@ function panel() {
       };
     };
   } else if (tab === "plans") {
-    hd.innerHTML = `<b>📚 틀</b> <span class="tag">책 구성</span><div class="note">구간(STEP·회차) 순서 + 어느 지면을 세트마다 반복할지. 라인업 이름이 붙는 곳.</div>`;
-    for (const p of LIB.plans) { const d = document.createElement("div"); d.className = "li"; d.style.cursor = "default";
-      d.innerHTML = `<b>${esc(p.name)}</b> <code style="font-size:10px;color:#7a6aa8">${p.id}</code><div class="ds">규격 ${p.spec} · 앞 ${(p.front || []).length} · 구간 ${(p.sections || []).length}</div>
-        ${(p.sections || []).map(s => `<div class="ds" style="margin-top:4px">▸ ${esc(s.name)}${s.divider ? ` <span class="chip" data-pg="${s.divider}">간지 ${s.divider}</span>` : ""} ${(s.pages || []).map(pg => `<span class="chip" data-pg="${pg.page}">${pg.page} · ${pg.repeat === "each_set" ? "세트마다" : "한 번"}</span>`).join("")}</div>`).join("")}
-        <div class="row" style="margin:6px 0 0"><a class="btn sm sub" href="/units/library#plans/${p.id}">책으로 미리보기 →</a></div>`;
-      d.querySelectorAll("[data-pg]").forEach(c => c.onclick = () => { const pg = byId("pages")[c.dataset.pg]; if (pg) open(pg); }); body.appendChild(d); }
-    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:12px"><button class="btn sm" id="pl-new">지금 지면 순서를 틀로 저장</button></div><div class="note">아래 띠의 지면을 그 순서대로 한 구간에 넣는다. 세트마다 반복할 지면은 라이브러리에서 <code>each_set</code> 으로.</div>`);
-    $("#pl-new").onclick = async () => { const name = prompt("틀 이름", "새 틀"); if (name == null) return; let n = 1; while (byId("plans")["plan_" + n]) n++;
-      const pl = {id: "plan_" + n, name, spec: (page && page.spec) || "a4", front: [], sections: [{id: "s1", name: "본문", pages: LIB.pages.map(p => ({page: p.id, repeat: "once"}))}], back: []};
-      const j = await api("/api/units/plans", pl); if (j.error) { $("#st").textContent = j.error; return; } LIB.plans.push(pl); panel(); };
+    hd.innerHTML = `<b>⑤ 틀</b> <span class="tag">책 구성 = 문서</span><div class="note">틀 하나 = 인디자인 문서 하나. 지면 순서가 곧 책. 다른 틀을 누르면 그 틀을 편집한다.</div>`;
+    for (const pl of LIB.plans) { const d = document.createElement("div"); d.className = "li" + (plan && pl.id === plan.id ? " on" : "");
+      d.innerHTML = `<b>${esc(pl.name || pl.id)}</b> <code style="font-size:10px;color:#7a6aa8">${pl.id}</code><div class="ds">규격 ${pl.spec} · 지면 ${planIds(pl).length}</div>
+        <div class="ds">${planIds(pl).map(id => `<span class="chip" data-pg="${id}">${esc((byId("pages")[id] || {name: id}).name || id)}</span>`).join("")}</div>`;
+      d.onclick = () => { if (!plan || plan.id !== pl.id) openPlan(pl); };
+      d.querySelectorAll("[data-pg]").forEach(c => c.onclick = (e) => { e.stopPropagation(); if (!plan || plan.id !== pl.id) openPlan(pl); const pg = byId("pages")[c.dataset.pg]; if (pg) open(pg); });
+      body.appendChild(d); }
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:12px"><button class="btn sm" id="pl-new">＋ 새 틀</button><button class="btn sm sub" id="pl-home">틀 목록 화면</button></div>
+      ${plan ? `<h3>이 틀</h3><div class="row"><button class="btn sm sub" id="pl-pdf">⬇ PDF</button><button class="btn sm danger" id="pl-del">틀 지우기</button></div><div class="note">지면은 라이브러리에 남는다. 세트마다 반복·간지 같은 세부는 <a href="/units/library#plans/${plan.id}">라이브러리 JSON</a>.</div>` : ""}`);
+    $("#pl-new").onclick = newPlan; $("#pl-home").onclick = showStart;
+    if (plan) { $("#pl-pdf").onclick = () => $("#p-pdf").click();
+      $("#pl-del").onclick = async () => { if (!confirm(`틀 「${plan.name || plan.id}」 을 지울까? (지면은 남는다)`)) return; await api("/api/units/plans", {id: plan.id}, "DELETE"); LIB.plans = LIB.plans.filter(x => x.id !== plan.id); showStart(); }; }
   }
 }
 document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; panel(); });
@@ -687,7 +782,7 @@ function side() {
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
       <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm danger" id="s-x">지우기</button></div>`;
   } else {
-    $("#stitle").textContent = `④ 지면 ${idx() + 1} / ${LIB.pages.length}`;
+    $("#stitle").textContent = `④ 지면 ${idx() + 1} / ${docPages().length}`;
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><label><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 책에서 오른쪽 면은 뒤집힌다</label></div>
       <h3>이 지면의 요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0"><span class="tag ${({atom: "a", part: "p", block: "b"})[unitOf(it)]}">${({atom: "①", part: "②", block: "③"})[unitOf(it)]}</span> ${esc(nameOf(it))} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 탭에서 블록·부품·원자를 누른다</div>`}
@@ -728,9 +823,8 @@ $("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawRail(); render(); 
 $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
 thumbsLoad();
 (() => {
-  const id = decodeURIComponent(location.hash.replace(/^#/, ""));
-  const p = byId("pages")[id] || LIB.pages[0];
-  if (p) open(p); else { drawRail(); $("#svgwrap").innerHTML = '<div class="empty">지면이 없다.<br>아래 「+」로 시작.</div>'; }
+  const q = new URLSearchParams(location.search); const pl = byId("plans")[q.get("plan") || ""];
+  if (pl) openPlan(pl); else showStart();
 })();
 </script>
 {% endblock %}
