@@ -96,6 +96,11 @@
   .pg:hover .th { border-color: #b39cf5; }
   .pg.on .th { border-color: var(--pp); box-shadow: 0 0 0 2px rgba(125,42,232,.18); }
   .pg .no { position: absolute; left: 5px; bottom: 4px; font-size: 10.5px; color: #3c4043; background: rgba(255,255,255,.85); padding: 0 4px; border-radius: 4px; }
+  .pg .pgact { position: absolute; right: 3px; top: 3px; display: none; gap: 2px; }
+  .pg:hover .pgact { display: flex; }
+  .pg .pgact button { border: 0; background: rgba(31,35,48,.85); color: #fff; font-size: 11px; width: 20px; height: 20px; border-radius: 5px; cursor: pointer; }
+  .pg .pgact button:hover { background: #c0263a; }
+  .pg .pgact button[data-pg-dup]:hover { background: var(--pp); }
   .pg.dragover .th { border-color: var(--pp); border-left-width: 6px; }
   .addpg { flex: none; width: 84px; aspect-ratio: 210 / 297; border: 2px dashed #cfc8e6; border-radius: 6px; background: #fff; display: grid; place-items: center; font-size: 26px; color: var(--pp); cursor: pointer; position: relative; }
   .addpg:hover { border-color: var(--pp); background: var(--pp-bg); }
@@ -152,7 +157,7 @@
       <label class="note">옷</label><select id="skin"></select>
       <span class="sep"></span>
       <button id="p-dup" title="지면 복제">⧉ 복제</button>
-      <button id="p-del" title="지면 지우기">🗑</button>
+      <button id="p-del" title="지면 지우기 (요소 없이 Delete)">🗑 지우기</button>
       <span class="st" id="st"></span>
     </div>
     <div class="area" id="area">
@@ -172,7 +177,7 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span>빈 곳 끌기 = 영역 선택 · Shift+클릭 = 더 고르기 · Ctrl+Z 되돌리기 · Ctrl+C/V · Ctrl+D 복제 · Ctrl+A 전체 · Ctrl+]/[ 앞뒤 · Alt 끌기 = 안 붙음 · ←/→ 지면 이동</span>
+        <span>썸네일에 올리면 ⧉ ✕ · 끌어 순서 · ←/→ 이동 · 요소 없이 Delete = 지면 지우기 | 빈 곳 끌기 = 영역 선택 · Ctrl+Z · Ctrl+C/V · Ctrl+D · Ctrl+A · Ctrl+]/[</span>
         <span class="cnt" id="cnt"></span>
         <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
       </div>
@@ -242,11 +247,15 @@ async function movePageTo(fromId, toIndex) {
   await api("/api/units/pages?after=" + encodeURIComponent(j > 0 ? LIB.pages[j - 1].id : ""), p); drawRail(); side();
 }
 $("#p-dup").onclick = () => addPage("dup");
-$("#p-del").onclick = async () => {
-  if (!page || !confirm(`지면 「${page.name || page.id}」 을 지울까?`)) return;
-  const i = idx(); await api("/api/units/pages", {id: page.id}, "DELETE"); LIB.pages.splice(i, 1); delete pageSvg[page.id];
-  if (LIB.pages.length) open(LIB.pages[Math.min(i, LIB.pages.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; }
-};
+async function deletePage(p) {
+  p = p || page; if (!p) return;
+  const n = (p.items || []).length;
+  if (!confirm(`지면 「${p.name || p.id}」 을 지울까?${n ? ` (요소 ${n}개도 함께)` : ""}`)) return;
+  const i = LIB.pages.findIndex(x => x.id === p.id); await api("/api/units/pages", {id: p.id}, "DELETE"); LIB.pages.splice(i, 1); delete pageSvg[p.id];
+  if (!page || p.id === page.id) { if (LIB.pages.length) open(LIB.pages[Math.min(i, LIB.pages.length - 1)]); else { page = null; $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; } }
+  else drawRail();
+}
+$("#p-del").onclick = () => deletePage();
 
 // ── 열기 · 그리기 ──
 function open(p) {
@@ -287,8 +296,10 @@ async function drawRail() {
   const rail = $("#rail"); rail.innerHTML = "";
   LIB.pages.forEach((p, i) => {
     const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id; d.draggable = true; d.title = p.name || p.id;
-    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span>`; strip(d);
+    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span><span class="pgact"><button data-pg-dup title="이 지면 복제">⧉</button><button data-pg-del title="이 지면 지우기">✕</button></span>`; strip(d);
     d.onclick = () => open(p);
+    d.querySelector("[data-pg-del]").onclick = (e) => { e.stopPropagation(); deletePage(p); };
+    d.querySelector("[data-pg-dup]").onclick = async (e) => { e.stopPropagation(); if (!page || page.id !== p.id) { open(p); await new Promise(r => setTimeout(r, 200)); } addPage("dup"); };
     d.ondragstart = (e) => { dragId = p.id; e.dataTransfer.effectAllowed = "move"; };
     d.ondragover = (e) => { if (dragId) { e.preventDefault(); d.classList.add("dragover"); } };
     d.ondragleave = () => d.classList.remove("dragover");
@@ -443,6 +454,7 @@ document.addEventListener("keydown", (e) => {
   if (mod && k === "g") { e.preventDefault(); if (e.shiftKey) ungroup(); else groupToPart(); return; }
   if (mod && (e.key === "]" || e.key === "[")) { e.preventDefault(); zorder(e.key === "]"); return; }
   if (!sels.size) {
+    if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePage(); return; }
     if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(); if (i > 0) open(LIB.pages[i - 1]); e.preventDefault(); }
     if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(); if (i < LIB.pages.length - 1) open(LIB.pages[i + 1]); e.preventDefault(); }
     return;
