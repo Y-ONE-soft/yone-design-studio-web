@@ -39,6 +39,12 @@ class Ctx(object):
         self.sys = dict(sys or {})
         self.warnings = []
         self._seen = set()
+        self._n = 0
+
+    def uid(self):
+        """SVG 안 id(그라디언트·클립) — 한 그림 안에서 겹치지 않게."""
+        self._n += 1
+        return f"u{self._n}"
 
     def warn(self, msg):
         if msg not in self._seen:
@@ -217,6 +223,42 @@ def path_d(d, x, y, w, h):
     return " ".join(out)
 
 
+def _fill(ctx, a):
+    """채움 → (fill 값, defs). gradient 가 있으면 <linearGradient>/<radialGradient> 를 만들어 url 로 쓴다."""
+    g = a.get("gradient")
+    if not g or not g.get("stops"):
+        return (ctx.color(a["fill"]) if a.get("fill") else "none"), ""
+    gid = ctx.uid()
+    stops = g["stops"]
+    n = max(len(stops) - 1, 1)
+    inner = "".join(f'<stop offset="{(st.get("at") if st.get("at") is not None else i / n) * 100:.1f}%" stop-color="{ctx.color(st.get("c"))}"/>'
+                    for i, st in enumerate(stops))
+    if g.get("type") == "radial":
+        defs = f'<radialGradient id="{gid}">{inner}</radialGradient>'
+    else:
+        defs = f'<linearGradient id="{gid}" gradientTransform="rotate({float(g.get("angle") or 0):.1f} 0.5 0.5)">{inner}</linearGradient>'
+    return f"url(#{gid})", f"<defs>{defs}</defs>"
+
+
+def _rrect_path(x, y, w, h, r):
+    """모서리마다 다른 반지름의 네모 → path. r = [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래]."""
+    tl, tr, br, bl = [max(0.0, min(float(v or 0), w / 2, h / 2)) for v in r]
+    k = 0.5523                                                   # 원호를 베지에로
+    d = [f"M {x + tl:.3f} {y:.3f}", f"L {x + w - tr:.3f} {y:.3f}"]
+    if tr:
+        d.append(f"C {x + w - tr + tr * k:.3f} {y:.3f} {x + w:.3f} {y + tr - tr * k:.3f} {x + w:.3f} {y + tr:.3f}")
+    d.append(f"L {x + w:.3f} {y + h - br:.3f}")
+    if br:
+        d.append(f"C {x + w:.3f} {y + h - br + br * k:.3f} {x + w - br + br * k:.3f} {y + h:.3f} {x + w - br:.3f} {y + h:.3f}")
+    d.append(f"L {x + bl:.3f} {y + h:.3f}")
+    if bl:
+        d.append(f"C {x + bl - bl * k:.3f} {y + h:.3f} {x:.3f} {y + h - bl + bl * k:.3f} {x:.3f} {y + h - bl:.3f}")
+    d.append(f"L {x:.3f} {y + tl:.3f}")
+    if tl:
+        d.append(f"C {x:.3f} {y + tl - tl * k:.3f} {x + tl - tl * k:.3f} {y:.3f} {x + tl:.3f} {y:.3f}")
+    return " ".join(d) + " Z"
+
+
 def _wrap_atom(a, svg, cx, cy):
     """회전·불투명 — 원자 공통. 회전축은 원자의 가운데."""
     rot = float(a.get("rotate") or 0)
@@ -339,22 +381,32 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         return (f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
                 f'{_stroke(ctx, a.get("stroke"))}/>')
     if t == "path":
-        fill = ctx.color(a["fill"]) if a.get("fill") else "none"
+        fill, defs = _fill(ctx, a)
         rule = ' fill-rule="evenodd"' if a.get("evenodd") else ""
-        return (f'<path d="{path_d(a.get("d"), a["x"], a["y"] + dy, a["w"], h)}" fill="{fill}"{rule} '
+        return (defs + f'<path d="{path_d(a.get("d"), a["x"], a["y"] + dy, a["w"], h)}" fill="{fill}"{rule} '
                 f'{_stroke(ctx, a.get("stroke"))} stroke-linejoin="round"/>')
     if t == "rect":
-        fill = ctx.color(a["fill"]) if a.get("fill") else "none"
-        return (f'<rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" rx="{a.get("radius", 0)}" '
+        fill, defs = _fill(ctx, a)
+        r = a.get("radius") or 0
+        if isinstance(r, (list, tuple)):
+            return (defs + f'<path d="{_rrect_path(a["x"], a["y"] + dy, a["w"], h, r)}" fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
+        return (defs + f'<rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" rx="{r}" '
                 f'fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
     if t == "ellipse":
-        fill = ctx.color(a["fill"]) if a.get("fill") else "none"
-        return (f'<ellipse cx="{a["x"] + a["w"] / 2:.3f}" cy="{a["y"] + dy + h / 2:.3f}" rx="{a["w"] / 2:.3f}" ry="{h / 2:.3f}" '
+        fill, defs = _fill(ctx, a)
+        return (defs + f'<ellipse cx="{a["x"] + a["w"] / 2:.3f}" cy="{a["y"] + dy + h / 2:.3f}" rx="{a["w"] / 2:.3f}" ry="{h / 2:.3f}" '
                 f'fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
     if t == "image":
         src = a.get("src") or ""
         if ctx.image(src):
             href = f"/api/units/image/{esc(ctx.skin.get('id', ''))}/{esc(src)}"
+            im = a.get("img")
+            if im:
+                # 틀 안 그림의 자리 — 틀 밖은 클립으로 자른다 (인디자인 프레임 안 그래픽)
+                cid = ctx.uid()
+                return (f'<clipPath id="{cid}"><rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}"/></clipPath>'
+                        f'<image x="{a["x"] + float(im["x"]):.3f}" y="{a["y"] + dy + float(im["y"]):.3f}" width="{float(im["w"]):.3f}" height="{float(im["h"]):.3f}" '
+                        f'href="{href}" preserveAspectRatio="none" clip-path="url(#{cid})"/>')
             par = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
             return (f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" '
                     f'href="{href}" preserveAspectRatio="{par}"/>')
