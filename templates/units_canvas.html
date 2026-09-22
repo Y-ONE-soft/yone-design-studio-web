@@ -61,7 +61,7 @@
 
   /* 가운데 */
   .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-  .stage .area { flex: 1; overflow: auto; padding: 64px 28px 28px; }
+  .stage .area { flex: 1; overflow: auto; padding: 64px 60px 40px; }
   .ptool { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; align-items: center; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(30,20,60,.16); padding: 5px 6px; z-index: 15; }
   .ptool input[type=text] { border: 0; width: 170px; font-weight: 600; padding: 4px 8px; }
   .ptool button { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
@@ -257,7 +257,7 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span class="help" title="선택: 클릭 · Shift+클릭 · 빈 곳 끌기 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 · Ctrl+1 폭 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
+        <span class="help" title="선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 요소 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 · Ctrl+1 폭 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <span class="cnt" id="cnt"></span>
         <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
@@ -415,7 +415,7 @@ function open(p) {
   const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
 function layout() {
-  const sp = specOf(); const fit = Math.min(4.5, ($("#area").clientWidth - 60) / sp.w);            // 기본 = 폭 맞춤. 세로는 스크롤
+  const sp = specOf(); const fit = Math.min(4.5, ($("#area").clientWidth - 140) / sp.w);           // 기본 = 폭 맞춤(양옆 회색 여유 — 거기서 범위 선택 시작). 세로는 스크롤
   scale = fit * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
   drawRulers();
@@ -490,7 +490,8 @@ function wire() {
     if (editing && page.items[+g.dataset.fi] && page.items[+g.dataset.fi]._edit) g.classList.add("edt");
     g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && (it.block || it.part) && !editing) { enterEdit(+g.dataset.fi); return; } if (it && it.atom && it.atom.t === "text") editTextInline(+g.dataset.fi); });
     g.addEventListener("pointerdown", (e) => {
-      if (e.button !== 0) return; e.stopPropagation();
+      if (e.button !== 0) return; if (e.ctrlKey || e.metaKey) return;          // Ctrl/⌘+끌기 = 범위 선택 (area 가 받는다)
+      e.stopPropagation();
       const i = +g.dataset.fi;
       if (e.shiftKey) { const ids = new Set(sels); if (ids.has(i)) ids.delete(i); else ids.add(i); select([...ids], ids.has(i) ? i : null); return; }
       if (!sels.has(i)) select([i], i); else { sel = i; markSels(); selbox(); side(); }
@@ -527,8 +528,9 @@ function dragItems(e) {
 }
 function guide(gx, gy) { const v = $("#gv"), h = $("#gh"); if (gx == null) v.style.display = "none"; else { v.style.display = ""; v.style.left = (gx * scale) + "px"; } if (gy == null) h.style.display = "none"; else { h.style.display = ""; h.style.top = (gy * scale) + "px"; } }
 // 영역 선택 — 빈 곳에서 끌면 상자, 상자에 걸치는 요소를 고른다. 안 끌면 선택 해제
-$("#paper").addEventListener("pointerdown", (e) => {
-  if (e.button !== 0 || !page || e.target.closest("g[data-fi], .selbox, .tools")) return;
+$("#area").addEventListener("pointerdown", (e) => {
+  if (e.button !== 0 || !page || spaceDown || e.target.closest(".selbox, .tools, .ptool, .editbar, .ruler, .guide, .warn, .start, .pv, #tedit, .cmenu")) return;
+  if (e.target.closest("g[data-fi]") && !(e.ctrlKey || e.metaKey)) return;        // 요소 위 = 옮기기. Ctrl/⌘ 누르면 범위 선택
   const s0 = mmOf(e); const m = $("#marq"); let moved = false;
   const mv = (ev) => { const m1 = mmOf(ev); if (!moved && Math.abs(m1.x - s0.x) + Math.abs(m1.y - s0.y) < 0.6) return; moved = true;
     const x = Math.min(s0.x, m1.x), y = Math.min(s0.y, m1.y), w = Math.abs(m1.x - s0.x), h = Math.abs(m1.y - s0.y);
