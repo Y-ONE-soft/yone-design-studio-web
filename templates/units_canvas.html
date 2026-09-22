@@ -108,6 +108,10 @@
   .pv .pvbar { display: flex; gap: 10px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line); }
   .pv .pvbar .note { flex: 1; }
   .pv .pvbody { flex: 1; overflow: auto; padding: 20px; display: flex; flex-wrap: wrap; gap: 18px; align-content: flex-start; justify-content: center; }
+  .chk { position: absolute; right: 16px; top: 56px; width: 380px; max-height: 70vh; overflow: auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); z-index: 16; padding: 12px 14px; font-size: 12px; }
+  .chk h4 { margin: 0 0 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; } .chk h4 .btn { margin-left: auto; }
+  .chk .it { padding: 5px 8px; border-radius: 7px; margin: 3px 0; line-height: 1.4; } .chk .it.error { background: #fde8e8; color: #8a1c1c; } .chk .it.warn { background: #fff4d6; color: #6b4b00; } .chk .it.info { color: var(--mute); }
+  .chk .ok { color: #1a7f37; font-weight: 600; }
   .pv .sheet { width: 300px; background: #fff; box-shadow: 0 2px 10px rgba(30,20,60,.15); position: relative; }
   .pv .sheet svg { width: 100%; height: auto; display: block; }
   .pv .sheet .lb { position: absolute; left: 0; top: -16px; font-size: 11px; color: var(--mute); }
@@ -226,6 +230,7 @@
       <select id="skin" title="브랜드 (색·서체)"></select>
       <span class="sep"></span>
       <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
+      <button id="p-check" title="원고 빠진 자리·안 실린 원고·넘침·없는 토큰을 찾는다">✓ 검수</button>
       <button id="p-pdf" title="PDF 저장">⬇ PDF</button>
       <span class="sep"></span>
       <button id="p-dup" title="페이지 복제">⧉</button>
@@ -403,6 +408,17 @@ $("#p-preview").onclick = async () => {
   for (const sh of j.svgs) { const d = document.createElement("div"); d.className = "sheet"; d.innerHTML = `<span class="lb">${esc(sh.label || "")} · ${sh.page_no}쪽</span>${sh.svg}`; strip(d); $("#pvbody").appendChild(d); }
 };
 $("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
+// 검수 — 책을 그려 보고 문제 목록
+async function runCheck() {
+  if (!plan) return; let box = $("#chk"); if (!box) { box = document.createElement("div"); box.className = "chk"; box.id = "chk"; document.body.appendChild(box); }
+  box.innerHTML = `<h4>검수 <span class="note">그리는 중…</span></h4>`;
+  const j = await api(`/api/units/check?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`);
+  if (j.error) { box.innerHTML = `<h4>검수 <button class="btn sm sub" onclick="this.closest('.chk').remove()">닫기</button></h4><div class="it error">${esc(j.error)}</div>`; return; }
+  box.innerHTML = `<h4>검수 · ${j.pages}면 <span class="${j.ok ? "ok" : ""}">${j.ok ? "✓ 책으로 내도 된다" : `오류 ${j.errors}`}${j.warns ? ` · 확인 ${j.warns}` : ""}</span><button class="btn sm sub" onclick="this.closest('.chk').remove()">닫기</button></h4>` +
+    j.issues.map(i => `<div class="it ${i.level}">${i.level === "error" ? "✕ " : i.level === "warn" ? "△ " : ""}${esc(i.msg)}</div>`).join("") +
+    `<div class="note" style="margin-top:8px">✕ 오류 = 원고가 빠졌거나 안 실린다(책에 빈 자리·누락) · △ 확인 = 넘침·없는 토큰·안 쓰인 원고</div>`;
+}
+$("#p-check").onclick = runCheck;
 
 // ── 열기 · 그리기 ──
 function open(p) {

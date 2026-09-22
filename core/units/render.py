@@ -41,6 +41,7 @@ class Ctx(object):
         self.blocks = _by_id(lib.get("blocks"))
         self.sys = dict(sys or {})
         self.warnings = []
+        self.issues = []                                  # 검수 — [{level: error|warn|info, msg}]
         self._seen = set()
         self._n = 0
 
@@ -50,9 +51,15 @@ class Ctx(object):
         return f"u{self._n}"
 
     def warn(self, msg):
+        self.issue("warn", msg)
+
+    def issue(self, level, msg):
+        """검수 항목. error = 책으로 내면 안 되는 것(원고 빠짐·안 실림), warn = 확인할 것(넘침·토큰), info = 알림."""
         if msg not in self._seen:
             self._seen.add(msg)
-            self.warnings.append(msg)
+            if level != "info":
+                self.warnings.append(msg)
+            self.issues.append({"level": level, "msg": msg})
 
     def _tok(self, ref, kind, default):
         if ref is None:
@@ -517,15 +524,51 @@ def _accepts(z, it):
     return not acc or it["block"] in acc or (it["set_kind"] and it["set_kind"] in acc)
 
 
-def _fill_items(pg, sample_set):
-    """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장."""
+def _fill_items(pg, sample_set, ctx=None):
+    """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
+
+    세트에 없는 자리는 **비워 둔다**(_empty — 견본 글이 책에 들어가면 안 된다) + 검수 error.
+    자리보다 원고가 많으면(줄 셋인데 자리 둘) 남는 원고는 안 실린다 + 검수 error.
+    """
     queue = {}
     for b in sample_set.get("blocks") or []:
         queue.setdefault(b.get("block"), []).append(b.get("fields") or {})
+    total = {k: len(v) for k, v in queue.items()}
+    filled = {}
+    sid = sample_set.get("id", "")
     for it in pg.get("items") or []:
-        q = queue.get(it.get("block"))
-        if q and not it.get("fields"):
-            it["fields"] = q.pop(0) if len(q) > 1 else q[0]
+        bid = it.get("block")
+        if not bid or it.get("hide") or it.get("fields"):
+            continue
+        blk = (ctx.blocks.get(bid) if ctx else None) or {}
+        if ctx and blk.get("source") != "content":
+            continue
+        q = queue.get(bid)
+        if q:
+            if ctx:
+                it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
+            else:
+                it["fields"] = q.pop(0) if len(q) > 1 else q[0]
+            filled[bid] = filled.get(bid, 0) + 1
+            if ctx:
+                for f, d in (blk.get("fields") or {}).items():
+                    if (d or {}).get("required") and (it["fields"].get(f) in (None, "", [])):
+                        ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} 의 필수 자리 {f} 가 비었다")
+        elif ctx:
+            it["fields"] = {}
+            it["_empty"] = True
+            if total.get(bid):
+                ctx.issue("warn", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리 {sum(1 for x in pg['items'] if x.get('block') == bid)}개 중 {total[bid]}개만 찼다 — 나머지는 빈 채")
+            else:
+                ctx.issue("error", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리에 넣을 원고가 없다 — 비워 둔다")
+    if ctx:
+        for bid, n in total.items():
+            k = filled.get(bid, 0)
+            blk = ctx.blocks.get(bid) or {}
+            if k == 0:
+                ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} {n}개가 지면 {pg.get('id')} 에 자리가 없어 안 실린다")
+            elif n > k:
+                ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} {n}개 중 {n - k}개는 지면 {pg.get('id')} 에 자리가 없어 안 실린다")
 
 
 def _stack_pages(ctx, page, sets, spec):
@@ -598,7 +641,7 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
             pg = json.loads(json.dumps(page))
             pg["_noguides"] = True
             if s is not None and not page.get("_canvas"):
-                _fill_items(pg, s)
+                _fill_items(pg, s, ctx)
                 pg["_canvas"] = True
             lab = label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else "")
             for k, fp in enumerate(flow.thread(ctx, pg, spec)):            # 넘치면 다음 면으로 이어 흐른다
@@ -743,7 +786,8 @@ def _item_frag(ctx, it):
             return None, None, 0, 0
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
-        frag, h = part_svg(ctx, part, sample.fill(blk, it.get("fields")), types, width=w)
+        values = {k: "" for k in types} if it.get("_empty") else sample.fill(blk, it.get("fields"))   # 책에서 원고 없는 자리는 빈 채로
+        frag, h = part_svg(ctx, part, values, types, width=w)
         return frag, part, w, h
     part = ctx.parts.get(it.get("part"))
     if not part:

@@ -76,7 +76,7 @@ def test_plan_pages_and_columns(lib):
     assert ans.count("data-fi=") == 5 and "replaced" in ans and "④" in ans    # 정답지: 세트 2개의 정답 줄이 쌓인다 (머리말·쪽번호·제목 + 2)
     exam = render.plan_svgs(ctx, store.by_id(lib["plans"])["exam_sheet"], lib["sets"], lib)
     assert len(exam) == 2 and "creativity" in exam[0]["svg"] and "cars" in exam[1]["svg"]   # 슬롯 모드: 세트마다 한 면, 값이 자리에 들어간다
-    assert not ctx.warnings, ctx.warnings
+    assert not [w for w in ctx.warnings if not w.startswith("원고")], ctx.warnings          # 원고↔자리 불일치는 검수 항목(시드는 두 종류를 섞어 둠)
 
 
 def test_skin_variant_switch(lib):
@@ -123,7 +123,10 @@ def test_free_items_canvas_vs_flow(lib):
     assert flow.count("data-fi=") == len(pg["items"]) and "creativity" in flow   # 세트 20의 값이 자리에 끼워진다
     empty = render.page_svgs(ctx, pg, [], render.DEFAULT_SPEC)[0]["svg"]
     assert empty.count("data-fi=") == 2                                        # 세트가 없으면 머리말·쪽번호만
-    assert not ctx.warnings, ctx.warnings
+    assert not [w for w in ctx.warnings if not w.startswith("원고")], ctx.warnings
+    # 세트 20 엔 빈칸·본문 O/X 가 없다 → 그 자리는 견본 글이 아니라 **빈 채** + 검수 error. 어법 O/X 3줄은 자리가 없어 안 실림
+    assert "r_____" not in flow and "Wide roads" not in flow
+    assert any("빈칸 줄 자리에 넣을 원고가 없다" in w for w in ctx.warnings) and any("어법 O/X 줄 3개가" in w for w in ctx.warnings)
 
 
 def test_atom_kinds_cover_indesign_objects(lib):
@@ -440,3 +443,21 @@ def test_stack_flow_pages(lib):
     rows = [o["svg"].count("data-fi=") - 3 for o in out]
     assert sum(rows) == 80 and all(r > 10 for r in rows[:-1])
     assert not any("넘친다" in w for w in ctx.warnings), ctx.warnings
+
+
+def test_check_report(lib):
+    """검수 — 원고 빠진 자리·안 실린 원고는 error, 넘침은 info, 어느 구간도 안 받는 kind 는 warn."""
+    from core.units import check, store
+    plan = store.by_id(lib["plans"])["workbook_mini"]
+    r = check.report(lib, plan, "d2")
+    assert r["pages"] == 6 and r["errors"] >= 2 and not r["ok"]
+    msgs = [i["msg"] for i in r["issues"]]
+    assert any("안 실린다" in m for m in msgs) and any("6면" in m for m in msgs)
+    # 맞는 원고만 넣으면 ok
+    good = [s for s in lib["sets"] if s["id"] == "21"]
+    r2 = check.report(lib, plan, "d2", good)
+    assert r2["ok"], r2["issues"]
+    # 안 받는 kind
+    stray = good + [{"kind": "vocab", "id": "9", "blocks": [{"block": "passage", "fields": {"passage": "x"}}]}]
+    r3 = check.report(lib, plan, "d2", stray)
+    assert any("어느 구간도 받지 않아" in i["msg"] and i["level"] == "warn" for i in r3["issues"])

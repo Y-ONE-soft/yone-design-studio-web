@@ -12,6 +12,7 @@
     /api/units/part_from POST      {dec, atoms:[번호], id, name} → 부품 저장
     /api/units/make POST           {prompt, skin} → 클로드가 그린 부품 + 블록 저장 (캔버스의 "설명으로 만들기")
     /api/units/pdf?plan=|page=     PDF 저장 — 크로미움 인쇄 (core/units/pdf.py). ?skin= ?set= ?dl=1
+    /api/units/check?plan=&skin=   검수 — 책을 그려 보고 error/warn/info 목록 (core/units/check.py)
     /api/units/manuscript POST     원고 → 세트. {text} | {contents: yos-workbook-v1} | 파일(docx·hwpx·txt·json). ?save=1 이면 저장. → {sets, log}
 
 화면은 얇다 — 그리는 일은 전부 core/units/render, 분해는 core/units/decompose.
@@ -83,6 +84,19 @@ def api_put(kind):
         return jsonify({"error": err}), 400
     store.put(kind, item, after=request.args.get("after"))      # ?after=<id> 그 뒤로 · ?after= 맨 앞
     return jsonify({"ok": True, "item": item})
+
+
+@bp.route("/api/units/check")
+def api_check():
+    from core.units import check
+    lib = store.library()
+    plan = store.by_id(lib["plans"]).get(request.args.get("plan") or "")
+    if not plan:
+        return jsonify({"error": "plan 없음"}), 404
+    try:
+        return jsonify(check.report(lib, plan, request.args.get("skin")))
+    except Exception as e:
+        return jsonify({"error": f"{type(e).__name__}: {e}"}), 500
 
 
 @bp.route("/api/units/manuscript", methods=["POST"])
