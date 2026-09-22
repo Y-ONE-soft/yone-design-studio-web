@@ -595,6 +595,8 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     canvas = bool(page.get("_canvas"))
     placed = []                                   # (fi, it, frag, w, 실제 높이, 설계 높이)
     for fi, it in enumerate(page.get("items") or []):
+        if it.get("hide"):
+            continue                                              # 레이어 눈 끔
         blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
         if not canvas and blk is not None and blk.get("source") == "content":
             continue
@@ -615,7 +617,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         if y + h > H + 0.01:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({y + h:.0f}mm > {H:.0f}mm) — 다음 면으로 흘리기는 아직")
         x = W - it["x"] - w if mirror else it["x"]
-        chrome.append(f'<g transform="translate({x:.3f},{y:.3f})" data-fi="{fi}" data-dy="{dy:.2f}">{frag}</g>')
+        chrome.append(f'<g transform="translate({x:.3f},{y:.3f})" data-fi="{fi}" data-dy="{dy:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{frag}</g>')
     ctx.sys = old
     guides = "" if not zones or page.get("_noguides") else "".join(
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '

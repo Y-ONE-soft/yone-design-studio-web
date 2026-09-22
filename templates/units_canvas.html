@@ -140,6 +140,44 @@
   .strip .foot { display: flex; align-items: center; gap: 12px; padding: 2px 16px 8px; font-size: 12px; color: var(--mute); }
   .strip .foot .cnt { margin-left: auto; font-weight: 600; color: #1f2330; }
   .strip .foot .help { cursor: help; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; background: #fff; }
+  .strip .foot select { padding: 2px 4px; font-size: 11.5px; }
+  .strip .foot .btn.sub.on { background: var(--pp-bg); color: var(--pp); }
+  /* 손잡이 8 + 회전 */
+  .selbox .hd { position: absolute; width: 9px; height: 9px; background: #fff; border: 2px solid var(--pp); border-radius: 3px; pointer-events: auto; box-sizing: border-box; }
+  .selbox .hd[data-h="nw"] { left: -5px; top: -5px; cursor: nwse-resize; } .selbox .hd[data-h="n"] { left: 50%; margin-left: -5px; top: -5px; cursor: ns-resize; } .selbox .hd[data-h="ne"] { right: -5px; top: -5px; cursor: nesw-resize; }
+  .selbox .hd[data-h="w"] { left: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; } .selbox .hd[data-h="e"] { right: -5px; top: 50%; margin-top: -5px; cursor: ew-resize; }
+  .selbox .hd[data-h="sw"] { left: -5px; bottom: -5px; cursor: nesw-resize; } .selbox .hd[data-h="s"] { left: 50%; margin-left: -5px; bottom: -5px; cursor: ns-resize; } .selbox .hd[data-h="se"] { right: -5px; bottom: -5px; cursor: nwse-resize; }
+  .selbox .rot { position: absolute; left: 50%; top: -26px; margin-left: -6px; width: 12px; height: 12px; border: 2px solid var(--pp); border-radius: 50%; background: #fff; pointer-events: auto; cursor: grab; box-sizing: border-box; }
+  .selbox .rot::before { content: ""; position: absolute; left: 4px; top: 10px; width: 2px; height: 10px; background: var(--pp); }
+  .selbox .lb { top: -18px; left: auto; right: -2px; }
+  .selbox.multi .hd, .selbox.multi .rot { display: none; }
+  /* 자 · 안내선 · 격자 · 여백 */
+  .ruler { position: absolute; background: #fbfafd; color: #8b91a5; font-size: 9px; display: none; user-select: none; }
+  .paper.rulers .ruler { display: block; }
+  .ruler.rt { left: 0; right: 0; top: -18px; height: 18px; border-bottom: 1px solid #d8d5e6; cursor: row-resize; }
+  .ruler.rl { top: 0; bottom: 0; left: -18px; width: 18px; border-right: 1px solid #d8d5e6; cursor: col-resize; }
+  .guide { position: absolute; background: #00b8d9; opacity: .8; z-index: 5; }
+  .guide.v { top: 0; bottom: 0; width: 1px; cursor: col-resize; padding: 0 3px; margin-left: -3px; background-clip: content-box; }
+  .guide.h { left: 0; right: 0; height: 1px; cursor: row-resize; padding: 3px 0; margin-top: -3px; background-clip: content-box; }
+  .paper.grid .svgwrap { background-image: linear-gradient(to right, rgba(125,42,232,.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(125,42,232,.12) 1px, transparent 1px); }
+  .margins { position: absolute; border: 1px dashed #f0a441; pointer-events: none; display: none; }
+  .paper.mg .margins { display: block; }
+  .area.pan { cursor: grab; } .area.pan:active { cursor: grabbing; }
+  .paper .svgwrap svg g[data-lock] { pointer-events: none; }
+  .paper .svgwrap svg g[data-lock].sel2, .paper .svgwrap svg g.lk-sel { outline: 2px dashed #f0a441; }
+  /* 글 바로 고치기 */
+  .tedit { position: absolute; z-index: 30; border: 2px solid var(--pp); border-radius: 2px; background: rgba(255,255,255,.95); padding: 0; margin: 0; resize: none; overflow: hidden; line-height: 1.45; font-family: inherit; box-sizing: border-box; }
+  /* 오른쪽 클릭 메뉴 · 레이어 */
+  .cmenu { position: fixed; z-index: 100; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(30,20,60,.2); padding: 5px; min-width: 180px; display: none; }
+  .cmenu button { display: flex; width: 100%; border: 0; background: transparent; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12.5px; text-align: left; color: #1f2330; }
+  .cmenu button:hover { background: #f1eff8; } .cmenu button span { margin-left: auto; color: #a0a4b5; font-size: 11px; }
+  .cmenu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .layers .li { display: flex; align-items: center; gap: 6px; padding: 4px 6px; margin: 2px 0; cursor: pointer; }
+  .layers .li.on { border-color: var(--pp); background: var(--pp-bg); }
+  .layers .li .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .layers .li button { border: 0; background: transparent; cursor: pointer; font-size: 12px; padding: 0 2px; color: #7a6aa8; opacity: .6; }
+  .layers .li button.on { opacity: 1; color: #1f2330; }
+  .layers .li.hid .nm { opacity: .4; text-decoration: line-through; }
   .strip .foot input[type=range] { width: 140px; }
 
   /* 오른쪽 — 고른 것의 단위 사슬 */
@@ -195,17 +233,22 @@
       <span class="st" id="st"></span>
     </div>
     <div class="start" id="start" style="display:none"></div>
+    <div class="cmenu" id="cmenu"></div>
     <div class="pv" id="pv" style="display:none"><div class="pvbar"><b id="pvtitle"></b><span class="note" id="pvinfo"></span><a class="btn sm" id="pvpdf" target="_blank">⬇ PDF</a><button class="btn sm sub" id="pvclose">닫기</button></div><div class="pvbody" id="pvbody"></div></div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
       <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">편집 중 · 저장하면 이 요소를 쓴 곳 전부에 반영</span><button class="btn sm" id="edit-done">저장</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
-        <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="hd-e" data-h="e" title="폭"></span><span class="hd-s" data-h="s" title="높이"></span><span class="hd-se" data-h="se" title="폭·높이"></span></div>
+        <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rot" data-rot title="회전 (Shift = 15°)"></span><span class="hd" data-h="nw"></span><span class="hd" data-h="n"></span><span class="hd" data-h="ne"></span><span class="hd" data-h="w"></span><span class="hd" data-h="e"></span><span class="hd" data-h="sw"></span><span class="hd" data-h="s"></span><span class="hd" data-h="se"></span></div>
+        <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
+        <textarea id="tedit" class="tedit" style="display:none"></textarea>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
         <div class="tools" id="tools">
           <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 요소를 고치려면 풀어서 고친 뒤 다시 요소로 저장">그룹 해제</button><button id="t-up" title="고른 것을 요소 패널에 저장한다. 글상자의 「자리 이름」이 원고가 들어올 자리가 된다">★ 요소로 저장</button>
           <span class="sep"></span>
-          <button data-al="l" title="왼쪽 맞춤">⇤</button><button data-al="c" title="가로 가운데">⇹</button><button data-al="r" title="오른쪽 맞춤">⇥</button><button data-al="t" title="위 맞춤">⤒</button><button data-al="m" title="세로 가운데">⇳</button><button data-al="b" title="아래 맞춤">⤓</button>
+          <button data-al="l" title="왼쪽 맞춤">⇤</button><button data-al="c" title="가로 가운데">⇹</button><button data-al="r" title="오른쪽 맞춤">⇥</button><button data-al="t" title="위 맞춤">⤒</button><button data-al="m" title="세로 가운데">⇳</button><button data-al="b" title="아래 맞춤">⤓</button><button data-ds="h" title="가로 간격 같게">↔</button><button data-ds="v" title="세로 간격 같게">↕</button><button data-ms="w" title="폭 같게">⊟</button>
+          <span class="sep"></span>
+          <button id="t-lock" title="잠금 (Ctrl+L)">🔒</button>
           <span class="sep"></span>
           <button id="t-front" title="맨 앞으로 (Ctrl+])">⬆</button><button id="t-back" title="맨 뒤로 (Ctrl+[)">⬇</button><button id="t-dup" title="복제 (Ctrl+D)">⧉</button><button id="t-x" class="x" title="지우기 (Delete)">✕</button>
         </div>
@@ -214,9 +257,11 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span class="help" title="＋ 페이지 끼우기 · 썸네일: 끌어 순서, ⧉ 복제, ✕ 지우기 · ←/→ 페이지 이동&#10;빈 곳 끌기 = 영역 선택 · Shift+클릭 더 고르기 · 더블클릭 = 요소 안 편집&#10;Ctrl+Z 되돌리기 · Ctrl+C/V · Ctrl+D 복제 · Ctrl+A 전체 · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+]/[ 앞뒤 · Delete">? 단축키</span>
+        <span class="help" title="선택: 클릭 · Shift+클릭 · 빈 곳 끌기 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 · Ctrl+1 폭 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <span class="cnt" id="cnt"></span>
-        <button class="btn sm sub" id="zoomfit" title="한 쪽 전체가 보이게">전체</button><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠로도"><span id="zoomv" title="폭 맞춤으로" style="cursor:pointer;min-width:38px">100%</span>
+        <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button>
+        <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
+        <button class="btn sm sub" id="zoomfit" title="한 쪽 전체 (Ctrl+0)">전체</button><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100% 폭</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px">100%</span>
       </div>
     </div>
   </div>
@@ -364,7 +409,7 @@ function open(p) {
   if (!page.items) page.items = [];
   editing = null; $("#paper").classList.remove("editing"); $("#editbar").style.display = "none"; page.items.forEach(it => delete it._edit);
   if (page.chrome && page.chrome.length) { page.items = page.chrome.map(c => ({part: c.part, x: c.x, y: c.y})).concat(page.items); delete page.chrome; }
-  $("#pname").value = page.name || ""; history.replaceState(null, "", (plan ? "?plan=" + encodeURIComponent(plan.id) : "") + "#" + page.id);
+  $("#pname").value = page.name || ""; history.replaceState(null, "", (plan ? "?plan=" + encodeURIComponent(plan.id) : "") + "#" + page.id); applyView();
   const pp = $("#paper"); pp.style.background = ""; pp.style.boxShadow = "";
   drawRail(); layout(); render(); side();
   const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
@@ -373,6 +418,7 @@ function layout() {
   const sp = specOf(); const fit = Math.min(4.5, ($("#area").clientWidth - 60) / sp.w);            // 기본 = 폭 맞춤. 세로는 스크롤
   scale = fit * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
+  drawRulers();
 }
 window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
 function setZoom(z) { zoom = Math.max(0.3, Math.min(3, z)); $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%"; layout(); selbox(); }
@@ -442,7 +488,7 @@ function wire() {
   svg.querySelectorAll("g[data-fi]").forEach(g => {
     g.addEventListener("click", (e) => e.stopPropagation());
     if (editing && page.items[+g.dataset.fi] && page.items[+g.dataset.fi]._edit) g.classList.add("edt");
-    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && (it.block || it.part) && !editing) { enterEdit(+g.dataset.fi); return; } if (it && it.atom && it.atom.t === "text") { const v = prompt(Array.isArray(it.atom.text) ? "글 (서식이 섞인 글 — 고치면 서식은 사라진다)" : "글", plainText(it.atom.text)); if (v != null) { hist(); it.atom.text = v; save(); render(); side(); } } });
+    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && (it.block || it.part) && !editing) { enterEdit(+g.dataset.fi); return; } if (it && it.atom && it.atom.t === "text") editTextInline(+g.dataset.fi); });
     g.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return; e.stopPropagation();
       const i = +g.dataset.fi;
@@ -458,8 +504,9 @@ function markSels() { const svg = $("#svgwrap svg"); if (!svg) return; svg.query
 function dragItems(e) {
   const ids = [...sels]; const st = {x: e.clientX, y: e.clientY, moved: false, before: JSON.stringify(page.items), o: ids.map(i => ({i, x: page.items[i].x, y: page.items[i].y, g: gOf(i), b: bboxOf(i)}))};
   const S = specOf(); const others = page.items.map((_, i) => i).filter(i => !sels.has(i)).map(i => bboxOf(i)).filter(Boolean);
-  const xs = [M.left, S.w - M.right, S.w / 2].concat(others.flatMap(b => [b.x, b.x + b.w / 2, b.x + b.w]));
-  const ys = [M.top, S.h - M.bottom, S.h / 2].concat(others.flatMap(b => [b.y, b.y + b.h / 2, b.y + b.h]));
+  const gd = page.guides || {};
+  const xs = [M.left, S.w - M.right, S.w / 2].concat(gd.v || [], others.flatMap(b => [b.x, b.x + b.w / 2, b.x + b.w]));
+  const ys = [M.top, S.h - M.bottom, S.h / 2].concat(gd.h || [], others.flatMap(b => [b.y, b.y + b.h / 2, b.y + b.h]));
   const lead = st.o.find(o => o.i === sel) || st.o[0];
   const mv = (ev) => {
     let dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
@@ -473,7 +520,7 @@ function dragItems(e) {
       dy += sy;
     }
     for (const o of st.o) { const it = page.items[o.i]; it.x = snap(o.x + dx); it.y = snap(o.y + dy); if (o.g) o.g.setAttribute("transform", `translate(${it.x},${it.y + (o.b ? o.b.dy : 0)})`); }
-    guide(gx, gy); selbox();
+    guide(gx, gy); selbox(); if (lead) $("#sellb").textContent = `${page.items[lead.i].x}, ${page.items[lead.i].y} mm`;
   };
   const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); guide(null, null); if (st.moved) { hist(st.before); save(); render(); side(); } };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
@@ -488,21 +535,43 @@ $("#paper").addEventListener("pointerdown", (e) => {
     Object.assign(m.style, {display: "", left: x * scale + "px", top: y * scale + "px", width: w * scale + "px", height: h * scale + "px"}); m._r = {x, y, w, h}; };
   const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); m.style.display = "none";
     if (!moved) { if (editing) exitEdit(true); else select([]); return; }
-    const r = m._r; const ids = page.items.map((_, i) => i).filter(i => { const b = bboxOf(i); return b && b.x < r.x + r.w && b.x + b.w > r.x && b.y < r.y + r.h && b.y + b.h > r.y; });
+    const r = m._r; const ids = page.items.map((_, i) => i).filter(i => { if (page.items[i].lock || page.items[i].hide) return false; const b = bboxOf(i); return b && b.x < r.x + r.w && b.x + b.w > r.x && b.y < r.y + r.h && b.y + b.h > r.y; });
     select(ev.shiftKey ? [...new Set([...sels, ...ids])] : ids); };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 });
 // 손잡이 — 폭(E) · 높이(S, 원자만) · 둘 다(SE)
+// 손잡이 8방향 — 요소·그룹은 폭만(높이는 글이 정한다), 원자는 폭·높이. Shift = 비율 유지. 선은 길이만
 document.querySelectorAll("#selbox [data-h]").forEach(hd => hd.addEventListener("pointerdown", (e) => {
   if (sel == null) return; e.stopPropagation(); e.preventDefault();
   const it = page.items[sel], b = bboxOf(sel); if (!b) return; const k = hd.dataset.h; const a = it.atom;
-  const st = {x: e.clientX, y: e.clientY, w0: it.w || b.w, h0: a ? (a.t === "line" ? Math.abs(a.y2 - a.y1) : a.h) : b.h}; const box = $("#selbox"); const before = JSON.stringify(page.items);
-  const mv = (ev) => { const dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
-    if (k !== "s") { it.w = Math.max(3, snap(st.w0 + dx)); box.style.width = (it.w * scale + 4) + "px"; }
-    if (k !== "e" && a) { const h = Math.max(1, snap(st.h0 + dy)); if (a.t === "line") a.y2 = a.y1 + h; else a.h = h; box.style.height = (h * scale + 4) + "px"; } };
+  const canH = !!a && a.t !== "line", isLine = !!a && a.t === "line";
+  const w0 = it.w || (a ? (isLine ? Math.abs(a.x2 - a.x1) : a.w) : b.w), h0 = a ? (isLine ? Math.abs(a.y2 - a.y1) : a.h) : b.h, x0 = it.x, y0 = it.y;
+  const st = {x: e.clientX, y: e.clientY}; const box = $("#selbox"); const before = JSON.stringify(page.items);
+  const mv = (ev) => {
+    let dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
+    let w = w0, h = h0, x = x0, y = y0;
+    if (k.includes("e")) w = w0 + dx; if (k.includes("w")) { w = w0 - dx; x = x0 + dx; }
+    if (canH) { if (k.includes("s")) h = h0 + dy; if (k.includes("n")) { h = h0 - dy; y = y0 + dy; } }
+    if (ev.shiftKey && k.length === 2 && canH) { const r = w0 / h0 || 1; if (Math.abs(dx) > Math.abs(dy)) h = w / r; else w = h * r; if (k.includes("n")) y = y0 + (h0 - h); if (k.includes("w")) x = x0 + (w0 - w); }
+    w = Math.max(3, snap(w)); h = Math.max(1, snap(h));
+    if (k.includes("e") || k.includes("w")) { it.w = w; it.x = snap(x); if (a && !isLine && a.t !== "ellipse") a.w = w; if (isLine) { a.x2 = a.x1 + w; } }
+    if (canH && (k.includes("n") || k.includes("s"))) { a.h = h; it.y = snap(y); }
+    Object.assign(box.style, {left: (it.x * scale - 2) + "px", top: (it.y * scale + b.dy * scale - 2) + "px", width: (w * scale + 4) + "px", height: ((canH ? h : b.h) * scale + 4) + "px"});
+    $("#sellb").textContent = `${it.x}, ${it.y} · ${w}×${canH ? h : Math.round(b.h * 10) / 10}mm`;
+  };
   const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); hist(before); save(); render(); side(); };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 }));
+// 회전 — 원자만 (요소는 안 편집에서 낱개로)
+$("#selbox [data-rot]").addEventListener("pointerdown", (e) => {
+  if (sel == null || !page.items[sel].atom) return; e.stopPropagation(); e.preventDefault();
+  const it = page.items[sel], a = it.atom, b = bboxOf(sel), pr = $("#paper").getBoundingClientRect(); const before = JSON.stringify(page.items);
+  const cx = pr.left + (b.x + b.w / 2) * scale, cy = pr.top + (b.y + b.h / 2) * scale; const g = gOf(sel);
+  const mv = (ev) => { let deg = Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI + 90; if (ev.shiftKey) deg = Math.round(deg / 15) * 15; deg = Math.round(((deg % 360) + 360) % 360);
+    a.rotate = deg || undefined; if (!a.rotate) delete a.rotate; $("#sellb").textContent = `${deg}°`; if (g) g.style.transformOrigin = `${b.x + b.w / 2}px ${b.y + b.h / 2}px`; };
+  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); hist(before); save(); render(); side(); };
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+});
 function selG() { return sel != null ? gOf(sel) : null; }
 function selbox() {
   const box = $("#selbox"), tools = $("#tools"), g = selG();
@@ -510,14 +579,18 @@ function selbox() {
   const r = g.getBoundingClientRect(), pr = $("#paper").getBoundingClientRect(); const it = page.items[sel];
   Object.assign(box.style, {display: "", left: (r.left - pr.left - 2) + "px", top: (r.top - pr.top - 2) + "px", width: (r.width + 4) + "px", height: (Math.max(r.height, 2) + 4) + "px"});
   box.classList.toggle("multi", sels.size > 1);
-  $("#sellb").textContent = (sels.size > 1 ? `${sels.size}개 · ` : "") + nameOf(it);
-  box.querySelector(".hd-s").style.display = box.querySelector(".hd-se").style.display = it.atom && it.atom.t !== "ellipse" ? "" : "none";
+  $("#sellb").textContent = (sels.size > 1 ? `${sels.size}개 · ` : "") + nameOf(it) + (it.lock ? " 🔒" : "") + ` · ${Math.round(r.width / scale * 10) / 10}×${Math.round(r.height / scale * 10) / 10}mm`;
+  const canH = !!it.atom && it.atom.t !== "line";
+  box.querySelectorAll(".hd").forEach(h => { const k = h.dataset.h; h.style.display = (k.includes("n") || k.includes("s")) && !canH ? "none" : ""; });
+  box.querySelector(".rot").style.display = it.atom ? "" : "none";
+  $("#t-lock").textContent = it.lock ? "🔓" : "🔒";
   Object.assign(tools.style, {display: "flex", left: Math.max(0, r.left - pr.left) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
   const u = unitOf(it), allAtoms = [...sels].every(i => page.items[i] && page.items[i].atom);
   $("#t-group").style.display = sels.size > 1 ? "" : "none";
   $("#t-up").style.display = (allAtoms || sels.size > 1 || (u === "part" && sels.size === 1)) ? "" : "none";
   $("#t-down").style.display = u === "atom" || sels.size > 1 ? "none" : "";
-  tools.querySelectorAll("[data-al]").forEach(b => b.style.display = sels.size > 1 ? "" : "none");
+  tools.querySelectorAll("[data-al], [data-ms]").forEach(b => b.style.display = sels.size > 1 ? "" : "none");
+  tools.querySelectorAll("[data-ds]").forEach(b => b.style.display = sels.size > 2 ? "" : "none");
 }
 function removeSel() { if (!sels.size) return; hist(); page.items = page.items.filter((_, i) => !sels.has(i)); select([]); save(); render(); }
 function dupSel() { if (!sels.size) return; hist(); const ids = [...sels].sort((a, b) => a - b); const n0 = page.items.length; ids.forEach(i => { const c = clone(page.items[i]); c.x = snap(c.x + 5); c.y = snap(c.y + 5); page.items.push(c); }); select(page.items.map((_, i) => i).filter(i => i >= n0)); save(); render(); }
@@ -556,10 +629,20 @@ document.addEventListener("keydown", (e) => {
   if (mod && k === "y") { e.preventDefault(); undoIt(false); return; }
   if (mod && k === "a") { e.preventDefault(); select(page.items.map((_, i) => i)); return; }
   if (mod && k === "c") { e.preventDefault(); copySel(); return; }
+  if (mod && k === "x") { e.preventDefault(); cutSel(); return; }
+  if (mod && k === "l") { e.preventDefault(); lockSel(); return; }
+  if (mod && k === "r") { e.preventDefault(); view.rulers = !view.rulers; applyView(); return; }
+  if (mod && e.key === "'") { e.preventDefault(); view.grid = !view.grid; applyView(); return; }
+  if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setZoom(zoom * 1.2); return; }
+  if (mod && e.key === "-") { e.preventDefault(); setZoom(zoom / 1.2); return; }
+  if (mod && e.key === "0") { e.preventDefault(); $("#zoomfit").click(); return; }
+  if (mod && e.key === "1") { e.preventDefault(); setZoom(1); return; }
+  if (e.key === "Tab" && page.items.length) { e.preventDefault(); selectNext(e.shiftKey); return; }
+  if (e.key === "Enter" && sel != null && page.items[sel]) { e.preventDefault(); const it = page.items[sel]; if (it.atom && it.atom.t === "text") editTextInline(sel); else if (it.block || it.part) enterEdit(sel); return; }
   if (mod && k === "v") { e.preventDefault(); paste(); return; }
   if (mod && k === "d") { e.preventDefault(); dupSel(); return; }
   if (mod && k === "g") { e.preventDefault(); if (e.shiftKey) ungroup(); else groupToPart(); return; }
-  if (mod && (e.key === "]" || e.key === "[")) { e.preventDefault(); zorder(e.key === "]"); return; }
+  if (mod && (e.key === "]" || e.key === "[" || e.key === "}" || e.key === "{")) { e.preventDefault(); const fwd = e.key === "]" || e.key === "}"; if (e.shiftKey) zorder(fwd); else zstep(fwd); return; }
   if (!sels.size) {
     if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePage(); return; }
     if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(), dp = docPages(); if (i > 0) open(dp[i - 1]); e.preventDefault(); }
@@ -571,6 +654,114 @@ document.addEventListener("keydown", (e) => {
   const step = e.shiftKey ? 5 : 0.5; const d = {ArrowUp: [0, -step], ArrowDown: [0, step], ArrowLeft: [-step, 0], ArrowRight: [step, 0]}[e.key]; if (!d) return;
   e.preventDefault(); hist(); for (const i of sels) { page.items[i].x = snap(page.items[i].x + d[0]); page.items[i].y = snap(page.items[i].y + d[1]); } save(); render(); side();
 });
+
+// ── 잠금·숨김 · 간격 · 크기 같게 · 오려두기 · 한 단계 앞뒤 · Tab ──
+function lockSel() { if (!sels.size) return; hist(); const on = !page.items[sel].lock; for (const i of sels) { if (on) page.items[i].lock = true; else delete page.items[i].lock; } save(); render(); side(); }
+function hideItem(i) { hist(); if (page.items[i].hide) delete page.items[i].hide; else page.items[i].hide = true; if (sels.has(i)) select([]); save(); render(); side(); }
+function distribute(axis) {
+  if (sels.size < 3) return; hist(); const bs = [...sels].map(i => { const b = bboxOf(i), a = page.items[i].atom; if (b && a && a.t !== "line") { b.w = page.items[i].w || a.w; b.h = a.h; } return {i, b}; }).filter(o => o.b).sort((p, q) => axis === "h" ? p.b.x - q.b.x : p.b.y - q.b.y);
+  const first = bs[0].b, last = bs[bs.length - 1].b; const span = axis === "h" ? (last.x + last.w) - first.x : (last.y + last.h) - first.y;
+  const total = bs.reduce((m, o) => m + (axis === "h" ? o.b.w : o.b.h), 0); const gap = (span - total) / (bs.length - 1); let cur = axis === "h" ? first.x : first.y;
+  for (const o of bs) { const it = page.items[o.i]; if (axis === "h") { it.x = snap(cur); cur += o.b.w + gap; } else { it.y = snap(cur - o.b.dy); cur += o.b.h + gap; } }
+  save(); render(); side();
+}
+function matchSize() { if (sels.size < 2) return; hist(); const w = bboxOf(sel).w; for (const i of sels) { const it = page.items[i]; it.w = snap(w); if (it.atom && it.atom.t !== "line" && it.atom.t !== "ellipse") it.atom.w = snap(w); if (it.atom && it.atom.t === "line") it.atom.x2 = it.atom.x1 + snap(w); } save(); render(); side(); }
+function cutSel() { copySel(); removeSel(); }
+function zstep(fwd) { if (sel == null) return; hist(); const i = sel, j = fwd ? i + 1 : i - 1; if (j < 0 || j >= page.items.length) return; [page.items[i], page.items[j]] = [page.items[j], page.items[i]]; select([j]); save(); render(); }
+function selectNext(back) { const n = page.items.length; if (!n) return; let i = sel == null ? (back ? n - 1 : 0) : (sel + (back ? -1 : 1) + n) % n; let guard = 0; while ((page.items[i].lock || page.items[i].hide) && guard++ < n) i = (i + (back ? -1 : 1) + n) % n; select([i]); const g = gOf(i); if (g) g.scrollIntoView({block: "nearest"}); }
+$("#t-lock").onclick = (e) => { e.stopPropagation(); lockSel(); };
+document.querySelectorAll("#tools [data-ds]").forEach(b => b.onclick = (e) => { e.stopPropagation(); distribute(b.dataset.ds); });
+document.querySelectorAll("#tools [data-ms]").forEach(b => b.onclick = (e) => { e.stopPropagation(); matchSize(); });
+
+// ── 글 바로 고치기 (글상자 더블클릭) ──
+function editTextInline(i) {
+  const it = page.items[i]; if (!it || !it.atom || it.atom.t !== "text") return; const b = bboxOf(i); if (!b) return;
+  const ta = $("#tedit"); const a = it.atom; const before = JSON.stringify(page.items);
+  Object.assign(ta.style, {display: "", left: (b.x * scale) + "px", top: (b.y * scale) + "px", width: Math.max(40, b.w * scale) + "px", height: Math.max(24, b.h * scale + 6) + "px", fontSize: (a.size * 25.4 / 72 * scale) + "px", textAlign: a.align || "left"});
+  ta.value = plainText(a.text); ta.focus(); ta.select();
+  const done = (commit) => { ta.style.display = "none"; ta.onblur = ta.onkeydown = null; if (commit && ta.value !== plainText(a.text)) { hist(before); a.text = ta.value; save(); render(); side(); } };
+  ta.onblur = () => done(true);
+  ta.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); done(false); } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); done(true); } e.stopPropagation(); };
+}
+
+// ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
+const view = Object.assign({rulers: true, grid: false, margins: true}, JSON.parse(localStorage.getItem("units.view") || "{}"));
+function applyView() {
+  const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
+  $("#tg-rul").classList.toggle("on", view.rulers); $("#tg-grid").classList.toggle("on", view.grid); $("#tg-mg").classList.toggle("on", view.margins);
+  localStorage.setItem("units.view", JSON.stringify(view)); drawRulers();
+}
+function drawRulers() {
+  if (!page) return; const sp = specOf(); const rt = $("#rt"), rl = $("#rl"); rt.innerHTML = ""; rl.innerHTML = "";
+  const step = scale < 1.5 ? 20 : (scale < 3 ? 10 : 5);
+  for (let m = 0; m <= sp.w; m += step) rt.insertAdjacentHTML("beforeend", `<span style="position:absolute;left:${m * scale}px;bottom:0;height:${m % 50 === 0 ? 9 : 5}px;border-left:1px solid #b8b5c9"></span>${m % 50 === 0 ? `<span style="position:absolute;left:${m * scale + 2}px;top:1px">${m}</span>` : ""}`);
+  for (let m = 0; m <= sp.h; m += step) rl.insertAdjacentHTML("beforeend", `<span style="position:absolute;top:${m * scale}px;right:0;width:${m % 50 === 0 ? 9 : 5}px;border-top:1px solid #b8b5c9"></span>${m % 50 === 0 ? `<span style="position:absolute;top:${m * scale + 1}px;left:1px;writing-mode:vertical-rl;transform:rotate(180deg)">${m}</span>` : ""}`);
+  $("#paper").querySelector(".svgwrap").style.backgroundSize = `${5 * scale}px ${5 * scale}px`;
+  Object.assign($("#mg").style, {left: (M.left * scale) + "px", top: (M.top * scale) + "px", width: ((sp.w - M.left - M.right) * scale) + "px", height: ((sp.h - M.top - M.bottom) * scale) + "px"});
+  drawGuides();
+}
+function drawGuides() {
+  const box = $("#guides"); box.innerHTML = ""; if (!page) return; const gd = page.guides || {v: [], h: []};
+  (gd.v || []).forEach((x, k) => { const d = document.createElement("div"); d.className = "guide v"; d.style.left = (x * scale) + "px"; d.title = x + "mm"; d.onpointerdown = (e) => dragGuide(e, "v", k); box.appendChild(d); });
+  (gd.h || []).forEach((y, k) => { const d = document.createElement("div"); d.className = "guide h"; d.style.top = (y * scale) + "px"; d.title = y + "mm"; d.onpointerdown = (e) => dragGuide(e, "h", k); box.appendChild(d); });
+}
+function dragGuide(e, axis, k, el) {                     // 안내선 옮기기 · 자 밖으로 끌면 지움
+  e.stopPropagation(); e.preventDefault(); const gd = page.guides; el = el || e.currentTarget;
+  const mv = (ev) => { const m = mmOf(ev); const v = snap(axis === "v" ? m.x : m.y); gd[axis][k] = v; el.style[axis === "v" ? "left" : "top"] = (v * scale) + "px"; el.title = v + "mm"; };
+  const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); const m = mmOf(ev); const sp = specOf();
+    if ((axis === "v" && (m.x < 0 || m.x > sp.w)) || (axis === "h" && (m.y < 0 || m.y > sp.h))) gd[axis].splice(k, 1); save(); drawGuides(); };
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+}
+["rt", "rl"].forEach(id => $("#" + id).addEventListener("pointerdown", (e) => {   // 자에서 끌어내면 새 안내선
+  if (!page) return; e.preventDefault(); const axis = id === "rt" ? "h" : "v"; page.guides = page.guides || {v: [], h: []}; page.guides.v = page.guides.v || []; page.guides.h = page.guides.h || [];
+  const m = mmOf(e); page.guides[axis].push(snap(axis === "v" ? m.x : m.y)); drawGuides(); const k = page.guides[axis].length - 1;
+  const el = $("#guides").children[axis === "v" ? k : (page.guides.v.length + k)]; if (el) dragGuide(e, axis, k, el);
+}));
+$("#tg-rul").onclick = () => { view.rulers = !view.rulers; applyView(); };
+$("#tg-grid").onclick = () => { view.grid = !view.grid; applyView(); };
+$("#tg-mg").onclick = () => { view.margins = !view.margins; applyView(); };
+$("#zoomsel").onchange = () => setZoom(+$("#zoomsel").value);
+// 손 도구 — Space 누른 채 끌기 · 가운데 버튼 끌기
+let spaceDown = false;
+document.addEventListener("keydown", (e) => { if (e.code === "Space" && !(e.target.matches && e.target.matches("input,textarea,select"))) { spaceDown = true; $("#area").classList.add("pan"); e.preventDefault(); } });
+document.addEventListener("keyup", (e) => { if (e.code === "Space") { spaceDown = false; $("#area").classList.remove("pan"); } });
+$("#area").addEventListener("pointerdown", (e) => {
+  if (!(spaceDown || e.button === 1)) return; e.preventDefault(); e.stopPropagation(); const ar = $("#area"); const st = {x: e.clientX, y: e.clientY, l: ar.scrollLeft, t: ar.scrollTop};
+  const mv = (ev) => { ar.scrollLeft = st.l - (ev.clientX - st.x); ar.scrollTop = st.t - (ev.clientY - st.y); };
+  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); };
+  window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+}, true);
+
+// ── 오른쪽 클릭 메뉴 ──
+function cmenu(e) {
+  e.preventDefault(); const m = $("#cmenu"); const hit = e.target.closest && e.target.closest("g[data-fi]");
+  if (hit && !sels.has(+hit.dataset.fi)) select([+hit.dataset.fi]);
+  const it = sel != null ? page.items[sel] : null;
+  const rows = it ? [["오려두기", "Ctrl+X", cutSel], ["복사", "Ctrl+C", copySel], ["붙여넣기", "Ctrl+V", paste], ["복제", "Ctrl+D", dupSel], null,
+    ...(sels.size > 1 ? [["그룹", "Ctrl+G", () => groupToPart()]] : []), ...(it.block || it.part ? [["편집 (안으로)", "더블클릭", () => enterEdit(sel)], ["그룹 해제", "Ctrl+Shift+G", ungroup]] : []), ["★ 요소로 저장", "", saveAsElement], null,
+    ["맨 앞으로", "Ctrl+Shift+]", () => zorder(true)], ["앞으로", "Ctrl+]", () => zstep(true)], ["뒤로", "Ctrl+[", () => zstep(false)], ["맨 뒤로", "Ctrl+Shift+[", () => zorder(false)], null,
+    [it.lock ? "잠금 해제" : "잠금", "Ctrl+L", lockSel], ["숨기기", "", () => hideItem(sel)], ["지우기", "Delete", removeSel]]
+    : [["붙여넣기", "Ctrl+V", paste], ["전체 선택", "Ctrl+A", () => select(page.items.map((_, i) => i))], null, ["페이지 복제", "", () => addPage("dup")], ["페이지 지우기", "", () => deletePage()]];
+  m.innerHTML = rows.map(r => r ? `<button>${r[0]}<span>${r[1]}</span></button>` : "<hr>").join("");
+  [...m.querySelectorAll("button")].forEach((b, k) => { const r = rows.filter(Boolean)[k]; b.onclick = (ev) => { ev.stopPropagation(); m.style.display = "none"; r[2](); }; });
+  m.style.display = ""; m.style.left = Math.min(e.clientX, innerWidth - 200) + "px"; m.style.top = Math.min(e.clientY, innerHeight - m.offsetHeight - 10) + "px";
+}
+$("#paper").addEventListener("contextmenu", cmenu);
+document.addEventListener("click", () => { $("#cmenu").style.display = "none"; });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#cmenu").style.display = "none"; });
+
+// ── 레이어 (오른쪽 아래) ──
+function layersHtml() {
+  const rows = page.items.map((it, i) => ({it, i})).reverse();
+  return `<h3>레이어 <small style="font-weight:400;color:var(--mute)">위가 앞</small></h3><div class="layers">${rows.map(({it, i}) => `<div class="li${sels.has(i) ? " on" : ""}${it.hide ? " hid" : ""}" data-li="${i}"><button data-eye="${i}" class="${it.hide ? "" : "on"}" title="보이기/숨기기">${it.hide ? "◌" : "👁"}</button><button data-lk="${i}" class="${it.lock ? "on" : ""}" title="잠금">${it.lock ? "🔒" : "🔓"}</button><span class="nm">${esc(nameOf(it))}</span><button data-lu="${i}" title="앞으로">▲</button><button data-ld="${i}" title="뒤로">▼</button></div>`).join("")}</div>`;
+}
+function wireLayers(box) {
+  box.querySelectorAll("[data-li]").forEach(d => d.onclick = (e) => { if (e.target.tagName === "BUTTON") return; const i = +d.dataset.li; if (page.items[i].hide) return; select(e.shiftKey ? [...new Set([...sels, i])] : [i]); });
+  box.querySelectorAll("[data-eye]").forEach(b => b.onclick = (e) => { e.stopPropagation(); hideItem(+b.dataset.eye); });
+  box.querySelectorAll("[data-lk]").forEach(b => b.onclick = (e) => { e.stopPropagation(); const i = +b.dataset.lk; hist(); if (page.items[i].lock) delete page.items[i].lock; else page.items[i].lock = true; if (page.items[i].lock && sels.has(i)) select([]); save(); render(); side(); });
+  box.querySelectorAll("[data-lu]").forEach(b => b.onclick = (e) => { e.stopPropagation(); select([+b.dataset.lu]); zstep(true); });
+  box.querySelectorAll("[data-ld]").forEach(b => b.onclick = (e) => { e.stopPropagation(); select([+b.dataset.ld]); zstep(false); });
+}
 
 // ── 요소 넣기 (블록 · 부품 · 원자) ──
 function bottomOf() {
@@ -878,14 +1069,15 @@ function side() {
       h += `<div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label></div>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
-      <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm danger" id="s-x">지우기</button></div>`;
+      <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm sub" id="s-lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button><button class="btn sm danger" id="s-x">지우기</button></div>
+      ${layersHtml()}`;
   } else {
     $("#stitle").textContent = `페이지 ${idx() + 1} / ${docPages().length}`;
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
       <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 없으면 한 번">${page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
-      <h3>요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0">· ${esc(nameOf(it))} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 「요소」를 누른다</div>`}`;
+      ${layersHtml()}`;
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
@@ -912,8 +1104,8 @@ function side() {
   }));
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
-  on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel);
-  box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => select([+d.dataset.seli]));
+  on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
+  wireLayers(box);
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });

@@ -191,7 +191,9 @@
                     "block": {"$ref": "#/definitions/id"}, "part": {"$ref": "#/definitions/id"},
                     "atom": {"$ref": "#/definitions/atom", "description": "낱개 원자(글상자·선·면·원·그림). 원점은 0,0 — 자리는 x,y"},
                     "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm", "description": "폭 — 없으면 부품 폭"},
-                    "fields": {"type": "object", "description": "이 자리의 견본 값(선택)"}}}},
+                    "fields": {"type": "object", "description": "이 자리의 견본 값(선택)"},
+                    "lock": {"type": "boolean", "description": "잠금 — 캔버스에서 못 고른다"}, "hide": {"type": "boolean", "description": "숨김 — 안 그린다"}}}},
+        "guides": {"type": "object", "description": "캔버스 안내선(mm)", "properties": {"v": {"type": "array", "items": {"$ref": "#/definitions/mm"}}, "h": {"type": "array", "items": {"$ref": "#/definitions/mm"}}}},
         "blocks": {"type": "array", "description": "캔버스에서 칸에 놓은 블록(견본 배치). 실제 콘텐츠는 세트로 흘러 들어오고, 이건 지면을 설계·미리볼 때 쓴다",
                    "items": {"type": "object", "required": ["zone", "block"], "properties": {"zone": {"$ref": "#/definitions/id"}, "block": {"$ref": "#/definitions/id"}}}}
       }
