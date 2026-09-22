@@ -1,15 +1,106 @@
 [
- {"id": "workbook_mini", "name": "워크북 (STEP 2 만)", "spec": "a4",
-  "front": ["cover"],
-  "sections": [
-   {"id": "step2", "name": "STEP 2", "divider": "divider",
-    "pages": [{"page": "pair", "repeat": "each_set", "sets": ["passage"]}]}
+ {
+  "id": "workbook_mini",
+  "name": "워크북 (STEP 2 만)",
+  "spec": "a4",
+  "front": [
+   "cover"
   ],
-  "back": []},
- {"id": "exam_sheet", "name": "시험지 (2단 이어짐)", "spec": "a4",
+  "sections": [
+   {
+    "id": "step2",
+    "name": "STEP 2",
+    "divider": "divider",
+    "pages": [
+     {
+      "page": "pair",
+      "repeat": "each_set",
+      "sets": [
+       "passage"
+      ]
+     }
+    ]
+   }
+  ],
+  "back": []
+ },
+ {
+  "id": "exam_sheet",
+  "name": "시험지 (2단 이어짐)",
+  "spec": "a4",
   "front": [],
   "sections": [
-   {"id": "r1", "name": "1회", "pages": [{"page": "two_col", "repeat": "once", "sets": ["passage"]}]}
+   {
+    "id": "r1",
+    "name": "1회",
+    "pages": [
+     {
+      "page": "two_col",
+      "repeat": "once",
+      "sets": [
+       "passage"
+      ]
+     }
+    ]
+   }
   ],
-  "back": []}
+  "back": []
+ },
+ {
+  "id": "plan_1",
+  "name": "새 틀",
+  "spec": "a4",
+  "front": [],
+  "sections": [
+   {
+    "id": "s1",
+    "name": "본문",
+    "pages": [
+     {
+      "page": "page_3",
+      "repeat": "once"
+     }
+    ]
+   }
+  ],
+  "back": []
+ },
+ {
+  "id": "plan_2",
+  "name": "새 틀",
+  "spec": "a4",
+  "front": [],
+  "sections": [
+   {
+    "id": "s1",
+    "name": "본문",
+    "pages": [
+     {
+      "page": "page_4",
+      "repeat": "once"
+     }
+    ]
+   }
+  ],
+  "back": []
+ },
+ {
+  "id": "plan_3",
+  "name": "새 문서",
+  "spec": "a4",
+  "front": [],
+  "sections": [
+   {
+    "id": "s1",
+    "name": "본문",
+    "pages": [
+     {
+      "page": "page_5",
+      "repeat": "once"
+     }
+    ]
+   }
+  ],
+  "back": []
+ }
 ]
