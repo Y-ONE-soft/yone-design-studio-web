@@ -231,7 +231,8 @@
       <span class="sep"></span>
       <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
       <button id="p-check" title="원고 빠진 자리·안 실린 원고·넘침·없는 토큰을 찾는다">✓ 검수</button>
-      <button id="p-pdf" title="PDF 저장">⬇ PDF</button>
+      <button id="p-pdf" title="화면용 PDF (RGB)">⬇ PDF</button>
+      <button id="p-print" title="인쇄용 PDF — 도련 3mm·재단선·CMYK(무채색은 K 단색)·TrimBox">🖨 인쇄용</button>
       <span class="sep"></span>
       <button id="p-dup" title="페이지 복제">⧉</button>
       <button id="p-del" title="페이지 지우기">🗑</button>
@@ -399,6 +400,7 @@ $("#p-home").onclick = showStart;
 $("#plname").oninput = () => { if (plan) { plan.name = $("#plname").value; clearTimeout(window._plt); window._plt = setTimeout(savePlan, 500); } };
 // 책 미리보기 · PDF
 $("#p-pdf").onclick = () => { if (plan) window.open(`/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`, "_blank"); };
+$("#p-print").onclick = () => { if (plan) window.open(`/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}&print=1&dl=1`, "_blank"); };
 $("#p-preview").onclick = async () => {
   if (!plan) return; const pv = $("#pv"); pv.style.display = ""; $("#pvtitle").textContent = plan.name || plan.id; $("#pvinfo").textContent = "그리는 중…"; $("#pvbody").innerHTML = "";
   $("#pvpdf").href = `/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`;

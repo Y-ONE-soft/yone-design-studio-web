@@ -461,3 +461,20 @@ def test_check_report(lib):
     stray = good + [{"kind": "vocab", "id": "9", "blocks": [{"block": "passage", "fields": {"passage": "x"}}]}]
     r3 = check.report(lib, plan, "d2", stray)
     assert any("어느 구간도 받지 않아" in i["msg"] and i["level"] == "warn" for i in r3["issues"])
+
+
+def test_print_mode_bleed_marks_and_gray_map(lib):
+    """인쇄 모드: 매체 = 재단 + 2×(도련+재단선 5mm), 가장자리 상자는 도련까지 늘고, 재단선 8줄, 무채색 토큰 → K."""
+    from core.units import pdf, render, store
+    skin = store.by_id(lib["skins"])["d2"]
+    ctx = render.Ctx(skin, lib, {"title": "T", "tag": "TAG"})
+    ctx.print = {"bleed": 3.0, "marks": True}
+    cover = store.by_id(lib["pages"])["cover"]
+    svg = render.page_svgs(ctx, cover, [], render.DEFAULT_SPEC)[0]["svg"]
+    assert 'viewBox="0 0 226.000 313.000"' in svg and 'data-trim="210.000 297.000"' in svg
+    assert svg.count("stroke-width=\"0.09\"") == 8                                   # 재단선
+    assert 'x="-3.000" y="-3.000" width="216.000"' in svg                            # 가장자리 상자가 도련까지
+    plain = render.page_svgs(render.Ctx(skin, lib), cover, [], render.DEFAULT_SPEC)[0]["svg"]
+    assert 'viewBox="0 0 210.000 297.000"' in plain and "-3.000" not in plain           # 화면용은 그대로
+    g = pdf.gray_map_of(skin)
+    assert g["#231f20"] == 1.0 and g["#ffffff"] == 0.0 and 0.2 < g["#b8b8b8"] < 0.35 and "#667fb4" not in g

@@ -41,6 +41,8 @@ class Ctx(object):
         self.blocks = _by_id(lib.get("blocks"))
         self.sys = dict(sys or {})
         self.warnings = []
+        self.print = None                                 # 인쇄 모드 {"bleed": mm, "marks": bool} — 도련 늘림·재단선
+        self._at = None                                   # 그리는 중인 요소의 면 안 자리 (x, y, W, H) — 도련 늘림용
         self.issues = []                                  # 검수 — [{level: error|warn|info, msg}]
         self._seen = set()
         self._n = 0
@@ -390,6 +392,46 @@ def _atom_svg(ctx, a, dy, h, html):
     return _wrap_atom(a, svg, cx, cy)
 
 
+def _bleed_box(ctx, x, y, w, h):
+    """인쇄 모드: 면 가장자리에 붙은 상자·그림을 도련만큼 밖으로 늘린다 (인디자인에서 도련선까지 끌어 놓는 일)."""
+    p = ctx.print
+    if not p or not p.get("bleed") or not ctx._at:
+        return x, y, w, h
+    b = float(p["bleed"])
+    ox, oy, W, H = ctx._at
+    ax, ay = ox + x, oy + y
+    if ax <= 0.05:
+        x -= b + ax
+        w += b + ax
+    if ax + w >= W - 0.05:
+        w += b + (W - ax - w)
+    if ay <= 0.05:
+        y -= b + ay
+        h += b + ay
+    if ay + h >= H - 0.05:
+        h += b + (H - ay - h)
+    return x, y, w, h
+
+
+def crop_marks(W, H, bleed, length=4.0, gap=0.5):
+    """재단선 — 네 귀에 가로·세로 두 줄씩. 도련 밖(gap)에서 length 만큼. 먹 100%."""
+    o = bleed + gap
+    L = o + length
+    s = 'stroke="#000000" stroke-width="0.09"'
+    out = []
+    for cx, sx in ((0.0, -1), (W, 1)):
+        for cy, sy in ((0.0, -1), (H, 1)):
+            out.append(f'<line x1="{cx + sx * o:.3f}" y1="{cy:.3f}" x2="{cx + sx * L:.3f}" y2="{cy:.3f}" {s}/>')
+            out.append(f'<line x1="{cx:.3f}" y1="{cy + sy * o:.3f}" x2="{cx:.3f}" y2="{cy + sy * L:.3f}" {s}/>')
+    return "".join(out)
+
+
+def print_margin(ctx):
+    """인쇄 모드에서 면 바깥 여유(mm) — 도련 + 재단선 자리."""
+    p = ctx.print or {}
+    return float(p.get("bleed") or 0) + (5.0 if p.get("marks") else 0.0)
+
+
 def _atom_svg_raw(ctx, a, dy, h, html):
     t = a.get("t")
     if t == "text":
@@ -416,9 +458,10 @@ def _atom_svg_raw(ctx, a, dy, h, html):
     if t == "rect":
         fill, defs = _fill(ctx, a)
         r = a.get("radius") or 0
+        bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)
         if isinstance(r, (list, tuple)):
-            return (defs + f'<path d="{_rrect_path(a["x"], a["y"] + dy, a["w"], h, r)}" fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
-        return (defs + f'<rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" rx="{r}" '
+            return (defs + f'<path d="{_rrect_path(bx, by, bw, bh, r)}" fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
+        return (defs + f'<rect x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" rx="{r}" '
                 f'fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
     if t == "ellipse":
         fill, defs = _fill(ctx, a)
@@ -436,7 +479,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                         f'<image x="{a["x"] + float(im["x"]):.3f}" y="{a["y"] + dy + float(im["y"]):.3f}" width="{float(im["w"]):.3f}" height="{float(im["h"]):.3f}" '
                         f'href="{href}" preserveAspectRatio="none" clip-path="url(#{cid})"/>')
             par = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
-            return (f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" '
+            bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)          # 인쇄: 가장자리 그림은 도련까지
+            return (f'<image x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" '
                     f'href="{href}" preserveAspectRatio="{par}"/>')
         if src:
             ctx.warn(f"이미지 없음 {src} — 옷 {ctx.skin.get('id') or '(없음)'}.images 에 파일을 적을 것")
@@ -713,7 +757,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     # 자유 배치 — 캔버스에서 좌표에 놓은 요소(블록은 견본 값으로, 부품은 그대로). 파워포인트의 개체.
     # 콘텐츠 블록 자리는 캔버스에서만 그린다(실제 콘텐츠는 세트로 흘러 든다). 머리말·쪽번호 같은
     # system 블록과 부품은 언제나 그린다.
-    for pl in place_items(ctx, page, W, H):
+    for pl in place_items(ctx, page, W, H, mirror):
         it = pl["it"]
         if pl["y"] + pl["h"] > H + 0.01:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
@@ -724,7 +768,17 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, f'data-page="{pno}" data-tpl="{esc(page["id"])}"')
+    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"'
+    if ctx.print:
+        # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
+        b = float(ctx.print.get("bleed") or 0)
+        m = print_margin(ctx)
+        MW, MH = W + 2 * m, H + 2 * m
+        inner = (f'<rect x="{-b:.3f}" y="{-b:.3f}" width="{W + 2 * b:.3f}" height="{H + 2 * b:.3f}" fill="{bg}"/>'
+                 + "".join(frags) + "".join(chrome) + (crop_marks(W, H, b) if ctx.print.get("marks") else ""))
+        return (f'<svg {_NS} viewBox="0 0 {MW:.3f} {MH:.3f}" width="{MW:.3f}mm" height="{MH:.3f}mm" {extra} data-trim="{W:.3f} {H:.3f}" data-bleed="{b:.3f}">'
+                f'<rect width="{MW:.3f}" height="{MH:.3f}" fill="#ffffff"/><g transform="translate({m:.3f},{m:.3f})">{inner}</g></svg>')
+    return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, extra)
 
 
 def is_fixed(ctx, it):
@@ -733,7 +787,7 @@ def is_fixed(ctx, it):
     return blk is not None and blk.get("source") == "system"
 
 
-def place_items(ctx, page, W, H):
+def place_items(ctx, page, W, H, mirror=False):
     """자유 배치 요소를 놓는다 → [{fi, it, frag, w, h, h0, y, dy, fixed}] (그리는 순서).
 
     글이 길어 자리가 자라면(실제 높이 > 설계 높이) **그 아래, 가로로 겹치는** 요소를 그만큼 민다 — 부품 안 원자와 같은 규칙.
@@ -747,7 +801,7 @@ def place_items(ctx, page, W, H):
         blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
         if not canvas and blk is not None and blk.get("source") == "content":
             continue
-        frag, part, w, h = _item_frag(ctx, it)
+        frag, part, w, h = _item_frag(ctx, it, (W, H, mirror))
         if frag is None:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
             continue
@@ -771,11 +825,21 @@ def atom_part(atom):
     return {"id": "_atom", "name": "원자", "w": max(w, 0.5), "h": max(h, 0.5), "atoms": [a]}
 
 
-def _item_frag(ctx, it):
-    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭, 실제 높이). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품."""
+def _item_frag(ctx, it, at=None):
+    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭, 실제 높이). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품.
+
+    at = (W, H, mirror) 를 주면 인쇄 모드의 도련 늘림이 면 안 자리를 안다.
+    """
+    def origin(w):
+        if at and ctx.print:
+            W, H, mirror = at
+            ctx._at = ((W - float(it["x"]) - w) if mirror else float(it["x"]), float(it["y"]), W, H)
+        else:
+            ctx._at = None
     if it.get("atom"):
         part = atom_part(it["atom"])
         w = float(it.get("w") or part["w"])
+        origin(w)
         frag, h = part_svg(ctx, part, {}, width=w)
         return frag, part, w, h
     if it.get("block"):
@@ -787,12 +851,14 @@ def _item_frag(ctx, it):
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
         values = {k: "" for k in types} if it.get("_empty") else sample.fill(blk, it.get("fields"))   # 책에서 원고 없는 자리는 빈 채로
+        origin(w)
         frag, h = part_svg(ctx, part, values, types, width=w)
         return frag, part, w, h
     part = ctx.parts.get(it.get("part"))
     if not part:
         return None, None, 0, 0
     w = float(it.get("w") or part.get("w") or 0)
+    origin(w)
     frag, h = part_svg(ctx, part, {}, width=w)
     return frag, part, w, h
 
