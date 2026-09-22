@@ -55,6 +55,7 @@
   .li { border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; margin: 5px 0; background: #fff; cursor: pointer; font-size: 12px; }
   .li:hover { border-color: var(--pp); } .li.on { border-color: var(--pp); background: var(--pp-bg); }
   .li .ds { color: var(--mute); font-size: 11px; margin-top: 2px; }
+  .li .x { float: right; color: var(--mute); font-size: 11px; padding: 0 3px; } .li .x:hover { color: #c33; }
   .chip { display: inline-block; font-size: 10.5px; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin: 2px 2px 0 0; cursor: pointer; background: #fff; }
   .chip:hover { border-color: var(--pp); color: var(--pp); }
   .upanel .ft { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 11.5px; }
@@ -980,10 +981,23 @@ function panel() {
     hd.innerHTML = `<b>원고</b>`;
     const none = document.createElement("div"); none.className = "li" + (curSet ? "" : " on"); none.innerHTML = `<b>견본 글</b><div class="ds">지어낸 글로 채운다</div>`; none.onclick = () => { curSet = ""; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(none);
     for (const s2 of LIB.sets) { const d = document.createElement("div"); d.className = "li" + (curSet === s2.id ? " on" : "");
-      d.innerHTML = `<b>${esc(s2.kind)} ${esc(s2.id)}</b><div class="ds">${(s2.blocks || []).map(b => (byId("blocks")[b.block] || {name: b.block}).name).join(" + ")}</div>`;
-      d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(d); }
-    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-new">＋ 원고 입력</button></div><div id="setform"></div>
+      d.innerHTML = `<b>${esc(s2.kind)} ${esc(s2.id)}</b><span class="x" title="지우기">✕</span><div class="ds">${(s2.blocks || []).map(b => (byId("blocks")[b.block] || {name: b.block}).name).join(" + ")}</div>`;
+      d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); };
+      d.querySelector(".x").onclick = async (e) => { e.stopPropagation(); await api("/api/units/sets", {id: s2.id}, "DELETE"); LIB.sets = LIB.sets.filter(x => x.id !== s2.id); if (curSet === s2.id) curSet = ""; pageSvg = {}; render(); drawRail(); panel(); };
+      body.appendChild(d); }
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-paste">📄 원고 붙여넣기</button><label class="btn sm sub">📎 파일<input type="file" id="set-file" accept=".docx,.hwpx,.txt,.md,.json" style="display:none"></label><button class="btn sm sub" id="set-new">＋ 자리별 입력</button></div><div id="setform"></div>
 `);
+    const gotSets = (j) => { if (j.error) { $("#st").textContent = j.error + ((j.log || []).length ? " · " + j.log[0] : ""); return; }
+      for (const st of j.sets) LIB.sets = LIB.sets.filter(x => x.id !== st.id).concat([st]); curSet = j.sets[0].id; pageSvg = {}; render(); drawRail(); panel();
+      $("#st").textContent = `원고 ${j.sets.length}개 읽음` + (j.log.length ? ` · 못 맞춘 것 ${j.log.length}: ${j.log[0]}` : ""); };
+    $("#set-paste").onclick = () => {
+      $("#setform").innerHTML = `<textarea id="ms-text" rows="12" style="width:100%;font-size:12px" placeholder="# 21\nThe idea that cities … (영어 지문)\n윗글의 주제로 가장 적절한 것은?\n① … ② … ③ …\n답: ③\n빈칸\n1. Wide roads r_____ neighborhoods.\n넓은 도로가 동네를 대체했다.\n답: replaced\n본문 O/X\n(1) Cities were built around cars.\n답: X"></textarea>
+        <div class="note">한 줄 = 한 단락. <b># 번호</b> 새 원고 · <b>이름:</b> 자리 지정(지문·발문·선지…) · <b>①②③</b> 선지 · <b>답:</b> 정답 · <b>빈칸 / 본문 O/X / 어법 O/X</b> 한 줄 뒤에 번호 줄 · 영어 긴 단락은 지문, 한글 물음은 발문</div>
+        <div class="row"><button class="btn sm" id="ms-go">읽어서 원고 만들기</button></div>`;
+      $("#ms-go").onclick = async () => gotSets(await api("/api/units/manuscript?save=1", {text: $("#ms-text").value}));
+    };
+    $("#set-file").onchange = async () => { const f = $("#set-file").files[0]; if (!f) return; const fd = new FormData(); fd.append("file", f);
+      const r = await fetch("/api/units/manuscript?save=1", {method: "POST", body: fd}); gotSets(await r.json()); $("#set-file").value = ""; };
     $("#set-new").onclick = () => {
       const slots = (page ? page.items : []).filter(it => it.block && (byId("blocks")[it.block] || {}).source === "content");
       if (!slots.length) { $("#setform").innerHTML = `<div class="note">이 페이지엔 원고가 들어갈 자리가 없다 — 자리 이름이 있는 요소를 놓는다</div>`; return; }

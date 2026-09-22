@@ -12,6 +12,7 @@
     /api/units/part_from POST      {dec, atoms:[번호], id, name} → 부품 저장
     /api/units/make POST           {prompt, skin} → 클로드가 그린 부품 + 블록 저장 (캔버스의 "설명으로 만들기")
     /api/units/pdf?plan=|page=     PDF 저장 — 크로미움 인쇄 (core/units/pdf.py). ?skin= ?set= ?dl=1
+    /api/units/manuscript POST     원고 → 세트. {text} | {contents: yos-workbook-v1} | 파일(docx·hwpx·txt·json). ?save=1 이면 저장. → {sets, log}
 
 화면은 얇다 — 그리는 일은 전부 core/units/render, 분해는 core/units/decompose.
 """
@@ -22,7 +23,7 @@ import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
 
-from core.units import decompose, render, store
+from core.units import decompose, manuscript, render, store
 
 bp = Blueprint("units", __name__)
 _RE_ID = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
@@ -82,6 +83,43 @@ def api_put(kind):
         return jsonify({"error": err}), 400
     store.put(kind, item, after=request.args.get("after"))      # ?after=<id> 그 뒤로 · ?after= 맨 앞
     return jsonify({"ok": True, "item": item})
+
+
+@bp.route("/api/units/manuscript", methods=["POST"])
+def api_manuscript():
+    """원고 → 세트 (core/units/manuscript). 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
+    blocks = store.load("blocks")
+    f = request.files.get("file")
+    try:
+        if f and f.filename:
+            ext = os.path.splitext(f.filename)[1].lower()
+            if ext not in (".docx", ".hwpx", ".txt", ".md", ".json"):
+                return jsonify({"error": "docx·hwpx·txt·json 만"}), 400
+            path = os.path.join(_updir(), uuid.uuid4().hex[:12] + ext)
+            f.save(path)
+            if ext == ".json":
+                with open(path, encoding="utf-8") as fh:
+                    sets, log = manuscript.from_contents(json.load(fh), blocks)
+            else:
+                sets, log = manuscript.from_file(path, blocks, request.form.get("kind") or "passage")
+        else:
+            body = request.get_json(silent=True) or {}
+            if body.get("contents"):
+                sets, log = manuscript.from_contents(body["contents"], blocks)
+            else:
+                sets, log = manuscript.from_text(body.get("text") or "", blocks, body.get("kind") or "passage")
+    except (ValueError, KeyError, OSError) as e:
+        return jsonify({"error": str(e)}), 400
+    if not sets:
+        return jsonify({"error": "세트를 하나도 못 만들었다", "log": log}), 400
+    for st in sets:
+        err = store.validate("sets", st)
+        if err:
+            return jsonify({"error": err, "log": log}), 400
+    if request.args.get("save"):
+        for st in sets:
+            store.put("sets", st)
+    return jsonify({"sets": sets, "log": log})
 
 
 @bp.route("/api/units/<kind>", methods=["DELETE"])

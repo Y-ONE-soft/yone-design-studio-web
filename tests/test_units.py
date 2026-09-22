@@ -319,3 +319,49 @@ def test_overflow_threads_to_next_page(lib):
     assert "planners" in out[-1]["svg"]
     # 짧은 지문은 한 면
     assert len(render.page_svgs(ctx, pg, lib["sets"][1:2], render.DEFAULT_SPEC)) == 1
+
+
+def test_manuscript_text_to_sets(lib):
+    """붙여넣은 원고 → 블록 자리 이름에 맞춘 세트."""
+    from core.units import manuscript, store
+    with open(os.path.join(REPO, "tests", "fixtures", "manuscript_sample.txt"), encoding="utf-8") as fh:
+        sets, log = manuscript.from_text(fh.read(), lib["blocks"])
+    assert log == [] and [s["id"] for s in sets] == ["21", "22"]
+    b = {x["block"]: x["fields"] for x in sets[0]["blocks"]}
+    assert b["pnum"]["pnum"] == "21" and b["passage"]["passage"].startswith("The idea") and "\n" in b["passage"]["passage"]
+    assert b["prompt"]["prompt"].endswith("?") and len(b["choices"]["choices"]) == 5 and b["choices"]["answer"] == "③"
+    assert b["blank"]["kr"].startswith("넓은") and b["blank"]["answer"] == "replaced"
+    ox = [x["fields"] for x in sets[0]["blocks"] if x["block"] == "ox"]
+    assert [o["answer"] for o in ox] == [False, True]
+    b2 = {x["block"]: x["fields"] for x in sets[1]["blocks"]}
+    assert b2["prompt"]["no"] == 2 and b2["gram_ox"]["answer"] == "X"
+    for s in sets:
+        assert store.validate("sets", s) is None
+
+
+def test_manuscript_contents_to_sets(lib):
+    """contents JSON(yos-workbook-v1) → 항목마다 세트, 못 맞춘 항목은 log."""
+    from core.units import manuscript
+    with open(os.path.join(REPO, "tests", "fixtures", "yos_workbook_v1.json"), encoding="utf-8") as fh:
+        sets, log = manuscript.from_contents(json.load(fh), lib["blocks"])
+    kinds = [s["kind"] for s in sets]
+    assert kinds[0] == "passage" and "content-ox" in kinds and "vocab-blank" in kinds and "grammar-fix" in kinds
+    assert len({s["id"] for s in sets}) == len(sets)                       # id 유일
+    ox = next(s for s in sets if s["kind"] == "content-ox")
+    assert [b["fields"]["answer"] for b in ox["blocks"] if b["block"] == "ox"][:2] == [True, False]
+    fix = next(s for s in sets if s["kind"] == "grammar-fix")
+    assert any(isinstance(b["fields"]["sentence"], list) for b in fix["blocks"] if b["block"] == "gram_ox")   # 밑줄 조각
+    assert any("순서배열" in x for x in log)
+
+
+def test_manuscript_api(lib, monkeypatch, tmp_path):
+    monkeypatch.setenv("YONE_STUDIO_ROOT", str(tmp_path))
+    import importlib
+    import studio_server
+    importlib.reload(studio_server)
+    c = studio_server.create_app().test_client()
+    r = c.post("/api/units/manuscript?save=1", json={"text": "# 7\nThis is a passage long enough to be recognised as the English body text of a set.\n윗글의 주제는?\n① a ② b\n답: ②"})
+    j = r.get_json()
+    assert r.status_code == 200 and j["sets"][0]["id"] == "7" and j["log"] == []
+    from core.units import store
+    assert store.get("sets", "7")["blocks"][-1]["fields"]["answer"] == "②"
