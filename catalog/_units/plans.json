@@ -20,6 +20,20 @@
       ]
      }
     ]
+   },
+   {
+    "id": "answers",
+    "name": "정답",
+    "divider": "divider",
+    "pages": [
+     {
+      "page": "answers",
+      "sets": [
+       "answers"
+      ],
+      "repeat": "once"
+     }
+    ]
    }
   ],
   "back": []

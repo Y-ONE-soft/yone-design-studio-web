@@ -31,6 +31,9 @@ def _by_id(items):
     return {x.get("id"): x for x in (items or []) if isinstance(x, dict) and x.get("id")}
 
 
+STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
+
+
 class Ctx(object):
     def __init__(self, skin, lib, sys=None):
         self.skin = skin or {"id": "", "tokens": {}}
@@ -38,6 +41,9 @@ class Ctx(object):
         self.blocks = _by_id(lib.get("blocks"))
         self.sys = dict(sys or {})
         self.warnings = []
+        self.print = None                                 # 인쇄 모드 {"bleed": mm, "marks": bool} — 도련 늘림·재단선
+        self._at = None                                   # 그리는 중인 요소의 면 안 자리 (x, y, W, H) — 도련 늘림용
+        self.issues = []                                  # 검수 — [{level: error|warn|info, msg}]
         self._seen = set()
         self._n = 0
 
@@ -47,9 +53,15 @@ class Ctx(object):
         return f"u{self._n}"
 
     def warn(self, msg):
+        self.issue("warn", msg)
+
+    def issue(self, level, msg):
+        """검수 항목. error = 책으로 내면 안 되는 것(원고 빠짐·안 실림), warn = 확인할 것(넘침·토큰), info = 알림."""
         if msg not in self._seen:
             self._seen.add(msg)
-            self.warnings.append(msg)
+            if level != "info":
+                self.warnings.append(msg)
+            self.issues.append({"level": level, "msg": msg})
 
     def _tok(self, ref, kind, default):
         if ref is None:
@@ -71,6 +83,19 @@ class Ctx(object):
     def image(self, src):
         p = ((self.skin.get("images") or {}).get(src)) if src else None
         return p
+
+    def styled(self, a):
+        """글 원자에 옷의 단락 스타일(a.style)을 입힌다 — 스타일 값이 원자 값보다 우선. 없는 스타일은 경고 + 원자 값 그대로."""
+        name = a.get("style")
+        if not name or a.get("t") != "text":
+            return a
+        st = (self.skin.get("styles") or {}).get(name)
+        if st is None:
+            self.warn(f"단락 스타일 없음 {name} — 옷 {self.skin.get('id') or '(없음)'}")
+            return a
+        out = dict(a)
+        out.update({k: v for k, v in st.items() if k in STYLE_KEYS and v is not None and v != ""})
+        return out
 
 
 def font_family(name):
@@ -321,6 +346,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     pw = float(part.get("w") or 0)
     if width and pw > 0 and abs(width - pw) > 0.01:
         atoms = _fit(atoms, float(width) / pw)
+    atoms = [ctx.styled(a) for a in atoms]                  # 단락 스타일(옷) 입히기
     # 1) 글이 자라는 만큼
     grown = []                                # (원자 번호, 원래 위, 원래 아래, 왼쪽, 오른쪽, 늘어난 양)
     content = {}
@@ -366,6 +392,46 @@ def _atom_svg(ctx, a, dy, h, html):
     return _wrap_atom(a, svg, cx, cy)
 
 
+def _bleed_box(ctx, x, y, w, h):
+    """인쇄 모드: 면 가장자리에 붙은 상자·그림을 도련만큼 밖으로 늘린다 (인디자인에서 도련선까지 끌어 놓는 일)."""
+    p = ctx.print
+    if not p or not p.get("bleed") or not ctx._at:
+        return x, y, w, h
+    b = float(p["bleed"])
+    ox, oy, W, H = ctx._at
+    ax, ay = ox + x, oy + y
+    if ax <= 0.05:
+        x -= b + ax
+        w += b + ax
+    if ax + w >= W - 0.05:
+        w += b + (W - ax - w)
+    if ay <= 0.05:
+        y -= b + ay
+        h += b + ay
+    if ay + h >= H - 0.05:
+        h += b + (H - ay - h)
+    return x, y, w, h
+
+
+def crop_marks(W, H, bleed, length=4.0, gap=0.5):
+    """재단선 — 네 귀에 가로·세로 두 줄씩. 도련 밖(gap)에서 length 만큼. 먹 100%."""
+    o = bleed + gap
+    L = o + length
+    s = 'stroke="#000000" stroke-width="0.09"'
+    out = []
+    for cx, sx in ((0.0, -1), (W, 1)):
+        for cy, sy in ((0.0, -1), (H, 1)):
+            out.append(f'<line x1="{cx + sx * o:.3f}" y1="{cy:.3f}" x2="{cx + sx * L:.3f}" y2="{cy:.3f}" {s}/>')
+            out.append(f'<line x1="{cx:.3f}" y1="{cy + sy * o:.3f}" x2="{cx:.3f}" y2="{cy + sy * L:.3f}" {s}/>')
+    return "".join(out)
+
+
+def print_margin(ctx):
+    """인쇄 모드에서 면 바깥 여유(mm) — 도련 + 재단선 자리."""
+    p = ctx.print or {}
+    return float(p.get("bleed") or 0) + (5.0 if p.get("marks") else 0.0)
+
+
 def _atom_svg_raw(ctx, a, dy, h, html):
     t = a.get("t")
     if t == "text":
@@ -375,6 +441,10 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                  f"overflow:hidden;word-break:break-word;white-space:normal")
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
+        if a.get("b"):
+            style += ";font-weight:700"
+        if a.get("i"):
+            style += ";font-style:italic"
         return (f'<foreignObject x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}">'
                 f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h)}</div></foreignObject>')
     if t == "line":
@@ -388,9 +458,10 @@ def _atom_svg_raw(ctx, a, dy, h, html):
     if t == "rect":
         fill, defs = _fill(ctx, a)
         r = a.get("radius") or 0
+        bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)
         if isinstance(r, (list, tuple)):
-            return (defs + f'<path d="{_rrect_path(a["x"], a["y"] + dy, a["w"], h, r)}" fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
-        return (defs + f'<rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" rx="{r}" '
+            return (defs + f'<path d="{_rrect_path(bx, by, bw, bh, r)}" fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
+        return (defs + f'<rect x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" rx="{r}" '
                 f'fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
     if t == "ellipse":
         fill, defs = _fill(ctx, a)
@@ -408,7 +479,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                         f'<image x="{a["x"] + float(im["x"]):.3f}" y="{a["y"] + dy + float(im["y"]):.3f}" width="{float(im["w"]):.3f}" height="{float(im["h"]):.3f}" '
                         f'href="{href}" preserveAspectRatio="none" clip-path="url(#{cid})"/>')
             par = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
-            return (f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" '
+            bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)          # 인쇄: 가장자리 그림은 도련까지
+            return (f'<image x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" '
                     f'href="{href}" preserveAspectRatio="{par}"/>')
         if src:
             ctx.warn(f"이미지 없음 {src} — 옷 {ctx.skin.get('id') or '(없음)'}.images 에 파일을 적을 것")
@@ -496,15 +568,98 @@ def _accepts(z, it):
     return not acc or it["block"] in acc or (it["set_kind"] and it["set_kind"] in acc)
 
 
-def _fill_items(pg, sample_set):
-    """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장."""
+def _fill_items(pg, sample_set, ctx=None):
+    """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
+
+    세트에 없는 자리는 **비워 둔다**(_empty — 견본 글이 책에 들어가면 안 된다) + 검수 error.
+    자리보다 원고가 많으면(줄 셋인데 자리 둘) 남는 원고는 안 실린다 + 검수 error.
+    """
     queue = {}
     for b in sample_set.get("blocks") or []:
         queue.setdefault(b.get("block"), []).append(b.get("fields") or {})
+    total = {k: len(v) for k, v in queue.items()}
+    filled = {}
+    sid = sample_set.get("id", "")
     for it in pg.get("items") or []:
-        q = queue.get(it.get("block"))
-        if q and not it.get("fields"):
-            it["fields"] = q.pop(0) if len(q) > 1 else q[0]
+        bid = it.get("block")
+        if not bid or it.get("hide") or it.get("fields"):
+            continue
+        blk = (ctx.blocks.get(bid) if ctx else None) or {}
+        if ctx and blk.get("source") != "content":
+            continue
+        q = queue.get(bid)
+        if q:
+            if ctx:
+                it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
+            else:
+                it["fields"] = q.pop(0) if len(q) > 1 else q[0]
+            filled[bid] = filled.get(bid, 0) + 1
+            if ctx:
+                for f, d in (blk.get("fields") or {}).items():
+                    if (d or {}).get("required") and (it["fields"].get(f) in (None, "", [])):
+                        ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} 의 필수 자리 {f} 가 비었다")
+        elif ctx:
+            it["fields"] = {}
+            it["_empty"] = True
+            if total.get(bid):
+                ctx.issue("warn", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리 {sum(1 for x in pg['items'] if x.get('block') == bid)}개 중 {total[bid]}개만 찼다 — 나머지는 빈 채")
+            else:
+                ctx.issue("error", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리에 넣을 원고가 없다 — 비워 둔다")
+    if ctx:
+        for bid, n in total.items():
+            k = filled.get(bid, 0)
+            blk = ctx.blocks.get(bid) or {}
+            if k == 0:
+                ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} {n}개가 지면 {pg.get('id')} 에 자리가 없어 안 실린다")
+            elif n > k:
+                ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} {n}개 중 {n - k}개는 지면 {pg.get('id')} 에 자리가 없어 안 실린다")
+
+
+def _stack_pages(ctx, page, sets, spec):
+    """쌓기 자리(item.flow) — 세트마다(세트 안 같은 블록마다) 자리 사본을 아래로 쌓는다. 한계선을 넘으면 새 면(고정·장식 요소는 그대로)."""
+    H = float(spec["h"])
+    limit = H - float((page.get("margins") or {}).get("bottom") or 20)
+    items = page.get("items") or []
+    flows = [i for i, it in enumerate(items) if it.get("flow") and not it.get("hide")]
+    static = [json.loads(json.dumps(it)) for i, it in enumerate(items) if i not in flows and not it.get("hide")
+              and not ((ctx.blocks.get(it.get("block")) or {}).get("source") == "content" and it.get("block"))]
+    pages = []
+    cur = None
+    for fi in flows:
+        base = items[fi]
+        gap = float(base.get("gap") or 2)
+        y = float(base["y"])
+        for s in sets:
+            for b in (s.get("blocks") or []):
+                if b.get("block") != base.get("block"):
+                    continue
+                it = json.loads(json.dumps(base))
+                it["fields"] = b.get("fields") or {}
+                it.pop("flow", None)
+                _f, _p, _w, h = _item_frag(ctx, it)
+                if cur is not None and y + h > limit + 0.01 and any(x.get("_stacked") for x in cur["items"]):
+                    pages.append(cur)
+                    cur = None
+                if cur is None:
+                    cur = json.loads(json.dumps(page))
+                    cur["items"] = [json.loads(json.dumps(x)) for x in static]
+                    cur["_canvas"] = True
+                    cur["_noguides"] = True
+                    cur["_flowed"] = True
+                    y = float(base["y"])
+                it["y"] = round(y, 3)
+                it["_stacked"] = True
+                cur["items"].append(it)
+                y += h + gap
+    if cur is not None:
+        pages.append(cur)
+    if not pages:
+        pg = json.loads(json.dumps(page))
+        pg["items"] = static
+        pg["_canvas"] = True
+        pg["_noguides"] = True
+        pages.append(pg)
+    return pages
 
 
 def page_svgs(ctx, page, sets, spec, pno=1, label=""):
@@ -515,19 +670,29 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
     """
     W, H = float(spec["w"]), float(spec["h"])
     slots = [it for it in page.get("items") or [] if it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"]
+    if slots and any(it.get("flow") for it in slots) and sets and not page.get("_canvas"):
+        out = []
+        for k, fp in enumerate(_stack_pages(ctx, page, sets, spec)):        # 쌓기 자리 — 세트를 아래로 쌓고 차면 다음 면
+            mirror = bool(fp.get("mirror")) and pno % 2 == 0
+            out.append({"svg": _page_wrap(ctx, fp, _zones(fp, W, mirror), [], W, H, pno, mirror),
+                        "label": label + (f" ({k + 1})" if k else ""), "page_no": pno})
+            pno += 1
+        return out
     if slots:
         out = []
+        from core.units import flow
         for s in (sets or [None]):
             pg = json.loads(json.dumps(page))
             pg["_noguides"] = True
             if s is not None and not page.get("_canvas"):
-                _fill_items(pg, s)
+                _fill_items(pg, s, ctx)
                 pg["_canvas"] = True
-            mirror = bool(pg.get("mirror")) and pno % 2 == 0
-            zones = _zones(pg, W, mirror)
-            out.append({"svg": _page_wrap(ctx, pg, zones, [], W, H, pno, mirror),
-                        "label": label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else ""), "page_no": pno})
-            pno += 1
+            lab = label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else "")
+            for k, fp in enumerate(flow.thread(ctx, pg, spec)):            # 넘치면 다음 면으로 이어 흐른다
+                mirror = bool(fp.get("mirror")) and pno % 2 == 0
+                out.append({"svg": _page_wrap(ctx, fp, _zones(fp, W, mirror), [], W, H, pno, mirror),
+                            "label": lab + (f" (이어서 {k + 1})" if k else ""), "page_no": pno})
+                pno += 1
         return out
     items = _items(ctx, sets)
     out = []
@@ -592,38 +757,62 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     # 자유 배치 — 캔버스에서 좌표에 놓은 요소(블록은 견본 값으로, 부품은 그대로). 파워포인트의 개체.
     # 콘텐츠 블록 자리는 캔버스에서만 그린다(실제 콘텐츠는 세트로 흘러 든다). 머리말·쪽번호 같은
     # system 블록과 부품은 언제나 그린다.
-    canvas = bool(page.get("_canvas"))
-    placed = []                                   # (fi, it, frag, w, 실제 높이, 설계 높이)
-    for fi, it in enumerate(page.get("items") or []):
-        if it.get("hide"):
-            continue                                              # 레이어 눈 끔
-        blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
-        if not canvas and blk is not None and blk.get("source") == "content":
-            continue
-        frag, part, w, h = _item_frag(ctx, it)
-        if frag is None:
-            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
-            continue
-        placed.append((fi, it, frag, w, h, float(part.get("h") or h)))
-    # 흐름 — 글이 길어 자리가 자라면(실제 높이 > 설계 높이) **그 아래, 가로로 겹치는** 요소를 그만큼 민다.
-    # 부품 안 원자와 같은 규칙. 머리말·쪽번호·간지(system 블록)는 자리가 고정이라 밀지 않는다.
-    grown = [(fi, it["x"], it["x"] + w, it["y"] + h0, h - h0) for fi, it, _f, w, h, h0 in placed if h > h0 + 0.01]
-    for fi, it, frag, w, h, h0 in placed:
-        blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
-        fixed = blk is not None and blk.get("source") == "system"
-        dy = 0.0 if fixed else sum(d for gi, gx0, gx1, gb, d in grown
-                                   if gi != fi and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + w > gx0 + 0.01)
-        y = it["y"] + dy
-        if y + h > H + 0.01:
-            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({y + h:.0f}mm > {H:.0f}mm) — 다음 면으로 흘리기는 아직")
-        x = W - it["x"] - w if mirror else it["x"]
-        chrome.append(f'<g transform="translate({x:.3f},{y:.3f})" data-fi="{fi}" data-dy="{dy:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{frag}</g>')
+    for pl in place_items(ctx, page, W, H, mirror):
+        it = pl["it"]
+        if pl["y"] + pl["h"] > H + 0.01:
+            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
+        x = W - it["x"] - pl["w"] if mirror else it["x"]
+        chrome.append(f'<g transform="translate({x:.3f},{pl["y"]:.3f})" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{pl["frag"]}</g>')
     ctx.sys = old
     guides = "" if not zones or page.get("_noguides") else "".join(
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, f'data-page="{pno}" data-tpl="{esc(page["id"])}"')
+    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"'
+    if ctx.print:
+        # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
+        b = float(ctx.print.get("bleed") or 0)
+        m = print_margin(ctx)
+        MW, MH = W + 2 * m, H + 2 * m
+        inner = (f'<rect x="{-b:.3f}" y="{-b:.3f}" width="{W + 2 * b:.3f}" height="{H + 2 * b:.3f}" fill="{bg}"/>'
+                 + "".join(frags) + "".join(chrome) + (crop_marks(W, H, b) if ctx.print.get("marks") else ""))
+        return (f'<svg {_NS} viewBox="0 0 {MW:.3f} {MH:.3f}" width="{MW:.3f}mm" height="{MH:.3f}mm" {extra} data-trim="{W:.3f} {H:.3f}" data-bleed="{b:.3f}">'
+                f'<rect width="{MW:.3f}" height="{MH:.3f}" fill="#ffffff"/><g transform="translate({m:.3f},{m:.3f})">{inner}</g></svg>')
+    return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, extra)
+
+
+def is_fixed(ctx, it):
+    """머리말·쪽번호·간지(system 블록)는 자리가 고정 — 밀리지도, 다음 면으로 넘어가지도 않는다."""
+    blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
+    return blk is not None and blk.get("source") == "system"
+
+
+def place_items(ctx, page, W, H, mirror=False):
+    """자유 배치 요소를 놓는다 → [{fi, it, frag, w, h, h0, y, dy, fixed}] (그리는 순서).
+
+    글이 길어 자리가 자라면(실제 높이 > 설계 높이) **그 아래, 가로로 겹치는** 요소를 그만큼 민다 — 부품 안 원자와 같은 규칙.
+    콘텐츠 블록 자리는 캔버스(_canvas)에서만 그린다(실제 콘텐츠는 세트가 끼운다).
+    """
+    canvas = bool(page.get("_canvas"))
+    placed = []
+    for fi, it in enumerate(page.get("items") or []):
+        if it.get("hide"):
+            continue
+        blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
+        if not canvas and blk is not None and blk.get("source") == "content":
+            continue
+        frag, part, w, h = _item_frag(ctx, it, (W, H, mirror))
+        if frag is None:
+            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
+            continue
+        placed.append({"fi": fi, "it": it, "frag": frag, "w": w, "h": h, "h0": float(part.get("h") or h), "fixed": is_fixed(ctx, it)})
+    grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"]) for p in placed if p["h"] > p["h0"] + 0.01]
+    for p in placed:
+        it = p["it"]
+        p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
+                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)
+        p["y"] = it["y"] + p["dy"]
+    return placed
 
 
 def atom_part(atom):
@@ -636,11 +825,21 @@ def atom_part(atom):
     return {"id": "_atom", "name": "원자", "w": max(w, 0.5), "h": max(h, 0.5), "atoms": [a]}
 
 
-def _item_frag(ctx, it):
-    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭, 실제 높이). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품."""
+def _item_frag(ctx, it, at=None):
+    """자유 배치 요소 하나 → (SVG 조각, 부품, 폭, 실제 높이). 블록이면 옷이 고른 모양의 부품 + 견본 값. 원자면 임시 부품.
+
+    at = (W, H, mirror) 를 주면 인쇄 모드의 도련 늘림이 면 안 자리를 안다.
+    """
+    def origin(w):
+        if at and ctx.print:
+            W, H, mirror = at
+            ctx._at = ((W - float(it["x"]) - w) if mirror else float(it["x"]), float(it["y"]), W, H)
+        else:
+            ctx._at = None
     if it.get("atom"):
         part = atom_part(it["atom"])
         w = float(it.get("w") or part["w"])
+        origin(w)
         frag, h = part_svg(ctx, part, {}, width=w)
         return frag, part, w, h
     if it.get("block"):
@@ -651,12 +850,15 @@ def _item_frag(ctx, it):
             return None, None, 0, 0
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
-        frag, h = part_svg(ctx, part, sample.fill(blk, it.get("fields")), types, width=w)
+        values = {k: "" for k in types} if it.get("_empty") else sample.fill(blk, it.get("fields"))   # 책에서 원고 없는 자리는 빈 채로
+        origin(w)
+        frag, h = part_svg(ctx, part, values, types, width=w)
         return frag, part, w, h
     part = ctx.parts.get(it.get("part"))
     if not part:
         return None, None, 0, 0
     w = float(it.get("w") or part.get("w") or 0)
+    origin(w)
     frag, h = part_svg(ctx, part, {}, width=w)
     return frag, part, w, h
 
@@ -709,6 +911,9 @@ def plan_svgs(ctx, plan, sets, lib):
 
     for pid in plan.get("front") or []:
         emit(pid, [], "앞")
+    if any("answers" in (pg.get("sets") or []) for sec in plan.get("sections") or [] for pg in sec.get("pages") or []):
+        from core.units import answers as _answers
+        sets = list(sets or []) + _answers.answer_sets(sets, list(ctx.blocks.values()))      # 정답지 — 세트의 정답을 모아 정답 세트로
     for sec in plan.get("sections") or []:
         ctx.sys["section"] = sec.get("name", "")
         if sec.get("divider"):

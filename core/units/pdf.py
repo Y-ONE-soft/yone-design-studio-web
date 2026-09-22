@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 
+PT = 72 / 25.4
 _MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 
@@ -51,3 +52,73 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180):
         raise RuntimeError("PDF 가 안 나왔다: " + (r.stderr or r.stdout or "")[-400:])
     shutil.rmtree(d, ignore_errors=True)
     return out_path
+
+
+# ── 인쇄용 ──────────────────────────────────────────────────────────────
+
+def gray_map_of(skin):
+    """옷의 무채색 토큰 → 인쇄 K 값. r≈g≈b 인 색만(유채색은 ICC 변환). 아주 어두우면 K100, 흰색은 0.
+
+    옷에 `print.gray: {"#hex": k}` 가 있으면 그것을 얹는다 — 화면 표기값과 인쇄 값이 다른 색(ink #231f20 = K100).
+    """
+    out = {"#000000": 1.0, "#ffffff": 0.0}
+    for hexv in (((skin or {}).get("tokens") or {}).get("color") or {}).values():
+        try:
+            r, g, b = (int(hexv[i:i + 2], 16) for i in (1, 3, 5))
+        except (ValueError, TypeError):
+            continue
+        if max(r, g, b) - min(r, g, b) > 10:
+            continue
+        lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255.0
+        out[hexv.lower()] = 1.0 if lum < 0.16 else round(1.0 - lum, 2)
+    out.update({str(k).lower(): float(v) for k, v in (((skin or {}).get("print") or {}).get("gray") or {}).items()})
+    return out
+
+
+def stamp_boxes(path, trim_w, trim_h, bleed, marks, log=None):
+    """MediaBox(매체) 안에 BleedBox·TrimBox 를 박는다. 매체 = 재단 + 2×(도련 + 재단선 자리 5mm)."""
+    import fitz
+    doc = fitz.open(path)
+    tw, th, b = float(trim_w) * PT, float(trim_h) * PT, float(bleed) * PT
+    for pg in doc:
+        mb = pg.mediabox                                             # 크로미움이 매체를 0.1mm 쯤 반올림한다 — 재단은 정확히 판형 크기로, 가운데에
+        cx, cy = (mb.x0 + mb.x1) / 2, (mb.y0 + mb.y1) / 2
+        trim = fitz.Rect(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2)
+        pg.set_bleedbox(fitz.Rect(trim.x0 - b, trim.y0 - b, trim.x1 + b, trim.y1 + b))
+        pg.set_trimbox(trim)
+    tmp = path + ".box"
+    doc.save(tmp, garbage=3, deflate=True)
+    n = doc.page_count
+    doc.close()
+    os.replace(tmp, path)
+    if log:
+        log(f"[인쇄] {n}p · 재단 {trim_w:g}×{trim_h:g}mm · 도련 {bleed:g}mm · TrimBox/BleedBox 박음")
+    return n
+
+
+def to_print_pdf(svgs, trim_w, trim_h, out_path, bleed=3.0, marks=True, skin=None, cmyk=True, title="인쇄", log=None):
+    """인쇄용 PDF — 도련·재단선이 든 SVG(render.Ctx.print) → PDF → (Ghostscript 있으면) CMYK + 무채색은 K 단색 → 상자 박기.
+
+    Returns {"pdf", "pages", "cmyk": bool, "note": str}
+    """
+    log = log or (lambda *_: None)
+    m = float(bleed) + (5.0 if marks else 0.0)
+    mw, mh = float(trim_w) + 2 * m, float(trim_h) + 2 * m
+    rgb = out_path + ".rgb.pdf"
+    to_pdf(svgs, mw, mh, rgb, title=title)
+    note = ""
+    done = False
+    if cmyk:
+        try:
+            from core.render_vivlio import prepress
+            prepress.make(rgb, out_path, bleed=m, gray_map=gray_map_of(skin), log=log)
+            done = True
+        except Exception as e:                                        # gs 없음·ICC 없음·글자층 불량
+            note = f"CMYK 변환 못 함 — RGB 그대로 ({str(e).splitlines()[0][:160]})"
+            log("[인쇄] " + note)
+    if not done:
+        os.replace(rgb, out_path)
+    elif os.path.exists(rgb):
+        os.remove(rgb)
+    pages = stamp_boxes(out_path, trim_w, trim_h, bleed, marks, log=log)
+    return {"pdf": out_path, "pages": pages, "cmyk": done, "note": note}

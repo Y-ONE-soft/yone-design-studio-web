@@ -1035,5 +1035,60 @@
     "y": 173
    }
   ]
+ },
+ {
+  "id": "answers",
+  "name": "정답지",
+  "mirror": true,
+  "zones": [],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "folio",
+    "x": 20,
+    "y": 278
+   },
+   {
+    "block": "running_head",
+    "x": 20,
+    "y": 14
+   },
+   {
+    "atom": {
+     "t": "text",
+     "x": 0,
+     "y": 0,
+     "w": 170,
+     "h": 8,
+     "font": "$disp",
+     "size": 14,
+     "color": "$s1",
+     "text": "정답"
+    },
+    "x": 20,
+    "y": 30
+   },
+   {
+    "block": "answer_row",
+    "x": 20,
+    "y": 42,
+    "w": 170,
+    "flow": true,
+    "gap": 2
+   }
+  ]
+ },
+ {
+  "id": "cover",
+  "name": "표지",
+  "zones": [],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "cover",
+    "x": 0,
+    "y": 0
+   }
+  ]
  }
 ]

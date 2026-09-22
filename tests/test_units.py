@@ -70,11 +70,13 @@ def test_plan_pages_and_columns(lib):
     from core.units import render, store
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
     pages = render.plan_svgs(ctx, store.by_id(lib["plans"])["workbook_mini"], lib["sets"], lib)
-    assert [p["label"] for p in pages] == ["앞", "STEP 2 간지", "STEP 2 · 20", "STEP 2 · 21"]
+    assert [p["label"] for p in pages] == ["앞", "STEP 2 간지", "STEP 2 · 20", "STEP 2 · 21", "정답 간지", "정답"]
     assert pages[2]["page_no"] == 3 and ">3<" in pages[2]["svg"]          # 쪽번호가 이어진다
+    ans = pages[-1]["svg"]
+    assert ans.count("data-fi=") == 5 and "replaced" in ans and "④" in ans    # 정답지: 세트 2개의 정답 줄이 쌓인다 (머리말·쪽번호·제목 + 2)
     exam = render.plan_svgs(ctx, store.by_id(lib["plans"])["exam_sheet"], lib["sets"], lib)
     assert len(exam) == 2 and "creativity" in exam[0]["svg"] and "cars" in exam[1]["svg"]   # 슬롯 모드: 세트마다 한 면, 값이 자리에 들어간다
-    assert not ctx.warnings, ctx.warnings
+    assert not [w for w in ctx.warnings if not w.startswith("원고")], ctx.warnings          # 원고↔자리 불일치는 검수 항목(시드는 두 종류를 섞어 둠)
 
 
 def test_skin_variant_switch(lib):
@@ -121,7 +123,10 @@ def test_free_items_canvas_vs_flow(lib):
     assert flow.count("data-fi=") == len(pg["items"]) and "creativity" in flow   # 세트 20의 값이 자리에 끼워진다
     empty = render.page_svgs(ctx, pg, [], render.DEFAULT_SPEC)[0]["svg"]
     assert empty.count("data-fi=") == 2                                        # 세트가 없으면 머리말·쪽번호만
-    assert not ctx.warnings, ctx.warnings
+    assert not [w for w in ctx.warnings if not w.startswith("원고")], ctx.warnings
+    # 세트 20 엔 빈칸·본문 O/X 가 없다 → 그 자리는 견본 글이 아니라 **빈 채** + 검수 error. 어법 O/X 3줄은 자리가 없어 안 실림
+    assert "r_____" not in flow and "Wide roads" not in flow
+    assert any("빈칸 줄 자리에 넣을 원고가 없다" in w for w in ctx.warnings) and any("어법 O/X 줄 3개가" in w for w in ctx.warnings)
 
 
 def test_atom_kinds_cover_indesign_objects(lib):
@@ -299,3 +304,209 @@ def test_group_by_box_row_and_column():
     sets = [set(p["atoms"]) for p in parts]
     assert {0, 1} in sets and {2, 3, 4} in sets and {5} in sets and {6, 7} in sets
     assert {9} in sets and {8} in sets and {10} in sets
+
+
+def test_overflow_threads_to_next_page(lib):
+    """긴 지문 → 면 아래로 넘치면 다음 면으로 이어 흐른다 (인디자인 스레드)."""
+    import copy
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = store.by_id(lib["pages"])["pair"]
+    s = copy.deepcopy(lib["sets"][1])
+    for b in s["blocks"]:
+        if b["block"] == "passage":
+            b["fields"]["passage"] = (render.rich_plain(b["fields"]["passage"]) + " ") * 12
+    out = render.page_svgs(ctx, pg, [s], render.DEFAULT_SPEC)
+    assert len(out) >= 2 and "이어서" in out[1]["label"]
+    assert not any("넘친다" in w for w in ctx.warnings)
+    # 첫 면 = 머리말·쪽번호·번호·지문 앞부분, 다음 면 = 지문 뒷부분 + 문항들 (전부 한 번씩)
+    assert out[0]["svg"].count("data-fi=") == 4 and out[1]["svg"].count("data-fi=") == 9
+    assert "planners" in out[-1]["svg"]
+    # 짧은 지문은 한 면
+    assert len(render.page_svgs(ctx, pg, lib["sets"][1:2], render.DEFAULT_SPEC)) == 1
+
+
+def test_manuscript_text_to_sets(lib):
+    """붙여넣은 원고 → 블록 자리 이름에 맞춘 세트."""
+    from core.units import manuscript, store
+    with open(os.path.join(REPO, "tests", "fixtures", "manuscript_sample.txt"), encoding="utf-8") as fh:
+        sets, log = manuscript.from_text(fh.read(), lib["blocks"])
+    assert log == [] and [s["id"] for s in sets] == ["21", "22"]
+    b = {x["block"]: x["fields"] for x in sets[0]["blocks"]}
+    assert b["pnum"]["pnum"] == "21" and b["passage"]["passage"].startswith("The idea") and "\n" in b["passage"]["passage"]
+    assert b["prompt"]["prompt"].endswith("?") and len(b["choices"]["choices"]) == 5 and b["choices"]["answer"] == "③"
+    assert b["blank"]["kr"].startswith("넓은") and b["blank"]["answer"] == "replaced"
+    ox = [x["fields"] for x in sets[0]["blocks"] if x["block"] == "ox"]
+    assert [o["answer"] for o in ox] == [False, True]
+    b2 = {x["block"]: x["fields"] for x in sets[1]["blocks"]}
+    assert b2["prompt"]["no"] == 2 and b2["gram_ox"]["answer"] == "X"
+    for s in sets:
+        assert store.validate("sets", s) is None
+
+
+def test_manuscript_contents_to_sets(lib):
+    """contents JSON(yos-workbook-v1) → 항목마다 세트, 못 맞춘 항목은 log."""
+    from core.units import manuscript
+    with open(os.path.join(REPO, "tests", "fixtures", "yos_workbook_v1.json"), encoding="utf-8") as fh:
+        sets, log = manuscript.from_contents(json.load(fh), lib["blocks"])
+    kinds = [s["kind"] for s in sets]
+    assert kinds[0] == "passage" and "content-ox" in kinds and "vocab-blank" in kinds and "grammar-fix" in kinds
+    assert len({s["id"] for s in sets}) == len(sets)                       # id 유일
+    ox = next(s for s in sets if s["kind"] == "content-ox")
+    assert [b["fields"]["answer"] for b in ox["blocks"] if b["block"] == "ox"][:2] == [True, False]
+    fix = next(s for s in sets if s["kind"] == "grammar-fix")
+    assert any(isinstance(b["fields"]["sentence"], list) for b in fix["blocks"] if b["block"] == "gram_ox")   # 밑줄 조각
+    assert any("순서배열" in x for x in log)
+
+
+def test_manuscript_api(lib, monkeypatch, tmp_path):
+    monkeypatch.setenv("YONE_STUDIO_ROOT", str(tmp_path))
+    import importlib
+    import studio_server
+    importlib.reload(studio_server)
+    c = studio_server.create_app().test_client()
+    r = c.post("/api/units/manuscript?save=1", json={"text": "# 7\nThis is a passage long enough to be recognised as the English body text of a set.\n윗글의 주제는?\n① a ② b\n답: ②"})
+    j = r.get_json()
+    assert r.status_code == 200 and j["sets"][0]["id"] == "7" and j["log"] == []
+    from core.units import store
+    assert store.get("sets", "7")["blocks"][-1]["fields"]["answer"] == "②"
+
+
+def _mini_docx(path, paras):
+    """[(스타일 id, [(글, {u,b})])] → 최소 docx (styles.xml 에 이름 = id 로 등록)."""
+    import zipfile
+    W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+    body = ""
+    for sid, runs in paras:
+        rr = "".join(f"<w:r><w:rPr>{'<w:u w:val=\"single\"/>' if f.get('u') else ''}{'<w:b/>' if f.get('b') else ''}</w:rPr><w:t xml:space=\"preserve\">{t}</w:t></w:r>" for t, f in runs)
+        body += f"<w:p>{f'<w:pPr><w:pStyle w:val=\"{sid}\"/></w:pPr>' if sid else ''}{rr}</w:p>"
+    styles = "".join(f'<w:style w:styleId="{sid}"><w:name w:val="{sid}"/></w:style>' for sid, _ in paras if sid)
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>')
+        z.writestr("word/document.xml", f'<?xml version="1.0"?><w:document {W}><w:body>{body}</w:body></w:document>')
+        z.writestr("word/styles.xml", f'<?xml version="1.0"?><w:styles {W}>{styles}</w:styles>')
+
+
+def test_manuscript_docx_styles_map_to_slots(lib, tmp_path):
+    """docx 단락 스타일 이름(지문·발문·선지·빈칸 줄)이 블록·자리 이름과 맞으면 규칙 없이도 그 자리로. 밑줄·굵게는 서식 조각."""
+    from core.units import manuscript
+    p = tmp_path / "m.docx"
+    _mini_docx(str(p), [
+        ("Normal", [("# 5", {})]),
+        ("지문", [("Cities were built around cars. ", {}), ("However", {"b": True}), (", planners are reversing this.", {})]),
+        ("지문", [("Second paragraph of the passage.", {})]),
+        ("발문", [("윗글의 요지로 가장 적절한 것은?", {})]),
+        ("선지", [("① one", {})]), ("선지", [("② two", {})]), ("선지", [("③ three", {})]),
+        ("Normal", [("답: ②", {})]),
+        ("빈칸 줄", [("1. Wide roads ", {}), ("replaced", {"u": True}), (" neighborhoods.", {})]),
+        ("해석", [("넓은 도로가 동네를 대체했다.", {})]),
+    ])
+    sets, log = manuscript.from_file(str(p), lib["blocks"])
+    assert log == [] and len(sets) == 1 and sets[0]["id"] == "5"
+    b = {x["block"]: x["fields"] for x in sets[0]["blocks"]}
+    passage = b["passage"]["passage"]
+    assert isinstance(passage, list) and {"t": "However", "b": True} in passage and "Second paragraph" in "".join(x if isinstance(x, str) else x["t"] for x in passage)
+    assert b["prompt"]["prompt"].endswith("?") and b["choices"]["choices"] == ["one", "two", "three"] and b["choices"]["answer"] == "②"
+    assert b["blank"]["no"] == 1 and {"t": "replaced", "u": True} in b["blank"]["sentence"] and b["blank"]["kr"].startswith("넓은")
+
+
+def test_paragraph_style_from_skin(lib):
+    """글 원자의 style → 옷의 styles 값이 원자 값보다 우선. 옷을 바꾸면 그 스타일의 글이 다 바뀐다."""
+    from core.units import render, store
+    skin = json.loads(json.dumps(store.by_id(lib["skins"])["d2"]))
+    part = {"id": "p", "name": "p", "w": 60, "h": 10, "atoms": [{"t": "text", "x": 0, "y": 0, "w": 60, "h": 10, "font": "$body", "size": 8, "style": "prompt", "text": "hello"}]}
+    ctx = render.Ctx(skin, lib)
+    frag, _ = render.part_svg(ctx, part)
+    assert "font-size:2.999px" in frag                                   # prompt 스타일 8.5pt (원자 8pt 아님)
+    skin["styles"]["prompt"] = {"size": 12, "b": True}
+    frag2, _ = render.part_svg(render.Ctx(skin, lib), part)
+    assert "font-size:4.233px" in frag2 and "font-weight:700" in frag2
+    ctx3 = render.Ctx({"id": "x", "tokens": skin["tokens"]}, lib)
+    render.part_svg(ctx3, part)
+    assert any("단락 스타일 없음 prompt" in w for w in ctx3.warnings)
+
+
+def test_stack_flow_pages(lib):
+    """쌓기 자리(flow): 세트를 아래로 쌓고 면이 차면 다음 면에 이어 쌓는다."""
+    from core.units import answers, render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = store.by_id(lib["pages"])["answers"]
+    many = []
+    for i in range(80):
+        s = json.loads(json.dumps(lib["sets"][i % 2]))
+        s["id"] = str(i + 1)
+        many.append(s)
+    asets = answers.answer_sets(many, lib["blocks"])
+    assert len(asets) == 80 and asets[0]["blocks"][0]["fields"]["no"] == "1"
+    out = render.page_svgs(ctx, pg, asets, render.DEFAULT_SPEC, 1, "정답")
+    assert len(out) >= 3 and out[1]["label"] == "정답 (2)"
+    rows = [o["svg"].count("data-fi=") - 3 for o in out]
+    assert sum(rows) == 80 and all(r > 10 for r in rows[:-1])
+    assert not any("넘친다" in w for w in ctx.warnings), ctx.warnings
+
+
+def test_check_report(lib):
+    """검수 — 원고 빠진 자리·안 실린 원고는 error, 넘침은 info, 어느 구간도 안 받는 kind 는 warn."""
+    from core.units import check, store
+    plan = store.by_id(lib["plans"])["workbook_mini"]
+    r = check.report(lib, plan, "d2")
+    assert r["pages"] == 6 and r["errors"] >= 2 and not r["ok"]
+    msgs = [i["msg"] for i in r["issues"]]
+    assert any("안 실린다" in m for m in msgs) and any("6면" in m for m in msgs)
+    # 맞는 원고만 넣으면 ok
+    good = [s for s in lib["sets"] if s["id"] == "21"]
+    r2 = check.report(lib, plan, "d2", good)
+    assert r2["ok"], r2["issues"]
+    # 안 받는 kind
+    stray = good + [{"kind": "vocab", "id": "9", "blocks": [{"block": "passage", "fields": {"passage": "x"}}]}]
+    r3 = check.report(lib, plan, "d2", stray)
+    assert any("어느 구간도 받지 않아" in i["msg"] and i["level"] == "warn" for i in r3["issues"])
+
+
+def test_print_mode_bleed_marks_and_gray_map(lib):
+    """인쇄 모드: 매체 = 재단 + 2×(도련+재단선 5mm), 가장자리 상자는 도련까지 늘고, 재단선 8줄, 무채색 토큰 → K."""
+    from core.units import pdf, render, store
+    skin = store.by_id(lib["skins"])["d2"]
+    ctx = render.Ctx(skin, lib, {"title": "T", "tag": "TAG"})
+    ctx.print = {"bleed": 3.0, "marks": True}
+    cover = store.by_id(lib["pages"])["cover"]
+    svg = render.page_svgs(ctx, cover, [], render.DEFAULT_SPEC)[0]["svg"]
+    assert 'viewBox="0 0 226.000 313.000"' in svg and 'data-trim="210.000 297.000"' in svg
+    assert svg.count("stroke-width=\"0.09\"") == 8                                   # 재단선
+    assert 'x="-3.000" y="-3.000" width="216.000"' in svg                            # 가장자리 상자가 도련까지
+    plain = render.page_svgs(render.Ctx(skin, lib), cover, [], render.DEFAULT_SPEC)[0]["svg"]
+    assert 'viewBox="0 0 210.000 297.000"' in plain and "-3.000" not in plain           # 화면용은 그대로
+    g = pdf.gray_map_of(skin)
+    assert g["#231f20"] == 1.0 and g["#ffffff"] == 0.0 and 0.2 < g["#b8b8b8"] < 0.35 and "#667fb4" not in g
+
+
+def test_seed_upgrade_adds_only_new(tmp_path):
+    """시드 보태기: 라이브에 없는 항목·스타일·구간만 더하고, 있는 것은 손대지 않는다."""
+    import shutil
+    from core.units import seed
+    live = tmp_path / "live"
+    shutil.copytree(os.path.join(REPO, "catalog", "_units"), live)
+    # 라이브를 "옛날" 상태로: 정답 줄·정답 지면·스타일·정답 구간 없음, 지면 이름 바꿈
+    for kind, drop in (("parts", "answer_row"), ("blocks", "answer_row"), ("pages", "answers")):
+        p = live / f"{kind}.json"
+        items = [x for x in json.load(open(p, encoding="utf-8")) if x["id"] != drop]
+        if kind == "pages":
+            items[0]["name"] = "내가 고친 이름"
+        if kind == "parts":
+            for x in items:
+                for a in x["atoms"]:
+                    a.pop("style", None)
+        json.dump(items, open(p, "w", encoding="utf-8"), ensure_ascii=False)
+    sk = json.load(open(live / "skins.json", encoding="utf-8"))
+    for x in sk:
+        x.pop("styles", None)
+    json.dump(sk, open(live / "skins.json", "w", encoding="utf-8"), ensure_ascii=False)
+    pl = json.load(open(live / "plans.json", encoding="utf-8"))
+    pl[0]["sections"] = [s for s in pl[0]["sections"] if s["id"] != "answers"]
+    json.dump(pl, open(live / "plans.json", "w", encoding="utf-8"), ensure_ascii=False)
+    ch = seed.upgrade(str(live), os.path.join(REPO, "catalog", "_units"))
+    assert "parts/answer_row" in ch and "pages/answers" in ch and "plans/workbook_mini.sections.answers" in ch
+    assert any(c.startswith("skins/d2.styles.") for c in ch) and any(c.endswith(".style") for c in ch)
+    pages = json.load(open(live / "pages.json", encoding="utf-8"))
+    assert pages[0]["name"] == "내가 고친 이름" and any(p["id"] == "answers" for p in pages)      # 있는 건 그대로, 새것만
+    assert seed.upgrade(str(live), os.path.join(REPO, "catalog", "_units")) == []                 # 두 번째는 할 일 없음

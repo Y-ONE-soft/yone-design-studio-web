@@ -55,6 +55,7 @@
   .li { border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; margin: 5px 0; background: #fff; cursor: pointer; font-size: 12px; }
   .li:hover { border-color: var(--pp); } .li.on { border-color: var(--pp); background: var(--pp-bg); }
   .li .ds { color: var(--mute); font-size: 11px; margin-top: 2px; }
+  .li .x { float: right; color: var(--mute); font-size: 11px; padding: 0 3px; } .li .x:hover { color: #c33; }
   .chip { display: inline-block; font-size: 10.5px; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin: 2px 2px 0 0; cursor: pointer; background: #fff; }
   .chip:hover { border-color: var(--pp); color: var(--pp); }
   .upanel .ft { padding: 8px 12px; border-top: 1px solid var(--line); font-size: 11.5px; }
@@ -107,6 +108,10 @@
   .pv .pvbar { display: flex; gap: 10px; align-items: center; padding: 10px 16px; background: #fff; border-bottom: 1px solid var(--line); }
   .pv .pvbar .note { flex: 1; }
   .pv .pvbody { flex: 1; overflow: auto; padding: 20px; display: flex; flex-wrap: wrap; gap: 18px; align-content: flex-start; justify-content: center; }
+  .chk { position: absolute; right: 16px; top: 56px; width: 380px; max-height: 70vh; overflow: auto; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); z-index: 16; padding: 12px 14px; font-size: 12px; }
+  .chk h4 { margin: 0 0 8px; font-size: 13px; display: flex; align-items: center; gap: 8px; } .chk h4 .btn { margin-left: auto; }
+  .chk .it { padding: 5px 8px; border-radius: 7px; margin: 3px 0; line-height: 1.4; } .chk .it.error { background: #fde8e8; color: #8a1c1c; } .chk .it.warn { background: #fff4d6; color: #6b4b00; } .chk .it.info { color: var(--mute); }
+  .chk .ok { color: #1a7f37; font-weight: 600; }
   .pv .sheet { width: 300px; background: #fff; box-shadow: 0 2px 10px rgba(30,20,60,.15); position: relative; }
   .pv .sheet svg { width: 100%; height: auto; display: block; }
   .pv .sheet .lb { position: absolute; left: 0; top: -16px; font-size: 11px; color: var(--mute); }
@@ -225,7 +230,9 @@
       <select id="skin" title="브랜드 (색·서체)"></select>
       <span class="sep"></span>
       <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
-      <button id="p-pdf" title="PDF 저장">⬇ PDF</button>
+      <button id="p-check" title="원고 빠진 자리·안 실린 원고·넘침·없는 토큰을 찾는다">✓ 검수</button>
+      <button id="p-pdf" title="화면용 PDF (RGB)">⬇ PDF</button>
+      <button id="p-print" title="인쇄용 PDF — 도련 3mm·재단선·CMYK(무채색은 K 단색)·TrimBox">🖨 인쇄용</button>
       <span class="sep"></span>
       <button id="p-dup" title="페이지 복제">⧉</button>
       <button id="p-del" title="페이지 지우기">🗑</button>
@@ -393,6 +400,7 @@ $("#p-home").onclick = showStart;
 $("#plname").oninput = () => { if (plan) { plan.name = $("#plname").value; clearTimeout(window._plt); window._plt = setTimeout(savePlan, 500); } };
 // 책 미리보기 · PDF
 $("#p-pdf").onclick = () => { if (plan) window.open(`/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`, "_blank"); };
+$("#p-print").onclick = () => { if (plan) window.open(`/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}&print=1&dl=1`, "_blank"); };
 $("#p-preview").onclick = async () => {
   if (!plan) return; const pv = $("#pv"); pv.style.display = ""; $("#pvtitle").textContent = plan.name || plan.id; $("#pvinfo").textContent = "그리는 중…"; $("#pvbody").innerHTML = "";
   $("#pvpdf").href = `/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`;
@@ -402,6 +410,17 @@ $("#p-preview").onclick = async () => {
   for (const sh of j.svgs) { const d = document.createElement("div"); d.className = "sheet"; d.innerHTML = `<span class="lb">${esc(sh.label || "")} · ${sh.page_no}쪽</span>${sh.svg}`; strip(d); $("#pvbody").appendChild(d); }
 };
 $("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
+// 검수 — 책을 그려 보고 문제 목록
+async function runCheck() {
+  if (!plan) return; let box = $("#chk"); if (!box) { box = document.createElement("div"); box.className = "chk"; box.id = "chk"; document.body.appendChild(box); }
+  box.innerHTML = `<h4>검수 <span class="note">그리는 중…</span></h4>`;
+  const j = await api(`/api/units/check?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`);
+  if (j.error) { box.innerHTML = `<h4>검수 <button class="btn sm sub" onclick="this.closest('.chk').remove()">닫기</button></h4><div class="it error">${esc(j.error)}</div>`; return; }
+  box.innerHTML = `<h4>검수 · ${j.pages}면 <span class="${j.ok ? "ok" : ""}">${j.ok ? "✓ 책으로 내도 된다" : `오류 ${j.errors}`}${j.warns ? ` · 확인 ${j.warns}` : ""}</span><button class="btn sm sub" onclick="this.closest('.chk').remove()">닫기</button></h4>` +
+    j.issues.map(i => `<div class="it ${i.level}">${i.level === "error" ? "✕ " : i.level === "warn" ? "△ " : ""}${esc(i.msg)}</div>`).join("") +
+    `<div class="note" style="margin-top:8px">✕ 오류 = 원고가 빠졌거나 안 실린다(책에 빈 자리·누락) · △ 확인 = 넘침·없는 토큰·안 쓰인 원고</div>`;
+}
+$("#p-check").onclick = runCheck;
 
 // ── 열기 · 그리기 ──
 function open(p) {
@@ -969,10 +988,20 @@ function panel() {
     body.insertAdjacentHTML("beforeend", `<div class="row"><button class="btn sm sub" id="sk-dup">⧉ 이 브랜드 복제해 새 브랜드</button></div>
       <h3>색 — ${esc(sk.name)}</h3><div class="colors">${Object.entries((sk.tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
       <h3>서체</h3>${Object.entries((sk.tokens || {}).font || {}).map(([k, v]) => `<div class="f"><span>${k}</span><input type="text" data-font="${k}" value="${esc(v)}"></div>`).join("")}
+      <h3>단락 스타일 <span class="note" style="display:inline">글상자의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 자리도 맞춰진다</span></h3>
+      ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
+        <div class="m3"><label>서체<select data-st="${n}:font"><option value="">-</option>${Object.keys(sk.tokens.font || {}).map(f => `<option value="$${f}" ${st.font === "$" + f ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
+        <div class="m3"><label>색<select data-st="${n}:color"><option value="">-</option>${Object.entries(sk.tokens.color || {}).map(([c, v]) => `<option value="$${c}" ${st.color === "$" + c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
+        <div class="m3"><label>첫 줄 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div></div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="st-new">＋ 단락 스타일</button></div>
       ${LIB.blocks.filter(b => (b.variants || []).length > 1).length ? `<h3>요소 모양 고르기</h3>${LIB.blocks.filter(b => (b.variants || []).length > 1).map(b => `<div class="f"><span>${esc(b.name)}</span><select data-var="${b.id}">${b.variants.map(v => `<option value="${v.id}" ${((sk.variants || {})[b.id] || b.variants[0].id) === v.id ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>`).join("")}` : ""}`);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-font]").forEach(i => i.onchange = () => { sk.tokens.font[i.dataset.font] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-var]").forEach(i => i.onchange = () => { sk.variants = sk.variants || {}; sk.variants[i.dataset.var] = i.value; saveSkin(); render(); });
+    body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = i.dataset.st.split(":"); const st = sk.styles[n]; const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
+      if (v === "" || v == null || v === false) delete st[k]; else st[k] = v; saveSkin(); pageSvg = {}; render(); });
+    body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 지울까요? 이 스타일을 쓰는 글상자는 자기 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
+    $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (영문 소문자·숫자·_ · 원고 docx 스타일 이름과 맞추려면 자리 이름과 같게)", ""); if (!n || !/^[a-z][a-z0-9_]*$/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
     $("#sk-dup").onclick = async () => { const name = prompt("새 브랜드 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
@@ -980,10 +1009,23 @@ function panel() {
     hd.innerHTML = `<b>원고</b>`;
     const none = document.createElement("div"); none.className = "li" + (curSet ? "" : " on"); none.innerHTML = `<b>견본 글</b><div class="ds">지어낸 글로 채운다</div>`; none.onclick = () => { curSet = ""; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(none);
     for (const s2 of LIB.sets) { const d = document.createElement("div"); d.className = "li" + (curSet === s2.id ? " on" : "");
-      d.innerHTML = `<b>${esc(s2.kind)} ${esc(s2.id)}</b><div class="ds">${(s2.blocks || []).map(b => (byId("blocks")[b.block] || {name: b.block}).name).join(" + ")}</div>`;
-      d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(d); }
-    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-new">＋ 원고 입력</button></div><div id="setform"></div>
+      d.innerHTML = `<b>${esc(s2.kind)} ${esc(s2.id)}</b><span class="x" title="지우기">✕</span><div class="ds">${(s2.blocks || []).map(b => (byId("blocks")[b.block] || {name: b.block}).name).join(" + ")}</div>`;
+      d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); };
+      d.querySelector(".x").onclick = async (e) => { e.stopPropagation(); await api("/api/units/sets", {id: s2.id}, "DELETE"); LIB.sets = LIB.sets.filter(x => x.id !== s2.id); if (curSet === s2.id) curSet = ""; pageSvg = {}; render(); drawRail(); panel(); };
+      body.appendChild(d); }
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-paste">📄 원고 붙여넣기</button><label class="btn sm sub">📎 파일<input type="file" id="set-file" accept=".docx,.hwpx,.txt,.md,.json" style="display:none"></label><button class="btn sm sub" id="set-new">＋ 자리별 입력</button></div><div id="setform"></div>
 `);
+    const gotSets = (j) => { if (j.error) { $("#st").textContent = j.error + ((j.log || []).length ? " · " + j.log[0] : ""); return; }
+      for (const st of j.sets) LIB.sets = LIB.sets.filter(x => x.id !== st.id).concat([st]); curSet = j.sets[0].id; pageSvg = {}; render(); drawRail(); panel();
+      $("#st").textContent = `원고 ${j.sets.length}개 읽음` + (j.log.length ? ` · 못 맞춘 것 ${j.log.length}: ${j.log[0]}` : ""); };
+    $("#set-paste").onclick = () => {
+      $("#setform").innerHTML = `<textarea id="ms-text" rows="12" style="width:100%;font-size:12px" placeholder="# 21\nThe idea that cities … (영어 지문)\n윗글의 주제로 가장 적절한 것은?\n① … ② … ③ …\n답: ③\n빈칸\n1. Wide roads r_____ neighborhoods.\n넓은 도로가 동네를 대체했다.\n답: replaced\n본문 O/X\n(1) Cities were built around cars.\n답: X"></textarea>
+        <div class="note">한 줄 = 한 단락. <b># 번호</b> 새 원고 · <b>이름:</b> 자리 지정(지문·발문·선지…) · <b>①②③</b> 선지 · <b>답:</b> 정답 · <b>빈칸 / 본문 O/X / 어법 O/X</b> 한 줄 뒤에 번호 줄 · 영어 긴 단락은 지문, 한글 물음은 발문</div>
+        <div class="row"><button class="btn sm" id="ms-go">읽어서 원고 만들기</button></div>`;
+      $("#ms-go").onclick = async () => gotSets(await api("/api/units/manuscript?save=1", {text: $("#ms-text").value}));
+    };
+    $("#set-file").onchange = async () => { const f = $("#set-file").files[0]; if (!f) return; const fd = new FormData(); fd.append("file", f);
+      const r = await fetch("/api/units/manuscript?save=1", {method: "POST", body: fd}); gotSets(await r.json()); $("#set-file").value = ""; };
     $("#set-new").onclick = () => {
       const slots = (page ? page.items : []).filter(it => it.block && (byId("blocks")[it.block] || {}).source === "content");
       if (!slots.length) { $("#setform").innerHTML = `<div class="note">이 페이지엔 원고가 들어갈 자리가 없다 — 자리 이름이 있는 요소를 놓는다</div>`; return; }
@@ -1035,6 +1077,7 @@ function side() {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
       const flds = Object.keys(blk.fields || {});
       h += `<div class="note">${flds.length ? `원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (쪽번호·구간명)" : "장식")}</div>
+        ${blk.source === "content" ? `<div class="f"><span>책에서</span><label title="정답지·어휘 목록처럼 세트를 하나씩 아래로 쌓고, 면이 차면 다음 면에 이어 쌓는다"><input type="checkbox" id="s-flow" ${it.flow ? "checked" : ""} style="width:auto"> 세트마다 아래로 쌓기</label></div>${it.flow ? `<div class="f"><span>쌓기 간격</span><input type="number" id="s-gap" step="0.5" value="${it.gap == null ? 2 : it.gap}"></div>` : ""}` : ""}
         ${(blk.variants || []).length > 1 ? `<div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>` : ""}
         <div class="row"><button class="btn sm" id="s-edit" title="더블클릭과 같다">✎ 편집</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다">그룹 해제</button></div>`;
     } else if (u === "part") {
@@ -1046,6 +1089,8 @@ function side() {
       h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `` : ""}`;
       if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(plainText(a.text))}</textarea></div>${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
         <div class="f"><span>자리 이름</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="예: passage · prompt · no" title="원고가 들어올 자리. 비우면 고정 글"></div>
+        <div class="f"><span>스타일</span><select data-a="style"><option value="">(직접)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span>서체</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
@@ -1078,7 +1123,7 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
-      <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 없으면 한 번">${page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
+      <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 쌓기 자리가 있으면 세트를 쌓아 채움, 없으면 한 번">${page.items.some(it => it.flow) ? "세트를 쌓아 채움" : page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
       ${layersHtml()}`;
   }
   box.innerHTML = h;
@@ -1090,6 +1135,7 @@ function side() {
     else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"}; if (kk === "cap" && v === "butt") delete a.stroke.cap; else a.stroke[kk] = v; } }
     else if (k === "fill" && !v) delete a.fill;
     else if (k === "bind" && !v) delete a.bind;
+    else if (k === "style") { if (v) a.style = v; else delete a.style; }
     else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
     else if (k === "fit") { if (v === "cover") a.fit = "cover"; else delete a.fit; }
@@ -1107,6 +1153,8 @@ function side() {
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
+  on("#s-flow", "change", (e) => { hist(); const it = page.items[sel]; if (e.target.checked) it.flow = true; else { delete it.flow; delete it.gap; } save(); side(); });
+  on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });

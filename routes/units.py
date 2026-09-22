@@ -12,6 +12,9 @@
     /api/units/part_from POST      {dec, atoms:[번호], id, name} → 부품 저장
     /api/units/make POST           {prompt, skin} → 클로드가 그린 부품 + 블록 저장 (캔버스의 "설명으로 만들기")
     /api/units/pdf?plan=|page=     PDF 저장 — 크로미움 인쇄 (core/units/pdf.py). ?skin= ?set= ?dl=1
+                                   ?print=1 인쇄용 — 도련(spec.bleed)·재단선·CMYK(Ghostscript, 무채색은 K 단색)·TrimBox/BleedBox. ?marks=0 재단선 없이
+    /api/units/check?plan=&skin=   검수 — 책을 그려 보고 error/warn/info 목록 (core/units/check.py)
+    /api/units/manuscript POST     원고 → 세트. {text} | {contents: yos-workbook-v1} | 파일(docx·hwpx·txt·json). ?save=1 이면 저장. → {sets, log}
 
 화면은 얇다 — 그리는 일은 전부 core/units/render, 분해는 core/units/decompose.
 """
@@ -22,7 +25,7 @@ import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
 
-from core.units import decompose, render, store
+from core.units import decompose, manuscript, render, store
 
 bp = Blueprint("units", __name__)
 _RE_ID = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
@@ -82,6 +85,56 @@ def api_put(kind):
         return jsonify({"error": err}), 400
     store.put(kind, item, after=request.args.get("after"))      # ?after=<id> 그 뒤로 · ?after= 맨 앞
     return jsonify({"ok": True, "item": item})
+
+
+@bp.route("/api/units/check")
+def api_check():
+    from core.units import check
+    lib = store.library()
+    plan = store.by_id(lib["plans"]).get(request.args.get("plan") or "")
+    if not plan:
+        return jsonify({"error": "plan 없음"}), 404
+    try:
+        return jsonify(check.report(lib, plan, request.args.get("skin")))
+    except Exception as e:
+        return jsonify({"error": f"{type(e).__name__}: {e}"}), 500
+
+
+@bp.route("/api/units/manuscript", methods=["POST"])
+def api_manuscript():
+    """원고 → 세트 (core/units/manuscript). 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
+    blocks = store.load("blocks")
+    f = request.files.get("file")
+    try:
+        if f and f.filename:
+            ext = os.path.splitext(f.filename)[1].lower()
+            if ext not in (".docx", ".hwpx", ".txt", ".md", ".json"):
+                return jsonify({"error": "docx·hwpx·txt·json 만"}), 400
+            path = os.path.join(_updir(), uuid.uuid4().hex[:12] + ext)
+            f.save(path)
+            if ext == ".json":
+                with open(path, encoding="utf-8") as fh:
+                    sets, log = manuscript.from_contents(json.load(fh), blocks)
+            else:
+                sets, log = manuscript.from_file(path, blocks, request.form.get("kind") or "passage")
+        else:
+            body = request.get_json(silent=True) or {}
+            if body.get("contents"):
+                sets, log = manuscript.from_contents(body["contents"], blocks)
+            else:
+                sets, log = manuscript.from_text(body.get("text") or "", blocks, body.get("kind") or "passage")
+    except (ValueError, KeyError, OSError) as e:
+        return jsonify({"error": str(e)}), 400
+    if not sets:
+        return jsonify({"error": "세트를 하나도 못 만들었다", "log": log}), 400
+    for st in sets:
+        err = store.validate("sets", st)
+        if err:
+            return jsonify({"error": err, "log": log}), 400
+    if request.args.get("save"):
+        for st in sets:
+            store.put("sets", st)
+    return jsonify({"sets": sets, "log": log})
 
 
 @bp.route("/api/units/<kind>", methods=["DELETE"])
@@ -316,6 +369,12 @@ def api_pdf():
     lib = store.library()
     ctx = _ctx(lib, request.args.get("skin"))
     plan_id, page_id = request.args.get("plan"), request.args.get("page")
+    printing = request.args.get("print") == "1"
+    if printing:
+        pl = store.by_id(lib["plans"]).get(plan_id or "") or {}
+        pg0 = store.by_id(lib["pages"]).get(page_id or "") or {}
+        sp0 = store.by_id(lib["specs"]).get(pl.get("spec") or pg0.get("spec") or "a4") or render.DEFAULT_SPEC
+        ctx.print = {"bleed": float(sp0.get("bleed") or 3.0), "marks": request.args.get("marks") != "0"}
     if plan_id:
         plan = store.by_id(lib["plans"]).get(plan_id)
         if not plan:
@@ -337,13 +396,19 @@ def api_pdf():
         return jsonify({"error": "그릴 면이 없다"}), 400
     out = os.path.join(store.udir(), "_pdf")
     os.makedirs(out, exist_ok=True)
-    path = os.path.join(out, re.sub(r"[^a-z0-9_]", "_", (plan_id or page_id).lower()) + ".pdf")
+    path = os.path.join(out, re.sub(r"[^a-z0-9_]", "_", (plan_id or page_id).lower()) + ("_print" if printing else "") + ".pdf")
     try:
-        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title)
+        if printing:
+            r = _pdf.to_print_pdf(svgs, float(spec["w"]), float(spec["h"]), path, bleed=ctx.print["bleed"], marks=ctx.print["marks"],
+                                  skin=ctx.skin, title=title + " (인쇄)")
+            if request.args.get("json") == "1":
+                return jsonify({"pages": r["pages"], "cmyk": r["cmyk"], "note": r["note"], "warnings": ctx.warnings})
+        else:
+            _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title)
     except Exception as e:
         return jsonify({"error": f"{type(e).__name__}: {e}", "warnings": ctx.warnings}), 500
     return send_file(path, mimetype="application/pdf", as_attachment=request.args.get("dl") == "1",
-                     download_name=f"{title}.pdf", max_age=0)
+                     download_name=f"{title}{'_인쇄' if printing else ''}.pdf", max_age=0)
 
 
 @bp.route("/api/units/part_from_preview", methods=["POST"])

@@ -58,6 +58,7 @@
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"},
         "h": {"$ref": "#/definitions/mm", "description": "최소 높이. 글이 길면 아래로 늘어난다"},
         "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
+        "style": {"$ref": "#/definitions/id", "description": "단락 스타일 이름 — 옷의 styles 에서 서체·크기·행간·색·정렬·자간·들여쓰기·간격을 가져온다(인디자인 단락 스타일). 스타일에 있는 값이 원자 값보다 우선"},
         "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
         "align": {"enum": ["left", "center", "right", "justify"]},
         "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich). 줄바꿈(\\n) = 단락"},
@@ -192,7 +193,7 @@
                     "atom": {"$ref": "#/definitions/atom", "description": "낱개 원자(글상자·선·면·원·그림). 원점은 0,0 — 자리는 x,y"},
                     "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm", "description": "폭 — 없으면 부품 폭"},
                     "fields": {"type": "object", "description": "이 자리의 견본 값(선택)"},
-                    "lock": {"type": "boolean", "description": "잠금 — 캔버스에서 못 고른다"}, "hide": {"type": "boolean", "description": "숨김 — 안 그린다"}}}},
+                    "lock": {"type": "boolean", "description": "잠금 — 캔버스에서 못 고른다"}, "hide": {"type": "boolean", "description": "숨김 — 안 그린다"}, "flow": {"type": "boolean", "description": "쌓기 자리 — 책에서 이 자리에 세트를 하나씩 아래로 쌓고, 면이 차면 다음 면에 이어 쌓는다(정답지·어휘 목록). 한 면에 한 세트가 아니다"}, "gap": {"$ref": "#/definitions/mm", "description": "쌓기 간격(flow). 없으면 2"}}}},
         "guides": {"type": "object", "description": "캔버스 안내선(mm)", "properties": {"v": {"type": "array", "items": {"$ref": "#/definitions/mm"}}, "h": {"type": "array", "items": {"$ref": "#/definitions/mm"}}}},
         "blocks": {"type": "array", "description": "캔버스에서 칸에 놓은 블록(견본 배치). 실제 콘텐츠는 세트로 흘러 들어오고, 이건 지면을 설계·미리볼 때 쓴다",
                    "items": {"type": "object", "required": ["zone", "block"], "properties": {"zone": {"$ref": "#/definitions/id"}, "block": {"$ref": "#/definitions/id"}}}}
@@ -208,7 +209,7 @@
         "pages": {"type": "array", "description": "비어 있을 수 있다 — 캔버스에서 막 만든 틀", "items": {"type": "object", "required": ["page", "repeat"], "properties": {
           "page": {"$ref": "#/definitions/id"},
           "repeat": {"enum": ["once", "each_set"], "description": "each_set = 세트마다 이 지면"},
-          "sets": {"type": "array", "items": {"type": "string"}, "description": "받는 세트 kind"}
+          "sets": {"type": "array", "items": {"type": "string"}, "description": "받는 세트 kind. `answers` 를 넣으면 앞 구간 세트들의 정답을 모은 정답 세트가 자동으로 생긴다(core/units/answers.py) — 지면엔 answer_row 쌓기 자리(flow)"}
         }}}
       }
     },
@@ -244,7 +245,15 @@
           "font": {"type": "object", "additionalProperties": {"type": "string", "description": "서체 family 이름"}}
         }},
         "variants": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"}, "description": "블록 id → 모양 id. 없으면 첫 모양"},
-        "images": {"type": "object", "additionalProperties": {"type": "string"}, "description": "image 원자의 src → 파일 경로"}
+        "images": {"type": "object", "additionalProperties": {"type": "string"}, "description": "image 원자의 src → 파일 경로"},
+        "styles": {"type": "object", "description": "단락 스타일 — 이름 → 글 속성. 글 원자의 style 이 가리킨다. 원고 docx 의 단락 스타일 이름과 같으면 파서가 자리를 맞춘다",
+          "additionalProperties": {"type": "object", "properties": {
+            "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}, "leading": {"$ref": "#/definitions/pt"},
+            "color": {"$ref": "#/definitions/token"}, "align": {"enum": ["left", "center", "right", "justify"]},
+            "tracking": {"type": "number"}, "indent": {"$ref": "#/definitions/mm"}, "indent_first": {"type": "number"}, "indent_right": {"$ref": "#/definitions/mm"},
+            "space_before": {"$ref": "#/definitions/mm"}, "space_after": {"$ref": "#/definitions/mm"},
+            "b": {"type": "boolean"}, "i": {"type": "boolean"}
+          }}}
       }
     },
 

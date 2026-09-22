@@ -24,7 +24,42 @@
    }
   },
   "variants": {},
-  "images": {}
+  "images": {},
+  "styles": {
+   "passage": {
+    "font": "$body",
+    "size": 8,
+    "leading": 13,
+    "color": "$ink",
+    "align": "justify"
+   },
+   "prompt": {
+    "font": "$disp",
+    "size": 8.5,
+    "color": "$ink"
+   },
+   "choices": {
+    "font": "$body",
+    "size": 8,
+    "leading": 12.5,
+    "color": "$ink"
+   },
+   "sentence": {
+    "font": "$body",
+    "size": 8,
+    "color": "$ink"
+   },
+   "kr": {
+    "font": "$body",
+    "size": 7,
+    "color": "$mute"
+   },
+   "no": {
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel"
+   }
+  }
  },
  {
   "id": "mono",
@@ -53,6 +88,41 @@
   "variants": {
    "gram_ox": "v2"
   },
-  "images": {}
+  "images": {},
+  "styles": {
+   "passage": {
+    "font": "$body",
+    "size": 8,
+    "leading": 13,
+    "color": "$ink",
+    "align": "justify"
+   },
+   "prompt": {
+    "font": "$disp",
+    "size": 8.5,
+    "color": "$ink"
+   },
+   "choices": {
+    "font": "$body",
+    "size": 8,
+    "leading": 12.5,
+    "color": "$ink"
+   },
+   "sentence": {
+    "font": "$body",
+    "size": 8,
+    "color": "$ink"
+   },
+   "kr": {
+    "font": "$body",
+    "size": 7,
+    "color": "$mute"
+   },
+   "no": {
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel"
+   }
+  }
  }
 ]
