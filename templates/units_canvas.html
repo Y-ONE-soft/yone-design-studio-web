@@ -42,6 +42,8 @@
   .card .th svg { width: 100%; height: auto; display: block; }
   .card .nm { font-size: 11.5px; font-weight: 600; margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card .ds { font-size: 10.5px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ghost { position: fixed; z-index: 99; width: 120px; opacity: .85; pointer-events: none; box-shadow: 0 8px 24px rgba(30,20,60,.3); }
+  .paper.dropok { outline: 3px solid var(--pp); outline-offset: -3px; }
   .atoms5 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
   .atoms5 button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 2px 4px; cursor: pointer; font-size: 10.5px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #3c4043; }
   .atoms5 button svg { width: 28px; height: 18px; }
@@ -214,7 +216,7 @@
       <div class="foot">
         <span class="help" title="＋ 페이지 끼우기 · 썸네일: 끌어 순서, ⧉ 복제, ✕ 지우기 · ←/→ 페이지 이동&#10;빈 곳 끌기 = 영역 선택 · Shift+클릭 더 고르기 · 더블클릭 = 요소 안 편집&#10;Ctrl+Z 되돌리기 · Ctrl+C/V · Ctrl+D 복제 · Ctrl+A 전체 · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+]/[ 앞뒤 · Delete">? 단축키</span>
         <span class="cnt" id="cnt"></span>
-        <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
+        <button class="btn sm sub" id="zoomfit" title="한 쪽 전체가 보이게">전체</button><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠로도"><span id="zoomv" title="폭 맞춤으로" style="cursor:pointer;min-width:38px">100%</span>
       </div>
     </div>
   </div>
@@ -368,12 +370,16 @@ function open(p) {
   const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
 function layout() {
-  const sp = specOf(); const fit = Math.min(3.4, ($("#area").clientWidth - 60) / sp.w, ($("#area").clientHeight - 90) / sp.h);
+  const sp = specOf(); const fit = Math.min(4.5, ($("#area").clientWidth - 60) / sp.w);            // 기본 = 폭 맞춤. 세로는 스크롤
   scale = fit * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
 }
 window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
-$("#zoom").oninput = () => { zoom = $("#zoom").value / 100; $("#zoomv").textContent = zoom === 1 ? "맞춤" : Math.round(zoom * 100) + "%"; layout(); selbox(); };
+function setZoom(z) { zoom = Math.max(0.3, Math.min(3, z)); $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%"; layout(); selbox(); }
+$("#zoom").oninput = () => setZoom($("#zoom").value / 100);
+$("#zoomv").onclick = () => setZoom(1);
+$("#zoomfit").onclick = () => { const sp = specOf(); setZoom((($("#area").clientHeight - 60) / sp.h) / (($("#area").clientWidth - 60) / sp.w)); };
+$("#area").addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, {passive: false});
 let rt = null;
 function render() {
   if (!page) return;
@@ -508,8 +514,8 @@ function selbox() {
   box.querySelector(".hd-s").style.display = box.querySelector(".hd-se").style.display = it.atom && it.atom.t !== "ellipse" ? "" : "none";
   Object.assign(tools.style, {display: "flex", left: Math.max(0, r.left - pr.left) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
   const u = unitOf(it), allAtoms = [...sels].every(i => page.items[i] && page.items[i].atom);
-  $("#t-group").style.display = allAtoms && sels.size > 1 ? "" : "none";
-  $("#t-up").style.display = (allAtoms || (u === "part" && sels.size === 1)) ? "" : "none";
+  $("#t-group").style.display = sels.size > 1 ? "" : "none";
+  $("#t-up").style.display = (allAtoms || sels.size > 1 || (u === "part" && sels.size === 1)) ? "" : "none";
   $("#t-down").style.display = u === "atom" || sels.size > 1 ? "none" : "";
   tools.querySelectorAll("[data-al]").forEach(b => b.style.display = sels.size > 1 ? "" : "none");
 }
@@ -590,11 +596,7 @@ function addBlock(id, at) {
 }
 function addPart(id, at) { if (byId("parts")[id] && page) place({part: id}, at, false); }
 function addAtom(t, at) { const a = ATOMS.find(x => x[0] === t); if (a && page) place({atom: clone(a[2])}, at, false); }
-$("#paper").addEventListener("dragover", (e) => e.preventDefault());
-$("#paper").addEventListener("drop", (e) => {
-  e.preventDefault(); if (!page) return; let d; try { d = JSON.parse(e.dataTransfer.getData("text/plain")); } catch (_) { return; }
-  const at = mmOf(e); if (d.k === "block") addBlock(d.id, at); else if (d.k === "part") addPart(d.id, at); else if (d.k === "atom") addAtom(d.id, at);
-});
+
 
 // ── 원자들 → 부품 · 부품 → 블록 (단위를 올린다) ──
 async function makeTable() {
@@ -614,8 +616,22 @@ async function makeTable() {
   LIB.parts.push(part); place({part: pid}, null, false); thumbsLoad();
 }
 
+function atomsOfItem(it) {                                    // 요소·그룹 → 자리 그대로의 원자 요소들 (ungroup 과 같은 셈)
+  if (it.atom) return [it];
+  const part = it.block ? partOfBlock(it.block) : byId("parts")[it.part]; if (!part) return [];
+  const sx = it.w && part.w ? it.w / part.w : 1; const out = [];
+  for (const a0 of part.atoms) { const a = clone(a0);
+    if (a.t === "line") { const x0 = Math.min(a.x1, a.x2) * sx, y0 = Math.min(a.y1, a.y2); const len = Math.abs(a.x2 - a.x1) * sx, dy = a.y2 - a.y1;
+      out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: snap(len), y2: dy < 0 ? 0 : snap(dy)}), x: snap(it.x + x0), y: snap(it.y + y0)}); }
+    else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = snap(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: snap(x), y: snap(y)}); } }
+  return out;
+}
 async function groupToPart(name) {
-  const ids = [...sels].filter(i => page.items[i] && page.items[i].atom).sort((a, b) => a - b); if (!ids.length) return;
+  let ids = [...sels].filter(i => page.items[i]).sort((a, b) => a - b); if (!ids.length) return;
+  if (ids.some(i => !page.items[i].atom)) {                     // 요소·그룹이 섞였으면 먼저 원자로 펼친다
+    hist(); const keep = page.items.filter((_, i) => !ids.includes(i)); const flat = ids.flatMap(i => atomsOfItem(page.items[i]));
+    page.items = keep.concat(flat); ids = flat.map((_, k) => keep.length + k); sels = new Set(ids); sel = ids[ids.length - 1];
+  }
   if (name == null) { let g = 1; while (byId("parts")["p_" + g]) g++; name = "그룹 " + g; }
   let n = 1; while (byId("parts")["p_" + n]) n++; const pid = "p_" + n;
   const its = ids.map(i => page.items[i]);
@@ -689,7 +705,7 @@ $("#edit-done").onclick = () => exitEdit(true); $("#edit-cancel").onclick = () =
 async function saveAsElement() {
   // 고른 것 → 요소 패널의 항목. 원자 여럿이면 먼저 그룹(부품)으로 묶는다. 글상자의 자리 이름 = 원고가 들어올 자리.
   const name = prompt("요소 이름 (요소 패널에 이 이름으로)", "새 요소"); if (name == null) return;
-  if ([...sels].every(i => page.items[i] && page.items[i].atom)) { await groupToPart(name); await new Promise(r => setTimeout(r, 150)); }
+  if (sels.size > 1 || [...sels].every(i => page.items[i] && page.items[i].atom)) { await groupToPart(name); await new Promise(r => setTimeout(r, 150)); }
   if (sel != null && page.items[sel] && page.items[sel].part) await partToBlock(sel, name);
 }
 async function partToBlock(i, name) {
@@ -703,9 +719,25 @@ async function partToBlock(i, name) {
 }
 
 // ── 왼쪽 탭 ──
-const card = (thumb, nm, ds, drag) => { const d = document.createElement("div"); d.className = "card"; d.draggable = true; d.title = nm;
+// 팔레트에서 끌어 놓기 — 포인터 기반(HTML5 DnD 는 브라우저마다 다르고 터치가 안 된다). 6px 넘게 움직이면 끌기, 아니면 누르기(onclick)
+function palDrag(el, payload) {
+  el.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return; const sx = e.clientX, sy = e.clientY; let ghost = null;
+    const mv = (ev) => { if (!ghost) { if (Math.abs(ev.clientX - sx) + Math.abs(ev.clientY - sy) < 6) return; ghost = el.cloneNode(true); ghost.className = el.className + " ghost"; document.body.appendChild(ghost); el._dragging = true; }
+      ghost.style.left = (ev.clientX + 8) + "px"; ghost.style.top = (ev.clientY + 8) + "px";
+      $("#paper").classList.toggle("dropok", !!over(ev)); };
+    const up = (ev) => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up);
+      if (!ghost) return; ghost.remove(); $("#paper").classList.remove("dropok"); setTimeout(() => { el._dragging = false; }, 0);
+      const r = over(ev); if (!r || !page) return; const at = {x: (ev.clientX - r.left) / scale, y: (ev.clientY - r.top) / scale};
+      if (payload.k === "block") addBlock(payload.id, at); else if (payload.k === "part") addPart(payload.id, at); else if (payload.k === "atom") addAtom(payload.id, at); };
+    const over = (ev) => { const r = $("#paper").getBoundingClientRect(); return ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom ? r : null; };
+    window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
+  });
+  el.addEventListener("click", (e) => { if (el._dragging) { e.stopPropagation(); e.preventDefault(); } }, true);
+}
+const card = (thumb, nm, ds, drag) => { const d = document.createElement("div"); d.className = "card"; d.title = nm;
   d.innerHTML = `<div class="th">${thumb || ""}</div><div class="nm">${esc(nm)}</div>${ds ? `<div class="ds">${esc(ds)}</div>` : ""}`; strip(d);
-  d.ondragstart = (e) => { dragId = null; e.dataTransfer.setData("text/plain", JSON.stringify(drag)); }; return d; };
+  palDrag(d, drag); return d; };
 function panel() {
   const hd = $("#phd"), body = $("#pbody"); body.innerHTML = "";
   document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
@@ -722,8 +754,7 @@ function panel() {
       ellipse: '<svg width="36" height="22"><ellipse cx="18" cy="11" rx="10" ry="9" fill="none" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
       image: '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="#eee" stroke="#999"/><path d="M6 17l8-8 6 6 4-3 6 5z" fill="#bbb"/></svg>',
       path: '<svg width="36" height="22"><path d="M3 7 L20 7 L20 2 L33 11 L20 20 L20 15 L3 15 Z" fill="#e9e0ff" stroke="#7d2ae8"/></svg>'};
-    for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.draggable = true; b.onclick = () => addAtom(t);
-      b.ondragstart = (e) => { dragId = null; e.dataTransfer.setData("text/plain", JSON.stringify({k: "atom", id: t})); }; g0.appendChild(b); }
+    for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.onclick = () => addAtom(t); palDrag(b, {k: "atom", id: t}); g0.appendChild(b); }
     const tb = document.createElement("button"); tb.innerHTML = '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="none" stroke="#7d2ae8"/><line x1="2" y1="8" x2="34" y2="8" stroke="#7d2ae8"/><line x1="2" y1="14" x2="34" y2="14" stroke="#7d2ae8"/><line x1="13" y1="2" x2="13" y2="20" stroke="#7d2ae8"/><line x1="24" y1="2" x2="24" y2="20" stroke="#7d2ae8"/></svg>표'; tb.onclick = makeTable; g0.appendChild(tb);
     body.appendChild(g0);
 
