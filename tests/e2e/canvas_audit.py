@@ -41,6 +41,7 @@ try:
     def js(x): return c.js(x)
     def shot(tag):
         shot_n[0] += 1
+        tag = "".join(ch if ch not in '/\\:' else "_" for ch in tag)
         d = c.call("Page.captureScreenshot", format="png")
         open(f"{SP}/audit_{shot_n[0]}_{tag}.png", "wb").write(base64.b64decode(d["data"]))
         return f"audit_{shot_n[0]}_{tag}.png"
@@ -95,6 +96,15 @@ try:
     def grect(i):
         return js(f"(() => {{ const g = gOf({i}); if (!g) return null; const r = g.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }})()")
     def item(i): return js(f"JSON.stringify(page.items[{i}] || null)")
+    def pick(i):
+        """요소 i 가 실제로 마우스에 잡히는 점 — 떠 있는 도구 막대·손잡이에 가리지 않은 곳"""
+        r = grect(i)
+        if not r: return None
+        for fx, fy in [(.5, .5), (.3, .7), (.7, .7), (.3, .3), (.7, .3), (.5, .9), (.1, .5), (.9, .5)]:
+            x, y = r[0] + r[2] * fx, r[1] + r[3] * fy
+            if js(f"(() => {{ const el = document.elementFromPoint({x}, {y}); const g = el && el.closest && el.closest('g[data-fi]'); return !!g && +g.dataset.fi === {i}; }})()"):
+                return (x, y)
+        return None
     def paper_pt(mmx, mmy):
         pr = rect("#paper"); sc = js("scale"); return (pr[0] + mmx * sc, pr[1] + mmy * sc)
     def mm_of(x, y):
@@ -123,6 +133,18 @@ try:
     step("A3 내 문서 화면 ↔ 문서 열기 (카드 클릭)", a3)
 
     # ───────── B. 페이지 띠 ─────────
+    def b0():
+        if js("!!view.strip"): click(*center("#tg-strip")); time.sleep(0.5)       # 접힌 상태에서 시작
+        folded = not js("!!view.strip") and not visible("#rail .addpg")
+        add, cnt = center("#f-addpg"), center("#f-cnt")
+        if not add or not cnt: return (False, f"상태 줄 단추 없음 ＋쪽={bool(add)} 쪽수={bool(cnt)}")
+        n0 = js("docPages().length"); click(*add); ok1 = wait(f"docPages().length === {n0 + 1}", 10)
+        if ok1:
+            js("deletePage(docPages()[docPages().length - 1])"); wait(f"docPages().length === {n0}", 10)
+        if not js("!!view.strip"): click(*cnt)
+        time.sleep(0.8); ok2 = visible("#rail .addpg")
+        return (folded and ok1 and ok2, f"접으면 썸네일 숨음={folded} 상태줄 ＋쪽={ok1} 쪽수 눌러 폄={ok2} 쪽 {n0}→{js('docPages().length')}")
+    step("B0 쪽 띠 접힘 — 상태 줄 ＋ 쪽 · 쪽수 눌러 펴기", b0)
     def b1():
         n0 = js("docPages().length"); r = rect("#rail .addpg"); click(r[0] + r[2] / 2, r[1] + r[3] / 2)
         time.sleep(0.5)
@@ -142,11 +164,18 @@ try:
         r = rect("#rail .pg:nth-child(2)")
         if not r: return (False, "페이지 2 없음(B1 실패)")
         click(r[0] + r[2] / 2, r[1] + r[3] / 2); wait("page && page.id === docPages()[1].id", 5)
-        n0 = js("docPages().length"); click(*center("#p-del")); ok = wait(f"docPages().length === {n0 - 1}", 8)
+        mouse("mouseMoved", r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(0.3)      # ✕ 는 썸네일에 올려야 나온다
+        b = center("#rail .pg:nth-child(2) [data-pg-del]")
+        if not b: return (False, "썸네일 ✕ 안 나옴")
+        n0 = js("docPages().length"); click(*b); ok = wait(f"docPages().length === {n0 - 1}", 8)
         return (ok, f"{n0}→{js('docPages().length')}")
     step("B3 페이지 지우기 (🗑)", b3)
     def b4():
-        n0 = js("docPages().length"); click(*center("#p-dup")); ok = wait(f"docPages().length === {n0 + 1}", 8)
+        r = rect("#rail .pg:nth-child(1)")
+        mouse("mouseMoved", r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(0.3)
+        b = center("#rail .pg:nth-child(1) [data-pg-dup]")
+        if not b: return (False, "썸네일 ⧉ 안 나옴")
+        n0 = js("docPages().length"); click(*b); ok = wait(f"docPages().length === {n0 + 1}", 10)
         return (ok, f"{n0}→{js('docPages().length')}")
     step("B4 페이지 복제 (⧉)", b4)
     def b5():
@@ -218,8 +247,10 @@ try:
         n = js("sels.size"); return (n >= 2 and visible("#selbox") and js("document.querySelector('#selbox').classList.contains('multi')"), f"sels={n}")
     step("D3 빈 곳에서 범위 끌기 → 여럿 선택 + 감싸는 상자", d3)
     def d4():
-        js(f"select([{TXT}], {TXT})"); r = grect(RECT); click(r[0] + 8, r[1] + 8, mods=SHIFT)
-        return (js("sels.size") == 2, f"sels={js('[...sels]')}")
+        js(f"select([{TXT}], {TXT})"); pt = pick(RECT)
+        if not pt: return (False, f"RECT={RECT} 가 마우스에 안 잡힌다")
+        click(*pt, mods=SHIFT)
+        return (js("sels.size") == 2, f"sels={js('[...sels]')} TXT={TXT} RECT={RECT}")
     step("D4 Shift+클릭으로 선택에 더하기", d4)
     def d5():
         r = grect(RECT); x0 = js(f"page.items[{RECT}].x"); js(f"select([{RECT}], {RECT})")
@@ -311,16 +342,19 @@ try:
     # ───────── G. 글 바로 고치기 ─────────
     TXT = js("page.items.findIndex(it => it.atom && it.atom.t === 'text')"); RECT = js("page.items.findIndex(it => it.atom && it.atom.t === 'rect')"); PAS = js("page.items.findIndex(it => it.block === 'passage')")
     def g1():
-        js("select([])"); js(f"gOf({TXT}).scrollIntoView({{block: 'center'}})"); time.sleep(0.3); r = grect(TXT); dbl(r[0] + 6, r[1] + 6)
+        js("select([])"); js(f"gOf({TXT}).scrollIntoView({{block: 'center'}})"); time.sleep(0.3)
+        r = grect(TXT); pt = pick(TXT) or (r[0] + 6, r[1] + 6); dbl(*pt)
         ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3)
-        if not ok: return (False, f"TXT={TXT} r={r} at={at(r[0] + 6, r[1] + 6)}")
-        tr = rect("#tedit"); over = tr and abs(tr[0] - r[0]) < 12 and abs(tr[1] - r[1]) < 12
+        if not ok: return (False, f"TXT={TXT} r={r} at={at(*pt)}")
+        exp = js(f"(() => {{ const pr = document.querySelector('#paper').getBoundingClientRect(), b = bboxOf({TXT}); return [pr.left + b.x * scale, pr.top + b.y * scale]; }})()")
+        tr = rect("#tedit"); over = bool(tr and exp and abs(tr[0] - exp[0]) < 3 and abs(tr[1] - exp[1]) < 3)
         if ok:
             js("(() => { const t = document.querySelector('#tedit'); t.focus(); t.select(); })()")
             c.call("Input.insertText", text="감사 글")
             key("Enter", mods=CTRL, code="Enter")
         ok2 = wait(f"page.items[{TXT}].atom.text === '감사 글'", 4)
-        return (ok and over and ok2 and js("document.querySelector('#tedit').style.display === 'none'"), f"editor={ok} pos={over} saved={ok2}")
+        return (ok and over and ok2 and js("document.querySelector('#tedit').style.display === 'none'"),
+                f"editor={ok} 자리={over} 저장={ok2} TXT={TXT} 편집칸={tr} 있어야 할 자리={exp} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:40]}")
     step("G1 글상자 더블클릭 → 제자리 편집 → Ctrl+Enter 저장", g1)
     def g2():
         js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3); key("Escape", code="Escape")
@@ -416,18 +450,20 @@ try:
 
     # ───────── L. 브랜드·원고·미리보기·검수·PDF ─────────
     def l1():
-        click(*center('[data-tab="skins"]')); time.sleep(0.5); r = rect('input[data-col="cream"]')
-        if not r: return (False, "색 입력 없음")
+        click(*center("#s-skin-edit")); time.sleep(0.6); r = rect('input[data-col="cream"]')
+        if not r: return (False, "색 입력 없음 (브랜드 창)")
         js("(() => { const i = document.querySelector('input[data-col=\"cream\"]'); i.value = '#ff0000'; i.dispatchEvent(new Event('input')); })()")
         ok = wait("document.querySelector('#svgwrap svg').innerHTML.includes('#ff0000')", 6)
         js("(() => { const i = document.querySelector('input[data-col=\"cream\"]'); i.value = '#f6f1e6'; i.dispatchEvent(new Event('input')); })()"); time.sleep(1)
-        return (ok, "")
+        click(*center("#sheet-x")); time.sleep(0.3)
+        return (ok and not visible(".sheet-bg.on"), "창 열고 색 → 캔버스 → 닫기")
     step("L1 브랜드 색 바꾸면 캔버스에 바로", l1)
     def l2():
-        click(*center('[data-tab="sets"]')); time.sleep(0.4); click(*center("#set-paste")); time.sleep(0.3)
+        click(*center("#s-set-edit")); time.sleep(0.6); click(*center("#set-paste")); time.sleep(0.3)
         js("document.querySelector('#ms-text').value = '# 77\\nThis is a long enough English passage for the audit of the manuscript parser feature set.\\n윗글의 주제는?\\n① a ② b ③ c\\n답: ②'")
         click(*center("#ms-go")); ok = wait("LIB.sets.some(s => s.id === '77') && curSet === '77'", 8)
         ok2 = wait("document.querySelector('#svgwrap svg').innerHTML.includes('audit of the manuscript')", 8)
+        if visible(".sheet-bg.on"): click(*center("#sheet-x")); time.sleep(0.3)
         return (ok and ok2, f"set={ok} shown={ok2}")
     step("L2 원고 붙여넣기 → 세트 → 캔버스에 그 원고", l2)
     def l3():
@@ -458,7 +494,6 @@ try:
 
     # ───────── M. 요소로 저장 · 설명으로 만들기 ─────────
     def m1():
-        click(*center('[data-tab="blocks"]')); time.sleep(0.3)
         js(f"select([{TXT}, {RECT}], {RECT})"); time.sleep(0.4); nb = js("LIB.blocks.length")
         b = center("#t-up") if visible("#t-up") else None
         if not b: return (False, "★ 요소로 저장 버튼 안 보임")
