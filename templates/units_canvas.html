@@ -91,7 +91,8 @@
   .strip .foot .vw button { min-width: 28px; }
   .ptool { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; align-items: center; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(30,20,60,.16); padding: 5px 6px; z-index: 15; }
   .ptool input[type=text] { border: 0; width: 170px; font-weight: 600; padding: 4px 8px; }
-  .ptool button { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
+  .ptool button, .ptool a { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
+  .ptool a.btn { font-weight: 500; }
   .ptool button:hover { background: #f1eff8; }
   .ptool .sep { width: 1px; height: 18px; background: var(--line); margin: 0 4px; }
   .ptool .st { font-size: 11px; color: var(--mute); padding: 0 8px; white-space: nowrap; }
@@ -212,6 +213,13 @@
   .cmenu button { display: flex; width: 100%; border: 0; background: transparent; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12.5px; text-align: left; color: #1f2330; }
   .cmenu button:hover { background: #f1eff8; } .cmenu button span { margin-left: auto; color: #a0a4b5; font-size: 11px; }
   .cmenu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  /* 브랜드 · 원고 창 — 편집기 밖 일이라 덮개로 연다 */
+  .sheet-bg { position: fixed; inset: 0; background: rgba(20,16,40,.28); z-index: 80; display: none; }
+  .sheet-bg.on { display: block; }
+  .sheetbox { position: absolute; right: 0; top: 0; bottom: 0; width: 420px; background: #fff; box-shadow: -8px 0 30px rgba(30,20,60,.2); display: flex; flex-direction: column; }
+  .sheetbox .shd { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; gap: 8px; }
+  .sheetbox .shd > div { flex: 1; }
+  .sheetbox .sbody { flex: 1; overflow: auto; padding: 8px 16px 20px; }
   .layers .li { display: flex; align-items: center; gap: 6px; padding: 4px 6px; margin: 2px 0; cursor: pointer; }
   .layers .li.on { border-color: var(--pp); background: var(--pp-bg); }
   .layers .li .nm { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -243,9 +251,7 @@
   <!-- 왼쪽: 단위 탭 -->
   <div class="left">
     <div class="utabs">
-      <button data-tab="blocks" class="on"><span class="ic">🧩</span>요소</button>
-      <button data-tab="skins"><span class="ic">🎨</span>브랜드</button>
-      <button data-tab="sets"><span class="ic">📝</span>원고</button>
+      <button data-tab="blocks" class="on" title="요소 (Ctrl+\\ 로 접기)"><span class="ic">🧩</span>요소</button>
       <div style="flex:1"></div>
       <button class="fold" id="fold-left" title="요소 패널 접기·펴기 (Ctrl+\\)"><span class="ic">◧</span></button>
     </div>
@@ -260,8 +266,10 @@
   <!-- 가운데 -->
   <div class="stage">
     <div class="ptool">
-      <button id="p-home" title="내 문서">←</button>
+      <button id="p-home" title="문서 목록으로">← 내 문서</button>
+      <a class="btn sm sub" href="/" title="스튜디오 첫 화면" style="text-decoration:none">⌂ 스튜디오</a>
       <input type="text" id="plname" placeholder="문서 이름" style="width:170px;color:var(--pp)">
+      <button id="p-doc" title="이 문서 — 다른 문서 열기 · 새 문서 · 문서 지우기">…</button>
       <select id="skin" title="브랜드 (색·서체)" style="display:none"></select>
       <span class="sep"></span>
       <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
@@ -274,6 +282,7 @@
       <span class="st" id="st"></span>
     </div>
     <div class="thint" id="thint"></div>
+    <div class="sheet-bg" id="sheetbg"><div class="sheetbox"><div class="shd"><div id="shd"></div><button class="btn sm sub" id="sheet-x">닫기</button></div><div class="sbody" id="sbody"></div></div></div>
     <div class="trail" id="trail">
       <button data-tool="select" class="on" title="선택 (V) — 클릭 · Shift+클릭 = 더 고르기 · 빈 곳 끌기 = 범위 · 끌어 옮기기"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.6L9.6 19z"/></svg>선택</button>
       <button data-tool="hand" title="손 (H · Space+끌기) — 화면 이동"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 013 0V11m0-1V4.5a1.5 1.5 0 013 0V11m0-.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-1a6 6 0 01-6-6v-3a1.5 1.5 0 013 0"/></svg>손</button>
@@ -870,6 +879,15 @@ document.querySelectorAll("[data-rsz]").forEach(bar => {
   bar.ondblclick = () => { if (bar.dataset.rsz === "l") view.lw = 262; else view.rw = 262; applyWidths(); applyView(); };
 });
 
+// 브랜드·원고 창 열고 닫기
+let sheetKind = "";
+function openSheet(kind) { sheetKind = kind; $("#sheetbg").classList.add("on"); fillSheet(); }
+function closeSheet() { sheetKind = ""; $("#sheetbg").classList.remove("on"); }
+function fillSheet() {
+  const hd = $("#shd"), body = $("#sbody"); body.innerHTML = "";
+  if (sheetKind === "skins") panelSkins(hd, body); else if (sheetKind === "sets") panelSets(hd, body); else if (sheetKind === "plans") panelPlans(hd, body);
+}
+
 function togglePanel(k) {
   if (k === "zen") view.zen = !view.zen;
   else { if (view.zen) view.zen = false; view[k] = !view[k]; }
@@ -901,6 +919,9 @@ function dragGuide(e, axis, k, el) {                     // 안내선 옮기기 
   const m = mmOf(e); page.guides[axis].push(snap(axis === "v" ? m.x : m.y)); drawGuides(); const k = page.guides[axis].length - 1;
   const el = $("#guides").children[axis === "v" ? k : (page.guides.v.length + k)]; if (el) dragGuide(e, axis, k, el);
 }));
+$("#sheet-x").onclick = closeSheet;
+$("#p-doc").onclick = () => openSheet("plans");
+$("#sheetbg").addEventListener("pointerdown", (e) => { if (e.target.id === "sheetbg") closeSheet(); });
 $("#tg-left").onclick = () => togglePanel("left");
 $("#tg-side").onclick = () => togglePanel("side");
 $("#tg-strip").onclick = () => togglePanel("strip");
@@ -1165,8 +1186,8 @@ const card = (thumb, nm, ds, drag) => { const d = document.createElement("div");
   palDrag(d, drag); return d; };
 function panel() {
   const hd = $("#phd"), body = $("#pbody"); body.innerHTML = "";
-  document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
-  if (tab === "blocks") {
+  if (sheetKind) fillSheet();                       // 열려 있는 브랜드·원고 창도 같이
+  {
     hd.innerHTML = `<b>요소</b>
       <div class="ai"><div class="box"><input type="text" id="ai" placeholder="설명으로 요소 만들기…" title="클로드가 그려서 요소로 저장하고 넣는다 (15초)"><button class="btn sm" id="btn-ai">만들기</button></div><div class="note" id="ainote" style="display:none"></div></div>`;
     $("#btn-ai").onclick = makeByPrompt; $("#ai").addEventListener("keydown", (e) => { if (e.key === "Enter") makeByPrompt(); });
@@ -1192,7 +1213,11 @@ function panel() {
       for (const it of items) { const f = Object.keys(it.fields || {}); const d = card(thumbs.blocks[it.id], it.name, f.length ? "자리 " + f.join(", ") : (it.source === "system" ? "자동(책이 채움)" : "장식"), {k: "block", id: it.id}); d.onclick = () => addBlock(it.id); g.appendChild(d); }
       body.appendChild(g);
     }
-  } else if (tab === "skins") {
+  }
+}
+
+// 브랜드 · 원고 — 편집기 사이드바가 아니라 따로 여는 창(문서 속성에서 연다)
+function panelSkins(hd, body) {
     const sk = skin();
     hd.innerHTML = `<b>브랜드</b>`;
     for (const s2 of LIB.skins) { const d = document.createElement("div"); d.className = "li" + (s2.id === sk.id ? " on" : "");
@@ -1218,7 +1243,9 @@ function panel() {
     $("#sk-dup").onclick = async () => { const name = prompt("새 브랜드 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
-  } else if (tab === "sets") {
+}
+
+function panelSets(hd, body) {
     hd.innerHTML = `<b>원고</b>`;
     const none = document.createElement("div"); none.className = "li" + (curSet ? "" : " on"); none.innerHTML = `<b>견본 글</b><div class="ds">지어낸 글로 채운다</div>`; none.onclick = () => { curSet = ""; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(none);
     for (const s2 of LIB.sets) { const d = document.createElement("div"); d.className = "li" + (curSet === s2.id ? " on" : "");
@@ -1256,7 +1283,9 @@ function panel() {
         LIB.sets = LIB.sets.filter(x => x.id !== st.id).concat([st]); curSet = st.id; pageSvg = {}; render(); drawRail(); panel();
       };
     };
-  } else if (tab === "plans") {
+}
+
+function panelPlans(hd, body) {
     hd.innerHTML = `<b>문서</b>`;
     for (const pl of LIB.plans) { const d = document.createElement("div"); d.className = "li" + (plan && pl.id === plan.id ? " on" : "");
       d.innerHTML = `<b>${esc(pl.name || pl.id)}</b><div class="ds">페이지 ${planIds(pl).length} · ${pl.spec || "a4"}</div>`;
@@ -1266,8 +1295,8 @@ function panel() {
     $("#pl-new").onclick = newPlan; $("#pl-home").onclick = showStart;
     if (plan) { $("#pl-pdf").onclick = () => $("#p-pdf").click();
       $("#pl-del").onclick = async () => { if (!confirm(`문서 「${plan.name || plan.id}」 을 지울까? (페이지는 남는다)`)) return; await api("/api/units/plans", {id: plan.id}, "DELETE"); LIB.plans = LIB.plans.filter(x => x.id !== plan.id); showStart(); }; }
-  }
 }
+
 document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
   if (tab === b.dataset.tab && !view.zen) { togglePanel("left"); return; }     // 같은 탭을 다시 누르면 접기·펴기
   tab = b.dataset.tab; if (!view.left || view.zen) { view.zen = false; view.left = true; applyView(); } panel();
@@ -1340,6 +1369,9 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
+      <h3>문서</h3>
+      <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
+      <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
       <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 쌓기 자리가 있으면 세트를 쌓아 채움, 없으면 한 번">${page.items.some(it => it.flow) ? "세트를 쌓아 채움" : page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
       ${layersHtml()}`;
   }
@@ -1373,6 +1405,10 @@ function side() {
   on("#s-flow", "change", (e) => { hist(); const it = page.items[sel]; if (e.target.checked) it.flow = true; else { delete it.flow; delete it.gap; } save(); side(); });
   on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
+  on("#s-skin", "change", (e) => { $("#skin").value = e.target.value; $("#skin").onchange(); });
+  on("#s-skin-edit", "click", () => openSheet("skins"));
+  on("#s-set", "change", (e) => { curSet = e.target.value; pageSvg = {}; render(); drawRail(); });
+  on("#s-set-edit", "click", () => openSheet("sets"));
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
