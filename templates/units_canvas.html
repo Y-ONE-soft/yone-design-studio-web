@@ -42,8 +42,9 @@
   .card .th svg { width: 100%; height: auto; display: block; }
   .card .nm { font-size: 11.5px; font-weight: 600; margin: 4px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .card .ds { font-size: 10.5px; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .atoms5 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-  .atoms5 button { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 6px; cursor: pointer; font-size: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .atoms5 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .atoms5 button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 6px 2px 4px; cursor: pointer; font-size: 10.5px; display: flex; flex-direction: column; align-items: center; gap: 3px; color: #3c4043; }
+  .atoms5 button svg { width: 28px; height: 18px; }
   .atoms5 button:hover { border-color: var(--pp); }
   .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.12); vertical-align: middle; }
   .colors { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -136,6 +137,7 @@
   .menu button small { display: block; color: var(--mute); font-size: 10.5px; }
   .strip .foot { display: flex; align-items: center; gap: 12px; padding: 2px 16px 8px; font-size: 12px; color: var(--mute); }
   .strip .foot .cnt { margin-left: auto; font-weight: 600; color: #1f2330; }
+  .strip .foot .help { cursor: help; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; background: #fff; }
   .strip .foot input[type=range] { width: 140px; }
 
   /* 오른쪽 — 고른 것의 단위 사슬 */
@@ -177,25 +179,24 @@
   <!-- 가운데 -->
   <div class="stage">
     <div class="ptool">
-      <button id="p-home" title="내 문서 목록으로">← 문서</button>
-      <input type="text" id="plname" placeholder="문서 이름" title="이 문서의 이름" style="width:150px;color:var(--pp)">
+      <button id="p-home" title="내 문서">←</button>
+      <input type="text" id="plname" placeholder="문서 이름" style="width:170px;color:var(--pp)">
       <span class="sep"></span>
-      <input type="text" id="pname" placeholder="페이지 이름" style="width:130px;font-weight:500">
+      <select id="skin" title="브랜드 (색·서체)"></select>
       <span class="sep"></span>
-      <label class="note">브랜드</label><select id="skin"></select>
-      <span class="sep"></span>
-      <button id="p-preview" title="원고를 넣은 책 전체를 본다">📖 원고 넣어 보기</button>
-      <button id="p-pdf" title="PDF 로 저장">⬇ PDF</button>
+      <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
+      <button id="p-pdf" title="PDF 저장">⬇ PDF</button>
       <span class="sep"></span>
       <button id="p-dup" title="페이지 복제">⧉</button>
-      <button id="p-del" title="페이지 지우기 (요소 없이 Delete)">🗑</button>
+      <button id="p-del" title="페이지 지우기">🗑</button>
+      <input type="text" id="pname" placeholder="페이지 이름" style="display:none">
       <span class="st" id="st"></span>
     </div>
     <div class="start" id="start" style="display:none"></div>
     <div class="pv" id="pv" style="display:none"><div class="pvbar"><b id="pvtitle"></b><span class="note" id="pvinfo"></span><a class="btn sm" id="pvpdf" target="_blank">⬇ PDF</a><button class="btn sm sub" id="pvclose">닫기</button></div><div class="pvbody" id="pvbody"></div></div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
-      <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">요소 안 편집 중 — 글상자·선·면을 고치거나 더 그린다. 자리 이름도 여기서. 저장하면 이 요소를 쓴 모든 페이지가 바뀐다.</span><button class="btn sm" id="edit-done">저장하고 나가기</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
+      <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">편집 중 · 저장하면 이 요소를 쓴 곳 전부에 반영</span><button class="btn sm" id="edit-done">저장</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
         <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="hd-e" data-h="e" title="폭"></span><span class="hd-s" data-h="s" title="높이"></span><span class="hd-se" data-h="se" title="폭·높이"></span></div>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
@@ -211,7 +212,7 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span>페이지 — ＋ 끼우기 · 썸네일에 올리면 ⧉ ✕ · 끌어 순서 · ←/→ | 빈 곳 끌기 = 영역 선택 · Ctrl+Z · Ctrl+C/V · Ctrl+D · Ctrl+A · Ctrl+G 그룹 · Ctrl+]/[</span>
+        <span class="help" title="＋ 페이지 끼우기 · 썸네일: 끌어 순서, ⧉ 복제, ✕ 지우기 · ←/→ 페이지 이동&#10;빈 곳 끌기 = 영역 선택 · Shift+클릭 더 고르기 · 더블클릭 = 요소 안 편집&#10;Ctrl+Z 되돌리기 · Ctrl+C/V · Ctrl+D 복제 · Ctrl+A 전체 · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+]/[ 앞뒤 · Delete">? 단축키</span>
         <span class="cnt" id="cnt"></span>
         <label>확대 <input type="range" id="zoom" min="30" max="200" value="100"></label><span id="zoomv">맞춤</span>
       </div>
@@ -317,18 +318,13 @@ function openPlan(pl) {
 }
 function emptyGuide() {
   $("#paper").style.width = "auto"; $("#paper").style.height = "auto"; $("#paper").style.background = "transparent"; $("#paper").style.boxShadow = "none";
-  $("#svgwrap").innerHTML = `<div class="guide"><h3>「${esc(plan.name || plan.id)}」 — 페이지가 아직 없다</h3><ol>
-    <li>아래 띠의 <b>＋</b> 로 페이지를 만든다 (표지 · 간지 · 본문)</li>
-    <li>왼쪽 <b>요소</b>를 눌러 놓는다 (지문 상자·발문·선지…). 직접 그리려면 「기본」 도형으로 그리고 「★ 요소로 저장」</li>
-    <li>왼쪽 <b>원고</b>를 고르면 자리에 글이 들어간다 → 위의 <b>📖 원고 넣어 보기</b> · <b>⬇ PDF</b></li></ol>
-    <div class="row" style="margin-top:14px"><button class="btn" id="g-first">＋ 첫 페이지 (본문)</button><button class="btn sub" id="g-cover">표지부터</button></div></div>`;
-  $("#g-first").onclick = () => addPage("body"); $("#g-cover").onclick = () => addPage("cover");
+  $("#svgwrap").innerHTML = `<div class="guide" style="text-align:center"><button class="btn" id="g-first">＋ 페이지</button></div>`;
+  $("#g-first").onclick = () => addPage("body");
 }
 async function showStart() {
   plan = null; page = null; history.replaceState(null, "", location.pathname);
-  const box = $("#start"); box.style.display = ""; $(".ptool").style.display = "none"; $("#side").innerHTML = ""; $("#stitle").textContent = "문서를 열면 여기에 속성"; $("#rail").innerHTML = ""; $("#cnt").textContent = "";
-  box.innerHTML = `<h2>내 문서</h2><div class="sub">문서 = 책 한 권. 페이지에 요소를 놓고, 글상자에 <b>자리 이름</b>을 붙여 두면 원고를 넣기만 해도 책이 되고 PDF 로 나온다.</div><div class="cards" id="pcards"></div>
-    <div class="note" style="margin-top:22px"><a href="/units/library">PDF·그림에서 요소 뽑기 · 고급(JSON) →</a></div>`;
+  const box = $("#start"); box.style.display = ""; $(".ptool").style.display = "none"; $("#side").innerHTML = ""; $("#stitle").textContent = ""; $("#rail").innerHTML = ""; $("#cnt").textContent = "";
+  box.innerHTML = `<h2>내 문서</h2><div class="cards" id="pcards"></div>`;
   const cards = $("#pcards");
   const nw = document.createElement("div"); nw.className = "pcard new"; nw.textContent = "＋ 새 문서"; nw.onclick = newPlan; cards.appendChild(nw);
   for (const pl of LIB.plans) {
@@ -344,7 +340,7 @@ async function newPlan() {
   let n = 1; while (byId("plans")["plan_" + n]) n++;
   const pl = {id: "plan_" + n, name, spec: "a4", front: [], sections: [{id: "s1", name: "본문", pages: []}], back: []};
   const j = await api("/api/units/plans", pl); if (j.error) { alert(j.error); return; }
-  LIB.plans.push(pl); openPlan(pl);
+  LIB.plans.push(pl); openPlan(pl); await addPage("body");                 // 캔바처럼 1쪽이 바로 있다
 }
 $("#p-home").onclick = showStart;
 $("#plname").oninput = () => { if (plan) { plan.name = $("#plname").value; clearTimeout(window._plt); window._plt = setTimeout(savePlan, 500); } };
@@ -714,11 +710,11 @@ function panel() {
   const hd = $("#phd"), body = $("#pbody"); body.innerHTML = "";
   document.querySelectorAll("[data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
   if (tab === "blocks") {
-    hd.innerHTML = `<b>요소</b><div class="note">누르면 페이지에 들어간다. 끌어다 놓아도 된다.</div>
-      <div class="ai"><div class="box"><input type="text" id="ai" placeholder="원하는 요소를 설명해 주세요"><button class="btn sm" id="btn-ai">만들기</button></div><div class="note" id="ainote">클로드가 그려서 요소로 저장하고 넣는다 (15초).</div></div>`;
+    hd.innerHTML = `<b>요소</b>
+      <div class="ai"><div class="box"><input type="text" id="ai" placeholder="설명으로 요소 만들기…" title="클로드가 그려서 요소로 저장하고 넣는다 (15초)"><button class="btn sm" id="btn-ai">만들기</button></div><div class="note" id="ainote" style="display:none"></div></div>`;
     $("#btn-ai").onclick = makeByPrompt; $("#ai").addEventListener("keydown", (e) => { if (e.key === "Enter") makeByPrompt(); });
     // 기본 도형 — 인디자인 오브젝트. 직접 그려서 「요소로 저장」
-    body.insertAdjacentHTML("beforeend", `<h3>기본 — 직접 그리기</h3>`);
+    body.insertAdjacentHTML("beforeend", `<h3>직접 그리기</h3>`);
     const g0 = document.createElement("div"); g0.className = "atoms5";
     const icons = {text: '<svg width="36" height="22"><rect x="1" y="1" width="34" height="20" fill="none" stroke="#7d2ae8" stroke-dasharray="2 2"/><text x="6" y="15" font-size="10" fill="#1f2330">Aa</text></svg>',
       line: '<svg width="36" height="22"><line x1="2" y1="11" x2="34" y2="11" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
@@ -730,7 +726,7 @@ function panel() {
       b.ondragstart = (e) => { dragId = null; e.dataTransfer.setData("text/plain", JSON.stringify({k: "atom", id: t})); }; g0.appendChild(b); }
     const tb = document.createElement("button"); tb.innerHTML = '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="none" stroke="#7d2ae8"/><line x1="2" y1="8" x2="34" y2="8" stroke="#7d2ae8"/><line x1="2" y1="14" x2="34" y2="14" stroke="#7d2ae8"/><line x1="13" y1="2" x2="13" y2="20" stroke="#7d2ae8"/><line x1="24" y1="2" x2="24" y2="20" stroke="#7d2ae8"/></svg>표'; tb.onclick = makeTable; g0.appendChild(tb);
     body.appendChild(g0);
-    body.insertAdjacentHTML("beforeend", `<div class="note">글상자에 <b>자리 이름</b>(오른쪽 속성)을 적으면 원고가 들어올 자리. 여럿 고르고 「★ 요소로 저장」.</div>`);
+
     // 저장된 요소 — 원고 자리 있는 것(콘텐츠) · 장식
     const groups = GROUPS.map(([nm, fams]) => [nm, LIB.blocks.filter(b => (b.source === "system" ? nm.startsWith("머리") : fams.includes(b.family)))]);
     const used = new Set(groups.flatMap(g => g[1].map(b => b.id))); const rest = LIB.blocks.filter(b => !used.has(b.id)); if (rest.length) groups.push(["내가 만든 요소", rest]);
@@ -742,7 +738,7 @@ function panel() {
     }
   } else if (tab === "skins") {
     const sk = skin();
-    hd.innerHTML = `<b>브랜드</b><div class="note">색·서체 한 벌. 학교·브랜드마다 하나. 바꾸면 이 브랜드를 쓰는 문서 전체가 바뀐다.</div>`;
+    hd.innerHTML = `<b>브랜드</b>`;
     for (const s2 of LIB.skins) { const d = document.createElement("div"); d.className = "li" + (s2.id === sk.id ? " on" : "");
       d.innerHTML = `<b>${esc(s2.name)}</b><div class="ds">${Object.values((s2.tokens || {}).color || {}).slice(0, 8).map(c => `<span class="sw" style="background:${c}"></span>`).join(" ")}</div>`;
       d.onclick = () => { $("#skin").value = s2.id; $("#skin").onchange(); }; body.appendChild(d); }
@@ -757,13 +753,13 @@ function panel() {
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
   } else if (tab === "sets") {
-    hd.innerHTML = `<b>원고</b><div class="note">지문 하나 = 원고 한 덩어리. 고르면 페이지의 자리에 그 글이 들어간다. 「📖 원고 넣어 보기」는 전부를 끼운 책.</div>`;
+    hd.innerHTML = `<b>원고</b>`;
     const none = document.createElement("div"); none.className = "li" + (curSet ? "" : " on"); none.innerHTML = `<b>견본 글</b><div class="ds">지어낸 글로 채운다</div>`; none.onclick = () => { curSet = ""; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(none);
     for (const s2 of LIB.sets) { const d = document.createElement("div"); d.className = "li" + (curSet === s2.id ? " on" : "");
       d.innerHTML = `<b>${esc(s2.kind)} ${esc(s2.id)}</b><div class="ds">${(s2.blocks || []).map(b => (byId("blocks")[b.block] || {name: b.block}).name).join(" + ")}</div>`;
       d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); }; body.appendChild(d); }
-    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-new">＋ 원고 입력 (이 페이지의 자리대로)</button></div><div id="setform"></div>
-      <div class="note" style="margin-top:10px">실제로는 콘텐츠팀(contents)이 보낸다. docx 자동 읽기는 준비 중.</div>`);
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:10px"><button class="btn sm" id="set-new">＋ 원고 입력</button></div><div id="setform"></div>
+`);
     $("#set-new").onclick = () => {
       const slots = (page ? page.items : []).filter(it => it.block && (byId("blocks")[it.block] || {}).source === "content");
       if (!slots.length) { $("#setform").innerHTML = `<div class="note">이 페이지엔 원고가 들어갈 자리가 없다 — 자리 이름이 있는 요소를 놓는다</div>`; return; }
@@ -782,12 +778,12 @@ function panel() {
       };
     };
   } else if (tab === "plans") {
-    hd.innerHTML = `<b>문서</b><div class="note">문서 = 책 한 권의 페이지들. 다른 문서를 누르면 그 문서를 편다.</div>`;
+    hd.innerHTML = `<b>문서</b>`;
     for (const pl of LIB.plans) { const d = document.createElement("div"); d.className = "li" + (plan && pl.id === plan.id ? " on" : "");
       d.innerHTML = `<b>${esc(pl.name || pl.id)}</b><div class="ds">페이지 ${planIds(pl).length} · ${pl.spec || "a4"}</div>`;
       d.onclick = () => { if (!plan || plan.id !== pl.id) openPlan(pl); }; body.appendChild(d); }
     body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:12px"><button class="btn sm" id="pl-new">＋ 새 문서</button><button class="btn sm sub" id="pl-home">내 문서 화면</button></div>
-      ${plan ? `<h3>이 문서</h3><div class="row"><button class="btn sm sub" id="pl-pdf">⬇ PDF</button><button class="btn sm danger" id="pl-del">문서 지우기</button></div><div class="note">페이지는 라이브러리에 남는다. 세부(고급)는 <a href="/units/library#plans/${plan.id}">JSON</a>.</div>` : ""}`);
+      ${plan ? `<h3>이 문서</h3><div class="row"><button class="btn sm sub" id="pl-pdf">⬇ PDF</button><button class="btn sm danger" id="pl-del">문서 지우기</button></div>` : ""}`);
     $("#pl-new").onclick = newPlan; $("#pl-home").onclick = showStart;
     if (plan) { $("#pl-pdf").onclick = () => $("#p-pdf").click();
       $("#pl-del").onclick = async () => { if (!confirm(`문서 「${plan.name || plan.id}」 을 지울까? (페이지는 남는다)`)) return; await api("/api/units/plans", {id: plan.id}, "DELETE"); LIB.plans = LIB.plans.filter(x => x.id !== plan.id); showStart(); }; }
@@ -796,11 +792,11 @@ function panel() {
 document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; panel(); });
 async function makeByPrompt() {
   const inp = $("#ai"); const prompt = inp.value.trim(); if (!prompt || !page) return;
-  $("#btn-ai").disabled = true; $("#ainote").textContent = "그리는 중… (15초쯤)";
+  $("#btn-ai").disabled = true; $("#ainote").style.display = ""; $("#ainote").textContent = "그리는 중… (15초쯤)";
   const j = await api("/api/units/make", {prompt, skin: $("#skin").value});
   if (j.error) { $("#btn-ai").disabled = false; $("#ainote").textContent = j.error; return; }
   const lj = await api("/api/units/library"); LIB.blocks = lj.blocks; LIB.parts = lj.parts; LIB.skins = lj.skins;
-  await thumbsLoad(); addBlock(j.block.id); $("#ainote").textContent = `「${j.block.name}」 을 넣었다.` + (j.note ? " " + j.note : ""); $("#btn-ai").disabled = false;
+  await thumbsLoad(); addBlock(j.block.id); $("#ainote").style.display = "none"; $("#btn-ai").disabled = false;
 }
 
 // ── 오른쪽: 고른 것의 단위 사슬 ──
@@ -814,16 +810,16 @@ function side() {
     if (u === "block") {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
       const flds = Object.keys(blk.fields || {});
-      h += `<div class="note">요소 「${esc(blk.name)}」${flds.length ? ` — 원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? " — 책이 자동으로 채운다(쪽번호·구간명)" : " — 장식")}</div>
-        ${(blk.variants || []).length > 1 ? `<div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div><div class="note">모양은 브랜드(${esc(sk.name)})에 저장된다.</div>` : ""}
-        <div class="row"><button class="btn sm" id="s-edit">✎ 안 편집 (더블클릭)</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다 (요소는 그대로)">그룹 해제</button></div>`;
+      h += `<div class="note">${flds.length ? `원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (쪽번호·구간명)" : "장식")}</div>
+        ${(blk.variants || []).length > 1 ? `<div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>` : ""}
+        <div class="row"><button class="btn sm" id="s-edit" title="더블클릭과 같다">✎ 편집</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다">그룹 해제</button></div>`;
     } else if (u === "part") {
       const part = byId("parts")[it.part] || {atoms: []};
-      h += `<div class="note">그룹 — 오브젝트 ${part.atoms.length}개. 요소 패널엔 아직 없다.</div>
+      h += `<div class="note">그룹 · ${part.atoms.length}개</div>
         <div class="row"><button class="btn sm" id="s-toblock">★ 요소로 저장</button><button class="btn sm sub" id="s-down">그룹 해제</button></div>`;
     } else {
       const a = it.atom;
-      h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `<div class="note">${sels.size}개 고름</div>` : ""}`;
+      h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `` : ""}`;
       if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(plainText(a.text))}</textarea></div>${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
         <div class="f"><span>자리 이름</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="예: passage · prompt · no" title="원고가 들어올 자리. 비우면 고정 글"></div>
         <div class="f"><span>서체</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
@@ -834,7 +830,7 @@ function side() {
         <div class="m3"><label>들여쓰기<input type="number" data-a="indent" step="0.5" value="${a.indent || 0}"></label><label>첫 줄<input type="number" data-a="indent_first" step="0.5" value="${a.indent_first || 0}" title="음수 = 내어쓰기"></label><label>오른쪽<input type="number" data-a="indent_right" step="0.5" value="${a.indent_right || 0}"></label></div>
         <div class="m3"><label>단락 앞<input type="number" data-a="space_before" step="0.5" value="${a.space_before || 0}"></label><label>단락 뒤<input type="number" data-a="space_after" step="0.5" value="${a.space_after || 0}"></label><label>안쪽 여백<input type="number" data-a="inset" step="0.5" value="${Array.isArray(a.inset) ? a.inset[0] : (a.inset || 0)}"></label></div>
         <div class="m3"><label>세로 정렬<select data-a="valign">${[["top", "위"], ["center", "가운데"], ["bottom", "아래"]].map(([v, n]) => `<option value="${v}" ${(a.valign || "top") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>단 수<input type="number" data-a="columns" min="1" max="6" step="1" value="${a.columns || 1}"></label><label>단 간격<input type="number" data-a="gutter" step="0.5" value="${a.gutter || 0}"></label></div>
-        <div class="note">mm. 줄바꿈 = 단락. 인디자인 단락·문자 스타일과 텍스트 프레임 옵션에 맞춘 것 — 탭 위치는 없다(칸을 나눠 글상자 여럿으로).</div>`;
+`;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
         <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>
         <div class="f"><span>선 끝</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>`;
@@ -847,7 +843,7 @@ function side() {
       else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림 키</span><input type="text" data-a="src" value="${esc(a.src || "")}"></div>
         <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
-        <div class="note">틀 안에서 그림 전체가 놓인 자리(틀 왼쪽 위 기준 mm, 음수 가능) — 틀 밖은 잘린다. 비우면 맞춤대로. 파일은 옷의 images 에 키→경로로 적는다.</div>`;
+`;
       h += `<div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label></div>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
@@ -855,9 +851,10 @@ function side() {
   } else {
     $("#stitle").textContent = `페이지 ${idx() + 1} / ${docPages().length}`;
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
-      <div class="f"><span>좌우 반전</span><label><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""}> 책에서 오른쪽 면은 뒤집힌다</label></div>
-      <div class="f"><span>원고 반복</span><div class="note" style="margin:0">${page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "원고 자리가 있다 → 책이 될 때 지문마다 이 페이지가 반복된다" : "원고 자리 없음 → 한 번만 (표지·간지)"}</div></div>
-      <h3>이 페이지의 요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0">· ${esc(nameOf(it))} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 「요소」를 누른다</div>`}`;
+      <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
+      <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
+      <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 없으면 한 번">${page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
+      <h3>요소 ${page.items.length}</h3>${page.items.map((it, k) => `<div class="note" data-seli="${k}" style="cursor:pointer;margin:2px 0">· ${esc(nameOf(it))} <span style="color:#b0b3c0">${it.x},${it.y}</span></div>`).join("") || `<div class="note">비어 있음 — 왼쪽 「요소」를 누른다</div>`}`;
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
@@ -887,6 +884,7 @@ function side() {
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel);
   box.querySelectorAll("[data-seli]").forEach(d => d.onclick = () => select([+d.dataset.seli]));
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
+  on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
 }
 $("#pname").oninput = () => { if (page) { page.name = $("#pname").value; save(); const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.title = page.name || page.id; } };
