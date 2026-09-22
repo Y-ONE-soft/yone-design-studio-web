@@ -517,17 +517,19 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
     slots = [it for it in page.get("items") or [] if it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"]
     if slots:
         out = []
+        from core.units import flow
         for s in (sets or [None]):
             pg = json.loads(json.dumps(page))
             pg["_noguides"] = True
             if s is not None and not page.get("_canvas"):
                 _fill_items(pg, s)
                 pg["_canvas"] = True
-            mirror = bool(pg.get("mirror")) and pno % 2 == 0
-            zones = _zones(pg, W, mirror)
-            out.append({"svg": _page_wrap(ctx, pg, zones, [], W, H, pno, mirror),
-                        "label": label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else ""), "page_no": pno})
-            pno += 1
+            lab = label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else "")
+            for k, fp in enumerate(flow.thread(ctx, pg, spec)):            # 넘치면 다음 면으로 이어 흐른다
+                mirror = bool(fp.get("mirror")) and pno % 2 == 0
+                out.append({"svg": _page_wrap(ctx, fp, _zones(fp, W, mirror), [], W, H, pno, mirror),
+                            "label": lab + (f" (이어서 {k + 1})" if k else ""), "page_no": pno})
+                pno += 1
         return out
     items = _items(ctx, sets)
     out = []
@@ -592,11 +594,37 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     # 자유 배치 — 캔버스에서 좌표에 놓은 요소(블록은 견본 값으로, 부품은 그대로). 파워포인트의 개체.
     # 콘텐츠 블록 자리는 캔버스에서만 그린다(실제 콘텐츠는 세트로 흘러 든다). 머리말·쪽번호 같은
     # system 블록과 부품은 언제나 그린다.
+    for pl in place_items(ctx, page, W, H):
+        it = pl["it"]
+        if pl["y"] + pl["h"] > H + 0.01:
+            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
+        x = W - it["x"] - pl["w"] if mirror else it["x"]
+        chrome.append(f'<g transform="translate({x:.3f},{pl["y"]:.3f})" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{pl["frag"]}</g>')
+    ctx.sys = old
+    guides = "" if not zones or page.get("_noguides") else "".join(
+        f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
+        f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
+    bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
+    return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, f'data-page="{pno}" data-tpl="{esc(page["id"])}"')
+
+
+def is_fixed(ctx, it):
+    """머리말·쪽번호·간지(system 블록)는 자리가 고정 — 밀리지도, 다음 면으로 넘어가지도 않는다."""
+    blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
+    return blk is not None and blk.get("source") == "system"
+
+
+def place_items(ctx, page, W, H):
+    """자유 배치 요소를 놓는다 → [{fi, it, frag, w, h, h0, y, dy, fixed}] (그리는 순서).
+
+    글이 길어 자리가 자라면(실제 높이 > 설계 높이) **그 아래, 가로로 겹치는** 요소를 그만큼 민다 — 부품 안 원자와 같은 규칙.
+    콘텐츠 블록 자리는 캔버스(_canvas)에서만 그린다(실제 콘텐츠는 세트가 끼운다).
+    """
     canvas = bool(page.get("_canvas"))
-    placed = []                                   # (fi, it, frag, w, 실제 높이, 설계 높이)
+    placed = []
     for fi, it in enumerate(page.get("items") or []):
         if it.get("hide"):
-            continue                                              # 레이어 눈 끔
+            continue
         blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
         if not canvas and blk is not None and blk.get("source") == "content":
             continue
@@ -604,26 +632,14 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         if frag is None:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
             continue
-        placed.append((fi, it, frag, w, h, float(part.get("h") or h)))
-    # 흐름 — 글이 길어 자리가 자라면(실제 높이 > 설계 높이) **그 아래, 가로로 겹치는** 요소를 그만큼 민다.
-    # 부품 안 원자와 같은 규칙. 머리말·쪽번호·간지(system 블록)는 자리가 고정이라 밀지 않는다.
-    grown = [(fi, it["x"], it["x"] + w, it["y"] + h0, h - h0) for fi, it, _f, w, h, h0 in placed if h > h0 + 0.01]
-    for fi, it, frag, w, h, h0 in placed:
-        blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
-        fixed = blk is not None and blk.get("source") == "system"
-        dy = 0.0 if fixed else sum(d for gi, gx0, gx1, gb, d in grown
-                                   if gi != fi and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + w > gx0 + 0.01)
-        y = it["y"] + dy
-        if y + h > H + 0.01:
-            ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({y + h:.0f}mm > {H:.0f}mm) — 다음 면으로 흘리기는 아직")
-        x = W - it["x"] - w if mirror else it["x"]
-        chrome.append(f'<g transform="translate({x:.3f},{y:.3f})" data-fi="{fi}" data-dy="{dy:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{frag}</g>')
-    ctx.sys = old
-    guides = "" if not zones or page.get("_noguides") else "".join(
-        f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
-        f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
-    bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, f'data-page="{pno}" data-tpl="{esc(page["id"])}"')
+        placed.append({"fi": fi, "it": it, "frag": frag, "w": w, "h": h, "h0": float(part.get("h") or h), "fixed": is_fixed(ctx, it)})
+    grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"]) for p in placed if p["h"] > p["h0"] + 0.01]
+    for p in placed:
+        it = p["it"]
+        p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
+                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)
+        p["y"] = it["y"] + p["dy"]
+    return placed
 
 
 def atom_part(atom):

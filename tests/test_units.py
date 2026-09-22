@@ -299,3 +299,23 @@ def test_group_by_box_row_and_column():
     sets = [set(p["atoms"]) for p in parts]
     assert {0, 1} in sets and {2, 3, 4} in sets and {5} in sets and {6, 7} in sets
     assert {9} in sets and {8} in sets and {10} in sets
+
+
+def test_overflow_threads_to_next_page(lib):
+    """긴 지문 → 면 아래로 넘치면 다음 면으로 이어 흐른다 (인디자인 스레드)."""
+    import copy
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = store.by_id(lib["pages"])["pair"]
+    s = copy.deepcopy(lib["sets"][1])
+    for b in s["blocks"]:
+        if b["block"] == "passage":
+            b["fields"]["passage"] = (render.rich_plain(b["fields"]["passage"]) + " ") * 12
+    out = render.page_svgs(ctx, pg, [s], render.DEFAULT_SPEC)
+    assert len(out) >= 2 and "이어서" in out[1]["label"]
+    assert not any("넘친다" in w for w in ctx.warnings)
+    # 첫 면 = 머리말·쪽번호·번호·지문 앞부분, 다음 면 = 지문 뒷부분 + 문항들 (전부 한 번씩)
+    assert out[0]["svg"].count("data-fi=") == 4 and out[1]["svg"].count("data-fi=") == 9
+    assert "planners" in out[-1]["svg"]
+    # 짧은 지문은 한 면
+    assert len(render.page_svgs(ctx, pg, lib["sets"][1:2], render.DEFAULT_SPEC)) == 1
