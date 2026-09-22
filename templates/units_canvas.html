@@ -63,7 +63,19 @@
 
   /* 가운데 */
   .stage { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
-  .stage .area { flex: 1; overflow: auto; padding: 84px 60px 40px; }
+  .stage .area { flex: 1; overflow: auto; padding: 56px 26px 22px; }
+
+  /* 작업 공간 넓히기 — 패널 접기(왼쪽 아이콘 탭은 남는다) · 쪽 띠 접기 · 넓게(집중) */
+  .cv.noleft .upanel { display: none; }
+  .cv.noside .side { display: none; }
+  .cv.nostrip .strip .rail { display: none; }
+  .cv.nostrip .strip { border-top: 1px solid var(--line); }
+  body.zen nav.rail { display: none; }
+  body.zen main.page { margin-left: 0; }
+  .utabs .fold { margin-top: auto; margin-bottom: 6px; color: #a0a4b5; }
+  .utabs .fold .ic { font-size: 14px; }
+  .strip .foot .vw { display: flex; gap: 3px; }
+  .strip .foot .vw button { min-width: 28px; }
   .ptool { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; align-items: center; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(30,20,60,.16); padding: 5px 6px; z-index: 15; }
   .ptool input[type=text] { border: 0; width: 170px; font-weight: 600; padding: 4px 8px; }
   .ptool button { border: 0; background: transparent; border-radius: 7px; padding: 5px 9px; font-size: 12.5px; cursor: pointer; color: #1f2330; white-space: nowrap; }
@@ -209,7 +221,7 @@
   .m4 input { width: 100%; padding: 4px 5px; }
 </style>
 
-<div class="cv">
+<div class="cv" id="cv">
   <!-- 왼쪽: 단위 탭 -->
   <div class="left">
     <div class="utabs">
@@ -218,6 +230,7 @@
       <button data-tab="sets"><span class="ic">📝</span>원고</button>
       <div style="flex:1"></div>
       <button data-tab="plans"><span class="ic">📚</span>문서</button>
+      <button class="fold" id="fold-left" title="요소 패널 접기·펴기 (Ctrl+\\)"><span class="ic">◧</span></button>
     </div>
     <div class="upanel">
       <div class="hd" id="phd"></div>
@@ -269,11 +282,13 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span class="help" title="선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 요소 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 · Ctrl+1 폭 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
+        <span class="help" title="선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 요소 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 쪽 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <span class="cnt" id="cnt"></span>
+        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 요소 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
+        <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
         <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
-        <button class="btn sm sub" id="zoomfit" title="한 쪽 전체 (Ctrl+0)">전체</button><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100% 폭</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px">100%</span>
+        <select id="fitsel" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 쪽이 다 보이게"><option value="width">폭 맞춤</option><option value="page">전체 맞춤</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
       </div>
     </div>
   </div>
@@ -438,17 +453,30 @@ function openPage(p) {                                  // ⚠ 이름이 open �
   drawRail(); layout(); render(); side();
   const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
+function fitScale() {
+  const sp = specOf(), a = $("#area"), cs = getComputedStyle(a);
+  const rul = view.rulers ? 18 : 0;                          // 자는 지면 밖에 그려진다
+  const w = (a.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - rul - 8) / sp.w;
+  const h = (a.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - rul - 8) / sp.h;
+  return Math.max(0.3, view.fit === "width" ? w : Math.min(w, h));   // 전체 = 한 쪽이 다 보이게(스크롤 없음)
+}
 function layout() {
-  const sp = specOf(); const fit = Math.min(4.5, ($("#area").clientWidth - 140) / sp.w);           // 기본 = 폭 맞춤(양옆 회색 여유 — 거기서 범위 선택 시작). 세로는 스크롤
-  scale = fit * zoom;
+  const sp = specOf();
+  scale = fitScale() * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
   drawRulers();
 }
 window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
-function setZoom(z) { zoom = Math.max(0.3, Math.min(3, z)); $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%"; layout(); selbox(); }
+function setZoom(z) {
+  zoom = Math.max(0.3, Math.min(3, z));
+  $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%";
+  view.zoom = zoom; localStorage.setItem("units.view", JSON.stringify(view));            // 다음에 열 때 그대로
+  layout(); selbox();
+}
 $("#zoom").oninput = () => setZoom($("#zoom").value / 100);
 $("#zoomv").onclick = () => setZoom(1);
-$("#zoomfit").onclick = () => { const sp = specOf(); setZoom((($("#area").clientHeight - 60) / sp.h) / (($("#area").clientWidth - 60) / sp.w)); };
+function setFit(mode) { view.fit = mode; $("#fitsel").value = mode; localStorage.setItem("units.view", JSON.stringify(view)); setZoom(1); }
+$("#fitsel").onchange = () => setFit($("#fitsel").value);
 $("#area").addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, {passive: false});
 let rt = null;
 function render() {
@@ -698,8 +726,11 @@ document.addEventListener("keydown", (e) => {
   if (mod && e.key === "'") { e.preventDefault(); view.grid = !view.grid; applyView(); return; }
   if (mod && (e.key === "=" || e.key === "+")) { e.preventDefault(); setZoom(zoom * 1.2); return; }
   if (mod && e.key === "-") { e.preventDefault(); setZoom(zoom / 1.2); return; }
-  if (mod && e.key === "0") { e.preventDefault(); $("#zoomfit").click(); return; }
-  if (mod && e.key === "1") { e.preventDefault(); setZoom(1); return; }
+  if (mod && e.key === "0") { e.preventDefault(); setFit("page"); return; }
+  if (mod && e.key === "1") { e.preventDefault(); setFit("width"); return; }
+  if (mod && e.key === "\\") { e.preventDefault(); togglePanel(e.altKey ? "strip" : (e.shiftKey ? "side" : "left")); return; }
+  if (!mod && k === "f") { e.preventDefault(); togglePanel("zen"); return; }
+  if (e.key === "Escape" && view.zen && !editing && !sels.size) { e.preventDefault(); togglePanel("zen"); return; }   // 고른 게 있으면 Esc 는 선택 풀기 먼저
   if (e.key === "Tab" && page.items.length) { e.preventDefault(); selectNext(e.shiftKey); return; }
   if (e.key === "Enter" && sel != null && page.items[sel]) { e.preventDefault(); const it = page.items[sel]; if (it.atom && it.atom.t === "text") editTextInline(sel); else if (it.block || it.part) enterEdit(sel); return; }
   if (mod && k === "v") { e.preventDefault(); paste(); return; }
@@ -748,11 +779,29 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
-const view = Object.assign({rulers: true, grid: false, margins: true}, JSON.parse(localStorage.getItem("units.view") || "{}"));
+const view = Object.assign({rulers: true, grid: false, margins: true, left: true, side: true, strip: true, zen: false, zoom: 1, fit: "width"},
+                           JSON.parse(localStorage.getItem("units.view") || "{}"));
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
   $("#tg-rul").classList.toggle("on", view.rulers); $("#tg-grid").classList.toggle("on", view.grid); $("#tg-mg").classList.toggle("on", view.margins);
+  applyPanels();
   localStorage.setItem("units.view", JSON.stringify(view)); drawRulers();
+}
+// 접기 — 넓게(zen)면 셋 다 접고 왼쪽 레일까지 숨긴다. 편 상태는 기억한다.
+function applyPanels() {
+  const cv = $("#cv"), on = (k) => view.zen ? false : view[k];
+  cv.classList.toggle("noleft", !on("left"));
+  cv.classList.toggle("noside", !on("side"));
+  cv.classList.toggle("nostrip", !on("strip"));
+  document.body.classList.toggle("zen", !!view.zen);
+  $("#tg-left").classList.toggle("on", on("left")); $("#tg-side").classList.toggle("on", on("side"));
+  $("#tg-strip").classList.toggle("on", on("strip")); $("#tg-zen").classList.toggle("on", !!view.zen);
+  if (page) { layout(); selbox(); }
+}
+function togglePanel(k) {
+  if (k === "zen") view.zen = !view.zen;
+  else { if (view.zen) view.zen = false; view[k] = !view[k]; }
+  applyView();
 }
 function drawRulers() {
   if (!page) return; const sp = specOf(); const rt = $("#rt"), rl = $("#rl"); rt.innerHTML = ""; rl.innerHTML = "";
@@ -780,6 +829,11 @@ function dragGuide(e, axis, k, el) {                     // 안내선 옮기기 
   const m = mmOf(e); page.guides[axis].push(snap(axis === "v" ? m.x : m.y)); drawGuides(); const k = page.guides[axis].length - 1;
   const el = $("#guides").children[axis === "v" ? k : (page.guides.v.length + k)]; if (el) dragGuide(e, axis, k, el);
 }));
+$("#tg-left").onclick = () => togglePanel("left");
+$("#tg-side").onclick = () => togglePanel("side");
+$("#tg-strip").onclick = () => togglePanel("strip");
+$("#tg-zen").onclick = () => togglePanel("zen");
+$("#fold-left").onclick = () => togglePanel("left");
 $("#tg-rul").onclick = () => { view.rulers = !view.rulers; applyView(); };
 $("#tg-grid").onclick = () => { view.grid = !view.grid; applyView(); };
 $("#tg-mg").onclick = () => { view.margins = !view.margins; applyView(); };
@@ -1132,7 +1186,10 @@ function panel() {
       $("#pl-del").onclick = async () => { if (!confirm(`문서 「${plan.name || plan.id}」 을 지울까? (페이지는 남는다)`)) return; await api("/api/units/plans", {id: plan.id}, "DELETE"); LIB.plans = LIB.plans.filter(x => x.id !== plan.id); showStart(); }; }
   }
 }
-document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; panel(); });
+document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => {
+  if (tab === b.dataset.tab && !view.zen) { togglePanel("left"); return; }     // 같은 탭을 다시 누르면 접기·펴기
+  tab = b.dataset.tab; if (!view.left || view.zen) { view.zen = false; view.left = true; applyView(); } panel();
+});
 async function makeByPrompt() {
   const inp = $("#ai"); const prompt = inp.value.trim(); if (!prompt || !page) return;
   $("#btn-ai").disabled = true; $("#ainote").style.display = ""; $("#ainote").textContent = "그리는 중… (15초쯤)";
@@ -1254,8 +1311,11 @@ $("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawRail(); render(); 
 $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
 thumbsLoad();
 (() => {
+  applyPanels();                                                   // 접어 둔 패널·넓게를 그대로 (localStorage)
+  $("#fitsel").value = view.fit || "width";
   const q = new URLSearchParams(location.search); const pl = byId("plans")[q.get("plan") || ""];
   if (pl) openPlan(pl); else showStart();
+  if (view.zoom && view.zoom !== 1) setZoom(view.zoom);            // 확대도 그대로
 })();
 </script>
 {% endblock %}
