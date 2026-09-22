@@ -27,7 +27,10 @@
   .utabs button.on { color: var(--pp); font-weight: 600; }
   .utabs button.on .ic { background: var(--pp-bg); }
   .utabs .lv { font-size: 9px; color: #a0a4b5; }
-  .upanel { width: 262px; display: flex; flex-direction: column; }
+  .upanel { width: 262px; display: flex; flex-direction: column; position: relative; }
+  .rsz { position: absolute; top: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 18; }
+  .upanel .rsz { right: -3px; } .side .rsz { left: -3px; }
+  .rsz:hover, .rsz.on { background: linear-gradient(90deg, transparent 2px, var(--pp) 2px, var(--pp) 5px, transparent 5px); }
   .upanel .hd { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
   .upanel .hd b { font-size: 13.5px; }
   .upanel .hd .note { margin: 2px 0 0; }
@@ -114,7 +117,10 @@
   .tools button { border: 0; background: transparent; color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
   .tools button:hover { background: #3a3f52; }
   .tools button.x:hover { background: #c0263a; }
-  .start { position: absolute; inset: 0; background: #ecebf3; z-index: 12; overflow: auto; padding: 40px 48px; }
+  .start { position: absolute; inset: 0; background: #ecebf3; z-index: 12; overflow: auto; padding: 36px 44px 60px; }
+  /* 문서 목록일 때는 편집 도구를 다 감춘다 — 파일 고르는 화면과 고치는 화면은 다르다(피그마·캔바) */
+  .cv.browsing .left, .cv.browsing .side, .cv.browsing .strip, .cv.browsing .trail, .cv.browsing .ptool { display: none; }
+  .cv.browsing .start .cards { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; max-width: 1600px; }
   .start h2 { margin: 0 0 4px; font-size: 20px; }
   .start .sub { color: var(--mute); font-size: 13px; margin-bottom: 22px; line-height: 1.6; }
   .start .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
@@ -213,7 +219,7 @@
   .strip .foot input[type=range] { width: 140px; }
 
   /* 오른쪽 — 고른 것의 단위 사슬 */
-  .side { width: 262px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; }
+  .side { width: 262px; flex: none; background: #fff; border-left: 1px solid var(--line); display: flex; flex-direction: column; position: relative; }
   .side .hd { padding: 12px 14px 8px; border-bottom: 1px solid var(--line); font-weight: 700; }
   .side .body { flex: 1; overflow: auto; padding: 4px 14px 16px; }
   .chain { border-left: 2px solid #e2e0ec; margin: 8px 0 8px 6px; padding-left: 10px; }
@@ -243,6 +249,7 @@
       <button class="fold" id="fold-left" title="요소 패널 접기·펴기 (Ctrl+\\)"><span class="ic">◧</span></button>
     </div>
     <div class="upanel">
+      <div class="rsz" data-rsz="l" title="끌어서 폭 바꾸기 (두 번 누르면 기본)"></div>
       <div class="hd" id="phd"></div>
       <div class="body" id="pbody"></div>
       <div class="ft"><a href="/units/library">PDF·그림에서 요소 뽑기 · 고급(JSON) →</a></div>
@@ -319,6 +326,7 @@
 
   <!-- 오른쪽 -->
   <div class="side">
+    <div class="rsz" data-rsz="r" title="끌어서 폭 바꾸기 (두 번 누르면 기본)"></div>
     <div class="hd" id="stitle">지면</div>
     <div class="body" id="side"></div>
   </div>
@@ -408,6 +416,7 @@ $("#p-del").onclick = () => deletePage();
 // ── 틀(문서) 고르기 · 만들기 ──
 function openPlan(pl) {
   plan = byId("plans")[pl.id] || pl; page = null; sel = null; sels = new Set();
+  $("#cv").classList.remove("browsing");
   $("#start").style.display = "none"; $(".ptool").style.display = ""; $("#plname").value = plan.name || plan.id;
   const dp = docPages(); const want = new URLSearchParams(location.search).get("page") || decodeURIComponent(location.hash.replace(/^#/, ""));   // ?page= 도 받는다(# 를 못 넘기는 곳)
   history.replaceState(null, "", "?plan=" + encodeURIComponent(plan.id) + (want ? "#" + want : ""));
@@ -421,8 +430,9 @@ function emptyGuide() {
 }
 async function showStart() {
   plan = null; page = null; history.replaceState(null, "", location.pathname);
+  $("#cv").classList.add("browsing");                       // 목록은 화면 전체를 쓴다
   const box = $("#start"); box.style.display = ""; $(".ptool").style.display = "none"; $("#side").innerHTML = ""; $("#stitle").textContent = ""; $("#rail").innerHTML = ""; $("#cnt").textContent = "";
-  box.innerHTML = `<h2>내 문서</h2><div class="cards" id="pcards"></div>`;
+  box.innerHTML = `<h2>내 문서</h2><div class="sub">문서를 누르면 편집 도구가 나온다. 문서 = 지면 순서(틀) — 같은 지면을 여러 문서가 쓴다.</div><div class="cards" id="pcards"></div>`;
   const cards = $("#pcards");
   const nw = document.createElement("div"); nw.className = "pcard new"; nw.textContent = "＋ 새 문서"; nw.onclick = newPlan; cards.appendChild(nw);
   for (const pl of LIB.plans) {
@@ -813,7 +823,7 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
-const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: true, zen: false, zoom: 1, fit: "width"},
+const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: true, zen: false, zoom: 1, fit: "width", lw: 262, rw: 262},
                            JSON.parse(localStorage.getItem("units.view") || "{}"));
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); $("#area").classList.toggle("rul", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
@@ -832,6 +842,26 @@ function applyPanels() {
   $("#tg-strip").classList.toggle("on", on("strip")); $("#tg-zen").classList.toggle("on", !!view.zen);
   if (page) { layout(); selbox(); }
 }
+// 패널 폭 — 끌어서 바꾸고 기억한다. 두 번 누르면 기본(262)
+function applyWidths() {
+  $(".upanel").style.width = (view.lw || 262) + "px";
+  $(".side").style.width = (view.rw || 262) + "px";
+}
+document.querySelectorAll("[data-rsz]").forEach(bar => {
+  bar.onpointerdown = (e) => {
+    e.preventDefault(); bar.classList.add("on"); bar.setPointerCapture(e.pointerId);
+    const side = bar.dataset.rsz === "l", x0 = e.clientX, w0 = side ? (view.lw || 262) : (view.rw || 262);
+    const move = (ev) => {
+      const w = Math.max(190, Math.min(560, w0 + (side ? ev.clientX - x0 : x0 - ev.clientX)));
+      if (side) view.lw = w; else view.rw = w;
+      applyWidths(); if (page) { layout(); selbox(); }
+    };
+    const up = () => { bar.classList.remove("on"); document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up); localStorage.setItem("units.view", JSON.stringify(view)); };
+    document.addEventListener("pointermove", move); document.addEventListener("pointerup", up);
+  };
+  bar.ondblclick = () => { if (bar.dataset.rsz === "l") view.lw = 262; else view.rw = 262; applyWidths(); applyView(); };
+});
+
 function togglePanel(k) {
   if (k === "zen") view.zen = !view.zen;
   else { if (view.zen) view.zen = false; view[k] = !view[k]; }
@@ -1352,7 +1382,7 @@ $("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawRail(); render(); 
 $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
 thumbsLoad();
 (() => {
-  applyPanels();                                                   // 접어 둔 패널·넓게를 그대로 (localStorage)
+  applyWidths(); applyPanels();                                    // 접어 둔 패널·폭·넓게를 그대로 (localStorage)
   $("#fitsel").value = view.fit || "width";
   const q = new URLSearchParams(location.search); const pl = byId("plans")[q.get("plan") || ""];
   if (pl) openPlan(pl); else showStart();
