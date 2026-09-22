@@ -76,14 +76,15 @@
   .trail button.on { background: var(--pp); color: #fff; }
   .trail button:disabled { opacity: .3; cursor: default; }
   .trail .sep { height: 1px; background: var(--line); margin: 4px 6px; }
+  .thint { position: absolute; left: 68px; z-index: 16; background: #1f2330; color: #fff; font-size: 11.5px; padding: 5px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.2); display: none; white-space: nowrap; }
 
   /* 작업 공간 넓히기 — 패널 접기(왼쪽 아이콘 탭은 남는다) · 쪽 띠 접기 · 넓게(집중) */
   .cv.noleft .upanel { display: none; }
   .cv.noside .side { display: none; }
   .cv.nostrip .strip .rail { display: none; }
   .cv.nostrip .strip { border-top: 1px solid var(--line); }
-  body.zen nav.rail { display: none; }
-  body.zen main.page { margin-left: 0; }
+  body.zen nav.rail, body.editing-doc nav.rail { display: none; }        /* 문서를 열면 창 전체가 편집기 */
+  body.zen main.page, body.editing-doc main.page { margin-left: 0; }
   .utabs .fold { margin-top: auto; margin-bottom: 6px; color: #a0a4b5; }
   .utabs .fold .ic { font-size: 14px; }
   .strip .foot .vw { display: flex; gap: 3px; }
@@ -96,6 +97,7 @@
   .ptool .st { font-size: 11px; color: var(--mute); padding: 0 8px; white-space: nowrap; }
   .ptool label { white-space: nowrap; }
   .paper { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 3px 18px rgba(30,20,60,.18); }
+  .paper .svgwrap { position: absolute; left: 0; top: 0; }                /* 대지가 있으면 음수 자리로 넘친다 */
   .paper .svgwrap svg { display: block; width: 100%; height: auto; }
   .paper .svgwrap svg g[data-fi] { cursor: move; }
   .paper .svgwrap svg g[data-fi]:hover { outline: 1.5px dashed #b39cf5; }
@@ -245,7 +247,6 @@
       <button data-tab="skins"><span class="ic">🎨</span>브랜드</button>
       <button data-tab="sets"><span class="ic">📝</span>원고</button>
       <div style="flex:1"></div>
-      <button data-tab="plans"><span class="ic">📚</span>문서</button>
       <button class="fold" id="fold-left" title="요소 패널 접기·펴기 (Ctrl+\\)"><span class="ic">◧</span></button>
     </div>
     <div class="upanel">
@@ -261,19 +262,18 @@
     <div class="ptool">
       <button id="p-home" title="내 문서">←</button>
       <input type="text" id="plname" placeholder="문서 이름" style="width:170px;color:var(--pp)">
-      <span class="sep"></span>
-      <select id="skin" title="브랜드 (색·서체)"></select>
+      <select id="skin" title="브랜드 (색·서체)" style="display:none"></select>
       <span class="sep"></span>
       <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
       <button id="p-check" title="원고 빠진 자리·안 실린 원고·넘침·없는 토큰을 찾는다">✓ 검수</button>
       <button id="p-pdf" title="화면용 PDF (RGB)">⬇ PDF</button>
       <button id="p-print" title="인쇄용 PDF — 도련 3mm·재단선·CMYK(무채색은 K 단색)·TrimBox">🖨 인쇄용</button>
-      <span class="sep"></span>
-      <button id="p-dup" title="페이지 복제">⧉</button>
-      <button id="p-del" title="페이지 지우기">🗑</button>
+      <button id="p-dup" title="페이지 복제" style="display:none">⧉</button>
+      <button id="p-del" title="페이지 지우기" style="display:none">🗑</button>
       <input type="text" id="pname" placeholder="페이지 이름" style="display:none">
       <span class="st" id="st"></span>
     </div>
+    <div class="thint" id="thint"></div>
     <div class="trail" id="trail">
       <button data-tool="select" class="on" title="선택 (V) — 클릭 · Shift+클릭 = 더 고르기 · 빈 곳 끌기 = 범위 · 끌어 옮기기"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.6L9.6 19z"/></svg>선택</button>
       <button data-tool="hand" title="손 (H · Space+끌기) — 화면 이동"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 013 0V11m0-1V4.5a1.5 1.5 0 013 0V11m0-.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-1a6 6 0 01-6-6v-3a1.5 1.5 0 013 0"/></svg>손</button>
@@ -348,6 +348,7 @@ const clone = (o) => JSON.parse(JSON.stringify(o));
 const snap = (v) => Math.round(v * 2) / 2;
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const M = {left: 20, right: 20, top: 44, bottom: 20};
+const BOARD = 40;                 // 대지(pasteboard) mm — 지면 둘레. 인디자인처럼 지면 밖에 요소를 둔다
 const GROUPS = [["지문", ["B1", "B2", "B3", "B7"]], ["문항", ["B6"]], ["드릴", ["B5", "B8"]], ["머리 · 꼬리 · 간지 · 표지", ["B10", "B11"]]];
 const ATOMS = [
   ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: "글상자 — 오른쪽에서 글·크기·색을"}],
@@ -416,7 +417,7 @@ $("#p-del").onclick = () => deletePage();
 // ── 틀(문서) 고르기 · 만들기 ──
 function openPlan(pl) {
   plan = byId("plans")[pl.id] || pl; page = null; sel = null; sels = new Set();
-  $("#cv").classList.remove("browsing");
+  $("#cv").classList.remove("browsing"); document.body.classList.add("editing-doc");   // 편집기는 창 전체(사이트 레일 감춤)
   $("#start").style.display = "none"; $(".ptool").style.display = ""; $("#plname").value = plan.name || plan.id;
   const dp = docPages(); const want = new URLSearchParams(location.search).get("page") || decodeURIComponent(location.hash.replace(/^#/, ""));   // ?page= 도 받는다(# 를 못 넘기는 곳)
   history.replaceState(null, "", "?plan=" + encodeURIComponent(plan.id) + (want ? "#" + want : ""));
@@ -430,7 +431,7 @@ function emptyGuide() {
 }
 async function showStart() {
   plan = null; page = null; history.replaceState(null, "", location.pathname);
-  $("#cv").classList.add("browsing");                       // 목록은 화면 전체를 쓴다
+  $("#cv").classList.add("browsing"); document.body.classList.remove("editing-doc");   // 목록은 사이트 안에서 화면 전체
   const box = $("#start"); box.style.display = ""; $(".ptool").style.display = "none"; $("#side").innerHTML = ""; $("#stitle").textContent = ""; $("#rail").innerHTML = ""; $("#cnt").textContent = "";
   box.innerHTML = `<h2>내 문서</h2><div class="sub">문서를 누르면 편집 도구가 나온다. 문서 = 지면 순서(틀) — 같은 지면을 여러 문서가 쓴다.</div><div class="cards" id="pcards"></div>`;
   const cards = $("#pcards");
@@ -498,7 +499,7 @@ function layout() {
   const sp = specOf();
   scale = fitScale() * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
-  drawRulers();
+  placeBoard(); drawRulers();
 }
 window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
 function setZoom(z) {
@@ -517,17 +518,24 @@ function render() {
   if (!page) return;
   clearTimeout(rt);
   rt = setTimeout(async () => {
-    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: curSet});
+    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: curSet, board: BOARD});
     const w = $("#warn");
     if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
     const svg = (j.svgs[0] || {}).svg || "";
-    $("#svgwrap").innerHTML = svg; strip($("#svgwrap"));
+    $("#svgwrap").innerHTML = svg; strip($("#svgwrap")); placeBoard();
     pageSvg[page.id] = svg; const th = document.querySelector(`.pg[data-id="${page.id}"] .th`); if (th) { th.innerHTML = svg; strip(th); }
     w.style.display = (j.warnings || []).length ? "" : "none"; w.textContent = (j.warnings || []).join("\n");
     wire(); selbox();
   }, 40);
 }
 function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); } }
+// 대지가 있는 SVG 는 지면보다 크다 — 지면 왼쪽 위가 #paper 의 (0,0) 이 되도록 음수로 민다(좌표 계산은 그대로)
+function placeBoard() {
+  const wrap = $("#svgwrap"), svg = wrap.querySelector("svg"); if (!svg) return;
+  const b = parseFloat(svg.dataset.board || 0), sp = specOf();
+  wrap.style.left = (-b * scale) + "px"; wrap.style.top = (-b * scale) + "px";
+  wrap.style.width = ((sp.w + 2 * b) * scale) + "px";
+}
 
 // ── 아래 지면 띠 ──
 let dragId = null;
@@ -988,7 +996,10 @@ function armDraw(t) {
   document.querySelectorAll("[data-draw]").forEach(b => b.classList.toggle("on", b.dataset.draw === drawTool));
   document.querySelectorAll("#trail [data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === (drawTool || (handTool ? "hand" : "select"))));
   if (drawTool) select([]);
-  $("#st").textContent = drawTool ? `${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소` : "";
+  const hint = $("#thint");                                  // 도구 설명은 도구 상자 옆 (위 줄은 문서 일만)
+  hint.style.display = drawTool ? "block" : "none";
+  if (drawTool) { hint.textContent = `${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소`;
+    const b = $("#trail").querySelector(`[data-tool="${drawTool}"]`); hint.style.top = (b ? b.offsetTop + $("#trail").offsetTop : 60) + "px"; }
 }
 document.querySelectorAll("#trail [data-tool]").forEach(b => b.onclick = () => armDraw(b.dataset.tool));
 const TOOLKEY = {v: "select", h: "hand", t: "text", r: "rect", o: "ellipse", l: "line", p: "path", i: "image"};

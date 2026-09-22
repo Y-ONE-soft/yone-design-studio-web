@@ -46,6 +46,7 @@ class Ctx(object):
         self.issues = []                                  # 검수 — [{level: error|warn|info, msg}]
         self._seen = set()
         self._n = 0
+        self.board = 0.0        # 캔버스 대지(pasteboard) mm — 지면 둘레의 회색 자리. 지면 밖 요소도 여기 보인다
 
     def uid(self):
         """SVG 안 id(그라디언트·클립) — 한 그림 안에서 겹치지 않게."""
@@ -780,6 +781,14 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
                  + "".join(frags) + "".join(chrome) + (crop_marks(W, H, b) if ctx.print.get("marks") else ""))
         return (f'<svg {_NS} viewBox="0 0 {MW:.3f} {MH:.3f}" width="{MW:.3f}mm" height="{MH:.3f}mm" {extra} data-trim="{W:.3f} {H:.3f}" data-bleed="{b:.3f}">'
                 f'<rect width="{MW:.3f}" height="{MH:.3f}" fill="#ffffff"/><g transform="translate({m:.3f},{m:.3f})">{inner}</g></svg>')
+    if page.get("_canvas") and ctx.board:
+        # 대지 — 인디자인처럼 지면 둘레에 자리를 둔다. 지면 밖에 놓은 요소가 잘리지 않는다
+        B = float(ctx.board)
+        BW, BH = W + 2 * B, H + 2 * B
+        return (f'<svg {_NS} viewBox="{-B:.3f} {-B:.3f} {BW:.3f} {BH:.3f}" width="{BW:.3f}mm" height="{BH:.3f}mm" {extra} data-board="{B:.3f}">'
+                f'<rect x="{-B:.3f}" y="{-B:.3f}" width="{BW:.3f}" height="{BH:.3f}" fill="#dedbe9"/>'
+                f'<rect width="{W:.3f}" height="{H:.3f}" fill="{bg}"/>'
+                f'{guides}{"".join(frags)}{"".join(chrome)}</svg>')
     return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, extra)
 
 
