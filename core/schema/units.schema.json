@@ -21,6 +21,17 @@
                      "cap": {"enum": ["butt", "round", "square"], "description": "선 끝 모양(인디자인 Cap). 없으면 butt"}}
     },
     "rotate": {"type": "number", "minimum": -360, "maximum": 360, "description": "회전 각도(°, 시계 방향, 원자의 가운데를 축으로). 없으면 0"},
+    "gradient": {
+      "description": "그라디언트 채움(인디자인 그라디언트 견본). 있으면 fill 대신 쓴다. 색은 토큰",
+      "type": "object", "required": ["stops"],
+      "properties": {
+        "type": {"enum": ["linear", "radial"], "description": "없으면 linear"},
+        "angle": {"type": "number", "description": "linear 의 방향(°). 0 = 왼쪽→오른쪽, 90 = 위→아래"},
+        "stops": {"type": "array", "minItems": 2, "items": {"type": "object", "required": ["c"], "properties": {"c": {"$ref": "#/definitions/token"}, "at": {"type": "number", "minimum": 0, "maximum": 1, "description": "0~1 위치. 없으면 고르게"}}}}
+      }
+    },
+    "radius": {"oneOf": [{"$ref": "#/definitions/mm"}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/definitions/mm"}}],
+               "description": "둥근 모서리. 하나 또는 [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래]"},
     "opacity": {"type": "number", "minimum": 0, "maximum": 1, "description": "불투명도 0~1. 없으면 1"},
     "run": {
       "description": "서식 조각 — 글 안에서 굵게·기울임·밑줄·위첨자·다른 색·서체·크기가 섞인 부분(인디자인 문자 스타일). core/render_vivlio/richtext.py 형식 + color·font·size",
@@ -79,7 +90,7 @@
       "properties": {
         "t": {"const": "rect"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
-        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"}, "radius": {"$ref": "#/definitions/mm"},
+        "fill": {"$ref": "#/definitions/token"}, "gradient": {"$ref": "#/definitions/gradient"}, "stroke": {"$ref": "#/definitions/stroke"}, "radius": {"$ref": "#/definitions/radius"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
@@ -88,7 +99,7 @@
       "properties": {
         "t": {"const": "ellipse"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
-        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"},
+        "fill": {"$ref": "#/definitions/token"}, "gradient": {"$ref": "#/definitions/gradient"}, "stroke": {"$ref": "#/definitions/stroke"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
@@ -100,6 +111,7 @@
         "src": {"type": "string", "description": "옷의 images 키. 옷마다 파일을 바꿔 끼운다"},
         "bind": {"$ref": "#/definitions/bind"},
         "fit": {"enum": ["contain", "cover"], "description": "contain = 틀 안에 다 보이게(기본) · cover = 틀을 채우고 넘치는 쪽을 자른다(인디자인 '비율에 맞게 프레임 채우기')"},
+        "img": {"$ref": "#/definitions/box", "description": "틀(x y w h) 안에서 그림 전체가 놓인 자리 — 틀의 왼쪽 위 기준 mm, 음수·틀보다 큰 값 가능. 틀 밖은 잘린다(인디자인의 프레임 안 그래픽). 있으면 fit 은 안 쓴다"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }
     },
@@ -110,7 +122,7 @@
         "t": {"const": "path"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
         "d": {"type": "string", "pattern": "^[MLCQZmlcqz0-9 .,-]+$", "description": "SVG path 문법(M L C Q Z 만), 좌표는 0~1 비율. 예: 삼각형 \"M0 0 L1 0.5 L0 1 Z\""},
-        "fill": {"$ref": "#/definitions/token"}, "stroke": {"$ref": "#/definitions/stroke"},
+        "fill": {"$ref": "#/definitions/token"}, "gradient": {"$ref": "#/definitions/gradient"}, "stroke": {"$ref": "#/definitions/stroke"},
         "evenodd": {"type": "boolean", "description": "구멍 뚫린 도형(짝홀 채움)"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
       }

@@ -176,7 +176,7 @@ def from_pdf(path, pno=1):
             a["t"] = "ellipse"                                        # 인디자인 원·타원 = 곡선 4개
         elif kinds == {"l", "c"} and len(items) == 8 and _on_box(lines, r):
             cs = [it for it in items if it[0] == "c"]
-            a["radius"] = round(sum(abs(it[1].x - it[4].x) for it in cs) / len(cs) * PT, 2)   # 둥근 모서리 반지름
+            a["radius"] = _corner_radii(cs, r)                            # 둥근 모서리 반지름(모서리마다 다르면 4개)
         else:
             a["t"] = "path"
             a["d"] = _unit_path(items, r, bool(d.get("closePath")))
@@ -189,8 +189,12 @@ def from_pdf(path, pno=1):
         a.update(extra)
         shapes.append(a)
 
-    # ── 이미지
+    # ── 이미지 — 회전은 변환 행렬로, 틀 안에서 잘린 것은 클립(scissor)으로: 틀 = 보이는 자리, img = 그림 전체의 자리
     n = 0
+    try:
+        clips = [fitz.Rect(d["scissor"]) for d in page.get_drawings(extended=True) if d.get("type") == "clip" and d.get("scissor")]
+    except Exception:
+        clips = []
     for info in page.get_image_info(xrefs=True):
         bx = fitz.Rect(info["bbox"])
         if bx.is_empty or bx.width < 2 or bx.height < 2:
@@ -202,8 +206,13 @@ def from_pdf(path, pno=1):
         if abs(ang) >= 0.5 and iw > 0 and ih > 0:
             cx, cy = (bx.x0 + bx.x1) / 2 - ox, (bx.y0 + bx.y1) / 2 - oy
             imgs.append({"t": "image", "x": mm(cx - iw / 2), "y": mm(cy - ih / 2), "w": mm(iw), "h": mm(ih), "src": f"img{n}", "rotate": ang})
-        else:
+            continue
+        frame = _image_frame(bx, clips)
+        if frame is None:
             imgs.append({"t": "image", "x": mm(bx.x0 - ox), "y": mm(bx.y0 - oy), "w": mm(bx.width), "h": mm(bx.height), "src": f"img{n}"})
+        else:
+            imgs.append({"t": "image", "x": mm(frame.x0 - ox), "y": mm(frame.y0 - oy), "w": mm(frame.width), "h": mm(frame.height), "src": f"img{n}",
+                         "img": {"x": mm(bx.x0 - frame.x0), "y": mm(bx.y0 - frame.y0), "w": mm(bx.width), "h": mm(bx.height)}})
 
     # 재단 밖(도련)은 잘라 내고, 밖에만 있는 것은 버린다
     atoms = [a for a in shapes + imgs + texts if _clip(a, W, H)]
@@ -382,6 +391,33 @@ def _stroke_of(d, stroke, width, tk):
     return st
 
 
+def _corner_radii(curves, r):
+    """둥근 네모의 곡선 4개 → 모서리 반지름. 곡선의 가운데가 상자 어느 귀퉁이에 있는지로 자리를 찾는다."""
+    cx, cy = (r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2
+    out = [0.0, 0.0, 0.0, 0.0]                                 # 왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래
+    for it in curves:
+        rad = round(abs(it[1].x - it[4].x) * PT, 2)
+        mx, my = (it[1].x + it[4].x) / 2, (it[1].y + it[4].y) / 2
+        k = (0 if my < cy else 3) if mx < cx else (1 if my < cy else 2)
+        out[k] = rad
+    return out[0] if max(out) - min(out) < 0.1 else out
+
+
+def _image_frame(bx, clips):
+    """그림(bx)을 실제로 자르는 클립 — bx 와 겹치되 bx 를 다 담지는 않는 것 중 겹침이 가장 큰 것. 없으면 None."""
+    best, best_area = None, 0.0
+    for c in clips:
+        inter = bx & c
+        if inter.is_empty or inter.width < 1 or inter.height < 1:
+            continue
+        if c.x0 <= bx.x0 + 0.5 and c.y0 <= bx.y0 + 0.5 and c.x1 >= bx.x1 - 0.5 and c.y1 >= bx.y1 - 0.5:
+            continue                                            # 그림을 다 담는 클립(면 클립·그룹 클립)은 자르는 게 아니다
+        area = inter.width * inter.height
+        if area > best_area:
+            best, best_area = inter, area
+    return best
+
+
 def _on_box(lines, r, tol=0.05):
     """선들이 모두 축에 나란하고 점이 전부 상자 테두리 위에 있으면 네모(둥근 네모의 변)다."""
     if not lines:
@@ -441,26 +477,95 @@ def _box(atoms):
     return [round(min(xs0), 2), round(y0, 2), round(max(xs1) - min(xs0), 2), round(y1 - y0, 2)]
 
 
-def group(dec, gap=3.0):
-    """부품 후보 — 세로로 띄어진 띠(band)마다 하나. 면의 절반 넘는 큰 상자는 바탕으로 보고 뺀다."""
+def _bx(a):
+    if a["t"] == "line":
+        return min(a["x1"], a["x2"]), min(a["y1"], a["y2"]), max(a["x1"], a["x2"]), max(a["y1"], a["y2"])
+    return a["x"], a["y"], a["x"] + a["w"], a["y"] + a["h"]
+
+
+def group(dec, gap=1.5):
+    """부품 후보 — 원자에서 부품으로 올라가는 첫 걸음. 세 가지로 묶는다:
+    1) 상자(면·도형·그림) 안에 든 것은 그 상자와 한 묶음 (지문 상자 + 안의 글)
+    2) 같은 줄(세로로 절반 넘게 겹침, 한쪽은 15mm 이하)에 있는 것은 한 묶음 (문장 + 오른쪽 끝 O/X). 키 큰 것끼리 나란하면 단
+    3) 가로로 겹치고 세로로 gap(mm) 안에 쌓인 것은 한 묶음 (발문 + 선지)
+    면의 절반 넘는 큰 상자는 바탕으로 보고 뺀다. 두 단(가로로 안 겹침)은 갈라진다."""
     atoms = dec.get("atoms") or []
     W, H = float(dec.get("w") or 210), float(dec.get("h") or 297)
     idx = [i for i, a in enumerate(atoms)
            if not (a["t"] in ("rect", "image", "path") and a["w"] * a["h"] > W * H * 0.5)]
-    idx.sort(key=lambda i: _top(atoms[i]))
-    groups = []
-    cur, cur_bottom = [], None
+    box = {i: _bx(atoms[i]) for i in idx}
+    area = {i: (box[i][2] - box[i][0]) * (box[i][3] - box[i][1]) for i in idx}
+    parent = list(range(len(atoms)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(i, j):
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            parent[rj] = ri
+
+    # 1) 상자 안에 든 것 — 가장 작은 상자(자기보다 큰)에 붙인다
+    holders = [i for i in idx if atoms[i]["t"] in ("rect", "path", "image") and area[i] >= 40]
+    top = []
     for i in idx:
-        a = atoms[i]
-        if cur and _top(a) - cur_bottom > gap:
-            groups.append(cur)
-            cur, cur_bottom = [], None
-        cur.append(i)
-        cur_bottom = _bottom(a) if cur_bottom is None else max(cur_bottom, _bottom(a))
-    if cur:
-        groups.append(cur)
+        x0, y0, x1, y1 = box[i]
+        best = None
+        for c in holders:
+            if c == i or area[c] <= area[i]:
+                continue
+            cx0, cy0, cx1, cy1 = box[c]
+            if cx0 - 0.5 <= x0 and cy0 - 0.5 <= y0 and x1 <= cx1 + 0.5 and y1 <= cy1 + 0.5:
+                if best is None or area[c] < area[best]:
+                    best = c
+        if best is None:
+            top.append(i)
+        else:
+            union(best, i)
+    # 위 단계 뒤의 덩어리 — 덩어리의 테두리는 맨 바깥 상자(또는 홀로 있는 원자)
+    ext = {}
+    for i in idx:
+        r = find(i)
+        x0, y0, x1, y1 = box[i]
+        e = ext.get(r)
+        ext[r] = (x0, y0, x1, y1) if e is None else (min(e[0], x0), min(e[1], y0), max(e[2], x1), max(e[3], y1))
+    # 면 가장자리에 닿은 것(러닝헤드 띠·측면 탭·바탕)은 면의 장식 — 줄·쌓임으로는 안 묶는다
+    edge = {r: (e[0] <= 0.5 or e[1] <= 0.5 or e[2] >= W - 0.5 or e[3] >= H - 0.5
+                or (atoms[r]["t"] == "line" and e[3] - e[1] > e[2] - e[0]))            # 세로 선(단 나눔 괘선)도 장식
+            for r, e in ext.items()}
+    roots = sorted((r for r in ext if not edge[r]), key=lambda r: (ext[r][1], ext[r][0]))
+    seps = [ext[r] for r in ext if atoms[r]["t"] == "line" and ext[r][3] - ext[r][1] > 30 and ext[r][3] - ext[r][1] > ext[r][2] - ext[r][0]]   # 단 나눔 세로 괘선
+
+    def divided(a, b):
+        """두 상자 사이에 세로 괘선이 지나가면 다른 단."""
+        lo, hi = min(a[2], b[2]), max(a[0], b[0])
+        for sx0, sy0, sx1, sy1 in seps:
+            if lo <= sx0 <= hi and sy0 <= max(a[1], b[1]) and sy1 >= min(a[3], b[3]):
+                return True
+        return False
+    # 2) 같은 줄(세로 겹침이 작은 쪽의 절반·큰 쪽의 3할 넘음) · 3) 가까이 쌓임(가로 겹침 + 세로 gap 안)
+    for a_i, ra in enumerate(roots):
+        ax0, ay0, ax1, ay1 = ext[ra]
+        for rb in roots[a_i + 1:]:
+            bx0, by0, bx1, by1 = ext[rb]
+            over = min(ay1, by1) - max(ay0, by0)
+            hgap = max(ax0, bx0) - min(ax1, bx1)
+            hs = (ay1 - ay0, by1 - by0)
+            same_row = (over > 0.5 * min(hs) and over > 0.3 * max(hs) and hgap < W * 0.5 and min(hs) <= 15   # 키 큰 것끼리 나란하면 단(column)
+                        and not divided(ext[ra], ext[rb]))
+            stacked = -over <= gap and hgap < 0
+            if same_row or stacked:
+                union(ra, rb)
+    groups = {}
+    for i in idx:
+        groups.setdefault(find(i), []).append(i)
+    ordered = sorted(groups.values(), key=lambda g: min(_top(atoms[i]) for i in g))
     out = []
-    for n, g in enumerate(groups, 1):
+    for n, g in enumerate(ordered, 1):
+        g.sort()
         texts = [_plain(atoms[i]["text"]) for i in g if atoms[i]["t"] == "text" and atoms[i].get("text")]
         hint = (texts[0][:18] + "…") if texts and len(texts[0]) > 18 else (texts[0] if texts else "")
         out.append({"name": f"후보 {n}" + (f" · {hint}" if hint else ""), "atoms": g, "box": _box([atoms[i] for i in g])})

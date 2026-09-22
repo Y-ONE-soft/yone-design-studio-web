@@ -233,3 +233,69 @@ def test_decompose_underline_paragraph_hanging(tmp_path):
     assert hang["indent_first"] == -hang["indent"] and abs(hang["indent"] - 12 * 25.4 / 72) < 0.3
     assert hang["text"].count("\n") == 1 and hang["text"].split("\n")[1].startswith("2.")   # 짧게 끝난 줄 다음 = 새 단락
     assert hang["x"] == pytest.approx(60 * 25.4 / 72, abs=0.1)
+
+
+def test_gradient_corners_and_image_crop_render(lib):
+    """그라디언트·모서리 4개·틀 안 그림 자리(자르기)가 스키마에 맞고 SVG 로 그려진다."""
+    from core.units import render, store
+    part = {"id": "g", "name": "g", "w": 60, "h": 40, "atoms": [
+        {"t": "rect", "x": 0, "y": 0, "w": 30, "h": 10, "radius": [2, 0, 2, 0], "gradient": {"angle": 90, "stops": [{"c": "$s1"}, {"c": "$white"}]}},
+        {"t": "ellipse", "x": 32, "y": 0, "w": 10, "h": 10, "gradient": {"type": "radial", "stops": [{"c": "$white", "at": 0}, {"c": "$sel", "at": 1}]}},
+        {"t": "image", "x": 0, "y": 15, "w": 20, "h": 10, "src": "logo", "img": {"x": -5, "y": -2, "w": 30, "h": 14}},
+    ]}
+    assert store.validate("parts", part) is None
+    skin = dict(store.by_id(lib["skins"])["d2"])
+    skin["images"] = {"logo": "x.png"}
+    ctx = render.Ctx(skin, lib)
+    frag, _h = render.part_svg(ctx, part)
+    assert '<linearGradient id="u1" gradientTransform="rotate(90.0 0.5 0.5)">' in frag and 'fill="url(#u1)"' in frag
+    assert '<path d="M 2.000 0.000' in frag                                   # 모서리가 다르면 path
+    assert '<radialGradient id="u2">' in frag and 'offset="100.0%" stop-color="#00559f"' in frag
+    assert '<clipPath id="u3"><rect x="0" y="15.000" width="20" height="10.000"/></clipPath>' in frag
+    assert '<image x="-5.000" y="13.000" width="30.000" height="14.000"' in frag and 'clip-path="url(#u3)"' in frag
+    assert not ctx.warnings, ctx.warnings
+
+
+def test_decompose_corner_radii_and_cropped_image(tmp_path):
+    """둥근 네모는 모서리마다 재고(다르면 4개), 틀로 잘린 그림은 틀 + 그림 전체 자리(img)로."""
+    import fitz
+    from core.units import decompose
+    doc = fitz.open()
+    page = doc.new_page(width=595, height=842)
+    page.draw_rect(fitz.Rect(56, 240, 300, 300), color=(0, 0, 0), width=1, radius=(0.05, 0.2))   # 가로 5% · 세로 20% → 네 모서리 같은 값
+    pix = fitz.Pixmap(fitz.csRGB, fitz.IRect(0, 0, 40, 20), 0)
+    page.insert_image(fitz.Rect(100, 500, 200, 550), pixmap=pix)
+    xref = page.get_contents()[-1]                                                   # 그림을 그린 스트림
+    src = doc.xref_stream(xref).decode("latin-1")
+    assert "Do" in src
+    doc.update_stream(xref, ("q 120 292 60 35 re W n " + src + " Q").encode("latin-1"))   # 틀 120..180 × (842-327)..(842-292) 로 자른다
+    p = tmp_path / "t.pdf"
+    doc.save(str(p))
+    dec = decompose.from_pdf(str(p), 1)
+    rect = next(a for a in dec["atoms"] if a["t"] == "rect")
+    assert isinstance(rect["radius"], (int, float)) and abs(rect["radius"] - 12 * 25.4 / 72) < 0.3
+    img = next(a for a in dec["atoms"] if a["t"] == "image")
+    assert abs(img["w"] - 60 * 25.4 / 72) < 0.2 and abs(img["h"] - 35 * 25.4 / 72) < 0.2        # 틀 = 보이는 자리
+    assert abs(img["img"]["x"] - (-20 * 25.4 / 72)) < 0.2 and abs(img["img"]["w"] - 100 * 25.4 / 72) < 0.2   # 그림 전체는 틀 왼쪽 위 기준
+
+
+def test_group_by_box_row_and_column():
+    """후보 묶기: 상자 안에 든 것 · 같은 줄(문장 + O/X) · 가까이 쌓인 것은 하나로, 단(세로 괘선 건너·키 큰 것끼리)과 가장자리 장식은 갈라진다."""
+    from core.units import decompose
+    atoms = [
+        {"t": "rect", "x": 20, "y": 20, "w": 170, "h": 30, "fill": "$cream"},                        # 0 지문 상자
+        {"t": "text", "x": 22, "y": 22, "w": 160, "h": 20, "font": "$body", "size": 9, "text": "passage"},   # 1 안의 글
+        {"t": "text", "x": 20, "y": 60, "w": 120, "h": 4, "font": "$body", "size": 9, "text": "sentence 1"},  # 2 문장
+        {"t": "rect", "x": 150, "y": 60, "w": 20, "h": 4, "stroke": {"w": 0.3, "color": "$rule"}},   # 3 O/X 상자
+        {"t": "text", "x": 152, "y": 60, "w": 5, "h": 4, "font": "$body", "size": 8, "text": "O"},        # 4 그 안
+        {"t": "text", "x": 20, "y": 72, "w": 120, "h": 4, "font": "$body", "size": 9, "text": "sentence 2"},  # 5 다음 줄(8mm 아래)
+        {"t": "text", "x": 20, "y": 90, "w": 60, "h": 4, "font": "$body", "size": 9, "text": "prompt"},      # 6 발문
+        {"t": "text", "x": 20, "y": 95, "w": 60, "h": 12, "font": "$body", "size": 9, "text": "choices"},    # 7 바로 밑 선지(1mm)
+        {"t": "line", "x1": 105, "y1": 85, "x2": 105, "y2": 130, "stroke": {"w": 0.3, "color": "$rule"}},  # 8 단 나눔 세로 괘선
+        {"t": "text", "x": 110, "y": 90, "w": 60, "h": 4, "font": "$body", "size": 9, "text": "right col"},  # 9 오른쪽 단, 같은 높이
+        {"t": "rect", "x": 200, "y": 60, "w": 10, "h": 30, "fill": "$s1"},                          # 10 오른쪽 가장자리 탭
+    ]
+    parts = decompose.group({"w": 210, "h": 297, "atoms": atoms})
+    sets = [set(p["atoms"]) for p in parts]
+    assert {0, 1} in sets and {2, 3, 4} in sets and {5} in sets and {6, 7} in sets
+    assert {9} in sets and {8} in sets and {10} in sets
