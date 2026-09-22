@@ -74,6 +74,9 @@
   .trail button.on { background: var(--pp); color: #fff; }
   .trail button:disabled { opacity: .3; cursor: default; }
   .trail .sep { height: 1px; background: var(--line); margin: 4px 6px; }
+  .thint .shp { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; max-width: 250px; }
+  .thint .shp button { border: 1px solid #4b4f61; background: transparent; color: #fff; border-radius: 6px; font-size: 11px; padding: 2px 6px; cursor: pointer; }
+  .thint .shp button.on { background: var(--pp); border-color: var(--pp); }
   .thint { position: absolute; left: 46px; z-index: 16; background: #1f2330; color: #fff; font-size: 11.5px; padding: 5px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.2); display: none; white-space: nowrap; }
 
   /* 작업 공간 넓히기 — 패널 접기(왼쪽 아이콘 탭은 남는다) · 쪽 띠 접기 · 넓게(집중) */
@@ -103,6 +106,16 @@
   .ptool .ctrl button { padding: 3px 5px; font-size: 12px; }
   .ptool label { white-space: nowrap; }
   .paper { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 3px 18px rgba(30,20,60,.18); }
+  /* 세로로 이어 보기 — 인디자인처럼 굴리면 다음 쪽. 지금 쪽만 고칠 수 있고 나머지는 그림이다 */
+  .pages { display: flex; flex-direction: column; align-items: center; gap: 40px; }
+  .pslot { position: relative; overflow: hidden; background: #fff; box-shadow: 0 3px 18px rgba(30,20,60,.18); cursor: pointer; flex: none; }
+  .pslot.cur { overflow: visible; background: none; box-shadow: none; cursor: default; }
+  .pslot .pw { position: absolute; left: 0; top: 0; }
+  .pslot .pw svg { display: block; width: 100%; height: auto; }
+  .pslot .plb { position: absolute; left: 1px; bottom: -18px; font-size: 11px; color: var(--mute); pointer-events: none; }
+  .pslot.cur .plb { color: var(--pp); font-weight: 600; }
+  .pslot:not(.cur):hover { outline: 2px solid #c9b6f3; }
+  .cv.noflow .pslot:not(.cur) { display: none; }
   .paper .svgwrap { position: absolute; left: 0; top: 0; }                /* 대지가 있으면 음수 자리로 넘친다 */
   .paper .svgwrap svg { display: block; width: 100%; height: auto; }
   .paper .svgwrap svg g[data-fi] { cursor: move; }
@@ -305,6 +318,7 @@
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
       <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">편집 중 · 저장하면 이 요소를 쓴 곳 전부에 반영</span><button class="btn sm" id="edit-done">저장</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
+      <div class="pages" id="pages">
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
         <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rot" data-rot title="회전 (Shift = 15°)"></span><span class="hd" data-h="nw"></span><span class="hd" data-h="n"></span><span class="hd" data-h="ne"></span><span class="hd" data-h="w"></span><span class="hd" data-h="e"></span><span class="hd" data-h="sw"></span><span class="hd" data-h="s"></span><span class="hd" data-h="se"></span></div>
         <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
@@ -320,6 +334,7 @@
           <button id="t-front" title="맨 앞으로 (Ctrl+])">⬆</button><button id="t-back" title="맨 뒤로 (Ctrl+[)">⬇</button><button id="t-dup" title="복제 (Ctrl+D)">⧉</button><button id="t-x" class="x" title="지우기 (Delete)">✕</button>
         </div>
       </div>
+      </div>
     </div>
     <div class="strip">
       <div class="rail" id="rail"></div>
@@ -327,7 +342,7 @@
         <span class="help" title="도구: V 선택 · H 손 · T 글상자 · R 면 · O 원 · L 선 · P 도형 · I 그림 — 고르고 지면에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 요소 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 쪽 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <button class="btn sm sub" id="f-cnt" title="쪽 띠 펴기·접기 (Ctrl+Alt+\\)"><span class="cnt" id="cnt"></span></button>
         <button class="btn sm sub" id="f-addpg" title="이 페이지 뒤에 새 본문 페이지">＋ 쪽</button>
-        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 요소 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
+        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 요소 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="이어 보기 — 지면을 세로로 이어 놓는다. 굴리면 다음 쪽으로 넘어간다">연속</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
         <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 요소·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
@@ -387,7 +402,8 @@ function usedElsewhere(pid) { return LIB.plans.some(pl => pl !== plan && planIds
 let tab = new URLSearchParams(location.search).get("tab") || "blocks";      // ?tab=atoms 로 바로 열기
 const specOf = (p) => byId("specs")[(p || page || {}).spec] || byId("specs").a4 || {w: 210, h: 297};
 const skin = () => byId("skins")[$("#skin").value] || LIB.skins[0];
-const idx = () => docPages().findIndex(x => page && x.id === page.id);
+let curIdx = 0;                                   // 지금 보는 칸의 번호 — 같은 지면이 두 번 들어와도 헷갈리지 않게
+const idx = () => { const dp = docPages(); return (page && dp[curIdx] && dp[curIdx].id === page.id) ? curIdx : dp.findIndex(x => page && x.id === page.id); };
 const unitOf = (it) => it.atom ? "atom" : (it.block ? "block" : "part");
 const nameOf = (it) => it.atom ? ATOM_NM[it.atom.t] : it.block ? (byId("blocks")[it.block] || {name: it.block}).name : ((byId("parts")[it.part] || {name: it.part}).name + " (그룹)");
 const partOfBlock = (bid) => { const b = byId("blocks")[bid]; if (!b) return null; const v = (b.variants || []).find(v => v.id === (skin().variants || {})[bid]) || b.variants[0]; return v && byId("parts")[v.part]; };
@@ -476,6 +492,7 @@ $("#p-preview").onclick = async () => {
 };
 $("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
 $("#f-cnt").onclick = () => togglePanel("strip");
+$("#tg-flow").onclick = () => { view.flow = !view.flow; applyView(); drawPages(); if (view.flow) scrollToActive(); };
 $("#f-addpg").onclick = () => addPage("body");
 // 검수 — 책을 그려 보고 문제 목록
 async function runCheck() {
@@ -490,15 +507,18 @@ async function runCheck() {
 $("#p-check").onclick = runCheck;
 
 // ── 열기 · 그리기 ──
-function openPage(p) {                                  // ⚠ 이름이 open 이면 window.open 을 가린다(PDF 열기가 죽는다)
+function openPage(p, keepScroll, at) {                  // ⚠ 이름이 open 이면 window.open 을 가린다(PDF 열기가 죽는다)
   page = byId("pages")[p.id] || p; sel = null; sels = new Set();
+  const dp0 = docPages(); curIdx = (at != null && dp0[at] && dp0[at].id === page.id) ? at : Math.max(0, dp0.findIndex(x => x.id === page.id));
   if (!page.items) page.items = [];
   editing = null; $("#paper").classList.remove("editing"); $("#editbar").style.display = "none"; page.items.forEach(it => delete it._edit);
   if (page.chrome && page.chrome.length) { page.items = page.chrome.map(c => ({part: c.part, x: c.x, y: c.y})).concat(page.items); delete page.chrome; }
   $("#pname").value = page.name || ""; history.replaceState(null, "", (plan ? "?plan=" + encodeURIComponent(plan.id) : "") + "#" + page.id); applyView();
   const pp = $("#paper"); pp.style.background = ""; pp.style.boxShadow = "";
-  drawRail(); layout(); render(); side(); histUI();
-  const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
+  const keep = $("#area").scrollTop;
+  drawPages(); drawRail(); layout(); render(); side(); histUI();
+  if (keepScroll) { $("#area").scrollTop = keep; flowLock = Date.now() + 250; } else scrollToActive();
+  const el = document.querySelector(`.pg[data-i="${idx()}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
 function fitScale() {
   const sp = specOf(), a = $("#area"), cs = getComputedStyle(a);
@@ -511,7 +531,7 @@ function layout() {
   const sp = specOf();
   scale = fitScale() * zoom;
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
-  placeBoard(); drawRulers();
+  sizeSlots(); placeBoard(); drawRulers();
 }
 window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
 function setZoom(z) {
@@ -535,7 +555,9 @@ function render() {
     if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
     const svg = (j.svgs[0] || {}).svg || "";
     $("#svgwrap").innerHTML = svg; strip($("#svgwrap")); placeBoard();
-    pageSvg[page.id] = svg; const th = document.querySelector(`.pg[data-id="${page.id}"] .th`); if (th) { th.innerHTML = svg; strip(th); }
+    pageSvg[page.id] = svg;
+    document.querySelectorAll(`.pg[data-id="${page.id}"] .th`).forEach(th => { th.innerHTML = svg; strip(th); });
+    document.querySelectorAll(`#pages .pslot[data-id="${page.id}"]:not(.cur)`).forEach(sl => fillPrev(sl, page));
     w.style.display = (j.warnings || []).length ? "" : "none"; w.textContent = (j.warnings || []).join("\n");
     wire(); selbox();
   }, 40);
@@ -549,12 +571,64 @@ function placeBoard() {
   wrap.style.width = ((sp.w + 2 * b) * scale) + "px";
 }
 
+// ── 세로로 이어 보기 — 지금 쪽은 진짜 지면(#paper), 앞뒤 쪽은 그림. 굴려서 가운데 오면 그 쪽이 열린다 ──
+function fillPrev(d, p) {
+  const w = d.querySelector(".pw"); if (!w) return;
+  w.innerHTML = pageSvg[p.id] || ""; const svg = w.querySelector("svg"); if (!svg) return;
+  svg.removeAttribute("width"); svg.removeAttribute("height");
+  const b = parseFloat(svg.dataset.board || 0), sp = specOf(p);
+  w.style.left = (-b * scale) + "px"; w.style.top = (-b * scale) + "px"; w.style.width = ((sp.w + 2 * b) * scale) + "px";
+}
+function sizeSlots() {
+  document.querySelectorAll("#pages .pslot").forEach(d => {
+    const p = byId("pages")[d.dataset.id]; if (!p) return; const sp = specOf(p);
+    d.style.width = (sp.w * scale) + "px"; d.style.height = (sp.h * scale) + "px";
+    if (!d.classList.contains("cur")) fillPrev(d, p);
+  });
+}
+function drawPages() {
+  const box = $("#pages"); if (!box) return;
+  const paper = $("#paper"); paper.remove();                     // 먼저 빼 둔다 — 안 그러면 통을 비울 때 같이 날아간다
+  box.innerHTML = ""; const dp = docPages();
+  if (!dp.length || !page) { box.appendChild(paper); return; }
+  const at = idx();
+  dp.forEach((p, i) => {
+    const cur = i === at, sp = specOf(p);
+    const d = document.createElement("div"); d.className = "pslot" + (cur ? " cur" : ""); d.dataset.id = p.id; d.dataset.i = i;
+    d.style.width = (sp.w * scale) + "px"; d.style.height = (sp.h * scale) + "px";
+    if (cur) d.appendChild(paper);
+    else { d.innerHTML = '<div class="pw"></div>'; fillPrev(d, p); d.onclick = () => openPage(p, false, i); }
+    d.insertAdjacentHTML("beforeend", `<span class="plb">${i + 1}${p.name ? " · " + esc(p.name) : ""}</span>`);
+    box.appendChild(d);
+  });
+}
+function scrollToActive() {
+  const d = document.querySelector("#pages .pslot.cur"), a = $("#area"); if (!d) return;
+  flowLock = Date.now() + 500;
+  a.scrollTop += d.getBoundingClientRect().top - a.getBoundingClientRect().top - (view.rulers ? 20 : 6);
+}
+let flowLock = 0, flowT = null;
+$("#area").addEventListener("scroll", () => {
+  if (!view.flow || !plan || !page) return;
+  clearTimeout(flowT);
+  flowT = setTimeout(() => {
+    if (Date.now() < flowLock || editing || drawTool) return;
+    const a = $("#area"), r0 = a.getBoundingClientRect(), mid = r0.top + a.clientHeight / 2;
+    let best = null, bd = 1e9;
+    document.querySelectorAll("#pages .pslot").forEach(d => {
+      const r = d.getBoundingClientRect(), c = Math.abs((r.top + r.bottom) / 2 - mid);
+      if (c < bd) { bd = c; best = d; }
+    });
+    if (best && +best.dataset.i !== idx()) { const p = byId("pages")[best.dataset.id]; if (p) openPage(p, true, +best.dataset.i); }
+  }, 140);
+});
+
 // ── 아래 지면 띠 ──
 let dragId = null;
 async function drawRail() {
   const rail = $("#rail"); rail.innerHTML = ""; const dp = docPages();
   dp.forEach((p, i) => {
-    const d = document.createElement("div"); d.className = "pg" + (page && p.id === page.id ? " on" : ""); d.dataset.id = p.id; d.draggable = true; d.title = p.name || p.id;
+    const d = document.createElement("div"); d.className = "pg" + (i === idx() ? " on" : ""); d.dataset.id = p.id; d.dataset.i = i; d.draggable = true; d.title = p.name || p.id;
     d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span><span class="pgact"><button data-pg-dup title="이 지면 복제">⧉</button><button data-pg-del title="이 지면 지우기">✕</button></span>`; strip(d);
     d.querySelector("[data-pg-del]").onclick = (e) => { e.stopPropagation(); deletePage(p); };
     d.querySelector("[data-pg-dup]").onclick = async (e) => { e.stopPropagation(); if (!page || page.id !== p.id) { openPage(p); await new Promise(r => setTimeout(r, 200)); } addPage("dup"); };
@@ -568,7 +642,7 @@ async function drawRail() {
         if (over && over !== d) { const to = planIds(plan).indexOf(over.dataset.id); movePageTo(p.id, to); } d._dragged = true; setTimeout(() => { d._dragged = false; }, 0); };
       window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
     });
-    d.onclick = () => { if (!d._dragged) openPage(p); };
+    d.onclick = () => { if (!d._dragged) openPage(p, false, i); };
     rail.appendChild(d);
   });
   const add = document.createElement("div"); add.className = "addpg"; add.title = "이 페이지 뒤에 새 페이지";
@@ -581,7 +655,8 @@ async function drawRail() {
     if (pageSvg[p.id]) continue;
     const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec, set: curSet});
     pageSvg[p.id] = ((j.svgs || [])[0] || {}).svg || "";
-    const th = document.querySelector(`.pg[data-id="${p.id}"] .th`); if (th) { th.innerHTML = pageSvg[p.id]; strip(th); }
+    document.querySelectorAll(`.pg[data-id="${p.id}"] .th`).forEach(th => { th.innerHTML = pageSvg[p.id]; strip(th); });
+    document.querySelectorAll(`#pages .pslot[data-id="${p.id}"]:not(.cur)`).forEach(sl => fillPrev(sl, p));
   }
 }
 document.addEventListener("click", () => document.querySelectorAll(".menu.on").forEach(m => m.classList.remove("on")));
@@ -843,7 +918,7 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
-const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: false, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
+const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: false, flow: true, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
                            JSON.parse(localStorage.getItem("units.view3") || "{}"));
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); $("#area").classList.toggle("rul", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
@@ -857,6 +932,8 @@ function applyPanels() {
   cv.classList.toggle("noleft", !on("left"));
   cv.classList.toggle("noside", !on("side"));
   cv.classList.toggle("nostrip", !on("strip"));
+  cv.classList.toggle("noflow", !view.flow);
+  $("#tg-flow").classList.toggle("on", !!view.flow);
   document.body.classList.toggle("zen", !!view.zen);
   $("#tg-left").classList.toggle("on", on("left")); $("#tg-side").classList.toggle("on", on("side"));
   $("#tg-strip").classList.toggle("on", on("strip")); $("#tg-zen").classList.toggle("on", !!view.zen);
@@ -1000,9 +1077,11 @@ function addBlock(id, at) {
   place({block: id}, at, true);
 }
 function addPart(id, at) { if (byId("parts")[id] && page) place({part: id}, at, false); }
+let shapeD = null;                                           // 도형 도구로 그릴 모양 (없으면 ATOMS 기본 = 화살표)
 function addAtom(t, at, r) {                                  // r = 끌어 그린 상자(mm). 없으면 기본 크기
   const a = ATOMS.find(x => x[0] === t); if (!a || !page) return;
   const atom = clone(a[2]);
+  if (t === "path" && shapeD) atom.d = shapeD;
   if (r) {
     if (t === "line") { atom.x1 = snap(r.x1 - r.x); atom.y1 = snap(r.y1 - r.y); atom.x2 = snap(r.x2 - r.x); atom.y2 = snap(r.y2 - r.y); }
     else { atom.w = Math.max(1, r.w); atom.h = Math.max(1, r.h); }
@@ -1022,7 +1101,9 @@ function armDraw(t) {
   if (drawTool) select([]);
   const hint = $("#thint");                                  // 도구 설명은 도구 상자 옆 (위 줄은 문서 일만)
   hint.style.display = drawTool ? "block" : "none";
-  if (drawTool) { hint.textContent = `${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소`;
+  if (drawTool) { hint.innerHTML = esc(`${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소`)
+      + (drawTool === "path" ? `<div class="shp">${Object.entries(SHAPES).map(([n, d]) => `<button data-shp="${esc(d)}" class="${(shapeD || ATOMS.find(x => x[0] === "path")[2].d) === d ? "on" : ""}">${esc(n)}</button>`).join("")}</div>` : "");
+    hint.querySelectorAll("[data-shp]").forEach(b => b.onclick = (ev) => { ev.stopPropagation(); shapeD = b.dataset.shp; hint.querySelectorAll("[data-shp]").forEach(x => x.classList.toggle("on", x === b)); });
     const b = $("#trail").querySelector(`[data-tool="${drawTool}"]`); hint.style.top = (b ? b.offsetTop + $("#trail").offsetTop : 60) + "px"; }
 }
 document.querySelectorAll("#trail [data-tool]").forEach(b => b.onclick = () => armDraw(b.dataset.tool));
