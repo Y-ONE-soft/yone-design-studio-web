@@ -1,0 +1,128 @@
+[
+ {
+  "id": "d2",
+  "name": "워크북 청보라 (d2)",
+  "tokens": {
+   "color": {
+    "s1": "#667fb4",
+    "s2": "#cba56f",
+    "s3": "#bc736c",
+    "sel": "#00559f",
+    "pnum": "#af9d81",
+    "ink": "#231f20",
+    "mute": "#58595b",
+    "rule": "#b8b8b8",
+    "cream": "#f6f1e6",
+    "sky": "#e4eef6",
+    "white": "#ffffff"
+   },
+   "font": {
+    "body": "Noto Sans CJK KR",
+    "disp": "Elice DX Neolli",
+    "label": "Gmarket Sans",
+    "num": "URW DIN"
+   }
+  },
+  "variants": {},
+  "images": {},
+  "styles": {
+   "passage": {
+    "font": "$body",
+    "size": 8,
+    "leading": 13,
+    "color": "$ink",
+    "align": "justify"
+   },
+   "prompt": {
+    "font": "$disp",
+    "size": 8.5,
+    "color": "$ink"
+   },
+   "choices": {
+    "font": "$body",
+    "size": 8,
+    "leading": 12.5,
+    "color": "$ink"
+   },
+   "sentence": {
+    "font": "$body",
+    "size": 8,
+    "color": "$ink"
+   },
+   "kr": {
+    "font": "$body",
+    "size": 7,
+    "color": "$mute"
+   },
+   "no": {
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel"
+   }
+  }
+ },
+ {
+  "id": "mono",
+  "name": "흑백 출력용",
+  "tokens": {
+   "color": {
+    "s1": "#333333",
+    "s2": "#555555",
+    "s3": "#777777",
+    "sel": "#000000",
+    "pnum": "#666666",
+    "ink": "#000000",
+    "mute": "#555555",
+    "rule": "#999999",
+    "cream": "#f2f2f2",
+    "sky": "#ededed",
+    "white": "#ffffff"
+   },
+   "font": {
+    "body": "Noto Sans CJK KR",
+    "disp": "Noto Sans CJK KR",
+    "label": "Noto Sans CJK KR",
+    "num": "Noto Sans CJK KR"
+   }
+  },
+  "variants": {
+   "gram_ox": "v2"
+  },
+  "images": {},
+  "styles": {
+   "passage": {
+    "font": "$body",
+    "size": 8,
+    "leading": 13,
+    "color": "$ink",
+    "align": "justify"
+   },
+   "prompt": {
+    "font": "$disp",
+    "size": 8.5,
+    "color": "$ink"
+   },
+   "choices": {
+    "font": "$body",
+    "size": 8,
+    "leading": 12.5,
+    "color": "$ink"
+   },
+   "sentence": {
+    "font": "$body",
+    "size": 8,
+    "color": "$ink"
+   },
+   "kr": {
+    "font": "$body",
+    "size": 7,
+    "color": "$mute"
+   },
+   "no": {
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel"
+   }
+  }
+ }
+]

@@ -1,0 +1,301 @@
+[
+ {
+  "id": "sheet",
+  "name": "한 칸 (이어짐)",
+  "mirror": true,
+  "zones": [
+   {
+    "id": "main",
+    "x": 20,
+    "y": 44,
+    "w": 170,
+    "h": 210,
+    "flow": "continue"
+   }
+  ],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "folio",
+    "x": 20,
+    "y": 278
+   },
+   {
+    "block": "running_head",
+    "x": 20,
+    "y": 14
+   },
+   {
+    "block": "pnum",
+    "x": 20.0,
+    "y": 44.0,
+    "w": 170
+   },
+   {
+    "block": "passage",
+    "x": 20.0,
+    "y": 52.5,
+    "w": 170
+   },
+   {
+    "block": "prompt",
+    "x": 20.0,
+    "y": 84.0,
+    "w": 170
+   },
+   {
+    "block": "choices",
+    "x": 20.0,
+    "y": 92.5,
+    "w": 170
+   },
+   {
+    "block": "gram_ox",
+    "x": 20.0,
+    "y": 116.0,
+    "w": 170
+   },
+   {
+    "block": "gram_ox",
+    "x": 20.0,
+    "y": 128.7,
+    "w": 170
+   },
+   {
+    "block": "gram_ox",
+    "x": 20.0,
+    "y": 141.4,
+    "w": 170
+   }
+  ]
+ },
+ {
+  "id": "pair",
+  "name": "상 지문 · 하 문제",
+  "mirror": true,
+  "zones": [
+   {
+    "id": "top",
+    "x": 20,
+    "y": 44,
+    "w": 170,
+    "h": 94,
+    "flow": "fixed",
+    "accepts": [
+     "pnum",
+     "passage"
+    ]
+   },
+   {
+    "id": "bottom",
+    "x": 20,
+    "y": 144,
+    "w": 170,
+    "h": 110,
+    "flow": "continue"
+   }
+  ],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "folio",
+    "x": 20,
+    "y": 278
+   },
+   {
+    "block": "running_head",
+    "x": 20,
+    "y": 14
+   },
+   {
+    "block": "pnum",
+    "x": 20.0,
+    "y": 44.0,
+    "w": 170
+   },
+   {
+    "block": "passage",
+    "x": 20.0,
+    "y": 52.5,
+    "w": 170
+   },
+   {
+    "block": "prompt",
+    "x": 20.0,
+    "y": 144.0,
+    "w": 170
+   },
+   {
+    "block": "choices",
+    "x": 20.0,
+    "y": 152.5,
+    "w": 170
+   },
+   {
+    "block": "blank",
+    "x": 20.0,
+    "y": 176.0,
+    "w": 170
+   },
+   {
+    "block": "blank",
+    "x": 20.0,
+    "y": 192.2,
+    "w": 170
+   },
+   {
+    "block": "ox",
+    "x": 20.0,
+    "y": 208.4,
+    "w": 170
+   },
+   {
+    "block": "ox",
+    "x": 20.0,
+    "y": 218.1,
+    "w": 170
+   }
+  ]
+ },
+ {
+  "id": "two_col",
+  "name": "2단 시험지",
+  "mirror": false,
+  "zones": [
+   {
+    "id": "main",
+    "x": 15,
+    "y": 24,
+    "w": 180,
+    "h": 250,
+    "flow": "columns",
+    "cols": 2,
+    "gutter": 8
+   }
+  ],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "folio",
+    "x": 15,
+    "y": 282
+   },
+   {
+    "block": "pnum",
+    "x": 15.0,
+    "y": 24.0,
+    "w": 86.0
+   },
+   {
+    "block": "passage",
+    "x": 15.0,
+    "y": 32.5,
+    "w": 86.0
+   },
+   {
+    "block": "prompt",
+    "x": 15.0,
+    "y": 78.7,
+    "w": 86.0
+   },
+   {
+    "block": "choices",
+    "x": 15.0,
+    "y": 87.2,
+    "w": 86.0
+   },
+   {
+    "block": "gram_ox",
+    "x": 15.0,
+    "y": 110.7,
+    "w": 86.0
+   },
+   {
+    "block": "gram_ox",
+    "x": 15.0,
+    "y": 131.6,
+    "w": 86.0
+   },
+   {
+    "block": "blank",
+    "x": 15.0,
+    "y": 152.5,
+    "w": 86.0
+   },
+   {
+    "block": "blank",
+    "x": 15.0,
+    "y": 172.8,
+    "w": 86.0
+   }
+  ]
+ },
+ {
+  "id": "divider",
+  "name": "간지",
+  "zones": [],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "divider",
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ {
+  "id": "cover",
+  "name": "표지",
+  "zones": [],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "cover",
+    "x": 0,
+    "y": 0
+   }
+  ]
+ },
+ {
+  "id": "answers",
+  "name": "정답지",
+  "mirror": true,
+  "zones": [],
+  "spec": "a4",
+  "items": [
+   {
+    "block": "folio",
+    "x": 20,
+    "y": 278
+   },
+   {
+    "block": "running_head",
+    "x": 20,
+    "y": 14
+   },
+   {
+    "atom": {
+     "t": "text",
+     "x": 0,
+     "y": 0,
+     "w": 170,
+     "h": 8,
+     "font": "$disp",
+     "size": 14,
+     "color": "$s1",
+     "text": "정답"
+    },
+    "x": 20,
+    "y": 30
+   },
+   {
+    "block": "answer_row",
+    "x": 20,
+    "y": 42,
+    "w": 170,
+    "flow": true,
+    "gap": 2
+   }
+  ]
+ }
+]

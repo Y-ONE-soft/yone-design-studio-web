@@ -1,0 +1,798 @@
+[
+ {
+  "id": "running_head",
+  "name": "러닝헤드",
+  "w": 170,
+  "h": 8,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 170,
+    "h": 7,
+    "fill": "$cream",
+    "radius": 1
+   },
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 2,
+    "h": 7,
+    "fill": "$s1"
+   },
+   {
+    "t": "text",
+    "x": 4,
+    "y": 1.6,
+    "w": 30,
+    "h": 4,
+    "font": "$label",
+    "size": 7,
+    "color": "$s1",
+    "bind": "sys.tag",
+    "text": "BUILD UP"
+   },
+   {
+    "t": "text",
+    "x": 34,
+    "y": 1.6,
+    "w": 60,
+    "h": 4,
+    "font": "$label",
+    "size": 7,
+    "color": "$ink",
+    "bind": "sys.section",
+    "text": "STEP 2"
+   },
+   {
+    "t": "text",
+    "x": 120,
+    "y": 1.8,
+    "w": 47,
+    "h": 4,
+    "font": "$label",
+    "size": 6,
+    "color": "$mute",
+    "align": "right",
+    "bind": "sys.title",
+    "text": "STEP BY STEP"
+   }
+  ]
+ },
+ {
+  "id": "folio",
+  "name": "쪽번호",
+  "w": 40,
+  "h": 5,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0,
+    "w": 12,
+    "h": 5,
+    "font": "$num",
+    "size": 9,
+    "color": "$s1",
+    "bind": "sys.page_no",
+    "text": "90"
+   },
+   {
+    "t": "text",
+    "x": 13,
+    "y": 1,
+    "w": 27,
+    "h": 4,
+    "font": "$label",
+    "size": 6,
+    "color": "$mute",
+    "bind": "sys.title",
+    "text": "STEP BY STEP"
+   }
+  ]
+ },
+ {
+  "id": "pnum_label",
+  "name": "지문 번호 라벨",
+  "w": 170,
+  "h": 7,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 14,
+    "h": 6,
+    "fill": "$pnum",
+    "radius": 3
+   },
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0.9,
+    "w": 14,
+    "h": 5,
+    "font": "$num",
+    "size": 9,
+    "color": "$white",
+    "align": "center",
+    "bind": "pnum",
+    "text": "20"
+   }
+  ]
+ },
+ {
+  "id": "passage_box",
+  "name": "지문 상자(크림)",
+  "w": 170,
+  "h": 30,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 170,
+    "h": 30,
+    "fill": "$cream",
+    "radius": 1.5
+   },
+   {
+    "t": "text",
+    "x": 5,
+    "y": 4,
+    "w": 160,
+    "h": 22,
+    "font": "$body",
+    "size": 8,
+    "leading": 13,
+    "color": "$ink",
+    "align": "justify",
+    "bind": "passage",
+    "style": "passage"
+   }
+  ]
+ },
+ {
+  "id": "passage_box_sky",
+  "name": "지문 상자(하늘·괘선)",
+  "w": 170,
+  "h": 30,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 170,
+    "h": 30,
+    "fill": "$sky",
+    "stroke": {
+     "w": 0.4,
+     "color": "$s1"
+    }
+   },
+   {
+    "t": "text",
+    "x": 5,
+    "y": 4,
+    "w": 160,
+    "h": 22,
+    "font": "$body",
+    "size": 8,
+    "leading": 13,
+    "color": "$ink",
+    "align": "justify",
+    "bind": "passage",
+    "style": "passage"
+   }
+  ]
+ },
+ {
+  "id": "prompt_row",
+  "name": "발문 줄",
+  "w": 170,
+  "h": 7,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0,
+    "w": 9,
+    "h": 6,
+    "font": "$num",
+    "size": 10,
+    "color": "$sel",
+    "bind": "no",
+    "text": "01"
+   },
+   {
+    "t": "text",
+    "x": 10,
+    "y": 0.8,
+    "w": 158,
+    "h": 5,
+    "font": "$disp",
+    "size": 8.5,
+    "color": "$ink",
+    "bind": "prompt",
+    "style": "prompt"
+   }
+  ]
+ },
+ {
+  "id": "choices_col",
+  "name": "선지 세로",
+  "w": 170,
+  "h": 22,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 10,
+    "y": 0,
+    "w": 158,
+    "h": 22,
+    "font": "$body",
+    "size": 8,
+    "leading": 12.5,
+    "color": "$ink",
+    "bind": "choices",
+    "style": "choices"
+   }
+  ]
+ },
+ {
+  "id": "gox_row",
+  "name": "어법 O/X 줄",
+  "w": 170,
+  "h": 9,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0,
+    "w": 8,
+    "h": 5,
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel",
+    "bind": "no",
+    "text": "1",
+    "style": "no"
+   },
+   {
+    "t": "text",
+    "x": 9,
+    "y": 0,
+    "w": 120,
+    "h": 5,
+    "font": "$body",
+    "size": 8,
+    "color": "$ink",
+    "bind": "sentence",
+    "style": "sentence"
+   },
+   {
+    "t": "ellipse",
+    "x": 133,
+    "y": 0,
+    "w": 5,
+    "h": 5,
+    "stroke": {
+     "w": 0.5,
+     "color": "$sel"
+    }
+   },
+   {
+    "t": "text",
+    "x": 133,
+    "y": 0.4,
+    "w": 5,
+    "h": 5,
+    "font": "$num",
+    "size": 7,
+    "color": "$sel",
+    "align": "center",
+    "text": "O"
+   },
+   {
+    "t": "ellipse",
+    "x": 140,
+    "y": 0,
+    "w": 5,
+    "h": 5,
+    "stroke": {
+     "w": 0.5,
+     "color": "$sel"
+    }
+   },
+   {
+    "t": "text",
+    "x": 140,
+    "y": 0.4,
+    "w": 5,
+    "h": 5,
+    "font": "$num",
+    "size": 7,
+    "color": "$sel",
+    "align": "center",
+    "text": "X"
+   },
+   {
+    "t": "line",
+    "x1": 9,
+    "y1": 8,
+    "x2": 170,
+    "y2": 8,
+    "stroke": {
+     "w": 0.3,
+     "color": "$rule",
+     "dash": [
+      1,
+      1
+     ]
+    }
+   }
+  ]
+ },
+ {
+  "id": "gox_row_box",
+  "name": "어법 O/X 줄 — 고침 칸 상자",
+  "w": 170,
+  "h": 14,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0,
+    "w": 8,
+    "h": 5,
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel",
+    "bind": "no",
+    "text": "1",
+    "style": "no"
+   },
+   {
+    "t": "text",
+    "x": 9,
+    "y": 0,
+    "w": 118,
+    "h": 5,
+    "font": "$body",
+    "size": 8,
+    "color": "$ink",
+    "bind": "sentence",
+    "style": "sentence"
+   },
+   {
+    "t": "rect",
+    "x": 131,
+    "y": 0,
+    "w": 6,
+    "h": 5,
+    "stroke": {
+     "w": 0.4,
+     "color": "$ink"
+    }
+   },
+   {
+    "t": "text",
+    "x": 131,
+    "y": 0.5,
+    "w": 6,
+    "h": 5,
+    "font": "$num",
+    "size": 7,
+    "color": "$ink",
+    "align": "center",
+    "text": "O"
+   },
+   {
+    "t": "rect",
+    "x": 139,
+    "y": 0,
+    "w": 6,
+    "h": 5,
+    "stroke": {
+     "w": 0.4,
+     "color": "$ink"
+    }
+   },
+   {
+    "t": "text",
+    "x": 139,
+    "y": 0.5,
+    "w": 6,
+    "h": 5,
+    "font": "$num",
+    "size": 7,
+    "color": "$ink",
+    "align": "center",
+    "text": "X"
+   },
+   {
+    "t": "rect",
+    "x": 9,
+    "y": 7,
+    "w": 161,
+    "h": 6,
+    "fill": "$cream",
+    "stroke": {
+     "w": 0.3,
+     "color": "$rule"
+    }
+   },
+   {
+    "t": "text",
+    "x": 11,
+    "y": 8.2,
+    "w": 30,
+    "h": 4,
+    "font": "$label",
+    "size": 6,
+    "color": "$mute",
+    "text": "고쳐 쓰기"
+   }
+  ]
+ },
+ {
+  "id": "blank_row",
+  "name": "빈칸 줄 + 해석",
+  "w": 170,
+  "h": 12,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0,
+    "w": 8,
+    "h": 5,
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel",
+    "bind": "no",
+    "text": "1",
+    "style": "no"
+   },
+   {
+    "t": "text",
+    "x": 9,
+    "y": 0,
+    "w": 160,
+    "h": 5,
+    "font": "$body",
+    "size": 8,
+    "color": "$ink",
+    "bind": "sentence",
+    "style": "sentence"
+   },
+   {
+    "t": "line",
+    "x1": 9,
+    "y1": 6.5,
+    "x2": 170,
+    "y2": 6.5,
+    "stroke": {
+     "w": 0.3,
+     "color": "$rule"
+    }
+   },
+   {
+    "t": "text",
+    "x": 9,
+    "y": 7.5,
+    "w": 160,
+    "h": 4,
+    "font": "$body",
+    "size": 7,
+    "color": "$mute",
+    "bind": "kr",
+    "style": "kr"
+   }
+  ]
+ },
+ {
+  "id": "ox_row",
+  "name": "본문 O/X 줄",
+  "w": 170,
+  "h": 7,
+  "atoms": [
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0,
+    "w": 8,
+    "h": 5,
+    "font": "$num",
+    "size": 8.5,
+    "color": "$sel",
+    "bind": "no",
+    "text": "1",
+    "style": "no"
+   },
+   {
+    "t": "text",
+    "x": 9,
+    "y": 0,
+    "w": 140,
+    "h": 5,
+    "font": "$body",
+    "size": 8,
+    "color": "$ink",
+    "bind": "sentence",
+    "style": "sentence"
+   },
+   {
+    "t": "rect",
+    "x": 152,
+    "y": 0,
+    "w": 7,
+    "h": 5,
+    "radius": 1,
+    "stroke": {
+     "w": 0.4,
+     "color": "$sel"
+    }
+   },
+   {
+    "t": "text",
+    "x": 152,
+    "y": 0.5,
+    "w": 7,
+    "h": 5,
+    "font": "$num",
+    "size": 7,
+    "color": "$sel",
+    "align": "center",
+    "text": "O"
+   },
+   {
+    "t": "rect",
+    "x": 161,
+    "y": 0,
+    "w": 7,
+    "h": 5,
+    "radius": 1,
+    "stroke": {
+     "w": 0.4,
+     "color": "$sel"
+    }
+   },
+   {
+    "t": "text",
+    "x": 161,
+    "y": 0.5,
+    "w": 7,
+    "h": 5,
+    "font": "$num",
+    "size": 7,
+    "color": "$sel",
+    "align": "center",
+    "text": "X"
+   }
+  ]
+ },
+ {
+  "id": "divider_art",
+  "name": "간지 그래픽",
+  "w": 210,
+  "h": 297,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 210,
+    "h": 297,
+    "fill": "$s1"
+   },
+   {
+    "t": "ellipse",
+    "x": 150,
+    "y": 40,
+    "w": 90,
+    "h": 90,
+    "fill": "$white"
+   },
+   {
+    "t": "text",
+    "x": 24,
+    "y": 110,
+    "w": 170,
+    "h": 30,
+    "font": "$disp",
+    "size": 56,
+    "leading": 60,
+    "color": "$white",
+    "bind": "sys.section",
+    "text": "STEP 2"
+   },
+   {
+    "t": "text",
+    "x": 25,
+    "y": 142,
+    "w": 170,
+    "h": 8,
+    "font": "$label",
+    "size": 14,
+    "color": "$white",
+    "bind": "sys.tag",
+    "text": "BUILD UP"
+   },
+   {
+    "t": "line",
+    "x1": 25,
+    "y1": 156,
+    "x2": 90,
+    "y2": 156,
+    "stroke": {
+     "w": 1.2,
+     "color": "$white"
+    }
+   },
+   {
+    "t": "text",
+    "x": 25,
+    "y": 262,
+    "w": 160,
+    "h": 6,
+    "font": "$label",
+    "size": 9,
+    "color": "$white",
+    "bind": "sys.title",
+    "text": "STEP BY STEP"
+   }
+  ]
+ },
+ {
+  "id": "cover_art",
+  "name": "표지",
+  "w": 210,
+  "h": 297,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 210,
+    "h": 297,
+    "fill": "$cream"
+   },
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 210,
+    "h": 120,
+    "fill": "$s1"
+   },
+   {
+    "t": "text",
+    "x": 22,
+    "y": 40,
+    "w": 166,
+    "h": 20,
+    "font": "$disp",
+    "size": 34,
+    "leading": 38,
+    "color": "$white",
+    "text": "STEP BY STEP"
+   },
+   {
+    "t": "text",
+    "x": 22,
+    "y": 62,
+    "w": 166,
+    "h": 8,
+    "font": "$label",
+    "size": 12,
+    "color": "$white",
+    "bind": "sys.title",
+    "text": "스텝바이스텝 워크북"
+   },
+   {
+    "t": "rect",
+    "x": 22,
+    "y": 150,
+    "w": 60,
+    "h": 1.2,
+    "fill": "$s1"
+   },
+   {
+    "t": "text",
+    "x": 22,
+    "y": 156,
+    "w": 166,
+    "h": 8,
+    "font": "$body",
+    "size": 10,
+    "color": "$ink",
+    "text": "고1 · 26년 3월 모의고사"
+   },
+   {
+    "t": "text",
+    "x": 22,
+    "y": 270,
+    "w": 166,
+    "h": 5,
+    "font": "$label",
+    "size": 7,
+    "color": "$mute",
+    "text": "Y.ONE STUDIO"
+   }
+  ]
+ },
+ {
+  "id": "answer_row",
+  "name": "정답 줄",
+  "w": 170,
+  "h": 7,
+  "atoms": [
+   {
+    "t": "rect",
+    "x": 0,
+    "y": 0,
+    "w": 9,
+    "h": 5.5,
+    "fill": "$pnum",
+    "radius": 2.75
+   },
+   {
+    "t": "text",
+    "x": 0,
+    "y": 0.4,
+    "w": 9,
+    "h": 5,
+    "font": "$num",
+    "size": 7.5,
+    "color": "$white",
+    "align": "center",
+    "bind": "no",
+    "text": "21"
+   },
+   {
+    "t": "text",
+    "x": 12,
+    "y": 0.2,
+    "w": 158,
+    "h": 5.5,
+    "font": "$body",
+    "size": 7.5,
+    "leading": 11,
+    "color": "$ink",
+    "style": "sentence",
+    "bind": "answers",
+    "text": [
+     {
+      "t": "발문 ",
+      "b": true
+     },
+     "1. ③   ",
+     {
+      "t": "빈칸 줄 ",
+      "b": true
+     },
+     "1. replaced  2. reversing   ",
+     {
+      "t": "본문 O/X 줄 ",
+      "b": true
+     },
+     "1. X  2. O"
+    ]
+   },
+   {
+    "t": "line",
+    "x1": 0,
+    "y1": 6.8,
+    "x2": 170,
+    "y2": 6.8,
+    "stroke": {
+     "w": 0.3,
+     "color": "$rule"
+    }
+   }
+  ]
+ }
+]

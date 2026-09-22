@@ -155,7 +155,8 @@
   .selbox .rot { position: absolute; left: 50%; top: -26px; margin-left: -6px; width: 12px; height: 12px; border: 2px solid var(--pp); border-radius: 50%; background: #fff; pointer-events: auto; cursor: grab; box-sizing: border-box; }
   .selbox .rot::before { content: ""; position: absolute; left: 4px; top: 10px; width: 2px; height: 10px; background: var(--pp); }
   .selbox .lb { top: -18px; left: auto; right: -2px; }
-  .selbox.multi .hd, .selbox.multi .rot { display: none; }
+  .selbox.rs .lb { top: auto; bottom: -26px; left: 50%; right: auto; transform: translateX(-50%); font-size: 12px; padding: 3px 9px; border-radius: 5px; }   /* 크기 조절 중엔 아래 가운데 크게 (피그마) */
+  .selbox.multi .rot { display: none; }
   /* 자 · 안내선 · 격자 · 여백 */
   .ruler { position: absolute; background: #fbfafd; color: #8b91a5; font-size: 9px; display: none; user-select: none; }
   .paper.rulers .ruler { display: block; }
@@ -539,7 +540,7 @@ function dragItems(e) {
       best = 1.2; let sy = 0; for (const y of ys) for (const v of [T, Mi, B]) { const d = Math.abs(v - y); if (d < best) { best = d; sy = y - v; gy = y; } }
       dy += sy;
     }
-    for (const o of st.o) { const it = page.items[o.i]; it.x = snap(o.x + dx); it.y = snap(o.y + dy); if (o.g) o.g.setAttribute("transform", `translate(${it.x},${it.y + (o.b ? o.b.dy : 0)})`); }
+    for (const o of st.o) { const it = page.items[o.i]; it.x = snap(o.x + dx); it.y = snap(o.y + dy); if (o.g) o.g.setAttribute("transform", `translate(${it.x},${it.y + (o.b ? o.b.dy : 0)})` + (it.s ? ` scale(${it.s})` : "")); }
     guide(gx, gy); selbox(); if (lead) $("#sellb").textContent = `${page.items[lead.i].x}, ${page.items[lead.i].y} mm`;
   };
   const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); guide(null, null); if (st.moved) { hist(st.before); save(); render(); side(); } };
@@ -560,27 +561,54 @@ $("#area").addEventListener("pointerdown", (e) => {
     select(ev.shiftKey ? [...new Set([...sels, ...ids])] : ids); };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 });
-// 손잡이 — 폭(E) · 높이(S, 원자만) · 둘 다(SE)
-// 손잡이 8방향 — 요소·그룹은 폭만(높이는 글이 정한다), 원자는 폭·높이. Shift = 비율 유지. 선은 길이만
+// 손잡이 8방향 (피그마·캔바처럼)
+//  · 원자 하나: 폭·높이. Shift = 비율 유지. 선은 길이만
+//  · 요소·그룹 하나: 옆 손잡이 = 폭만(글이 다시 감김) · 모서리·위아래 = 균일 배율(글자 크기까지 같이, it.s)
+//  · 여럿: 고른 것 전체 상자를 기준으로 전부 비례해서 옮기고 키운다
+function itemSize(i) { const it = page.items[i], a = it.atom, b = bboxOf(i) || {w: 10, h: 10, dy: 0}; const isLine = !!a && a.t === "line";
+  return {w: a ? (isLine ? Math.abs(a.x2 - a.x1) : (a.t === "ellipse" ? a.w : (it.w || a.w))) : b.w, h: a ? (isLine ? Math.abs(a.y2 - a.y1) : a.h) : b.h, b}; }
+function applyScale(i, o, fx, fy, ox, oy) {                       // 원점(ox,oy) 기준으로 fx·fy 배
+  const it = page.items[i], a = it.atom;
+  it.x = snap(ox + (o.x - ox) * fx); it.y = snap(oy + (o.y - oy) * fy);
+  if (a) {
+    if (a.t === "line") { a.x2 = a.x1 + Math.max(1, snap(o.w * fx)); a.y2 = a.y1 + snap(o.h * fy); if (o.dyl) a.y2 = a.y1 - Math.abs(a.y2 - a.y1); }
+    else { const w = Math.max(1, snap(o.w * fx)), h = Math.max(1, snap(o.h * fy)); a.w = w; a.h = h; if (it.w) it.w = w; }
+  } else {
+    if (fy !== 1 && Math.abs(fx - fy) < 1e-6) { it.s = Math.round((o.s || 1) * fx * 1000) / 1000; if (Math.abs(it.s - 1) < 0.002) delete it.s; }
+    else if (fx !== 1 && fy === 1) { it.w = Math.max(3, snap(o.w * fx / (o.s || 1))); }
+    else { it.s = Math.round((o.s || 1) * fy * 1000) / 1000; if (Math.abs(it.s - 1) < 0.002) delete it.s; }
+  }
+}
 document.querySelectorAll("#selbox [data-h]").forEach(hd => hd.addEventListener("pointerdown", (e) => {
   if (sel == null) return; e.stopPropagation(); e.preventDefault();
-  const it = page.items[sel], b = bboxOf(sel); if (!b) return; const k = hd.dataset.h; const a = it.atom;
-  const canH = !!a && a.t !== "line", isLine = !!a && a.t === "line";
-  const w0 = it.w || (a ? (isLine ? Math.abs(a.x2 - a.x1) : a.w) : b.w), h0 = a ? (isLine ? Math.abs(a.y2 - a.y1) : a.h) : b.h, x0 = it.x, y0 = it.y;
-  const st = {x: e.clientX, y: e.clientY}; const box = $("#selbox"); const before = JSON.stringify(page.items);
+  const k = hd.dataset.h; const ids = [...sels].filter(i => page.items[i] && !page.items[i].lock); if (!ids.length) return;
+  const one = ids.length === 1 ? page.items[ids[0]] : null; const a = one && one.atom; const isLine = !!a && a.t === "line";
+  const orig = ids.map(i => { const sz = itemSize(i); const it = page.items[i]; return {i, x: it.x, y: it.y, w: sz.w, h: sz.h, s: it.s || 1, dyl: it.atom && it.atom.t === "line" && it.atom.y2 < it.atom.y1}; });
+  const boxes = ids.map(i => bboxOf(i)).filter(Boolean); const B = {x: Math.min(...boxes.map(b => b.x)), y: Math.min(...boxes.map(b => b.y))};
+  B.w = Math.max(...boxes.map(b => b.x + b.w)) - B.x; B.h = Math.max(...boxes.map(b => b.y + b.h)) - B.y;
+  const st = {x: e.clientX, y: e.clientY}; const box = $("#selbox"); const before = JSON.stringify(page.items); box.classList.add("rs");
   const mv = (ev) => {
     let dx = (ev.clientX - st.x) / scale, dy = (ev.clientY - st.y) / scale;
-    let w = w0, h = h0, x = x0, y = y0;
-    if (k.includes("e")) w = w0 + dx; if (k.includes("w")) { w = w0 - dx; x = x0 + dx; }
-    if (canH) { if (k.includes("s")) h = h0 + dy; if (k.includes("n")) { h = h0 - dy; y = y0 + dy; } }
-    if (ev.shiftKey && k.length === 2 && canH) { const r = w0 / h0 || 1; if (Math.abs(dx) > Math.abs(dy)) h = w / r; else w = h * r; if (k.includes("n")) y = y0 + (h0 - h); if (k.includes("w")) x = x0 + (w0 - w); }
-    w = Math.max(3, snap(w)); h = Math.max(1, snap(h));
-    if (k.includes("e") || k.includes("w")) { it.w = w; it.x = snap(x); if (a && !isLine && a.t !== "ellipse") a.w = w; if (isLine) { a.x2 = a.x1 + w; } }
-    if (canH && (k.includes("n") || k.includes("s"))) { a.h = h; it.y = snap(y); }
-    Object.assign(box.style, {left: (it.x * scale - 2) + "px", top: (it.y * scale + b.dy * scale - 2) + "px", width: (w * scale + 4) + "px", height: ((canH ? h : b.h) * scale + 4) + "px"});
-    $("#sellb").textContent = `${it.x}, ${it.y} · ${w}×${canH ? h : Math.round(b.h * 10) / 10}mm`;
+    let w = B.w, h = B.h;
+    if (k.includes("e")) w = B.w + dx; if (k.includes("w")) w = B.w - dx;
+    if (k.includes("s")) h = B.h + dy; if (k.includes("n")) h = B.h - dy;
+    if (isLine && a) { h = B.h; }
+    w = Math.max(2, w); h = Math.max(1, h);
+    let fx = w / B.w, fy = h / B.h;
+    const side = k.length === 1, horiz = k === "e" || k === "w"; const dom = Math.abs(dx) >= Math.abs(dy) ? fx : fy;
+    if (isLine) fy = 1;                                                                 // 선: 길이만
+    else if (one && a) { if (side) { if (horiz) fy = 1; else fx = 1; } else if (ev.shiftKey) { fx = dom; fy = dom; } }   // 원자: 자유, Shift = 비율
+    else if (one) { if (side && horiz) { fy = 1; } else { const f = side ? fy : dom; fx = f; fy = f; } }              // 그룹: 옆 = 폭, 나머지 = 배율
+    else { if (side) { if (horiz) fy = 1; else fx = 1; } else { fx = dom; fy = dom; } }                              // 여럿: 옆 = 한 방향, 모서리 = 비례
+    const ox = k.includes("w") ? B.x + B.w : B.x, oy = k.includes("n") ? B.y + B.h : B.y;     // 반대편이 고정
+    for (const o of orig) applyScale(o.i, o, fx, fy, ox, oy);
+    for (const o of orig) { const g = gOf(o.i); const it = page.items[o.i]; if (!g) continue;
+      if (it.atom) g.style.display = "none"; else g.setAttribute("transform", `translate(${it.x},${it.y + ((bboxOf(o.i) || {}).dy || 0)})` + (it.s ? ` scale(${it.s})` : "")); }
+    const nx = ox + (B.x - ox) * fx, ny = oy + (B.y - oy) * fy, nw = B.w * fx, nh = B.h * fy;
+    Object.assign(box.style, {left: (nx * scale - 2) + "px", top: (ny * scale - 2) + "px", width: (nw * scale + 4) + "px", height: (nh * scale + 4) + "px"});
+    $("#sellb").textContent = `${Math.round(nw * 10) / 10} × ${Math.round(nh * 10) / 10} mm` + (one && !a && fx === fy && fx !== 1 ? ` · ${Math.round((page.items[ids[0]].s || 1) * 100)}%` : "");
   };
-  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); hist(before); save(); render(); side(); };
+  const up = () => { window.removeEventListener("pointermove", mv); window.removeEventListener("pointerup", up); box.classList.remove("rs"); hist(before); save(); render(); side(); };
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 }));
 // 회전 — 원자만 (요소는 안 편집에서 낱개로)
@@ -597,12 +625,14 @@ function selG() { return sel != null ? gOf(sel) : null; }
 function selbox() {
   const box = $("#selbox"), tools = $("#tools"), g = selG();
   if (!g || !page.items[sel]) { box.style.display = "none"; tools.style.display = "none"; return; }
-  const r = g.getBoundingClientRect(), pr = $("#paper").getBoundingClientRect(); const it = page.items[sel];
-  Object.assign(box.style, {display: "", left: (r.left - pr.left - 2) + "px", top: (r.top - pr.top - 2) + "px", width: (r.width + 4) + "px", height: (Math.max(r.height, 2) + 4) + "px"});
+  const pr = $("#paper").getBoundingClientRect(); const it = page.items[sel];
+  const rs = [...sels].map(i => gOf(i)).filter(Boolean).map(x => x.getBoundingClientRect());          // 여럿이면 전체를 감싸는 상자
+  const r = {left: Math.min(...rs.map(x => x.left)), top: Math.min(...rs.map(x => x.top))}; r.width = Math.max(...rs.map(x => x.right)) - r.left; r.height = Math.max(...rs.map(x => x.bottom)) - r.top;
+  Object.assign(box.style, {display: "block", left: (r.left - pr.left - 2) + "px", top: (r.top - pr.top - 2) + "px", width: (r.width + 4) + "px", height: (Math.max(r.height, 2) + 4) + "px"});
   box.classList.toggle("multi", sels.size > 1);
   $("#sellb").textContent = (sels.size > 1 ? `${sels.size}개 · ` : "") + nameOf(it) + (it.lock ? " 🔒" : "") + ` · ${Math.round(r.width / scale * 10) / 10}×${Math.round(r.height / scale * 10) / 10}mm`;
-  const canH = !!it.atom && it.atom.t !== "line";
-  box.querySelectorAll(".hd").forEach(h => { const k = h.dataset.h; h.style.display = (k.includes("n") || k.includes("s")) && !canH ? "none" : ""; });
+  const isLine = sels.size === 1 && !!it.atom && it.atom.t === "line";
+  box.querySelectorAll(".hd").forEach(h => { const k = h.dataset.h; h.style.display = isLine && k !== "e" && k !== "w" ? "none" : ""; });
   box.querySelector(".rot").style.display = it.atom ? "" : "none";
   $("#t-lock").textContent = it.lock ? "🔓" : "🔒";
   Object.assign(tools.style, {display: "flex", left: Math.max(0, r.left - pr.left) + "px", top: Math.max(0, r.top - pr.top - 32) + "px"});
@@ -1116,6 +1146,7 @@ function side() {
       h += `<div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label></div>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
+      ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="요소·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
       <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm sub" id="s-lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button><button class="btn sm danger" id="s-x">지우기</button></div>
       ${layersHtml()}`;
   } else {
@@ -1128,7 +1159,7 @@ function side() {
   }
   box.innerHTML = h;
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
-  box.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { hist(); const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else it[k] = +i.value; save(); render(); });
+  box.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { hist(); const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else if (k === "s") { const v = Math.max(10, +i.value) / 100; if (Math.abs(v - 1) < 0.002) delete it.s; else it.s = v; } else it[k] = +i.value; save(); render(); });
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
     if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
