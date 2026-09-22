@@ -11,6 +11,7 @@
     /api/units/decompose POST      {upload, page} | {upload(이미지)} | {prompt} → decomposed (+ 임시 옷 src_<id> 저장)
     /api/units/part_from POST      {dec, atoms:[번호], id, name} → 부품 저장
     /api/units/make POST           {prompt, skin} → 클로드가 그린 부품 + 블록 저장 (캔버스의 "설명으로 만들기")
+    /api/units/pdf?plan=|page=     PDF 저장 — 크로미움 인쇄 (core/units/pdf.py). ?skin= ?set= ?dl=1
 
 화면은 얇다 — 그리는 일은 전부 core/units/render, 분해는 core/units/decompose.
 """
@@ -306,6 +307,43 @@ def api_make():
     store.put("parts", part)
     store.put("blocks", block)
     return jsonify({"ok": True, "block": block, "part": part, "note": dec.get("note", "")})
+
+
+@bp.route("/api/units/pdf")
+def api_pdf():
+    """PDF 저장 — ?plan=<틀> (세트 전부) 또는 ?page=<지면> (견본 값·?set=). ?skin= 옷. 크로미움 인쇄."""
+    from core.units import pdf as _pdf
+    lib = store.library()
+    ctx = _ctx(lib, request.args.get("skin"))
+    plan_id, page_id = request.args.get("plan"), request.args.get("page")
+    if plan_id:
+        plan = store.by_id(lib["plans"]).get(plan_id)
+        if not plan:
+            abort(404)
+        spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
+        svgs = render.plan_svgs(ctx, plan, lib["sets"], lib)
+        title = plan.get("name") or plan_id
+    elif page_id:
+        pg = store.by_id(lib["pages"]).get(page_id)
+        if not pg:
+            abort(404)
+        spec = store.by_id(lib["specs"]).get(pg.get("spec") or "a4") or render.DEFAULT_SPEC
+        ss = store.get("sets", request.args["set"]) if request.args.get("set") else None
+        svgs = render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        title = pg.get("name") or page_id
+    else:
+        return jsonify({"error": "plan 또는 page"}), 400
+    if not svgs:
+        return jsonify({"error": "그릴 면이 없다"}), 400
+    out = os.path.join(store.udir(), "_pdf")
+    os.makedirs(out, exist_ok=True)
+    path = os.path.join(out, re.sub(r"[^a-z0-9_]", "_", (plan_id or page_id).lower()) + ".pdf")
+    try:
+        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title)
+    except Exception as e:
+        return jsonify({"error": f"{type(e).__name__}: {e}", "warnings": ctx.warnings}), 500
+    return send_file(path, mimetype="application/pdf", as_attachment=request.args.get("dl") == "1",
+                     download_name=f"{title}.pdf", max_age=0)
 
 
 @bp.route("/api/units/part_from_preview", methods=["POST"])
