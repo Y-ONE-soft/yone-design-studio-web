@@ -6,13 +6,14 @@ import os
 import pytest
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SEED = os.path.join(REPO, "tests", "fixtures", "units")
 
 
 @pytest.fixture
 def lib(tmp_path, monkeypatch):
-    """리포 시드를 임시 카탈로그로 복사해 읽는다 — 저장 시험이 리포 파일을 건드리지 않게."""
+    """시험용 시드(tests/fixtures/units — 리포 catalog/_units 는 로컬 :5099 의 라이브라 화면에서 바뀐다)를 임시 카탈로그로 복사해 읽는다."""
     import shutil
-    src = os.path.join(REPO, "catalog", "_units")
+    src = SEED
     dst = tmp_path / "catalog" / "_units"
     shutil.copytree(src, dst)
     from core.units import store
@@ -485,7 +486,7 @@ def test_seed_upgrade_adds_only_new(tmp_path):
     import shutil
     from core.units import seed
     live = tmp_path / "live"
-    shutil.copytree(os.path.join(REPO, "catalog", "_units"), live)
+    shutil.copytree(SEED, live)
     # 라이브를 "옛날" 상태로: 정답 줄·정답 지면·스타일·정답 구간 없음, 지면 이름 바꿈
     for kind, drop in (("parts", "answer_row"), ("blocks", "answer_row"), ("pages", "answers")):
         p = live / f"{kind}.json"
@@ -504,9 +505,25 @@ def test_seed_upgrade_adds_only_new(tmp_path):
     pl = json.load(open(live / "plans.json", encoding="utf-8"))
     pl[0]["sections"] = [s for s in pl[0]["sections"] if s["id"] != "answers"]
     json.dump(pl, open(live / "plans.json", "w", encoding="utf-8"), ensure_ascii=False)
-    ch = seed.upgrade(str(live), os.path.join(REPO, "catalog", "_units"))
+    ch = seed.upgrade(str(live), SEED)
     assert "parts/answer_row" in ch and "pages/answers" in ch and "plans/workbook_mini.sections.answers" in ch
     assert any(c.startswith("skins/d2.styles.") for c in ch) and any(c.endswith(".style") for c in ch)
     pages = json.load(open(live / "pages.json", encoding="utf-8"))
     assert pages[0]["name"] == "내가 고친 이름" and any(p["id"] == "answers" for p in pages)      # 있는 건 그대로, 새것만
-    assert seed.upgrade(str(live), os.path.join(REPO, "catalog", "_units")) == []                 # 두 번째는 할 일 없음
+    assert seed.upgrade(str(live), SEED) == []                                                    # 두 번째는 할 일 없음
+
+
+def test_item_scale_renders_and_places(lib):
+    """요소 배율(item.s): 그룹 전체가 scale() 로 커지고, 자리 계산(아래 요소 밀기·넘침)도 배율 곱한 크기로."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = {"id": "t", "name": "t", "zones": [], "spec": "a4", "items": [
+        {"block": "prompt", "x": 20, "y": 40, "w": 100, "s": 2.0, "fields": {"no": 1, "prompt": "Q"}},
+        {"block": "prompt", "x": 20, "y": 48, "w": 100, "fields": {"no": 2, "prompt": "Q2"}}]}
+    pg["_canvas"] = True
+    svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)[0]["svg"]
+    assert 'transform="translate(20.000,40.000) scale(2.0000)"' in svg
+    placed = {p["fi"]: p for p in render.place_items(ctx, pg, 210.0, 297.0)}
+    assert placed[0]["w"] == 200 and placed[0]["h"] > placed[1]["h"] * 1.9        # 배율 곱한 크기 (자리·넘침 계산에 쓰인다)
+    assert placed[0]["h0"] == placed[1]["h0"] * 2 and placed[1]["dy"] == 0        # 배율은 설계 크기라 글이 자란 게 아니다 — 밀지 않는다
+    assert store.validate("pages", {k: v for k, v in pg.items() if not k.startswith("_")}) is None

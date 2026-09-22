@@ -637,6 +637,7 @@ def _stack_pages(ctx, page, sets, spec):
                 it["fields"] = b.get("fields") or {}
                 it.pop("flow", None)
                 _f, _p, _w, h = _item_frag(ctx, it)
+                h *= float(it.get("s") or 1)
                 if cur is not None and y + h > limit + 0.01 and any(x.get("_stacked") for x in cur["items"]):
                     pages.append(cur)
                     cur = None
@@ -688,7 +689,7 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
                 _fill_items(pg, s, ctx)
                 pg["_canvas"] = True
             lab = label + (f" · {s.get('id', '')}" if s and not label.endswith(str(s.get("id", ""))) else "")
-            for k, fp in enumerate(flow.thread(ctx, pg, spec)):            # 넘치면 다음 면으로 이어 흐른다
+            for k, fp in enumerate([pg] if page.get("_canvas") else flow.thread(ctx, pg, spec)):   # 책에선 넘치면 다음 면으로. 캔버스는 한 면 + 경고
                 mirror = bool(fp.get("mirror")) and pno % 2 == 0
                 out.append({"svg": _page_wrap(ctx, fp, _zones(fp, W, mirror), [], W, H, pno, mirror),
                             "label": lab + (f" (이어서 {k + 1})" if k else ""), "page_no": pno})
@@ -762,7 +763,8 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         if pl["y"] + pl["h"] > H + 0.01:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
         x = W - it["x"] - pl["w"] if mirror else it["x"]
-        chrome.append(f'<g transform="translate({x:.3f},{pl["y"]:.3f})" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{pl["frag"]}</g>')
+        tf = f"translate({x:.3f},{pl['y']:.3f})" + (f" scale({pl['s']:.4f})" if abs(pl["s"] - 1) > 1e-6 else "")
+        chrome.append(f'<g transform="{tf}" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{pl["frag"]}</g>')
     ctx.sys = old
     guides = "" if not zones or page.get("_noguides") else "".join(
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
@@ -805,7 +807,8 @@ def place_items(ctx, page, W, H, mirror=False):
         if frag is None:
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
             continue
-        placed.append({"fi": fi, "it": it, "frag": frag, "w": w, "h": h, "h0": float(part.get("h") or h), "fixed": is_fixed(ctx, it)})
+        sc = float(it.get("s") or 1)                                   # 균일 배율 — 자리 계산은 배율 곱한 크기로
+        placed.append({"fi": fi, "it": it, "frag": frag, "w": w * sc, "h": h * sc, "h0": float(part.get("h") or h) * sc, "s": sc, "fixed": is_fixed(ctx, it)})
     grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"]) for p in placed if p["h"] > p["h0"] + 0.01]
     for p in placed:
         it = p["it"]
@@ -833,7 +836,8 @@ def _item_frag(ctx, it, at=None):
     def origin(w):
         if at and ctx.print:
             W, H, mirror = at
-            ctx._at = ((W - float(it["x"]) - w) if mirror else float(it["x"]), float(it["y"]), W, H)
+            sc = float(it.get("s") or 1)                               # 도련 늘림은 배율 전 좌표계에서 — 면 크기를 배율로 나눠 넣는다
+            ctx._at = (((W - float(it["x"]) - w * sc) if mirror else float(it["x"])) / sc, float(it["y"]) / sc, W / sc, H / sc)
         else:
             ctx._at = None
     if it.get("atom"):

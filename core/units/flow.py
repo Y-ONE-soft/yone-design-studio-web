@@ -116,19 +116,25 @@ def thread(ctx, page, spec, max_pages=40):
     W, H = float(spec["w"]), float(spec["h"])
     limit = _limit(page, spec)
     out = []
+    stuck = set()                                    # 제자리에서 넘치는데 자를 수도 없는 요소 — 그대로 둔다
     cur = json.loads(json.dumps(page))
-    for _ in range(max_pages):
+    for _ in range(max_pages * 3):
         cur["_flowed"] = True
         placed = render.place_items(ctx, cur, W, H)
-        over = [p for p in placed if not p["fixed"] and p["y"] + p["h"] > limit + 0.01]
+        over = [p for p in placed if not p["fixed"] and p["y"] + p["h"] > limit + 0.01 and id(p["it"]) not in stuck]
         if not over:
             out.append(cur)
             return out
         first = min(over, key=lambda p: p["y"])
         it = first["it"]
+        if first["dy"] < 0.01 and not (it.get("block") and split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w"))):
+            # 밀린 것도 없이 제자리에서 넘치고 자를 수도 없다 — 다음 면에 놓아도 똑같다. 그대로 두고 알린다
+            ctx.warn(f"{page.get('id')}: 요소 {it.get('block') or it.get('part') or '원자'} 이 제자리에서 면 아래로 넘친다 ({first['y'] + first['h']:.0f}mm > {limit:.0f}mm) — 자리를 올릴 것")
+            stuck.add(id(it))
+            continue
         movers = {p["fi"] for p in placed if not p["fixed"] and p["y"] >= first["y"] - 0.01 and p["fi"] != first["fi"]}
         nxt = json.loads(json.dumps(cur))
-        split = split_fit(ctx, it, limit - first["y"], it.get("w")) if it.get("block") else None
+        split = split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w")) if it.get("block") else None
         items_now, items_next = [], []
         for fi, x in enumerate(cur.get("items") or []):
             fixed = is_fixed(ctx, x)

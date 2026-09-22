@@ -191,7 +191,7 @@
                   "items": {"type": "object", "required": ["x", "y"], "properties": {
                     "block": {"$ref": "#/definitions/id"}, "part": {"$ref": "#/definitions/id"},
                     "atom": {"$ref": "#/definitions/atom", "description": "낱개 원자(글상자·선·면·원·그림). 원점은 0,0 — 자리는 x,y"},
-                    "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm", "description": "폭 — 없으면 부품 폭"},
+                    "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm", "description": "폭 — 없으면 부품 폭"}, "s": {"type": "number", "exclusiveMinimum": 0, "description": "균일 확대·축소 배율 — 요소·그룹 전체(글자 크기까지)를 모서리 손잡이로 키우고 줄일 때. 없으면 1. 폭(w)에 맞춘 뒤 곱한다"},
                     "fields": {"type": "object", "description": "이 자리의 견본 값(선택)"},
                     "lock": {"type": "boolean", "description": "잠금 — 캔버스에서 못 고른다"}, "hide": {"type": "boolean", "description": "숨김 — 안 그린다"}, "flow": {"type": "boolean", "description": "쌓기 자리 — 책에서 이 자리에 세트를 하나씩 아래로 쌓고, 면이 차면 다음 면에 이어 쌓는다(정답지·어휘 목록). 한 면에 한 세트가 아니다"}, "gap": {"$ref": "#/definitions/mm", "description": "쌓기 간격(flow). 없으면 2"}}}},
         "guides": {"type": "object", "description": "캔버스 안내선(mm)", "properties": {"v": {"type": "array", "items": {"$ref": "#/definitions/mm"}}, "h": {"type": "array", "items": {"$ref": "#/definitions/mm"}}}},
