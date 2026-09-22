@@ -478,3 +478,35 @@ def test_print_mode_bleed_marks_and_gray_map(lib):
     assert 'viewBox="0 0 210.000 297.000"' in plain and "-3.000" not in plain           # 화면용은 그대로
     g = pdf.gray_map_of(skin)
     assert g["#231f20"] == 1.0 and g["#ffffff"] == 0.0 and 0.2 < g["#b8b8b8"] < 0.35 and "#667fb4" not in g
+
+
+def test_seed_upgrade_adds_only_new(tmp_path):
+    """시드 보태기: 라이브에 없는 항목·스타일·구간만 더하고, 있는 것은 손대지 않는다."""
+    import shutil
+    from core.units import seed
+    live = tmp_path / "live"
+    shutil.copytree(os.path.join(REPO, "catalog", "_units"), live)
+    # 라이브를 "옛날" 상태로: 정답 줄·정답 지면·스타일·정답 구간 없음, 지면 이름 바꿈
+    for kind, drop in (("parts", "answer_row"), ("blocks", "answer_row"), ("pages", "answers")):
+        p = live / f"{kind}.json"
+        items = [x for x in json.load(open(p, encoding="utf-8")) if x["id"] != drop]
+        if kind == "pages":
+            items[0]["name"] = "내가 고친 이름"
+        if kind == "parts":
+            for x in items:
+                for a in x["atoms"]:
+                    a.pop("style", None)
+        json.dump(items, open(p, "w", encoding="utf-8"), ensure_ascii=False)
+    sk = json.load(open(live / "skins.json", encoding="utf-8"))
+    for x in sk:
+        x.pop("styles", None)
+    json.dump(sk, open(live / "skins.json", "w", encoding="utf-8"), ensure_ascii=False)
+    pl = json.load(open(live / "plans.json", encoding="utf-8"))
+    pl[0]["sections"] = [s for s in pl[0]["sections"] if s["id"] != "answers"]
+    json.dump(pl, open(live / "plans.json", "w", encoding="utf-8"), ensure_ascii=False)
+    ch = seed.upgrade(str(live), os.path.join(REPO, "catalog", "_units"))
+    assert "parts/answer_row" in ch and "pages/answers" in ch and "plans/workbook_mini.sections.answers" in ch
+    assert any(c.startswith("skins/d2.styles.") for c in ch) and any(c.endswith(".style") for c in ch)
+    pages = json.load(open(live / "pages.json", encoding="utf-8"))
+    assert pages[0]["name"] == "내가 고친 이름" and any(p["id"] == "answers" for p in pages)      # 있는 건 그대로, 새것만
+    assert seed.upgrade(str(live), os.path.join(REPO, "catalog", "_units")) == []                 # 두 번째는 할 일 없음
