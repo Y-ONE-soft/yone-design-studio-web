@@ -104,7 +104,7 @@
   .pg.dragover .th { border-color: var(--pp); border-left-width: 6px; }
   .addpg { flex: none; width: 84px; aspect-ratio: 210 / 297; border: 2px dashed #cfc8e6; border-radius: 6px; background: #fff; display: grid; place-items: center; font-size: 26px; color: var(--pp); cursor: pointer; position: relative; }
   .addpg:hover { border-color: var(--pp); background: var(--pp-bg); }
-  .menu { position: absolute; left: 0; bottom: calc(100% + 6px); width: 190px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); padding: 6px; z-index: 30; display: none; text-align: left; }
+  .menu { position: fixed; width: 190px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(30,20,60,.18); padding: 6px; z-index: 30; display: none; text-align: left; }
   .menu.on { display: block; }
   .menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 12.5px; color: #1f2330; }
   .menu button:hover { background: #f1eff8; }
@@ -308,7 +308,7 @@ async function drawRail() {
   });
   const add = document.createElement("div"); add.className = "addpg"; add.title = "지금 지면 뒤에 새 지면";
   add.innerHTML = `+<div class="menu"><button data-new="body">본문<small>머리말·쪽번호만 있는 빈 면</small></button><button data-new="blank">빈 면</button><button data-new="divider">간지<small>구간 앞 전면 색</small></button><button data-new="cover">표지</button><button data-new="dup">지금 지면 복제</button></div>`;
-  add.onclick = (e) => { e.stopPropagation(); add.querySelector(".menu").classList.toggle("on"); };
+  add.onclick = (e) => { e.stopPropagation(); const m = add.querySelector(".menu"), r = add.getBoundingClientRect(); m.style.left = Math.min(r.left, innerWidth - 200) + "px"; m.style.bottom = (innerHeight - r.top + 6) + "px"; m.classList.toggle("on"); };
   add.querySelectorAll("[data-new]").forEach(b => b.onclick = (e) => { e.stopPropagation(); add.querySelector(".menu").classList.remove("on"); addPage(b.dataset.new); });
   rail.appendChild(add);
   $("#cnt").textContent = page ? `${idx() + 1} / ${LIB.pages.length}` : `0 / ${LIB.pages.length}`;
