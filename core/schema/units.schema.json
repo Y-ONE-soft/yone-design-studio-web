@@ -228,7 +228,8 @@
       "description": "틀 — 구간 순서 + 앞뒤 면. 라인업 이름이 붙는 곳",
       "type": "object", "required": ["id", "name", "spec", "sections"],
       "properties": {
-        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"}, "spec": {"$ref": "#/definitions/id"},
+        "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "facing": {"type": "boolean", "description": "페이지 마주보기 — 켜면 2·3쪽이 한 장(펼침면)으로 보이고 1쪽은 오른쪽. 안 적으면 켠 것으로 본다"}, "spec": {"$ref": "#/definitions/id"},
         "front": {"type": "array", "items": {"$ref": "#/definitions/id"}},
         "sections": {"type": "array", "items": {"$ref": "#/definitions/section"}},
         "back": {"type": "array", "items": {"$ref": "#/definitions/id"}}

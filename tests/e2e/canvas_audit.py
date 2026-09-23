@@ -593,6 +593,22 @@ try:
                 f"끄면 한 줄 한 쪽(대지 {board1}mm) · 켜면 두 쪽(대지 {board2}mm) · 지면 폭 {w0}")
     step("N7 펼침 껐다 켜기 (끄면 대지가 돌아온다)", n7)
 
+    def n8():
+        js("select([])"); time.sleep(0.5)
+        b = center("#s-facing")
+        if not b: return (False, "문서 칸에 「페이지 마주보기」가 없다")
+        if not js("!!view.spread"): click(*center("#tg-spread")); time.sleep(1.0)
+        rows0 = js("[...document.querySelectorAll('#pages .prow')].map(r => r.querySelectorAll('.pslot').length)")
+        click(*b); ok = wait("plan.facing === false", 6); time.sleep(1.5)          # 문서 설정에서 끄기
+        rows1 = js("[...document.querySelectorAll('#pages .prow')].map(r => r.querySelectorAll('.pslot').length)")
+        off = js("!!document.querySelector('#tg-spread').disabled")
+        board = js("((document.querySelector('#svgwrap svg') || {}).dataset || {}).board || '0'")
+        js("select([])"); time.sleep(0.4); click(*center("#s-facing")); wait("plan.facing === true", 6); time.sleep(1.5)
+        rows2 = js("[...document.querySelectorAll('#pages .prow')].map(r => r.querySelectorAll('.pslot').length)")
+        return (ok and max(rows0) == 2 and max(rows1) == 1 and off and float(board) > 0 and max(rows2) == 2,
+                f"켬 {rows0} → 끔 {rows1}(펼침 단추 꺼짐={off}, 대지 {board}mm) → 다시 켬 {rows2}")
+    step("N8 문서 설정 「페이지 마주보기」 끄고 켜기 (문서에 저장)", n8)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)
