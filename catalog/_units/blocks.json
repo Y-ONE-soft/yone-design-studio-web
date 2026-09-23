@@ -253,5 +253,42 @@
     "part": "answer_row"
    }
   ]
+ },
+ {
+  "id": "p_3",
+  "name": "어휘 선택",
+  "source": "none",
+  "fields": {},
+  "variants": [
+   {
+    "id": "v1",
+    "name": "기본",
+    "part": "p_3"
+   }
+  ],
+  "kind": "어휘 선택",
+  "accepts": [
+   "vocab-choice"
+  ]
+ },
+ {
+  "id": "ai_1",
+  "name": "파란 제목 띠와 번호 원",
+  "source": "content",
+  "fields": {
+   "no": {
+    "type": "number"
+   },
+   "prompt": {
+    "type": "rich"
+   }
+  },
+  "variants": [
+   {
+    "id": "v1",
+    "name": "기본",
+    "part": "ai_1"
+   }
+  ]
  }
 ]

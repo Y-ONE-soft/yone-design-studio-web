@@ -1020,6 +1020,13 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
         q = queue.get(bid)
         if not q:
             q = by_kind.get(kind_of(bid))                        # 블록을 새로 만들었어도 유형 이름이 같으면 꽂힌다
+        if not q and ctx:                                        # 블록이 「받는 항목」에 적어 둔 이름들로
+            blk2 = ctx.blocks.get(bid) or {}
+            for acc in (blk2.get("accepts") or []):
+                key = str(acc).strip()
+                q = queue.get(key) or by_kind.get(key.lower())
+                if q:
+                    break
         if not q and ctx and ctx.map:                            # 그래도 없으면 문서의 원고 연결표를 본다
             for src, dst in (ctx.map or {}).items():
                 if dst != bid:

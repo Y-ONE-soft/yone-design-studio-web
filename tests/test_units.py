@@ -934,3 +934,27 @@ def test_manuscript_matches_block_by_name(lib):
            "items": [{"block": "p_8", "x": 20, "y": 40, "w": 170}]}
     svg2 = render.page_canvas_svgs(ctx2, pg2, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
     assert "원고 본문 한 줄" not in svg2
+
+
+def test_block_accepts_items(lib):
+    """블록의 「받는 항목」 — 블록 목록이 곧 매칭표. 원고 항목 이름이 accepts 에 있으면 꽂힌다."""
+    from core.units import render, store
+    seed = store.by_id(lib["blocks"])["gram_ox"]
+    mine = dict(seed, id="p_20", name="내 어법 줄", accepts=["grammar-ox", "gram_ox"])
+    lib2 = dict(lib, blocks=lib["blocks"] + [mine])
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
+    pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
+          "items": [{"block": "p_20", "x": 20, "y": 40, "w": 170}]}
+    st = {"kind": "passage", "id": "78", "blocks": [{"block": "grammar-ox", "fields": {"no": 1, "sentence": "He have finished it.", "answer": "X"}}]}
+    svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
+    assert "have finished" in svg                       # contents 의 key 로 꽂힌다
+    st2 = {"kind": "passage", "id": "79", "blocks": [{"block": "gram_ox", "fields": {"no": 2, "sentence": "She has lived here.", "answer": "O"}}]}
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
+    svg2 = render.page_canvas_svgs(ctx2, pg, render.DEFAULT_SPEC, sample_set=st2)[0]["svg"]
+    assert "has lived here" in svg2                     # 붙여넣은 원고(씨앗 블록 이름)로도 꽂힌다
+    other = dict(seed, id="p_21", name="딴것", accepts=["writing-order"])
+    lib3 = dict(lib, blocks=lib["blocks"] + [other])
+    ctx3 = render.Ctx(store.by_id(lib["skins"])["d2"], lib3, {})
+    pg3 = dict(pg, items=[{"block": "p_21", "x": 20, "y": 40, "w": 170}])
+    svg3 = render.page_canvas_svgs(ctx3, pg3, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
+    assert "have finished" not in svg3                  # 안 받는 항목은 안 꽂힌다

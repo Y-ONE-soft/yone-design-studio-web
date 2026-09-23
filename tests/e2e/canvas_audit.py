@@ -505,7 +505,7 @@ try:
         b = center("#t-up") if visible("#t-up") else None
         if not b: return (False, "★ 요소로 저장 버튼 안 보임")
         click(*b); time.sleep(1.0)
-        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-kind]')].find(x => x.dataset.kind !== '__new'); if (!d) return null; const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-item]')].find(x => !x.dataset.item.startsWith('__')); if (!d) return null; d.scrollIntoView({block: 'center'}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if k:
             click(*k)                                            # ★ 요소로 저장 → 유형 고르기 창에서 하나 고른다
         ok = wait(f"LIB.blocks.length === {nb + 1}", 12)

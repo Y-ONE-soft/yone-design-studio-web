@@ -1278,31 +1278,67 @@ async function exitEdit(saveIt) {
 }
 $("#edit-done").onclick = () => exitEdit(true); $("#edit-cancel").onclick = () => exitEdit(false);
 
-// 원고 유형 — 목록은 **라이브러리의 블록들**에서 나온다(블록을 만들면 유형도 는다 = 확장된다).
-// 고르면 그 이름·kind 로 블록이 만들어지고, 같은 유형의 원고가 저절로 꽂힌다.
-function kindList() {
-  const seen = new Map();
+// 원고 항목 씨앗 — contents(yos-workbook-v1)가 보내는 key 그대로. 여기에 원고·블록에서 본 것이 더해진다.
+const SEED_ITEMS = [
+  ["vocab-choice", "어휘 선택", "지문에 ⓐ/ⓑ 가 섞여 나온다"],
+  ["vocab-choice-2", "어휘 선택 2단계", ""],
+  ["content-ox", "본문 O/X", "번호 + 문장 + O/X"],
+  ["content-summary", "내용 종합", "(n) 물음 + ①~ 선지"],
+  ["sentence-order", "문장 배열", "(A)(B)(C) 보기"],
+  ["vocab-blank", "빈칸 어휘", "번호 + 빈칸 문장 + 정답(첫 글자 힌트)"],
+  ["grammar-choice", "어법 선택", "본문 안 a / b 고르기"],
+  ["grammar-ox", "어법 O/X", "번호 + 문장 + O/X"],
+  ["grammar-fix", "어법 고치기", "틀린 곳에 밑줄"],
+  ["grammar-blank", "빈칸 어법", "번호 + 빈칸 문장 + 정답"],
+  ["writing-order", "영작 배열", "한글 + ( 조각 / 조각 )"],
+  ["mock-exam", "실전 문제", "발문 + 선지"],
+  ["outline-text", "본문 정리", "본문 상자 + 정리 줄"],
+];
+
+// 고를 수 있는 원고 항목 = 씨앗 + 라이브러리 블록이 받는 것 + 지금 원고에 들어 있는 것
+function itemList() {
+  const m = new Map();
+  for (const [key, name, hint] of SEED_ITEMS) m.set(key, {key: key, name: name, hint: hint, fields: []});
   for (const b of LIB.blocks || []) {
     if (b.source !== "content") continue;
+    const fs = Object.keys(b.fields || {});
+    for (const acc of (b.accepts || [])) if (!m.has(acc)) m.set(acc, {key: acc, name: acc, hint: "", fields: fs});
     const k = (b.kind || b.name || b.id).trim();
-    if (!seen.has(k)) seen.set(k, {name: k, fields: Object.keys(b.fields || {})});
+    if (!m.has(k)) m.set(k, {key: k, name: b.name || k, hint: "지금 있는 요소", fields: fs});
+    else if (!m.get(k).fields.length) m.get(k).fields = fs;
   }
-  return [...seen.values()];
+  for (const st of LIB.sets || []) {
+    for (const b of st.blocks || []) {
+      const k = b.block;
+      const fs = Object.keys(b.fields || {});
+      if (!m.has(k)) m.set(k, {key: k, name: (byId("blocks")[k] || {}).name || k, hint: "원고에 있음", fields: fs});
+      else if (!m.get(k).fields.length) m.get(k).fields = fs;
+    }
+  }
+  return [...m.values()];
 }
 let _saveAfterKind = null;
 function panelNewBlock(hd, body) {
-  hd.innerHTML = `<div><b>어떤 유형인가?</b><div class="note">고르면 그 이름으로 저장된다. 같은 유형의 원고가 <b>저절로</b> 이 블록에 들어온다.</div></div>`;
   const binds = _saveAfterKind ? _saveAfterKind.binds : [];
-  const list = kindList();
-  body.innerHTML = `<div class="note" style="margin-bottom:8px">고른 요소의 원고 자리: <b>${binds.length ? esc(binds.join(", ")) : "없음(장식)"}</b></div>`
-    + list.map(k => `<div class="li" data-kind="${esc(k.name)}"><b>${esc(k.name)}</b><div class="ds">자리 ${esc(k.fields.join(", ")) || "없음"}</div></div>`).join("")
-    + `<div class="li" data-kind="__new" style="border-style:dashed"><b>＋ 새 유형 만들기</b><div class="ds">목록에 없으면 이름을 새로 짓는다</div></div>`;
-  body.querySelectorAll("[data-kind]").forEach(d => d.onclick = async () => {
-    let name = d.dataset.kind;
-    if (name === "__new") { name = prompt("새 유형 이름 (예: 어휘 선택 · 문장 배열)", ""); if (name == null || !name.trim()) return; name = name.trim(); }
+  hd.innerHTML = `<div><b>이 요소는 무엇을 받나?</b><div class="note">하나 고르면 이름·연결이 한 번에 정해진다. 그 원고가 오면 <b>저절로</b> 이 요소에 들어온다.</div></div>`;
+  const same = (a, b) => a.length && b.length && a.length === b.length && a.every(x => b.includes(x));
+  const list = itemList().sort((x, y) => (same(binds, y.fields) ? 1 : 0) - (same(binds, x.fields) ? 1 : 0));
+  body.innerHTML = `<div class="note" style="margin-bottom:8px">이 요소의 원고 자리: <b>${binds.length ? esc(binds.join(", ")) : "없음"}</b></div>`
+    + list.map(k => `<div class="li" data-item="${esc(k.key)}" data-name="${esc(k.name)}">
+        <b>${esc(k.name)}</b>${same(binds, k.fields) ? ` <span class="chip" style="border-color:var(--pp);color:var(--pp)">자리 맞음</span>` : ""}
+        <div class="ds">${esc(k.key !== k.name ? k.key + " · " : "")}${esc(k.fields.length ? "자리 " + k.fields.join(", ") : (k.hint || ""))}</div></div>`).join("")
+    + `<div class="li" data-item="__any" data-name="아무 원고나"><b>아무 원고나</b><div class="ds">자리 이름만 맞으면 받는다</div></div>`
+    + `<div class="li" data-item="__none" data-name="장식"><b>장식 — 원고 안 들어옴</b><div class="ds">틀·선·배경처럼 고정된 것</div></div>`
+    + `<div class="li" data-item="__new" data-name="" style="border-style:dashed"><b>＋ 새 항목 이름 적기</b><div class="ds">목록에 없는 원고 항목</div></div>`;
+  body.querySelectorAll("[data-item]").forEach(d => d.onclick = async () => {
+    let key = d.dataset.item, name = d.dataset.name;
+    if (key === "__new") { const v = prompt("원고 항목 이름 (원고가 쓰는 이름 그대로)", ""); if (v == null || !v.trim()) return; key = name = v.trim(); }
     closeSheet();
     const fn = _saveAfterKind && _saveAfterKind.go; _saveAfterKind = null;
-    if (fn) await fn(name);
+    // 받는 항목 = 고른 것 + **자리 조합이 같은 기존 항목들**(붙여넣은 원고는 씨앗 블록 이름으로 찍히므로)
+    const extra = (LIB.blocks || []).filter(b => b.source === "content" && same(binds, Object.keys(b.fields || {}))).map(b => b.id);
+    const accepts = (key === "__any" || key === "__none") ? [] : [...new Set([key, ...extra])];
+    if (fn) await fn(name || key, accepts);
   });
 }
 
@@ -1320,20 +1356,21 @@ function suggestName() {
 function saveAsElement() {
   // 고른 것 → 블록. 사용자는 **유형만 고르면 된다** — 이름·자리·매칭은 그걸로 정해진다.
   const binds = [...sels].map(i => page.items[i] && page.items[i].atom && page.items[i].atom.bind).filter(Boolean);
-  _saveAfterKind = {binds: binds, go: async (name) => {
+  _saveAfterKind = {binds: binds, go: async (name, accepts) => {
     if (sels.size > 1 || [...sels].every(i => page.items[i] && page.items[i].atom)) { await groupToPart(name); await new Promise(r => setTimeout(r, 150)); }
-    if (sel != null && page.items[sel] && page.items[sel].part) await partToBlock(sel, name, name);
-    $("#st").textContent = `「${name}」 요소로 저장 — 같은 유형 원고가 들어온다`;
+    if (sel != null && page.items[sel] && page.items[sel].part) await partToBlock(sel, name, name, accepts);
+    $("#st").textContent = `「${name}」 저장 — ${(accepts || []).length ? "그 원고가 오면 여기 들어온다" : "원고 안 들어오는 장식"}`;
   }};
   openSheet("newblock");
 }
-async function partToBlock(i, name, kind) {
+async function partToBlock(i, name, kind, accepts) {
   const it = page.items[i]; const part = byId("parts")[it.part]; if (!part) return;
   if (name == null) { name = prompt("요소 이름", part.name); if (name == null) return; }
   const fields = {}; for (const a of part.atoms) if (a.bind && !a.bind.startsWith("sys.")) fields[a.bind] = {type: a.bind === "no" ? "number" : (a.bind === "choices" ? "choices" : (a.bind === "answer" ? "answer" : "rich"))};
   let bid = part.id; if (byId("blocks")[bid]) { let n = 1; while (byId("blocks")[part.id + "_" + n]) n++; bid = part.id + "_" + n; }
   const block = {id: bid, name, source: Object.keys(fields).length ? "content" : "none", fields, variants: [{id: "v1", name: "기본", part: part.id}]};
   if (kind) block.kind = kind;                                 // 유형 = 원고와 붙는 이름
+  if (accepts && accepts.length) block.accepts = accepts;      // 받는 원고 항목 — 블록 목록이 곧 매칭표
   const j = await api("/api/units/blocks", block); if (j.error) { $("#st").textContent = j.error; return; }
   hist(); LIB.blocks.push(block); page.items[i] = {block: bid, x: it.x, y: it.y, w: it.w}; save(); render(); thumbsLoad(); side();
 }
