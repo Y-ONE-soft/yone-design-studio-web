@@ -140,6 +140,13 @@ def rich_html(v, ctx=None):
             st += f"font-family:{esc(ctx.font(v['font']) if ctx else v['font'])};"
         if v.get("size"):
             st += f"font-size:{float(v['size']) * PT:.3f}px;"
+        if v.get("bshift"):
+            st += f"position:relative;top:{-float(v['bshift']) * PT:.3f}px;"
+        if v.get("tracking"):
+            st += f"letter-spacing:{float(v['tracking']) / 1000.0:.4f}em;"
+        hs, vs = v.get("hscale"), v.get("vscale")
+        if hs or vs:
+            st += f"display:inline-block;transform:scale({float(hs or 100) / 100.0:.3f},{float(vs or 100) / 100.0:.3f});transform-origin:0 100%;"
         if st:
             t = f'<span style="{st}">' + t + "</span>"
         return t
@@ -198,8 +205,24 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
 
 
-def _text_html(a, html, h):
-    """글상자 안 HTML — 단락(<p>)마다 들여쓰기·앞뒤 간격, 상자엔 여백·세로 정렬·다단·자간. px = mm (viewBox 가 mm)."""
+_BULLET = {"disc": "disc", "circle": "circle", "square": "square", "decimal": "decimal",
+           "decimal-paren": "decimal", "upper-alpha": "upper-alpha", "lower-alpha": "lower-alpha"}
+
+
+def _rule_css(r, side, ctx=None):
+    """단락 경계선 — 인디자인 단락 경계선(위/아래)."""
+    if not r:
+        return ""
+    w = float(r.get("w") or 0.5) * PT
+    col = (ctx.color(r.get("color"), "#000000") if ctx else (r.get("color") or "#000000"))
+    off = float(r.get("offset") or 0)
+    css = f"border-{side}:{w:.3f}px solid {col};"
+    css += f"padding-{side}:{off:.3f}px;" if off else ""
+    return css
+
+
+def _text_html(a, html, h, ctx=None):
+    """글상자 안 HTML — 단락(<p>)마다 들여쓰기·앞뒤 간격·경계선·음영·글머리, 상자엔 여백·세로 정렬·다단·첫 기준선·장평."""
     ps = ""
     if a.get("indent"):
         ps += f"padding-left:{float(a['indent']):.3f}px;"
@@ -211,28 +234,161 @@ def _text_html(a, html, h):
         ps += f"margin-top:{float(a['space_before']):.3f}px;"
     if a.get("space_after"):
         ps += f"margin-bottom:{float(a['space_after']):.3f}px;"
+    ps += _rule_css(a.get("rule_above"), "top", ctx) + _rule_css(a.get("rule_below"), "bottom", ctx)
+    if a.get("shade"):
+        ps += f"background-color:{ctx.color(a['shade']) if ctx else a['shade']};"
+    bul = _BULLET.get(a.get("bullet") or "")
+    if bul:
+        ps += f"display:list-item;list-style-type:{bul};list-style-position:inside;"
     paras = (html or "").split("<br/>")
     inner = "".join(f'<p style="margin:0;{ps}">{x or "&#160;"}</p>' for x in paras)
     it, ir, ib, il = insets(a)
+    it += float(a.get("first_baseline") or 0)                    # 첫 기준선 — 상자 위에서 더 내린다
     cols = int(a.get("columns") or 1)
     box = f"height:{h:.3f}px;box-sizing:border-box;padding:{it:.3f}px {ir:.3f}px {ib:.3f}px {il:.3f}px;"
     if a.get("valign") in ("center", "bottom"):
         box += "display:flex;flex-direction:column;justify-content:" + ("center" if a["valign"] == "center" else "flex-end") + ";"
     if cols > 1:
         inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;column-fill:balance">{inner}</div>'
+    hs, vs = float(a.get("h_scale") or 100), float(a.get("v_scale") or 100)
+    if hs != 100 or vs != 100:                                   # 장평 — 글자는 늘리고 상자 폭은 지킨다
+        inner = (f'<div style="width:{float(a["w"]) * 100.0 / hs:.3f}px;transform:scale({hs / 100.0:.4f},{vs / 100.0:.4f});'
+                 f'transform-origin:0 0">{inner}</div>')
     return f'<div style="{box}">{inner}</div>'
 
 
 # ── 부품 ────────────────────────────────────────────────────────────
+def tint(hex_color, pct):
+    """색조 — 인디자인 Tint. 흰색과 섞는다. 100 = 그대로, 0 = 흰색."""
+    if pct is None:
+        return hex_color
+    t = max(0.0, min(float(pct), 100.0)) / 100.0
+    c = (hex_color or "#000000").lstrip("#")
+    if len(c) == 3:
+        c = "".join(ch * 2 for ch in c)
+    try:
+        r, g, b = (int(c[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return hex_color
+    return "#%02x%02x%02x" % tuple(round(v * t + 255 * (1 - t)) for v in (r, g, b))
+
+
 def _stroke(ctx, st):
     if not st:
         return 'stroke="none"'
-    s = f'stroke="{ctx.color(st.get("color"), "#000000")}" stroke-width="{(st.get("w") or 0.5) * PT:.3f}"'
+    s = f'stroke="{tint(ctx.color(st.get("color"), "#000000"), st.get("tint"))}" stroke-width="{(st.get("w") or 0.5) * PT:.3f}"'
     if st.get("dash"):
         s += ' stroke-dasharray="' + " ".join(f"{d * PT:.3f}" for d in st["dash"]) + '"'
     if st.get("cap") in ("round", "square"):
         s += f' stroke-linecap="{st["cap"]}"'
+    if st.get("join") in ("round", "bevel"):
+        s += f' stroke-linejoin="{st["join"]}"'
+    if st.get("miter"):
+        s += f' stroke-miterlimit="{float(st["miter"]):.2f}"'
     return s
+
+
+_ARROW_D = {                                        # 화살촉 — 0~10 상자 안, 오른쪽(10,5)이 촉 끝
+    "arrow": "M0 0 L10 5 L0 10 z",
+    "open": "M0 0 L10 5 L0 10",
+    "circle": "M5 0 A5 5 0 1 1 5 10 A5 5 0 1 1 5 0 z",
+    "square": "M0 0 L10 0 L10 10 L0 10 z",
+    "bar": "M8 0 L10 0 L10 10 L8 10 z",
+}
+
+
+def _arrows(ctx, st):
+    """선 시작·끝 화살촉 → (defs, 속성). 인디자인 시작/끝 모양."""
+    if not st:
+        return "", ""
+    defs, attrs = "", ""
+    col = tint(ctx.color(st.get("color"), "#000000"), st.get("tint"))
+    for side in ("start", "end"):
+        kind = st.get(side)
+        if not kind or kind == "none" or kind not in _ARROW_D:
+            continue
+        mid = ctx.uid()
+        fill = "none" if kind == "open" else col
+        defs += (f'<marker id="{mid}" viewBox="0 0 10 10" refX="{0 if kind == "open" else 9}" refY="5" markerWidth="5" markerHeight="5" '
+                 f'orient="auto-start-reverse"><path d="{_ARROW_D[kind]}" fill="{fill}" stroke="{col}" stroke-width="1.2"/></marker>')
+        attrs += f' marker-{side}="url(#{mid})"'
+    return defs, attrs
+
+
+def _fx_defs(ctx, a):
+    """효과(그림자·광선·페더·혼합 모드) → (defs, g 속성). 인디자인 효과 패널."""
+    fx = a.get("fx") or {}
+    if not fx:
+        return "", ""
+    attrs = ""
+    if fx.get("blend") and fx["blend"] != "normal":
+        attrs += f' style="mix-blend-mode:{fx["blend"]}"'
+    steps, last = [], "SourceGraphic"
+    sh, gl, fe = fx.get("shadow"), fx.get("glow"), fx.get("feather")
+    if sh:
+        col = ctx.color(sh.get("color"), "#000000")
+        op = 1.0 if sh.get("opacity") is None else float(sh["opacity"])
+        dx, dy, bl = float(sh.get("x") or 0), float(sh.get("y") or 0), float(sh.get("blur") or 0)
+        if sh.get("inner"):
+            steps.append(f'<feOffset in="SourceAlpha" dx="{dx:.3f}" dy="{dy:.3f}" result="so"/>'
+                         f'<feGaussianBlur in="so" stdDeviation="{max(bl, 0.01) / 2:.3f}" result="sb"/>'
+                         f'<feComposite in="SourceAlpha" in2="sb" operator="out" result="si"/>'
+                         f'<feFlood flood-color="{col}" flood-opacity="{op:.3f}" result="sc"/>'
+                         f'<feComposite in="sc" in2="si" operator="in" result="sin"/>'
+                         f'<feComposite in="sin" in2="{last}" operator="over" result="fx1"/>')
+            last = "fx1"
+        else:
+            steps.append(f'<feDropShadow in="{last}" dx="{dx:.3f}" dy="{dy:.3f}" stdDeviation="{max(bl, 0.01) / 2:.3f}" '
+                         f'flood-color="{col}" flood-opacity="{op:.3f}" result="fx1"/>')
+            last = "fx1"
+    if gl:
+        col = ctx.color(gl.get("color"), "#ffff00")
+        op = 1.0 if gl.get("opacity") is None else float(gl["opacity"])
+        bl = max(float(gl.get("blur") or 1), 0.01)
+        if gl.get("inner"):
+            steps.append(f'<feGaussianBlur in="SourceAlpha" stdDeviation="{bl / 2:.3f}" result="gb"/>'
+                         f'<feComposite in="SourceAlpha" in2="gb" operator="out" result="gi"/>'
+                         f'<feFlood flood-color="{col}" flood-opacity="{op:.3f}" result="gc"/>'
+                         f'<feComposite in="gc" in2="gi" operator="in" result="gin"/>'
+                         f'<feComposite in="gin" in2="{last}" operator="over" result="fx2"/>')
+        else:
+            steps.append(f'<feGaussianBlur in="SourceAlpha" stdDeviation="{bl / 2:.3f}" result="gb"/>'
+                         f'<feFlood flood-color="{col}" flood-opacity="{op:.3f}" result="gc"/>'
+                         f'<feComposite in="gc" in2="gb" operator="in" result="gg"/>'
+                         f'<feMerge result="fx2"><feMergeNode in="gg"/><feMergeNode in="{last}"/></feMerge>')
+        last = "fx2"
+    if fe:
+        steps.append(f'<feGaussianBlur in="SourceAlpha" stdDeviation="{max(float(fe), 0.01) / 2:.3f}" result="fm"/>'
+                     f'<feComposite in="{last}" in2="fm" operator="in" result="fx3"/>')
+        last = "fx3"
+    if not steps:
+        return "", attrs
+    fid = ctx.uid()
+    defs = f'<filter id="{fid}" x="-40%" y="-40%" width="180%" height="180%">{"".join(steps)}</filter>'
+    return defs, attrs + f' filter="url(#{fid})"'
+
+
+def _aligned_shape(ctx, a, el, bbox):
+    """획 정렬(안쪽·바깥쪽) — SVG 획은 늘 가운데라, 두 배 굵기로 그린 뒤 자르거나 가린다.
+    el(attrs) = 그 모양을 그 속성으로 만드는 함수."""
+    st = a.get("stroke") or {}
+    fill, gdefs = _fill(ctx, a)
+    align = st.get("align") or "center"
+    w = float(st.get("w") or 0)
+    adefs, aattrs = _arrows(ctx, st)
+    if not w or align == "center" or not st.get("color"):
+        return gdefs + adefs + el(f'fill="{fill}" {_stroke(ctx, st)}{aattrs}')
+    thick = _stroke(ctx, dict(st, w=w * 2))
+    cid = ctx.uid()
+    base = el(f'fill="{fill}" stroke="none"')
+    if align == "inside":
+        clip = f'<clipPath id="{cid}">{el("")}</clipPath>'
+        return gdefs + adefs + clip + base + el(f'fill="none" {thick}{aattrs} clip-path="url(#{cid})"')
+    x, y, bw, bh = bbox
+    pad = w * PT * 2 + 1
+    mask = (f'<mask id="{cid}"><rect x="{x - pad:.3f}" y="{y - pad:.3f}" width="{bw + 2 * pad:.3f}" height="{bh + 2 * pad:.3f}" fill="white"/>'
+            f'{el("fill=" + chr(34) + "black" + chr(34))}</mask>')
+    return gdefs + adefs + mask + el(f'fill="none" {thick}{aattrs} mask="url(#{cid})"') + base
 
 
 def path_d(d, x, y, w, h):
@@ -253,7 +409,7 @@ def _fill(ctx, a):
     """채움 → (fill 값, defs). gradient 가 있으면 <linearGradient>/<radialGradient> 를 만들어 url 로 쓴다."""
     g = a.get("gradient")
     if not g or not g.get("stops"):
-        return (ctx.color(a["fill"]) if a.get("fill") else "none"), ""
+        return (tint(ctx.color(a["fill"]), a.get("tint")) if a.get("fill") else "none"), ""
     gid = ctx.uid()
     stops = g["stops"]
     n = max(len(stops) - 1, 1)
@@ -285,18 +441,36 @@ def _rrect_path(x, y, w, h, r):
     return " ".join(d) + " Z"
 
 
-def _wrap_atom(a, svg, cx, cy):
-    """회전·불투명 — 원자 공통. 회전축은 원자의 가운데."""
+def _wrap_atom(a, svg, cx, cy, ctx=None):
+    """회전·뒤집기·기울이기·배율·불투명·효과 — 원자 공통. 축은 원자의 가운데(인디자인 기준점 가운데)."""
     rot = float(a.get("rotate") or 0)
     op = a.get("opacity")
-    if not rot and (op is None or float(op) >= 1):
-        return svg
-    attrs = ""
+    flip, skew, sc = a.get("flip"), a.get("skew"), a.get("scale")
+    fdefs, fattrs = _fx_defs(ctx, a) if ctx is not None else ("", "")
+    tr = []
     if rot:
-        attrs += f' transform="rotate({rot:.2f} {cx:.3f} {cy:.3f})"'
+        tr.append(f"rotate({rot:.2f} {cx:.3f} {cy:.3f})")
+    if flip or skew or sc:
+        tr.append(f"translate({cx:.3f} {cy:.3f})")
+        if flip:
+            tr.append(f"scale({-1 if 'h' in flip else 1} {-1 if 'v' in flip else 1})")
+        if sc and len(sc) == 2:
+            tr.append(f"scale({float(sc[0]) / 100.0:.4f} {float(sc[1]) / 100.0:.4f})")
+        if skew and len(skew) == 2:
+            if float(skew[0]):
+                tr.append(f"skewX({float(skew[0]):.2f})")
+            if float(skew[1]):
+                tr.append(f"skewY({float(skew[1]):.2f})")
+        tr.append(f"translate({-cx:.3f} {-cy:.3f})")
+    attrs = ""
+    if tr:
+        attrs += f' transform="{" ".join(tr)}"'
     if op is not None and float(op) < 1:
         attrs += f' opacity="{float(op):.3f}"'
-    return f"<g{attrs}>{svg}</g>"
+    attrs += fattrs
+    if not attrs and not fdefs:
+        return svg
+    return f"{fdefs}<g{attrs}>{svg}</g>"
 
 
 def _text_content(ctx, a, values, types):
@@ -358,6 +532,11 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         html, plain = _text_content(ctx, a, values, types)
         content[i] = html
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
+        if a.get("auto_size") is False:                          # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
+            heights[i] = a["h"]
+            if need > a["h"] + 0.01:
+                ctx.issue("warn", f"글이 상자보다 길다 — {plain[:20]}… (자동 크기 조정 꺼짐)")
+            continue
         heights[i] = max(a["h"], need)
         if need > a["h"] + 0.01:
             grown.append((i, a["y"], a["y"] + a["h"], a["x"], a["x"] + a["w"], need - a["h"]))
@@ -390,7 +569,7 @@ def _atom_svg(ctx, a, dy, h, html):
         cx, cy = (a["x1"] + a["x2"]) / 2, (a["y1"] + a["y2"]) / 2 + dy
     else:
         cx, cy = a["x"] + a["w"] / 2, a["y"] + dy + h / 2
-    return _wrap_atom(a, svg, cx, cy)
+    return _wrap_atom(a, svg, cx, cy, ctx)
 
 
 def _bleed_box(ctx, x, y, w, h):
@@ -442,32 +621,41 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                  f"overflow:hidden;word-break:break-word;white-space:normal")
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
+        if a.get("kerning") == "none":
+            style += ";font-kerning:none"
+        if a.get("baseline"):
+            style += f";position:relative;top:{-float(a['baseline']) * PT:.3f}px"
         if a.get("b"):
             style += ";font-weight:700"
         if a.get("i"):
             style += ";font-style:italic"
+        if a.get("tab"):
+            style = style.replace("white-space:normal", "white-space:pre-wrap") + f";tab-size:{float(a['tab']):.3f}px"
         return (f'<foreignObject x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}">'
-                f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h)}</div></foreignObject>')
+                f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h, ctx)}</div></foreignObject>')
     if t == "line":
-        return (f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
-                f'{_stroke(ctx, a.get("stroke"))}/>')
+        adefs, aattrs = _arrows(ctx, a.get("stroke"))
+        return (adefs + f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
+                f'{_stroke(ctx, a.get("stroke"))}{aattrs}/>')
     if t == "path":
-        fill, defs = _fill(ctx, a)
         rule = ' fill-rule="evenodd"' if a.get("evenodd") else ""
-        return (defs + f'<path d="{path_d(a.get("d"), a["x"], a["y"] + dy, a["w"], h)}" fill="{fill}"{rule} '
-                f'{_stroke(ctx, a.get("stroke"))} stroke-linejoin="round"/>')
+        d = path_d(a.get("d"), a["x"], a["y"] + dy, a["w"], h)
+        join = "" if (a.get("stroke") or {}).get("join") else ' stroke-linejoin="round"'
+        el = lambda at: f'<path d="{d}"{rule} {at}{join}/>'
+        return _aligned_shape(ctx, a, el, (a["x"], a["y"] + dy, a["w"], h))
     if t == "rect":
-        fill, defs = _fill(ctx, a)
         r = a.get("radius") or 0
         bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)
         if isinstance(r, (list, tuple)):
-            return (defs + f'<path d="{_rrect_path(bx, by, bw, bh, r)}" fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
-        return (defs + f'<rect x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" rx="{r}" '
-                f'fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
+            d = _rrect_path(bx, by, bw, bh, r)
+            el = lambda at: f'<path d="{d}" {at}/>'
+        else:
+            el = lambda at: f'<rect x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" rx="{r}" {at}/>'
+        return _aligned_shape(ctx, a, el, (bx, by, bw, bh))
     if t == "ellipse":
-        fill, defs = _fill(ctx, a)
-        return (defs + f'<ellipse cx="{a["x"] + a["w"] / 2:.3f}" cy="{a["y"] + dy + h / 2:.3f}" rx="{a["w"] / 2:.3f}" ry="{h / 2:.3f}" '
-                f'fill="{fill}" {_stroke(ctx, a.get("stroke"))}/>')
+        cx0, cy0, rx0, ry0 = a["x"] + a["w"] / 2, a["y"] + dy + h / 2, a["w"] / 2, h / 2
+        el = lambda at: f'<ellipse cx="{cx0:.3f}" cy="{cy0:.3f}" rx="{rx0:.3f}" ry="{ry0:.3f}" {at}/>'
+        return _aligned_shape(ctx, a, el, (a["x"], a["y"] + dy, a["w"], h))
     if t == "image":
         src = a.get("src") or ""
         if ctx.image(src):

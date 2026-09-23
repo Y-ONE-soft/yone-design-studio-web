@@ -388,6 +388,13 @@ def _stroke_of(d, stroke, width, tk):
     cap = cap[0] if isinstance(cap, (tuple, list)) and cap else cap
     if cap in (1, 2):
         st["cap"] = "round" if cap == 1 else "square"
+    join = d.get("lineJoin")
+    join = join[0] if isinstance(join, (tuple, list)) and join else join
+    if join in (1, 2):
+        st["join"] = "round" if join == 1 else "bevel"
+    so = d.get("stroke_opacity")
+    if so is not None and 0 <= float(so) < 1:
+        st["tint"] = round(float(so) * 100)          # PDF 의 획 투명도 → 색조(같은 색의 옅은 값)
     return st
 
 
