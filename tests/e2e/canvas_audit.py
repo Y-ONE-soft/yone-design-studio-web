@@ -466,9 +466,11 @@ try:
         return (ok and not visible(".sheet-bg.on"), "창 열고 색 → 캔버스 → 닫기")
     step("L1 브랜드 색 바꾸면 캔버스에 바로", l1)
     def l2():
-        click(*center("#s-set-edit")); time.sleep(0.6); click(*center("#set-paste")); time.sleep(0.3)
+        click(*center("#s-set-edit")); time.sleep(0.8)
+        if not wait("sheetKind === 'sets'", 5): return (False, "원고 창이 안 뜸")
+        js("document.querySelector('#set-paste').click()"); time.sleep(0.5)          # 창 안 단추는 눌러서(좌표는 목록 길이에 흔들린다)
         js("document.querySelector('#ms-text').value = '# 77\\nThis is a long enough English passage for the audit of the manuscript parser feature set.\\n윗글의 주제는?\\n① a ② b ③ c\\n답: ②'")
-        click(*center("#ms-go")); ok = wait("LIB.sets.some(s => s.id === '77') && curSet === '77'", 8)
+        js("document.querySelector('#ms-go').click()"); ok = wait("LIB.sets.some(s => s.id === '77') && curSet === '77'", 10)
         ok2 = wait("document.querySelector('#svgwrap svg').innerHTML.includes('audit of the manuscript')", 8)
         if visible(".sheet-bg.on"): click(*center("#sheet-x")); time.sleep(0.3)
         return (ok and ok2, f"set={ok} shown={ok2}")
