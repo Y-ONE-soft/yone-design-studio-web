@@ -192,6 +192,7 @@ def api_preview():
             if body.get("mode") == "canvas":            # 자유 배치 요소를 견본(또는 고른 세트) 값으로
                 ss = store.get("sets", body["set"]) if body.get("set") else None
                 ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))     # 대지(지면 둘레)
+                ctx.map = body.get("map") or {}                                     # 문서의 원고 연결표
                 out.extend(render.page_canvas_svgs(ctx, item, spec, sample_set=ss))
             else:
                 out.extend(render.page_svgs(ctx, item, sets, spec, 1, item.get("name", "")))

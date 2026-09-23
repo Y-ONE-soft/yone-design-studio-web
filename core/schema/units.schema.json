@@ -397,6 +397,9 @@
       "type": "object", "required": ["id", "name", "spec", "sections"],
       "properties": {
         "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "map": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"},
+                "description": "원고 연결표 — {원고 유형 이름 또는 원고 쪽 블록 id: 이 문서에서 쓸 블록 id}. 코드에 박아 두던 매칭표를 문서에 둔다",
+                "propertyNames": {"maxLength": 60}},
         "skin": {"$ref": "#/definitions/id", "description": "이 문서의 브랜드(옷) — 열 때 이 옷으로 그린다. 없으면 화면에서 고른 옷"},
         "facing": {"type": "boolean", "description": "페이지 마주보기 — 켜면 2·3쪽이 한 장(펼침면)으로 보이고 1쪽은 오른쪽. 안 적으면 켠 것으로 본다"}, "spec": {"$ref": "#/definitions/id"},
         "front": {"type": "array", "items": {"$ref": "#/definitions/id"}},
