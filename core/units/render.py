@@ -989,15 +989,23 @@ def load_page_env(ctx, page):
     return ctx
 
 
-def _fill_items(pg, sample_set, ctx=None):
+def _fill_items(pg, sample_set, ctx=None, canvas=False):
     """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
 
     세트에 없는 자리는 **비워 둔다**(_empty — 견본 글이 책에 들어가면 안 된다) + 검수 error.
     자리보다 원고가 많으면(줄 셋인데 자리 둘) 남는 원고는 안 실린다 + 검수 error.
     """
-    queue = {}
+    def kind_of(bid):
+        """그 블록의 원고 유형 이름 — kind 가 있으면 그것, 없으면 블록 이름(없으면 id)."""
+        b = (ctx.blocks.get(bid) if ctx else None) or {}
+        return str(b.get("kind") or b.get("name") or bid or "").strip().lower()
+
+    queue, by_kind = {}, {}
     for b in sample_set.get("blocks") or []:
-        queue.setdefault(b.get("block"), []).append(b.get("fields") or {})
+        bid = b.get("block")
+        fs = b.get("fields") or {}
+        queue.setdefault(bid, []).append(fs)
+        by_kind.setdefault(kind_of(bid), []).append(fs)          # id 가 달라도 유형 이름이 같으면 붙는다
     total = {k: len(v) for k, v in queue.items()}
     filled = {}
     sid = sample_set.get("id", "")
@@ -1006,27 +1014,29 @@ def _fill_items(pg, sample_set, ctx=None):
         if not bid or it.get("hide") or it.get("fields"):
             continue
         blk = (ctx.blocks.get(bid) if ctx else None) or {}
-        if ctx and blk.get("source") != "content":
+        if ctx and not canvas and blk.get("source") != "content":
             continue
         q = queue.get(bid)
+        if not q:
+            q = by_kind.get(kind_of(bid))                        # 블록을 새로 만들었어도 유형 이름이 같으면 꽂힌다
         if q:
-            if ctx:
+            if ctx and not canvas:
                 it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
             else:
                 it["fields"] = q.pop(0) if len(q) > 1 else q[0]
             filled[bid] = filled.get(bid, 0) + 1
-            if ctx:
+            if ctx and not canvas:
                 for f, d in (blk.get("fields") or {}).items():
                     if (d or {}).get("required") and (it["fields"].get(f) in (None, "", [])):
                         ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} 의 필수 자리 {f} 가 비었다")
-        elif ctx:
+        elif ctx and not canvas:
             it["fields"] = {}
             it["_empty"] = True
             if total.get(bid):
                 ctx.issue("warn", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리 {sum(1 for x in pg['items'] if x.get('block') == bid)}개 중 {total[bid]}개만 찼다 — 나머지는 빈 채")
             else:
                 ctx.issue("error", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리에 넣을 원고가 없다 — 비워 둔다")
-    if ctx:
+    if ctx and not canvas:
         for bid, n in total.items():
             k = filled.get(bid, 0)
             blk = ctx.blocks.get(bid) or {}
@@ -1312,7 +1322,7 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
     pg["_noguides"] = True                     # 캔버스는 자유 배치 — 칸 안내선은 안 보인다
     pg["_canvas"] = True                       # 콘텐츠 블록 자리(items)도 견본으로 그린다
     if sample_set:
-        _fill_items(pg, sample_set)
+        _fill_items(pg, sample_set, ctx=ctx, canvas=True)          # 캔버스 미리보기 — 검수 항목은 안 쌓되 유형 이름 짝짓기는 한다
     sets = []
     for z in pg.get("zones") or []:
         kind = "_canvas:" + z["id"]

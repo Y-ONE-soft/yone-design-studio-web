@@ -910,3 +910,27 @@ def test_justified_box_has_no_slack(tmp_path):
     a = [x for x in dec["atoms"] if x["t"] == "text"][0]
     assert a.get("align") == "justify"
     assert a["w"] - w * 25.4 / 72 < 1.0, a["w"]          # 잰 글 폭 + 0.3mm
+
+
+def test_manuscript_matches_block_by_name(lib):
+    """원고 ↔ 지면 짝짓기 — 블록 id 가 달라도 **유형 이름(kind·이름)** 이 같으면 꽂힌다.
+    (새로 만든 블록은 id 가 p_2 처럼 나오는데, 원고에는 씨앗 블록 id 가 박혀 있어 전엔 안 꽂혔다)"""
+    from core.units import render, store
+    lib2 = {k: list(v) for k, v in lib.items()}
+    seed = store.by_id(lib["blocks"])["passage"]
+    mine = dict(seed, id="p_9", name="지문 상자")                  # 같은 이름, 다른 id
+    lib2["blocks"] = lib["blocks"] + [mine]
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
+    pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
+          "items": [{"block": "p_9", "x": 20, "y": 40, "w": 170}]}
+    st = {"kind": "passage", "id": "77", "blocks": [{"block": "passage", "fields": {"passage": "원고 본문 한 줄"}}]}
+    svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
+    assert "원고 본문 한 줄" in svg
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})   # 이름이 다르면 안 꽂힌다(자리는 비고 검수에 뜬다)
+    other = dict(seed, id="p_8", name="전혀 다른 것")
+    lib3 = dict(lib2, blocks=lib["blocks"] + [other])
+    ctx2.blocks = {b["id"]: b for b in lib3["blocks"]}
+    pg2 = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
+           "items": [{"block": "p_8", "x": 20, "y": 40, "w": 170}]}
+    svg2 = render.page_canvas_svgs(ctx2, pg2, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
+    assert "원고 본문 한 줄" not in svg2
