@@ -49,6 +49,7 @@ class Ctx(object):
         self.board = 0.0        # 캔버스 대지(pasteboard) mm — 지면 둘레의 회색 자리. 지면 밖 요소도 여기 보인다
         self.layers = {}        # 지면 레이어 {id: {hide, lock, nonprint}} — 숨김·비인쇄를 한꺼번에
         self._item_y = 0.0      # 그리는 중인 요소의 면 안 세로 자리 (기준선 격자용)
+        self.map = {}           # 원고 연결표 {원고 유형·블록 id: 이 문서의 블록 id} — 문서(틀)의 map
         self.grid = None        # 기준선 격자 {start, step} — snap_baseline 인 글상자가 줄을 맞춘다
 
     def uid(self):
@@ -1019,6 +1020,13 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
         q = queue.get(bid)
         if not q:
             q = by_kind.get(kind_of(bid))                        # 블록을 새로 만들었어도 유형 이름이 같으면 꽂힌다
+        if not q and ctx and ctx.map:                            # 그래도 없으면 문서의 원고 연결표를 본다
+            for src, dst in (ctx.map or {}).items():
+                if dst != bid:
+                    continue
+                q = queue.get(src) or by_kind.get(str(src).strip().lower())
+                if q:
+                    break
         if q:
             if ctx and not canvas:
                 it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
@@ -1336,6 +1344,7 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
 
 def plan_svgs(ctx, plan, sets, lib):
     """틀 → 면 목록. 앞면 → 구간(간지 + 지면 반복) → 뒷면. 쪽번호는 이어진다."""
+    ctx.map = plan.get("map") or ctx.map or {}                 # 문서의 원고 연결표 — 책·PDF·검수에도 쓴다
     specs = _by_id(lib.get("specs"))
     pages = _by_id(lib.get("pages"))
     spec = specs.get(plan.get("spec")) or DEFAULT_SPEC

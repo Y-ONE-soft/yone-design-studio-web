@@ -504,7 +504,11 @@ try:
         js(f"select([{TXT}, {RECT}], {RECT})"); time.sleep(0.4); nb = js("LIB.blocks.length")
         b = center("#t-up") if visible("#t-up") else None
         if not b: return (False, "★ 요소로 저장 버튼 안 보임")
-        click(*b); ok = wait(f"LIB.blocks.length === {nb + 1}", 10)
+        click(*b); time.sleep(1.0)
+        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-kind]')].find(x => x.dataset.kind !== '__new'); if (!d) return null; const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        if k:
+            click(*k)                                            # ★ 요소로 저장 → 유형 고르기 창에서 하나 고른다
+        ok = wait(f"LIB.blocks.length === {nb + 1}", 12)
         return (ok and js("page.items.some(it => it.block && it.block.startsWith('x'))") or ok, f"blocks {nb}→{js('LIB.blocks.length')}")
     step("M1 둘 골라 ★ 요소로 저장 → 팔레트에 새 요소", m1)
     def m2():
@@ -686,7 +690,7 @@ try:
     WANT_SHAPE = ["w", "h", "fill", "stroke.color", "stroke.w", "stroke.align", "stroke.join", "stroke.tint", "dashpat",
                   "grad", "rotate", "opacity", "tint", "flip", "skewx", "skewy", "scalex", "scaley",
                   "fx.blend", "fx.shadow.x", "fx.shadow.y", "fx.shadow.blur", "fx.shadow.inner", "fx.glow.blur", "fx.glow.inner", "fx.feather"]
-    WANT_TEXT = ["text", "bind", "style", "font", "size", "color", "align", "leading", "tracking", "indent", "indent_first",
+    WANT_TEXT = ["text", "bindsel", "style", "font", "size", "color", "align", "leading", "tracking", "indent", "indent_first",
                  "indent_right", "space_before", "space_after", "inset", "valign", "columns", "gutter",
                  "bullet", "tab", "shade", "rule_above.w", "rule_above.color", "rule_above.offset", "rule_below.w",
                  "first_baseline", "baseline", "kerning", "h_scale", "v_scale", "auto_size"]
