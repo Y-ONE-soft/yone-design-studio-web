@@ -728,3 +728,67 @@ def test_run_case(lib):
     svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
                                "text": [{"t": "abc", "case": "upper"}]})
     assert "text-transform:uppercase" in svg
+
+
+def test_decompose_merges_lines_with_leading(tmp_path):
+    """실제 교재 행간(글자 크기의 2.5~3배)에서도 줄이 한 글상자로 이어지고, 잰 행간이 leading 으로 남는다.
+    (워크북 reference.pdf 4면: 고치기 전 글 원자 28개·행간 없음 → 고친 뒤 12개·행간 21.8pt)"""
+    import fitz
+    from core.units import decompose
+    p = tmp_path / "lines.pdf"
+    doc = fitz.open()
+    page = doc.new_page(width=300, height=200)
+    y, gap = 40, 21.0                                        # 8pt 글자에 21pt 행간 = 2.6배
+    for i in range(4):
+        page.insert_text((30, y + i * gap), "The quick brown fox jumps over", fontsize=8, fontname="helv")
+    doc.save(p)
+    doc.close()
+    dec = decompose.from_pdf(str(p), 1)
+    ts = [a for a in dec["atoms"] if a["t"] == "text"]
+    assert len(ts) == 1, f"줄이 안 이어졌다: {len(ts)}개"
+    assert ts[0].get("leading") and abs(ts[0]["leading"] - gap) < 1.5
+    assert ts[0].get("align") == "justify"                   # 줄 끝이 같은 자리 = 양끝맞춤
+    assert ts[0]["text"].count("\n") == 0 if isinstance(ts[0]["text"], str) else True
+
+
+def test_decompose_keeps_paragraph_breaks(tmp_path):
+    """줄 끝이 이른 줄 다음은 새 단락 — 이어 붙이되 단락은 지킨다."""
+    import fitz
+    from core.units import decompose
+    p = tmp_path / "para.pdf"
+    doc = fitz.open()
+    page = doc.new_page(width=300, height=200)
+    page.insert_text((30, 40), "The quick brown fox jumps over", fontsize=8, fontname="helv")
+    page.insert_text((30, 61), "short line.", fontsize=8, fontname="helv")          # 일찍 끝나는 줄
+    page.insert_text((30, 82), "The quick brown fox jumps over", fontsize=8, fontname="helv")
+    doc.save(p)
+    doc.close()
+    dec = decompose.from_pdf(str(p), 1)
+    ts = [a for a in dec["atoms"] if a["t"] == "text"]
+    assert len(ts) == 1
+    plain = ts[0]["text"] if isinstance(ts[0]["text"], str) else "".join(r if isinstance(r, str) else r.get("t", "") for r in ts[0]["text"])
+    assert "\n" in plain                                     # 단락은 살아 있다
+
+
+def test_decompose_recovers_tracking(tmp_path):
+    """자간이 넓은 줄 — PyMuPDF 가 글자마다 넣는 가짜 빈칸을 빼고 자간으로 돌려놓는다.
+    (워크북 40면 29번 줄: 고치기 전 'H e a l s o e n j o y s' → 고친 뒤 'He also enjoys' + tracking 164)"""
+    import fitz
+    from core.units import decompose
+    p = tmp_path / "track.pdf"
+    doc = fitz.open()
+    page = doc.new_page(width=300, height=120)
+    tw = fitz.TextWriter(page.rect)
+    font = fitz.Font("helv")
+    x = 30.0
+    for ch in "He also enjoys":                      # 글자마다 벌려 쓴다 = 인디자인 자간
+        tw.append((x, 60), ch, font=font, fontsize=10)
+        x += font.text_length(ch, 10) + 1.6
+    tw.write_text(page)
+    doc.save(p)
+    doc.close()
+    dec = decompose.from_pdf(str(p), 1)
+    ts = [a for a in dec["atoms"] if a["t"] == "text"]
+    plain = "".join(r if isinstance(r, str) else r.get("t", "") for r in ts[0]["text"]) if not isinstance(ts[0]["text"], str) else ts[0]["text"]
+    assert "He also enjoys" in plain.replace("  ", " "), plain
+    assert ts[0].get("tracking", 0) > 30             # 벌린 만큼 자간으로
