@@ -1,0 +1,18 @@
+[
+ {
+  "id": "passage",
+  "name": "지문"
+ },
+ {
+  "id": "question",
+  "name": "문항"
+ },
+ {
+  "id": "drill",
+  "name": "드릴"
+ },
+ {
+  "id": "chrome",
+  "name": "머리 · 꼬리 · 간지 · 표지"
+ }
+]

@@ -59,6 +59,21 @@
     "size": 8.5,
     "color": "$sel"
    }
+  },
+  "obj_styles": {
+   "감사 박스": {
+    "fill": "$cream",
+    "radius": 1,
+    "fx": {
+     "bevel": {
+      "size": 1,
+      "depth": 1.5
+     },
+     "satin": {
+      "blur": 1.5
+     }
+    }
+   }
   }
  },
  {
