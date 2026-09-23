@@ -767,6 +767,76 @@ try:
         return (not miss and all(drawn.values()), f"없는 칸 {miss or '없음'} · 그려짐 {drawn} · 원자 {at[:110]}")
     step("P4 글 — 드롭캡·단 사이 선·작은대문자·밑줄 옵션", p4)
 
+    def p5():
+        js("addAtom('rect', {x: 20, y: 120})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        want = ["ostyle", "layer", "fx.bevel.size", "fx.bevel.depth", "fx.bevel.angle", "fx.satin.blur"]
+        miss = [k for k in want if k not in have]
+        for k, v in [("fx.bevel.size", "1"), ("fx.bevel.depth", "1.5"), ("fx.satin.blur", "1.5")]:
+            setf(k, v)
+        time.sleep(1.8)
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        drawn = {"엠보스": "feSpecularLighting" in svg, "새틴": 'operator="xor"' in svg}
+        js("window.__promptv = '감사 박스'")
+        b = center("#s-ostyle-new")
+        if b:
+            click(*b); wait("!!(skin().obj_styles && skin().obj_styles['감사 박스'])", 8)
+        js("window.__promptv = null")
+        st = js("Object.keys(skin().obj_styles || {})")
+        ost = js("page.items[page.items.length - 1].atom.ostyle")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
+        return (not miss and all(drawn.values()) and "감사 박스" in st and ost == "감사 박스",
+                f"없는 칸 {miss or '없음'} · {drawn} · 개체 스타일 {st} · 요소에 붙음 {ost}")
+    step("P5 도형 — 개체 스타일 저장·엠보스·새틴", p5)
+
+    def p6():
+        js("select([])"); time.sleep(0.6)
+        need = [k for k in ("s-lay-new", "s-grid-start", "s-grid-step") if not js(f"!!document.querySelector('#{k}')")]
+        if need:
+            return (False, f"지면 칸 없음 {need}")
+        js("window.__promptv = '앞면'")
+        click(*center("#s-lay-new")); ok1 = wait("(page.layers || []).length >= 1", 8)
+        js("window.__promptv = null")
+        setf("nothing", "")                                              # (no-op)
+        js("(() => { const gs = document.querySelector('#s-grid-start'), gp = document.querySelector('#s-grid-step'); gs.value = 20; gs.dispatchEvent(new Event('change')); gp.value = 6; gp.dispatchEvent(new Event('change')); })()")
+        ok2 = wait("!!(page.baseline_grid && page.baseline_grid.step === 6)", 8)
+        js("addAtom('rect', {x: 20, y: 120})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); page.items[i].atom.fill = '$sel'; const el = document.querySelector('#side [data-a=\"layer\"]'); el.value = page.layers[0].id; el.dispatchEvent(new Event('change')); })()")
+        time.sleep(1.8)
+        col = js("skin().tokens.color.sel")
+        seen = js(f"document.querySelector('#svgwrap svg').innerHTML.includes({json.dumps(col)})")
+        js("select([])"); time.sleep(0.6)
+        js("(() => { const c = document.querySelector('#side [data-lay$=\":hide\"]'); c.checked = true; c.dispatchEvent(new Event('change')); })()")
+        time.sleep(2.0)
+        gone = not js(f"document.querySelector('#svgwrap svg').innerHTML.includes({json.dumps(col)})")
+        js("(() => { page.items.pop(); page.layers = []; delete page.baseline_grid; select([]); save(); render(); })()"); time.sleep(1.2)
+        return (ok1 and ok2 and seen and gone,
+                f"레이어 만들기={ok1} · 격자 20/6={ok2} · 넣으면 보임={seen} · 숨기면 사라짐={gone}")
+    step("P6 지면 — 레이어 만들기·숨기기 · 기준선 격자", p6)
+
+    def p7():
+        js("addAtom('text', {x: 20, y: 150})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        want = ["tabspec", "hyphenate", "justify_mode", "word_spacing", "snap_baseline", "clip"]
+        miss = [k for k in want if k not in have and k != "clip"]          # clip 은 그림 원자에만
+        setf("text", "가\t나\t다")                                        # 탭 자리를 보려면 글에 탭이 있어야 한다
+        for k, v in [("tabspec", "30 right ., 60 center"), ("justify_mode", "letter"), ("word_spacing", "120")]:
+            setf(k, v)
+        js("(() => { const h = document.querySelector('#side [data-a=\"hyphenate\"]'); h.checked = true; h.dispatchEvent(new Event('change')); })()")
+        time.sleep(1.8)
+        at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        drawn = {"탭 자리": "min-width:30.000px" in svg, "리더": "......" in svg, "하이픈": "hyphens:auto" in svg}
+        anc = js("(() => { const s = document.querySelector('#s-anc-part'); if (!s || !LIB.parts.length) return false; s.value = LIB.parts[0].id; document.querySelector('#s-anc-add').click(); return true; })()")
+        time.sleep(2.0)
+        has_anc = js("(() => { const a = page.items[page.items.length - 1].atom; return Array.isArray(a.text) && a.text.some(r => r && r.anc); })()")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
+        return (not miss and all(drawn.values()) and anc and has_anc,
+                f"없는 칸 {miss or '없음'} · {drawn} · 글 안 개체={has_anc} · 원자 {at[:90]}")
+    step("P7 글 — 탭 자리·리더·하이픈·양끝맞춤·글 안 개체", p7)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)

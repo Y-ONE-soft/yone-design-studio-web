@@ -792,3 +792,101 @@ def test_decompose_recovers_tracking(tmp_path):
     plain = "".join(r if isinstance(r, str) else r.get("t", "") for r in ts[0]["text"]) if not isinstance(ts[0]["text"], str) else ts[0]["text"]
     assert "He also enjoys" in plain.replace("  ", " "), plain
     assert ts[0].get("tracking", 0) > 30             # 벌린 만큼 자간으로
+
+
+# ── 마지막 8가지 (2026-09-23) ────────────────────────────────────────
+def test_object_style(lib):
+    """개체 스타일 — 옷의 obj_styles 를 깔고 원자 값이 이긴다(인디자인 개체 스타일)."""
+    from core.units import render, store
+    sk = dict(store.by_id(lib["skins"])["d2"])
+    sk["obj_styles"] = {"박스": {"fill": "$sel", "radius": 2, "stroke": {"w": 1, "color": "$ink"}}}
+    ctx = render.Ctx(sk, lib, {})
+    a = {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "ostyle": "박스"}
+    svg = render._atom_svg(ctx, a, 0, 10, "")
+    assert f'fill="{ctx.color("$sel")}"' in svg and 'rx="2"' in svg
+    a2 = dict(a, fill="$cream")                                    # 원자 값이 스타일을 이긴다
+    svg2 = render._atom_svg(ctx, a2, 0, 10, "")
+    assert f'fill="{ctx.color("$cream")}"' in svg2
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})     # 스타일이 없는 옷이면 알린다
+    render._atom_svg(ctx2, a, 0, 10, "")
+    assert any("개체 스타일 없음" in w for w in ctx2.warnings)
+
+
+def test_layers_hide_and_nonprint(lib):
+    """레이어 — 숨김은 화면에서, 비인쇄는 PDF 에서 뺀다."""
+    from core.units import render, store
+    mk = lambda: {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
+                  "layers": [{"id": "l1", "name": "앞"}, {"id": "l2", "name": "숨김", "hide": True},
+                             {"id": "l3", "name": "안 찍음", "nonprint": True}],
+                  "items": [{"atom": {"t": "rect", "x": 0, "y": 0, "w": 9, "h": 9, "fill": "$ink", "layer": "l1"}, "x": 10, "y": 10},
+                            {"atom": {"t": "rect", "x": 0, "y": 0, "w": 9, "h": 9, "fill": "$sel", "layer": "l2"}, "x": 30, "y": 10},
+                            {"atom": {"t": "rect", "x": 0, "y": 0, "w": 9, "h": 9, "fill": "$cream", "layer": "l3"}, "x": 50, "y": 10}]}
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    on = render.page_canvas_svgs(ctx, mk(), render.DEFAULT_SPEC)[0]["svg"]
+    assert ctx.color("$ink") in on and ctx.color("$sel") not in on and ctx.color("$cream") in on
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    ctx2.print = {"bleed": 0, "marks": False}
+    pr = render.page_canvas_svgs(ctx2, mk(), render.DEFAULT_SPEC)[0]["svg"]
+    assert ctx2.color("$cream") not in pr                          # 비인쇄 레이어는 PDF 에서 빠진다
+
+
+def test_baseline_grid_snap(lib):
+    """기준선 격자 — 행간을 격자 간격의 배수로, 첫 줄을 격자 줄에."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True, "baseline_grid": {"start": 20, "step": 6},
+          "items": [{"atom": {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                              "leading": 10, "text": "격자", "snap_baseline": True}, "x": 10, "y": 23}]}
+    svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)[0]["svg"]
+    assert "line-height:6.000px" in svg                            # 10pt(3.53mm) → 6mm 한 칸
+    assert "padding:3.000px" in svg                                # 23mm → 다음 격자 줄 26mm
+
+
+def test_tabs_with_align_and_leader(lib):
+    """탭 자리 — 자리·정렬·리더(인디자인 탭 패널)."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                               "text": "가\t나\t다", "tabs": [{"at": 30, "align": "right", "leader": "."},
+                                                              {"at": 60, "align": "center"}]})
+    assert "min-width:30.000px" in svg and "justify-content:flex-end" in svg
+    assert "min-width:30.000px" in svg and "justify-content:center" in svg
+    assert "......" in svg                                          # 리더
+
+
+def test_hyphen_justify_wordspacing(lib):
+    """하이픈 · 양끝맞춤 세부 · 낱말 사이."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                               "text": "hyphenation test", "hyphenate": True, "justify_mode": "letter", "word_spacing": 120})
+    assert "hyphens:auto" in svg and "text-justify:inter-character" in svg and "word-spacing:0.1200em" in svg
+
+
+def test_image_clipping_path(lib):
+    """그림 클리핑 패스 — 그 모양으로 오려 낸다."""
+    from core.units import render, store
+    sk = dict(store.by_id(lib["skins"])["d2"])
+    sk["images"] = dict(sk.get("images") or {}, pic="x.png")
+    ctx = render.Ctx(sk, lib, {})
+    a = {"t": "image", "x": 0, "y": 0, "w": 40, "h": 30, "src": "pic", "clip": "M0 0 L1 0 L0.5 1 Z"}
+    svg = render._atom_svg(ctx, a, 0, 30, "")
+    assert "<clipPath" in svg and "clip-path=" in svg and "L 20.000 30.000" in svg
+
+
+def test_anchored_object_in_text(lib):
+    """글 안에 고정한 개체 — 부품이 글줄 안에 들어간다."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    part = list(lib["parts"])[0]
+    a = {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+         "text": ["앞 ", {"t": "", "anc": {"part": part["id"], "w": 8, "h": 4}}, " 뒤"]}
+    svg = render._atom_svg(ctx, a, 0, 6, render.rich_html(a["text"], ctx))
+    assert "inline-block" in svg and "<svg" in svg and "앞" in svg and "뒤" in svg
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    render.rich_html([{"t": "", "anc": {"part": "없는부품"}}], ctx2)
+    assert any("글 안 개체의 부품 없음" in w for w in ctx2.warnings)
+
+
+def test_satin_and_bevel(lib):
+    """새틴 · 경사와 엠보스 — SVG 필터."""
+    svg, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "$sel",
+                               "fx": {"bevel": {"size": 1, "depth": 1.5, "angle": 120}, "satin": {"blur": 1, "distance": 1}}})
+    assert "feSpecularLighting" in svg and "feDistantLight" in svg
+    assert 'operator="xor"' in svg and "feFlood" in svg

@@ -1577,6 +1577,9 @@ function side() {
         <div class="m3"><label>드롭캡 줄<input type="number" data-a="drop_cap.lines" min="0" max="8" step="1" value="${(a.drop_cap || {}).lines || ""}" placeholder="없음" title="첫 글자를 몇 줄 높이로"></label><label>글자 수<input type="number" data-a="drop_cap.chars" min="1" max="4" step="1" value="${(a.drop_cap || {}).chars || 1}"></label><label>대소문자<select data-a="case"><option value="">그대로</option>${[["upper", "대문자"], ["lower", "소문자"], ["small", "작은대문자"]].map(([v, n]) => `<option value="${v}" ${a.case === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
         <div class="m3"><label>단 사이 선 pt<input type="number" data-a="column_rule.w" step="0.1" value="${(a.column_rule || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("column_rule.color", (a.column_rule || {}).color, true)}</label><label></label></div>
         <div class="m4"><label>밑줄 pt<input type="number" data-a="underline.w" step="0.1" value="${(a.underline || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("underline.color", (a.underline || {}).color, true)}</label><label>내림 pt<input type="number" data-a="underline.offset" step="0.5" value="${(a.underline || {}).offset || ""}"></label><label>모양<select data-a="underline.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.underline || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+        <div class="f"><span>탭 자리</span><input type="text" data-a="tabspec" value="${(a.tabs || []).map(t => [t.at, t.align || "left", t.leader || ""].filter(x => x !== "").join(" ")).join(", ")}" placeholder="예: 30 right ., 60 center — 자리mm 정렬 리더" title="인디자인 탭 패널. 글 안의 탭 문자가 이 자리에 선다"></div>
+        <div class="m4"><label>하이픈<input type="checkbox" data-a="hyphenate" ${a.hyphenate ? "checked" : ""} style="width:auto"></label><label>양끝맞춤<select data-a="justify_mode"><option value="">낱말</option><option value="letter" ${a.justify_mode === "letter" ? "selected" : ""}>글자까지</option></select></label><label>낱말 사이 ‰<input type="number" data-a="word_spacing" step="10" value="${a.word_spacing || ""}" placeholder="0"></label><label>격자 맞춤<input type="checkbox" data-a="snap_baseline" ${a.snap_baseline ? "checked" : ""} style="width:auto" title="지면의 기준선 격자에 글줄을 세운다"></label></div>
+        <div class="f"><span>글 안 개체</span><span style="display:flex;gap:4px"><select id="s-anc-part"><option value="">부품 고르기</option>${LIB.parts.map(pt => `<option value="${pt.id}">${esc(pt.name || pt.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-anc-add" title="글 끝에 그 부품을 끼운다(인디자인 앵커드 개체)">＋ 끼우기</button></span></div>
         <div class="m3"><label>취소선 pt<input type="number" data-a="strike.w" step="0.1" value="${(a.strike || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("strike.color", (a.strike || {}).color, true)}</label><label>모양<select data-a="strike.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.strike || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
 `;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
@@ -1591,10 +1594,13 @@ function side() {
         ${a.t === "rect" ? `<div class="m3"><label>모서리 모양<select data-a="corner">${[["round", "둥글게"], ["inverse", "역둥글게"], ["bevel", "경사"], ["inset", "빗면"], ["fancy", "팬시"]].map(([v, n]) => `<option value="${v}" ${(a.corner || "round") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>모서리 따로<input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위,오위,오아래,왼아래"></label><label></label></div>` : ""}
         ${strokeMore(a, a.t === "path")}`;
       else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림 키</span><input type="text" data-a="src" value="${esc(a.src || "")}"></div>
+        <div class="f"><span>클리핑 패스</span><input type="text" data-a="clip" value="${esc(a.clip || "")}" placeholder="M L C Q Z · 0~1 비율 — 이 모양으로 오려 낸다"></div>
         <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
 `;
-      h += `<h3>변형 — 인디자인 변형 패널</h3>
+      h += `<h3>개체 스타일 · 레이어</h3>
+        <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">(직접)</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">기본</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 요소의 채움·획·모서리·효과를 이름 붙여 옷에 저장한다">스타일로</button></label></div>
+        <h3>변형 — 인디자인 변형 패널</h3>
         <div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}" title="채움 색의 색조(인디자인 Tint)"></label></div>
         <div class="m3"><label>뒤집기<select data-a="flip"><option value="">없음</option>${[["h", "좌우"], ["v", "상하"], ["hv", "둘 다"]].map(([v, n]) => `<option value="${v}" ${a.flip === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>기울이기 가로 °<input type="number" data-a="skewx" step="1" value="${(a.skew || [0, 0])[0] || 0}"></label><label>세로 °<input type="number" data-a="skewy" step="1" value="${(a.skew || [0, 0])[1] || 0}"></label></div>
         <div class="m3"><label>배율 가로 %<input type="number" data-a="scalex" step="5" min="1" value="${(a.scale || [100, 100])[0] || 100}"></label><label>세로 %<input type="number" data-a="scaley" step="5" min="1" value="${(a.scale || [100, 100])[1] || 100}"></label><label>혼합<select data-a="fx.blend">${[["", "보통"], ["multiply", "곱하기"], ["screen", "스크린"], ["overlay", "오버레이"], ["darken", "어둡게"], ["lighten", "밝게"], ["difference", "차이"]].map(([v, n]) => `<option value="${v}" ${((a.fx || {}).blend || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
@@ -1603,7 +1609,8 @@ function side() {
         ${(a.fx || {}).shadow ? `<div class="m3"><label>그림자 색${colorSel("fx.shadow.color", ((a.fx || {}).shadow || {}).color, true)}</label><label>진하기 %<input type="number" data-a="fx.shadow.opacity" min="0" max="100" step="5" value="${Math.round((((a.fx || {}).shadow || {}).opacity ?? 1) * 100)}"></label><label></label></div>` : ""}
         <div class="m3"><label>기준점<select data-a="origin">${[["center", "가운데"], ["tl", "왼위"], ["tr", "오른위"], ["bl", "왼아래"], ["br", "오른아래"]].map(([v, n]) => `<option value="${v}" ${(a.origin || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>비인쇄<input type="checkbox" data-a="nonprint" ${a.nonprint ? "checked" : ""} style="width:auto" title="화면에만 보이고 PDF·인쇄엔 안 나온다"></label><label>중복인쇄<input type="checkbox" data-a="overprint" ${a.overprint ? "checked" : ""} style="width:auto" title="인쇄 분판에서 밑색을 파지 않는다(값만 보관)"></label></div>
         <div class="m3"><label>텍스트 감싸기<select data-a="wrap.mode"><option value="">안 함</option><option value="bbox" ${(a.wrap || {}).mode === "bbox" ? "selected" : ""}>상자 둘레로</option></select></label><label>띄우기 mm<input type="number" data-a="wrap.offset" step="0.5" value="${(a.wrap || {}).offset || ""}"></label><label>흐를 쪽<select data-a="wrap.side">${[["auto", "자동"], ["left", "왼쪽"], ["right", "오른쪽"]].map(([v, n]) => `<option value="${v}" ${((a.wrap || {}).side || "auto") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <div class="m4"><label>광선 번짐<input type="number" data-a="fx.glow.blur" step="0.5" value="${((a.fx || {}).glow || {}).blur ?? ""}" placeholder="없음"></label><label>색${colorSel("fx.glow.color", ((a.fx || {}).glow || {}).color, true)}</label><label>안쪽<input type="checkbox" data-a="fx.glow.inner" ${((a.fx || {}).glow || {}).inner ? "checked" : ""} style="width:auto"></label><label>페더 mm<input type="number" data-a="fx.feather" step="0.5" value="${(a.fx || {}).feather ?? ""}" placeholder="없음" title="가장자리를 흐리게"></label></div>`;
+        <div class="m4"><label>광선 번짐<input type="number" data-a="fx.glow.blur" step="0.5" value="${((a.fx || {}).glow || {}).blur ?? ""}" placeholder="없음"></label><label>색${colorSel("fx.glow.color", ((a.fx || {}).glow || {}).color, true)}</label><label>안쪽<input type="checkbox" data-a="fx.glow.inner" ${((a.fx || {}).glow || {}).inner ? "checked" : ""} style="width:auto"></label><label>페더 mm<input type="number" data-a="fx.feather" step="0.5" value="${(a.fx || {}).feather ?? ""}" placeholder="없음" title="가장자리를 흐리게"></label></div>
+        <div class="m4"><label>엠보스 크기<input type="number" data-a="fx.bevel.size" step="0.2" value="${((a.fx || {}).bevel || {}).size ?? ""}" placeholder="없음" title="경사와 엠보스"></label><label>깊이<input type="number" data-a="fx.bevel.depth" step="0.5" value="${((a.fx || {}).bevel || {}).depth ?? ""}"></label><label>빛 °<input type="number" data-a="fx.bevel.angle" step="15" value="${((a.fx || {}).bevel || {}).angle ?? ""}"></label><label>새틴 번짐<input type="number" data-a="fx.satin.blur" step="0.5" value="${((a.fx || {}).satin || {}).blur ?? ""}" placeholder="없음"></label></div>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
       ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="요소·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
@@ -1614,6 +1621,14 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
+      <div class="m3"><label>기준선 격자 시작 mm<input type="number" id="s-grid-start" step="0.5" value="${(page.baseline_grid || {}).start ?? ""}" placeholder="없음"></label><label>줄 간격 mm<input type="number" id="s-grid-step" step="0.5" value="${(page.baseline_grid || {}).step ?? ""}"></label><label></label></div>
+      <h3>레이어 <span class="note" style="display:inline">요소를 층으로 — 숨기기·잠금·비인쇄</span></h3>
+      ${(page.layers || []).map(l => `<div class="f"><span>${esc(l.name)}</span><span style="display:flex;gap:6px;align-items:center">
+        <label title="숨기기"><input type="checkbox" data-lay="${l.id}:hide" ${l.hide ? "checked" : ""} style="width:auto">숨김</label>
+        <label title="잠금"><input type="checkbox" data-lay="${l.id}:lock" ${l.lock ? "checked" : ""} style="width:auto">잠금</label>
+        <label title="인쇄 안 함"><input type="checkbox" data-lay="${l.id}:nonprint" ${l.nonprint ? "checked" : ""} style="width:auto">비인쇄</label>
+        <button class="btn sm sub" data-layx="${l.id}" title="레이어 지우기(요소는 기본 레이어로)">✕</button></span></div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="s-lay-new">＋ 레이어</button></div>
       <h3>문서</h3>
       <div class="f"><span>페이지 마주보기</span><input id="s-facing" type="checkbox" ${facing() ? "checked" : ""} title="인디자인 「파일 > 문서 설정 > 페이지 마주보기」 — 켜면 2·3쪽이 한 장(펼침면)이 되고 1쪽은 오른쪽에 선다. 문서마다 저장된다" style="width:auto"></div>
       <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
@@ -1660,6 +1675,19 @@ function side() {
       if (kill) { if (a[g2]) { const head = {wrap: "mode", drop_cap: "lines", column_rule: "w", underline: "w", strike: "w"}[g2];
           if (kk === head) delete a[g2]; else { delete a[g2][kk]; if (!Object.keys(a[g2]).length) delete a[g2]; } } }
       else { a[g2] = a[g2] || {}; a[g2][kk] = v; if (g2 === "drop_cap" && !a[g2].chars) a[g2].chars = 1; } }
+    else if (k === "tabspec") {                                  // "30 right ., 60 center" → tabs
+      const ts = String(v).split(",").map(x => x.trim()).filter(Boolean).map(x => {
+        const [at, al, ld] = x.split(/\s+/); const t = {at: +at};
+        if (["left", "center", "right", "decimal"].includes(al)) t.align = al;
+        if (ld) t.leader = ld.slice(0, 4);
+        return t; }).filter(t => t.at > 0);
+      if (ts.length) a.tabs = ts; else delete a.tabs; }
+    else if (k === "ostyle") { if (v) a.ostyle = v; else delete a.ostyle; }
+    else if (k === "layer") { if (v) a.layer = v; else delete a.layer; }
+    else if (k === "clip") { if (v) a.clip = v; else delete a.clip; }
+    else if (k === "hyphenate" || k === "snap_baseline") { if (v) a[k] = true; else delete a[k]; }
+    else if (k === "justify_mode") { if (v) a.justify_mode = v; else delete a.justify_mode; }
+    else if (k === "word_spacing") { if (v) a.word_spacing = +v; else delete a.word_spacing; }
     else if (k === "corner") { if (v && v !== "round") a.corner = v; else delete a.corner; }
     else if (k === "origin") { if (v && v !== "center") a.origin = v; else delete a.origin; }
     else if (k === "case") { if (v) a.case = v; else delete a.case; }
@@ -1698,6 +1726,47 @@ function side() {
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
+  // 레이어 — 만들고 숨기고 잠그고 지운다(요소는 안 지운다)
+  on("#s-lay-new", "click", () => {
+    const nm = prompt("레이어 이름", "레이어 " + ((page.layers || []).length + 1)); if (nm == null || !nm.trim()) return;
+    let n = 1; while ((page.layers || []).some(l => l.id === "l" + n)) n++;
+    page.layers = (page.layers || []).concat([{id: "l" + n, name: nm.trim()}]); save(); side();
+  });
+  box.querySelectorAll("[data-lay]").forEach(i => i.onchange = () => {
+    const [lid, key] = i.dataset.lay.split(":"); const l = (page.layers || []).find(x => x.id === lid); if (!l) return;
+    if (i.checked) l[key] = true; else delete l[key];
+    save(); render(); side();
+  });
+  box.querySelectorAll("[data-layx]").forEach(b => b.onclick = () => {
+    const lid = b.dataset.layx; const l = (page.layers || []).find(x => x.id === lid); if (!l) return;
+    if (!confirm(`레이어 「${l.name}」 을 지울까? 그 안의 요소는 기본 레이어로 간다(요소는 안 지운다).`)) return;
+    page.layers = (page.layers || []).filter(x => x.id !== lid);
+    page.items.forEach(it => { if (it.atom && it.atom.layer === lid) delete it.atom.layer; });
+    save(); render(); side();
+  });
+  // 기준선 격자
+  const grid = () => { const st = +($("#s-grid-start") || {}).value || 0, sp = +($("#s-grid-step") || {}).value || 0;
+    if (sp > 0) page.baseline_grid = {start: st, step: sp}; else delete page.baseline_grid; save(); render(); };
+  on("#s-grid-start", "change", grid); on("#s-grid-step", "change", grid);
+  // 개체 스타일로 저장 — 지금 요소의 모양만 뽑아 옷에 넣는다
+  on("#s-ostyle-new", "click", async () => {
+    const it = page.items[sel]; if (!it || !it.atom) return;
+    const nm = prompt("개체 스타일 이름", "스타일 " + (Object.keys(sk.obj_styles || {}).length + 1)); if (nm == null || !nm.trim()) return;
+    const keep = ["fill", "gradient", "stroke", "radius", "corner", "tint", "fx", "opacity"];
+    const st = {}; keep.forEach(k => { if (it.atom[k] !== undefined) st[k] = clone(it.atom[k]); });
+    sk.obj_styles = sk.obj_styles || {}; sk.obj_styles[nm.trim()] = st;
+    const j = await api("/api/units/skins", sk); if (j.error) { $("#st").textContent = j.error; return; }
+    it.atom.ostyle = nm.trim(); save(); render(); side(); $("#st").textContent = `개체 스타일 「${nm.trim()}」 저장`;
+  });
+  // 글 안에 개체 끼우기(앵커드)
+  on("#s-anc-add", "click", () => {
+    const pid = ($("#s-anc-part") || {}).value; if (!pid) { $("#st").textContent = "부품을 고르세요"; return; }
+    const it = page.items[sel]; const a2 = it && it.atom; if (!a2 || a2.t !== "text") return;
+    const pt = byId("parts")[pid] || {};
+    hist(); const rich = Array.isArray(a2.text) ? a2.text.slice() : [String(a2.text || "")];
+    rich.push({t: "", anc: {part: pid, w: pt.w || 20, h: pt.h || 10, align: "inline"}});
+    a2.text = rich; save(); render(); side(); $("#st").textContent = `글 안에 「${esc(pt.name || pid)}」 끼움`;
+  });
   on("#s-facing", "change", async (e) => {                        // 문서 설정 — 켜야 펼침면이 생긴다 (인디자인과 같게)
     if (!plan) return; plan.facing = e.target.checked; await savePlan();
     applyView(); layout(); drawPages(); layout(); render(); scrollToActive(); side();

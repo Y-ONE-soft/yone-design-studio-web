@@ -55,7 +55,11 @@
         "blend": {"enum": ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion"], "description": "혼합 모드"},
         "shadow": {"type": "object", "description": "그림자 — 거리·번짐은 mm", "properties": {"x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "blur": {"$ref": "#/definitions/mm"}, "color": {"$ref": "#/definitions/token"}, "opacity": {"$ref": "#/definitions/opacity"}, "inner": {"type": "boolean", "description": "내부 그림자"}}},
         "glow": {"type": "object", "description": "광선", "properties": {"blur": {"$ref": "#/definitions/mm"}, "color": {"$ref": "#/definitions/token"}, "opacity": {"$ref": "#/definitions/opacity"}, "inner": {"type": "boolean"}}},
-        "feather": {"$ref": "#/definitions/mm", "description": "기본 페더 — 가장자리를 이만큼 흐리게(mm)"}
+        "feather": {"$ref": "#/definitions/mm", "description": "기본 페더 — 가장자리를 이만큼 흐리게(mm)"},
+        "bevel": {"type": "object", "description": "경사와 엠보스 — 빛을 받아 도드라진다",
+                  "properties": {"size": {"$ref": "#/definitions/mm"}, "depth": {"type": "number", "minimum": 0, "description": "깊이(1 = 보통)"}, "angle": {"type": "number", "description": "빛 방향 °"}}},
+        "satin": {"type": "object", "description": "새틴 — 안쪽에 비단결 같은 그림자",
+                  "properties": {"blur": {"$ref": "#/definitions/mm"}, "distance": {"$ref": "#/definitions/mm"}, "color": {"$ref": "#/definitions/token"}, "opacity": {"$ref": "#/definitions/opacity"}}}
       }
     },
     "rotate": {"type": "number", "minimum": -360, "maximum": 360, "description": "회전 각도(°, 시계 방향, 원자의 가운데를 축으로). 없으면 0"},
@@ -82,7 +86,10 @@
         "hscale": {"type": "number", "minimum": 1, "description": "장평 가로 %"},
         "vscale": {"type": "number", "minimum": 1, "description": "장평 세로 %"},
         "tracking": {"type": "number", "description": "자간 1/1000 em"},
-        "case": {"enum": ["upper", "lower", "small"], "description": "대문자·소문자·작은대문자"}
+        "case": {"enum": ["upper", "lower", "small"], "description": "대문자·소문자·작은대문자"},
+        "anc": {"type": "object", "description": "글 안에 고정한 개체(인디자인 앵커드) — 글 흐름 안에 부품을 끼운다",
+                "required": ["part"], "properties": {"part": {"$ref": "#/definitions/id"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+                                                     "align": {"enum": ["inline", "left", "right"], "description": "inline = 글줄 안(기본) · left/right = 그 쪽으로 띄워 글이 감싼다"}}}
       }
     },
     "rich": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/run"}]}},
@@ -122,6 +129,15 @@
         "shade": {"$ref": "#/definitions/token", "description": "단락 음영 색(인디자인 단락 음영)"},
         "bullet": {"enum": ["disc", "circle", "square", "decimal", "decimal-paren", "upper-alpha", "lower-alpha"], "description": "글머리 기호·번호 매기기"},
         "tab": {"$ref": "#/definitions/mm", "description": "탭 간격 — 글 안의 탭 문자가 이 간격으로 선다"},
+        "tabs": {"type": "array", "description": "탭 자리 — 인디자인 탭 패널(자리·정렬·리더). 있으면 tab 보다 우선",
+                 "items": {"type": "object", "required": ["at"], "properties": {
+                     "at": {"$ref": "#/definitions/mm", "description": "글상자 왼쪽에서 mm"},
+                     "align": {"enum": ["left", "center", "right", "decimal"], "description": "없으면 left"},
+                     "leader": {"type": "string", "maxLength": 4, "description": "리더 — 빈 자리를 채울 글자(예: . 또는 ·)"}}}},
+        "hyphenate": {"type": "boolean", "description": "하이픈 넣기(인디자인 하이픈). 영어 본문에서 양끝맞춤이 벌어지는 걸 줄인다"},
+        "justify_mode": {"enum": ["word", "letter"], "description": "양끝맞춤을 낱말 사이로(기본) 또는 글자 사이까지"},
+        "word_spacing": {"type": "number", "description": "낱말 사이 더하기 — em 의 1/1000"},
+        "snap_baseline": {"type": "boolean", "description": "기준선 격자에 맞추기 — 지면의 baseline_grid 줄에 글줄을 세운다"},
         "first_baseline": {"$ref": "#/definitions/mm", "description": "첫 줄을 상자 위에서 이만큼 내린다(인디자인 첫 기준선)"},
         "auto_size": {"type": "boolean", "description": "글이 길면 상자가 아래로 늘어난다(기본 true). false 면 넘쳐도 상자 높이를 지킨다"},
         "h_scale": {"type": "number", "minimum": 1, "description": "장평 가로 % (인디자인 수평 비율). 없으면 100"},
@@ -141,6 +157,8 @@
         "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
         "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"},
         "origin": {"enum": ["center", "tl", "tr", "bl", "br"], "description": "변형 기준점(인디자인 기준점) — 없으면 가운데"},
+        "ostyle": {"type": "string", "description": "개체 스타일 이름 — 옷의 obj_styles 에서 채움·획·모서리·효과를 가져온다. 원자에 적힌 값이 우선(인디자인 개체 스타일)"},
+        "layer": {"$ref": "#/definitions/id", "description": "이 원자가 놓인 레이어 id (지면의 layers). 없으면 맨 아래 레이어"},
         "wrap": {"$ref": "#/definitions/wrap"},
         "nonprint": {"type": "boolean", "description": "비인쇄 — 화면에만 보이고 PDF·인쇄에는 안 나온다(인디자인 비인쇄)"},
         "overprint": {"type": "boolean", "description": "중복인쇄 — 인쇄 분판에서 밑색을 파지 않는다(값만 보관, 화면은 그대로)"}
@@ -159,6 +177,8 @@
         "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
         "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"},
         "origin": {"enum": ["center", "tl", "tr", "bl", "br"], "description": "변형 기준점(인디자인 기준점) — 없으면 가운데"},
+        "ostyle": {"type": "string", "description": "개체 스타일 이름 — 옷의 obj_styles 에서 채움·획·모서리·효과를 가져온다. 원자에 적힌 값이 우선(인디자인 개체 스타일)"},
+        "layer": {"$ref": "#/definitions/id", "description": "이 원자가 놓인 레이어 id (지면의 layers). 없으면 맨 아래 레이어"},
         "wrap": {"$ref": "#/definitions/wrap"},
         "nonprint": {"type": "boolean", "description": "비인쇄 — 화면에만 보이고 PDF·인쇄에는 안 나온다(인디자인 비인쇄)"},
         "overprint": {"type": "boolean", "description": "중복인쇄 — 인쇄 분판에서 밑색을 파지 않는다(값만 보관, 화면은 그대로)"}
@@ -178,6 +198,8 @@
         "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
         "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"},
         "origin": {"enum": ["center", "tl", "tr", "bl", "br"], "description": "변형 기준점(인디자인 기준점) — 없으면 가운데"},
+        "ostyle": {"type": "string", "description": "개체 스타일 이름 — 옷의 obj_styles 에서 채움·획·모서리·효과를 가져온다. 원자에 적힌 값이 우선(인디자인 개체 스타일)"},
+        "layer": {"$ref": "#/definitions/id", "description": "이 원자가 놓인 레이어 id (지면의 layers). 없으면 맨 아래 레이어"},
         "wrap": {"$ref": "#/definitions/wrap"},
         "nonprint": {"type": "boolean", "description": "비인쇄 — 화면에만 보이고 PDF·인쇄에는 안 나온다(인디자인 비인쇄)"},
         "overprint": {"type": "boolean", "description": "중복인쇄 — 인쇄 분판에서 밑색을 파지 않는다(값만 보관, 화면은 그대로)"}
@@ -196,6 +218,8 @@
         "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
         "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"},
         "origin": {"enum": ["center", "tl", "tr", "bl", "br"], "description": "변형 기준점(인디자인 기준점) — 없으면 가운데"},
+        "ostyle": {"type": "string", "description": "개체 스타일 이름 — 옷의 obj_styles 에서 채움·획·모서리·효과를 가져온다. 원자에 적힌 값이 우선(인디자인 개체 스타일)"},
+        "layer": {"$ref": "#/definitions/id", "description": "이 원자가 놓인 레이어 id (지면의 layers). 없으면 맨 아래 레이어"},
         "wrap": {"$ref": "#/definitions/wrap"},
         "nonprint": {"type": "boolean", "description": "비인쇄 — 화면에만 보이고 PDF·인쇄에는 안 나온다(인디자인 비인쇄)"},
         "overprint": {"type": "boolean", "description": "중복인쇄 — 인쇄 분판에서 밑색을 파지 않는다(값만 보관, 화면은 그대로)"}
@@ -208,6 +232,7 @@
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
         "src": {"type": "string", "description": "옷의 images 키. 옷마다 파일을 바꿔 끼운다"},
         "bind": {"$ref": "#/definitions/bind"},
+        "clip": {"type": "string", "pattern": "^[MLCQZmlcqz0-9 .,-]+$", "description": "클리핑 패스 — 0~1 비율 path. 이 모양으로 그림을 오려 낸다(인디자인 클리핑 패스)"},
         "fit": {"enum": ["contain", "cover"], "description": "contain = 틀 안에 다 보이게(기본) · cover = 틀을 채우고 넘치는 쪽을 자른다(인디자인 '비율에 맞게 프레임 채우기')"},
         "img": {"$ref": "#/definitions/box", "description": "틀(x y w h) 안에서 그림 전체가 놓인 자리 — 틀의 왼쪽 위 기준 mm, 음수·틀보다 큰 값 가능. 틀 밖은 잘린다(인디자인의 프레임 안 그래픽). 있으면 fit 은 안 쓴다"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
@@ -217,6 +242,8 @@
         "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
         "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"},
         "origin": {"enum": ["center", "tl", "tr", "bl", "br"], "description": "변형 기준점(인디자인 기준점) — 없으면 가운데"},
+        "ostyle": {"type": "string", "description": "개체 스타일 이름 — 옷의 obj_styles 에서 채움·획·모서리·효과를 가져온다. 원자에 적힌 값이 우선(인디자인 개체 스타일)"},
+        "layer": {"$ref": "#/definitions/id", "description": "이 원자가 놓인 레이어 id (지면의 layers). 없으면 맨 아래 레이어"},
         "wrap": {"$ref": "#/definitions/wrap"},
         "nonprint": {"type": "boolean", "description": "비인쇄 — 화면에만 보이고 PDF·인쇄에는 안 나온다(인디자인 비인쇄)"},
         "overprint": {"type": "boolean", "description": "중복인쇄 — 인쇄 분판에서 밑색을 파지 않는다(값만 보관, 화면은 그대로)"}
@@ -238,6 +265,8 @@
         "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
         "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"},
         "origin": {"enum": ["center", "tl", "tr", "bl", "br"], "description": "변형 기준점(인디자인 기준점) — 없으면 가운데"},
+        "ostyle": {"type": "string", "description": "개체 스타일 이름 — 옷의 obj_styles 에서 채움·획·모서리·효과를 가져온다. 원자에 적힌 값이 우선(인디자인 개체 스타일)"},
+        "layer": {"$ref": "#/definitions/id", "description": "이 원자가 놓인 레이어 id (지면의 layers). 없으면 맨 아래 레이어"},
         "wrap": {"$ref": "#/definitions/wrap"},
         "nonprint": {"type": "boolean", "description": "비인쇄 — 화면에만 보이고 PDF·인쇄에는 안 나온다(인디자인 비인쇄)"},
         "overprint": {"type": "boolean", "description": "중복인쇄 — 인쇄 분판에서 밑색을 파지 않는다(값만 보관, 화면은 그대로)"}
@@ -300,6 +329,17 @@
       }
     },
 
+    "layer": {
+      "description": "레이어 — 인디자인 레이어 패널. 지면의 원자를 층으로 나눠 보이기·잠금·인쇄를 한꺼번에",
+      "type": "object", "required": ["id", "name"],
+      "properties": {"id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+                     "hide": {"type": "boolean"}, "lock": {"type": "boolean"}, "nonprint": {"type": "boolean"}}
+    },
+    "baseline_grid": {
+      "description": "기준선 격자 — 인디자인 격자. 글줄을 같은 줄에 세운다",
+      "type": "object",
+      "properties": {"start": {"$ref": "#/definitions/mm", "description": "첫 줄 자리(지면 위에서)"}, "step": {"$ref": "#/definitions/mm", "description": "줄 간격"}, "color": {"$ref": "#/definitions/token"}}
+    },
     "page": {
       "description": "지면 — 칸 배치 + 고정 부품(러닝헤드·쪽번호). PDF 한 면 = 지면 하나",
       "type": "object", "required": ["id", "name", "zones"],
@@ -307,6 +347,8 @@
         "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
         "zones": {"type": "array", "items": {"$ref": "#/definitions/zone"}},
         "chrome": {"type": "array", "items": {"type": "object", "required": ["part", "x", "y"], "properties": {"part": {"$ref": "#/definitions/id"}, "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}}}},
+        "layers": {"type": "array", "items": {"$ref": "#/definitions/layer"}, "description": "레이어 — 뒤에서 앞 순서"},
+        "baseline_grid": {"$ref": "#/definitions/baseline_grid"},
         "mirror": {"type": "boolean", "description": "오른쪽 면에서 좌우 반전"},
         "background": {"$ref": "#/definitions/token"},
         "spec": {"$ref": "#/definitions/id", "description": "이 지면을 그린 규격(캔버스용). 틀에 들어가면 틀의 규격을 따른다"},
@@ -373,6 +415,8 @@
         }},
         "variants": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"}, "description": "블록 id → 모양 id. 없으면 첫 모양"},
         "images": {"type": "object", "additionalProperties": {"type": "string"}, "description": "image 원자의 src → 파일 경로"},
+        "obj_styles": {"type": "object", "description": "개체 스타일 — 이름마다 채움·획·모서리·효과 묶음(인디자인 개체 스타일). 원자의 ostyle 이 가리킨다",
+                       "additionalProperties": {"type": "object"}},
         "styles": {"type": "object", "description": "단락 스타일 — 이름 → 글 속성. 글 원자의 style 이 가리킨다. 원고 docx 의 단락 스타일 이름과 같으면 파서가 자리를 맞춘다",
           "additionalProperties": {"type": "object", "properties": {
             "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}, "leading": {"$ref": "#/definitions/pt"},

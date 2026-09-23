@@ -47,6 +47,9 @@ class Ctx(object):
         self._seen = set()
         self._n = 0
         self.board = 0.0        # 캔버스 대지(pasteboard) mm — 지면 둘레의 회색 자리. 지면 밖 요소도 여기 보인다
+        self.layers = {}        # 지면 레이어 {id: {hide, lock, nonprint}} — 숨김·비인쇄를 한꺼번에
+        self._item_y = 0.0      # 그리는 중인 요소의 면 안 세로 자리 (기준선 격자용)
+        self.grid = None        # 기준선 격자 {start, step} — snap_baseline 인 글상자가 줄을 맞춘다
 
     def uid(self):
         """SVG 안 id(그라디언트·클립) — 한 그림 안에서 겹치지 않게."""
@@ -111,6 +114,26 @@ def font_family(name):
 
 
 # ── 글 ─────────────────────────────────────────────────────────────
+def anchored_html(v, ctx):
+    """글 안에 고정한 개체(인디자인 앵커드) — 부품을 그려 글줄 안에 끼운다."""
+    anc = v.get("anc") or {}
+    part = (ctx.parts or {}).get(anc.get("part")) if ctx else None
+    if not part:
+        if ctx:
+            ctx.warn(f"글 안 개체의 부품 없음 {anc.get('part')}")
+        return ""
+    w = float(anc.get("w") or part.get("w") or 20)
+    frag, ph = part_svg(ctx, part)
+    ph = float(anc.get("h") or ph or 10)
+    al = anc.get("align") or "inline"
+    box = f"width:{w:.3f}px;height:{ph:.3f}px;display:inline-block;vertical-align:middle;"
+    if al in ("left", "right"):
+        box += f"float:{al};margin:{0.5}px {1.0}px;"
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {part.get("w", w):.3f} {ph:.3f}" '
+           f'width="{w:.3f}" height="{ph:.3f}" style="display:block">{frag}</svg>')
+    return f'<span style="{box}">{svg}</span>'
+
+
 def rich_html(v, ctx=None):
     """서식 조각 → HTML. 조각(run)의 b·i·u·sup·sub 는 태그로, color·font·size(토큰)는 인라인 style 로."""
     if v is None:
@@ -120,6 +143,8 @@ def rich_html(v, ctx=None):
     if isinstance(v, list):
         return "".join(rich_html(x, ctx) for x in v)
     if isinstance(v, dict):
+        if v.get("anc"):
+            return (anchored_html(v, ctx) if ctx else "") + esc(v.get("t", ""))
         t = esc(v.get("t", "")).replace("\n", "<br/>")
         if v.get("u"):
             t = "<u>" + t + "</u>"
@@ -269,6 +294,38 @@ def _wrap_floats(ctx, a, h):
     return out
 
 
+def _tab_html(a, para, ctx=None):
+    """탭 자리 — 인디자인 탭 패널. 탭으로 나뉜 조각을 자리마다 세우고, 리더로 빈 곳을 채운다."""
+    stops = a.get("tabs") or []
+    if not stops or "\t" not in para:
+        return None
+    segs = para.split("\t")
+    stops = sorted(stops, key=lambda t: float(t.get("at") or 0))
+    cols, prev = [], 0.0
+    for i, seg in enumerate(segs):
+        if i == 0:
+            cols.append((0.0, "left", "", seg))
+            continue
+        st = stops[min(i - 1, len(stops) - 1)]
+        at = float(st.get("at") or 0)
+        cols.append((at, st.get("align") or "left", st.get("leader") or "", seg))
+    out = ""
+    for i, (at, al, leader, seg) in enumerate(cols):
+        if i == 0:
+            out += f'<span>{seg}</span>'
+            continue
+        prev_at = cols[i - 1][0]
+        w = max(at - prev_at, 0.5)
+        just = {"left": "flex-start", "center": "center", "right": "flex-end", "decimal": "flex-end"}[al]
+        lead = ""
+        if leader:
+            lead = (f'<span style="flex:1;overflow:hidden;white-space:nowrap;opacity:.6">'
+                    + (esc(leader) * 60) + "</span>")
+        out += (f'<span style="display:inline-flex;min-width:{w:.3f}px;justify-content:{just};align-items:baseline">'
+                f'{lead}<span>{seg}</span></span>')
+    return out
+
+
 def _text_html(a, html, h, ctx=None):
     """글상자 안 HTML — 단락(<p>)마다 들여쓰기·앞뒤 간격·경계선·음영·글머리, 상자엔 여백·세로 정렬·다단·첫 기준선·장평."""
     ps = ""
@@ -289,7 +346,7 @@ def _text_html(a, html, h, ctx=None):
     if bul:
         ps += f"display:list-item;list-style-type:{bul};list-style-position:inside;"
     paras = (html or "").split("<br/>")
-    inner = "".join(f'<p style="margin:0;{ps}">{x or "&#160;"}</p>' for x in paras)
+    inner = "".join(f'<p style="margin:0;{ps}">{_tab_html(a, x, ctx) or x or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
         n = int(dc.get("chars") or 1)
@@ -300,7 +357,7 @@ def _text_html(a, html, h, ctx=None):
             cap = (f'<span style="float:left;font-size:{lead * lines * 0.86:.3f}px;line-height:{lead * lines:.3f}px;'
                    f'margin-right:{lead * 0.12:.3f}px">{head}</span>')
             inner = (f'<p style="margin:0;{ps}">{cap}{rest or "&#160;"}</p>'
-                     + "".join(f'<p style="margin:0;{ps}">{x or "&#160;"}</p>' for x in paras[1:]))
+                     + "".join(f'<p style="margin:0;{ps}">{_tab_html(a, x, ctx) or x or "&#160;"}</p>' for x in paras[1:]))
     it, ir, ib, il = insets(a)
     it += float(a.get("first_baseline") or 0)                    # 첫 기준선 — 상자 위에서 더 내린다
     cols = int(a.get("columns") or 1)
@@ -422,6 +479,31 @@ def _fx_defs(ctx, a):
                          f'<feComposite in="gc" in2="gb" operator="in" result="gg"/>'
                          f'<feMerge result="fx2"><feMergeNode in="gg"/><feMergeNode in="{last}"/></feMerge>')
         last = "fx2"
+    bv, sa = fx.get("bevel"), fx.get("satin")
+    if bv:
+        size = max(float(bv.get("size") or 0.6), 0.05)
+        depth = float(bv.get("depth") or 1)
+        ang = float(bv.get("angle") or 120)
+        steps.append(f'<feGaussianBlur in="SourceAlpha" stdDeviation="{size / 2:.3f}" result="bb"/>'
+                     f'<feSpecularLighting in="bb" surfaceScale="{2 * depth:.2f}" specularConstant="{0.9 * depth:.2f}" specularExponent="18" lighting-color="#ffffff" result="bl">'
+                     f'<feDistantLight azimuth="{ang:.1f}" elevation="55"/></feSpecularLighting>'
+                     f'<feComposite in="bl" in2="SourceAlpha" operator="in" result="bl2"/>'
+                     f'<feComposite in="{last}" in2="bl2" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="fxb"/>')
+        last = "fxb"
+    if sa:
+        col = ctx.color(sa.get("color"), "#000000")
+        op = 0.5 if sa.get("opacity") is None else float(sa["opacity"])
+        bl = max(float(sa.get("blur") or 1), 0.01)
+        ds = float(sa.get("distance") or 1)
+        steps.append(f'<feOffset in="SourceAlpha" dx="{ds:.3f}" dy="{ds:.3f}" result="s1"/>'
+                     f'<feOffset in="SourceAlpha" dx="{-ds:.3f}" dy="{-ds:.3f}" result="s2"/>'
+                     f'<feComposite in="s1" in2="s2" operator="xor" result="sx"/>'
+                     f'<feGaussianBlur in="sx" stdDeviation="{bl / 2:.3f}" result="sxb"/>'
+                     f'<feFlood flood-color="{col}" flood-opacity="{op:.3f}" result="sc2"/>'
+                     f'<feComposite in="sc2" in2="sxb" operator="in" result="sat"/>'
+                     f'<feComposite in="sat" in2="SourceAlpha" operator="in" result="sat2"/>'
+                     f'<feComposite in="sat2" in2="{last}" operator="over" result="fxs"/>')
+        last = "fxs"
     if fe:
         steps.append(f'<feGaussianBlur in="SourceAlpha" stdDeviation="{max(float(fe), 0.01) / 2:.3f}" result="fm"/>'
                      f'<feComposite in="{last}" in2="fm" operator="in" result="fx3"/>')
@@ -661,6 +743,10 @@ def part_svg(ctx, part, values=None, types=None, width=None):
 
 
 def _atom_svg(ctx, a, dy, h, html):
+    a = with_ostyle(ctx, a)                                       # 개체 스타일 먼저
+    lay = (ctx.layers or {}).get(a.get("layer") or "")
+    if lay and (lay.get("hide") or (lay.get("nonprint") and ctx.print)):
+        return ""                                                 # 숨긴 레이어 · 비인쇄 레이어
     if a.get("nonprint") and ctx.print:                           # 비인쇄 — 화면에만
         return ""
     svg = _atom_svg_raw(ctx, a, dy, h, html)
@@ -711,10 +797,33 @@ def print_margin(ctx):
     return float(p.get("bleed") or 0) + (5.0 if p.get("marks") else 0.0)
 
 
+def with_ostyle(ctx, a):
+    """개체 스타일(인디자인) — 옷의 obj_styles[이름] 을 밑에 깔고 원자 값으로 덮는다."""
+    nm = a.get("ostyle")
+    if not nm:
+        return a
+    st = ((ctx.skin.get("obj_styles") or {}).get(nm)) or {}
+    if not st:
+        ctx.warn(f"개체 스타일 없음 {nm} — 옷 {ctx.skin.get('id') or '(없음)'}.obj_styles")
+        return a
+    out = dict(st)
+    out.update(a)
+    return out
+
+
 def _atom_svg_raw(ctx, a, dy, h, html):
     t = a.get("t")
     if t == "text":
         lead = (a.get("leading") or a["size"] * 1.45) * PT
+        if a.get("snap_baseline") and getattr(ctx, "grid", None):
+            step = float((ctx.grid or {}).get("step") or 0)
+            if step > 0:
+                lead = math.ceil(lead / step - 0.01) * step           # 행간을 격자 간격의 배수로
+                start = float((ctx.grid or {}).get("start") or 0)
+                off = float(getattr(ctx, "_item_y", 0) or 0)                       # 요소가 면 안에 놓인 자리
+                top = off + a["y"] + dy
+                first = start + math.ceil((top - start) / step - 0.01) * step
+                a = dict(a, first_baseline=max(0.0, first - top))     # 첫 줄을 격자 줄에 세운다
         style = (f"margin:0;font-family:{esc(ctx.font(a.get('font')))};font-size:{a['size'] * PT:.3f}px;"
                  f"line-height:{lead:.3f}px;color:{ctx.color(a.get('color'))};text-align:{a.get('align', 'left')};"
                  f"overflow:hidden;word-break:break-word;white-space:normal")
@@ -722,6 +831,12 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
         if a.get("kerning") == "none":
             style += ";font-kerning:none"
+        if a.get("hyphenate"):
+            style += ";hyphens:auto;-webkit-hyphens:auto"
+        if a.get("justify_mode"):
+            style += ";text-justify:" + ("inter-character" if a["justify_mode"] == "letter" else "inter-word")
+        if a.get("word_spacing"):
+            style += f";word-spacing:{float(a['word_spacing']) / 1000.0:.4f}em"
         dec = _decor_css(a, ctx)
         if dec:
             style += ";" + dec
@@ -771,6 +886,12 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                 return (f'<clipPath id="{cid}"><rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}"/></clipPath>'
                         f'<image x="{a["x"] + float(im["x"]):.3f}" y="{a["y"] + dy + float(im["y"]):.3f}" width="{float(im["w"]):.3f}" height="{float(im["h"]):.3f}" '
                         f'href="{href}" preserveAspectRatio="none" clip-path="url(#{cid})"/>')
+            if a.get("clip"):                                   # 클리핑 패스 — 이 모양으로 오려 낸다
+                cid2 = ctx.uid()
+                par2 = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
+                return (f'<clipPath id="{cid2}"><path d="{path_d(a["clip"], a["x"], a["y"] + dy, a["w"], h)}"/></clipPath>'
+                        f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" '
+                        f'href="{href}" preserveAspectRatio="{par2}" clip-path="url(#{cid2})"/>')
             par = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
             bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)          # 인쇄: 가장자리 그림은 도련까지
             return (f'<image x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" '
@@ -859,6 +980,13 @@ def _zones(page, W, mirror):
 def _accepts(z, it):
     acc = z.get("accepts")
     return not acc or it["block"] in acc or (it["set_kind"] and it["set_kind"] in acc)
+
+
+def load_page_env(ctx, page):
+    """지면의 레이어·기준선 격자를 ctx 에 싣는다 (원자를 그릴 때 본다)."""
+    ctx.layers = {l.get("id"): l for l in (page.get("layers") or []) if l.get("id")}
+    ctx.grid = page.get("baseline_grid") or None
+    return ctx
 
 
 def _fill_items(pg, sample_set, ctx=None):
@@ -962,6 +1090,7 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
     캔버스에서 만든 지면(콘텐츠 블록 자리 = items)은 **슬롯 모드**: 세트마다 한 면, 자리에 값을 끼운다.
     글이 길어 자리가 자라면 아래 요소를 민다(_page_wrap). 칸(zones) 흐름은 옛 지면용.
     """
+    load_page_env(ctx, page)                                   # 레이어·기준선 격자
     W, H = float(spec["w"]), float(spec["h"])
     slots = [it for it in page.get("items") or [] if it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"]
     if slots and any(it.get("flow") for it in slots) and sets and not page.get("_canvas"):
@@ -1135,6 +1264,7 @@ def _item_frag(ctx, it, at=None):
     at = (W, H, mirror) 를 주면 인쇄 모드의 도련 늘림이 면 안 자리를 안다.
     """
     def origin(w):
+        ctx._item_y = float(it.get("y") or 0)                          # 기준선 격자 — 이 요소가 면에서 놓인 세로 자리
         if at and ctx.print:
             W, H, mirror = at
             sc = float(it.get("s") or 1)                               # 도련 늘림은 배율 전 좌표계에서 — 면 크기를 배율로 나눠 넣는다
@@ -1177,6 +1307,7 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
     sample_set(세트)을 주면 같은 블록의 값을 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
     (옛 형식: 칸 흐름 배치 page.blocks 도 아직 그린다.) 넘치면 여러 면이 되므로 캔버스는 첫 장만 보인다.
     """
+    load_page_env(ctx, page)                                   # 레이어·기준선 격자
     pg = json.loads(json.dumps(page))
     pg["_noguides"] = True                     # 캔버스는 자유 배치 — 칸 안내선은 안 보인다
     pg["_canvas"] = True                       # 콘텐츠 블록 자리(items)도 견본으로 그린다
