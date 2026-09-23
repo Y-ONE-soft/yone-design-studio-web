@@ -1244,6 +1244,22 @@ def is_fixed(ctx, it):
     return blk is not None and blk.get("source") == "system"
 
 
+def can_grow(it, part):
+    """자라서 아래를 미는 요소인가 — **원고가 들어오는 자리만** 자란다.
+
+    인디자인과 같다: 판에 그려 둔 글상자는 크기가 정해져 있고 넘치면 넘침이다. 자리(bind)에는 원고 길이가
+    그때그때 다르니 자라고, 그만큼 아래 요소를 민다. `it.grow` 로 하나씩 뒤집을 수 있다.
+    """
+    if it.get("grow") is not None:
+        return bool(it["grow"])
+    if it.get("block"):
+        return True
+    a = it.get("atom")
+    if a is not None:
+        return bool(a.get("bind"))
+    return any(x.get("bind") for x in (part.get("atoms") or []))
+
+
 def place_items(ctx, page, W, H, mirror=False):
     """자유 배치 요소를 놓는다 → [{fi, it, frag, w, h, h0, y, dy, fixed}] (그리는 순서).
 
@@ -1263,8 +1279,10 @@ def place_items(ctx, page, W, H, mirror=False):
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part')} 없음")
             continue
         sc = float(it.get("s") or 1)                                   # 균일 배율 — 자리 계산은 배율 곱한 크기로
-        placed.append({"fi": fi, "it": it, "frag": frag, "w": w * sc, "h": h * sc, "h0": float(part.get("h") or h) * sc, "s": sc, "fixed": is_fixed(ctx, it)})
-    grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"]) for p in placed if p["h"] > p["h0"] + 0.01]
+        placed.append({"fi": fi, "it": it, "frag": frag, "w": w * sc, "h": h * sc, "h0": float(part.get("h") or h) * sc, "s": sc,
+                       "fixed": is_fixed(ctx, it), "grow": can_grow(it, part)})
+    grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"])
+             for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
     for p in placed:
         it = p["it"]
         p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
