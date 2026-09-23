@@ -841,40 +841,47 @@ try:
                 f"없는 칸 {miss or '없음'} · {drawn} · 글 안 개체={has_anc} · 원자 {at[:90]}")
     step("P7 글 — 탭 자리·리더·하이픈·양끝맞춤·글 안 개체", p7)
 
-    # ───────── Q. 묻지 않고 저장 · 받는 원고 고치기 ─────────
-    def q1():
-        """자리 조합이 아는 것이면 ★ 요소로 저장이 창 없이 바로 저장한다"""
-        nb = js("LIB.blocks.length")
+    # ───────── Q. 유형 하나 · 모양 여럿 ─────────
+    def mkrow(y):
+        """번호·문장·정답 글상자 한 줄을 그려 고른 상태로 둔다"""
         js("""(() => { for (const [b, x] of [["no", 20], ["sentence", 34], ["answer", 160]]) {
-                addAtom('text', {x: x, y: 180}); const i = page.items.length - 1; page.items[i].atom.bind = b; }
-              const n = page.items.length; select([n - 3, n - 2, n - 1], n - 1); save(); render(); })()"""); time.sleep(1.2)
+                addAtom('text', {x: x, y: %d}); const i = page.items.length - 1; page.items[i].atom.bind = b; }
+              const n = page.items.length; select([n - 3, n - 2, n - 1], n - 1); save(); render(); })()""" % y)
+        time.sleep(1.2)
+    def q1():
+        """★ 저장 → 창에서 새 유형을 고르면 그 이름의 블록이 생긴다"""
+        nb = js("LIB.blocks.length"); mkrow(180)
         b = center("#t-up")
         if not b: return (False, "★ 요소로 저장 버튼 안 보임")
-        click(*b)
+        click(*b); time.sleep(1.0)
+        if not wait("sheetKind === 'newblock'", 5): return (False, "창이 안 뜸")
+        head = js("(document.querySelector('#shd') || {}).textContent || ''")
+        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-item]')].find(x => x.dataset.item === 'grammar-ox'); if (!d) return null; d.scrollIntoView({block: 'center'}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        if not k: return (False, "「어법 O/X」 줄 없음")
+        click(*k)
         ok = wait(f"LIB.blocks.length === {nb + 1}", 15)
-        sheet = js("sheetKind === 'newblock'")
-        blk = js("(() => { const b = LIB.blocks[LIB.blocks.length - 1]; return JSON.stringify({name: b.name, fields: Object.keys(b.fields || {}), accepts: b.accepts || []}); })()")
-        acc = json.loads(blk)["accepts"]
-        return (ok and not sheet and "grammar-ox" in acc and "content-ox" in acc,
-                f"창 안 뜸={not sheet} · {blk[:140]}")
-    step("Q1 자리 조합이 아는 것 → 묻지 않고 저장 (창 없음)", q1)
+        blk = js("(() => { const b = LIB.blocks[LIB.blocks.length - 1]; return JSON.stringify({name: b.name, vs: (b.variants || []).length}); })()")
+        return (ok and "무엇의 모양" in head, f"창 머리 「{head[:16]}」 · {blk}")
+    step("Q1 ★ 저장 → 새 유형으로 저장", q1)
 
     def q2():
-        """오른쪽 「받는 원고 · 고치기」로 받는 항목을 바꾼다"""
-        i = js("page.items.findIndex(it => it.block && LIB.blocks.some(b => b.id === it.block && (b.accepts || []).length))")
-        if i < 0: return (False, "받는 원고가 있는 요소 없음")
-        js(f"select([{i}], {i})"); time.sleep(0.8)
-        r = into("#s-acc")
-        if not r: return (False, "「받는 원고 고치기」 단추 없음")
-        click(r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(1.0)
-        if not wait("sheetKind === 'newblock'", 4): return (False, "창이 안 뜸")
-        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-item]')].find(x => x.dataset.item === 'writing-order'); if (!d) return null; d.scrollIntoView({block: 'center'}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
-        if not k: return (False, "「영작 배열」 줄 없음")
-        click(*k); time.sleep(1.5)
-        acc = js(f"JSON.stringify((LIB.blocks.find(b => b.id === page.items[{i}].block) || {{}}).accepts || [])")
-        shown = js("(() => { const el = document.querySelector('#s-acc'); return el ? el.parentNode.textContent.trim() : ''; })()")
-        return ("writing-order" in json.loads(acc), f"받는 원고 {acc[:90]} · 오른쪽에 「{shown[:30]}」")
-    step("Q2 「받는 원고 · 고치기」로 바꾸기", q2)
+        """같은 자리 조합을 다시 저장하면 그 유형의 **새 모양**이 된다 (블록은 안 늘어난다)"""
+        nb = js("LIB.blocks.length"); bid = js("LIB.blocks[LIB.blocks.length - 1].id")
+        vs0 = js(f"(LIB.blocks.find(b => b.id === '{bid}').variants || []).length")
+        mkrow(210)
+        click(*center("#t-up")); time.sleep(1.0)
+        if not wait("sheetKind === 'newblock'", 5): return (False, "창이 안 뜸")
+        k = js(f"(() => {{ const d = document.querySelector('#sbody [data-var=\"{bid}\"]'); if (!d) return null; d.scrollIntoView({{block: 'center'}}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }})()")
+        if not k: return (False, "「… 의 새 모양」 줄 없음")
+        click(*k)
+        ok = wait(f"(LIB.blocks.find(b => b.id === '{bid}').variants || []).length === {vs0 + 1}", 15)
+        same_n = js("LIB.blocks.length") == nb                     # 유형은 안 늘어난다
+        inskin = js(f"(skin().variants || {{}})['{bid}'] === 'v{vs0 + 1}'")   # 이 책은 새 모양을 쓴다
+        js(f"(() => {{ const i = page.items.findIndex(it => it.block === '{bid}'); if (i >= 0) select([i], i); }})()"); time.sleep(0.8)
+        hasui = visible("#var")                                     # 오른쪽에 「모양」 고르는 칸
+        return (ok and same_n and inskin and hasui,
+                f"모양 {vs0}→{js(f'(LIB.blocks.find(b => b.id === \'{bid}\').variants || []).length')} · 유형 그대로={same_n} · 옷에 저장={inskin} · 오른쪽 모양 칸={hasui}")
+    step("Q2 같은 유형의 새 모양 — 블록은 안 늘고 옷이 고른다", q2)
 
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
