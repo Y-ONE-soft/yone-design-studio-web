@@ -104,8 +104,11 @@ def from_pdf(path, pno=1):
             continue
         for ln in b.get("lines", []):
             spans = []
+            tracks = []
             for sp in ln.get("spans", []):
-                sp["text"] = "".join(ch.get("c", "") for ch in sp.get("chars", []))
+                sp["text"], tr, sp["chars_"] = _despace(sp)
+                if tr:
+                    tracks.append(tr)
                 if sp["text"].strip():
                     spans.append(sp)
             if not spans:
@@ -119,17 +122,21 @@ def from_pdf(path, pno=1):
             x0, y0, x1, y1 = ln["bbox"]
             # 밑줄 후보 중 이 줄보다 두 글자 넘게 긴 것(제목 밑 괘선)은 밑줄이 아니다
             cand = {k: v for k, v in ul.items() if v[1] - v[0] <= (x1 - x0) + 2 * key[1]} if not ang else None
-            line = {"runs": _runs(spans, main, tk, cand, consumed), "x0": x0, "x1": x1}
+            line = {"runs": _runs(spans, main, tk, cand, consumed), "x0": x0, "x1": x1,
+                    "track": (sum(tracks) / len(tracks)) if tracks else 0.0}
             # 같은 서체·크기·색이고 줄 머리 간격이 두 글자 높이 안이면 같은 글상자. 회전한 줄은 줄마다 원자
-            if (cur and not ang and cur["key"] == key and 0 < y0 - cur["last_y0"] < key[1] * 2.0
+            gap = (y0 - cur["last_y0"]) if cur else 0
+            prev_gap = cur.get("gap") if cur else None
+            steady = gap > 0 and gap < key[1] * 3.4 and (prev_gap is None or abs(gap - prev_gap) <= max(0.18 * prev_gap, 0.6))
+            if (cur and not ang and cur["key"] == key and steady
                     and x0 < cur["x1"] and x1 > cur["x0"]):
                 cur["lines_"].append(line)
                 cur["x0"], cur["x1"], cur["y1"] = min(cur["x0"], x0), max(cur["x1"], x1), max(cur["y1"], y1)
-                cur["last_y0"] = y0
+                cur["last_y0"], cur["gap"] = y0, gap
             else:
                 if cur:
                     texts.append(_text_atom(cur, ox, oy, tk))
-                cur = {"key": key, "lines_": [line], "x0": x0, "y0": y0, "x1": x1, "y1": y1, "last_y0": y0}
+                cur = {"key": key, "lines_": [line], "x0": x0, "y0": y0, "x1": x1, "y1": y1, "last_y0": y0, "gap": None}
     if cur:
         texts.append(_text_atom(cur, ox, oy, tk))
 
@@ -241,6 +248,22 @@ def _clip(a, W, H):
     return True
 
 
+def _despace(sp):
+    """글자 사이의 가짜 빈칸 빼기 → (글, 뺀 빈칸들의 평균 폭 pt). 인디자인 자간이 넓은 줄에서 생긴다."""
+    cs = sp.get("chars") or []
+    size = float(sp.get("size") or 9) or 9.0
+    keep, dropped = [], []
+    for i, ch in enumerate(cs):
+        if ch.get("c") == " " and 0 < i < len(cs) - 1:
+            w = ch["bbox"][2] - ch["bbox"][0]
+            if w < 0.22 * size and (cs[i - 1].get("c") or " ").strip() and (cs[i + 1].get("c") or " ").strip():
+                dropped.append(w)
+                continue
+        keep.append(ch)
+    txt = "".join(c.get("c", "") for c in keep)
+    return txt, (sum(dropped) / len(dropped) if len(dropped) >= 2 else 0.0), keep
+
+
 def _text_atom(cur, ox, oy, tk):
     font, size, color, _flags, ang = cur["key"]
     lines = cur["lines_"]
@@ -258,7 +281,9 @@ def _text_atom(cur, ox, oy, tk):
         cx, cy = (cur["x0"] + cur["x1"]) / 2 - ox, (cur["y0"] + cur["y1"]) / 2 - oy
         x0, y0, w_mm, h_mm = (cx - w_pt / 2) * PT, (cy - h_pt / 2) * PT, w_pt * PT + 1.5, h_pt * PT
     else:
-        x0, y0, w_mm, h_mm = (cur["x0"] - ox) * PT, (cur["y0"] - oy) * PT, bw * PT + 1.5, bh * PT   # 브라우저 서체가 조금 넓어도 줄이 안 늘게
+        # 브라우저 서체는 인디자인 서체보다 조금 넓다 — 4%(최소 1.5mm) 여유를 둬야 한글 줄 끝이 안 넘어간다
+        slack = 0.08 if len(lines) == 1 else 0.04                      # 한 줄짜리는 넉넉히 — 줄이 안 접히게
+        x0, y0, w_mm, h_mm = (cur["x0"] - ox) * PT, (cur["y0"] - oy) * PT, bw * PT + max(1.5, bw * PT * slack), bh * PT
     # 단락: 끝이 이른 줄(오른쪽 끝이 글상자 오른쪽보다 1.5글자 넘게 짧다) 다음은 새 단락
     maxx1 = max(l["x1"] for l in lines)
     paras = [[lines[0]]]
@@ -277,9 +302,27 @@ def _text_atom(cur, ox, oy, tk):
         runs.extend(pr)
         if len(para) > 1 and indent is None:
             indent = min(l["x0"] for l in para[1:]) - para[0]["x0"]         # 둘째 줄부터 들여 있으면 내어쓰기
-    lead = round(h_mm / max(len(lines), 1) / PT, 1) if len(lines) > 1 else None
+    lead = round(cur["gap"], 1) if cur.get("gap") else (round(h_mm / max(len(lines), 1) / PT, 1) if len(lines) > 1 else None)
     a = {"t": "text", "x": round(x0, 2), "y": round(y0, 2), "w": round(w_mm, 2), "h": round(h_mm, 2),
          "font": tk.f(font), "size": round(size, 1), "color": tk.c(color) or "#000000", "text": _runs_finish(runs)}
+    trs = [l.get("track") or 0 for l in lines]
+    wide = [t for t in trs if t > 0]
+    if wide and len(wide) >= max(1, len(trs) // 2):
+        a_track = round(sum(wide) / len(wide) / max(size, 0.1) * 1000)
+        if a_track >= 15:
+            a_tracking = a_track
+        else:
+            a_tracking = None
+    else:
+        a_tracking = None
+    if len(lines) >= 3:
+        tail_ix, n0 = set(), 0                                            # 단락 끝 줄은 짧아도 된다 (번호로 세야 같은 줄끼리 안 헷갈린다)
+        for para in paras:
+            n0 += len(para)
+            tail_ix.add(n0 - 1)
+        body = [l for i, l in enumerate(lines) if i not in tail_ix]
+        if body and all(abs(l["x1"] - maxx1) < 1.2 * size for l in body):
+            a["align"] = "justify"
     if lead:
         a["leading"] = lead
     if indent is not None and indent > 1.0:
@@ -287,6 +330,8 @@ def _text_atom(cur, ox, oy, tk):
         a["indent_first"] = -a["indent"]
     elif indent is not None and indent < -1.0:
         a["indent_first"] = round(-indent * PT, 2)
+    if a_tracking:
+        a["tracking"] = a_tracking
     if ang:
         a["rotate"] = ang
     return a
@@ -312,7 +357,7 @@ def _runs(spans, main, tk, ul=None, consumed=None):
             base["i"] = True
         if fl & 1:
             base["sup"] = True
-        chars = sp.get("chars") or []
+        chars = sp.get("chars_") or sp.get("chars") or []       # 가짜 빈칸을 뺀 글자들(자간 되돌림)
         if not ul or not chars:
             out.append(dict(base, t=sp.get("text", "")))
             continue
