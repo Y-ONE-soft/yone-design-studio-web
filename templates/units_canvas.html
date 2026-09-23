@@ -523,7 +523,8 @@ function openPage(p, keepScroll, at) {                  // ⚠ 이름이 open �
   if (keepScroll) { $("#area").scrollTop = keep; flowLock = Date.now() + 250; } else scrollToActive();
   const el = document.querySelector(`.pg[data-i="${idx()}"]`); if (el) el.scrollIntoView({inline: "nearest", block: "nearest"});
 }
-const cols = () => (view.spread && docPages().length > 1) ? 2 : 1;      // 펼침면이면 한 줄에 두 쪽
+const facing = () => !plan || plan.facing !== false;                    // 문서 설정 「페이지 마주보기」 (기본 켬)
+const cols = () => (view.spread && facing() && docPages().length > 1) ? 2 : 1;   // 펼침면이면 한 줄에 두 쪽
 function fitScale() {
   const sp = specOf(), a = $("#area"), cs = getComputedStyle(a);
   // 자 자리는 area 여백(padding)에 이미 들어 있다 — 또 빼면 지면이 공연히 작아진다
@@ -554,7 +555,7 @@ function render() {
   if (!page) return;
   clearTimeout(rt);
   rt = setTimeout(async () => {
-    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: curSet, board: view.spread ? 0 : BOARD});
+    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: curSet, board: cols() === 2 ? 0 : BOARD});
     const w = $("#warn");
     if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
     const svg = (j.svgs[0] || {}).svg || "";
@@ -954,7 +955,10 @@ function applyPanels() {
   cv.classList.toggle("nostrip", !on("strip"));
   cv.classList.toggle("noflow", !view.flow);
   $("#tg-flow").classList.toggle("on", !!view.flow);
-  $("#tg-spread").classList.toggle("on", !!view.spread);
+  $("#tg-spread").classList.toggle("on", !!view.spread && facing());
+  $("#tg-spread").disabled = !facing();
+  $("#tg-spread").title = facing() ? "펼침면 — 2·3쪽이 한 장처럼 붙어 보이고 1쪽은 오른쪽에 선다. 펼침 보기에선 지면 둘레 대지를 안 그린다"
+    : "이 문서는 「페이지 마주보기」가 꺼져 있다 — 오른쪽 문서 칸에서 켜면 펼침면으로 볼 수 있다";
   document.body.classList.toggle("zen", !!view.zen);
   $("#tg-left").classList.toggle("on", on("left")); $("#tg-side").classList.toggle("on", on("side"));
   $("#tg-strip").classList.toggle("on", on("strip")); $("#tg-zen").classList.toggle("on", !!view.zen);
@@ -1476,6 +1480,7 @@ function side() {
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
       <h3>문서</h3>
+      <div class="f"><span>페이지 마주보기</span><input id="s-facing" type="checkbox" ${facing() ? "checked" : ""} title="인디자인 「파일 > 문서 설정 > 페이지 마주보기」 — 켜면 2·3쪽이 한 장(펼침면)이 되고 1쪽은 오른쪽에 선다. 문서마다 저장된다" style="width:auto"></div>
       <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
       <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 쌓기 자리가 있으면 세트를 쌓아 채움, 없으면 한 번">${page.items.some(it => it.flow) ? "세트를 쌓아 채움" : page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
@@ -1519,6 +1524,10 @@ function side() {
   on("#s-spec", "change", (e) => { page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
+  on("#s-facing", "change", async (e) => {                        // 문서 설정 — 켜야 펼침면이 생긴다 (인디자인과 같게)
+    if (!plan) return; plan.facing = e.target.checked; await savePlan();
+    applyView(); layout(); drawPages(); layout(); render(); scrollToActive(); side();
+  });
 }
 $("#pname").oninput = () => { if (page) { page.name = $("#pname").value; save(); const el = document.querySelector(`.pg[data-id="${page.id}"]`); if (el) el.title = page.name || page.id; } };
 
