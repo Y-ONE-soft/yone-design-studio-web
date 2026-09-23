@@ -618,7 +618,7 @@ try:
         if not r: return None
         mouse("mouseMoved", r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(0.35); return r
     def headsel(word):                  # 그 이름을 가진 카테고리 머리
-        i = js(f"[...document.querySelectorAll('#pbody h3')].findIndex(x => x.firstChild.textContent.includes({json.dumps(word)}))")
+        i = js(f"[...document.querySelectorAll('#pbody h3')].findIndex(x => x.textContent.replace(/[▾▸✎✕]/g, '').includes({json.dumps(word)}))")
         return f"#pbody h3:nth-of-type({i + 1})" if i >= 0 else None
     def o1():
         js("window.__promptv = '감사분류'")
@@ -626,7 +626,7 @@ try:
         if not r: return (False, "＋ 카테고리 단추가 없다")
         n0 = js("LIB.groups.length"); click(r[0] + r[2] / 2, r[1] + r[3] / 2); ok = wait(f"LIB.groups.length === {n0 + 1}", 8)
         js("window.__promptv = null")
-        head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.firstChild.textContent)")
+        head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.textContent.replace(/[▾▸✎✕]/g, ''))")
         return (ok and any("감사분류" in h for h in head), f"카테고리 {n0}→{js('LIB.groups.length')} · 줄 {head}")
     step("O1 ＋ 카테고리 로 만들기", o1)
     def o2():
@@ -659,11 +659,28 @@ try:
         if not b: return (False, "✕ 가 안 나온다")
         click(*b); ok = wait("!LIB.groups.some(g => g.name === '감사분류2')", 8)
         alive = js(f"LIB.blocks.filter(b => b.group === {json.dumps(gid)}).length")
-        head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.firstChild.textContent)")
+        head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.textContent.replace(/[▾▸✎✕]/g, ''))")
         js(f"(async () => {{ for (const b of LIB.blocks.filter(b => b.group === {json.dumps(gid)})) {{ delete b.group; await api('/api/units/blocks', b); }} }})()"); time.sleep(1.2)
         return (ok and alive >= 1 and any("내가 만든 요소" in h for h in head),
                 f"지운 뒤 줄 {head} · 그 안에 있던 요소 {alive}개는 살아서 「내가 만든 요소」로")
     step("O4 카테고리 지우기 (✕) — 요소는 안 지운다", o4)
+
+    def o5():
+        js("localStorage.removeItem('units.gfold')")
+        sel = "#pbody h3.fold"
+        n = js(f"document.querySelectorAll({json.dumps(sel)}).length")
+        if n < 2: return (False, f"접을 수 있는 줄이 {n}개")
+        r = into("#pbody h3.fold:nth-of-type(2)")
+        if not r: return (False, "두 번째 줄이 없다")
+        vis0 = js("[...document.querySelectorAll('#pbody .grid, #pbody .atoms5')].filter(g => getComputedStyle(g).display !== 'none').length")
+        click(r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(0.5)
+        vis1 = js("[...document.querySelectorAll('#pbody .grid, #pbody .atoms5')].filter(g => getComputedStyle(g).display !== 'none').length")
+        saved = js("localStorage.getItem('units.gfold')")
+        click(r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(0.5)                 # 다시 펴기
+        vis2 = js("[...document.querySelectorAll('#pbody .grid, #pbody .atoms5')].filter(g => getComputedStyle(g).display !== 'none').length")
+        return (vis1 == vis0 - 1 and vis2 == vis0 and saved not in (None, "[]"),
+                f"줄 {n}개 · 접으니 보이는 묶음 {vis0}→{vis1}, 펴니 {vis2} · 기억 {saved}")
+    step("O5 카테고리 접고 펴기 (기억한다)", o5)
 
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기

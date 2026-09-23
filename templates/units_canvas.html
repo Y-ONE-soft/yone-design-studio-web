@@ -11,6 +11,10 @@
   .card .cact { position: absolute; right: 3px; top: 3px; display: none; border: 0; background: rgba(31,35,48,.82); color: #fff; width: 18px; height: 18px; line-height: 16px; border-radius: 5px; font-size: 10px; cursor: pointer; padding: 0; }
   .card:hover .cact { display: block; }
   .card .cact:hover { background: var(--pp); }
+  .cv h3.fold { cursor: pointer; user-select: none; }
+  .cv h3.fold:hover { color: #1f2330; }
+  .cv h3 .tw { display: inline-block; width: 11px; color: #a0a4b5; font-size: 9px; }
+  .cv h3 .n { color: #b9bdca; font-weight: 500; }
   .cv h3 { position: relative; font-size: 11.5px; color: var(--mute); margin: 10px 0 5px; font-weight: 600; letter-spacing: .04em; }
   .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
   .btn { display: inline-flex; align-items: center; gap: 5px; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
@@ -1312,7 +1316,7 @@ function panel() {
     $("#fold-left").onclick = () => togglePanel("left");
     $("#btn-ai").onclick = makeByPrompt; $("#ai").addEventListener("keydown", (e) => { if (e.key === "Enter") makeByPrompt(); });
     // 기본 도형 — 인디자인 오브젝트. 직접 그려서 「요소로 저장」
-    body.insertAdjacentHTML("beforeend", `<h3>직접 그리기</h3>`);
+    const h0 = foldHead(body, "직접 그리기", "_draw", "");
     const g0 = document.createElement("div"); g0.className = "atoms5";
     const icons = {text: '<svg width="36" height="22"><rect x="1" y="1" width="34" height="20" fill="none" stroke="#7d2ae8" stroke-dasharray="2 2"/><text x="6" y="15" font-size="10" fill="#1f2330">Aa</text></svg>',
       line: '<svg width="36" height="22"><line x1="2" y1="11" x2="34" y2="11" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
@@ -1322,13 +1326,14 @@ function panel() {
       path: '<svg width="36" height="22"><path d="M3 7 L20 7 L20 2 L33 11 L20 20 L20 15 L3 15 Z" fill="#e9e0ff" stroke="#7d2ae8"/></svg>'};
     for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.dataset.draw = t; b.title = nm + " — 누르고 지면에서 끌면 그 크기로 그려진다"; b.onclick = () => armDraw(t); palDrag(b, {k: "atom", id: t}); g0.appendChild(b); }
     const tb = document.createElement("button"); tb.innerHTML = '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="none" stroke="#7d2ae8"/><line x1="2" y1="8" x2="34" y2="8" stroke="#7d2ae8"/><line x1="2" y1="14" x2="34" y2="14" stroke="#7d2ae8"/><line x1="13" y1="2" x2="13" y2="20" stroke="#7d2ae8"/><line x1="24" y1="2" x2="24" y2="20" stroke="#7d2ae8"/></svg>표'; tb.onclick = makeTable; g0.appendChild(tb);
-    body.appendChild(g0);
+    body.appendChild(g0); foldWire(h0, g0, "_draw");
 
     // 저장된 요소 — 원고 자리 있는 것(콘텐츠) · 장식
     const gs = LIB.groups || [], bag = new Map(gs.map(g => [g.id, []])), rest = [];
     for (const b of LIB.blocks) { const gid = groupOf(b); (bag.has(gid) ? bag.get(gid) : rest).push(b); }
     const put = (title, items, gid) => {
-      body.insertAdjacentHTML("beforeend", `<h3 data-g="${esc(gid)}">${esc(title)}${gid ? `<span class="gact"><button data-gren title="카테고리 이름 바꾸기">✎</button><button data-gdel title="카테고리 지우기 — 안의 요소는 「내가 만든 요소」로 간다">✕</button></span>` : ""}</h3>`);
+      const key = gid || "_mine";
+      const h = foldHead(body, `${esc(title)} <span class="n">${items.length}</span>`, key, gid);
       const g = document.createElement("div"); g.className = "grid";
       for (const it of items) {
         const f = Object.keys(it.fields || {});
@@ -1339,7 +1344,7 @@ function panel() {
         g.appendChild(d);
       }
       if (!items.length) g.insertAdjacentHTML("beforeend", `<div class="note" style="grid-column:1/-1">비었다 — 요소 카드의 ▾ 로 옮겨 온다</div>`);
-      body.appendChild(g);
+      body.appendChild(g); foldWire(h, g, key);
     };
     for (const g of gs) put(g.name, bag.get(g.id), g.id);
     if (rest.length) put("내가 만든 요소", rest, "");
@@ -1348,6 +1353,26 @@ function panel() {
     body.querySelectorAll("[data-gren]").forEach(b => b.onclick = (e) => { e.stopPropagation(); renGroup(b.closest("h3").dataset.g); });
     body.querySelectorAll("[data-gdel]").forEach(b => b.onclick = (e) => { e.stopPropagation(); delGroup(b.closest("h3").dataset.g); });
   }
+}
+
+// ── 카테고리 접기·펴기 — 접어 둔 것은 다음에 열 때도 접혀 있다 ──
+const gFold = new Set(JSON.parse(localStorage.getItem("units.gfold") || "[]"));
+function foldHead(body, title, key, gid) {
+  const open = !gFold.has(key);
+  body.insertAdjacentHTML("beforeend", `<h3 class="fold" data-g="${esc(gid || "")}" data-k="${esc(key)}"><span class="tw">${open ? "▾" : "▸"}</span>${title}`
+    + (gid ? `<span class="gact"><button data-gren title="카테고리 이름 바꾸기">✎</button><button data-gdel title="카테고리 지우기 — 안의 요소는 「내가 만든 요소」로 간다">✕</button></span>` : "") + `</h3>`);
+  return body.lastElementChild;
+}
+function foldWire(h, g, key) {
+  if (gFold.has(key)) g.style.display = "none";
+  h.onclick = (e) => {
+    if (e.target.closest("button")) return;                    // ✎ ✕ 는 따로
+    const closing = !gFold.has(key);
+    if (closing) gFold.add(key); else gFold.delete(key);
+    localStorage.setItem("units.gfold", JSON.stringify([...gFold]));
+    g.style.display = closing ? "none" : "";
+    h.querySelector(".tw").textContent = closing ? "▸" : "▾";
+  };
 }
 
 // ── 요소 카테고리 만들기·이름 바꾸기·지우기 · 카드 옮기기 ──
