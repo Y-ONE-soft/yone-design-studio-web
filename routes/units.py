@@ -47,14 +47,14 @@ def _lib_json(lib):
 def canvas():
     """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
     lib = store.library()
-    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="단위")
+    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기")
 
 
 @bp.route("/units/library")
 def page():
     """라이브러리·분해·JSON — 데이터를 들여다보는 화면."""
     lib = store.library()
-    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="단위")
+    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기")
 
 
 @bp.route("/api/units/thumbs")

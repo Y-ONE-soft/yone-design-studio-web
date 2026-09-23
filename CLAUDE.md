@@ -10,7 +10,7 @@
 > Vercel Blob `core/blob.py`, 웹훅 `core/yos_hooks.py`, contents 데이터 어댑터 `core/sources/`, Y.OS 쪽 드롭인 `deploy/yos/*.ts`.
 > (`core/notify.py` 는 예전 macOS 알림 모듈 — 웹훅과 다르다.) 테스트 `tests/test_webauth.py`·`tests/test_api_v1.py`.
 > **디자인 단위(2026-09-21)**: 원자(인디자인 오브젝트) → 부품 → 블록 → 지면 → 구간 → 틀 · 옷 · 세트. 스키마 `core/schema/units.schema.json`, 설명 `docs/디자인_단위_스키마.md`,
-> 코드 `core/units/`(store·render·decompose·sample), 화면 `/units`(캔버스 — 지면·칸·블록 끌어 놓기) · `/units/library`(라이브러리·분해·JSON) (`routes/units.py`), 시드 `catalog/_units/`. 기존 계열 렌더러(`core/render_vivlio/series/*`)와 독립 — 납품 중인 책은 안 건드린다.
+> 코드 `core/units/`(store·render·decompose·sample), 화면 `/units` = 왼쪽 레일의 **「만들기」**(캔버스 — 지면·칸·블록 끌어 놓기) · `/units/library`(라이브러리·분해·JSON) (`routes/units.py`), 시드 `catalog/_units/`. 기존 계열 렌더러(`core/render_vivlio/series/*`)와 독립 — 납품 중인 책은 안 건드린다.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
