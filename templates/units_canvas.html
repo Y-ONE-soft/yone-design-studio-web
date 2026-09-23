@@ -1279,26 +1279,35 @@ async function exitEdit(saveIt) {
 $("#edit-done").onclick = () => exitEdit(true); $("#edit-cancel").onclick = () => exitEdit(false);
 
 // 원고 항목 씨앗 — contents(yos-workbook-v1)가 보내는 key 그대로. 여기에 원고·블록에서 본 것이 더해진다.
-const SEED_ITEMS = [
-  ["vocab-choice", "어휘 선택", "지문에 ⓐ/ⓑ 가 섞여 나온다"],
-  ["vocab-choice-2", "어휘 선택 2단계", ""],
-  ["content-ox", "본문 O/X", "번호 + 문장 + O/X"],
-  ["content-summary", "내용 종합", "(n) 물음 + ①~ 선지"],
-  ["sentence-order", "문장 배열", "(A)(B)(C) 보기"],
-  ["vocab-blank", "빈칸 어휘", "번호 + 빈칸 문장 + 정답(첫 글자 힌트)"],
-  ["grammar-choice", "어법 선택", "본문 안 a / b 고르기"],
-  ["grammar-ox", "어법 O/X", "번호 + 문장 + O/X"],
-  ["grammar-fix", "어법 고치기", "틀린 곳에 밑줄"],
-  ["grammar-blank", "빈칸 어법", "번호 + 빈칸 문장 + 정답"],
-  ["writing-order", "영작 배열", "한글 + ( 조각 / 조각 )"],
-  ["mock-exam", "실전 문제", "발문 + 선지"],
-  ["outline-text", "본문 정리", "본문 상자 + 정리 줄"],
+const SEED_ITEMS = [   // [항목 key, 이름, 설명, 자리 조합] — 자리 조합이 있어야 묻지 않고 저절로 붙는다
+  ["vocab-choice", "어휘 선택", "지문에 ⓐ/ⓑ 가 섞여 나온다", ["passage"]],
+  ["vocab-choice-2", "어휘 선택 2단계", "", ["passage"]],
+  ["content-ox", "본문 O/X", "번호 + 문장 + O/X", ["no", "sentence", "answer"]],
+  ["content-summary", "내용 종합", "(n) 물음 + ①~ 선지", ["no", "prompt", "choices"]],
+  ["sentence-order", "문장 배열", "(A)(B)(C) 보기", ["no", "sentences"]],
+  ["vocab-blank", "빈칸 어휘", "번호 + 빈칸 문장 + 정답(첫 글자 힌트)", ["no", "sentence", "answer"]],
+  ["grammar-choice", "어법 선택", "본문 안 a / b 고르기", ["passage"]],
+  ["grammar-ox", "어법 O/X", "번호 + 문장 + O/X", ["no", "sentence", "answer"]],
+  ["grammar-fix", "어법 고치기", "틀린 곳에 밑줄", ["no", "sentence", "answer"]],
+  ["grammar-blank", "빈칸 어법", "번호 + 빈칸 문장 + 정답", ["no", "sentence", "kr", "answer"]],
+  ["writing-order", "영작 배열", "한글 + ( 조각 / 조각 )", ["no", "kr", "sentences"]],
+  ["mock-exam", "실전 문제", "발문 + 선지", ["no", "prompt", "choices"]],
+  ["outline-text", "본문 정리", "본문 상자 + 정리 줄", ["passage", "sentence"]],
 ];
 
+// 자리 조합이 같은가 — 이게 「이 요소가 그 원고를 받는다」의 기준
+const sameSlots = (a, b) => a.length && b.length && a.length === b.length && a.every(x => b.includes(x));
+// 이 자리 조합을 쓰는 원고 항목 전부 (항목 key + 같은 모양의 기존 블록 id)
+function matchItems(binds) {
+  const keys = itemList().filter(k => sameSlots(binds, k.fields)).map(k => k.key);
+  const ids = (LIB.blocks || []).filter(b => b.source === "content" && sameSlots(binds, Object.keys(b.fields || {}))).map(b => b.id);
+  return [...new Set([...keys, ...ids])];
+}
+const accNames = (accepts) => { const m = new Map(itemList().map(k => [k.key, k.name])); return (accepts || []).map(a => m.get(a) || (byId("blocks")[a] || {}).name || a); };
 // 고를 수 있는 원고 항목 = 씨앗 + 라이브러리 블록이 받는 것 + 지금 원고에 들어 있는 것
 function itemList() {
   const m = new Map();
-  for (const [key, name, hint] of SEED_ITEMS) m.set(key, {key: key, name: name, hint: hint, fields: []});
+  for (const [key, name, hint, slots] of SEED_ITEMS) m.set(key, {key: key, name: name, hint: hint, fields: slots || []});
   for (const b of LIB.blocks || []) {
     if (b.source !== "content") continue;
     const fs = Object.keys(b.fields || {});
@@ -1319,9 +1328,10 @@ function itemList() {
 }
 let _saveAfterKind = null;
 function panelNewBlock(hd, body) {
-  const binds = _saveAfterKind ? _saveAfterKind.binds : [];
-  hd.innerHTML = `<div><b>이 요소는 무엇을 받나?</b><div class="note">하나 고르면 이름·연결이 한 번에 정해진다. 그 원고가 오면 <b>저절로</b> 이 요소에 들어온다.</div></div>`;
-  const same = (a, b) => a.length && b.length && a.length === b.length && a.every(x => b.includes(x));
+  const st0 = _saveAfterKind || {};
+  const binds = st0.binds || [];
+  hd.innerHTML = `<div><b>이 요소는 무엇을 받나?</b><div class="note">${st0.edit ? "지금 받는 것을 바꾼다. " : ""}하나 고르면 이름·연결이 한 번에 정해진다. 그 원고가 오면 <b>저절로</b> 이 요소에 들어온다.</div></div>`;
+  const same = sameSlots;
   const list = itemList().sort((x, y) => (same(binds, y.fields) ? 1 : 0) - (same(binds, x.fields) ? 1 : 0));
   body.innerHTML = `<div class="note" style="margin-bottom:8px">이 요소의 원고 자리: <b>${binds.length ? esc(binds.join(", ")) : "없음"}</b></div>`
     + list.map(k => `<div class="li" data-item="${esc(k.key)}" data-name="${esc(k.name)}">
@@ -1334,10 +1344,18 @@ function panelNewBlock(hd, body) {
     let key = d.dataset.item, name = d.dataset.name;
     if (key === "__new") { const v = prompt("원고 항목 이름 (원고가 쓰는 이름 그대로)", ""); if (v == null || !v.trim()) return; key = name = v.trim(); }
     closeSheet();
-    const fn = _saveAfterKind && _saveAfterKind.go; _saveAfterKind = null;
+    const fn = st0.go; _saveAfterKind = null;
     // 받는 항목 = 고른 것 + **자리 조합이 같은 기존 항목들**(붙여넣은 원고는 씨앗 블록 이름으로 찍히므로)
-    const extra = (LIB.blocks || []).filter(b => b.source === "content" && same(binds, Object.keys(b.fields || {}))).map(b => b.id);
-    const accepts = (key === "__any" || key === "__none") ? [] : [...new Set([key, ...extra])];
+    const accepts = (key === "__any" || key === "__none") ? [] : [...new Set([key, ...matchItems(binds)])];
+    if (st0.edit) {                                  // 이미 있는 요소의 「받는 원고」를 바꾼다
+      const blk = byId("blocks")[st0.edit]; if (!blk) return;
+      if (accepts.length) blk.accepts = accepts; else delete blk.accepts;
+      if (key !== "__any" && key !== "__none") blk.kind = name || key;
+      const j = await api("/api/units/blocks", blk);
+      say(j.error ? j.error : `「${blk.name}」 받는 원고 = ${accepts.length ? [...new Set(accNames(accepts))].join(" · ") : "자리 이름만 맞으면"}`);
+      pageSvg = {}; render(); side();
+      return;
+    }
     if (fn) await fn(name || key, accepts);
   });
 }
@@ -1354,12 +1372,21 @@ function suggestName() {
   return "새 요소";
 }
 function saveAsElement() {
-  // 고른 것 → 블록. 사용자는 **유형만 고르면 된다** — 이름·자리·매칭은 그걸로 정해진다.
+  // 고른 것 → 블록. **자리 조합이 이미 아는 것이면 묻지 않고 저장한다** — 고를 게 없다.
   const binds = [...sels].map(i => page.items[i] && page.items[i].atom && page.items[i].atom.bind).filter(Boolean);
-  _saveAfterKind = {binds: binds, go: async (name, accepts) => {
+  const go = async (name, accepts) => {
     if (sels.size > 1 || [...sels].every(i => page.items[i] && page.items[i].atom)) { await groupToPart(name); await new Promise(r => setTimeout(r, 150)); }
     if (sel != null && page.items[sel] && page.items[sel].part) await partToBlock(sel, name, name, accepts);
-    $("#st").textContent = `「${name}」 저장 — ${(accepts || []).length ? "그 원고가 오면 여기 들어온다" : "원고 안 들어오는 장식"}`;
+  };
+  const auto = matchItems(binds);
+  if (auto.length) {
+    const name = suggestName(), names = [...new Set(accNames(auto))];
+    go(name, auto).then(() => say(`「${name}」 저장 — ${names.slice(0, 3).join(" · ")}${names.length > 3 ? ` 외 ${names.length - 3}` : ""} 원고를 받는다 (오른쪽 「받는 원고」에서 바꾼다)`));
+    return;
+  }
+  _saveAfterKind = {binds: binds, go: async (name, accepts) => {
+    await go(name, accepts);
+    say(`「${name}」 저장 — ${(accepts || []).length ? "그 원고가 오면 여기 들어온다" : "원고 안 들어오는 장식"}`);
   }};
   openSheet("newblock");
 }
@@ -1425,7 +1452,7 @@ function panel() {
         <ol id="howto" style="display:none">
           <li>도구로 <b>글상자</b>를 그린다</li>
           <li>오른쪽 <b>「원고 자리」</b>에서 무엇이 들어올지 고른다 (지문 본문 · 발문 · 선지 …)</li>
-          <li>다 고르면 <b>★ 요소로 저장</b> → <b>유형</b>을 고른다</li>
+          <li>다 고르면 <b>★ 요소로 저장</b> — 자리 조합이 아는 것이면 바로 저장된다 (모르는 조합일 때만 유형을 묻는다)</li>
           <li>그 카드를 지면에 놓고, 오른쪽 <b>「원고」</b> 를 고르면 글이 들어온다</li>
         </ol></div>`;
     $("#howto-btn").onclick = () => { const o = $("#howto"); const on = o.style.display === "none";
@@ -1684,7 +1711,11 @@ function side() {
     if (u === "block") {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
       const flds = Object.keys(blk.fields || {});
+      const accs = [...new Set(accNames(blk.accepts))];
       h += `<div class="note">${flds.length ? `원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (쪽번호·구간명)" : "장식")}</div>
+        ${blk.source === "content" ? `<div class="f"><span title="이 요소에 저절로 들어올 원고 항목">받는 원고</span><span style="display:flex;gap:4px;align-items:center;min-width:0">
+          <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(accs.join(" · ") || "자리 이름만 맞으면 받는다")}">${esc(accs.slice(0, 2).join(" · ") || "자리 맞으면")}${accs.length > 2 ? ` 외 ${accs.length - 2}` : ""}</b>
+          <button class="btn sm sub" id="s-acc">고치기</button></span></div>` : ""}
         ${blk.source === "content" ? `<div class="f"><span>책에서</span><label title="정답지·어휘 목록처럼 세트를 하나씩 아래로 쌓고, 면이 차면 다음 면에 이어 쌓는다"><input type="checkbox" id="s-flow" ${it.flow ? "checked" : ""} style="width:auto"> 세트마다 아래로 쌓기</label></div>${it.flow ? `<div class="f"><span>쌓기 간격</span><input type="number" id="s-gap" step="0.5" value="${it.gap == null ? 2 : it.gap}"></div>` : ""}` : ""}
         ${(blk.variants || []).length > 1 ? `<div class="f"><span>모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>` : ""}
         <div class="row"><button class="btn sm" id="s-edit" title="더블클릭과 같다">✎ 편집</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다">그룹 해제</button></div>`;
@@ -1862,7 +1893,8 @@ function side() {
     save(); render(); side();
   }));
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
-  on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
+  on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement);
+  on("#s-acc", "click", () => { const it = page.items[sel], blk = byId("blocks")[it.block] || {}; _saveAfterKind = {binds: Object.keys(blk.fields || {}), edit: it.block}; openSheet("newblock"); }); on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
   on("#s-flow", "change", (e) => { hist(); const it = page.items[sel]; if (e.target.checked) it.flow = true; else { delete it.flow; delete it.gap; } save(); side(); });
   on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
@@ -1940,9 +1972,13 @@ function ctrlBar() {
   c.querySelectorAll("[data-cal]").forEach(b => b.onclick = () => align(b.dataset.cal));
 }
 
+// 상태줄 — 알려 줄 말은 잠깐 붙잡는다(자동 저장이 바로 덮어 쓰지 않게)
+let stHold = 0;
+const say = (msg, ms) => { $("#st").textContent = msg; stHold = Date.now() + (ms || 6000); };
 function save() {
-  if (!page) return; $("#st").textContent = "저장 중…";
-  clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page); $("#st").textContent = j.error ? "저장 실패: " + j.error : "저장됨"; }, 500);
+  if (!page) return; if (Date.now() > stHold) $("#st").textContent = "저장 중…";
+  clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page);
+    if (j.error) $("#st").textContent = "저장 실패: " + j.error; else if (Date.now() > stHold) $("#st").textContent = "저장됨"; }, 500);
 }
 function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { const j = await api("/api/units/skins", skin()); if (j.error) $("#st").textContent = "브랜드 저장 실패: " + j.error; thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
 async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); panel(); }
