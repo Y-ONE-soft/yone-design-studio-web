@@ -541,11 +541,10 @@ try:
         return (ok, f"50% 로 줄이니 {len(seen)}칸 보임 · 이웃 눌러 {at2 + 1}쪽")
     step("N2 이웃 쪽 눌러서 열기", n2)
     def n3():
-        click(*center("#tg-flow")); time.sleep(0.6)
-        one = js("[...document.querySelectorAll('#pages .pslot')].filter(d => getComputedStyle(d).display !== 'none').length")
-        click(*center("#tg-flow")); time.sleep(0.6)
-        many = js("[...document.querySelectorAll('#pages .pslot')].filter(d => getComputedStyle(d).display !== 'none').length")
-        return (one == 1 and many > 1, f"끄면 {one}칸 · 켜면 {many}칸")
+        vis = "[...document.querySelectorAll('#pages .prow')].filter(d => getComputedStyle(d).display !== 'none').length"
+        click(*center("#tg-flow")); time.sleep(0.7); one = js(vis)
+        click(*center("#tg-flow")); time.sleep(0.7); many = js(vis)
+        return (one == 1 and many > 1, f"끄면 {one}줄(지금 쪽·펼침면만) · 켜면 {many}줄")
     step("N3 연속 껐다 켜기", n3)
     def n4():
         click(*center('#trail [data-tool="path"]')); time.sleep(0.5)
@@ -561,6 +560,38 @@ try:
         star = js("(() => { const it = page.items[page.items.length - 1]; return !!(it && it.atom && it.atom.t === 'path'); })()")
         return (ok and star and d.startswith("M0.5 0 L0.62"), f"모양 {len(btns)}개 · 고른 것={nm} · 그린 것 d={d[:22]}")
     step("N4 도형 — 모양 고르고 그리면 그 모양", n4)
+
+    def n5():
+        while js("docPages().length") < 3:
+            click(*center("#f-addpg")); time.sleep(1.2)
+        if not js("!!view.spread"): click(*center("#tg-spread")); time.sleep(1.2)
+        js("scrollToActive()"); time.sleep(0.8)
+        rows = js("[...document.querySelectorAll('#pages .prow')].map(r => [...r.querySelectorAll('.pslot')].map(d => +d.dataset.i + 1))")
+        blank = js("!!document.querySelector('#pages .prow:first-child .pblank')")
+        two = any(len(r) == 2 for r in rows)
+        return (blank and two and rows[0] == [1], f"줄 {rows} · 1쪽 오른쪽(빈 자리)={blank}")
+    step("N5 펼침면 — 2·3쪽이 한 장, 1쪽은 오른쪽", n5)
+    def n6():
+        js("(() => { const r = document.querySelector('#pages .prow:nth-child(2) .pslot'); if (r) openPage(byId('pages')[r.dataset.id], false, +r.dataset.i); })()"); time.sleep(1.2)
+        row = js("[...document.querySelector('#pages .prow.cur').querySelectorAll('.pslot')].map(d => +d.dataset.i + 1)")
+        o = rect("#pages .prow.cur .pslot:not(.cur)")
+        if not o: return (False, f"맞은편 쪽이 없다 (줄 {row})")
+        i0 = js("idx()"); click(o[0] + o[2] / 2, o[1] + o[3] / 2)
+        ok = wait(f"idx() !== {i0}", 6)
+        paper_here = js("!!document.querySelector('#pages .prow.cur .pslot.cur #paper')")
+        return (ok and paper_here, f"줄 {row} · 맞은편 눌러 {js('idx()') + 1}쪽 · 지면이 그 칸에={paper_here}")
+    step("N6 맞은편 쪽 눌러 고치기", n6)
+    def n7():
+        w0 = js("Math.round(document.querySelector('.paper').getBoundingClientRect().width)")
+        click(*center("#tg-spread")); time.sleep(1.5)
+        one = js("document.querySelectorAll('#pages .prow:first-child .pslot').length")
+        board1 = js("(document.querySelector('#svgwrap svg') || {}).dataset ? (document.querySelector('#svgwrap svg').dataset.board || '0') : '?'")
+        click(*center("#tg-spread")); time.sleep(1.5)
+        two = js("[...document.querySelectorAll('#pages .prow')].some(r => r.querySelectorAll('.pslot').length === 2)")
+        board2 = js("(document.querySelector('#svgwrap svg') || {}).dataset ? (document.querySelector('#svgwrap svg').dataset.board || '0') : '?'")
+        return (one == 1 and two and float(board1) > 0 and float(board2) == 0,
+                f"끄면 한 줄 한 쪽(대지 {board1}mm) · 켜면 두 쪽(대지 {board2}mm) · 지면 폭 {w0}")
+    step("N7 펼침 껐다 켜기 (끄면 대지가 돌아온다)", n7)
 
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
