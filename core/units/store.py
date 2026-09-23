@@ -65,11 +65,41 @@ def get(kind, uid):
     return by_id(load(kind)).get(uid)
 
 
+def norm_page(page):
+    """지면 규칙 하나 — **자리는 요소가 갖고 원자는 0,0**.
+
+    분해해서 넣은 지면처럼 절대좌표가 원자에 박혀 있으면 요소로 옮긴다. 안 그러면 「원고 자리가 자라면
+    아래를 민다」가 원자 전부를 자란 것으로 보고 지면을 밀어 버린다.
+    """
+    for it in page.get("items") or []:
+        a = it.get("atom")
+        if not isinstance(a, dict):
+            continue
+        if abs(float(it.get("x") or 0)) > 0.001 or abs(float(it.get("y") or 0)) > 0.001:
+            continue
+        if a.get("t") == "line":
+            ax, ay = min(a.get("x1", 0), a.get("x2", 0)), min(a.get("y1", 0), a.get("y2", 0))
+        else:
+            ax, ay = a.get("x", 0), a.get("y", 0)
+        if abs(ax) < 0.001 and abs(ay) < 0.001:
+            continue
+        it["x"], it["y"] = round(ax, 3), round(ay, 3)
+        if a.get("t") == "line":
+            for k, d in (("x1", ax), ("x2", ax), ("y1", ay), ("y2", ay)):
+                if k in a:
+                    a[k] = round(a[k] - d, 3)
+        else:
+            a["x"], a["y"] = round(a.get("x", 0) - ax, 3), round(a.get("y", 0) - ay, 3)
+    return page
+
+
 def put(kind, item, after=None):
     """같은 id 는 덮어쓴다(자리 유지). 없으면 끝에.
 
     after 를 주면 그 id 바로 뒤로 옮긴다("" 이면 맨 앞). 목록 순서 = 문서 순서(지면 띠).
     """
+    if kind == "pages":
+        norm_page(item)
     items = load(kind)
     for i, x in enumerate(items):
         if x.get("id") == item["id"]:

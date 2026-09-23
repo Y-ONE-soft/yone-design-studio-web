@@ -958,3 +958,40 @@ def test_block_accepts_items(lib):
     pg3 = dict(pg, items=[{"block": "p_21", "x": 20, "y": 40, "w": 170}])
     svg3 = render.page_canvas_svgs(ctx3, pg3, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
     assert "have finished" not in svg3                  # 안 받는 항목은 안 꽂힌다
+
+
+def test_fixed_frames_do_not_push(lib):
+    """판에 그려 둔 글상자는 안 자란다 — 인디자인처럼. 원고가 들어오는 자리만 자라고 아래를 민다."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    long = "긴 글이 들어가서 상자보다 훨씬 커진다. " * 12
+    fixed = {"t": "text", "x": 0, "y": 0, "w": 80, "h": 4, "font": "$body", "size": 9, "color": "$ink", "text": long}
+    below = {"t": "rect", "x": 0, "y": 0, "w": 40, "h": 5, "fill": "$sel"}
+    pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
+          "items": [{"atom": fixed, "x": 20, "y": 40}, {"atom": below, "x": 20, "y": 80}]}
+    placed = render.place_items(ctx, pg, 210, 297)
+    assert placed[0]["h"] > placed[0]["h0"] + 1          # 글은 넘친다(실제 높이가 크다)
+    assert placed[1]["dy"] == 0                          # 그래도 아래 것은 안 민다 — 고정 글상자
+    slot = dict(fixed, bind="sentence")                  # 같은 글상자에 원고 자리를 주면
+    pg2 = dict(pg, items=[{"atom": slot, "x": 20, "y": 40}, {"atom": below, "x": 20, "y": 80}])
+    placed2 = render.place_items(ctx, pg2, 210, 297)
+    assert placed2[1]["dy"] > 1                          # 자란 만큼 아래를 민다
+    pg3 = dict(pg, items=[{"atom": slot, "x": 20, "y": 40, "grow": False}, {"atom": below, "x": 20, "y": 80}])
+    assert render.place_items(ctx, pg3, 210, 297)[1]["dy"] == 0   # grow:false 로 끌 수 있다
+
+
+def test_page_item_coords_normalized_on_save(tmp_path, monkeypatch):
+    """지면을 저장하면 자리는 요소가 갖고 원자는 0,0 — 분해해서 넣은 지면도 같은 규칙이 된다."""
+    from core.units import store
+    monkeypatch.setattr(store, "udir", lambda: str(tmp_path))
+    pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "items": [
+        {"atom": {"t": "text", "x": 21.0, "y": 91.34, "w": 80, "h": 5, "text": "가"}, "x": 0, "y": 0},
+        {"atom": {"t": "line", "x1": 10, "y1": 50, "x2": 60, "y2": 50}, "x": 0, "y": 0},
+        {"atom": {"t": "rect", "x": 0, "y": 0, "w": 10, "h": 10}, "x": 30, "y": 40},
+    ]}
+    store.put("pages", pg)
+    got = store.get("pages", "t")["items"]
+    assert (got[0]["x"], got[0]["y"]) == (21.0, 91.34) and (got[0]["atom"]["x"], got[0]["atom"]["y"]) == (0, 0)
+    assert (got[1]["x"], got[1]["y"]) == (10, 50) and (got[1]["atom"]["x1"], got[1]["atom"]["y1"]) == (0, 0)
+    assert (got[1]["atom"]["x2"], got[1]["atom"]["y2"]) == (50, 0)
+    assert (got[2]["x"], got[2]["y"]) == (30, 40)                  # 이미 규칙대로면 안 건드린다
