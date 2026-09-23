@@ -1109,7 +1109,8 @@ function bottomOf() {
 }
 function place(it, at, stretch) {
   const S = specOf();
-  if (stretch) it.w = S.w - M.left - M.right;
+  // 블록은 **제 크기로** 놓는다(인디자인의 프레임). 단 폭만큼 그려 둔 것만 단 폭에 맞춘다.
+  if (stretch) { const col = S.w - M.left - M.right, pw = (partOfBlock(it.block) || {}).w || col; it.w = Math.min(pw, col); }
   it.x = M.left; it.y = snap(Math.min(bottomOf() + 3, S.h - 20));
   if (at) { it.x = snap(Math.max(0, at.x)); it.y = snap(Math.max(0, at.y)); }
   if (editing) it._edit = true;
