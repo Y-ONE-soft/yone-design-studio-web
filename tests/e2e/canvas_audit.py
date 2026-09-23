@@ -733,6 +733,40 @@ try:
         return (not miss and all(drawn.values()), f"없는 칸 {miss or '없음'} · 그려짐 {drawn} · 원자 {at[:120]}")
     step("P2 글 속성 — 단락 경계선·음영·글머리·탭·장평·기준선·커닝", p2)
 
+    def p3():
+        js("addAtom('rect', {x: 20, y: 120})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        want = ["corner", "stroke.gap_color", "origin", "nonprint", "overprint", "wrap.mode", "wrap.offset", "wrap.side"]
+        miss = [k for k in want if k not in have]
+        for k, v in [("corner", "bevel"), ("origin", "tl"), ("wrap.mode", "bbox"), ("wrap.offset", "2"), ("dashpat", "3, 2")]:
+            setf(k, v)
+        time.sleep(1.6)
+        at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
+        return (not miss and "bevel" in at and "wrap" in at and "stroke-dasharray" in svg,
+                f"없는 칸 {miss or '없음'} · 원자 {at[:110]}")
+    step("P3 도형 — 모서리 모양·기준점·감싸기·비인쇄·간격 색", p3)
+
+    def p4():
+        js("addAtom('text', {x: 20, y: 150})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        want = ["drop_cap.lines", "drop_cap.chars", "case", "column_rule.w", "underline.w", "underline.style", "strike.w"]
+        miss = [k for k in want if k not in have]
+        for k, v in [("drop_cap.lines", "3"), ("case", "small"), ("columns", "2"), ("column_rule.w", "0.5"),
+                     ("underline.w", "0.6"), ("underline.style", "wavy")]:
+            setf(k, v)
+        time.sleep(1.8)
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        drawn = {"드롭캡": "float:left" in svg, "작은대문자": "small-caps" in svg,
+                 "단 사이 선": "column-rule" in svg, "물결 밑줄": "wavy" in svg}
+        at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
+        return (not miss and all(drawn.values()), f"없는 칸 {miss or '없음'} · 그려짐 {drawn} · 원자 {at[:110]}")
+    step("P4 글 — 드롭캡·단 사이 선·작은대문자·밑줄 옵션", p4)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)

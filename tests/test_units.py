@@ -653,3 +653,78 @@ def test_decompose_reads_dash_and_join(tmp_path):
     dec = decompose.from_pdf(str(p), 1)
     st = [a for a in dec["atoms"] if a.get("stroke")][0]["stroke"]
     assert st.get("dash") and st.get("join") == "round"
+
+
+def test_corner_shapes(lib):
+    """모서리 모양 5종 — 인디자인 모서리 옵션."""
+    got = {}
+    for shape in ("round", "inverse", "bevel", "inset", "fancy"):
+        svg, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "$cream", "radius": 3, "corner": shape})
+        got[shape] = svg
+    assert "rx=\"3\"" in got["round"]                    # 둥근 모서리는 rect 그대로
+    assert " A 3.000 3.000 0 0 0 " in got["inverse"]      # 역둥글게 = 반대로 도는 원호
+    assert " L 20.000 3.000 " in got["bevel"]             # 경사 = 곧은 선
+    assert " L 17.000 3.000 " in got["inset"]             # 빗면 = 안으로 파낸 네모
+    assert " C 17.000 3.000 " in got["fancy"]
+
+
+def test_dash_gap_color(lib):
+    """점선 간격 색 — 밑에 꽉 찬 선을 깔고 그 위에 점선."""
+    svg, ctx = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "none",
+                                 "stroke": {"w": 1, "color": "$ink", "dash": [3, 2], "gap_color": "$cream"}})
+    assert svg.count("<rect") >= 2                        # 두 번 그린다
+    assert f'stroke="{ctx.color("$cream")}"' in svg and "stroke-dasharray" in svg
+
+
+def test_drop_cap_column_rule_case_decor(lib):
+    """드롭캡·단 사이 괘선·작은대문자·밑줄 옵션 — 인디자인 단락/문자 패널."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 20, "font": "$body", "size": 9,
+                               "text": "The quick brown fox", "drop_cap": {"lines": 3, "chars": 1}, "case": "small",
+                               "columns": 2, "gutter": 4, "column_rule": {"w": 0.5, "color": "$rule"},
+                               "underline": {"w": 0.6, "color": "$sel", "offset": 1, "style": "wavy"},
+                               "strike": {"w": 0.4, "style": "dotted"}})
+    assert "float:left" in svg and "line-height:41" not in svg      # 드롭캡 — 첫 글자가 떠 있다
+    assert "column-rule:0.176px solid" in svg
+    assert "font-variant:small-caps" in svg
+    assert "text-decoration-line:underline" in svg and "text-decoration-style:wavy" in svg and "text-underline-offset:" in svg
+    assert "text-decoration-line:line-through" in svg and "text-decoration-style:dotted" in svg
+
+
+def test_text_wrap_makes_room(lib):
+    """텍스트 감싸기 — 겹치는 「감싸기」 원자만큼 글 자리를 비운다."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    part = {"id": "w", "name": "w", "w": 100, "atoms": [
+        {"t": "rect", "x": 60, "y": 0, "w": 30, "h": 20, "fill": "$cream", "wrap": {"mode": "bbox", "offset": 2, "side": "right"}},
+        {"t": "text", "x": 0, "y": 0, "w": 100, "h": 30, "font": "$body", "size": 9, "text": "감싸기 시험 " * 8}]}
+    svg, _h = render.part_svg(ctx, part)
+    assert "float:right" in svg and "width:42.000px" in svg          # 100 - (60-2) = 42mm 를 비운다
+    no_wrap = {"id": "w", "name": "w", "w": 100, "atoms": [dict(part["atoms"][0], wrap=None), part["atoms"][1]]}
+    svg2, _ = render.part_svg(ctx, no_wrap)
+    assert "float:right" not in svg2
+
+
+def test_nonprint_and_origin(lib):
+    """비인쇄 — PDF·인쇄에는 안 그린다. 기준점 — 변형 축이 그 귀로."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    mk = lambda: {"id": "t", "name": "t", "zones": [], "spec": "a4", "_canvas": True,
+                  "items": [{"atom": {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "$ink", "nonprint": True}, "x": 10, "y": 10}]}
+    ink = ctx.color("$ink")
+    on_screen = render.page_canvas_svgs(ctx, mk(), render.DEFAULT_SPEC)[0]["svg"]
+    assert f'fill="{ink}"' in on_screen                               # 화면엔 보인다
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    ctx2.print = {"bleed": 0, "marks": False}
+    printed = render.page_canvas_svgs(ctx2, mk(), render.DEFAULT_SPEC)[0]["svg"]
+    assert f'fill="{ink}"' not in printed                             # 인쇄엔 빠진다
+    svg, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "$ink", "rotate": 30, "origin": "tl"})
+    assert "rotate(30.00 0.000 0.000)" in svg                        # 왼위를 축으로
+    svg2, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "$ink", "rotate": 30})
+    assert "rotate(30.00 10.000 5.000)" in svg2                      # 없으면 가운데
+
+
+def test_run_case(lib):
+    """글 안 조각의 대소문자."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                               "text": [{"t": "abc", "case": "upper"}]})
+    assert "text-transform:uppercase" in svg

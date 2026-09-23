@@ -144,6 +144,8 @@ def rich_html(v, ctx=None):
             st += f"position:relative;top:{-float(v['bshift']) * PT:.3f}px;"
         if v.get("tracking"):
             st += f"letter-spacing:{float(v['tracking']) / 1000.0:.4f}em;"
+        if v.get("case"):
+            st += {"upper": "text-transform:uppercase;", "lower": "text-transform:lowercase;", "small": "font-variant:small-caps;"}[v["case"]]
         hs, vs = v.get("hscale"), v.get("vscale")
         if hs or vs:
             st += f"display:inline-block;transform:scale({float(hs or 100) / 100.0:.3f},{float(vs or 100) / 100.0:.3f});transform-origin:0 100%;"
@@ -221,6 +223,52 @@ def _rule_css(r, side, ctx=None):
     return css
 
 
+def _decor_css(a, ctx=None):
+    """밑줄·취소선 꾸밈 — 굵기·색·내린 거리·모양(인디자인 밑줄 옵션)."""
+    css = ""
+    for k, line in (("underline", "underline"), ("strike", "line-through")):
+        d = a.get(k)
+        if not d:
+            continue
+        css += f"text-decoration-line:{line};"
+        if d.get("w"):
+            css += f"text-decoration-thickness:{float(d['w']) * PT:.3f}px;"
+        if d.get("color"):
+            css += f"text-decoration-color:{ctx.color(d['color']) if ctx else d['color']};"
+        if d.get("style") and d["style"] != "solid":
+            css += f"text-decoration-style:{d['style']};"
+        if k == "underline" and d.get("offset"):
+            css += f"text-underline-offset:{float(d['offset']) * PT:.3f}px;"
+    if a.get("case"):
+        css += {"upper": "text-transform:uppercase;", "lower": "text-transform:lowercase;", "small": "font-variant:small-caps;"}[a["case"]]
+    return css
+
+
+def _wrap_floats(ctx, a, h):
+    """텍스트 감싸기 — 이 글상자와 겹치는 「감싸기」 원자만큼 자리를 비운다(인디자인 텍스트 감싸기, 사각형)."""
+    out = ""
+    for w in (getattr(ctx, "wrappers", None) or []):
+        if w.get("id") is a:
+            continue
+        off = float(w.get("offset") or 0)
+        x0, y0 = w["x"] - off, w["y"] - off
+        x1, y1 = w["x"] + w["w"] + off, w["y"] + w["h"] + off
+        tx0, ty0, tx1, ty1 = a["x"], a["y"], a["x"] + a["w"], a["y"] + h
+        if x1 <= tx0 or x0 >= tx1 or y1 <= ty0 or y0 >= ty1:
+            continue                                              # 안 겹친다
+        side = w.get("side") or "auto"
+        if side == "auto":
+            side = "left" if (x0 - tx0) < (tx1 - x1) else "right"
+        ww = (x1 - tx0) if side == "left" else (tx1 - x0)
+        hh = y1 - ty0
+        if ww <= 0 or hh <= 0:
+            continue
+        mt = max(0.0, y0 - ty0)
+        out += (f'<div style="float:{side};width:{min(ww, a["w"]):.3f}px;height:{hh - mt:.3f}px;'
+                f'margin-top:{mt:.3f}px;shape-outside:none"></div>')
+    return out
+
+
 def _text_html(a, html, h, ctx=None):
     """글상자 안 HTML — 단락(<p>)마다 들여쓰기·앞뒤 간격·경계선·음영·글머리, 상자엔 여백·세로 정렬·다단·첫 기준선·장평."""
     ps = ""
@@ -242,6 +290,17 @@ def _text_html(a, html, h, ctx=None):
         ps += f"display:list-item;list-style-type:{bul};list-style-position:inside;"
     paras = (html or "").split("<br/>")
     inner = "".join(f'<p style="margin:0;{ps}">{x or "&#160;"}</p>' for x in paras)
+    dc = a.get("drop_cap")
+    if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
+        n = int(dc.get("chars") or 1)
+        lines = int(dc["lines"])
+        lead = (a.get("leading") or float(a.get("size") or 9) * 1.45) * PT
+        head, rest = paras[0][:n], paras[0][n:]
+        if head and "<" not in head:                              # 첫 글자에 태그가 걸치면 건드리지 않는다
+            cap = (f'<span style="float:left;font-size:{lead * lines * 0.86:.3f}px;line-height:{lead * lines:.3f}px;'
+                   f'margin-right:{lead * 0.12:.3f}px">{head}</span>')
+            inner = (f'<p style="margin:0;{ps}">{cap}{rest or "&#160;"}</p>'
+                     + "".join(f'<p style="margin:0;{ps}">{x or "&#160;"}</p>' for x in paras[1:]))
     it, ir, ib, il = insets(a)
     it += float(a.get("first_baseline") or 0)                    # 첫 기준선 — 상자 위에서 더 내린다
     cols = int(a.get("columns") or 1)
@@ -249,11 +308,17 @@ def _text_html(a, html, h, ctx=None):
     if a.get("valign") in ("center", "bottom"):
         box += "display:flex;flex-direction:column;justify-content:" + ("center" if a["valign"] == "center" else "flex-end") + ";"
     if cols > 1:
-        inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;column-fill:balance">{inner}</div>'
+        cr = a.get("column_rule")
+        rule = ""
+        if cr and cr.get("w"):
+            rule = f";column-rule:{float(cr['w']) * PT:.3f}px solid {(ctx.color(cr.get('color'), '#000000') if ctx else (cr.get('color') or '#000000'))}"
+        inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;column-fill:balance{rule}">{inner}</div>'
     hs, vs = float(a.get("h_scale") or 100), float(a.get("v_scale") or 100)
     if hs != 100 or vs != 100:                                   # 장평 — 글자는 늘리고 상자 폭은 지킨다
         inner = (f'<div style="width:{float(a["w"]) * 100.0 / hs:.3f}px;transform:scale({hs / 100.0:.4f},{vs / 100.0:.4f});'
                  f'transform-origin:0 0">{inner}</div>')
+    if ctx is not None:
+        inner = _wrap_floats(ctx, a, h) + inner                   # 감싸기 — 비울 자리를 먼저
     return f'<div style="{box}">{inner}</div>'
 
 
@@ -376,8 +441,11 @@ def _aligned_shape(ctx, a, el, bbox):
     align = st.get("align") or "center"
     w = float(st.get("w") or 0)
     adefs, aattrs = _arrows(ctx, st)
+    gap = ""
+    if st.get("dash") and st.get("gap_color"):                    # 간격 색 — 밑에 꽉 찬 선을 깔고 그 위에 점선
+        gap = el(f'fill="none" {_stroke(ctx, dict(st, color=st["gap_color"], dash=None))}')
     if not w or align == "center" or not st.get("color"):
-        return gdefs + adefs + el(f'fill="{fill}" {_stroke(ctx, st)}{aattrs}')
+        return gdefs + adefs + gap + el(f'fill="{fill}" {_stroke(ctx, st)}{aattrs}')
     thick = _stroke(ctx, dict(st, w=w * 2))
     cid = ctx.uid()
     base = el(f'fill="{fill}" stroke="none"')
@@ -422,27 +490,53 @@ def _fill(ctx, a):
     return f"url(#{gid})", f"<defs>{defs}</defs>"
 
 
-def _rrect_path(x, y, w, h, r):
-    """모서리마다 다른 반지름의 네모 → path. r = [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래]."""
+def _corner(x0, y0, x1, y1, cx, cy, r, shape):
+    """한 귀 — (x0,y0)에서 (x1,y1) 로 가는 모서리. cx,cy = 그 귀의 꼭짓점. 인디자인 모서리 옵션 5종."""
+    k = 0.5523
+    ix, iy = x0 + x1 - cx, y0 + y1 - cy                          # 안쪽으로 들어간 점
+    if shape == "bevel":                                         # 경사 — 곧게 자른다
+        return f"L {x1:.3f} {y1:.3f}"
+    if shape == "inset":                                         # 빗면 — 네모로 파낸다
+        return f"L {ix:.3f} {iy:.3f} L {x1:.3f} {y1:.3f}"
+    if shape == "inverse":                                       # 역둥글게 — 안으로 파인 원호
+        return f"A {r:.3f} {r:.3f} 0 0 0 {x1:.3f} {y1:.3f}"
+    if shape == "fancy":                                         # 팬시 — 안으로 들어갔다 나오는 S
+        return f"C {ix:.3f} {iy:.3f} {cx:.3f} {cy:.3f} {x1:.3f} {y1:.3f}"
+    return f"C {x0 + (cx - x0) * k:.3f} {y0 + (cy - y0) * k:.3f} {x1 + (cx - x1) * k:.3f} {y1 + (cy - y1) * k:.3f} {x1:.3f} {y1:.3f}"
+
+
+def _rrect_path(x, y, w, h, r, shape="round"):
+    """모서리마다 다른 반지름의 네모 → path. r = [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래]. shape = 모서리 모양."""
     tl, tr, br, bl = [max(0.0, min(float(v or 0), w / 2, h / 2)) for v in r]
-    k = 0.5523                                                   # 원호를 베지에로
     d = [f"M {x + tl:.3f} {y:.3f}", f"L {x + w - tr:.3f} {y:.3f}"]
     if tr:
-        d.append(f"C {x + w - tr + tr * k:.3f} {y:.3f} {x + w:.3f} {y + tr - tr * k:.3f} {x + w:.3f} {y + tr:.3f}")
+        d.append(_corner(x + w - tr, y, x + w, y + tr, x + w, y, tr, shape))
     d.append(f"L {x + w:.3f} {y + h - br:.3f}")
     if br:
-        d.append(f"C {x + w:.3f} {y + h - br + br * k:.3f} {x + w - br + br * k:.3f} {y + h:.3f} {x + w - br:.3f} {y + h:.3f}")
+        d.append(_corner(x + w, y + h - br, x + w - br, y + h, x + w, y + h, br, shape))
     d.append(f"L {x + bl:.3f} {y + h:.3f}")
     if bl:
-        d.append(f"C {x + bl - bl * k:.3f} {y + h:.3f} {x:.3f} {y + h - bl + bl * k:.3f} {x:.3f} {y + h - bl:.3f}")
+        d.append(_corner(x + bl, y + h, x, y + h - bl, x, y + h, bl, shape))
     d.append(f"L {x:.3f} {y + tl:.3f}")
     if tl:
-        d.append(f"C {x:.3f} {y + tl - tl * k:.3f} {x + tl - tl * k:.3f} {y:.3f} {x + tl:.3f} {y:.3f}")
+        d.append(_corner(x, y + tl, x + tl, y, x, y, tl, shape))
     return " ".join(d) + " Z"
 
 
+def _origin(a, cx, cy, h=None):
+    """변형 기준점 — 없으면 가운데, tl·tr·bl·br 이면 그 귀."""
+    o = a.get("origin")
+    if not o or o == "center" or a.get("t") == "line":
+        return cx, cy
+    x, y, w = a.get("x", 0), a.get("y", 0), a.get("w", 0)
+    hh = h if h is not None else a.get("h", 0)
+    dy = cy - (y + hh / 2)                                        # 자란 만큼 따라간다
+    return (x if "l" in o else x + w), (y + dy if "t" in o else y + hh + dy)
+
+
 def _wrap_atom(a, svg, cx, cy, ctx=None):
-    """회전·뒤집기·기울이기·배율·불투명·효과 — 원자 공통. 축은 원자의 가운데(인디자인 기준점 가운데)."""
+    """회전·뒤집기·기울이기·배율·불투명·효과 — 원자 공통. 축은 기준점(기본 가운데)."""
+    cx, cy = _origin(a, cx, cy)
     rot = float(a.get("rotate") or 0)
     op = a.get("opacity")
     flip, skew, sc = a.get("flip"), a.get("skew"), a.get("scale")
@@ -522,6 +616,9 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     if width and pw > 0 and abs(width - pw) > 0.01:
         atoms = _fit(atoms, float(width) / pw)
     atoms = [ctx.styled(a) for a in atoms]                  # 단락 스타일(옷) 입히기
+    ctx.wrappers = [{"id": a, "x": a.get("x", 0), "y": a.get("y", 0), "w": a.get("w", 0), "h": a.get("h", 0),
+                     "offset": (a.get("wrap") or {}).get("offset"), "side": (a.get("wrap") or {}).get("side")}
+                    for a in atoms if (a.get("wrap") or {}).get("mode") == "bbox"]      # 텍스트 감싸기 상자들
     # 1) 글이 자라는 만큼
     grown = []                                # (원자 번호, 원래 위, 원래 아래, 왼쪽, 오른쪽, 늘어난 양)
     content = {}
@@ -564,6 +661,8 @@ def part_svg(ctx, part, values=None, types=None, width=None):
 
 
 def _atom_svg(ctx, a, dy, h, html):
+    if a.get("nonprint") and ctx.print:                           # 비인쇄 — 화면에만
+        return ""
     svg = _atom_svg_raw(ctx, a, dy, h, html)
     if a.get("t") == "line":
         cx, cy = (a["x1"] + a["x2"]) / 2, (a["y1"] + a["y2"]) / 2 + dy
@@ -623,6 +722,9 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
         if a.get("kerning") == "none":
             style += ";font-kerning:none"
+        dec = _decor_css(a, ctx)
+        if dec:
+            style += ";" + dec
         if a.get("baseline"):
             style += f";position:relative;top:{-float(a['baseline']) * PT:.3f}px"
         if a.get("b"):
@@ -645,9 +747,11 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         return _aligned_shape(ctx, a, el, (a["x"], a["y"] + dy, a["w"], h))
     if t == "rect":
         r = a.get("radius") or 0
+        shape = a.get("corner") or "round"
         bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)
-        if isinstance(r, (list, tuple)):
-            d = _rrect_path(bx, by, bw, bh, r)
+        if isinstance(r, (list, tuple)) or (r and shape != "round"):
+            rr = r if isinstance(r, (list, tuple)) else [r, r, r, r]
+            d = _rrect_path(bx, by, bw, bh, rr, shape)
             el = lambda at: f'<path d="{d}" {at}/>'
         else:
             el = lambda at: f'<rect x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" rx="{r}" {at}/>'
