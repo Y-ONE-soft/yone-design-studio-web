@@ -461,6 +461,7 @@ function openPlan(pl) {
   plan = byId("plans")[pl.id] || pl; page = null; sel = null; sels = new Set();
   $("#cv").classList.remove("browsing"); document.body.classList.add("editing-doc");   // 편집기는 창 전체(사이트 레일 감춤)
   $("#start").style.display = "none"; $(".ptool").style.display = ""; $("#plname").value = plan.name || plan.id;
+  if (plan.skin && byId("skins")[plan.skin]) { $("#skin").value = plan.skin; pageSvg = {}; }    // 문서가 기억한 브랜드로 연다
   const dp = docPages(); const want = new URLSearchParams(location.search).get("page") || decodeURIComponent(location.hash.replace(/^#/, ""));   // ?page= 도 받는다(# 를 못 넘기는 곳)
   history.replaceState(null, "", "?plan=" + encodeURIComponent(plan.id) + (want ? "#" + want : ""));
   if (dp.length) openPage(dp.find(x => x.id === want) || dp[0]); else { $("#svgwrap").innerHTML = ""; drawRail(); $("#side").innerHTML = ""; emptyGuide(); }
@@ -1727,7 +1728,10 @@ function save() {
 }
 function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { const j = await api("/api/units/skins", skin()); if (j.error) $("#st").textContent = "브랜드 저장 실패: " + j.error; thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
 async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); panel(); }
-$("#skin").onchange = () => { pageSvg = {}; thumbsLoad(); drawRail(); render(); side(); };
+$("#skin").onchange = async () => {
+  pageSvg = {}; thumbsLoad(); drawRail(); render(); side();
+  if (plan && plan.skin !== $("#skin").value) { plan.skin = $("#skin").value; await savePlan(); }   // 문서에 기억시킨다
+};
 
 // ── 시작 ──
 $("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");

@@ -354,6 +354,7 @@
       "type": "object", "required": ["id", "name", "spec", "sections"],
       "properties": {
         "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
+        "skin": {"$ref": "#/definitions/id", "description": "이 문서의 브랜드(옷) — 열 때 이 옷으로 그린다. 없으면 화면에서 고른 옷"},
         "facing": {"type": "boolean", "description": "페이지 마주보기 — 켜면 2·3쪽이 한 장(펼침면)으로 보이고 1쪽은 오른쪽. 안 적으면 켠 것으로 본다"}, "spec": {"$ref": "#/definitions/id"},
         "front": {"type": "array", "items": {"$ref": "#/definitions/id"}},
         "sections": {"type": "array", "items": {"$ref": "#/definitions/section"}},
