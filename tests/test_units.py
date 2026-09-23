@@ -527,3 +527,129 @@ def test_item_scale_renders_and_places(lib):
     assert placed[0]["w"] == 200 and placed[0]["h"] > placed[1]["h"] * 1.9        # 배율 곱한 크기 (자리·넘침 계산에 쓰인다)
     assert placed[0]["h0"] == placed[1]["h0"] * 2 and placed[1]["dy"] == 0        # 배율은 설계 크기라 글이 자란 게 아니다 — 밀지 않는다
     assert store.validate("pages", {k: v for k, v in pg.items() if not k.startswith("_")}) is None
+
+
+# ── 인디자인 개체 속성 전부 (2026-09-23) ──────────────────────────────
+def _canvas_svg(lib, atom, **page_kw):
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": "TAG"})
+    pg = dict({"id": "t", "name": "t", "zones": [], "spec": "a4", "items": [{"atom": atom, "x": 10, "y": 10}]}, **page_kw)
+    pg["_canvas"] = True
+    return render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)[0]["svg"], ctx
+
+
+def test_stroke_align_inside_outside(lib):
+    """획 정렬 — SVG 획은 늘 가운데라 두 배 굵기 + 클립(안쪽)·마스크(바깥쪽)로 그린다."""
+    from core.units import store
+    ins, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 40, "h": 20, "fill": "$cream",
+                               "stroke": {"w": 1, "color": "$ink", "align": "inside"}})
+    out, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 40, "h": 20, "fill": "$cream",
+                               "stroke": {"w": 1, "color": "$ink", "align": "outside"}})
+    mid, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 40, "h": 20, "fill": "$cream",
+                               "stroke": {"w": 1, "color": "$ink"}})
+    assert "clipPath" in ins and 'stroke-width="0.706"' in ins        # 1pt → 두 배로 그려 안쪽만 남긴다
+    assert "<mask" in out and 'stroke-width="0.706"' in out
+    assert "clipPath" not in mid and "<mask" not in mid and 'stroke-width="0.353"' in mid
+    assert store.validate("pages", {"id": "p", "name": "p", "spec": "a4", "zones": [], "items": [
+        {"atom": {"t": "rect", "x": 0, "y": 0, "w": 4, "h": 2, "stroke": {"w": 1, "color": "$ink", "align": "inside"}}, "x": 0, "y": 0}]}) is None
+
+
+def test_dash_join_miter_and_arrows(lib):
+    """점선 패턴·모서리 연결·마이터·화살촉 — 인디자인 획 패널."""
+    svg, _ = _canvas_svg(lib, {"t": "line", "x1": 0, "y1": 0, "x2": 50, "y2": 0,
+                               "stroke": {"w": 0.6, "color": "$ink", "dash": [2, 1], "join": "round", "miter": 8,
+                                          "start": "circle", "end": "arrow"}})
+    assert 'stroke-dasharray="0.706 0.353"' in svg
+    assert 'stroke-linejoin="round"' in svg and 'stroke-miterlimit="8.00"' in svg
+    assert svg.count("<marker") == 2 and "marker-start=" in svg and "marker-end=" in svg
+
+
+def test_tint_fill_and_stroke(lib):
+    """색조 — 같은 색의 옅은 값(흰색과 섞는다)."""
+    from core.units.render import tint
+    assert tint("#ff0000", 40) == "#ff9999" and tint("#ff0000", 100) == "#ff0000" and tint("#ff0000", 0) == "#ffffff"
+    svg, ctx = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 10, "h": 10, "fill": "$ink", "tint": 20,
+                                 "stroke": {"w": 1, "color": "$ink", "tint": 50}})
+    ink = ctx.color("$ink")
+    assert f'fill="{tint(ink, 20)}"' in svg and f'stroke="{tint(ink, 50)}"' in svg
+    assert tint(ink, 20) != ink and tint(ink, 50) != ink
+
+
+def test_fx_shadow_glow_feather_blend(lib):
+    """효과 — 그림자·광선·페더는 filter, 혼합 모드는 mix-blend-mode."""
+    svg, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 10, "h": 10, "fill": "$sel",
+                               "fx": {"blend": "multiply", "shadow": {"x": 1, "y": 1, "blur": 2, "color": "$ink", "opacity": 0.5},
+                                      "glow": {"blur": 3, "color": "$sel"}, "feather": 1}})
+    assert "mix-blend-mode:multiply" in svg
+    assert "feDropShadow" in svg and 'flood-opacity="0.500"' in svg
+    assert svg.count("feGaussianBlur") >= 2 and "feComposite" in svg
+    inner, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 10, "h": 10, "fill": "$sel",
+                                 "fx": {"shadow": {"x": 0, "y": 0, "blur": 1, "inner": True}}})
+    assert "feOffset" in inner and "operator=\"out\"" in inner
+
+
+def test_flip_skew_scale(lib):
+    """뒤집기·기울이기·배율 — 원자 가운데를 축으로."""
+    svg, _ = _canvas_svg(lib, {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 10, "fill": "$cream",
+                               "flip": "hv", "skew": [10, 5], "scale": [150, 50], "rotate": 15})
+    assert "rotate(15.00" in svg and "scale(-1 -1)" in svg and "scale(1.5000 0.5000)" in svg
+    assert "skewX(10.00)" in svg and "skewY(5.00)" in svg
+
+
+def test_paragraph_rules_shade_bullet_tab(lib):
+    """단락 경계선·음영·글머리·탭 — 인디자인 단락 패널."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                               "text": "한 줄", "rule_above": {"w": 1, "color": "$rule", "offset": 1},
+                               "rule_below": {"w": 0.5, "color": "$rule"}, "shade": "$cream",
+                               "bullet": "decimal", "tab": 8})
+    assert "border-top:0.353px solid" in svg and "border-bottom:0.176px solid" in svg
+    assert "background-color:" in svg and "list-style-type:decimal" in svg
+    assert "tab-size:8.000px" in svg and "white-space:pre-wrap" in svg
+
+
+def test_text_scale_baseline_kerning_first_baseline(lib):
+    """장평·기준선 이동·커닝·첫 기준선."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                               "text": "가", "h_scale": 90, "v_scale": 110, "baseline": 2, "kerning": "none",
+                               "first_baseline": 3})
+    assert "transform:scale(0.9000,1.1000)" in svg and "width:88.889px" in svg      # 폭은 되돌려 줄바꿈은 그대로
+    assert "font-kerning:none" in svg and "top:-0.706px" in svg
+    assert "padding:3.000px" in svg
+
+
+def test_run_bshift_hscale_tracking(lib):
+    """글 안 조각(run)의 기준선 이동·장평·자간 — 인디자인 문자 패널."""
+    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+                               "text": [{"t": "x", "bshift": 3, "hscale": 80, "tracking": 100}]})
+    assert "top:-1.058px" in svg and "scale(0.800,1.000)" in svg and "letter-spacing:0.1000em" in svg
+
+
+def test_auto_size_off_keeps_box(lib):
+    """자동 크기 조정 끔 — 글이 길어도 상자 높이를 지키고 검수에 알린다."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    long = "가나다라마바사아자차카타파하" * 20
+    pg = {"id": "t", "name": "t", "zones": [], "spec": "a4", "_canvas": True, "items": [
+        {"atom": {"t": "text", "x": 0, "y": 0, "w": 40, "h": 6, "font": "$body", "size": 9, "text": long, "auto_size": False}, "x": 10, "y": 10}]}
+    render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)
+    assert any("자동 크기 조정 꺼짐" in w for w in ctx.warnings)
+    pg2 = {"id": "t", "name": "t", "zones": [], "spec": "a4", "_canvas": True, "items": [
+        {"atom": {"t": "text", "x": 0, "y": 0, "w": 40, "h": 6, "font": "$body", "size": 9, "text": long}, "x": 10, "y": 10}]}
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    render.page_canvas_svgs(ctx2, pg2, render.DEFAULT_SPEC)
+    assert not any("자동 크기" in w for w in ctx2.warnings)
+
+
+def test_decompose_reads_dash_and_join(tmp_path):
+    """PDF 분해 — 점선 패턴·모서리 연결도 가져온다(인디자인이 넣은 값)."""
+    import fitz
+    from core.units import decompose
+    p = tmp_path / "d.pdf"
+    doc = fitz.open()
+    page = doc.new_page(width=200, height=120)
+    page.draw_rect(fitz.Rect(20, 20, 160, 90), color=(0, 0, 0), width=2, dashes="[3 2] 0", lineJoin=1)
+    doc.save(p)
+    doc.close()
+    dec = decompose.from_pdf(str(p), 1)
+    st = [a for a in dec["atoms"] if a.get("stroke")][0]["stroke"]
+    assert st.get("dash") and st.get("join") == "round"

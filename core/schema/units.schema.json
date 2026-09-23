@@ -16,9 +16,32 @@
       "properties": {"x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"}}
     },
     "stroke": {
+      "description": "획 — 인디자인 획 패널",
       "type": "object",
-      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "dash": {"type": "array", "items": {"$ref": "#/definitions/pt"}},
-                     "cap": {"enum": ["butt", "round", "square"], "description": "선 끝 모양(인디자인 Cap). 없으면 butt"}}
+      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "dash": {"type": "array", "items": {"$ref": "#/definitions/pt"}, "description": "점선 패턴 pt — [선, 빈칸, …] (인디자인 획 유형)"},
+                     "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "획 색조 % (인디자인 Tint). 없으면 100"},
+                     "cap": {"enum": ["butt", "round", "square"], "description": "선 끝 모양(인디자인 Cap). 없으면 butt"},
+                     "join": {"enum": ["miter", "round", "bevel"], "description": "모서리 연결(인디자인 Join). 없으면 miter"},
+                     "miter": {"type": "number", "minimum": 1, "description": "마이터 한계. 없으면 4"},
+                     "align": {"enum": ["center", "inside", "outside"], "description": "획 정렬(인디자인 Align Stroke) — 가운데(기본)·안쪽·바깥쪽"},
+                     "start": {"$ref": "#/definitions/arrow", "description": "선 시작 화살촉"},
+                     "end": {"$ref": "#/definitions/arrow", "description": "선 끝 화살촉"}}
+    },
+    "arrow": {"enum": ["none", "arrow", "open", "circle", "square", "bar"], "description": "화살촉 모양(인디자인 시작/끝 모양)"},
+    "rule": {
+      "description": "단락 경계선 — 굵기·색·단락에서 떨어진 거리(인디자인 단락 경계선)",
+      "type": "object",
+      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "offset": {"$ref": "#/definitions/mm"}}
+    },
+    "fx": {
+      "description": "효과 — 인디자인 개체 효과(혼합 모드·그림자·광선·페더). 원자 어디에나 붙는다",
+      "type": "object",
+      "properties": {
+        "blend": {"enum": ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion"], "description": "혼합 모드"},
+        "shadow": {"type": "object", "description": "그림자 — 거리·번짐은 mm", "properties": {"x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "blur": {"$ref": "#/definitions/mm"}, "color": {"$ref": "#/definitions/token"}, "opacity": {"$ref": "#/definitions/opacity"}, "inner": {"type": "boolean", "description": "내부 그림자"}}},
+        "glow": {"type": "object", "description": "광선", "properties": {"blur": {"$ref": "#/definitions/mm"}, "color": {"$ref": "#/definitions/token"}, "opacity": {"$ref": "#/definitions/opacity"}, "inner": {"type": "boolean"}}},
+        "feather": {"$ref": "#/definitions/mm", "description": "기본 페더 — 가장자리를 이만큼 흐리게(mm)"}
+      }
     },
     "rotate": {"type": "number", "minimum": -360, "maximum": 360, "description": "회전 각도(°, 시계 방향, 원자의 가운데를 축으로). 없으면 0"},
     "gradient": {
@@ -39,7 +62,11 @@
       "properties": {
         "t": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"}, "s": {"type": "boolean", "description": "취소선"},
         "sup": {"type": "boolean"}, "sub": {"type": "boolean"},
-        "color": {"$ref": "#/definitions/token"}, "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}
+        "color": {"$ref": "#/definitions/token"}, "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
+        "bshift": {"$ref": "#/definitions/pt", "description": "기준선 이동 pt — 양수면 위로"},
+        "hscale": {"type": "number", "minimum": 1, "description": "장평 가로 %"},
+        "vscale": {"type": "number", "minimum": 1, "description": "장평 세로 %"},
+        "tracking": {"type": "number", "description": "자간 1/1000 em"}
       }
     },
     "rich": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/run"}]}},
@@ -74,7 +101,23 @@
         "valign": {"enum": ["top", "center", "bottom"], "description": "세로 정렬. 없으면 top"},
         "columns": {"type": "integer", "minimum": 1, "maximum": 6, "description": "글상자 안 단 수. 없으면 1"},
         "gutter": {"$ref": "#/definitions/mm", "description": "단 사이 간격"},
-        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
+        "rule_above": {"$ref": "#/definitions/rule", "description": "단락 위 경계선"},
+        "rule_below": {"$ref": "#/definitions/rule", "description": "단락 아래 경계선"},
+        "shade": {"$ref": "#/definitions/token", "description": "단락 음영 색(인디자인 단락 음영)"},
+        "bullet": {"enum": ["disc", "circle", "square", "decimal", "decimal-paren", "upper-alpha", "lower-alpha"], "description": "글머리 기호·번호 매기기"},
+        "tab": {"$ref": "#/definitions/mm", "description": "탭 간격 — 글 안의 탭 문자가 이 간격으로 선다"},
+        "first_baseline": {"$ref": "#/definitions/mm", "description": "첫 줄을 상자 위에서 이만큼 내린다(인디자인 첫 기준선)"},
+        "auto_size": {"type": "boolean", "description": "글이 길면 상자가 아래로 늘어난다(기본 true). false 면 넘쳐도 상자 높이를 지킨다"},
+        "h_scale": {"type": "number", "minimum": 1, "description": "장평 가로 % (인디자인 수평 비율). 없으면 100"},
+        "v_scale": {"type": "number", "minimum": 1, "description": "장평 세로 % (인디자인 수직 비율). 없으면 100"},
+        "baseline": {"$ref": "#/definitions/pt", "description": "기준선 이동 pt — 양수면 위로"},
+        "kerning": {"enum": ["metrics", "none"], "description": "커닝 — metrics(기본) 또는 끄기"},
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
+        "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},
+        "fx": {"$ref": "#/definitions/fx"},
+        "flip": {"enum": ["h", "v", "hv"], "description": "뒤집기 — 좌우(h)·상하(v)·둘 다"},
+        "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
+        "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"}
       }
     },
     "atom_line": {
@@ -83,7 +126,12 @@
         "t": {"const": "line"},
         "x1": {"$ref": "#/definitions/mm"}, "y1": {"$ref": "#/definitions/mm"}, "x2": {"$ref": "#/definitions/mm"}, "y2": {"$ref": "#/definitions/mm"},
         "stroke": {"$ref": "#/definitions/stroke"},
-        "opacity": {"$ref": "#/definitions/opacity"}
+        "opacity": {"$ref": "#/definitions/opacity"},
+        "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},
+        "fx": {"$ref": "#/definitions/fx"},
+        "flip": {"enum": ["h", "v", "hv"], "description": "뒤집기 — 좌우(h)·상하(v)·둘 다"},
+        "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
+        "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"}
       }
     },
     "atom_rect": {
@@ -92,7 +140,12 @@
         "t": {"const": "rect"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
         "fill": {"$ref": "#/definitions/token"}, "gradient": {"$ref": "#/definitions/gradient"}, "stroke": {"$ref": "#/definitions/stroke"}, "radius": {"$ref": "#/definitions/radius"},
-        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
+        "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},
+        "fx": {"$ref": "#/definitions/fx"},
+        "flip": {"enum": ["h", "v", "hv"], "description": "뒤집기 — 좌우(h)·상하(v)·둘 다"},
+        "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
+        "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"}
       }
     },
     "atom_ellipse": {
@@ -101,7 +154,12 @@
         "t": {"const": "ellipse"},
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
         "fill": {"$ref": "#/definitions/token"}, "gradient": {"$ref": "#/definitions/gradient"}, "stroke": {"$ref": "#/definitions/stroke"},
-        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
+        "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},
+        "fx": {"$ref": "#/definitions/fx"},
+        "flip": {"enum": ["h", "v", "hv"], "description": "뒤집기 — 좌우(h)·상하(v)·둘 다"},
+        "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
+        "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"}
       }
     },
     "atom_image": {
@@ -113,7 +171,12 @@
         "bind": {"$ref": "#/definitions/bind"},
         "fit": {"enum": ["contain", "cover"], "description": "contain = 틀 안에 다 보이게(기본) · cover = 틀을 채우고 넘치는 쪽을 자른다(인디자인 '비율에 맞게 프레임 채우기')"},
         "img": {"$ref": "#/definitions/box", "description": "틀(x y w h) 안에서 그림 전체가 놓인 자리 — 틀의 왼쪽 위 기준 mm, 음수·틀보다 큰 값 가능. 틀 밖은 잘린다(인디자인의 프레임 안 그래픽). 있으면 fit 은 안 쓴다"},
-        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
+        "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},
+        "fx": {"$ref": "#/definitions/fx"},
+        "flip": {"enum": ["h", "v", "hv"], "description": "뒤집기 — 좌우(h)·상하(v)·둘 다"},
+        "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
+        "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"}
       }
     },
     "atom_path": {
@@ -125,7 +188,12 @@
         "d": {"type": "string", "pattern": "^[MLCQZmlcqz0-9 .,-]+$", "description": "SVG path 문법(M L C Q Z 만), 좌표는 0~1 비율. 예: 삼각형 \"M0 0 L1 0.5 L0 1 Z\""},
         "fill": {"$ref": "#/definitions/token"}, "gradient": {"$ref": "#/definitions/gradient"}, "stroke": {"$ref": "#/definitions/stroke"},
         "evenodd": {"type": "boolean", "description": "구멍 뚫린 도형(짝홀 채움)"},
-        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"}
+        "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
+        "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},
+        "fx": {"$ref": "#/definitions/fx"},
+        "flip": {"enum": ["h", "v", "hv"], "description": "뒤집기 — 좌우(h)·상하(v)·둘 다"},
+        "skew": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "기울이기 [가로°, 세로°] (인디자인 전단)"},
+        "scale": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number"}, "description": "배율 [가로%, 세로%] — 자리는 그대로 두고 늘린다"}
       }
     },
 

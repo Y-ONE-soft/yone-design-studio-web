@@ -682,6 +682,57 @@ try:
                 f"줄 {n}개 · 접으니 보이는 묶음 {vis0}→{vis1}, 펴니 {vis2} · 기억 {saved}")
     step("O5 카테고리 접고 펴기 (기억한다)", o5)
 
+    # ───────── P. 인디자인 개체 속성 (오른쪽 패널에 다 있나) ─────────
+    WANT_SHAPE = ["w", "h", "fill", "stroke.color", "stroke.w", "stroke.align", "stroke.join", "stroke.tint", "dashpat",
+                  "grad", "rotate", "opacity", "tint", "flip", "skewx", "skewy", "scalex", "scaley",
+                  "fx.blend", "fx.shadow.x", "fx.shadow.y", "fx.shadow.blur", "fx.shadow.inner", "fx.glow.blur", "fx.glow.inner", "fx.feather"]
+    WANT_TEXT = ["text", "bind", "style", "font", "size", "color", "align", "leading", "tracking", "indent", "indent_first",
+                 "indent_right", "space_before", "space_after", "inset", "valign", "columns", "gutter",
+                 "bullet", "tab", "shade", "rule_above.w", "rule_above.color", "rule_above.offset", "rule_below.w",
+                 "first_baseline", "baseline", "kerning", "h_scale", "v_scale", "auto_size"]
+
+    def setf(k, v):
+        return js(f"""(() => {{ const el = document.querySelector('#side [data-a="{k}"]'); if (!el) return '{k}';
+            if (el.type === 'checkbox') el.checked = {str(bool(v)).lower() if isinstance(v, bool) else 'true'};
+            else el.value = {json.dumps(v)};
+            el.dispatchEvent(new Event('change')); return ''; }})()""")
+
+    def p1():
+        js("addAtom('rect', {x: 30, y: 200})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        miss = [k for k in WANT_SHAPE if k not in have]
+        for k, v in [("stroke.align", "inside"), ("dashpat", "2, 1"), ("stroke.join", "round"), ("stroke.tint", "60"),
+                     ("tint", "50"), ("flip", "h"), ("skewx", "10"), ("scalex", "120"), ("fx.blend", "multiply"),
+                     ("fx.shadow.x", "1"), ("fx.shadow.y", "1"), ("fx.shadow.blur", "1"), ("fx.glow.blur", "2"), ("fx.feather", "0.5")]:
+            setf(k, v)
+        time.sleep(2.0)
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        drawn = {"획 안쪽": "clipPath" in svg, "점선": "stroke-dasharray" in svg, "그림자": "feDropShadow" in svg,
+                 "혼합": "mix-blend-mode" in svg, "기울이기": "skewX" in svg, "뒤집기": "scale(-1" in svg}
+        at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
+        return (not miss and all(drawn.values()), f"없는 칸 {miss or '없음'} · 그려짐 {drawn} · 원자 {at[:120]}")
+    step("P1 도형 속성 — 획 정렬·점선·색조·뒤집기·기울이기·효과", p1)
+
+    def p2():
+        js("addAtom('text', {x: 30, y: 210})"); time.sleep(1.2)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        miss = [k for k in WANT_TEXT if k not in have]
+        for k, v in [("bullet", "decimal"), ("tab", "8"), ("rule_above.w", "0.8"), ("rule_below.w", "0.4"),
+                     ("first_baseline", "2"), ("baseline", "1"), ("kerning", "none"), ("h_scale", "90"), ("v_scale", "105")]:
+            setf(k, v)
+        js("(() => { const el = document.querySelector('#side [data-a=\"auto_size\"]'); el.checked = false; el.dispatchEvent(new Event('change')); })()")
+        time.sleep(2.0)
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        drawn = {"글머리": "list-item" in svg, "단락선": "border-top" in svg, "탭": "tab-size" in svg,
+                 "커닝": "font-kerning" in svg, "장평": "transform:scale" in svg}
+        at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
+        return (not miss and all(drawn.values()), f"없는 칸 {miss or '없음'} · 그려짐 {drawn} · 원자 {at[:120]}")
+    step("P2 글 속성 — 단락 경계선·음영·글머리·탭·장평·기준선·커닝", p2)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)

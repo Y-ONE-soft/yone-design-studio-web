@@ -1304,6 +1304,16 @@ function palDrag(el, payload) {
   });
   el.addEventListener("click", (e) => { if (el._dragging) { e.stopPropagation(); e.preventDefault(); } }, true);
 }
+// 획 더보기 — 정렬·점선 패턴·연결·화살촉 (인디자인 획 패널)
+function strokeMore(a, arrows) {
+  const st = a.stroke || {};
+  return `<h3>획 — 인디자인 획 패널</h3>
+    <div class="m3"><label>정렬<select data-a="stroke.align">${[["center", "가운데"], ["inside", "안쪽"], ["outside", "바깥쪽"]].map(([v, n]) => `<option value="${v}" ${(st.align || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>연결<select data-a="stroke.join">${[["miter", "각지게"], ["round", "둥글게"], ["bevel", "깎기"]].map(([v, n]) => `<option value="${v}" ${(st.join || "miter") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>색조 %<input type="number" data-a="stroke.tint" min="0" max="100" step="5" value="${st.tint == null ? 100 : st.tint}"></label></div>
+    <div class="f"><span>점선 패턴</span><input type="text" data-a="dashpat" value="${(st.dash || []).join(", ")}" placeholder="예: 2, 1 (선, 빈칸 pt)"></div>
+    ${arrows ? `<div class="m3"><label>시작 촉<select data-a="stroke.start">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.start || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>끝 촉<select data-a="stroke.end">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.end || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>마이터<input type="number" data-a="stroke.miter" step="1" min="1" value="${st.miter || 4}"></label></div>` : ""}`;
+}
+const ARROWS = [["none", "없음"], ["arrow", "채운 촉"], ["open", "열린 촉"], ["circle", "원"], ["square", "네모"], ["bar", "막대"]];
+
 const card = (thumb, nm, ds, drag) => { const d = document.createElement("div"); d.className = "card"; d.title = nm;
   d.innerHTML = `<div class="th">${thumb || ""}</div><div class="nm">${esc(nm)}</div>${ds ? `<div class="ds">${esc(ds)}</div>` : ""}`; strip(d);
   palDrag(d, drag); return d; };
@@ -1553,21 +1563,36 @@ function side() {
         <div class="m3"><label>들여쓰기<input type="number" data-a="indent" step="0.5" value="${a.indent || 0}"></label><label>첫 줄<input type="number" data-a="indent_first" step="0.5" value="${a.indent_first || 0}" title="음수 = 내어쓰기"></label><label>오른쪽<input type="number" data-a="indent_right" step="0.5" value="${a.indent_right || 0}"></label></div>
         <div class="m3"><label>단락 앞<input type="number" data-a="space_before" step="0.5" value="${a.space_before || 0}"></label><label>단락 뒤<input type="number" data-a="space_after" step="0.5" value="${a.space_after || 0}"></label><label>안쪽 여백<input type="number" data-a="inset" step="0.5" value="${Array.isArray(a.inset) ? a.inset[0] : (a.inset || 0)}"></label></div>
         <div class="m3"><label>세로 정렬<select data-a="valign">${[["top", "위"], ["center", "가운데"], ["bottom", "아래"]].map(([v, n]) => `<option value="${v}" ${(a.valign || "top") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>단 수<input type="number" data-a="columns" min="1" max="6" step="1" value="${a.columns || 1}"></label><label>단 간격<input type="number" data-a="gutter" step="0.5" value="${a.gutter || 0}"></label></div>
+        <h3>단락 — 인디자인 단락 패널</h3>
+        <div class="m3"><label>글머리<select data-a="bullet"><option value="">없음</option>${[["disc", "● 점"], ["circle", "○ 원"], ["square", "■ 네모"], ["decimal", "1. 숫자"], ["decimal-paren", "1) 숫자"], ["upper-alpha", "A. 대문자"], ["lower-alpha", "a. 소문자"]].map(([v, n]) => `<option value="${v}" ${a.bullet === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>탭 mm<input type="number" data-a="tab" step="1" value="${a.tab || ""}" placeholder="없음" title="글 안의 탭 문자가 이 간격으로 선다"></label><label>음영${colorSel("shade", a.shade, true)}</label></div>
+        <div class="m3"><label>위 선 pt<input type="number" data-a="rule_above.w" step="0.1" value="${(a.rule_above || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("rule_above.color", (a.rule_above || {}).color, true)}</label><label>거리 mm<input type="number" data-a="rule_above.offset" step="0.5" value="${(a.rule_above || {}).offset || ""}"></label></div>
+        <div class="m3"><label>아래 선 pt<input type="number" data-a="rule_below.w" step="0.1" value="${(a.rule_below || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("rule_below.color", (a.rule_below || {}).color, true)}</label><label>거리 mm<input type="number" data-a="rule_below.offset" step="0.5" value="${(a.rule_below || {}).offset || ""}"></label></div>
+        <div class="m3"><label>첫 기준선 mm<input type="number" data-a="first_baseline" step="0.5" value="${a.first_baseline || ""}" placeholder="0" title="첫 줄을 상자 위에서 이만큼 내린다"></label><label>기준선 이동 pt<input type="number" data-a="baseline" step="0.5" value="${a.baseline || ""}" placeholder="0"></label><label>커닝<select data-a="kerning"><option value="">켬</option><option value="none" ${a.kerning === "none" ? "selected" : ""}>끔</option></select></label></div>
+        <div class="m3"><label>장평 가로 %<input type="number" data-a="h_scale" step="5" min="10" value="${a.h_scale || 100}"></label><label>세로 %<input type="number" data-a="v_scale" step="5" min="10" value="${a.v_scale || 100}"></label><label>자동 크기<input type="checkbox" data-a="auto_size" ${a.auto_size === false ? "" : "checked"} style="width:auto" title="끄면 글이 길어도 상자 높이를 지킨다(넘침은 검수에 뜬다)"></label></div>
 `;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
         <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>
-        <div class="f"><span>선 끝</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>`;
+        <div class="f"><span>선 끝</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>
+        ${strokeMore(a, true)}`;
       else if (a.t === "rect" || a.t === "ellipse" || a.t === "path") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label>${a.t === "rect" ? `<label>모서리<input type="number" data-a="radius" step="0.5" value="${a.radius || 0}"></label>` : ""}</div>
         ${a.t === "path" ? `<div class="f"><span>모양</span><select data-a="d"><option value="">직접</option>${Object.entries(SHAPES).map(([n, d]) => `<option value="${d}" ${a.d === d ? "selected" : ""}>${n}</option>`).join("")}</select></div><div class="f"><span>경로 d</span><input type="text" data-a="d" value="${esc(a.d || "")}" placeholder="M L C Q Z · 0~1 비율"></div>` : ""}
         <div class="f"><span>채움</span>${colorSel("fill", a.fill, true)}</div><div class="f"><span>테두리</span>${colorSel("stroke.color", (a.stroke || {}).color, true)}</div><div class="f"><span>굵기 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0}"></div>
         <div class="f"><span>그라디언트</span><label><input type="checkbox" data-a="grad" ${a.gradient ? "checked" : ""}> 쓰기</label></div>
         ${a.gradient ? `<div class="m3"><label>시작${colorSel("grad.c0", a.gradient.stops[0].c)}</label><label>끝${colorSel("grad.c1", a.gradient.stops[a.gradient.stops.length - 1].c)}</label><label>${a.gradient.type === "radial" ? "원형" : "각도 °"}<input type="number" data-a="grad.angle" step="15" value="${a.gradient.angle || 0}"></label></div><div class="f"><span>모양</span><select data-a="grad.type"><option value="linear" ${a.gradient.type !== "radial" ? "selected" : ""}>선형</option><option value="radial" ${a.gradient.type === "radial" ? "selected" : ""}>원형</option></select></div>` : ""}
-        ${a.t === "rect" ? `<div class="f"><span>모서리 따로</span><input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위, 오위, 오아래, 왼아래 (mm)"></div>` : ""}`;
+        ${a.t === "rect" ? `<div class="f"><span>모서리 따로</span><input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위, 오위, 오아래, 왼아래 (mm)"></div>` : ""}
+        ${strokeMore(a, a.t === "path")}`;
       else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림 키</span><input type="text" data-a="src" value="${esc(a.src || "")}"></div>
         <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
 `;
-      h += `<div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label></div>`;
+      h += `<h3>변형 — 인디자인 변형 패널</h3>
+        <div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}" title="채움 색의 색조(인디자인 Tint)"></label></div>
+        <div class="m3"><label>뒤집기<select data-a="flip"><option value="">없음</option>${[["h", "좌우"], ["v", "상하"], ["hv", "둘 다"]].map(([v, n]) => `<option value="${v}" ${a.flip === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>기울이기 가로 °<input type="number" data-a="skewx" step="1" value="${(a.skew || [0, 0])[0] || 0}"></label><label>세로 °<input type="number" data-a="skewy" step="1" value="${(a.skew || [0, 0])[1] || 0}"></label></div>
+        <div class="m3"><label>배율 가로 %<input type="number" data-a="scalex" step="5" min="1" value="${(a.scale || [100, 100])[0] || 100}"></label><label>세로 %<input type="number" data-a="scaley" step="5" min="1" value="${(a.scale || [100, 100])[1] || 100}"></label><label>혼합<select data-a="fx.blend">${[["", "보통"], ["multiply", "곱하기"], ["screen", "스크린"], ["overlay", "오버레이"], ["darken", "어둡게"], ["lighten", "밝게"], ["difference", "차이"]].map(([v, n]) => `<option value="${v}" ${((a.fx || {}).blend || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+        <h3>효과 — 인디자인 효과 패널</h3>
+        <div class="m4"><label>그림자 x<input type="number" data-a="fx.shadow.x" step="0.5" value="${((a.fx || {}).shadow || {}).x ?? ""}" placeholder="없음"></label><label>y<input type="number" data-a="fx.shadow.y" step="0.5" value="${((a.fx || {}).shadow || {}).y ?? ""}"></label><label>번짐<input type="number" data-a="fx.shadow.blur" step="0.5" value="${((a.fx || {}).shadow || {}).blur ?? ""}"></label><label>안쪽<input type="checkbox" data-a="fx.shadow.inner" ${((a.fx || {}).shadow || {}).inner ? "checked" : ""} style="width:auto"></label></div>
+        ${(a.fx || {}).shadow ? `<div class="m3"><label>그림자 색${colorSel("fx.shadow.color", ((a.fx || {}).shadow || {}).color, true)}</label><label>진하기 %<input type="number" data-a="fx.shadow.opacity" min="0" max="100" step="5" value="${Math.round((((a.fx || {}).shadow || {}).opacity ?? 1) * 100)}"></label><label></label></div>` : ""}
+        <div class="m4"><label>광선 번짐<input type="number" data-a="fx.glow.blur" step="0.5" value="${((a.fx || {}).glow || {}).blur ?? ""}" placeholder="없음"></label><label>색${colorSel("fx.glow.color", ((a.fx || {}).glow || {}).color, true)}</label><label>안쪽<input type="checkbox" data-a="fx.glow.inner" ${((a.fx || {}).glow || {}).inner ? "checked" : ""} style="width:auto"></label><label>페더 mm<input type="number" data-a="fx.feather" step="0.5" value="${(a.fx || {}).feather ?? ""}" placeholder="없음" title="가장자리를 흐리게"></label></div>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
       ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="요소·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
@@ -1592,7 +1617,33 @@ function side() {
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
     if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
-    else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"}; if (kk === "cap" && v === "butt") delete a.stroke.cap; else a.stroke[kk] = v; } }
+    else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"};
+      const dflt = {cap: "butt", join: "miter", align: "center", start: "none", end: "none", tint: 100, miter: 4};
+      if (v === "" || v === dflt[kk]) delete a.stroke[kk]; else a.stroke[kk] = v; } }
+    else if (k === "dashpat") { const d = String(v).split(/[,\s]+/).filter(Boolean).map(Number).filter(x => x > 0);
+      a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (d.length) a.stroke.dash = d; else delete a.stroke.dash; }
+    else if (k === "flip") { if (v) a.flip = v; else delete a.flip; }
+    else if (k === "skewx" || k === "skewy") { const sk2 = (a.skew || [0, 0]).slice(); sk2[k === "skewx" ? 0 : 1] = v || 0;
+      if (sk2[0] || sk2[1]) a.skew = sk2; else delete a.skew; }
+    else if (k === "scalex" || k === "scaley") { const sc = (a.scale || [100, 100]).slice(); sc[k === "scalex" ? 0 : 1] = v || 100;
+      if (sc[0] !== 100 || sc[1] !== 100) a.scale = sc; else delete a.scale; }
+    else if (k === "tint") { if (v !== "" && +v < 100) a.tint = +v; else delete a.tint; }
+    else if (k.startsWith("fx.")) { const path = k.slice(3).split(".");
+      a.fx = a.fx || {};
+      if (path.length === 1) { if (v === "" || v === false) delete a.fx[path[0]]; else a.fx[path[0]] = v; }
+      else { const grp = path[0], kk = path[1];
+        if (kk === "opacity") { a.fx[grp] = a.fx[grp] || {}; a.fx[grp].opacity = Math.max(0, Math.min(100, +v)) / 100; }
+        else if (v === "" || v === false) { if (a.fx[grp]) { delete a.fx[grp][kk]; if (!Object.keys(a.fx[grp]).filter(x => a.fx[grp][x] !== "" && a.fx[grp][x] !== false).length) delete a.fx[grp]; } }
+        else { a.fx[grp] = a.fx[grp] || {}; a.fx[grp][kk] = v; } }
+      if (!Object.keys(a.fx).length) delete a.fx; }
+    else if (k.startsWith("rule_above.") || k.startsWith("rule_below.")) { const [g2, kk] = k.split(".");
+      if (v === "" || (kk === "w" && !v)) { if (a[g2]) { delete a[g2][kk]; if (kk === "w" || !Object.keys(a[g2]).length) delete a[g2]; } }
+      else { a[g2] = a[g2] || {w: 0.5, color: "$rule"}; a[g2][kk] = v; } }
+    else if (k === "shade") { if (v) a.shade = v; else delete a.shade; }
+    else if (k === "bullet" || k === "kerning") { if (v) a[k] = v; else delete a[k]; }
+    else if (["tab", "first_baseline", "baseline"].includes(k)) { if (v) a[k] = v; else delete a[k]; }
+    else if (k === "h_scale" || k === "v_scale") { if (v && +v !== 100) a[k] = +v; else delete a[k]; }
+    else if (k === "auto_size") { if (v) delete a.auto_size; else a.auto_size = false; }
     else if (k === "fill" && !v) delete a.fill;
     else if (k === "bind" && !v) delete a.bind;
     else if (k === "style") { if (v) a.style = v; else delete a.style; }
