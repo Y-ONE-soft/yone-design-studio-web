@@ -116,5 +116,318 @@
    }
   ],
   "back": []
+ },
+ {
+  "id": "wbd1",
+  "name": "워크북 d1 (PDF 분해)",
+  "spec": "a4",
+  "skin": "wbd1_skin",
+  "facing": true,
+  "front": [],
+  "back": [],
+  "sections": [
+   {
+    "id": "s1",
+    "name": "본문",
+    "pages": [
+     {
+      "page": "wbd1_p001",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p002",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p003",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p004",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p005",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p006",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p007",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p008",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p009",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p010",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p011",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p012",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p013",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p014",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p015",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p016",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p017",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p018",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p019",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p020",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p021",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p022",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p023",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p024",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p025",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p026",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p027",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p028",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p029",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p030",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p031",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p032",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p033",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p034",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p035",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p036",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p037",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p038",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p039",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p040",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p041",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p042",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p043",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p044",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p045",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p046",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p047",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p048",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p049",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p050",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p051",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p052",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p053",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p054",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p055",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p056",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p057",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p058",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p059",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p060",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p061",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p062",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p063",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p064",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p065",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p066",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p067",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p068",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p069",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p070",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p071",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p072",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p073",
+      "repeat": "once"
+     },
+     {
+      "page": "wbd1_p074",
+      "repeat": "once"
+     }
+    ]
+   }
+  ]
  }
 ]
