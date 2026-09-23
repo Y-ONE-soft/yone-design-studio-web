@@ -27,6 +27,8 @@
   h2 { font-size: 22px; margin: 26px 0 14px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
   h2 .tg { font-size: 14px; color: #5f6368; cursor: pointer; user-select: none; }
   h2 .n { font-size: 13px; color: #8b91a5; font-weight: 500; }
+  h2 .lnk { font-size: 12.5px; font-weight: 500; color: #7d2ae8; text-decoration: none; margin-left: 10px; }
+  h2 .lnk:hover { text-decoration: underline; }
 
   .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 22px 18px; }
   .card { text-decoration: none; color: inherit; display: block; }
@@ -98,7 +100,9 @@
 
   {% if folder %}
   <section id="designs">
-    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개 — 골라서 새 책</span></h2>
+    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개 — 골라서 새 책</span>
+      <a class="lnk" href="/catalog/dir/{{ folder.id }}" title="이 폴더의 틀 목록 — 다른 폴더로 옮기기">틀 관리 →</a>
+      <a class="lnk" href="/catalog/intake" title="완성본 PDF 를 판정해 새 틀·디자인으로">PDF 판정 →</a></h2>
     {% if designs or bare %}<div class="dsg">
       {% for t in bare %}<div class="d bare" data-series="{{ t.series }}">
         <div class="th"><span class="ph">▦</span><span class="tag">{{ t.name }}</span></div>
@@ -127,7 +131,8 @@
   </section>
   {% else %}
   <section id="folders">
-    <h2><span class="tg" data-for="folder-list">▾</span>폴더 <span class="n">카탈로그 디렉토리</span></h2>
+    <h2><span class="tg" data-for="folder-list">▾</span>폴더 <span class="n">카탈로그 디렉토리</span>
+      <a class="lnk" href="/catalog">틀 전체 →</a><a class="lnk" href="/catalog/intake">PDF 판정 →</a></h2>
     <div class="folders" id="folder-list">
       {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
          data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
