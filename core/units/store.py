@@ -9,8 +9,16 @@ import re
 
 from routes.catalog import CATALOG
 
-KINDS = ("parts", "blocks", "pages", "specs", "plans", "skins", "sets")
-_DEF = {"parts": "part", "blocks": "block", "pages": "page", "specs": "spec", "plans": "plan", "skins": "skin", "sets": "set"}
+KINDS = ("parts", "blocks", "pages", "specs", "plans", "skins", "sets", "groups")
+_DEF = {"parts": "part", "blocks": "block", "pages": "page", "specs": "spec", "plans": "plan", "skins": "skin", "sets": "set", "groups": "group"}
+# 요소 카테고리 — 파일이 아직 없을 때만 이 기본값을 쓴다(배포 볼륨에도 없으니 같은 목록이 나온다).
+# 한 번이라도 고치면 파일이 생기고, 그 뒤로는 파일이 정본이다(다 지우면 빈 목록 그대로).
+DEFAULT_GROUPS = [
+    {"id": "passage", "name": "지문"},
+    {"id": "question", "name": "문항"},
+    {"id": "drill", "name": "드릴"},
+    {"id": "chrome", "name": "머리 · 꼬리 · 간지 · 표지"},
+]
 _RE_ID = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
 _SCHEMA = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "schema", "units.schema.json")
 
@@ -26,6 +34,8 @@ def _path(kind):
 
 
 def load(kind):
+    if kind == "groups" and not os.path.exists(_path(kind)):
+        return [dict(g) for g in DEFAULT_GROUPS]
     try:
         with open(_path(kind), encoding="utf-8") as f:
             v = json.load(f)

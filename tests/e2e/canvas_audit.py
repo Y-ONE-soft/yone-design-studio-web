@@ -609,6 +609,62 @@ try:
                 f"켬 {rows0} → 끔 {rows1}(펼침 단추 꺼짐={off}, 대지 {board}mm) → 다시 켬 {rows2}")
     step("N8 문서 설정 「페이지 마주보기」 끄고 켜기 (문서에 저장)", n8)
 
+    # ───────── O. 요소 카테고리 ─────────
+    def into(sel):                      # 요소 패널은 길어서 스크롤한다 — 보이게 한 뒤 누른다
+        js(f"(() => {{ const el = document.querySelector({json.dumps(sel)}); if (el) el.scrollIntoView({{block: 'center'}}); }})()")
+        time.sleep(0.4); return rect(sel)
+    def hover(sel):                     # ✎ ✕ ▾ 는 올려야 나온다
+        r = into(sel)
+        if not r: return None
+        mouse("mouseMoved", r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(0.35); return r
+    def headsel(word):                  # 그 이름을 가진 카테고리 머리
+        i = js(f"[...document.querySelectorAll('#pbody h3')].findIndex(x => x.firstChild.textContent.includes({json.dumps(word)}))")
+        return f"#pbody h3:nth-of-type({i + 1})" if i >= 0 else None
+    def o1():
+        js("window.__promptv = '감사분류'")
+        r = into("#g-new")
+        if not r: return (False, "＋ 카테고리 단추가 없다")
+        n0 = js("LIB.groups.length"); click(r[0] + r[2] / 2, r[1] + r[3] / 2); ok = wait(f"LIB.groups.length === {n0 + 1}", 8)
+        js("window.__promptv = null")
+        head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.firstChild.textContent)")
+        return (ok and any("감사분류" in h for h in head), f"카테고리 {n0}→{js('LIB.groups.length')} · 줄 {head}")
+    step("O1 ＋ 카테고리 로 만들기", o1)
+    def o2():
+        gid = js("(LIB.groups.find(g => g.name === '감사분류') || {}).id")
+        if not hover("#pbody .card"): return (False, "카드가 없다")
+        c = center("#pbody .card .cact")
+        if not c: return (False, "카드에 ▾ 가 없다")
+        click(*c); time.sleep(0.5)
+        b = js("(() => { const el = [...document.querySelectorAll('#gmenu button')].find(x => x.textContent.startsWith('감사분류')); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        if not b: return (False, "옮기기 메뉴에 그 카테고리가 없다")
+        click(*b); ok = wait(f"LIB.blocks.some(b => b.group === {json.dumps(gid)})", 8)
+        moved = js(f"LIB.blocks.filter(b => b.group === {json.dumps(gid)}).map(b => b.name)")
+        return (ok, f"옮긴 요소 {moved} → {gid}")
+    step("O2 카드 ▾ 로 다른 카테고리에 옮기기", o2)
+    def o3():
+        sel = headsel("감사분류")
+        if not sel: return (False, "그 카테고리 줄이 없다")
+        js("window.__promptv = '감사분류2'"); hover(sel)
+        b = center(sel + " [data-gren]")
+        if not b: return (False, "✎ 가 안 나온다")
+        click(*b); ok = wait("LIB.groups.some(g => g.name === '감사분류2')", 8)
+        js("window.__promptv = null")
+        return (ok, f"이름 {js('JSON.stringify(LIB.groups.map(g => g.name))')}")
+    step("O3 카테고리 이름 바꾸기 (✎)", o3)
+    def o4():
+        gid = js("(LIB.groups.find(g => g.name === '감사분류2') || {}).id")
+        sel = headsel("감사분류2")
+        if not sel: return (False, "그 카테고리 줄이 없다")
+        hover(sel); b = center(sel + " [data-gdel]")
+        if not b: return (False, "✕ 가 안 나온다")
+        click(*b); ok = wait("!LIB.groups.some(g => g.name === '감사분류2')", 8)
+        alive = js(f"LIB.blocks.filter(b => b.group === {json.dumps(gid)}).length")
+        head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.firstChild.textContent)")
+        js(f"(async () => {{ for (const b of LIB.blocks.filter(b => b.group === {json.dumps(gid)})) {{ delete b.group; await api('/api/units/blocks', b); }} }})()"); time.sleep(1.2)
+        return (ok and alive >= 1 and any("내가 만든 요소" in h for h in head),
+                f"지운 뒤 줄 {head} · 그 안에 있던 요소 {alive}개는 살아서 「내가 만든 요소」로")
+    step("O4 카테고리 지우기 (✕) — 요소는 안 지운다", o4)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)

@@ -148,12 +148,22 @@
       }
     },
 
+    "group": {
+      "description": "요소 카테고리 — 요소 패널에서 블록을 묶는 이름. 사용자가 만들고 고치고 지운다",
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {"$ref": "#/definitions/id"},
+        "name": {"type": "string"}
+      }
+    },
     "block": {
       "description": "블록 — 유형 1개. 필드 스키마 + 그리는 부품(모양) 1개 이상. 콘텐츠 연동 단위",
       "type": "object", "required": ["id", "name", "source", "fields", "variants"],
       "properties": {
         "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
         "family": {"type": "string", "pattern": "^B(1[01]|[1-9])$", "description": "블록 지도 갈래 B1~B11 (참고용)"},
+        "group": {"$ref": "#/definitions/id", "description": "요소 카테고리 id (요소 패널의 묶음). 없으면 family 로 정해진 기본 자리"},
         "source": {"enum": ["content", "system", "none"], "description": "content = 콘텐츠팀이 채움 · system = 책이 채움(쪽번호·러닝헤드·간지) · none = 장식만"},
         "fields": {"type": "object", "additionalProperties": {"$ref": "#/definitions/field"}},
         "variants": {
