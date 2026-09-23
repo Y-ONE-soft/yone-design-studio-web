@@ -841,6 +841,41 @@ try:
                 f"없는 칸 {miss or '없음'} · {drawn} · 글 안 개체={has_anc} · 원자 {at[:90]}")
     step("P7 글 — 탭 자리·리더·하이픈·양끝맞춤·글 안 개체", p7)
 
+    # ───────── Q. 묻지 않고 저장 · 받는 원고 고치기 ─────────
+    def q1():
+        """자리 조합이 아는 것이면 ★ 요소로 저장이 창 없이 바로 저장한다"""
+        nb = js("LIB.blocks.length")
+        js("""(() => { for (const [b, x] of [["no", 20], ["sentence", 34], ["answer", 160]]) {
+                addAtom('text', {x: x, y: 180}); const i = page.items.length - 1; page.items[i].atom.bind = b; }
+              const n = page.items.length; select([n - 3, n - 2, n - 1], n - 1); save(); render(); })()"""); time.sleep(1.2)
+        b = center("#t-up")
+        if not b: return (False, "★ 요소로 저장 버튼 안 보임")
+        click(*b)
+        ok = wait(f"LIB.blocks.length === {nb + 1}", 15)
+        sheet = js("sheetKind === 'newblock'")
+        blk = js("(() => { const b = LIB.blocks[LIB.blocks.length - 1]; return JSON.stringify({name: b.name, fields: Object.keys(b.fields || {}), accepts: b.accepts || []}); })()")
+        acc = json.loads(blk)["accepts"]
+        return (ok and not sheet and "grammar-ox" in acc and "content-ox" in acc,
+                f"창 안 뜸={not sheet} · {blk[:140]}")
+    step("Q1 자리 조합이 아는 것 → 묻지 않고 저장 (창 없음)", q1)
+
+    def q2():
+        """오른쪽 「받는 원고 · 고치기」로 받는 항목을 바꾼다"""
+        i = js("page.items.findIndex(it => it.block && LIB.blocks.some(b => b.id === it.block && (b.accepts || []).length))")
+        if i < 0: return (False, "받는 원고가 있는 요소 없음")
+        js(f"select([{i}], {i})"); time.sleep(0.8)
+        r = into("#s-acc")
+        if not r: return (False, "「받는 원고 고치기」 단추 없음")
+        click(r[0] + r[2] / 2, r[1] + r[3] / 2); time.sleep(1.0)
+        if not wait("sheetKind === 'newblock'", 4): return (False, "창이 안 뜸")
+        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-item]')].find(x => x.dataset.item === 'writing-order'); if (!d) return null; d.scrollIntoView({block: 'center'}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        if not k: return (False, "「영작 배열」 줄 없음")
+        click(*k); time.sleep(1.5)
+        acc = js(f"JSON.stringify((LIB.blocks.find(b => b.id === page.items[{i}].block) || {{}}).accepts || [])")
+        shown = js("(() => { const el = document.querySelector('#s-acc'); return el ? el.parentNode.textContent.trim() : ''; })()")
+        return ("writing-order" in json.loads(acc), f"받는 원고 {acc[:90]} · 오른쪽에 「{shown[:30]}」")
+    step("Q2 「받는 원고 · 고치기」로 바꾸기", q2)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)
