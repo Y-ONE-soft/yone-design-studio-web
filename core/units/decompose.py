@@ -280,10 +280,6 @@ def _text_atom(cur, ox, oy, tk):
         w_pt, h_pt = max(w_pt, size), max(h_pt, size)
         cx, cy = (cur["x0"] + cur["x1"]) / 2 - ox, (cur["y0"] + cur["y1"]) / 2 - oy
         x0, y0, w_mm, h_mm = (cx - w_pt / 2) * PT, (cy - h_pt / 2) * PT, w_pt * PT + 1.5, h_pt * PT
-    else:
-        # 브라우저 서체는 인디자인 서체보다 조금 넓다 — 4%(최소 1.5mm) 여유를 둬야 한글 줄 끝이 안 넘어간다
-        slack = 0.08 if len(lines) == 1 else 0.04                      # 한 줄짜리는 넉넉히 — 줄이 안 접히게
-        x0, y0, w_mm, h_mm = (cur["x0"] - ox) * PT, (cur["y0"] - oy) * PT, bw * PT + max(1.5, bw * PT * slack), bh * PT
     # 단락: 끝이 이른 줄(오른쪽 끝이 글상자 오른쪽보다 1.5글자 넘게 짧다) 다음은 새 단락
     maxx1 = max(l["x1"] for l in lines)
     paras = [[lines[0]]]
@@ -292,6 +288,24 @@ def _text_atom(cur, ox, oy, tk):
             paras.append([ln])
         else:
             paras[-1].append(ln)
+    # 양끝맞춤인가 — 단락 끝 줄 빼고 줄 끝이 같은 자리에 서면 (자리 계산보다 먼저 봐야 여유를 정한다)
+    is_just = False
+    if len(lines) >= 3:
+        tail_ix, n0 = set(), 0
+        for para in paras:
+            n0 += len(para)
+            tail_ix.add(n0 - 1)
+        body = [l for i, l in enumerate(lines) if i not in tail_ix]
+        is_just = bool(body) and all(abs(l["x1"] - maxx1) < 1.2 * size for l in body)
+    if not ang:
+        # 브라우저 서체는 인디자인 서체보다 조금 넓다 — 여유를 둬야 한글 줄 끝이 안 접힌다.
+        # 다만 **양끝맞춤은 여유만큼 줄이 늘어나** 오른쪽 끝이 원본보다 나가므로 0.3mm 만.
+        if is_just:
+            w_mm = bw * PT + 0.3
+        else:
+            slack = 0.08 if len(lines) == 1 else 0.04                  # 한 줄짜리는 넉넉히
+            w_mm = bw * PT + max(1.5, bw * PT * slack)
+        x0, y0, h_mm = (cur["x0"] - ox) * PT, (cur["y0"] - oy) * PT, bh * PT
     runs, indent = [], None
     for pi, para in enumerate(paras):
         if pi:
@@ -315,14 +329,8 @@ def _text_atom(cur, ox, oy, tk):
             a_tracking = None
     else:
         a_tracking = None
-    if len(lines) >= 3:
-        tail_ix, n0 = set(), 0                                            # 단락 끝 줄은 짧아도 된다 (번호로 세야 같은 줄끼리 안 헷갈린다)
-        for para in paras:
-            n0 += len(para)
-            tail_ix.add(n0 - 1)
-        body = [l for i, l in enumerate(lines) if i not in tail_ix]
-        if body and all(abs(l["x1"] - maxx1) < 1.2 * size for l in body):
-            a["align"] = "justify"
+    if is_just:
+        a["align"] = "justify"
     if lead:
         a["leading"] = lead
     if indent is not None and indent > 1.0:

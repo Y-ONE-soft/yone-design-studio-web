@@ -890,3 +890,23 @@ def test_satin_and_bevel(lib):
                                "fx": {"bevel": {"size": 1, "depth": 1.5, "angle": 120}, "satin": {"blur": 1, "distance": 1}}})
     assert "feSpecularLighting" in svg and "feDistantLight" in svg
     assert 'operator="xor"' in svg and "feFlood" in svg
+
+
+def test_justified_box_has_no_slack(tmp_path):
+    """양끝맞춤 글상자는 여유를 0.3mm 만 — 여유만큼 줄이 늘어나 오른쪽 끝이 원본보다 나가면 안 된다."""
+    import fitz
+    from core.units import decompose
+    p = tmp_path / "just.pdf"
+    doc = fitz.open()
+    page = doc.new_page(width=300, height=200)
+    font = fitz.Font("helv")
+    text = "The quick brown fox jumps over the lazy dog again"
+    w = font.text_length(text, 9)
+    for i in range(4):
+        page.insert_text((30, 40 + i * 21), text, fontsize=9, fontname="helv")
+    doc.save(p)
+    doc.close()
+    dec = decompose.from_pdf(str(p), 1)
+    a = [x for x in dec["atoms"] if x["t"] == "text"][0]
+    assert a.get("align") == "justify"
+    assert a["w"] - w * 25.4 / 72 < 1.0, a["w"]          # 잰 글 폭 + 0.3mm
