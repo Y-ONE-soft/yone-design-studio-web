@@ -4,7 +4,14 @@
 {% block content %}
 <style>
   .cv { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; user-select: none; }
-  .cv h3 { font-size: 11.5px; color: var(--mute); margin: 10px 0 5px; font-weight: 600; letter-spacing: .04em; }
+  .cv h3 .gact { position: absolute; right: 0; top: 0; display: none; gap: 1px; }
+  .cv h3:hover .gact { display: flex; }
+  .cv h3 .gact button { border: 0; background: transparent; color: #a0a4b5; cursor: pointer; font-size: 11px; padding: 1px 4px; border-radius: 5px; }
+  .cv h3 .gact button:hover { background: #f1eff8; color: #1f2330; }
+  .card .cact { position: absolute; right: 3px; top: 3px; display: none; border: 0; background: rgba(31,35,48,.82); color: #fff; width: 18px; height: 18px; line-height: 16px; border-radius: 5px; font-size: 10px; cursor: pointer; padding: 0; }
+  .card:hover .cact { display: block; }
+  .card .cact:hover { background: var(--pp); }
+  .cv h3 { position: relative; font-size: 11.5px; color: var(--mute); margin: 10px 0 5px; font-weight: 600; letter-spacing: .04em; }
   .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
   .btn { display: inline-flex; align-items: center; gap: 5px; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
   .btn:hover { background: #6a1fd0; }
@@ -35,7 +42,7 @@
   .ai .box { display: flex; gap: 6px; margin-top: 8px; }
   .ai input { flex: 1; border-radius: 10px; padding: 8px 10px; font-size: 12.5px; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-  .card { border: 1px solid var(--line); border-radius: 9px; padding: 4px; background: #fff; cursor: pointer; }
+  .card { position: relative; border: 1px solid var(--line); border-radius: 9px; padding: 4px; background: #fff; cursor: pointer; }
   .card:hover { border-color: var(--pp); box-shadow: 0 2px 8px rgba(125,42,232,.15); }
   .card.on { border-color: var(--pp); background: var(--pp-bg); }
   .card .th { background: #f7f6fb; border-radius: 6px; overflow: hidden; height: 40px; display: flex; align-items: center; }
@@ -378,7 +385,10 @@ const snap = (v) => Math.round(v * 2) / 2;
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const M = {left: 20, right: 20, top: 44, bottom: 20};
 const BOARD = 20;                 // 대지(pasteboard) mm — 지면 둘레. 인디자인처럼 지면 밖에 요소를 둔다
-const GROUPS = [["지문", ["B1", "B2", "B3", "B7"]], ["문항", ["B6"]], ["드릴", ["B5", "B8"]], ["머리 · 꼬리 · 간지 · 표지", ["B10", "B11"]]];
+// 요소 카테고리 — 목록은 catalog/_units/groups.json (만들기·이름 바꾸기·지우기 가능).
+// 블록에 group 이 없으면 블록 지도 갈래(B1~B11)로 기본 자리를 잡는다.
+const FAMG = {B1: "passage", B2: "passage", B3: "passage", B7: "passage", B6: "question", B5: "drill", B8: "drill", B10: "chrome", B11: "chrome"};
+const groupOf = (b) => b.group || (b.source === "system" ? "chrome" : (FAMG[b.family] || ""));
 const ATOMS = [
   ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: "글상자 — 오른쪽에서 글·크기·색을"}],
   ["line", "선", {t: "line", x1: 0, y1: 0, x2: 80, y2: 0, stroke: {w: 0.5, color: "$rule"}}],
@@ -1315,15 +1325,79 @@ function panel() {
     body.appendChild(g0);
 
     // 저장된 요소 — 원고 자리 있는 것(콘텐츠) · 장식
-    const groups = GROUPS.map(([nm, fams]) => [nm, LIB.blocks.filter(b => (b.source === "system" ? nm.startsWith("머리") : fams.includes(b.family)))]);
-    const used = new Set(groups.flatMap(g => g[1].map(b => b.id))); const rest = LIB.blocks.filter(b => !used.has(b.id)); if (rest.length) groups.push(["내가 만든 요소", rest]);
-    for (const [nm, items] of groups) {
-      if (!items.length) continue;
-      body.insertAdjacentHTML("beforeend", `<h3>${nm}</h3>`); const g = document.createElement("div"); g.className = "grid";
-      for (const it of items) { const f = Object.keys(it.fields || {}); const d = card(thumbs.blocks[it.id], it.name, f.length ? "자리 " + f.join(", ") : (it.source === "system" ? "자동(책이 채움)" : "장식"), {k: "block", id: it.id}); d.onclick = () => addBlock(it.id); g.appendChild(d); }
+    const gs = LIB.groups || [], bag = new Map(gs.map(g => [g.id, []])), rest = [];
+    for (const b of LIB.blocks) { const gid = groupOf(b); (bag.has(gid) ? bag.get(gid) : rest).push(b); }
+    const put = (title, items, gid) => {
+      body.insertAdjacentHTML("beforeend", `<h3 data-g="${esc(gid)}">${esc(title)}${gid ? `<span class="gact"><button data-gren title="카테고리 이름 바꾸기">✎</button><button data-gdel title="카테고리 지우기 — 안의 요소는 「내가 만든 요소」로 간다">✕</button></span>` : ""}</h3>`);
+      const g = document.createElement("div"); g.className = "grid";
+      for (const it of items) {
+        const f = Object.keys(it.fields || {});
+        const d = card(thumbs.blocks[it.id], it.name, f.length ? "자리 " + f.join(", ") : (it.source === "system" ? "자동(책이 채움)" : "장식"), {k: "block", id: it.id});
+        d.onclick = () => addBlock(it.id);
+        d.insertAdjacentHTML("beforeend", `<button class="cact" data-move="${esc(it.id)}" title="다른 카테고리로 옮기기">▾</button>`);
+        d.querySelector(".cact").onclick = (e) => { e.stopPropagation(); moveMenu(e.currentTarget, it); };
+        g.appendChild(d);
+      }
+      if (!items.length) g.insertAdjacentHTML("beforeend", `<div class="note" style="grid-column:1/-1">비었다 — 요소 카드의 ▾ 로 옮겨 온다</div>`);
       body.appendChild(g);
-    }
+    };
+    for (const g of gs) put(g.name, bag.get(g.id), g.id);
+    if (rest.length) put("내가 만든 요소", rest, "");
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:12px"><button class="btn sm sub" id="g-new" title="요소를 묶을 새 카테고리">＋ 카테고리</button></div>`);
+    $("#g-new").onclick = newGroup;
+    body.querySelectorAll("[data-gren]").forEach(b => b.onclick = (e) => { e.stopPropagation(); renGroup(b.closest("h3").dataset.g); });
+    body.querySelectorAll("[data-gdel]").forEach(b => b.onclick = (e) => { e.stopPropagation(); delGroup(b.closest("h3").dataset.g); });
   }
+}
+
+// ── 요소 카테고리 만들기·이름 바꾸기·지우기 · 카드 옮기기 ──
+function newGid(nm) {
+  let base = "g_" + String(nm || "").replace(/[^a-z0-9]+/gi, "").toLowerCase().slice(0, 12);
+  if (base === "g_") base = "grp";
+  let id = base, n = 2; while (byId("groups")[id]) id = base + "_" + (n++);
+  return id;
+}
+async function newGroup() {
+  const nm = prompt("새 카테고리 이름", ""); if (nm == null || !nm.trim()) return;
+  const g = {id: newGid(nm), name: nm.trim()};
+  const j = await api("/api/units/groups", g); if (j.error) { $("#st").textContent = j.error; return; }
+  LIB.groups.push(g); panel(); $("#st").textContent = `카테고리 「${g.name}」 만듦`;
+}
+async function renGroup(id) {
+  const g = byId("groups")[id]; if (!g) return;
+  const nm = prompt("카테고리 이름", g.name); if (nm == null || !nm.trim()) return;
+  g.name = nm.trim(); const j = await api("/api/units/groups", g); if (j.error) { $("#st").textContent = j.error; return; }
+  panel();
+}
+async function delGroup(id) {
+  const g = byId("groups")[id]; if (!g) return;
+  const n = LIB.blocks.filter(b => groupOf(b) === id).length;
+  if (!confirm(`카테고리 「${g.name}」 을 지울까?${n ? `\n안에 있던 요소 ${n}개는 「내가 만든 요소」 로 간다 (요소 자체는 안 지운다).` : ""}`)) return;
+  const j = await api("/api/units/groups", {id: id}, "DELETE"); if (j.error) { $("#st").textContent = j.error; return; }
+  LIB.groups = LIB.groups.filter(x => x.id !== id); panel(); $("#st").textContent = `카테고리 「${g.name}」 지움`;
+}
+function moveMenu(btn, b) {
+  document.querySelectorAll(".menu.on").forEach(m => m.classList.remove("on"));
+  let m = $("#gmenu");
+  if (!m) { m = document.createElement("div"); m.className = "menu"; m.id = "gmenu"; document.body.appendChild(m); }
+  m.innerHTML = (LIB.groups || []).map(g => `<button data-to="${esc(g.id)}">${esc(g.name)}${groupOf(b) === g.id ? " ✓" : ""}</button>`).join("")
+    + `<button data-to="">내가 만든 요소${groupOf(b) ? "" : " ✓"}</button><button data-to="+">＋ 새 카테고리…</button>`;
+  const r = btn.getBoundingClientRect();
+  m.style.left = Math.min(r.left, innerWidth - 200) + "px"; m.style.top = (r.bottom + 4) + "px"; m.style.bottom = "auto";
+  m.classList.add("on");
+  m.querySelectorAll("[data-to]").forEach(x => x.onclick = async (e) => {
+    e.stopPropagation(); m.classList.remove("on"); let to = x.dataset.to;
+    if (to === "+") {
+      const nm = prompt("새 카테고리 이름", ""); if (nm == null || !nm.trim()) return;
+      const g = {id: newGid(nm), name: nm.trim()};
+      const j0 = await api("/api/units/groups", g); if (j0.error) { $("#st").textContent = j0.error; return; }
+      LIB.groups.push(g); to = g.id;
+    }
+    const blk = byId("blocks")[b.id]; if (!blk) return;
+    if (to) blk.group = to; else delete blk.group;
+    const j = await api("/api/units/blocks", blk); if (j.error) { $("#st").textContent = j.error; return; }
+    panel(); $("#st").textContent = `「${blk.name}」 → ${to ? (byId("groups")[to] || {}).name : "내가 만든 요소"}`;
+  });
 }
 
 // 브랜드 · 원고 — 편집기 사이드바가 아니라 따로 여는 창(문서 속성에서 연다)
