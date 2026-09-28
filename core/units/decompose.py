@@ -198,6 +198,8 @@ def from_pdf(path, pno=1):
 
     # ── 이미지 — 회전은 변환 행렬로, 틀 안에서 잘린 것은 클립(scissor)으로: 틀 = 보이는 자리, img = 그림 전체의 자리
     n = 0
+    imgmap = {}                     # p1_img1 → PDF 안 그림 번호(xref) — 실제 그림은 부르는 쪽이 꺼내 저장한다
+    tag = f"p{pno}_img"             # 면 번호를 붙여 여러 면을 분해해도 이름이 안 겹친다
     try:
         clips = [fitz.Rect(d["scissor"]) for d in page.get_drawings(extended=True) if d.get("type") == "clip" and d.get("scissor")]
     except Exception:
@@ -212,21 +214,46 @@ def from_pdf(path, pno=1):
         iw, ih = math.hypot(ma, mb), math.hypot(mc, md)
         if abs(ang) >= 0.5 and iw > 0 and ih > 0:
             cx, cy = (bx.x0 + bx.x1) / 2 - ox, (bx.y0 + bx.y1) / 2 - oy
-            imgs.append({"t": "image", "x": mm(cx - iw / 2), "y": mm(cy - ih / 2), "w": mm(iw), "h": mm(ih), "src": f"img{n}", "rotate": ang})
+            imgs.append({"t": "image", "x": mm(cx - iw / 2), "y": mm(cy - ih / 2), "w": mm(iw), "h": mm(ih), "src": f"{tag}{n}", "rotate": ang})
+            imgmap[f"{tag}{n}"] = info.get("xref")
             continue
         frame = _image_frame(bx, clips)
         if frame is None:
-            imgs.append({"t": "image", "x": mm(bx.x0 - ox), "y": mm(bx.y0 - oy), "w": mm(bx.width), "h": mm(bx.height), "src": f"img{n}"})
+            imgs.append({"t": "image", "x": mm(bx.x0 - ox), "y": mm(bx.y0 - oy), "w": mm(bx.width), "h": mm(bx.height), "src": f"{tag}{n}"})
         else:
-            imgs.append({"t": "image", "x": mm(frame.x0 - ox), "y": mm(frame.y0 - oy), "w": mm(frame.width), "h": mm(frame.height), "src": f"img{n}",
+            imgs.append({"t": "image", "x": mm(frame.x0 - ox), "y": mm(frame.y0 - oy), "w": mm(frame.width), "h": mm(frame.height), "src": f"{tag}{n}",
                          "img": {"x": mm(bx.x0 - frame.x0), "y": mm(bx.y0 - frame.y0), "w": mm(bx.width), "h": mm(bx.height)}})
+        imgmap[f"{tag}{n}"] = info.get("xref")
 
     # 재단 밖(도련)은 잘라 내고, 밖에만 있는 것은 버린다
     atoms = [a for a in shapes + imgs + texts if _clip(a, W, H)]
     tokens = tk.finish(atoms)
     dec = {"from": f"pdf:{os.path.basename(path)}#{pno}", "w": round(W, 2), "h": round(H, 2), "atoms": atoms, "tokens": tokens}
+    keep = {a["src"] for a in atoms if a.get("t") == "image" and a.get("src")}
+    dec["imgmap"] = {k: v for k, v in imgmap.items() if k in keep and v}   # 남은 그림만 — 부르는 쪽이 꺼내 옷에 넣는다
     dec["parts"] = group(dec)
     return dec
+
+
+def save_images(path, imgmap, outdir, prefix=""):
+    """PDF 안 그림을 PNG 로 꺼내 저장한다 → {img1: 파일 이름}. 투명(SMask)·CMYK 도 PNG 로 맞춘다."""
+    import fitz
+    if not imgmap:
+        return {}
+    os.makedirs(outdir, exist_ok=True)
+    doc = fitz.open(path)
+    out = {}
+    for key, xref in imgmap.items():
+        try:
+            pix = fitz.Pixmap(doc, int(xref))
+            if pix.n - pix.alpha >= 4:                       # CMYK → RGB
+                pix = fitz.Pixmap(fitz.csRGB, pix)
+            name = f"{prefix}{key}.png"
+            pix.save(os.path.join(outdir, name))
+            out[key] = name
+        except Exception:
+            continue
+    return out
 
 
 def _clip(a, W, H):
