@@ -16,6 +16,8 @@
   .cv h3 .tw { display: inline-block; width: 11px; color: #a0a4b5; font-size: 9px; }
   .cv h3 .n { color: #b9bdca; font-weight: 500; }
   .cv h3 { position: relative; font-size: 11.5px; color: var(--mute); margin: 10px 0 5px; font-weight: 600; letter-spacing: .04em; }
+  .side h3 { border-top: 1px solid var(--line); padding-top: 9px; margin-top: 13px; color: var(--ink); font-size: 12.5px; }
+  .side h3:first-child { border-top: 0; padding-top: 0; margin-top: 2px; }
   .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
   .btn { display: inline-flex; align-items: center; gap: 5px; background: var(--pp); color: #fff; border: 0; border-radius: 8px; padding: 6px 11px; cursor: pointer; font-size: 12.5px; font-weight: 600; text-decoration: none; }
   .btn:hover { background: #6a1fd0; }
@@ -1783,7 +1785,7 @@ function side() {
     } else {
       const a = it.atom;
       h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `` : ""}`;
-      if (a.t === "text") h += `<div class="f"><span>글</span><textarea data-a="text" rows="3">${esc(plainText(a.text))}</textarea></div>${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
+      if (a.t === "text") h += `<h3>원고 <span class="note" style="display:inline">이 상자에 무엇이 들어오나 — 우리 것(인디자인의 XML 태그 자리)</span></h3>
         <div class="f"><span>원고 자리</span><span style="display:flex;gap:4px">
           <select data-a="bindsel" title="이 글상자에 원고의 무엇이 들어올지 고른다. 「고정 글」이면 원고와 상관없는 글">
             <option value="">고정 글 (원고 안 들어옴)</option>
@@ -1792,10 +1794,15 @@ function side() {
           </select>
           ${a.bind && !SLOTS.some(([v]) => v === a.bind) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px">` : ""}
         </span></div>
+        ${a.bind ? `<div class="note">이 상자 = 원고의 <b>${esc((Object.fromEntries(SLOTS))[a.bind] || a.bind)}</b></div>`
+                 : `<div class="note">원고와 상관없이 늘 같은 글이면 <b>고정 글</b> 그대로 둔다</div>`}
         <div class="f"><span title="인디자인 글머리 기호 및 번호 매기기 — 원고가 번호를 안 줘도 저절로 1,2,3… 매긴다. 면마다 다시 1부터">번호 매기기</span><span style="display:flex;gap:4px">
           <select data-a="num"><option value="">없음</option>${NUMS.map(v => `<option value="${v}" ${a.num === v ? "selected" : ""}>${v}</option>`).join("")}</select>
           ${a.num ? `<input type="number" data-a="num_start" min="1" step="1" value="${a.num_start || 1}" style="width:56px" title="시작 번호">` : ""}</span></div>
         ${a.num ? `<div class="note">번호는 저절로 매겨진다 — 원고가 번호를 주면 그 번호를 쓰고, 그다음부터 이어 센다</div>` : ""}
+        <div class="f"><span title="${a.bind ? "원고가 아직 없을 때 자리에 보일 글 — 책에는 안 실린다" : "이 상자에 늘 찍힐 글"}">${a.bind ? "견본 글" : "글"}</span><textarea data-a="text" rows="2">${esc(plainText(a.text))}</textarea></div>
+        ${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
+        <h3>글자 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>
         <div class="f"><span title="인디자인 단락 스타일 — 옷(브랜드)에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span title="인디자인 글꼴">글꼴</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
