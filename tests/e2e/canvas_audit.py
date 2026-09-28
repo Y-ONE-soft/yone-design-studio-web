@@ -921,6 +921,23 @@ try:
         return (shut < open_ and len(sums) == 2, f"접으면 {shut}칸 · 펴면 {open_}칸 · 더 보기 {sums}")
     step("R2 오른쪽 패널 — 기본만 보이고 나머지는 접힌다", r2)
 
+    def r3():
+        """여백 — 지면마다 값이 있고, 마주보는 책이면 안쪽(제본쪽)이 면마다 좌우로 바뀐다"""
+        js("select([]); side();"); time.sleep(0.8)
+        if not js("!!document.querySelector('#s-mg-top')"): return (False, "여백 칸 없음")
+        if js("docPages().length") < 2:
+            js("addPage('blank')"); wait("docPages().length >= 2", 10); time.sleep(1.0)
+        got = js("""(() => {
+            const dp = docPages().slice(0, 2);
+            for (const p of dp) { p.margins = {top: 30, bottom: 25, inside: 28, outside: 12}; }
+            const r = dp.map(p => [rightHand(p), marg(p).left, marg(p).right]);
+            for (const p of dp) { delete p.margins; }
+            return r; })()""")
+        a, b = got[0], got[1]
+        ok = a[0] and a[1] == 28 and a[2] == 12 and (not b[0]) and b[1] == 12 and b[2] == 28
+        return (ok, f"1쪽(오른쪽) 좌{a[1]}/우{a[2]} · 2쪽(왼쪽) 좌{b[1]}/우{b[2]}")
+    step("R3 여백 — 안쪽(제본쪽)이 면마다 좌우로 바뀐다", r3)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)
