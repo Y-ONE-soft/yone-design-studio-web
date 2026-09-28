@@ -6,6 +6,8 @@
 import json
 import os
 import re
+import threading
+import time
 
 from routes.catalog import CATALOG
 
@@ -33,15 +35,33 @@ def _path(kind):
     return os.path.join(udir(), kind + ".json")
 
 
+_LOCK = threading.RLock()                 # 읽고-고쳐-쓰기는 한 번에 하나 (같이 저장하면 한쪽이 사라진다)
+
+
+def _read(p):
+    """목록 파일 하나 → 목록. 없으면 None. **못 읽으면 예외** — 빈 목록으로 갈음하면 뒤이은 저장이 다 날린다.
+
+    iCloud·구글 드라이브에서 EDEADLK/EAGAIN 이 나므로 몇 번 다시 해 본다(webdata 와 같은 규칙).
+    """
+    last = None
+    for i in range(5):
+        try:
+            with open(p, encoding="utf-8") as f:
+                v = json.load(f)
+            return v if isinstance(v, list) else []
+        except FileNotFoundError:
+            return None
+        except (OSError, ValueError) as e:
+            last = e
+            time.sleep(0.05 * (i + 1))
+    raise RuntimeError(f"{os.path.basename(p)} 를 못 읽었다 ({last}) — 덮어쓰지 않는다")
+
+
 def load(kind):
-    if kind == "groups" and not os.path.exists(_path(kind)):
-        return [dict(g) for g in DEFAULT_GROUPS]
-    try:
-        with open(_path(kind), encoding="utf-8") as f:
-            v = json.load(f)
-        return v if isinstance(v, list) else []
-    except (OSError, ValueError):
-        return []
+    v = _read(_path(kind))
+    if v is None:
+        return [dict(g) for g in DEFAULT_GROUPS] if kind == "groups" else []
+    return v
 
 
 def save(kind, items):
@@ -100,6 +120,11 @@ def put(kind, item, after=None):
     """
     if kind == "pages":
         norm_page(item)
+    with _LOCK:
+        return _put_locked(kind, item, after)
+
+
+def _put_locked(kind, item, after):
     items = load(kind)
     for i, x in enumerate(items):
         if x.get("id") == item["id"]:
@@ -116,11 +141,12 @@ def put(kind, item, after=None):
 
 
 def delete(kind, uid):
-    items = load(kind)
-    rest = [x for x in items if x.get("id") != uid]
-    if len(rest) != len(items):
-        save(kind, rest)
-    return len(rest) != len(items)
+    with _LOCK:
+        items = load(kind)
+        rest = [x for x in items if x.get("id") != uid]
+        if len(rest) != len(items):
+            save(kind, rest)
+        return len(rest) != len(items)
 
 
 _schema_cache = {}

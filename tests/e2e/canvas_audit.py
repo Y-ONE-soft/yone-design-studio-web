@@ -122,6 +122,8 @@ try:
     # ───────── A. 시작 화면 ─────────
     step("A1 시작 화면 — 내 문서 목록이 보인다", lambda: (visible("#start") and js("document.querySelectorAll('#pcards .pcard').length") >= 2, f"cards={js('document.querySelectorAll(\"#pcards .pcard\").length')}"))
     NAME = "감사문서" + str(int(time.time()) % 100000)
+    OLD_PLANS = set(js("(LIB.plans || []).map(p => p.id)") or [])      # 감사는 남의 문서를 절대 안 건드린다
+    OLD_PAGES = list(js("(LIB.pages || []).map(p => p.id)") or [])     # 원래 있던 지면 — 뒷정리에서 안 건드린다
     def a2():
         js(f"window.__promptv = {json.dumps(NAME)}"); c0 = center("#pcards .pcard.new"); t0 = time.time(); click(*c0); js("window.__promptv = null")
         # 새 문서는 빈 종이라 요소가 없다 — 지면이 그려지면 열린 것
@@ -130,6 +132,8 @@ try:
         return (ok and js("docPages().length") == 1 and not visible("#start"), f"opened={ok} plan={js('plan && plan.id')} pages={js('docPages().length')} start={visible('#start')} name={js('plan && plan.name')}")
     step("A2 ＋ 새 문서 → 바로 1쪽이 열린다", a2)
     PLAN = js("plan.id")
+    if PLAN in OLD_PLANS:
+        raise SystemExit(f"감사 중단 — 새 문서가 안 만들어져 기존 문서({PLAN})가 열렸다. 그대로 두고 멈춘다")
     def a3():
         click(*center("#p-home")); ok = wait("document.querySelector('#start').style.display !== 'none'", 5)
         cards = js(f"[...document.querySelectorAll('#pcards .pcard')].findIndex(d => d.textContent.includes({json.dumps(NAME)}))")
@@ -974,9 +978,36 @@ try:
         return (ok, f"켬 {on} · 서버 {saved} · 끔 {off}")
     step("R4 책에서 — 「원고마다 한 장」을 화면에서 켜고 끈다", r4)
 
+    def r5():
+        """묶는 순서 — 「지문마다」 면이 둘 이상이면 유형별/지문별을 화면에서 고르고 틀에 저장한다"""
+        if js("docPages().length") < 2:
+            js("addPage('blank')"); wait("docPages().length >= 2", 10); time.sleep(1.0)
+        js("""(async () => { for (const sc of plan.sections || []) for (const pg of sc.pages || []) pg.repeat = 'each_set';
+            await savePlan(); select([]); side(); })()"""); time.sleep(1.5)
+        if not js("!!document.querySelector('#s-order')"): return (False, "「묶는 순서」 칸 없음 (지문마다 면 " + str(js("((plan.sections || []).flatMap(sc => sc.pages || [])).filter(x => x.repeat === 'each_set').length")) + ")")
+        js("(() => { const o = document.querySelector('#s-order'); o.value = 'by_set'; o.dispatchEvent(new Event('change')); })()")
+        wait("plan.order === 'by_set'", 10); time.sleep(1.2)
+        saved = js("""(async () => { const j = await api('/api/units/library');
+            return ((j.plans || []).find(x => x.id === plan.id) || {}).order || 'none'; })()""")
+        js("(() => { const o = document.querySelector('#s-order'); o.value = 'by_page'; o.dispatchEvent(new Event('change')); })()")
+        wait("!plan.order", 10); time.sleep(1.0)
+        back = js("plan.order || 'by_page'")
+        return (saved == "by_set" and back == "by_page", f"서버 {saved} · 되돌림 {back}")
+    step("R5 묶는 순서 — 유형별 ↔ 지문별", r5)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
-    js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)
+    js("""(async () => {
+        const keep = new Set(%s), mine = plan.id;
+        await api('/api/units/plans', {id: mine}, 'DELETE');
+        const j = await api('/api/units/library');
+        for (const p of j.pages || []) {                       // 감사가 만든 지면만 — 남이 쓰는 것은 그대로
+            if (keep.has(p.id)) continue;
+            const used = (j.plans || []).some(pl => [...(pl.front || []), ...(pl.back || []),
+                ...((pl.sections || []).flatMap(sc => [sc.divider, ...((sc.pages || []).map(x => x.page))]))].includes(p.id));
+            if (!used) await api('/api/units/pages', {id: p.id}, 'DELETE');
+        }
+        await api('/api/units/sets', {id: '77'}, 'DELETE'); })()""" % json.dumps(OLD_PAGES)); time.sleep(3)
     if MADE_SEED:
         js("(async () => { await api('/api/units/blocks', {id: 'passage'}, 'DELETE'); await api('/api/units/parts', {id: 'audit_passage'}, 'DELETE'); })()"); time.sleep(1.5)
 finally:

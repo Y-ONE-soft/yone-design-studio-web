@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """디자인 단위 — 시드가 스키마에 맞고, 원자 → SVG 가 그려지고, PDF 한 면이 원자로 분해된다."""
+import io
 import json
 import os
 
@@ -78,6 +79,46 @@ def test_plan_pages_and_columns(lib):
     exam = render.plan_svgs(ctx, store.by_id(lib["plans"])["exam_sheet"], lib["sets"], lib)
     assert len(exam) == 2 and "creativity" in exam[0]["svg"] and "cars" in exam[1]["svg"]   # 슬롯 모드: 세트마다 한 면, 값이 자리에 들어간다
     assert not [w for w in ctx.warnings if not w.startswith("원고")], ctx.warnings          # 원고↔자리 불일치는 검수 항목(시드는 두 종류를 섞어 둠)
+
+
+def test_load_failure_does_not_wipe(lib, tmp_path):
+    """목록 파일을 못 읽으면 예외 — 빈 목록으로 갈음하면 뒤이은 저장이 나머지를 다 지운다(실제로 세 번 겪음)."""
+    import pytest as _pytest
+    from core.units import store
+    p = os.path.join(store.udir(), "pages.json")
+    before = io.open(p, encoding="utf-8").read()
+    io.open(p, "w", encoding="utf-8").write("{ 깨진 json")
+    with _pytest.raises(RuntimeError):
+        store.load("pages")
+    with _pytest.raises(RuntimeError):
+        store.put("pages", {"id": "new_one", "name": "새 면", "spec": "a4", "items": []})
+    assert io.open(p, encoding="utf-8").read() == "{ 깨진 json"       # 안 덮어쓴다
+    io.open(p, "w", encoding="utf-8").write(before)
+    assert len(store.load("pages")) == len(lib["pages"])
+
+
+def test_plan_order_by_set(lib):
+    """묶는 순서 — 유형별(기본)은 면마다 원고를 몰아 찍고, 지문별은 원고마다 면 한 벌씩."""
+    import copy
+    from core.units import render, store
+    lib2 = copy.deepcopy(lib)
+    plan = store.by_id(lib2["plans"])["workbook_mini"]
+    plan["front"] = []
+    sec = plan["sections"][0]
+    sec["divider"] = None
+    sec.pop("divider")
+    sec["pages"] = [{"page": "pair", "repeat": "each_set", "sets": ["passage"]},
+                    {"page": "two_col", "repeat": "each_set", "sets": ["passage"]}]
+    plan["sections"] = [sec]                                            # 유형 2 × 지문 2
+    ctx = render.Ctx(store.by_id(lib2["skins"])["d2"], lib2, {"title": "T", "tag": "TAG"})
+    a = [p["label"] for p in render.plan_svgs(ctx, plan, lib2["sets"], lib2)]
+    assert a == ["STEP 2 · 20", "STEP 2 · 21", "STEP 2 · 20", "STEP 2 · 21"]     # 유형별: 면1(20·21) → 면2(20·21)
+    plan["order"] = "by_set"
+    ctx2 = render.Ctx(store.by_id(lib2["skins"])["d2"], lib2, {"title": "T", "tag": "TAG"})
+    svgs = render.plan_svgs(ctx2, plan, lib2["sets"], lib2)
+    assert [p["label"] for p in svgs] == ["STEP 2 · 20", "STEP 2 · 20", "STEP 2 · 21", "STEP 2 · 21"]   # 지문별: 원고20(면1·면2) → 원고21
+    assert store.validate("plans", plan) is None
+    assert [p["page_no"] for p in svgs] == [1, 2, 3, 4]                  # 쪽번호는 이어진다
 
 
 def test_skin_variant_switch(lib):

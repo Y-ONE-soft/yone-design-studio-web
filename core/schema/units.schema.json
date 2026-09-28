@@ -407,6 +407,7 @@
                 "propertyNames": {"maxLength": 60}},
         "skin": {"$ref": "#/definitions/id", "description": "이 문서의 브랜드(옷) — 열 때 이 옷으로 그린다. 없으면 화면에서 고른 옷"},
         "facing": {"type": "boolean", "description": "페이지 마주보기 — 켜면 2·3쪽이 한 장(펼침면)으로 보이고 1쪽은 오른쪽. 안 적으면 켠 것으로 본다"}, "spec": {"$ref": "#/definitions/id"},
+        "order": {"enum": ["by_page", "by_set"], "description": "묶는 순서 — by_page(기본·유형별) = 「지문마다」 면 하나를 원고 수만큼 몰아 찍는다. by_set(지문별) = 잇닿은 「지문마다」 면들을 한 벌로 묶어 원고마다 한 벌씩"},
         "front": {"type": "array", "items": {"$ref": "#/definitions/id"}},
         "sections": {"type": "array", "items": {"$ref": "#/definitions/section"}},
         "back": {"type": "array", "items": {"$ref": "#/definitions/id"}}

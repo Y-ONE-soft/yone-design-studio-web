@@ -1456,18 +1456,40 @@ def plan_svgs(ctx, plan, sets, lib):
     if any("answers" in (pg.get("sets") or []) for sec in plan.get("sections") or [] for pg in sec.get("pages") or []):
         from core.units import answers as _answers
         sets = list(sets or []) + _answers.answer_sets(sets, list(ctx.blocks.values()))      # 정답지 — 세트의 정답을 모아 정답 세트로
+    by_set = (plan.get("order") or "by_page") == "by_set"          # 묶는 순서 — 원고가 바깥쪽 반복(지문별) / 면이 바깥쪽(유형별)
+
+    def pg_sets(pg):
+        kinds = pg.get("sets")
+        return [s for s in sets or [] if not kinds or s.get("kind") in kinds]
+
     for sec in plan.get("sections") or []:
         ctx.sys["section"] = sec.get("name", "")
         if sec.get("divider"):
             emit(sec["divider"], [], sec.get("name", "") + " 간지")
-        for pg in sec.get("pages") or []:
-            kinds = pg.get("sets")
-            ss = [s for s in sets or [] if not kinds or s.get("kind") in kinds]
-            if pg.get("repeat") == "each_set":
-                for s in ss:
+        pgs = sec.get("pages") or []
+        i = 0
+        while i < len(pgs):
+            pg = pgs[i]
+            if pg.get("repeat") != "each_set":
+                emit(pg["page"], pg_sets(pg), sec.get("name", ""))
+                i += 1
+                continue
+            if not by_set:                                          # 유형별 — 이 면을 원고 수만큼 몰아서
+                for s in pg_sets(pg):
                     emit(pg["page"], [s], f"{sec.get('name', '')} · {s.get('id', '')}")
-            else:
-                emit(pg["page"], ss, sec.get("name", ""))
+                i += 1
+                continue
+            j = i                                                   # 지문별 — 잇닿은 「지문마다」 면들을 한 벌로 묶어 원고마다 한 벌씩
+            while j < len(pgs) and pgs[j].get("repeat") == "each_set":
+                j += 1
+            run = pgs[i:j]
+            for s in sets or []:
+                for p2 in run:
+                    kinds = p2.get("sets")
+                    if kinds and s.get("kind") not in kinds:
+                        continue
+                    emit(p2["page"], [s], f"{sec.get('name', '')} · {s.get('id', '')}")
+            i = j
     ctx.sys["section"] = ""
     for pid in plan.get("back") or []:
         emit(pid, [], "뒤")
