@@ -47,9 +47,10 @@ class _Tokens(object):
         self.font[name] += 1
         return name
 
-    def finish(self, atoms):
-        cmap = {hx: f"c{i + 1}" for i, (hx, _n) in enumerate(self.color.most_common())}
-        fmap = {nm: f"f{i + 1}" for i, (nm, _n) in enumerate(self.font.most_common())}
+    def finish(self, atoms, tag=""):
+        """tag 를 주면 이름 뒤에 붙인다 — 한 PDF 의 여러 면을 분해해도 색·글꼴 이름이 안 겹치게 (c1_p3)."""
+        cmap = {hx: f"c{i + 1}{tag}" for i, (hx, _n) in enumerate(self.color.most_common())}
+        fmap = {nm: f"f{i + 1}{tag}" for i, (nm, _n) in enumerate(self.font.most_common())}
         for a in atoms:
             for k in ("color", "fill"):
                 if a.get(k) in cmap:
@@ -227,7 +228,7 @@ def from_pdf(path, pno=1):
 
     # 재단 밖(도련)은 잘라 내고, 밖에만 있는 것은 버린다
     atoms = [a for a in shapes + imgs + texts if _clip(a, W, H)]
-    tokens = tk.finish(atoms)
+    tokens = tk.finish(atoms, tag=f"_p{pno}")
     dec = {"from": f"pdf:{os.path.basename(path)}#{pno}", "w": round(W, 2), "h": round(H, 2), "atoms": atoms, "tokens": tokens}
     keep = {a["src"] for a in atoms if a.get("t") == "image" and a.get("src")}
     dec["imgmap"] = {k: v for k, v in imgmap.items() if k in keep and v}   # 남은 그림만 — 부르는 쪽이 꺼내 옷에 넣는다

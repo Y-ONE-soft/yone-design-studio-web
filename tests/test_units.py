@@ -1048,3 +1048,23 @@ def test_decompose_keeps_images(tmp_path):
     assert set(got) == set(dec["imgmap"])
     for name in got.values():
         assert os.path.getsize(os.path.join(str(tmp_path), name)) > 500   # 진짜 PNG 가 저장된다
+
+
+def test_decompose_tokens_per_page(tmp_path):
+    """한 PDF 의 여러 면을 분해해도 색·글꼴 이름이 안 겹친다 — 겹치면 앞 면이 자홍색으로 뜬다."""
+    import os
+    import pytest
+    from core.units import decompose
+    pdf = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "catalog", "workbook", "designs", "d1", "reference.pdf")
+    if not os.path.exists(pdf):
+        pytest.skip("기준 PDF 없음")
+    a = decompose.from_pdf(pdf, 1)
+    b = decompose.from_pdf(pdf, 3)
+    ca, cb = a["tokens"]["color"], b["tokens"]["color"]
+    assert ca and cb
+    assert all(k.endswith("_p1") for k in ca), list(ca)[:4]
+    assert all(k.endswith("_p3") for k in cb), list(cb)[:4]
+    assert not (set(ca) & set(cb))                                  # 이름이 안 겹친다
+    used = {x.get("fill") or x.get("color") for x in a["atoms"]} - {None}
+    assert all(u.lstrip("$") in ca for u in used if isinstance(u, str) and u.startswith("$"))

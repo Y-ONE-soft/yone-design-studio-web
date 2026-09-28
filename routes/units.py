@@ -293,8 +293,12 @@ def api_decompose():
                 images = {k: os.path.join("_img", v) for k, v in got.items()}
         except Exception as e:
             dec.setdefault("warnings", []).append(f"그림 꺼내기 실패: {e}")
-    skin = {"id": sid, "name": "분해 · " + dec.get("from", ""), "tokens": dec.get("tokens") or {"color": {}, "font": {}}, "variants": {}, "images": {}}
     old = store.get("skins", sid) or {}
+    tok = dec.get("tokens") or {"color": {}, "font": {}}
+    ot = old.get("tokens") or {}
+    tok = {"color": dict(ot.get("color") or {}, **(tok.get("color") or {})),   # 면마다 쌓는다 — 이름에 면 번호가 붙어 안 겹친다
+           "font": dict(ot.get("font") or {}, **(tok.get("font") or {}))}
+    skin = {"id": sid, "name": "분해 · " + dec.get("from", ""), "tokens": tok, "variants": {}, "images": {}}
     skin["images"] = dict(old.get("images") or {}, **images)        # 여러 면을 분해해도 쌓인다
     store.put("skins", skin)
     dec["skin"] = sid
