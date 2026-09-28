@@ -138,6 +138,18 @@
   .paper .svgwrap svg g[data-fi] { cursor: move; }
   .paper .svgwrap svg g[data-fi]:hover { outline: 1.5px dashed #b39cf5; }
   .paper .svgwrap svg g.sel2 { outline: 2px dashed var(--pp); }
+  .steps { background: var(--pp-bg); border: 1px solid var(--line); border-radius: 9px; padding: 7px 9px; margin-bottom: 9px; }
+  .steps .row3 { display: flex; gap: 4px; flex-wrap: wrap; }
+  .steps .st { font-size: 10.5px; padding: 2px 6px; border-radius: 99px; background: var(--bg); color: var(--mute); border: 1px solid var(--line); }
+  .steps .st.on { background: var(--pp); color: #fff; border-color: var(--pp); font-weight: 700; }
+  .steps .st.ok { color: var(--pp); }
+  .steps .note { margin-top: 5px; }
+  .steps.done { background: #e8f7ef; }
+  :root[data-theme="dark"] .steps.done, body.dark .steps.done { background: #16281f; }
+  .slots { position: absolute; inset: 0; pointer-events: none; }
+  .slots .tag { position: absolute; font-size: 9.5px; line-height: 1.5; background: var(--pp); color: #fff;
+    padding: 0 5px; border-radius: 3px; white-space: nowrap; opacity: .82; transform: translateY(-100%); }
+  .slots .box { position: absolute; border: 1px dashed var(--pp); border-radius: 2px; opacity: .45; }
   .selbox { position: absolute; border: 2px solid var(--pp); border-radius: 2px; pointer-events: none; display: none; }
   .selbox .lb { position: absolute; left: -2px; top: -18px; font-size: 10px; background: var(--pp); color: #fff; padding: 1px 6px; border-radius: 4px 4px 0 0; white-space: nowrap; }
   .selbox span[data-h] { position: absolute; background: #fff; border: 2px solid var(--pp); border-radius: 4px; pointer-events: auto; }
@@ -338,6 +350,7 @@
       <div class="pages" id="pages">
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
         <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rot" data-rot title="회전 (Shift = 15°)"></span><span class="hd" data-h="nw"></span><span class="hd" data-h="n"></span><span class="hd" data-h="ne"></span><span class="hd" data-h="w"></span><span class="hd" data-h="e"></span><span class="hd" data-h="sw"></span><span class="hd" data-h="s"></span><span class="hd" data-h="se"></span></div>
+        <div class="slots" id="slots"></div>
         <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
         <textarea id="tedit" class="tedit" style="display:none"></textarea>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
@@ -361,7 +374,7 @@
         <button class="btn sm sub" id="f-addpg" title="이 페이지 뒤에 새 본문 페이지">＋ 쪽</button>
         <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 요소 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="이어 보기 — 지면을 세로로 이어 놓는다. 굴리면 다음 쪽으로 넘어간다">연속</button><button class="btn sm sub" id="tg-spread" title="펼침면 — 인디자인의 「페이지 마주보기」. 2·3쪽이 한 장처럼 붙어 보이고 1쪽은 오른쪽에 선다. 펼침 보기에선 지면 둘레 대지를 안 그린다">펼침</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
-        <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 요소·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button>
+        <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 요소·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button><button class="btn sm sub" id="tg-slots" title="원고 자리 — 글이 들어올 칸에 이름표를 띄운다">자리</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
         <select id="fitsel" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 쪽이 다 보이게"><option value="width">폭 맞춤</option><option value="page">전체 맞춤</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
       </div>
@@ -496,7 +509,7 @@ async function newPlan() {
   let n = 1; while (byId("plans")["plan_" + n]) n++;
   const pl = {id: "plan_" + n, name, spec: "a4", front: [], sections: [{id: "s1", name: "본문", pages: []}], back: []};
   const j = await api("/api/units/plans", pl); if (j.error) { alert(j.error); return; }
-  LIB.plans.push(pl); openPlan(pl); await addPage("body");                 // 캔바처럼 1쪽이 바로 있다
+  LIB.plans.push(pl); openPlan(pl); await addPage("blank");                // 1쪽이 바로 있되 **빈 종이**로 (머리·꼬리는 ＋ 에서 고른다)
 }
 $("#p-home").onclick = showStart;
 $("#plname").oninput = () => { if (plan) { plan.name = $("#plname").value; clearTimeout(window._plt); window._plt = setTimeout(savePlan, 500); } };
@@ -557,12 +570,12 @@ function layout() {
   const paper = $("#paper"); paper.style.width = (sp.w * scale) + "px"; paper.style.height = (sp.h * scale) + "px";
   sizeSlots(); placeBoard(); drawRulers();
 }
-window.addEventListener("resize", () => { if (page) { layout(); selbox(); } });
+window.addEventListener("resize", () => { if (page) { layout(); selbox(); slotTags(); } });
 function setZoom(z) {
   zoom = Math.max(0.3, Math.min(3, z));
   $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%";
   view.zoom = zoom; localStorage.setItem("units.view3", JSON.stringify(view));            // 다음에 열 때 그대로
-  layout(); selbox();
+  layout(); selbox(); slotTags();
 }
 $("#zoom").oninput = () => setZoom($("#zoom").value / 100);
 $("#zoomv").onclick = () => setZoom(1);
@@ -583,7 +596,7 @@ function render() {
     document.querySelectorAll(`.pg[data-id="${page.id}"] .th`).forEach(th => { th.innerHTML = svg; strip(th); });
     document.querySelectorAll(`#pages .pslot[data-id="${page.id}"]:not(.cur)`).forEach(sl => fillPrev(sl, page));
     w.style.display = (j.warnings || []).length ? "" : "none"; w.textContent = (j.warnings || []).join("\n");
-    wire(); selbox();
+    wire(); selbox(); slotTags();
   }, 40);
 }
 function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); } }
@@ -726,6 +739,49 @@ function wire() {
     });
   });
   markSels();
+}
+// 원고가 들어올 자리를 캔버스에 표시한다 — 「어디가 자리인지」가 눈에 보이게
+// 3단계 길잡이 — 고른 것에 따라 지금 할 차례를 켠다
+function steps() {
+  const its = [...sels].map(i => page.items[i]).filter(Boolean);
+  const atoms = its.filter(x => x.atom);
+  const binds = atoms.filter(x => x.atom.bind);
+  const blk = its.length === 1 && its[0].block ? (byId("blocks")[its[0].block] || {}) : null;
+  let n = 1, tip = "왼쪽 <b>T</b> 를 누르고 지면에서 끌어 글상자를 그린다";
+  if (blk && blk.source === "content") {
+    const fs = Object.keys(blk.fields || {});
+    return `<div class="steps done">✓ <b>${esc(blk.name)}</b> — 원고 자리 ${esc(fs.join(" · "))} 를 받는다<div class="note">원고를 고르면 이 자리에 글이 들어온다</div></div>`;
+  }
+  if (atoms.length && binds.length === atoms.length) { n = 3; tip = "위 <b>★ 요소로 저장</b> 을 누른다 — 창이 무엇의 모양인지 한 번만 묻는다"; }
+  else if (atoms.length) { n = 2; tip = "아래 <b>「원고 자리」</b> 에서 무엇이 들어올지 고른다"; }
+  const lbl = ["글상자 그리기", "원고 자리 고르기", "★ 요소로 저장"];
+  return `<div class="steps"><div class="row3">` +
+    lbl.map((t, i) => `<span class="st ${i + 1 === n ? "on" : (i + 1 < n ? "ok" : "")}">${i + 1}. ${t}</span>`).join("") +
+    `</div><div class="note">${tip}</div></div>`;
+}
+function slotTags() {
+  const box = $("#slots"); if (!box) return;
+  box.innerHTML = "";
+  if (!page || !view.slots) return;
+  const svg = $("#svgwrap svg"); if (!svg) return;
+  const pr = $("#paper").getBoundingClientRect();
+  const nm = Object.fromEntries(SLOTS);
+  for (const g of svg.querySelectorAll("g[data-fi]")) {
+    const it = page.items[+g.dataset.fi]; if (!it) continue;
+    let names = [];
+    if (it.atom) { if (it.atom.bind) names = [nm[it.atom.bind] || it.atom.bind]; }
+    else if (it.block) {
+      const b = byId("blocks")[it.block] || {};
+      if (b.source !== "content") continue;
+      names = Object.keys(b.fields || {}).map(f => nm[f] || f);
+    }
+    if (!names.length) continue;
+    const r = g.getBoundingClientRect();
+    const x = r.left - pr.left, y = r.top - pr.top;
+    box.insertAdjacentHTML("beforeend",
+      `<div class="box" style="left:${x}px;top:${y}px;width:${Math.max(r.width, 2)}px;height:${Math.max(r.height, 2)}px"></div>` +
+      `<div class="tag" style="left:${x}px;top:${y - 1}px">${esc((it.block ? nameOf(it) + " · " : "") + names.join(" · "))}</div>`);
+  }
 }
 function markSels() { const svg = $("#svgwrap svg"); if (!svg) return; svg.querySelectorAll("g[data-fi]").forEach(g => g.classList.toggle("sel2", sels.has(+g.dataset.fi) && +g.dataset.fi !== sel)); }
 // 끌어 옮기기 — 고른 것 전부, 안내선(다른 요소의 왼·가운데·오른 / 위·가운데·아래, 여백선)에 붙는다
@@ -958,11 +1014,11 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
-const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, left: true, side: true, strip: false, flow: true, spread: true, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
+const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, slots: true, left: true, side: true, strip: false, flow: true, spread: true, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
                            JSON.parse(localStorage.getItem("units.view3") || "{}"));
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); $("#area").classList.toggle("rul", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
-  $("#tg-rul").classList.toggle("on", view.rulers); $("#tg-grid").classList.toggle("on", view.grid); $("#tg-mg").classList.toggle("on", view.margins); $("#tg-snap").classList.toggle("on", view.snap);
+  $("#tg-rul").classList.toggle("on", view.rulers); $("#tg-grid").classList.toggle("on", view.grid); $("#tg-mg").classList.toggle("on", view.margins); $("#tg-snap").classList.toggle("on", view.snap); $("#tg-slots").classList.toggle("on", view.slots);
   applyPanels();
   localStorage.setItem("units.view3", JSON.stringify(view)); drawRulers();
 }
@@ -1056,6 +1112,7 @@ $("#unfold-left").onclick = () => togglePanel("left");
 $("#tg-rul").onclick = () => { view.rulers = !view.rulers; applyView(); };
 $("#tg-grid").onclick = () => { view.grid = !view.grid; applyView(); };
 $("#tg-mg").onclick = () => { view.margins = !view.margins; applyView(); };
+$("#tg-slots").onclick = () => { view.slots = !view.slots; applyView(); slotTags(); };
 $("#tg-snap").onclick = () => { view.snap = !view.snap; applyView(); };
 $("#zoomsel").onchange = () => setZoom(+$("#zoomsel").value);
 // 손 도구 — Space 누른 채 끌기 · 가운데 버튼 끌기
@@ -1707,7 +1764,7 @@ async function makeByPrompt() {
 // ── 오른쪽: 고른 것의 단위 사슬 ──
 function side() {
   const box = $("#side"); if (!page) { box.innerHTML = ""; return; }
-  let h = ""; const sk = skin();
+  let h = steps(); const sk = skin();
   const colorSel = (k, cur, none) => `<select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries(sk.tokens.color || {}).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}</select>`;
   if (sel != null && page.items[sel]) {
     const it = page.items[sel]; const u = unitOf(it);
