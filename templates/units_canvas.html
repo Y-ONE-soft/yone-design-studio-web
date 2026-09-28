@@ -413,7 +413,10 @@ const byId = (k) => Object.fromEntries((LIB[k] || []).map(x => [x.id, x]));
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const snap = (v) => Math.round(v * 2) / 2;
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
-const M = {left: 20, right: 20, top: 44, bottom: 20};
+const MDEF = {left: 20, right: 20, top: 44, bottom: 20};          // 새 지면 기본 여백
+// 지금 지면의 여백 — 지면에 적힌 값이 먼저다(분해해 온 지면은 그 면에서 잰 값이 들어 있다)
+function marg(pg) { return Object.assign({}, MDEF, ((pg || (typeof page !== "undefined" ? page : null)) || {}).margins || {}); }
+const M = new Proxy({}, {get: (_t, k) => marg()[k]});             // 예전 코드가 M.left 로 읽는다
 const BOARD = 20;                 // 대지(pasteboard) mm — 지면 둘레. 인디자인처럼 지면 밖에 요소를 둔다
 // 요소 카테고리 — 목록은 catalog/_units/groups.json (만들기·이름 바꾸기·지우기 가능).
 // 블록에 group 이 없으면 블록 지도 갈래(B1~B11)로 기본 자리를 잡는다.
@@ -1875,6 +1878,9 @@ function side() {
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
+      <h3>여백 <span class="note" style="display:inline">인디자인 여백 및 단 — 노란 안내선. 인쇄엔 안 나온다</span></h3>
+      <div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label>왼쪽<input type="number" id="s-mg-left" step="1" value="${marg(page).left}"></label><label>오른쪽<input type="number" id="s-mg-right" step="1" value="${marg(page).right}"></label></div>
+      <div class="row"><button class="btn sm sub" id="s-mg-fit" title="이 지면에 놓인 것들이 실제로 차지한 자리를 재서 여백을 맞춘다">요소에 맞추기</button>${page.margins ? `<button class="btn sm sub" id="s-mg-clr">기본값으로</button>` : ""}</div>
       <div class="m3"><label>기준선 격자 시작 mm<input type="number" id="s-grid-start" step="0.5" value="${(page.baseline_grid || {}).start ?? ""}" placeholder="없음"></label><label>줄 간격 mm<input type="number" id="s-grid-step" step="0.5" value="${(page.baseline_grid || {}).step ?? ""}"></label><label></label></div>
       <h3>레이어 <span class="note" style="display:inline">요소를 층으로 — 숨기기·잠금·비인쇄</span></h3>
       ${(page.layers || []).map(l => `<div class="f"><span>${esc(l.name)}</span><span style="display:flex;gap:6px;align-items:center">
@@ -1974,6 +1980,19 @@ function side() {
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement);
  on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
+  ["top", "bottom", "left", "right"].forEach(k => on("#s-mg-" + k, "change", (e) => {
+    hist(); page.margins = Object.assign({}, marg(page), {[k]: +e.target.value || 0}); save(); applyView(); side(); }));
+  on("#s-mg-fit", "click", () => {                              // 놓인 것들이 실제로 차지한 자리로
+    const S = specOf(); const bs = page.items.map((_, i) => bboxOf(i)).filter(Boolean)
+      .filter(b => b.w * b.h < S.w * S.h * 0.6);                // 전면 바탕은 빼고
+    if (!bs.length) { say("잴 요소가 없다"); return; }
+    hist();
+    page.margins = {left: Math.round(Math.min(...bs.map(b => b.x))), top: Math.round(Math.min(...bs.map(b => b.y))),
+                    right: Math.round(S.w - Math.max(...bs.map(b => b.x + b.w))), bottom: Math.round(S.h - Math.max(...bs.map(b => b.y + b.h)))};
+    for (const k of ["left", "top", "right", "bottom"]) page.margins[k] = Math.max(0, page.margins[k]);
+    save(); applyView(); side(); say(`여백을 요소에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
+  });
+  on("#s-mg-clr", "click", () => { hist(); delete page.margins; save(); applyView(); side(); });
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
   box.querySelectorAll("details.more").forEach(d => d.addEventListener("toggle", () => {      // 펴 둔 채로 기억한다
     view.adv = d.open; localStorage.setItem("units.view3", JSON.stringify(view));
