@@ -1093,7 +1093,9 @@ function drawRulers() {
   for (let m = 0; m <= sp.w; m += step) rt.insertAdjacentHTML("beforeend", `<span style="position:absolute;left:${m * scale}px;bottom:0;height:${m % 50 === 0 ? 9 : 5}px;border-left:1px solid #b8b5c9"></span>${m % 50 === 0 ? `<span style="position:absolute;left:${m * scale + 2}px;top:1px">${m}</span>` : ""}`);
   for (let m = 0; m <= sp.h; m += step) rl.insertAdjacentHTML("beforeend", `<span style="position:absolute;top:${m * scale}px;right:0;width:${m % 50 === 0 ? 9 : 5}px;border-top:1px solid #b8b5c9"></span>${m % 50 === 0 ? `<span style="position:absolute;top:${m * scale + 1}px;left:1px;writing-mode:vertical-rl;transform:rotate(180deg)">${m}</span>` : ""}`);
   $("#paper").querySelector(".svgwrap").style.backgroundSize = `${5 * scale}px ${5 * scale}px`;
-  Object.assign($("#mg").style, {left: (M.left * scale) + "px", top: (M.top * scale) + "px", width: ((sp.w - M.left - M.right) * scale) + "px", height: ((sp.h - M.top - M.bottom) * scale) + "px"});
+  const mg = marg(page), anymg = mg.top || mg.bottom || mg.left || mg.right;      // 여백 0(표지·간지)이면 안내선을 안 그린다
+  Object.assign($("#mg").style, {display: anymg ? "" : "none", left: (mg.left * scale) + "px", top: (mg.top * scale) + "px",
+                                 width: ((sp.w - mg.left - mg.right) * scale) + "px", height: ((sp.h - mg.top - mg.bottom) * scale) + "px"});
   drawGuides();
 }
 function drawGuides() {

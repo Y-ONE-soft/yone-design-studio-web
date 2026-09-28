@@ -252,8 +252,11 @@ def content_margins(atoms, W, H):
         bs.append((x0, y0, x1, y1))
     if not bs:
         return None
-    return {"left": round(max(0, min(b[0] for b in bs)), 1), "top": round(max(0, min(b[1] for b in bs)), 1),
-            "right": round(max(0, W - max(b[2] for b in bs)), 1), "bottom": round(max(0, H - max(b[3] for b in bs)), 1)}
+    m = {"left": round(max(0, min(b[0] for b in bs)), 1), "top": round(max(0, min(b[1] for b in bs)), 1),
+         "right": round(max(0, W - max(b[2] for b in bs)), 1), "bottom": round(max(0, H - max(b[3] for b in bs)), 1)}
+    if min(m.values()) < 3:
+        return {"left": 0, "top": 0, "right": 0, "bottom": 0}      # 가장자리까지 쓰는 면(표지·간지) — 여백선 없음
+    return m
 
 
 def save_images(path, imgmap, outdir, prefix=""):
