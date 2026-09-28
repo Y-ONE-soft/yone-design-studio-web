@@ -124,7 +124,8 @@ try:
     NAME = "감사문서" + str(int(time.time()) % 100000)
     def a2():
         js(f"window.__promptv = {json.dumps(NAME)}"); c0 = center("#pcards .pcard.new"); t0 = time.time(); click(*c0); js("window.__promptv = null")
-        ok = wait("!!(plan && page && document.querySelector('#svgwrap svg g[data-fi]'))", 30); took = round(time.time() - t0, 1)
+        # 새 문서는 빈 종이라 요소가 없다 — 지면이 그려지면 열린 것
+        ok = wait("!!(plan && page && document.querySelector('#svgwrap svg'))", 30); took = round(time.time() - t0, 1)
         rec("A2b 새 문서가 3초 안에 열린다", took < 3, f"{took}s")
         return (ok and js("docPages().length") == 1 and not visible("#start"), f"opened={ok} plan={js('plan && plan.id')} pages={js('docPages().length')} start={visible('#start')} name={js('plan && plan.name')}")
     step("A2 ＋ 새 문서 → 바로 1쪽이 열린다", a2)
@@ -135,7 +136,7 @@ try:
         js(f"document.querySelector('#pcards .pcard:nth-child({max(cards, 0) + 1})').scrollIntoView({{block: 'center'}})"); time.sleep(0.3)
         r = rect(f"#pcards .pcard:nth-child({max(cards, 0) + 1})")
         click(r[0] + r[2] / 2, r[1] + r[3] / 2)
-        t0 = time.time(); ok2 = wait(f"!!(plan && plan.id === {json.dumps(PLAN)} && document.querySelector('#svgwrap svg g[data-fi]'))", 30)
+        t0 = time.time(); ok2 = wait(f"!!(plan && plan.id === {json.dumps(PLAN)} && document.querySelector('#svgwrap svg'))", 30)
         return (ok and ok2, f"home={ok} open={ok2} {round(time.time() - t0, 1)}s")
     step("A3 내 문서 화면 ↔ 문서 열기 (카드 클릭)", a3)
 
