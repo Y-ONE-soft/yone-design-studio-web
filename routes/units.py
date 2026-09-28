@@ -284,7 +284,18 @@ def api_decompose():
         return jsonify({"error": f"{type(e).__name__}: {e}"}), 500
     # 잰 색·서체 → 임시 옷. 부품이 이 토큰을 쓰므로 같이 저장해 둔다
     sid = "src_" + re.sub(r"[^a-z0-9_]", "_", (body.get("upload") or "prompt").lower())[:20]
+    images = {}
+    if body.get("upload") and dec.get("imgmap"):                    # PDF 안 그림도 꺼내 둔다 — 안 그러면 자리만 남는다
+        try:
+            path, meta = _upload(body["upload"])
+            if meta["ext"] == ".pdf":
+                got = decompose.save_images(path, dec["imgmap"], os.path.join(store.udir(), "_img"), prefix=sid + "_")
+                images = {k: os.path.join("_img", v) for k, v in got.items()}
+        except Exception as e:
+            dec.setdefault("warnings", []).append(f"그림 꺼내기 실패: {e}")
     skin = {"id": sid, "name": "분해 · " + dec.get("from", ""), "tokens": dec.get("tokens") or {"color": {}, "font": {}}, "variants": {}, "images": {}}
+    old = store.get("skins", sid) or {}
+    skin["images"] = dict(old.get("images") or {}, **images)        # 여러 면을 분해해도 쌓인다
     store.put("skins", skin)
     dec["skin"] = sid
     # 면 전체 그림 (원자 그대로)

@@ -1028,3 +1028,23 @@ def test_auto_numbering(lib):
     ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
     svg2 = render.page_canvas_svgs(ctx2, pg, render.DEFAULT_SPEC, sample_set=st2)[0]["svg"]
     assert ">07<" in svg2 and ">08<" in svg2 and ">09<" in svg2   # 원고가 준 번호가 이기고, 그다음부터 이어 센다
+
+
+def test_decompose_keeps_images(tmp_path):
+    """PDF 를 분해하면 그림도 꺼내 온다 — 자리만 남으면 표지가 글자만 남는다."""
+    import os
+    import pytest
+    from core.units import decompose
+    pdf = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       "catalog", "workbook", "designs", "d2", "참고", "reference.pdf")
+    if not os.path.exists(pdf):
+        pytest.skip("기준 PDF 없음")
+    dec = decompose.from_pdf(pdf, 3)
+    srcs = [a["src"] for a in dec["atoms"] if a.get("t") == "image"]
+    assert srcs, "표지에 그림 원자가 있어야 한다"
+    assert all(s.startswith("p3_img") for s in srcs), srcs      # 면 번호가 붙어 여러 면이 안 겹친다
+    assert set(dec["imgmap"]) >= set(srcs)                      # 꺼낼 그림 번호(xref)를 넘겨 준다
+    got = decompose.save_images(pdf, dec["imgmap"], str(tmp_path), prefix="t_")
+    assert set(got) == set(dec["imgmap"])
+    for name in got.values():
+        assert os.path.getsize(os.path.join(str(tmp_path), name)) > 500   # 진짜 PNG 가 저장된다
