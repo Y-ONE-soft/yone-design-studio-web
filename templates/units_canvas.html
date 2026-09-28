@@ -529,7 +529,11 @@ async function showStart() {
     d.innerHTML = `<div class="th"></div><div class="nm">${esc(pl.name || pl.id)}</div><div class="ds">페이지 ${ids.length} · ${pl.spec || "a4"}</div>`;
     d.onclick = () => openPlan(pl); cards.appendChild(d);
     const first = byId("pages")[ids[0]];
-    if (first) { const j = await api("/api/units/preview", {kind: "pages", item: first, skin: $("#skin").value, mode: "canvas", spec: first.spec}); const th = d.querySelector(".th"); th.innerHTML = ((j.svgs || [])[0] || {}).svg || ""; strip(th); }
+    if (first) {                                                   // 미리보기는 **그 문서의 옷**으로 — 아니면 색이 없어 자홍색으로 뜬다
+      const sid = pl.skin && byId("skins")[pl.skin] ? pl.skin : $("#skin").value;
+      const j = await api("/api/units/preview", {kind: "pages", item: first, skin: sid, skin_item: byId("skins")[sid], mode: "canvas", spec: first.spec});
+      const th = d.querySelector(".th"); th.innerHTML = ((j.svgs || [])[0] || {}).svg || ""; strip(th);
+    }
   }
 }
 async function newPlan() {
