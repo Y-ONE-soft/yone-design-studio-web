@@ -16,6 +16,13 @@
   .cv h3 .tw { display: inline-block; width: 11px; color: #a0a4b5; font-size: 9px; }
   .cv h3 .n { color: #b9bdca; font-weight: 500; }
   .cv h3 { position: relative; font-size: 11.5px; color: var(--mute); margin: 10px 0 5px; font-weight: 600; letter-spacing: .04em; }
+  .side .more { margin: 8px 0 2px; }
+  .side .more:not([open]) > *:not(summary) { display: none !important; }   /* 우리 .f 가 UA 규칙을 이겨 버린다 */
+  .side .more > summary { cursor: pointer; font-size: 11.5px; color: var(--pp); background: var(--pp-bg);
+    border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; list-style: none; }
+  .side .more > summary::-webkit-details-marker { display: none; }
+  .side .more > summary::before { content: "\25b8  "; }
+  .side .more[open] > summary::before { content: "\25be  "; }
   .side h3 { border-top: 1px solid var(--line); padding-top: 9px; margin-top: 13px; color: var(--ink); font-size: 12.5px; }
   .side h3:first-child { border-top: 0; padding-top: 0; margin-top: 2px; }
   .cv input[type=text], .cv input[type=number], .cv select, .cv textarea { box-sizing: border-box; background: #fff; color: var(--ink); border: 1px solid #cfc8e6; border-radius: 8px; padding: 5px 8px; font-size: 12.5px; }
@@ -1016,7 +1023,7 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
-const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, slots: true, left: true, side: true, strip: false, flow: true, spread: true, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
+const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, slots: true, adv: false, left: true, side: true, strip: false, flow: true, spread: true, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
                            JSON.parse(localStorage.getItem("units.view3") || "{}"));
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); $("#area").classList.toggle("rul", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
@@ -1808,6 +1815,7 @@ function side() {
         <div class="f"><span title="인디자인 글꼴">글꼴</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
+        <details class="more" ${view.adv ? "open" : ""}><summary>글자 더 보기 — 정렬 · 행간 · 자간 · 들여쓰기 · 단락 · 탭</summary>
         <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
         <div class="m3"><label>높이 mm<input type="number" data-a="h" step="0.5" value="${a.h}"></label><label>행간 pt<input type="number" data-a="leading" step="0.5" value="${a.leading || ""}" placeholder="자동"></label><label>자간 ‰<input type="number" data-a="tracking" step="10" value="${a.tracking || 0}"></label></div>
         <div class="m3"><label>들여쓰기<input type="number" data-a="indent" step="0.5" value="${a.indent || 0}"></label><label>첫 줄<input type="number" data-a="indent_first" step="0.5" value="${a.indent_first || 0}" title="음수 = 내어쓰기"></label><label>오른쪽<input type="number" data-a="indent_right" step="0.5" value="${a.indent_right || 0}"></label></div>
@@ -1826,7 +1834,7 @@ function side() {
         <div class="m4"><label>하이픈<input type="checkbox" data-a="hyphenate" ${a.hyphenate ? "checked" : ""} style="width:auto"></label><label>양끝맞춤<select data-a="justify_mode"><option value="">낱말</option><option value="letter" ${a.justify_mode === "letter" ? "selected" : ""}>글자까지</option></select></label><label>낱말 사이 ‰<input type="number" data-a="word_spacing" step="10" value="${a.word_spacing || ""}" placeholder="0"></label><label>격자 맞춤<input type="checkbox" data-a="snap_baseline" ${a.snap_baseline ? "checked" : ""} style="width:auto" title="지면의 기준선 격자에 글줄을 세운다"></label></div>
         <div class="f"><span title="인디자인 앵커 개체 — 글에 붙어 같이 흐른다">앵커 개체</span><span style="display:flex;gap:4px"><select id="s-anc-part"><option value="">부품 고르기</option>${LIB.parts.map(pt => `<option value="${pt.id}">${esc(pt.name || pt.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-anc-add" title="글 끝에 그 부품을 끼운다(인디자인 앵커드 개체)">＋ 끼우기</button></span></div>
         <div class="m3"><label>취소선 pt<input type="number" data-a="strike.w" step="0.1" value="${(a.strike || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("strike.color", (a.strike || {}).color, true)}</label><label>모양<select data-a="strike.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.strike || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-`;
+        </details>`;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span title="인디자인 획 두께">획 두께 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
         <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>
         <div class="f"><span title="인디자인 획 — 끝모양">끝모양</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>
@@ -1843,7 +1851,8 @@ function side() {
         <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
 `;
-      h += `<h3>개체 스타일 · 레이어</h3>
+      h += `<details class="more" ${view.adv ? "open" : ""}><summary>모양 더 보기 — 개체 스타일 · 회전 · 불투명 · 그림자 · 감싸기</summary>
+        <h3 style="border-top:0;margin-top:4px;padding-top:0">개체 스타일 · 레이어</h3>
         <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">(직접)</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">기본</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 요소의 채움·획·모서리·효과를 이름 붙여 옷에 저장한다">스타일로</button></label></div>
         <h3>변형 — 인디자인 변형 패널</h3>
         <div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}" title="채움 색의 색조(인디자인 Tint)"></label></div>
@@ -1855,7 +1864,7 @@ function side() {
         <div class="m3"><label>기준점<select data-a="origin">${[["center", "가운데"], ["tl", "왼위"], ["tr", "오른위"], ["bl", "왼아래"], ["br", "오른아래"]].map(([v, n]) => `<option value="${v}" ${(a.origin || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>비인쇄<input type="checkbox" data-a="nonprint" ${a.nonprint ? "checked" : ""} style="width:auto" title="화면에만 보이고 PDF·인쇄엔 안 나온다"></label><label>중복인쇄<input type="checkbox" data-a="overprint" ${a.overprint ? "checked" : ""} style="width:auto" title="인쇄 분판에서 밑색을 파지 않는다(값만 보관)"></label></div>
         <div class="m3"><label>텍스트 감싸기<select data-a="wrap.mode"><option value="">안 함</option><option value="bbox" ${(a.wrap || {}).mode === "bbox" ? "selected" : ""}>상자 둘레로</option></select></label><label>띄우기 mm<input type="number" data-a="wrap.offset" step="0.5" value="${(a.wrap || {}).offset || ""}"></label><label>흐를 쪽<select data-a="wrap.side">${[["auto", "자동"], ["left", "왼쪽"], ["right", "오른쪽"]].map(([v, n]) => `<option value="${v}" ${((a.wrap || {}).side || "auto") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
         <div class="m4"><label>광선 번짐<input type="number" data-a="fx.glow.blur" step="0.5" value="${((a.fx || {}).glow || {}).blur ?? ""}" placeholder="없음"></label><label>색${colorSel("fx.glow.color", ((a.fx || {}).glow || {}).color, true)}</label><label>안쪽<input type="checkbox" data-a="fx.glow.inner" ${((a.fx || {}).glow || {}).inner ? "checked" : ""} style="width:auto"></label><label>페더 mm<input type="number" data-a="fx.feather" step="0.5" value="${(a.fx || {}).feather ?? ""}" placeholder="없음" title="가장자리를 흐리게"></label></div>
-        <div class="m4"><label>엠보스 크기<input type="number" data-a="fx.bevel.size" step="0.2" value="${((a.fx || {}).bevel || {}).size ?? ""}" placeholder="없음" title="경사와 엠보스"></label><label>깊이<input type="number" data-a="fx.bevel.depth" step="0.5" value="${((a.fx || {}).bevel || {}).depth ?? ""}"></label><label>빛 °<input type="number" data-a="fx.bevel.angle" step="15" value="${((a.fx || {}).bevel || {}).angle ?? ""}"></label><label>새틴 번짐<input type="number" data-a="fx.satin.blur" step="0.5" value="${((a.fx || {}).satin || {}).blur ?? ""}" placeholder="없음"></label></div>`;
+        <div class="m4"><label>엠보스 크기<input type="number" data-a="fx.bevel.size" step="0.2" value="${((a.fx || {}).bevel || {}).size ?? ""}" placeholder="없음" title="경사와 엠보스"></label><label>깊이<input type="number" data-a="fx.bevel.depth" step="0.5" value="${((a.fx || {}).bevel || {}).depth ?? ""}"></label><label>빛 °<input type="number" data-a="fx.bevel.angle" step="15" value="${((a.fx || {}).bevel || {}).angle ?? ""}"></label><label>새틴 번짐<input type="number" data-a="fx.satin.blur" step="0.5" value="${((a.fx || {}).satin || {}).blur ?? ""}" placeholder="없음"></label></div></details>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
       ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="요소·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
@@ -1966,6 +1975,10 @@ function side() {
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement);
  on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
+  box.querySelectorAll("details.more").forEach(d => d.addEventListener("toggle", () => {      // 펴 둔 채로 기억한다
+    view.adv = d.open; localStorage.setItem("units.view3", JSON.stringify(view));
+    box.querySelectorAll("details.more").forEach(o => { o.open = d.open; });
+  }));
   on("#s-flow", "change", (e) => { hist(); const it = page.items[sel]; if (e.target.checked) it.flow = true; else { delete it.flow; delete it.gap; } save(); side(); });
   on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);

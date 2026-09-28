@@ -704,6 +704,7 @@ try:
             else el.value = {json.dumps(v)};
             el.dispatchEvent(new Event('change')); return ''; }})()""")
 
+    js("view.adv = true; side();")           # P·Q 단계는 「더 보기」 안 칸까지 만진다 — 펴 놓고 본다
     def p1():
         js("addAtom('rect', {x: 30, y: 200})"); time.sleep(1.2)
         js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
@@ -906,6 +907,19 @@ try:
         js(f"(() => {{ page.items.length = {n0}; select([]); save(); render(); }})()"); time.sleep(1.0)
         return (got, f"01·02 매겨짐={got} · 원자 {at[:80]}")
     step("R1 번호 매기기 — 자리 순서대로 01 · 02", r1)
+
+    def r2():
+        """오른쪽 패널은 기본만 보이고 나머지는 「더 보기」 안에 접혀 있다"""
+        js("addAtom('text', {x: 20, y: 250})"); time.sleep(1.0)
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
+        js("view.adv = false; side();"); time.sleep(0.8)
+        shut = js("[...document.querySelectorAll('#side .f > span:first-child, #side h3')].filter(x => x.offsetParent).length")
+        sums = js("[...document.querySelectorAll('#side details.more > summary')].map(x => x.textContent.trim().slice(0, 10))")
+        js("view.adv = true; side();"); time.sleep(0.8)
+        open_ = js("[...document.querySelectorAll('#side .f > span:first-child, #side h3')].filter(x => x.offsetParent).length")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(0.8)
+        return (shut < open_ and len(sums) == 2, f"접으면 {shut}칸 · 펴면 {open_}칸 · 더 보기 {sums}")
+    step("R2 오른쪽 패널 — 기본만 보이고 나머지는 접힌다", r2)
 
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
