@@ -7,4 +7,5 @@
 # (이 파일은 리포 밖·본인 홈에만 둔다. 키를 리포나 채팅에 적지 말 것.)
 [ -f "$HOME/.config/yone/env" ] && . "$HOME/.config/yone/env"
 cd "$(dirname "$0")/.." || exit 1
+bin/catalog-backup >/dev/null 2>&1 &          # 카탈로그 스냅숏 (사고 나면 bin/catalog-backup restore)
 exec python3 -u studio_server.py "$@"
