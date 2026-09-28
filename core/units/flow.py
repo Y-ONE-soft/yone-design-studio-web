@@ -5,6 +5,7 @@
 규칙
   · 한계선 = 면 높이 - 아래 여백(page.margins.bottom, 없으면 20mm).
   · 놓았을 때(place_items) 한계선을 넘는 첫 요소를 찾는다. 머리말·쪽번호(system)는 고정이라 안 본다.
+  · 아래 여백 밖(꼬리말 자리)에 그린 요소도 고정 — 본문이 길어져도 안 밀리고 안 넘어간다.
   · 그 요소가 글 자리(콘텐츠 블록, rich/text 필드)면 **글을 자른다**: 들어가는 만큼은 이 면에, 나머지는
     다음 면 같은 자리에. 글이 아니면(선지 목록 등) 통째로 다음 면으로.
   · 그 뒤의(더 아래 놓인) 요소들은 다음 면으로 같이 넘어간다 — 원래 자리(템플릿 좌표)에 다시 놓인다.
@@ -137,7 +138,7 @@ def thread(ctx, page, spec, max_pages=40):
         split = split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w")) if it.get("block") else None
         items_now, items_next = [], []
         for fi, x in enumerate(cur.get("items") or []):
-            fixed = is_fixed(ctx, x)
+            fixed = is_fixed(ctx, x, cur, H)
             if fixed:
                 items_now.append(x); items_next.append(json.loads(json.dumps(x)))
             elif fi == first["fi"]:
@@ -152,7 +153,7 @@ def thread(ctx, page, spec, max_pages=40):
                 items_next.append(x)
             else:
                 items_now.append(x)
-        if not split and len(items_now) == sum(1 for x in items_now if is_fixed(ctx, x)) and not out:
+        if not split and len(items_now) == sum(1 for x in items_now if is_fixed(ctx, x, cur, H)) and not out:
             ctx.warn(f"{page.get('id')}: 요소 하나가 한 면보다 크다 — 자를 수 없어 그대로 둔다")
             cur["_flowed"] = True
             out.append(cur)
@@ -161,11 +162,11 @@ def thread(ctx, page, spec, max_pages=40):
         out.append(cur)
         nxt["items"] = items_next
         cur = nxt
-        if not any(not is_fixed(ctx, x) for x in items_next):
+        if not any(not is_fixed(ctx, x, cur, H) for x in items_next):
             return out
     ctx.warn(f"{page.get('id')}: 넘침이 {max_pages}면을 넘었다 — 멈춤")
     return out
 
 
-def is_fixed(ctx, it):
-    return render.is_fixed(ctx, it)
+def is_fixed(ctx, it, page=None, H=None):
+    return render.is_fixed(ctx, it, page, H)

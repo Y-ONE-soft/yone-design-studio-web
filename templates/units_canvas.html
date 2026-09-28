@@ -219,6 +219,7 @@
   .pg:hover .th { border-color: #b39cf5; }
   .pg.on .th { border-color: var(--pp); box-shadow: 0 0 0 2px rgba(125,42,232,.18); }
   .pg .no { position: absolute; left: 5px; bottom: 4px; font-size: 10.5px; color: #3c4043; background: rgba(255,255,255,.85); padding: 0 4px; border-radius: 4px; }
+  .pg .rep { position: absolute; right: 4px; bottom: 4px; font-size: 9.5px; color: #fff; background: var(--pp); padding: 0 4px; border-radius: 4px; }
   .pg .pgact { position: absolute; right: 3px; top: 3px; display: none; gap: 2px; }
   .pg:hover .pgact { display: flex; }
   .pg .pgact button { border: 0; background: rgba(31,35,48,.85); color: #fff; font-size: 11px; width: 20px; height: 20px; border-radius: 5px; cursor: pointer; }
@@ -457,7 +458,9 @@ let plan = null, page = null, sel = null, sels = new Set(), scale = 3, zoom = 1,
 // 틀 = 문서. 아래 띠·←/→·＋ 는 전부 이 틀의 지면 순서 위에서 움직인다. 지면 자체는 라이브러리(공유)에 있다.
 function planIds(pl) { const ids = [...(pl.front || [])]; for (const sc of pl.sections || []) { if (sc.divider) ids.push(sc.divider); for (const pg of sc.pages || []) ids.push(pg.page); } ids.push(...(pl.back || [])); return ids; }
 function docPages() { return plan ? planIds(plan).map(id => byId("pages")[id]).filter(Boolean) : []; }
-function setPlanIds(ids) { const s0 = (plan.sections || [])[0] || {id: "s1", name: "본문"}; plan.front = []; plan.back = []; plan.sections = [{id: s0.id, name: s0.name, pages: ids.map(id => ({page: id, repeat: "once"}))}]; }
+function planPg(pid) { for (const sc of ((plan || {}).sections) || []) for (const pg of sc.pages || []) if (pg.page === pid) return pg; return null; }   // 그 지면의 틀 항목 (앞·뒤붙이엔 없다)
+function setPlanIds(ids) { const s0 = (plan.sections || [])[0] || {id: "s1", name: "본문"}; const old = {}; for (const sc of plan.sections || []) for (const pg of sc.pages || []) old[pg.page] = pg;
+  plan.front = []; plan.back = []; plan.sections = [{id: s0.id, name: s0.name, pages: ids.map(id => Object.assign({}, old[id], {page: id, repeat: (old[id] || {}).repeat || "once"}))}]; }   // 순서가 바뀌어도 「원고마다」 설정은 남긴다
 async function savePlan() { if (!plan) return; const j = await api("/api/units/plans", plan); if (j.error) $("#st").textContent = "틀 저장 실패: " + j.error; }
 function usedElsewhere(pid) { return LIB.plans.some(pl => pl !== plan && planIds(pl).includes(pid)); }
 let tab = new URLSearchParams(location.search).get("tab") || "blocks";      // ?tab=atoms 로 바로 열기
@@ -714,7 +717,7 @@ async function drawRail() {
   const rail = $("#rail"); rail.innerHTML = ""; const dp = docPages();
   dp.forEach((p, i) => {
     const d = document.createElement("div"); d.className = "pg" + (i === idx() ? " on" : ""); d.dataset.id = p.id; d.dataset.i = i; d.draggable = true; d.title = p.name || p.id;
-    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span><span class="pgact"><button data-pg-dup title="이 지면 복제">⧉</button><button data-pg-del title="이 지면 지우기">✕</button></span>`; strip(d);
+    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span>${(planPg(p.id) || {}).repeat === "each_set" ? `<span class="rep" title="원고(지문)마다 이 면을 한 장씩">×원고</span>` : ""}<span class="pgact"><button data-pg-dup title="이 지면 복제">⧉</button><button data-pg-del title="이 지면 지우기">✕</button></span>`; strip(d);
     d.querySelector("[data-pg-del]").onclick = (e) => { e.stopPropagation(); deletePage(p); };
     d.querySelector("[data-pg-dup]").onclick = async (e) => { e.stopPropagation(); if (!page || page.id !== p.id) { openPage(p); await new Promise(r => setTimeout(r, 200)); } addPage("dup"); };
     d.draggable = false;
@@ -1897,6 +1900,12 @@ function side() {
       ${layersHtml()}`;
   } else {
     $("#stitle").textContent = `페이지 ${idx() + 1} / ${docPages().length}`;
+    const pe = planPg(page.id), kinds = [...new Set((LIB.sets || []).map(s2 => s2.kind))], curK = ((pe || {}).sets || []).join(",");
+    const bookRow = !pe ? `<div class="note">앞붙이·뒤붙이 — 원고 없이 한 장</div>` : `
+      <div class="f"><span title="인디자인 데이터 병합의 「여러 레코드」 — 원고(지문)가 12개면 이 면을 12장 찍고 한 장에 한 지문씩 넣는다">원고마다</span><select id="s-rep"><option value="once" ${pe.repeat === "each_set" ? "" : "selected"}>한 번만 — 1장</option><option value="each_set" ${pe.repeat === "each_set" ? "selected" : ""}>지문마다 한 장</option></select></div>
+      <div class="f"><span title="비우면 모든 원고를 받는다. 「정답지」를 고르면 앞 구간 원고들의 정답을 모은 원고가 저절로 생긴다">받는 원고</span><select id="s-sets"><option value="" ${curK ? "" : "selected"}>모두</option>${kinds.map(k => `<option value="${esc(k)}" ${curK === k ? "selected" : ""}>${esc(k)}</option>`).join("")}<option value="answers" ${curK === "answers" ? "selected" : ""}>정답지 (answers)</option>${curK && curK !== "answers" && !kinds.includes(curK) ? `<option value="${esc(curK)}" selected>${esc(curK)}</option>` : ""}</select></div>
+      ${page.items.some(it => it.flow) ? `<div class="note">쌓기 자리가 있다 — 그 자리엔 세트를 하나씩 아래로 쌓고 면이 차면 다음 면으로 넘긴다</div>` : ""}
+      <div class="note">지금 이 면은 <b>${pe.repeat === "each_set" ? "원고 1개마다 1장" : "1장"}</b> · 받는 원고 <b>${curK ? esc(curK) : "모두"}</b></div>`;
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}</select></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
@@ -1918,7 +1927,8 @@ function side() {
       <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
-      <div class="f"><span>책에서</span><span title="원고 자리가 있으면 지문마다 반복, 쌓기 자리가 있으면 세트를 쌓아 채움, 없으면 한 번">${page.items.some(it => it.flow) ? "세트를 쌓아 채움" : page.items.some(it => it.block && (byId("blocks")[it.block] || {}).source === "content") ? "지문마다 반복" : "한 번"}</span></div>
+      <h3>책에서 <span class="note" style="display:inline">이 면을 몇 장 찍고, 어느 원고를 받을지</span></h3>
+      ${bookRow}
       ${layersHtml()}`;
   }
   box.innerHTML = h;
@@ -2019,6 +2029,8 @@ function side() {
     save(); applyView(); side(); say(`여백을 요소에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
   });
   on("#s-mg-clr", "click", () => { hist(); delete page.margins; save(); applyView(); side(); });
+  on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; q.repeat = e.target.value; await savePlan(); drawRail(); side(); });
+  on("#s-sets", "change", async (e) => { const q = planPg(page.id); if (!q) return; if (e.target.value) q.sets = [e.target.value]; else delete q.sets; await savePlan(); drawRail(); side(); });
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
   box.querySelectorAll("details.more").forEach(d => d.addEventListener("toggle", () => {      // 펴 둔 채로 기억한다
     view.adv = d.open; localStorage.setItem("units.view3", JSON.stringify(view));

@@ -195,6 +195,17 @@ try:
     js("open(docPages()[0])"); time.sleep(1.0)
 
     # ───────── C. 요소 넣기 ─────────
+    # 감사가 쓰는 씨앗 요소 — 라이브러리를 비운 상태에서도 돌게 직접 만든다 (끝에 지운다)
+    MADE_SEED = not js("!!(LIB.blocks || []).some(b => b.id === 'passage')")
+    if MADE_SEED:
+        js("""(async () => {
+            await api('/api/units/parts', {id: 'audit_passage', name: '지문 상자', w: 149, h: 41,
+                atoms: [{t: 'text', x: 0, y: 0, w: 149, h: 41, font: '$body', size: 9, color: '$ink', bind: 'passage', text: '지문이 여기에 들어온다.'}]});
+            await api('/api/units/blocks', {id: 'passage', name: '지문 상자', source: 'content',
+                fields: {passage: {type: 'rich', required: true}}, variants: [{id: 'v1', name: '기본', part: 'audit_passage'}]});
+            const j2 = await api('/api/units/library'); LIB.parts = j2.parts; LIB.blocks = j2.blocks; panel(); })()"""); time.sleep(2.0)
+        wait("(LIB.blocks || []).some(b => b.id === 'passage')", 10)
+
     def c1():
         n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('.g0 button, .pal button, .draw button, button')].find(b => /글상자/.test(b.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not b: return (False, "글상자 버튼 없음")
@@ -207,10 +218,13 @@ try:
                 f"items {n0}→{n_items()} {a.get('w')}×{a.get('h')}mm sel={js('sel')}")
     step("C1 「글상자」 고르고 지면에서 끌면 그 크기로 그려진다 (인디자인처럼)", c1)
     def c2():
-        n0 = n_items(); cardc = js("(() => { const el = [...document.querySelectorAll('.card')].find(d => /지문 상자/.test(d.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        n0 = n_items()
+        js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자'); if (el) el.scrollIntoView({block: 'center'}); })()"); time.sleep(0.5)
+        cardc = js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자'); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not cardc: return (False, "지문 상자 카드 없음")
         tx, ty = paper_pt(30, 100); drag(cardc[0], cardc[1], tx, ty, steps=12)
         ok = wait(f"page.items.length === {n0 + 1}", 8)
+        js("document.querySelectorAll('#pbody, .upanel, #left').forEach(e => { e.scrollTop = 0; })"); time.sleep(0.4)   # 카드 찾느라 굴린 팔레트를 제자리로 — 뒤 단계는 좌표로 누른다
         it = json.loads(item(n0)) if ok else {}
         return (ok and it.get("block") == "passage" and abs(it.get("x", 0) - 30) < 3 and abs(it.get("y", 0) - 100) < 3, f"{it}")
     step("C2 팔레트 카드를 끌어 페이지 위 자리에 놓기", c2)
@@ -425,15 +439,19 @@ try:
     TXT = js("page.items.findIndex(it => it.atom && it.atom.t === 'text')"); RECT = js("page.items.findIndex(it => it.atom && it.atom.t === 'rect')")
     def j1():
         js("select([])"); time.sleep(0.3); rows = js("document.querySelectorAll('#side .layers .li').length")
+        js("(document.querySelector('#side .layers .li:nth-child(1)') || {scrollIntoView: () => {}}).scrollIntoView({block: 'center'})"); time.sleep(0.4)
         r = rect("#side .layers .li:nth-child(1)");
         if not r: return (False, f"레이어 줄 없음 rows={rows}")
         click(r[0] + r[2] / 2, r[1] + r[3] / 2); ok = wait("sel != null", 3)
         return (ok, f"rows={rows} sel={js('sel')}")
     step("J1 레이어 줄 클릭 → 선택", j1)
     def j2():
-        i = js("sel"); eye = rect("#side .layers .li:nth-child(1) [data-eye]")
+        i = js("sel")
+        js("(document.querySelector('#side .layers .li:nth-child(1)') || {scrollIntoView: () => {}}).scrollIntoView({block: 'center'})"); time.sleep(0.4)
+        eye = rect("#side .layers .li:nth-child(1) [data-eye]")
         if not eye: return (False, "눈 아이콘 없음")
         click(eye[0] + eye[2] / 2, eye[1] + eye[3] / 2); hid = wait(f"page.items[{i}].hide === true", 3); gone = wait(f"!gOf({i})", 4)
+        js("(document.querySelector('#side .layers .li:nth-child(1)') || {scrollIntoView: () => {}}).scrollIntoView({block: 'center'})"); time.sleep(0.4)
         eye = rect("#side .layers .li:nth-child(1) [data-eye]"); click(eye[0] + eye[2] / 2, eye[1] + eye[3] / 2); back = wait(f"!page.items[{i}].hide && !!gOf({i})", 4)
         return (hid and gone and back, f"hide={hid} gone={gone} back={back}")
     step("J2 레이어 눈 → 숨김 → 다시 보임", j2)
@@ -938,9 +956,29 @@ try:
         return (ok, f"1쪽(오른쪽) 좌{a[1]}/우{a[2]} · 2쪽(왼쪽) 좌{b[1]}/우{b[2]}")
     step("R3 여백 — 안쪽(제본쪽)이 면마다 좌우로 바뀐다", r3)
 
+    def r4():
+        """책에서 — 이 면을 원고마다 한 장 찍을지 화면에서 고를 수 있고, 저장되고, 레일에 표가 뜬다"""
+        js("select([]); side();"); time.sleep(0.8)
+        if not js("!!document.querySelector('#s-rep')"): return (False, "「원고마다」 칸 없음")
+        js("(() => { const r = document.querySelector('#s-rep'); r.value = 'each_set'; r.dispatchEvent(new Event('change')); })()")
+        wait("(planPg(page.id) || {}).repeat === 'each_set'", 10); time.sleep(1.2)
+        on = js("[(planPg(page.id) || {}).repeat, document.querySelectorAll('.pg .rep').length]")
+        saved = js("""(async () => { const j = await api('/api/units/library', null, 'GET');
+            const pl = (j.plans || []).find(x => x.id === plan.id) || {};
+            for (const sc of pl.sections || []) for (const pg of sc.pages || []) if (pg.page === page.id) return pg.repeat;
+            return 'none'; })()""")
+        js("(() => { const r = document.querySelector('#s-rep'); r.value = 'once'; r.dispatchEvent(new Event('change')); })()")
+        wait("(planPg(page.id) || {}).repeat === 'once'", 10); time.sleep(1.0)
+        off = js("[(planPg(page.id) || {}).repeat, document.querySelectorAll('.pg .rep').length]")
+        ok = on[0] == "each_set" and on[1] >= 1 and saved == "each_set" and off[0] == "once" and off[1] == 0
+        return (ok, f"켬 {on} · 서버 {saved} · 끔 {off}")
+    step("R4 책에서 — 「원고마다 한 장」을 화면에서 켜고 끈다", r4)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)
+    if MADE_SEED:
+        js("(async () => { await api('/api/units/blocks', {id: 'passage'}, 'DELETE'); await api('/api/units/parts', {id: 'audit_passage'}, 'DELETE'); })()"); time.sleep(1.5)
 finally:
     proc.terminate()
     ok = sum(1 for r in R if r[1]); print(f"\n== {ok}/{len(R)} PASS ==")

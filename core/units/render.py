@@ -1285,10 +1285,20 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     return wrap(guides + "".join(frags) + "".join(chrome), W, H, bg, extra)
 
 
-def is_fixed(ctx, it):
-    """머리말·쪽번호·간지(system 블록)는 자리가 고정 — 밀리지도, 다음 면으로 넘어가지도 않는다."""
+def is_fixed(ctx, it, page=None, H=None):
+    """머리말·쪽번호·간지(system 블록)는 자리가 고정 — 밀리지도, 다음 면으로 넘어가지도 않는다.
+
+    아래 여백 **밖**(꼬리말 자리)에 그려 둔 것도 고정이다 — 인디자인 마스터 페이지의 꼬리말과 같다.
+    본문이 길어져도 쪽번호·꼬리말이 다음 면으로 떠밀려 가면 안 된다.
+    """
     blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
-    return blk is not None and blk.get("source") == "system"
+    if blk is not None and blk.get("source") == "system":
+        return True
+    if page is not None and H:
+        bm = float((page.get("margins") or {}).get("bottom") or 20)
+        if float(it.get("y") or 0) >= float(H) - bm - 0.01:
+            return True
+    return False
 
 
 def can_grow(it, part):
@@ -1328,7 +1338,7 @@ def place_items(ctx, page, W, H, mirror=False):
             continue
         sc = float(it.get("s") or 1)                                   # 균일 배율 — 자리 계산은 배율 곱한 크기로
         placed.append({"fi": fi, "it": it, "frag": frag, "w": w * sc, "h": h * sc, "h0": float(part.get("h") or h) * sc, "s": sc,
-                       "fixed": is_fixed(ctx, it), "grow": can_grow(it, part)})
+                       "fixed": is_fixed(ctx, it, page, H), "grow": can_grow(it, part)})
     grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"])
              for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
     for p in placed:
