@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""카탈로그(catalog/_units)를 통째로 스냅숏해 둔다 — git 머지·체크아웃 사고에서 되살리려고.
+
+`bin/studio` 가 뜰 때마다 한 번 돌고, 손으로도 돌릴 수 있다:
+    bin/catalog-backup            스냅숏 하나 뜨기 (내용이 그대로면 안 뜬다)
+    bin/catalog-backup list       있는 스냅숏 보기
+    bin/catalog-backup restore    가장 최근 스냅숏으로 되돌리기 (지금 파일은 .before 로 남긴다)
+
+둘 곳: ~/.local/share/yone-catalog-backups/<날짜시각>/ · 최근 30개만 남긴다.
+"""
+import json, os, shutil, sys, time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(ROOT, "catalog", "_units")
+DST = os.path.expanduser("~/.local/share/yone-catalog-backups")
+KEEP = 30
+
+
+def snaps():
+    if not os.path.isdir(DST):
+        return []
+    return sorted(d for d in os.listdir(DST) if d[:1].isdigit())
+
+
+def counts(d):
+    out = {}
+    for f in sorted(os.listdir(d)):
+        if f.endswith(".json"):
+            try:
+                with open(os.path.join(d, f), encoding="utf-8") as fp:
+                    out[f[:-5]] = len(json.load(fp))
+            except Exception:
+                out[f[:-5]] = "?"
+    return out
+
+
+def same(a, b):
+    """두 폴더의 json 이 글자까지 같은가."""
+    fa = sorted(f for f in os.listdir(a) if f.endswith(".json"))
+    fb = sorted(f for f in os.listdir(b) if f.endswith(".json"))
+    if fa != fb:
+        return False
+    for f in fa:
+        if open(os.path.join(a, f), "rb").read() != open(os.path.join(b, f), "rb").read():
+            return False
+    return True
+
+
+def take():
+    if not os.path.isdir(SRC):
+        return None
+    os.makedirs(DST, exist_ok=True)
+    last = snaps()[-1] if snaps() else None
+    if last and same(SRC, os.path.join(DST, last)):
+        return None                                        # 바뀐 게 없으면 안 뜬다
+    name = time.strftime("%Y%m%d-%H%M%S")
+    shutil.copytree(SRC, os.path.join(DST, name))
+    for old in snaps()[:-KEEP]:
+        shutil.rmtree(os.path.join(DST, old), ignore_errors=True)
+    return name
+
+
+def main(argv):
+    cmd = argv[1] if len(argv) > 1 else "take"
+    if cmd == "list":
+        for s in snaps():
+            c = counts(os.path.join(DST, s))
+            print(s, " ".join(f"{k} {v}" for k, v in c.items()))
+        return 0
+    if cmd == "restore":
+        if not snaps():
+            print("스냅숏이 없다")
+            return 1
+        s = argv[2] if len(argv) > 2 else snaps()[-1]
+        src = os.path.join(DST, s)
+        if not os.path.isdir(src):
+            print("그런 스냅숏이 없다:", s)
+            return 1
+        bak = SRC + ".before"
+        shutil.rmtree(bak, ignore_errors=True)
+        shutil.copytree(SRC, bak)
+        for f in os.listdir(src):
+            if f.endswith(".json"):
+                shutil.copy(os.path.join(src, f), os.path.join(SRC, f))
+        print("되살림", s, counts(src), "· 직전 것은", bak)
+        return 0
+    name = take()
+    print("스냅숏", name, counts(SRC)) if name else print("바뀐 게 없어 안 떴다")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
