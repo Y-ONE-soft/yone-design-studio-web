@@ -1440,6 +1440,7 @@ const SLOTS = [
   ["answer", "정답"], ["no", "번호"], ["sentence", "문장 한 줄"], ["sentences", "문장 여럿(보기)"],
   ["kr", "한글 해석"], ["title", "제목"], ["label", "라벨"], ["answers", "정답 묶음"],
 ];
+const NUMS = ["1", "01", "(1)", "\u2460", "\uac00", "A", "a"];     // 번호 매기기 형식 (인디자인 번호 매기기)
 const ARROWS = [["none", "없음"], ["arrow", "채운 촉"], ["open", "열린 촉"], ["circle", "원"], ["square", "네모"], ["bar", "막대"]];
 
 const card = (thumb, nm, ds, drag) => { const d = document.createElement("div"); d.className = "card"; d.title = nm;
@@ -1734,6 +1735,10 @@ function side() {
           </select>
           ${a.bind && !SLOTS.some(([v]) => v === a.bind) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px">` : ""}
         </span></div>
+        <div class="f"><span title="인디자인 글머리 기호 및 번호 매기기 — 원고가 번호를 안 줘도 저절로 1,2,3… 매긴다. 면마다 다시 1부터">번호 매기기</span><span style="display:flex;gap:4px">
+          <select data-a="num"><option value="">없음</option>${NUMS.map(v => `<option value="${v}" ${a.num === v ? "selected" : ""}>${v}</option>`).join("")}</select>
+          ${a.num ? `<input type="number" data-a="num_start" min="1" step="1" value="${a.num_start || 1}" style="width:56px" title="시작 번호">` : ""}</span></div>
+        ${a.num ? `<div class="note">번호는 저절로 매겨진다 — 원고가 번호를 주면 그 번호를 쓰고, 그다음부터 이어 센다</div>` : ""}
         <div class="f"><span title="인디자인 단락 스타일 — 옷(브랜드)에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span title="인디자인 글꼴">글꼴</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
@@ -1886,6 +1891,8 @@ function side() {
     else if (k === "radius4") { const r = String(v).split(/[,\s]+/).filter(Boolean).map(Number); if (r.length === 4 && r.every(x => x >= 0)) a.radius = r.every(x => x === r[0]) ? r[0] : r; else if (!v) { if (Array.isArray(a.radius)) delete a.radius; } }
     else if (k.startsWith("img.")) { const kk = k.slice(4); if (i.value === "") { delete a.img; } else { a.img = a.img || {x: 0, y: 0, w: a.w, h: a.h}; a.img[kk] = v; } }
     else if (["tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "inset", "gutter", "leading"].includes(k)) { if (v) a[k] = v; else delete a[k]; }
+    else if (k === "num") { if (v) a.num = v; else { delete a.num; delete a.num_start; } }
+    else if (k === "num_start") { const n = Math.round(+v || 1); if (n > 1) a.num_start = n; else delete a.num_start; }
     else if (k === "columns") { if (v > 1) a.columns = Math.round(v); else delete a.columns; }
     else if (k === "valign") { if (v === "top") delete a.valign; else a.valign = v; }
     else a[k] = v;

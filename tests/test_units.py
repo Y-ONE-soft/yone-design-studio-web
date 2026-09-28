@@ -995,3 +995,36 @@ def test_page_item_coords_normalized_on_save(tmp_path, monkeypatch):
     assert (got[1]["x"], got[1]["y"]) == (10, 50) and (got[1]["atom"]["x1"], got[1]["atom"]["y1"]) == (0, 0)
     assert (got[1]["atom"]["x2"], got[1]["atom"]["y2"]) == (50, 0)
     assert (got[2]["x"], got[2]["y"]) == (30, 40)                  # 이미 규칙대로면 안 건드린다
+
+
+def test_auto_numbering(lib):
+    """번호 매기기 — 원고가 번호를 안 줘도 자리 순서대로 1,2,3… 매긴다(인디자인 번호 매기기)."""
+    from core.units import render, store
+    assert [render.num_text(n, "01") for n in (1, 9, 10)] == ["01", "09", "10"]
+    assert render.num_text(3, "(1)") == "(3)" and render.num_text(3, "\u2460") == "\u2462"
+    assert render.num_text(2, "\uac00") == "\ub098" and render.num_text(27, "A") == "AA"
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    row = {"id": "num_row", "name": "번호 줄", "w": 120, "h": 6, "atoms": [
+        {"t": "text", "x": 0, "y": 0, "w": 8, "h": 5, "font": "$num", "size": 9, "color": "$ink",
+         "bind": "no", "num": "01"},
+        {"t": "text", "x": 10, "y": 0, "w": 100, "h": 5, "font": "$body", "size": 9, "color": "$ink",
+         "bind": "sentence", "text": "견본"}]}
+    blk = {"id": "num_blk", "name": "번호 줄", "source": "content",
+           "fields": {"no": {"type": "number"}, "sentence": {"type": "rich"}},
+           "variants": [{"id": "v1", "name": "기본", "part": "num_row"}]}
+    lib2 = dict(lib, parts=lib["parts"] + [row], blocks=lib["blocks"] + [blk])
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
+    pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
+          "items": [{"block": "num_blk", "x": 20, "y": 20 + 10 * i, "w": 120} for i in range(3)]}
+    st = {"kind": "passage", "id": "9", "blocks": [
+        {"block": "num_blk", "fields": {"sentence": "가"}},
+        {"block": "num_blk", "fields": {"sentence": "나"}},
+        {"block": "num_blk", "fields": {"sentence": "다"}}]}
+    svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
+    assert ">01<" in svg and ">02<" in svg and ">03<" in svg      # 원고에 번호가 없어도 매겨진다
+    st2 = dict(st, blocks=[{"block": "num_blk", "fields": {"no": 7, "sentence": "가"}},
+                           {"block": "num_blk", "fields": {"sentence": "나"}},
+                           {"block": "num_blk", "fields": {"sentence": "다"}}])
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
+    svg2 = render.page_canvas_svgs(ctx2, pg, render.DEFAULT_SPEC, sample_set=st2)[0]["svg"]
+    assert ">07<" in svg2 and ">08<" in svg2 and ">09<" in svg2   # 원고가 준 번호가 이기고, 그다음부터 이어 센다
