@@ -230,10 +230,30 @@ def from_pdf(path, pno=1):
     atoms = [a for a in shapes + imgs + texts if _clip(a, W, H)]
     tokens = tk.finish(atoms, tag=f"_p{pno}")
     dec = {"from": f"pdf:{os.path.basename(path)}#{pno}", "w": round(W, 2), "h": round(H, 2), "atoms": atoms, "tokens": tokens}
+    dec["margins"] = content_margins(atoms, W, H)                 # 이 면에서 실제로 잰 여백 — 안내선이 맞게
     keep = {a["src"] for a in atoms if a.get("t") == "image" and a.get("src")}
     dec["imgmap"] = {k: v for k, v in imgmap.items() if k in keep and v}   # 남은 그림만 — 부르는 쪽이 꺼내 옷에 넣는다
     dec["parts"] = group(dec)
     return dec
+
+
+def content_margins(atoms, W, H):
+    """이 면의 것들이 실제로 차지한 자리 → 여백(mm). 전면 바탕(면의 60% 넘는 것)은 빼고 잰다."""
+    bs = []
+    for a in atoms:
+        if a.get("t") == "line":
+            x0, x1 = sorted((a.get("x1", 0), a.get("x2", 0)))
+            y0, y1 = sorted((a.get("y1", 0), a.get("y2", 0)))
+        else:
+            x0, y0 = a.get("x", 0), a.get("y", 0)
+            x1, y1 = x0 + (a.get("w") or 0), y0 + (a.get("h") or 0)
+        if (x1 - x0) * (y1 - y0) > W * H * 0.6:
+            continue
+        bs.append((x0, y0, x1, y1))
+    if not bs:
+        return None
+    return {"left": round(max(0, min(b[0] for b in bs)), 1), "top": round(max(0, min(b[1] for b in bs)), 1),
+            "right": round(max(0, W - max(b[2] for b in bs)), 1), "bottom": round(max(0, H - max(b[3] for b in bs)), 1)}
 
 
 def save_images(path, imgmap, outdir, prefix=""):
