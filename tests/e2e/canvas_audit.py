@@ -885,6 +885,27 @@ try:
                 f"모양 {vs0}→{js(f'(LIB.blocks.find(b => b.id === \'{bid}\').variants || []).length')} · 유형 그대로={same_n} · 옷에 저장={inskin} · 오른쪽 모양 칸={hasui}")
     step("Q2 같은 유형의 새 모양 — 블록은 안 늘고 옷이 고른다", q2)
 
+    # ───────── R. 번호 매기기 ─────────
+    def r1():
+        """번호 매기기 — 원고가 번호를 안 줘도 놓은 순서대로 매겨진다(인디자인 번호 매기기)"""
+        n0 = js("page.items.length")
+        for k in range(2):
+            js(f"addAtom('text', {{x: 20, y: {230 + 8 * k}}})"); time.sleep(0.9)
+            js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.6)
+            miss = setf("bindsel", "no")
+            if miss: return (False, f"없는 칸 {miss}")
+            time.sleep(0.6)
+            miss = setf("num", "01")
+            if miss: return (False, f"없는 칸 {miss}")
+            time.sleep(1.2)
+        js("select([])"); time.sleep(1.5)
+        svg = js("document.querySelector('#svgwrap svg').innerHTML")
+        got = ">01<" in svg and ">02<" in svg
+        at = js(f"JSON.stringify(page.items[{n0}].atom)")
+        js(f"(() => {{ page.items.length = {n0}; select([]); save(); render(); }})()"); time.sleep(1.0)
+        return (got, f"01·02 매겨짐={got} · 원자 {at[:80]}")
+    step("R1 번호 매기기 — 자리 순서대로 01 · 02", r1)
+
     print("JS 오류:", errs())
     # 정리 — 감사 문서 지우기
     js("(async () => { for (const p of docPages()) { await api('/api/units/pages', {id: p.id}, 'DELETE'); } await api('/api/units/plans', {id: plan.id}, 'DELETE'); await api('/api/units/sets', {id: '77'}, 'DELETE'); })()"); time.sleep(2)

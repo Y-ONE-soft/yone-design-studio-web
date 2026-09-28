@@ -46,6 +46,7 @@ class Ctx(object):
         self.issues = []                                  # 검수 — [{level: error|warn|info, msg}]
         self._seen = set()
         self._n = 0
+        self.nums = {}          # 번호 매기기 — 목록 이름 → 마지막 번호 (인디자인 「글머리 기호 및 번호 매기기」)
         self.board = 0.0        # 캔버스 대지(pasteboard) mm — 지면 둘레의 회색 자리. 지면 밖 요소도 여기 보인다
         self.layers = {}        # 지면 레이어 {id: {hide, lock, nonprint}} — 숨김·비인쇄를 한꺼번에
         self._item_y = 0.0      # 그리는 중인 요소의 면 안 세로 자리 (기준선 격자용)
@@ -202,6 +203,46 @@ def fmt(v, ftype, ctx=None):
         s = "✓" if v else ""
         return s, s
     return rich_html(v, ctx), rich_plain(v)
+
+
+_KR = "가나다라마바사아자차카타파하"
+
+
+def num_text(n, f):
+    """번호 하나 → 글자. f = 1 · 01 · (1) · ① · 가 · A · a"""
+    n = max(1, int(n))
+    if f == "01":
+        return f"{n:02d}"
+    if f == "(1)":
+        return f"({n})"
+    if f == "①":
+        return CIRC[n - 1] if n <= len(CIRC) else str(n)
+    if f == "가":
+        return _KR[(n - 1) % len(_KR)]
+    if f in ("A", "a"):
+        s = ""
+        k = n
+        while k > 0:
+            k, r = divmod(k - 1, 26)
+            s = chr((65 if f == "A" else 97) + r) + s
+        return s
+    return str(n)
+
+
+def next_num(ctx, a, v):
+    """이 글상자의 번호 — 원고가 준 번호가 있으면 그것, 없으면 앞 번호 다음. 목록은 num_list(없으면 자리 이름)로 나뉜다."""
+    key = str(a.get("num_list") or a.get("bind") or "_")
+    start = int(a.get("num_start") or 1)
+    n = None
+    if v not in (None, "", []):
+        try:
+            n = int(str(v).strip())
+        except ValueError:
+            n = None
+    if n is None:
+        n = ctx.nums.get(key, start - 1) + 1
+    ctx.nums[key] = n
+    return num_text(n, a.get("num") or "1")
 
 
 def insets(a):
@@ -651,8 +692,14 @@ def _wrap_atom(a, svg, cx, cy, ctx=None):
 
 
 def _text_content(ctx, a, values, types):
-    """글 원자의 (html, plain). bind → 값 → 없으면 sys → 없으면 견본 글 → 없으면 {bind} 회색."""
+    """글 원자의 (html, plain). bind → 값 → 없으면 sys → 없으면 견본 글 → 없으면 {bind} 회색.
+
+    번호 매기기(num)가 켜져 있으면 원고가 번호를 안 줘도 앞 번호 다음으로 저절로 매긴다.
+    """
     b = a.get("bind")
+    if a.get("num"):
+        t = next_num(ctx, a, values.get(b) if b else None)
+        return esc(t), t
     if not b:
         return rich_html(a.get("text", ""), ctx), rich_plain(a.get("text", ""))
     v = values.get(b)
@@ -1267,6 +1314,7 @@ def place_items(ctx, page, W, H, mirror=False):
     콘텐츠 블록 자리는 캔버스(_canvas)에서만 그린다(실제 콘텐츠는 세트가 끼운다).
     """
     canvas = bool(page.get("_canvas"))
+    ctx.nums = {}                        # 번호 매기기는 면마다 다시 1부터 (시작 번호는 원자의 num_start)
     placed = []
     for fi, it in enumerate(page.get("items") or []):
         if it.get("hide"):
@@ -1329,6 +1377,10 @@ def _item_frag(ctx, it, at=None):
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
         values = {k: "" for k in types} if it.get("_empty") else sample.fill(blk, it.get("fields"))   # 책에서 원고 없는 자리는 빈 채로
+        given = set((it.get("fields") or {}).keys())
+        for a2 in (part.get("atoms") or []):                           # 번호 매기기 자리는 견본 번호 대신 저절로 매긴다
+            if a2.get("num") and a2.get("bind") and a2["bind"] not in given:
+                values.pop(a2["bind"], None)
         origin(w)
         frag, h = part_svg(ctx, part, values, types, width=w)
         return frag, part, w, h
