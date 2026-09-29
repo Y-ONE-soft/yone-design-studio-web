@@ -47,9 +47,9 @@ def _lib_json(lib):
 @bp.route("/units")
 def canvas():
     """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
-    from core.units import workbook_src
+    from core.units import formats
     lib = store.library()
-    lib["workbook"] = workbook_src.catalog()          # 원고를 넣기 전에도 워크북 유형·자리를 고를 수 있게 — 틀 먼저, 원고는 나중
+    lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
     return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기")
 
 
@@ -75,9 +75,9 @@ def api_thumbs():
 
 @bp.route("/api/units/library")
 def api_library():
-    from core.units import workbook_src
+    from core.units import formats
     lib = store.library()
-    lib["workbook"] = workbook_src.catalog()          # 원고를 넣기 전에도 워크북 유형·자리를 고를 수 있게
+    lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게
     return jsonify(lib)
 
 
@@ -108,19 +108,21 @@ def api_check():
 
 @bp.route("/api/units/manuscript", methods=["POST"])
 def api_manuscript():
-    """원고 → 세트 (core/units/manuscript). 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
+    """원고 → 세트. 원고 형식(core/units/formats — 문서가 고른 form.format, 없으면 파일 이름으로 알아봄)이 있으면 그 형식으로,
+    아니면 기본 파서(core/units/manuscript): 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
+    from core.units import formats
     blocks = store.load("blocks")
     fs = [x for x in request.files.getlist("file") if x and x.filename]
     f = fs[0] if fs else None
+    names = [unicodedata.normalize("NFC", os.path.basename(x.filename)) for x in fs]
+    fid = (request.form.get("format") or "").strip() or (formats.detect(names) if fs else None)
+    if fid and fid not in formats.BY_ID:
+        return jsonify({"error": f"모르는 원고 형식 {fid}"}), 400
     try:
-        if len(fs) > 1:
-            # 워크북 원고 묶음(Step1 A1 …docx 여러 개) — 엔진이 파일 이름으로 스텝을 가르므로 원래 이름으로 둔다
-            from core.units import workbook_src
-            names = [unicodedata.normalize("NFC", os.path.basename(x.filename)) for x in fs]
-            if any(os.path.splitext(n)[1].lower() not in (".docx", ".hwpx") for n in names):
-                return jsonify({"error": "여러 파일은 docx·hwpx 만"}), 400
-            if not workbook_src.looks_like_workbook(names):
-                return jsonify({"error": "여러 파일은 워크북 원고(Step1 A1 … 처럼 스텝 이름)만"}), 400
+        if fs and fid:
+            # 원고 형식 — 형식이 파일 이름을 읽을 수 있게(스텝·회차) 원래 이름으로 둔다
+            if any(os.path.splitext(n)[1].lower() not in (".docx", ".hwpx", ".hwp") for n in names):
+                return jsonify({"error": "원고 형식은 docx·hwpx 만"}), 400
             d = os.path.join(_updir(), uuid.uuid4().hex[:12])
             os.makedirs(d)
             paths = []
@@ -128,7 +130,9 @@ def api_manuscript():
                 p = os.path.join(d, n)
                 x.save(p)
                 paths.append(p)
-            sets, log = workbook_src.from_files(paths)
+            sets, log = formats.parse(fid, paths)
+        elif len(fs) > 1:
+            return jsonify({"error": "여러 파일은 원고 형식(워크북·모의고사 …)을 알아볼 수 있을 때만 — 문서의 「원고 형식」을 고르거나 파일 이름을 확인"}), 400
         elif f:
             ext = os.path.splitext(f.filename)[1].lower()
             if ext not in (".docx", ".hwpx", ".txt", ".md", ".json"):

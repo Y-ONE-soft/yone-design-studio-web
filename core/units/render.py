@@ -718,8 +718,8 @@ _SLOT_NAMES = {"passage": "지문 본문", "pnum": "지문 번호", "prompt": "�
 
 
 def _slot_label(b):
-    from core.units.workbook_src import LABELS
-    return LABELS.get(b) or _SLOT_NAMES.get(b) or b
+    from core.units.formats import labels_all
+    return labels_all().get(b) or _SLOT_NAMES.get(b) or b
 
 
 def _bounds(a):
@@ -1082,9 +1082,9 @@ def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
         blk = (ctx.blocks.get(it.get("block")) if ctx else None) or {}
         return [f for f in (blk.get("fields") or {}) if not f.startswith("sys.")]
 
-    # 요소(블록)를 자리 이름으로 채우는 것은 **역할 원고**(워크북 원고 — 세트의 블록이 단락 역할, labels 가 붙어 온다)일 때만.
+    # 요소(블록)를 자리 이름으로 채우는 것은 **역할 원고**(원고 형식이 읽은 원고 — 세트의 블록이 단락 역할, labels 가 붙어 온다)일 때만.
     # 라이브러리 블록 원고는 유형 이름으로만 짝짓는다 — 자리 이름이 같아도 다른 유형(어법 O/X ↔ 본문 O/X)으로 새지 않게
-    role_set = bool(sample_set.get("labels"))                   # 역할 원고 표시 — core/units/workbook_src 가 붙인다
+    role_set = bool(sample_set.get("labels"))                   # 자리 이름 원고 — 원고 형식(core/units/formats)이 labels 를 붙인다
     entries = []
     for it in [x for x in pg.get("items") or [] if _atom_slot(x)] + pending:
         keys = slot_keys(it)
@@ -1109,14 +1109,27 @@ def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
             count[k] = count.get(k, 0) + 1
     used, taken = set(), {}
 
+    set_fmt = sample_set.get("fmt") or {}
+
+    def styled(v, f, it):
+        """자리마다 서식(인디자인 단락 스타일 ↔ 원고 역할) — 글상자의 slot_fmt 가 원고 형식의 기본(fmt)보다 우선."""
+        fmt = dict(set_fmt.get(f) or {})
+        fmt.update(((it.get("atom") or {}).get("slot_fmt") or {}).get(f) or {})
+        fmt = {k: x for k, x in fmt.items() if x not in (None, "", False)}
+        if not fmt or v in (None, ""):
+            return v
+        return [dict(fmt, t=x) if isinstance(x, str) else dict(fmt, **x) for x in (v if isinstance(v, list) else [v])]
+
     def with_no(v, bf):
         no = bf.get("no")
         return v if no in (None, "") else [f"{no} "] + (v if isinstance(v, list) else [v])
 
-    def flow(pairs, number):
-        """(블록 번호, 값) 목록 → 한 스토리. number 면 번호를 글 앞에."""
+    def flow(pairs, number, it=None, fields=None):
+        """(블록 번호, 값) 목록 → 한 스토리. number 면 번호를 글 앞에. fields 를 주면 값마다 그 자리의 서식."""
         joined = None
-        for bi, v in pairs:
+        for k, (bi, v) in enumerate(pairs):
+            if fields is not None:
+                v = styled(v, fields[k], it)
             v = with_no(v, blocks[bi].get("fields") or {}) if number else v
             joined = v if joined is None else _join_paras(joined, v)
             used.add((bi, blocks[bi].get("block")))
@@ -1131,11 +1144,11 @@ def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
             taken[f] = k + 1
             if "+" in f:                                         # 자리 여럿 — 원고에 나온 순서대로 섞는다
                 want = [x for x in f.split("+") if x]
-                pairs = [(bi, (b.get("fields") or {})[w]) for bi, b in enumerate(blocks) for w in want
-                         if (b.get("fields") or {}).get(w) not in (None, "")]
-                out[f] = flow(pairs, number) if pairs else ""
+                hits = [(bi, (b.get("fields") or {})[w], w) for bi, b in enumerate(blocks) for w in want
+                        if (b.get("fields") or {}).get(w) not in (None, "")]
+                out[f] = flow([(bi, v) for bi, v, _ in hits], number, it, [w for *_, w in hits]) if hits else ""
             elif f != "no" and count[f] == 1 and len(vals.get(f) or []) > 1:
-                out[f] = flow([(bi, v) for (bi, _), v in zip(src[f], vals[f])], number)   # 자리 하나 — 전부 흘려 넣는다
+                out[f] = flow([(bi, v) for (bi, _), v in zip(src[f], vals[f])], number, it, [f] * len(vals[f]))   # 자리 하나 — 전부 흘려 넣는다
                 taken[f] = len(vals[f])
                 if "no" in keys:
                     out["no"] = ""
@@ -1143,7 +1156,7 @@ def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
             elif f == "no" and "no" in out:
                 continue
             elif k < len(vals.get(f) or []):
-                out[f] = vals[f][k]
+                out[f] = styled(vals[f][k], f, it)
                 used.add(src[f][k])
             elif ctx and not canvas:
                 out[f] = ""

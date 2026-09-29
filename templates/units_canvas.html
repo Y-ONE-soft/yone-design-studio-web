@@ -1550,10 +1550,13 @@ const SLOTS = [
   ["kr", "한글 해석"], ["title", "제목"], ["label", "라벨"], ["answers", "정답 묶음"],
   ["sys.page_no", "쪽 번호 (책이 채움)"], ["sys.title", "책 제목 (책이 채움)"],
 ];
-// 고를 수 있는 원고 자리 = 기본 자리 + 지금 들어온 원고가 가진 자리(워크북 원고면 O/X 문항·본문 박스 … 원고의 단락 역할)
+// 고를 수 있는 원고 자리 = 기본 자리 + 문서의 원고 형식이 밝힌 자리 + 지금 들어온 원고가 가진 자리(원고의 단락 역할)
+// 문서의 원고 형식 — 고른 것 하나, 안 골랐으면 모두 (core/units/formats 등록부가 밝힌 것)
+function slotFmt(a, f) { const own = (a.slot_fmt || {})[f] || {}; let base = {}; for (const fm of docFormats()) if ((fm.fmt || {})[f]) { base = fm.fmt[f]; break; } return Object.assign({}, base, own); }
+function docFormats() { const all = LIB.formats || []; const f = plan && plan.format; return f ? all.filter(x => x.id === f) : all; }
 function allSlots() {
   const seen = new Set(SLOTS.map(([v]) => v)), out = [];
-  for (const [f, n] of Object.entries((LIB.workbook || {}).labels || {})) if (!seen.has(f)) { seen.add(f); out.push([f, n]); }   // 워크북 자리 — 원고 없이도
+  for (const fm of docFormats()) for (const [f, n] of Object.entries(fm.fields || {})) if (!seen.has(f)) { seen.add(f); out.push([f, n]); }   // 원고 형식의 자리 — 원고 없이도
   for (const st of LIB.sets || []) for (const b of st.blocks || []) for (const f of Object.keys(b.fields || {}))
     if (!seen.has(f)) { seen.add(f); out.push([f, (st.labels || {})[f] || f]); }
   return SLOTS.concat(out);
@@ -1765,7 +1768,7 @@ function panelSets(hd, body) {
       d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); };
       d.querySelector(".x").onclick = async (e) => { e.stopPropagation(); await api("/api/units/sets", {id: s2.id}, "DELETE"); LIB.sets = LIB.sets.filter(x => x.id !== s2.id); if (curSet === s2.id) curSet = ""; pageSvg = {}; render(); drawRail(); panel(); };
       body.appendChild(d); }
-    body.insertAdjacentHTML("afterbegin", `<div class="row" style="margin-bottom:10px"><button class="btn sm" id="set-paste">📄 원고 붙여넣기</button><label class="btn sm sub" title="워크북 원고는 스텝 파일(Step1 A1 … docx) 여러 개를 한 번에 고른다">📎 파일<input type="file" id="set-file" multiple accept=".docx,.hwpx,.txt,.md,.json" style="display:none"></label><button class="btn sm sub" id="set-new">＋ 자리별 입력</button></div><div id="setform"></div>
+    body.insertAdjacentHTML("afterbegin", `<div class="row" style="margin-bottom:10px"><button class="btn sm" id="set-paste">📄 원고 붙여넣기</button><label class="btn sm sub" title="원고 형식(워크북 스텝 파일 여러 개 · 모의고사 회차 원고 …)은 파일을 한 번에 여러 개 고를 수 있다">📎 파일<input type="file" id="set-file" multiple accept=".docx,.hwpx,.txt,.md,.json" style="display:none"></label><button class="btn sm sub" id="set-new">＋ 자리별 입력</button></div><div id="setform"></div>
 `);
     const gotSets = (j) => { if (j.error) { $("#st").textContent = j.error + ((j.log || []).length ? " · " + j.log[0] : ""); return; }
       for (const st of j.sets) LIB.sets = LIB.sets.filter(x => x.id !== st.id).concat([st]); curSet = j.sets[0].id; pageSvg = {}; render(); drawRail(); panel();
@@ -1776,7 +1779,7 @@ function panelSets(hd, body) {
         <div class="row"><button class="btn sm" id="ms-go">읽어서 원고 만들기</button></div>`;
       $("#ms-go").onclick = async () => gotSets(await api("/api/units/manuscript?save=1", {text: $("#ms-text").value}));
     };
-    $("#set-file").onchange = async () => { const fl = [...$("#set-file").files]; if (!fl.length) return; const fd = new FormData(); for (const f of fl) fd.append("file", f); say(fl.length > 1 ? `원고 ${fl.length}개 읽는 중…` : "원고 읽는 중…");
+    $("#set-file").onchange = async () => { const fl = [...$("#set-file").files]; if (!fl.length) return; const fd = new FormData(); for (const f of fl) fd.append("file", f); if (plan && plan.format) fd.append("format", plan.format); say(fl.length > 1 ? `원고 ${fl.length}개 읽는 중…` : "원고 읽는 중…");
       const r = await fetch("/api/units/manuscript?save=1", {method: "POST", body: fd}); gotSets(await r.json()); $("#set-file").value = ""; };
     $("#set-new").onclick = () => {
       const slots = (page ? page.items : []).filter(it => it.block && (byId("blocks")[it.block] || {}).source === "content");
@@ -1854,6 +1857,7 @@ function side() {
           ${a.bind && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px">` : ""}
         </span></div>
         ${a.bind && !a.bind.startsWith("sys.") ? `<div class="f"><span title="한 글상자에 원고 자리를 여럿 — 원고에 나온 순서대로 섞여 흐른다(발문 다음 선지, 문장 다음 해석). 인디자인의 한 스토리 여러 단락 스타일">자리 더하기</span><select data-a="bindadd"><option value="">＋ 같이 흘릴 자리…</option>${allSlots().filter(([v]) => !v.startsWith("sys.") && !a.bind.split("+").includes(v)).map(([v, n2]) => `<option value="${v}">${esc(n2)}</option>`).join("")}</select></div>` : ""}
+        ${a.bind && !a.bind.startsWith("sys.") ? a.bind.split("+").map(f => { const d = slotFmt(a, f); return `<div class="f"><span title="자리마다 서식 — 한 흐름 안에서 이 자리 단락만 (인디자인 단락 스타일)">${esc((Object.fromEntries(allSlots()))[f] || f)}</span><span style="display:flex;gap:8px"><label><input type="checkbox" data-a="slotfmt.${f}.b" ${d.b ? "checked" : ""}> 굵게</label><label><input type="checkbox" data-a="slotfmt.${f}.i" ${d.i ? "checked" : ""}> 기울임</label></span></div>`; }).join("") : ""}
         ${a.bind ? `<div class="note">이 상자 = 원고의 <b>${esc(a.bind.split("+").map(b => (Object.fromEntries(allSlots()))[b] || b).join(" + "))}</b> — ${a.bind.includes("+") ? "원고에 나온 순서대로 섞여 흐른다" : "같은 자리 상자가 여럿이면 위에서부터 1번째·2번째 … 값, 하나뿐이면 전부 흘러 들어간다"}</div>`
                  : `<div class="note">원고와 상관없이 늘 같은 글이면 <b>고정 글</b> 그대로 둔다</div>`}
         <div class="f"><span title="인디자인 글머리 기호 및 번호 매기기 — 원고가 번호를 안 줘도 저절로 1,2,3… 매긴다. 면마다 다시 1부터">번호 매기기</span><span style="display:flex;gap:4px">
@@ -1926,7 +1930,7 @@ function side() {
       ${layersHtml()}`;
   } else {
     $("#stitle").textContent = `페이지 ${idx() + 1} / ${docPages().length}`;
-    const pe = planPg(page.id), kinds = [...new Set([...((LIB.workbook || {}).kinds || []), ...(LIB.sets || []).map(s2 => s2.kind)])], curK = ((pe || {}).sets || []).join(",");
+    const pe = planPg(page.id), kinds = [...new Set([...docFormats().flatMap(fm => fm.kinds || []), ...(LIB.sets || []).filter(s2 => !plan.format || !s2.format || s2.format === plan.format).map(s2 => s2.kind)])], curK = ((pe || {}).sets || []).join(",");
     const eachPgs = ((plan.sections || []).flatMap(sc => sc.pages || [])).filter(x => x.repeat === "each_set");
     const eachN = eachPgs.length, nSet = (LIB.sets || []).length;
     const nOf = (q) => (LIB.sets || []).filter(s => !(q.sets || []).length || q.sets.includes(s.kind)).length;   // 그 면이 받는 원고 수(받는 원고 유형만)
@@ -1956,6 +1960,7 @@ function side() {
       <div class="row"><button class="btn sm sub" id="s-lay-new">＋ 레이어</button></div>
       <h3>문서</h3>
       <div class="f"><span>페이지 마주보기</span><input id="s-facing" type="checkbox" ${facing() ? "checked" : ""} title="인디자인 「파일 > 문서 설정 > 페이지 마주보기」 — 켜면 2·3쪽이 한 장(펼침면)이 되고 1쪽은 오른쪽에 선다. 문서마다 저장된다" style="width:auto"></div>
+      <div class="f"><span title="원고를 어떤 형식으로 읽나 — 원고 자리·받는 원고 목록이 이 형식 것으로 바뀐다. 안 고르면 파일 이름으로 알아본다">원고 형식</span><select id="s-format"><option value="">자동 (파일 이름으로)</option>${(LIB.formats || []).map(fm => `<option value="${esc(fm.id)}" ${plan.format === fm.id ? "selected" : ""}>${esc(fm.name)}</option>`).join("")}</select></div>
       <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
@@ -2024,6 +2029,7 @@ function side() {
     else if (k === "h_scale" || k === "v_scale") { if (v && +v !== 100) a[k] = +v; else delete a[k]; }
     else if (k === "auto_size") { if (v) delete a.auto_size; else a.auto_size = false; }
     else if (k === "fill" && !v) delete a.fill;
+    else if (k.startsWith("slotfmt.")) { const [, f, prop] = k.split("."); a.slot_fmt = a.slot_fmt || {}; a.slot_fmt[f] = Object.assign({}, a.slot_fmt[f], {[prop]: !!v}); }
     else if (k === "bindadd") { if (v && a.bind) a.bind = a.bind + "+" + v; }
     else if (k === "bindsel") { if (v === "__other") { a.bind = a.bind || ""; } else if (v) a.bind = v; else delete a.bind;
       if (a.bind && a.text === DEFAULT_TEXT) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 자리 이름이 회색으로 보인다
@@ -2077,6 +2083,7 @@ function side() {
   on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
   on("#s-skin", "change", (e) => { $("#skin").value = e.target.value; $("#skin").onchange(); });
+  on("#s-format", "change", async (e) => { if (e.target.value) plan.format = e.target.value; else delete plan.format; await savePlan(); side(); });
   on("#s-skin-edit", "click", () => openSheet("skins"));
   on("#s-set", "change", (e) => { curSet = e.target.value; pageSvg = {}; render(); drawRail(); });
   on("#s-set-edit", "click", () => openSheet("sets"));

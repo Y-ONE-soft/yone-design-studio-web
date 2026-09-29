@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""워크북 원고(역할 원고) → 캔버스 — 변환기(core/units/workbook_src) · 원고 자리 글상자 · 요소의 자리 이름 채우기 · 정답지."""
+"""워크북 원고(역할 원고) → 캔버스 — 원고 형식 등록부(core/units/formats) · 원고 자리 글상자 · 요소의 자리 이름 채우기 · 정답지."""
 import os
 
 import pytest
@@ -19,7 +19,7 @@ def lib(tmp_path, monkeypatch):
 
 def _sets():
     """워크북 v2 엔진이 읽은 스텝 모양 → 세트 (지문 20)."""
-    from core.units import workbook_src
+    from core.units.formats import workbook as workbook_src
     steps = [
         {"step": 1, "logo": "A2", "title": "본문 O/X", "key": "step1_a2", "groups": [{"label": "20", "units": [[
             {"role": "box_body", "text": "Learning games need to be fun enough."},
@@ -68,18 +68,50 @@ def test_workbook_sets_from_steps():
 
 
 def test_catalog_without_manuscript():
-    """원고를 넣기 전에도 틀을 그릴 수 있다 — 워크북 유형(받는 원고)·자리(원고 자리) 목록이 엔진 표에서 온다. 세트 kind 와 같은 이름."""
-    from core.units import workbook_src
-    c = workbook_src.catalog()
+    """원고를 넣기 전에도 틀을 그릴 수 있다 — 원고 형식마다 유형(받는 원고)·자리(원고 자리) 목록을 밝힌다. 세트 kind 와 같은 이름."""
+    from core.units import formats
+    cat = {c["id"]: c for c in formats.catalog()}
+    c = cat["workbook"]
     assert len(c["kinds"]) == 11 and c["kinds"][0] == "A1 어휘 선택 1" and "C2 영작 배열" in c["kinds"]
     assert {s["kind"] for s in _sets()} <= set(c["kinds"])
-    assert c["labels"]["ox_item"] == "O/X 문항" and "no" not in c["labels"]
+    assert c["fields"]["ox_item"] == "O/X 문항" and "no" not in c["fields"]
+    assert cat["mockexam"]["kinds"] == ["동형 모의고사"] and cat["mockexam"]["fields"]["m_choice"] == "선지"
 
 
-def test_looks_like_workbook():
-    from core.units import workbook_src
-    assert workbook_src.looks_like_workbook(["Step1 A1 어휘선택.docx", "Step2 B1 어법OX.docx"])
-    assert not workbook_src.looks_like_workbook(["원고.docx", "Step1 A1 어휘선택.docx"])
+def test_format_detect():
+    """파일 이름으로 원고 형식을 알아본다 — 캔버스·렌더러는 책 종류를 모른다."""
+    from core.units import formats
+    assert formats.detect(["Step1 A1 어휘선택.docx", "Step2 B1 어법OX.docx"]) == "workbook"
+    assert formats.detect(["한영고1 동형 모의고사 1회.hwpx"]) == "mockexam"
+    assert formats.detect(["원고.docx"]) is None
+
+
+def test_mockexam_paragraphs_to_set():
+    """모의고사 — 단락 역할을 자리 이름으로, 발문엔 차례 번호, 한 회 = 원고 하나(머리 정보는 optional)."""
+    from core.units.formats import mockexam
+    paras = [{"pstyle": "다음 글을 읽고", "text": "[1~2] 다음 글을 읽고 답하시오."}, {"pstyle": "지문", "text": "Passage one."},
+             {"pstyle": "문제 번호", "text": "윗글의 주제는?"}, {"pstyle": "선지", "text": "① a"}, {"pstyle": "문제 번호", "text": ""},
+             {"pstyle": "지문", "text": ""}, {"pstyle": "서술형 번호", "text": "[서답형1] 쓰시오."}]
+    s = mockexam.paragraphs_to_set(paras, "한영고", "1", 1)
+    assert s["id"] == "한영고1 1회" and s["blocks"][0]["optional"]
+    assert [b["block"] for b in s["blocks"][1:]] == ["m_group", "m_passage", "m_q", "m_choice", "m_q", "m_desc"]
+    assert s["blocks"][3]["fields"]["m_q"] == "1. 윗글의 주제는?" and s["blocks"][5]["fields"]["m_q"] == "2."
+
+
+def test_slot_fmt_in_story(lib):
+    """자리마다 서식 — 한 스토리에 흘릴 때 원고 형식의 기본(발문 굵게)에 글상자의 slot_fmt 가 덧씌운다."""
+    from core.units import render
+    st = dict(_sets()[0], fmt={"b2_q": {"b": True}})
+    pg = {"id": "t", "items": [_text("b2_q+ox_item", 40)]}
+    render._fill_items(pg, st, _ctx(lib))
+    v = pg["items"][0]["fields"]["b2_q+ox_item"]
+    heads = [x for x in v if isinstance(x, dict) and x.get("b")]
+    assert heads and heads[0]["t"].startswith("다음 글의") and not any(isinstance(x, dict) and x.get("b") and "Games" in x.get("t", "") for x in v)
+    pg = {"id": "t", "items": [_text("b2_q+ox_item", 40)]}
+    pg["items"][0]["atom"]["slot_fmt"] = {"ox_item": {"i": True}, "b2_q": {"b": False}}
+    render._fill_items(pg, st, _ctx(lib))
+    v = pg["items"][0]["fields"]["b2_q+ox_item"]
+    assert not any(isinstance(x, dict) and x.get("b") for x in v) and any(isinstance(x, dict) and x.get("i") for x in v)
 
 
 def test_atom_slots_fill_like_data_merge(lib):
@@ -133,7 +165,8 @@ def test_answers_page_once_collects_all(lib):
 
 def test_two_passages_per_page(lib):
     """「지문 2개씩 한 장」(per 2) — 지문 번호·본문 자리를 두 벌 그린 면에 지문 둘이 위·아래로. 유형별·지문별 둘 다."""
-    from core.units import render, store, workbook_src
+    from core.units import render, store
+    from core.units.formats import workbook as workbook_src
     mk = lambda no: {"step": 1, "logo": "A1", "title": "어휘 선택 1", "key": "step1_a1",
                      "groups": [{"label": str(no), "units": [[{"role": "vocab_sel", "text": f"passage {no}"}]]}]}
     sets = workbook_src.steps_to_sets([mk(20), mk(21), mk(22)])

@@ -1,10 +1,10 @@
-"""워크북 원고(스텝별 docx·hwpx 여러 개) → 캔버스 원고 세트.
+"""원고 형식 · 워크북 — 스텝별 docx·hwpx 여러 개 → 캔버스 원고 세트.
 
 원고를 읽는 일은 새로 짜지 않는다 — 통합웹 워크북 v2 엔진이 이미 읽는다(`engines/workbook_v2`):
     원고 파일들 → content.json → render_plan.json(wb-flows-v1) → 스텝·지문 묶음·역할(data_mod.from_plan)
 여기서는 그 결과를 **스텝 × 지문마다 세트 하나**로 옮긴다.
 
-    세트 = {kind: "A2 본문 O/X", id: "20·1A2", group: "20", labels: {자리: 이름}, blocks: [{block: 역할, fields}]}
+    세트 = {kind: "A2 본문 O/X", id: "20·1A2", group: "20", blocks: [{block: 역할, fields}]}   (format·labels 는 등록부가 붙인다)
 
 자리 이름은 역할 이름 그대로다(ox_item · box_body · q_prompt …) — 원고의 단락 역할 = 인디자인 단락 스타일.
 화면에는 labels 의 한글 이름으로 보인다. 글에 섞여 있는 정답(빈칸 1[fun], 발문 끝 ③)은 떼어 answer 자리로 옮긴다
@@ -157,11 +157,14 @@ def looks_like_workbook(names):
     return sum(1 for n in names if _RE_STEP_NAME.search(os.path.basename(n))) >= 2
 
 
-def catalog():
-    """원고 없이도 틀을 그릴 수 있게 — 워크북 유형 이름(받는 원고)과 자리 이름(원고 자리)을 엔진의 스텝 표에서.
-
-    세트의 kind 와 같은 이름이다(steps_to_sets 가 같은 logo·title 로 짓는다).
-    """
+def kinds():
+    """유형 이름(받는 원고) — 엔진의 스텝 표에서. 세트의 kind 와 같은 이름이다(steps_to_sets 가 같은 logo·title 로 짓는다)."""
     from core.render_vivlio.series.workbook.data import STEP_META
-    kinds = [f"{m['logo']} {m['title']}" for m in STEP_META.values() if m["step"] in (1, 2) and m.get("layout") != "attach"]
-    return {"kinds": kinds, "labels": {k: v for k, v in LABELS.items() if k not in ("no", "answer")}}
+    return [f"{m['logo']} {m['title']}" for m in STEP_META.values() if m["step"] in (1, 2) and m.get("layout") != "attach"]
+
+
+# ── 원고 형식 등록부(core/units/formats) 에 밝히는 것 ──
+ID, NAME = "workbook", "워크북 (Step1·2 원고 여러 개)"
+detect = looks_like_workbook
+parse = from_files
+FMT = {"b2_q": {"b": True}, "q_prompt": {"b": True}, "sum_topic": {"b": True}, "sum_title": {"b": True}}   # 흘려 넣을 때 발문·정리 머리는 굵게
