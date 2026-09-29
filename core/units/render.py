@@ -34,9 +34,16 @@ def _by_id(items):
 STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
 
 
+# 꾸밈없는 기본 견본 — 브랜드가 하나도 없어도 그린다(인디자인 기본 견본: 검정·종이·회색 · 기본 서체).
+# 새 디자인은 직접 색·서체로 그리고, 다 만든 뒤 「브랜드로 등록」하면 브랜드가 생긴다. 브랜드에 없는 견본도 여기서 찾는다.
+DEFAULT_SKIN = {"id": "", "name": "기본", "tokens": {
+    "color": {"ink": "#231f20", "white": "#ffffff", "rule": "#b8b8b8", "gray": "#e6e6e6"},
+    "font": {"body": "Noto Sans CJK KR"}}}
+
+
 class Ctx(object):
     def __init__(self, skin, lib, sys=None):
-        self.skin = skin or {"id": "", "tokens": {}}
+        self.skin = skin or DEFAULT_SKIN
         self.parts = _by_id(lib.get("parts"))
         self.blocks = _by_id(lib.get("blocks"))
         self.pages = _by_id(lib.get("pages"))                 # 넘치면 이어 갈 면(page.cont) 찾기 — 인디자인의 다른 마스터 프레임으로 잇기
@@ -76,6 +83,8 @@ class Ctx(object):
         if not (isinstance(ref, str) and ref.startswith("$")):
             return ref                                    # 직접 값 — 분해 직후엔 허용
         v = ((self.skin.get("tokens") or {}).get(kind) or {}).get(ref[1:])
+        if v is None:
+            v = DEFAULT_SKIN["tokens"].get(kind, {}).get(ref[1:])          # 기본 견본(잉크·흰색·회색·기본 서체)
         if v is None:
             self.warn(f"토큰 없음 {ref} ({kind}) — 옷 {self.skin.get('id') or '(없음)'}")
             return "#ff00ff" if kind == "color" else "sans-serif"

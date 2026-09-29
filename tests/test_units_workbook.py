@@ -204,6 +204,26 @@ def test_bind_schema_allows_joined_slots():
     assert store.validate("pages", page)
 
 
+def test_raw_colors_and_fonts_without_brand(lib):
+    """빈 상태에서 그린다 — 색·서체를 직접 값(#rrggbb · 서체 이름)으로 저장하고, 브랜드가 없어도 기본 견본으로 그린다."""
+    from core.units import render, store
+    atom = {"t": "text", "x": 0, "y": 0, "w": 60, "h": 8, "size": 12, "font": "Montserrat", "color": "#77a1c4", "text": "STEP"}
+    page = {"id": "page_1", "name": "t", "spec": "a4", "zones": [], "items": [{"atom": atom, "x": 10, "y": 10},
+            {"atom": {"t": "rect", "x": 0, "y": 0, "w": 20, "h": 5, "fill": "#cba56f"}, "x": 10, "y": 30}]}
+    assert store.validate("pages", page) is None
+    page["items"][0]["atom"]["color"] = "$Bad"
+    assert store.validate("pages", page)                                   # 견본 이름 규칙은 그대로
+    page["items"][0]["atom"]["color"] = "#77a1c4"
+    lib2 = dict(lib, skins=[])
+    ctx = render.Ctx(None, lib2, {})                                       # 브랜드 없음 — 기본 견본
+    svg = render.page_canvas_svgs(ctx, page, render.DEFAULT_SPEC)[0]["svg"]
+    assert "#77a1c4" in svg and "Montserrat" in svg and "#cba56f" in svg and "#ff00ff" not in svg
+    ctx = render.Ctx(None, lib2, {})
+    t = {"t": "text", "x": 0, "y": 0, "w": 60, "h": 8, "size": 9, "font": "$body", "color": "$ink", "text": "x"}
+    svg = render.page_canvas_svgs(ctx, dict(page, items=[{"atom": t, "x": 0, "y": 0}]), render.DEFAULT_SPEC)[0]["svg"]
+    assert "#231f20" in svg and "#ff00ff" not in svg and not ctx.warnings            # $ink · $body 는 기본 견본에서
+
+
 def _mock_set():
     from core.units.formats import mockexam
     paras = [{"pstyle": "문제 번호", "text": "윗글의 주제는?"}, {"pstyle": "지문", "text": "First paragraph. " * 20},

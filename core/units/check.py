@@ -12,7 +12,7 @@ from core.units import render, store
 
 def report(lib, plan, skin_id=None, sets=None):
     skins = store.by_id(lib.get("skins"))
-    skin = skins.get(skin_id) or (lib["skins"][0] if lib.get("skins") else {"id": "", "tokens": {}})
+    skin = skins.get(skin_id) or (lib["skins"][0] if lib.get("skins") else render.DEFAULT_SKIN)
     ctx = render.Ctx(skin, lib, {"title": plan.get("name", ""), "tag": ""})
     sets = list(sets if sets is not None else lib.get("sets") or [])
     pages = render.plan_svgs(ctx, plan, sets, lib)

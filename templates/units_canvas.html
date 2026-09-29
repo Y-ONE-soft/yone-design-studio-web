@@ -443,10 +443,10 @@ const DEFAULT_TEXT = "글상자 — 오른쪽에서 글·크기·색을";
 const ATOMS = [
   ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: DEFAULT_TEXT}],
   ["line", "선", {t: "line", x1: 0, y1: 0, x2: 80, y2: 0, stroke: {w: 0.5, color: "$rule"}}],
-  ["rect", "면", {t: "rect", x: 0, y: 0, w: 60, h: 20, fill: "$cream", radius: 1}],
-  ["ellipse", "원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$sel"}}],
+  ["rect", "면", {t: "rect", x: 0, y: 0, w: 60, h: 20, fill: "$gray", radius: 1}],
+  ["ellipse", "원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$ink"}}],
   ["image", "그림", {t: "image", x: 0, y: 0, w: 40, h: 30, src: "img1"}],
-  ["path", "도형", {t: "path", x: 0, y: 0, w: 12, h: 8, d: "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", fill: "$sel"}],
+  ["path", "도형", {t: "path", x: 0, y: 0, w: 12, h: 8, d: "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", fill: "$ink"}],
 ];
 const ATOM_NM = Object.fromEntries(ATOMS.map(a => [a[0], a[1]]));
 // 도형 견본 — 좌표는 0~1 비율. 인디자인 Polygon·펜 패스 대신 여기서 고르거나 d 를 직접 적는다
@@ -477,7 +477,9 @@ async function savePlan() { if (!plan) return; const j = await api("/api/units/p
 function usedElsewhere(pid) { return LIB.plans.some(pl => pl !== plan && planIds(pl).includes(pid)); }
 let tab = new URLSearchParams(location.search).get("tab") || "blocks";      // ?tab=atoms 로 바로 열기
 const specOf = (p) => byId("specs")[(p || page || {}).spec] || byId("specs").a4 || {w: 210, h: 297};
-const skin = () => byId("skins")[$("#skin").value] || LIB.skins[0];
+// 꾸밈없는 기본 견본 — 브랜드가 없어도 그린다 (render.DEFAULT_SKIN 과 같다). 새 디자인은 직접 색으로 그리고 다 만든 뒤 브랜드로 등록
+const DEFAULT_SKIN = {id: "", name: "기본 (브랜드 없음)", tokens: {color: {ink: "#231f20", white: "#ffffff", rule: "#b8b8b8", gray: "#e6e6e6"}, font: {body: "Noto Sans CJK KR"}}, styles: {}};
+const skin = () => byId("skins")[$("#skin").value] || LIB.skins[0] || DEFAULT_SKIN;
 let curIdx = 0;                                   // 지금 보는 칸의 번호 — 같은 지면이 두 번 들어와도 헷갈리지 않게
 const idx = () => { const dp = docPages(); return (page && dp[curIdx] && dp[curIdx].id === page.id) ? curIdx : dp.findIndex(x => page && x.id === page.id); };
 const unitOf = (it) => it.atom ? "atom" : (it.block ? "block" : "part");
@@ -1829,7 +1831,9 @@ async function makeByPrompt() {
 function side() {
   const box = $("#side"); if (!page) { box.innerHTML = ""; return; }
   let h = steps(); const sk = skin();
-  const colorSel = (k, cur, none) => `<select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries(sk.tokens.color || {}).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}</select>`;
+  // 색 — 견본(브랜드 + 기본) 또는 직접 고르기. 새 디자인은 직접 색으로 그리고, 다 만든 뒤 「브랜드로 등록」하면 견본이 된다
+  const colorSel = (k, cur, none) => { const toks = Object.assign({}, DEFAULT_SKIN.tokens.color, sk.tokens.color || {}); const raw = !!cur && !String(cur).startsWith("$");
+    return `<span style="display:flex;gap:4px;align-items:center"><select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries(toks).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}<option value="__raw" ${raw ? "selected" : ""}>직접 고르기…</option></select>${raw ? `<input type="color" data-a="${k}" value="${esc(cur)}" title="직접 색">` : ""}</span>`; };
   if (sel != null && page.items[sel]) {
     const it = page.items[sel]; const u = unitOf(it);
     $("#stitle").textContent = nameOf(it);
@@ -1870,7 +1874,7 @@ function side() {
         <h3>글자 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>
         <div class="f"><span title="인디자인 단락 스타일 — 옷(브랜드)에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
-        <div class="f"><span title="인디자인 글꼴">글꼴</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
+        <div class="f"><span title="인디자인 글꼴">글꼴</span><span style="display:flex;gap:4px"><select data-a="font">${Object.entries(Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {})).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}<option value="__raw" ${a.font && !a.font.startsWith("$") ? "selected" : ""}>직접 입력…</option></select>${a.font && !a.font.startsWith("$") ? `<input type="text" data-a="font" value="${esc(a.font)}" title="서체 이름 (예: Montserrat)" style="width:110px">` : ""}</span></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
@@ -1964,6 +1968,7 @@ function side() {
       <div class="f"><span>페이지 마주보기</span><input id="s-facing" type="checkbox" ${facing() ? "checked" : ""} title="인디자인 「파일 > 문서 설정 > 페이지 마주보기」 — 켜면 2·3쪽이 한 장(펼침면)이 되고 1쪽은 오른쪽에 선다. 문서마다 저장된다" style="width:auto"></div>
       <div class="f"><span title="원고를 어떤 형식으로 읽나 — 원고 자리·받는 원고 목록이 이 형식 것으로 바뀐다. 안 고르면 파일 이름으로 알아본다">원고 형식</span><select id="s-format"><option value="">자동 (파일 이름으로)</option>${(LIB.formats || []).map(fm => `<option value="${esc(fm.id)}" ${plan.format === fm.id ? "selected" : ""}>${esc(fm.name)}</option>`).join("")}</select></div>
       <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
+      <div class="f"><span></span><button class="btn sm sub" id="s-brandreg" title="이 문서에 직접 고른 색·서체를 모아 새 브랜드(견본)로 — 문서는 그 견본을 가리키게 바뀐다. 다른 브랜드로 갈아입힐 수 있게 된다">이 모양을 브랜드로 등록</button></div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
       <h3>책에서 <span class="note" style="display:inline">이 면을 몇 장 찍고, 어느 원고를 받을지</span></h3>
@@ -1976,6 +1981,7 @@ function side() {
   document.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { hist(); const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else if (k === "s") { const v = Math.max(10, +i.value) / 100; if (Math.abs(v - 1) < 0.002) delete it.s; else it.s = v; } else it[k] = +i.value; save(); render(); side(); });     // 위 컨트롤 바·오른쪽 패널 둘 다 같은 값을 보이게
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
+    if (v === "__raw") v = k === "font" ? "Noto Sans CJK KR" : "#231f20";          // 직접 고르기 — 옆에 색 고르기·서체 이름 칸이 뜬다
     if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
     else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"};
       const dflt = {cap: "butt", join: "miter", align: "center", start: "none", end: "none", tint: 100, miter: 4};
@@ -2085,6 +2091,7 @@ function side() {
   on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
   on("#s-skin", "change", (e) => { $("#skin").value = e.target.value; $("#skin").onchange(); });
+  on("#s-brandreg", "click", registerBrand);
   on("#s-format", "change", async (e) => { if (e.target.value) plan.format = e.target.value; else delete plan.format; await savePlan(); side(); });
   on("#s-skin-edit", "click", () => openSheet("skins"));
   on("#s-set", "change", (e) => { curSet = e.target.value; pageSvg = {}; render(); drawRail(); });
@@ -2167,6 +2174,37 @@ function save() {
   clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page);
     if (j.error) $("#st").textContent = "저장 실패: " + j.error; else if (Date.now() > stHold) $("#st").textContent = "저장됨"; }, 500);
 }
+// 브랜드로 등록 — 먼저 직접 색·서체로 그리고, 다 만든 뒤 여기서 견본으로 (인디자인: 문서에서 쓴 색을 견본에 추가)
+//  문서 면과 그 면이 쓰는 요소(부품)의 직접 값(#색 · 서체 이름)을 모아 c1… · f1… 견본으로, 값은 견본 참조로 바꾼다
+const RAW_COLOR_KEYS = [["color"], ["fill"], ["stroke", "color"], ["column_rule", "color"]];
+async function registerBrand() {
+  if (!plan) return;
+  const pages = docPages(), parts = new Set();
+  for (const p of pages) for (const it of p.items || []) { if (it.part) parts.add(it.part); if (it.block) { const b = byId("blocks")[it.block]; for (const v of (b && b.variants) || []) parts.add(v.part); } }
+  const atoms = [];
+  for (const p of pages) for (const it of p.items || []) if (it.atom) atoms.push(it.atom);
+  for (const pid of parts) for (const a of ((byId("parts")[pid] || {}).atoms || [])) atoms.push(a);
+  const cnt = {color: new Map(), font: new Map()};
+  const get = (a, path) => path.reduce((o, k) => o && o[k], a);
+  for (const a of atoms) { for (const path of RAW_COLOR_KEYS) { const v = get(a, path); if (typeof v === "string" && v.startsWith("#")) cnt.color.set(v.toLowerCase(), (cnt.color.get(v.toLowerCase()) || 0) + 1); }
+    if (typeof a.font === "string" && a.font && !a.font.startsWith("$")) cnt.font.set(a.font, (cnt.font.get(a.font) || 0) + 1); }
+  if (!cnt.color.size && !cnt.font.size) { say("직접 고른 색·서체가 없다 — 이미 견본만 쓴다"); return; }
+  const name = prompt("새 브랜드 이름", (plan.name || "새 문서") + " 브랜드"); if (name == null || !name.trim()) return;
+  const base = skin(), map = {color: {}, font: {}}, tokens = {color: Object.assign({}, DEFAULT_SKIN.tokens.color, (base.tokens || {}).color || {}), font: Object.assign({}, DEFAULT_SKIN.tokens.font, (base.tokens || {}).font || {})};
+  for (const [kind, pre] of [["color", "c"], ["font", "f"]]) { let n = 1;
+    for (const [v] of [...cnt[kind].entries()].sort((x, y) => y[1] - x[1])) { while (tokens[kind][pre + n]) n++; tokens[kind][pre + n] = v; map[kind][v] = "$" + pre + n; n++; } }
+  const swap = (a) => { for (const path of RAW_COLOR_KEYS) { const o = path.length === 1 ? a : a[path[0]]; const k = path[path.length - 1]; if (o && typeof o[k] === "string" && map.color[o[k].toLowerCase()]) o[k] = map.color[o[k].toLowerCase()]; }
+    if (a.font && map.font[a.font]) a.font = map.font[a.font]; };
+  atoms.forEach(swap);
+  let n = 1; while (byId("skins")["skin_" + n]) n++;
+  const sk2 = {id: "skin_" + n, name: name.trim(), tokens, styles: clone(base.styles || {}), variants: clone(base.variants || {})};
+  const j = await api("/api/units/skins", sk2); if (j.error) { say("브랜드 등록 실패: " + j.error); return; }
+  for (const p of pages) await api("/api/units/pages", p);
+  for (const pid of parts) if (byId("parts")[pid]) await api("/api/units/parts", byId("parts")[pid]);
+  LIB.skins.push(sk2); $("#skin").innerHTML = LIB.skins.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("#skin").value = sk2.id; await $("#skin").onchange();
+  pageSvg = {}; render(); drawRail(); thumbsLoad(); side();
+  say(`브랜드 「${sk2.name}」 등록 — 색 ${cnt.color.size} · 서체 ${cnt.font.size}, 이 문서는 이제 이 브랜드의 견본을 쓴다`, 9000);
+}
 function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { const j = await api("/api/units/skins", skin()); if (j.error) $("#st").textContent = "브랜드 저장 실패: " + j.error; thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
 async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); panel(); }
 $("#skin").onchange = async () => {
@@ -2175,7 +2213,7 @@ $("#skin").onchange = async () => {
 };
 
 // ── 시작 ──
-$("#skin").innerHTML = LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
+$("#skin").innerHTML = LIB.skins.length ? LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("") : `<option value="">${esc(DEFAULT_SKIN.name)}</option>`;
 thumbsLoad();
 (() => {
   applyWidths(); applyPanels();                                    // 접어 둔 패널·폭·넓게를 그대로 (localStorage)

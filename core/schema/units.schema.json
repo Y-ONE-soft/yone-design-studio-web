@@ -8,7 +8,7 @@
     "mm": {"type": "number"},
     "pt": {"type": "number", "minimum": 0},
     "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,39}$"},
-    "token": {"type": "string", "pattern": "^\\$[a-z][a-z0-9_]*$", "description": "토큰 참조. 옷의 tokens.color / tokens.font 에서 값을 찾는다"},
+    "token": {"type": "string", "pattern": "^(\\$[a-z][a-z0-9_]*|#[0-9a-fA-F]{6}|[A-Za-z0-9가-힣][^$]{0,79})$", "description": "토큰 참조($이름 — 옷의 tokens.color / tokens.font) 또는 직접 값(색 #rrggbb · 서체 이름). 직접 값으로 먼저 그리고, 다 만든 뒤 「브랜드로 등록」하면 토큰으로 바뀐다"},
     "bind": {"type": "string", "pattern": "^((sys\\.)?[a-z][a-z0-9_]*|[a-z][a-z0-9_]*(\\+[a-z][a-z0-9_]*)+)$", "description": "이 원자에 들어갈 필드 이름. sys.page_no · sys.section · sys.title 은 책이 채운다. a+b 는 자리 여럿 — 원고에 나온 순서대로 섞여 흐른다"},
 
     "box": {

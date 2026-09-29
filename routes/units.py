@@ -176,7 +176,7 @@ def api_delete(kind):
 
 def _ctx(lib, skin_id, sys=None, skin_item=None):
     skins = store.by_id(lib["skins"])
-    skin = skin_item if isinstance(skin_item, dict) and skin_item.get("tokens") else (skins.get(skin_id) or (lib["skins"][0] if lib["skins"] else {"id": "", "tokens": {}}))
+    skin = skin_item if isinstance(skin_item, dict) and skin_item.get("tokens") else (skins.get(skin_id) or (lib["skins"][0] if lib["skins"] else render.DEFAULT_SKIN))
     return render.Ctx(skin, lib, sys or {"title": "STEP BY STEP", "tag": "BUILD UP"})
 
 
