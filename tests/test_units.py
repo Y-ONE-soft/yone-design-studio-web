@@ -97,6 +97,32 @@ def test_load_failure_does_not_wipe(lib, tmp_path):
     assert len(store.load("pages")) == len(lib["pages"])
 
 
+def test_layout_check_catches_mess(lib):
+    """판 짜임새 검수 — 면 밖 · 자리 겹침 · 줄 간격 들쭉날쭉을 잡는다 (눈으로 보기 전에)."""
+    from core.units import check, render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": ""})
+    spec = store.by_id(lib["specs"])["a4"]
+    part = lib["parts"][0]["id"]
+    page = {"id": "messy", "name": "엉망", "spec": "a4", "items": [
+        {"part": part, "x": 20, "y": 40},
+        {"part": part, "x": 20, "y": 41},              # 겹침
+        {"part": part, "x": 20, "y": 120},
+        {"part": part, "x": 20, "y": 140},
+        {"part": part, "x": 20, "y": 175},             # 간격 20 · 35 — 들쭉날쭉
+        {"part": part, "x": 20, "y": 305},             # 면 밖으로
+    ]}
+    check.layout(ctx, page, spec)
+    msgs = " · ".join(i["msg"] for i in ctx.issues)
+    assert any(i["level"] == "error" and "면 밖" in i["msg"] for i in ctx.issues), msgs
+    assert any(i["level"] == "warn" and "겹친다" in i["msg"] for i in ctx.issues), msgs
+    assert any(i["level"] == "warn" and "들쭉날쭉" in i["msg"] for i in ctx.issues), msgs
+    ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {"title": "T", "tag": ""})
+    tidy = {"id": "tidy", "name": "가지런", "spec": "a4", "items": [
+        {"part": part, "x": 20, "y": 40 + 20 * k} for k in range(4)]}
+    check.layout(ctx2, tidy, spec)
+    assert not ctx2.issues, [i["msg"] for i in ctx2.issues]          # 가지런하면 조용하다
+
+
 def test_plan_order_by_set(lib):
     """묶는 순서 — 유형별(기본)은 면마다 원고를 몰아 찍고, 지문별은 원고마다 면 한 벌씩."""
     import copy

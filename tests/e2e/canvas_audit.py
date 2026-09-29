@@ -583,7 +583,8 @@ try:
         nm = js("(document.querySelector('#thint [data-shp]:nth-child(4)') || {}).textContent")
         click(*b); time.sleep(0.2)
         n0 = n_items(); pr = rect("#paper"); sc = js("scale")
-        drag(pr[0] + 40 * sc, pr[1] + 150 * sc, pr[0] + 70 * sc, pr[1] + 175 * sc, steps=8)
+        js("(() => { const a = document.querySelector('#area'); if (a) a.scrollTop = 0; })()"); time.sleep(0.3)
+        drag(pr[0] + 40 * sc, pr[1] + 210 * sc, pr[0] + 70 * sc, pr[1] + 235 * sc, steps=8)   # 빈 자리에서 — 다른 요소 위에서 끌면 그 요소가 잡힌다
         ok = wait(f"page.items.length === {n0 + 1}", 6)
         d = js("(() => { const it = page.items[page.items.length - 1]; return it && it.atom ? it.atom.d || '' : ''; })()")
         star = js("(() => { const it = page.items[page.items.length - 1]; return !!(it && it.atom && it.atom.t === 'path'); })()")
