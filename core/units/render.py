@@ -1048,10 +1048,11 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
         b = (ctx.blocks.get(bid) if ctx else None) or {}
         return str(b.get("kind") or b.get("name") or bid or "").strip().lower()
 
-    queue, by_kind = {}, {}
+    queue, by_kind, origin = {}, {}, {}
     for b in sample_set.get("blocks") or []:
         bid = b.get("block")
         fs = b.get("fields") or {}
+        origin[id(fs)] = bid                                     # 채운 원고가 원래 어느 블록 것인지 — 검수 셈은 원고 쪽으로
         queue.setdefault(bid, []).append(fs)
         by_kind.setdefault(kind_of(bid), []).append(fs)          # id 가 달라도 유형 이름이 같으면 붙는다
     total = {k: len(v) for k, v in queue.items()}
@@ -1086,7 +1087,8 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
                 it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
             else:
                 it["fields"] = q.pop(0) if len(q) > 1 else q[0]
-            filled[bid] = filled.get(bid, 0) + 1
+            src = origin.get(id(it["fields"]), bid)
+            filled[src] = filled.get(src, 0) + 1
             if ctx and not canvas:
                 for f, d in (blk.get("fields") or {}).items():
                     if (d or {}).get("required") and (it["fields"].get(f) in (None, "", [])):

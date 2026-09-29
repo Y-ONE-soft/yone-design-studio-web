@@ -1391,7 +1391,8 @@ const SEED_ITEMS = [   // [항목 key, 이름, 설명, 자리 조합] — 자리
 ];
 
 // 자리 조합이 같은가 — 이게 「이 요소가 그 원고를 받는다」의 기준
-const sameSlots = (a, b) => a.length && b.length && a.length === b.length && a.every(x => b.includes(x));
+//  a = 그린 요소의 자리, b = 원고 항목·블록의 자리. 정답(answer)만은 요소에 없어도 된다 — 정답은 학생 면에 안 찍고 정답지로 간다
+const sameSlots = (a, b) => a.length && b.length && a.every(x => b.includes(x)) && b.every(x => a.includes(x) || x === "answer");
 // 이 자리 조합을 쓰는 원고 항목 전부 (항목 key + 같은 모양의 기존 블록 id)
 function matchItems(binds) {
   const keys = itemList().filter(k => sameSlots(binds, k.fields)).map(k => k.key);
