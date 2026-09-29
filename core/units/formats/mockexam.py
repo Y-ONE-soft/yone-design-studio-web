@@ -15,7 +15,9 @@ LABELS = {
     "m_desc": "서술형 발문", "m_answer_line": "서술형 답란",
     "school": "학교", "exam_title": "시험 이름", "round_label": "회차",
 }
-FMT = {"m_group": {"b": True}, "m_q": {"b": True}, "m_desc": {"b": True}}          # 흘려 넣을 때 발문은 굵게
+# 흘려 넣을 때 역할마다 기본 모양 — 발문은 굵게·앞 간격, 지문은 테두리 상자, 선지는 들여쓰기 (글상자에서 바꿀 수 있다)
+FMT = {"m_group": {"b": True, "space": 3}, "m_q": {"b": True, "space": 3}, "m_desc": {"b": True, "space": 3},
+       "m_passage": {"box": True}, "m_box": {"box": True}, "m_choice": {"indent": 3}}
 
 _ROLE = {"다음 글을 읽고": "m_group", "문제 번호": "m_q", "선지": "m_choice", "서술형 번호": "m_desc", "서술형답지": "m_answer_line",
          "지문_순서": "m_box", "테두리_순서": "m_box", "테두리_순서삽입": "m_box"}

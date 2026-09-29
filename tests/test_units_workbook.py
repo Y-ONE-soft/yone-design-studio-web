@@ -202,3 +202,54 @@ def test_bind_schema_allows_joined_slots():
     assert store.validate("pages", page) is None
     page["items"][0]["atom"]["bind"] = "b2_q+"
     assert store.validate("pages", page)
+
+
+def _mock_set():
+    from core.units.formats import mockexam
+    paras = [{"pstyle": "문제 번호", "text": "윗글의 주제는?"}, {"pstyle": "지문", "text": "First paragraph. " * 20},
+             {"pstyle": "지문", "text": "Second paragraph. " * 20}, {"pstyle": "선지", "text": "① a"}, {"pstyle": "선지", "text": "② b"}] * 12
+    s = mockexam.paragraphs_to_set(paras, "한영고", "1", 1)
+    return dict(s, format="mockexam", labels=mockexam.LABELS, fmt=mockexam.FMT)
+
+
+def test_paragraph_shapes_in_story(lib):
+    """단락 모양(자리마다 서식) — 잇닿은 지문 단락은 테두리 상자 하나로, 선지는 들여쓰기. 그려지면 div 로."""
+    from core.units import render
+    pg = {"id": "t", "items": [_text("m_q+m_passage+m_choice", 40)]}
+    render._fill_items(pg, _mock_set(), _ctx(lib))
+    v = pg["items"][0]["fields"]["m_q+m_passage+m_choice"]
+    paras = [x for x in v if isinstance(x, dict) and "para" in x]
+    boxes = [x for x in paras if x["para"].get("box")]
+    assert len(boxes) == 12 and "Second paragraph" in render.rich_plain(boxes[0])            # 지문 두 단락이 상자 하나
+    assert any(x["para"].get("indent") == 3 for x in paras)
+    html = render.rich_html(v, _ctx(lib))
+    assert html.count("border:0.3px solid") == 12 and "padding-left:3.00px" in html
+
+
+def test_overflow_continues_on_other_page(lib):
+    """넘치면 이어 갈 면(page.cont) — 첫 면(제목 있음)에서 넘친 글이 둘째 면 모양의 같은 자리 글상자로. 상자 안에서 잘려도 모양 유지."""
+    from core.units import render
+    story = "m_q+m_passage+m_choice"
+    first = {"id": "f1", "name": "첫", "spec": "a4", "zones": [], "cont": "f2",
+             "items": [dict(_text(None, 20, 10), atom=dict(_text(None, 20, 10)["atom"], text="FIRST TITLE")), _text(story, 40, 230)]}
+    first["items"][0]["atom"].pop("bind", None)
+    nxt = {"id": "f2", "name": "둘", "spec": "a4", "zones": [], "items": [
+        {"atom": {"t": "text", "x": 0, "y": 0, "w": 170, "h": 8, "size": 9, "font": "$body", "color": "$ink", "text": "RUNNING HEAD"}, "x": 20, "y": 20},
+        _text(story, 35, 235)]}
+    lib2 = {k: list(v) for k, v in lib.items()}
+    lib2["pages"] = lib2["pages"] + [first, nxt]
+    plan = {"id": "p", "name": "p", "spec": "a4", "front": [], "back": [],
+            "sections": [{"id": "s", "name": "본문", "pages": [{"page": "f1", "repeat": "each_set"}]}]}
+    out = render.plan_svgs(_ctx(lib, lib2), plan, [_mock_set()], lib2)
+    assert len(out) >= 2
+    assert "FIRST TITLE" in out[0]["svg"] and "RUNNING HEAD" not in out[0]["svg"]
+    assert [("RUNNING HEAD" in o["svg"], "FIRST TITLE" in o["svg"]) for o in out[1:]] == [(True, False)] * (len(out) - 1), [o["label"] for o in out]
+    assert "윗글의 주제는" in out[-1]["svg"] or "② b" in out[-1]["svg"]
+    assert all("border:0.3px solid" in o["svg"] for o in out)                                # 나뉜 상자도 양쪽 모두 상자
+    # 이어 갈 면이 문서에 들어 있어도 「찍지 않음」이면 따로 안 찍힌다 · 면마다 자기 판형
+    first["spec"] = nxt["spec"] = "b4_exam"
+    plan["sections"][0]["pages"].append({"page": "f2", "repeat": "none"})
+    from core.units import store
+    assert store.validate("plans", plan) is None
+    out2 = render.plan_svgs(_ctx(lib, lib2), plan, [_mock_set()], lib2)
+    assert len(out2) < len(out) and 'viewBox="0 0 257' in out2[0]["svg"]                   # B4 라 면이 줄고, B4 로 찍힌다

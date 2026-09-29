@@ -39,6 +39,7 @@ class Ctx(object):
         self.skin = skin or {"id": "", "tokens": {}}
         self.parts = _by_id(lib.get("parts"))
         self.blocks = _by_id(lib.get("blocks"))
+        self.pages = _by_id(lib.get("pages"))                 # 넘치면 이어 갈 면(page.cont) 찾기 — 인디자인의 다른 마스터 프레임으로 잇기
         self.sys = dict(sys or {})
         self.warnings = []
         self.print = None                                 # 인쇄 모드 {"bleed": mm, "marks": bool} — 도련 늘림·재단선
@@ -143,8 +144,12 @@ def rich_html(v, ctx=None):
     if isinstance(v, str):
         return esc(v).replace("\n", "<br/>")
     if isinstance(v, list):
-        return "".join(rich_html(x, ctx) for x in v)
+        isp = lambda x: isinstance(x, dict) and "para" in x
+        return "".join(rich_html(x, ctx) for k, x in enumerate(v)
+                       if not (x == "\n" and ((k and isp(v[k - 1])) or (k + 1 < len(v) and isp(v[k + 1])))))
     if isinstance(v, dict):
+        if "para" in v:                                                    # 단락 묶음 — 테두리 상자·들여쓰기 (자리마다 서식)
+            return f'<div style="{para_css(v["para"], ctx)}">{rich_html(v.get("c"), ctx)}</div>'
         if v.get("anc"):
             return (anchored_html(v, ctx) if ctx else "") + esc(v.get("t", ""))
         t = esc(v.get("t", "")).replace("\n", "<br/>")
@@ -190,8 +195,25 @@ def rich_plain(v):
     if isinstance(v, list):
         return "".join(rich_plain(x) for x in v)
     if isinstance(v, dict):
+        if "para" in v:
+            return rich_plain(v.get("c"))
         return str(v.get("t", ""))
     return str(v)
+
+
+PARA_KEYS = ("box", "indent", "space")          # 단락 모양 — 자리마다 서식 중 단락에 입히는 것 (나머지 b·i·color·size·font 는 글 조각)
+
+
+def para_css(pf, ctx=None):
+    """단락 묶음 모양 → CSS. 글상자 안 px = mm (지면 좌표가 mm)."""
+    st = "display:block;"
+    if pf.get("box"):
+        st += f"border:0.3px solid {ctx.color('$ink', '#231f20') if ctx else '#231f20'};padding:1.2px 1.8px;margin:1px 0;"
+    if pf.get("indent"):
+        st += f"padding-left:{float(pf['indent']):.2f}px;"
+    if pf.get("space"):
+        st += f"margin-top:{float(pf['space']):.2f}px;"
+    return st
 
 
 def fmt(v, ftype, ctx=None):
@@ -1115,24 +1137,47 @@ def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
         """자리마다 서식(인디자인 단락 스타일 ↔ 원고 역할) — 글상자의 slot_fmt 가 원고 형식의 기본(fmt)보다 우선."""
         fmt = dict(set_fmt.get(f) or {})
         fmt.update(((it.get("atom") or {}).get("slot_fmt") or {}).get(f) or {})
-        fmt = {k: x for k, x in fmt.items() if x not in (None, "", False)}
+        fmt = {k: x for k, x in fmt.items() if x not in (None, "", False, 0) and k not in PARA_KEYS}
         if not fmt or v in (None, ""):
             return v
         return [dict(fmt, t=x) if isinstance(x, str) else dict(fmt, **x) for x in (v if isinstance(v, list) else [v])]
+
+    def para_of(f, it):
+        pf = {k: x for k, x in (set_fmt.get(f) or {}).items() if k in PARA_KEYS}
+        pf.update({k: x for k, x in ((((it or {}).get("atom") or {}).get("slot_fmt") or {}).get(f) or {}).items() if k in PARA_KEYS})
+        return {k: x for k, x in pf.items() if x not in (None, "", False, 0)}
 
     def with_no(v, bf):
         no = bf.get("no")
         return v if no in (None, "") else [f"{no} "] + (v if isinstance(v, list) else [v])
 
     def flow(pairs, number, it=None, fields=None):
-        """(블록 번호, 값) 목록 → 한 스토리. number 면 번호를 글 앞에. fields 를 주면 값마다 그 자리의 서식."""
-        joined = None
+        """(블록 번호, 값) 목록 → 한 스토리. number 면 번호를 글 앞에. fields 를 주면 값마다 그 자리의 서식,
+        단락 모양(상자·들여쓰기)이 있는 자리는 잇닿은 같은 자리 단락을 한 묶음으로 — 지문 여러 단락이 상자 하나에."""
+        joined, group, gf = None, None, None
+
+        def flush():
+            nonlocal joined, group
+            if group is not None:
+                piece = [{"para": para_of(gf, it), "c": group if isinstance(group, list) else [group]}]
+                joined = piece if joined is None else _join_paras(joined, piece)
+                group = None
         for k, (bi, v) in enumerate(pairs):
-            if fields is not None:
-                v = styled(v, fields[k], it)
+            f = fields[k] if fields is not None else None
+            if f is not None:
+                v = styled(v, f, it)
             v = with_no(v, blocks[bi].get("fields") or {}) if number else v
-            joined = v if joined is None else _join_paras(joined, v)
             used.add((bi, blocks[bi].get("block")))
+            if f is not None and para_of(f, it):
+                if group is not None and gf == f:
+                    group = _join_paras(group, v)
+                else:
+                    flush()
+                    group, gf = v, f
+                continue
+            flush()
+            joined = v if joined is None else _join_paras(joined, v)
+        flush()
         return joined
 
     for it, keys in sorted(entries, key=lambda e: (round(float(e[0].get("y") or 0), 1), float(e[0].get("x") or 0))):
@@ -1458,7 +1503,7 @@ def can_grow(it, part):
         return True
     a = it.get("atom")
     if a is not None:
-        return bool(a.get("bind"))
+        return bool(a.get("bind")) and not str(a["bind"]).startswith("sys.")      # 쪽 번호·책 제목(책이 채움)은 짧다 — 넘침 계산 중 자리 이름 길이로 자라 본문을 밀면 안 된다
     return any(x.get("bind") for x in (part.get("atoms") or []))
 
 
@@ -1634,7 +1679,7 @@ def plan_svgs(ctx, plan, sets, lib):
         if not pg:
             ctx.warn(f"지면 없음 {pid}")
             return
-        res = page_svgs(ctx, pg, ss, spec, pno, label)
+        res = page_svgs(ctx, pg, ss, specs.get(pg.get("spec")) or spec, pno, label)     # 면마다 자기 판형 (B4 시험지 면 · A4 표지 …)
         out.extend(res)
         pno += len(res)
 
@@ -1657,6 +1702,9 @@ def plan_svgs(ctx, plan, sets, lib):
         i = 0
         while i < len(pgs):
             pg = pgs[i]
+            if pg.get("repeat") == "none":                          # 찍지 않는 면 — 다른 면이 넘친 글을 이어 받는 모양(page.cont)으로만
+                i += 1
+                continue
             if pg.get("repeat") != "each_set":
                 ss = pg_sets(pg)
                 if ss and (pg.get("sets") or []) == ["answers"]:        # 정답지 한 번만 — 정답을 한 흐름으로 모아 넘치면 다음 면
