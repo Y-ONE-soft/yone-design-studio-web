@@ -26,6 +26,10 @@ BY_NAME = {
 def value(name, ftype):
     if name in BY_NAME:
         return BY_NAME[name]
+    from core.units.workbook_src import LABELS                      # 워크북 원고 자리 — 지어낸 글 대신 자리 이름 (원고를 붓기 전)
+    parts = name.split("+")
+    if all(p in LABELS for p in parts):
+        return "‹" + " + ".join(LABELS[p] for p in parts) + "›"
     return SAMPLE.get(ftype, "")
 
 

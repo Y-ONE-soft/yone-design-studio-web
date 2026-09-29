@@ -47,7 +47,9 @@ def _lib_json(lib):
 @bp.route("/units")
 def canvas():
     """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
+    from core.units import workbook_src
     lib = store.library()
+    lib["workbook"] = workbook_src.catalog()          # 원고를 넣기 전에도 워크북 유형·자리를 고를 수 있게 — 틀 먼저, 원고는 나중
     return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기")
 
 
@@ -73,7 +75,10 @@ def api_thumbs():
 
 @bp.route("/api/units/library")
 def api_library():
-    return jsonify(store.library())
+    from core.units import workbook_src
+    lib = store.library()
+    lib["workbook"] = workbook_src.catalog()          # 원고를 넣기 전에도 워크북 유형·자리를 고를 수 있게
+    return jsonify(lib)
 
 
 @bp.route("/api/units/<kind>", methods=["POST"])

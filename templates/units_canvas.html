@@ -439,8 +439,9 @@ const BOARD = 20;                 // 대지(pasteboard) mm — 지면 둘레. �
 // 블록에 group 이 없으면 블록 지도 갈래(B1~B11)로 기본 자리를 잡는다.
 const FAMG = {B1: "passage", B2: "passage", B3: "passage", B7: "passage", B6: "question", B5: "drill", B8: "drill", B10: "chrome", B11: "chrome"};
 const groupOf = (b) => b.group || (b.source === "system" ? "chrome" : (FAMG[b.family] || ""));
+const DEFAULT_TEXT = "글상자 — 오른쪽에서 글·크기·색을";
 const ATOMS = [
-  ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: "글상자 — 오른쪽에서 글·크기·색을"}],
+  ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: DEFAULT_TEXT}],
   ["line", "선", {t: "line", x1: 0, y1: 0, x2: 80, y2: 0, stroke: {w: 0.5, color: "$rule"}}],
   ["rect", "면", {t: "rect", x: 0, y: 0, w: 60, h: 20, fill: "$cream", radius: 1}],
   ["ellipse", "원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$sel"}}],
@@ -1228,7 +1229,7 @@ function addBlock(id, at) {
   const S = specOf();
   if (blk.source === "system") { const it = {block: id, x: M.left, y: 14}; if (id === "folio") it.y = S.h - 19; else if (/divider|cover/.test(id)) { it.x = 0; it.y = 0; }
     if (at) { it.x = snap(at.x); it.y = snap(at.y); } hist(); page.items.push(it); select([page.items.length - 1]); save(); render(); return; }
-  place({block: id}, at, true);
+  place({block: id}, at, !at);                                   // 끌어 놓으면 그린 크기 그대로(전면 띠·옆 탭이 단 폭으로 줄지 않게), 눌러 넣으면 단 폭에
 }
 function addPart(id, at) { if (byId("parts")[id] && page) place({part: id}, at, false); }
 let shapeD = null;                                           // 도형 도구로 그릴 모양 (없으면 ATOMS 기본 = 화살표)
@@ -1552,6 +1553,7 @@ const SLOTS = [
 // 고를 수 있는 원고 자리 = 기본 자리 + 지금 들어온 원고가 가진 자리(워크북 원고면 O/X 문항·본문 박스 … 원고의 단락 역할)
 function allSlots() {
   const seen = new Set(SLOTS.map(([v]) => v)), out = [];
+  for (const [f, n] of Object.entries((LIB.workbook || {}).labels || {})) if (!seen.has(f)) { seen.add(f); out.push([f, n]); }   // 워크북 자리 — 원고 없이도
   for (const st of LIB.sets || []) for (const b of st.blocks || []) for (const f of Object.keys(b.fields || {}))
     if (!seen.has(f)) { seen.add(f); out.push([f, (st.labels || {})[f] || f]); }
   return SLOTS.concat(out);
@@ -1923,7 +1925,7 @@ function side() {
       ${layersHtml()}`;
   } else {
     $("#stitle").textContent = `페이지 ${idx() + 1} / ${docPages().length}`;
-    const pe = planPg(page.id), kinds = [...new Set((LIB.sets || []).map(s2 => s2.kind))], curK = ((pe || {}).sets || []).join(",");
+    const pe = planPg(page.id), kinds = [...new Set([...((LIB.workbook || {}).kinds || []), ...(LIB.sets || []).map(s2 => s2.kind)])], curK = ((pe || {}).sets || []).join(",");
     const eachPgs = ((plan.sections || []).flatMap(sc => sc.pages || [])).filter(x => x.repeat === "each_set");
     const eachN = eachPgs.length, nSet = (LIB.sets || []).length;
     const nOf = (q) => (LIB.sets || []).filter(s => !(q.sets || []).length || q.sets.includes(s.kind)).length;   // 그 면이 받는 원고 수(받는 원고 유형만)
@@ -2022,7 +2024,8 @@ function side() {
     else if (k === "auto_size") { if (v) delete a.auto_size; else a.auto_size = false; }
     else if (k === "fill" && !v) delete a.fill;
     else if (k === "bindadd") { if (v && a.bind) a.bind = a.bind + "+" + v; }
-    else if (k === "bindsel") { if (v === "__other") { a.bind = a.bind || ""; } else if (v) a.bind = v; else delete a.bind; }
+    else if (k === "bindsel") { if (v === "__other") { a.bind = a.bind || ""; } else if (v) a.bind = v; else delete a.bind;
+      if (a.bind && a.text === DEFAULT_TEXT) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 자리 이름이 회색으로 보인다
     else if (k === "bind" && !v) delete a.bind;
     else if (k === "style") { if (v) a.style = v; else delete a.style; }
     else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }

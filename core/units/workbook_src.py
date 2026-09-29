@@ -146,3 +146,13 @@ _RE_STEP_NAME = re.compile(r"(?i)step\s*[12]\s*[A-C]\d")
 def looks_like_workbook(names):
     """파일 이름이 `Step1 A2 …` 꼴이 둘 이상이면 워크북 원고 묶음."""
     return sum(1 for n in names if _RE_STEP_NAME.search(os.path.basename(n))) >= 2
+
+
+def catalog():
+    """원고 없이도 틀을 그릴 수 있게 — 워크북 유형 이름(받는 원고)과 자리 이름(원고 자리)을 엔진의 스텝 표에서.
+
+    세트의 kind 와 같은 이름이다(steps_to_sets 가 같은 logo·title 로 짓는다).
+    """
+    from core.render_vivlio.series.workbook.data import STEP_META
+    kinds = [f"{m['logo']} {m['title']}" for m in STEP_META.values() if m["step"] in (1, 2) and m.get("layout") != "attach"]
+    return {"kinds": kinds, "labels": {k: v for k, v in LABELS.items() if k not in ("no", "answer")}}

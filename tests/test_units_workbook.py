@@ -62,6 +62,15 @@ def test_workbook_sets_from_steps():
     assert q == {"answer": "③", "q_prompt": "다음 글의 주제로 가장 적절한 것은?"}
 
 
+def test_catalog_without_manuscript():
+    """원고를 넣기 전에도 틀을 그릴 수 있다 — 워크북 유형(받는 원고)·자리(원고 자리) 목록이 엔진 표에서 온다. 세트 kind 와 같은 이름."""
+    from core.units import workbook_src
+    c = workbook_src.catalog()
+    assert len(c["kinds"]) == 11 and c["kinds"][0] == "A1 어휘 선택 1" and "C2 영작 배열" in c["kinds"]
+    assert {s["kind"] for s in _sets()} <= set(c["kinds"])
+    assert c["labels"]["ox_item"] == "O/X 문항" and "no" not in c["labels"]
+
+
 def test_looks_like_workbook():
     from core.units import workbook_src
     assert workbook_src.looks_like_workbook(["Step1 A1 어휘선택.docx", "Step2 B1 어법OX.docx"])

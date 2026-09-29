@@ -708,8 +708,18 @@ def _text_content(ctx, a, values, types):
     if v is None:
         if a.get("text"):
             return rich_html(a["text"], ctx), rich_plain(a["text"])
-        return f'<span style="color:#b0b0b0">{{{esc(b)}}}</span>', "{" + b + "}"
+        hint = " + ".join(_slot_label(x) for x in b.split("+"))        # 견본 글도 원고도 없으면 자리 이름을 회색으로
+        return f'<span style="color:#b0b0b0">‹{esc(hint)}›</span>', "‹" + hint + "›"
     return fmt(v, types.get(b, "text"), ctx)
+
+
+_SLOT_NAMES = {"passage": "지문 본문", "pnum": "지문 번호", "prompt": "발문", "choices": "선지", "answer": "정답", "no": "번호",
+               "sentence": "문장 한 줄", "sentences": "문장 여럿", "kr": "한글 해석", "title": "제목", "label": "라벨", "answers": "정답 묶음"}
+
+
+def _slot_label(b):
+    from core.units.workbook_src import LABELS
+    return LABELS.get(b) or _SLOT_NAMES.get(b) or b
 
 
 def _bounds(a):
