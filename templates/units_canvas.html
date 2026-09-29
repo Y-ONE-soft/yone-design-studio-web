@@ -460,7 +460,9 @@ function planIds(pl) { const ids = [...(pl.front || [])]; for (const sc of pl.se
 function docPages() { return plan ? planIds(plan).map(id => byId("pages")[id]).filter(Boolean) : []; }
 // 이 면에 보여 줄 원고 — 고른 원고가 이 면이 받는 유형이 아니면 같은 지문(group)의 그 유형 원고로 (A1 을 골라 두고 A2 면을 보면 A2 의 같은 지문)
 function setFor(p) {
-  const kinds = ((planPg(p.id) || {}).sets || []).filter(k => k !== "answers");
+  const all = (planPg(p.id) || {}).sets || [];
+  if (all.length === 1 && all[0] === "answers") return "answers";          // 정답지 면 — 모은 정답을 보인다
+  const kinds = all.filter(k => k !== "answers");
   const cur = (LIB.sets || []).find(s => s.id === curSet);
   if (!kinds.length || !cur || kinds.includes(cur.kind)) return curSet;
   const g = String(cur.group || cur.id);

@@ -209,7 +209,11 @@ def api_preview():
             spec = store.by_id(lib["specs"]).get(body.get("spec") or item.get("spec") or "a4") or render.DEFAULT_SPEC
             if body.get("mode") == "canvas":            # 자유 배치 요소를 견본(또는 고른 세트) 값으로
                 ss = store.get("sets", body["set"]) if body.get("set") else None
-                ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))     # 대지(지면 둘레)
+                if body.get("set") == "answers" and not ss:          # 정답지 면 — 모든 원고의 정답을 모은 한 흐름으로 보인다
+                    from core.units import answers as _answers
+                    rows = _answers.answer_sets(lib.get("sets") or [], lib.get("blocks") or [])
+                    ss = {"kind": "answers", "id": "answers", "blocks": [b for s in rows for b in s["blocks"]]} if rows else None
+                ctx.board =max(0.0, min(float(body.get("board") or 0), 200.0))     # 대지(지면 둘레)
                 ctx.map = body.get("map") or {}                                     # 문서의 원고 연결표
                 out.extend(render.page_canvas_svgs(ctx, item, spec, sample_set=ss))
             else:
