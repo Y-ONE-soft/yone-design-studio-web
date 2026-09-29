@@ -1740,7 +1740,9 @@ function panelSkins(hd, body) {
       d.onclick = () => { $("#skin").value = s2.id; $("#skin").onchange(); }; body.appendChild(d); }
     body.insertAdjacentHTML("beforeend", `<div class="row"><button class="btn sm sub" id="sk-dup">⧉ 이 브랜드 복제해 새 브랜드</button></div>
       <h3>색상 견본 — ${esc(sk.name)}</h3><div class="colors">${Object.entries((sk.tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
+      <div class="row"><button class="btn sm sub" id="sk-addcol" title="색상 견본 더하기 — 인디자인 견본 패널의 새 색상">＋ 색</button></div>
       <h3>글꼴</h3>${Object.entries((sk.tokens || {}).font || {}).map(([k, v]) => `<div class="f"><span>${k}</span><input type="text" data-font="${k}" value="${esc(v)}"></div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="sk-addfont" title="글꼴 자리 더하기 — 로고·숫자처럼 따로 쓸 서체">＋ 글꼴</button></div>
       <h3>단락 스타일 <span class="note" style="display:inline">글상자의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 자리도 맞춰진다</span></h3>
       ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
         <div class="m3"><label>서체<select data-st="${n}:font"><option value="">-</option>${Object.keys(sk.tokens.font || {}).map(f => `<option value="$${f}" ${st.font === "$" + f ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
@@ -1754,6 +1756,11 @@ function panelSkins(hd, body) {
     body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = i.dataset.st.split(":"); const st = sk.styles[n]; const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
       if (v === "" || v == null || v === false) delete st[k]; else st[k] = v; saveSkin(); pageSvg = {}; render(); });
     body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 지울까요? 이 스타일을 쓰는 글상자는 자기 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
+    // 색·글꼴 더하기 — 「이름 값」 한 줄로 (예: tab1 #e1eaf3 · logo Montserrat). 이름은 영문 소문자·숫자·_
+    const addTok = (kind, hint, ok) => { const v = prompt(hint, ""); if (!v) return; const m = v.trim().match(/^([a-z][a-z0-9_]*)\s+(.+)$/);
+      if (!m || !ok(m[2])) { say("「이름 값」 꼴로 — " + hint); return; } sk.tokens[kind] = sk.tokens[kind] || {}; sk.tokens[kind][m[1]] = m[2].trim(); saveSkin(); pageSvg = {}; render(); panel(); };
+    $("#sk-addcol").onclick = () => addTok("color", "새 색 — 이름과 색 (예: tab1 #e1eaf3)", v => /^#[0-9a-fA-F]{6}$/.test(v.trim()));
+    $("#sk-addfont").onclick = () => addTok("font", "새 글꼴 — 이름과 서체 (예: logo Montserrat)", v => !!v.trim());
     $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (영문 소문자·숫자·_ · 원고 docx 스타일 이름과 맞추려면 자리 이름과 같게)", ""); if (!n || !/^[a-z][a-z0-9_]*$/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
     $("#sk-dup").onclick = async () => { const name = prompt("새 브랜드 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
