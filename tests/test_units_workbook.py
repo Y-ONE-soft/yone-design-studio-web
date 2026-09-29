@@ -60,6 +60,11 @@ def test_workbook_sets_from_steps():
     assert "fun" not in c2["blank_vocab"] and c2["answer"] == "(1) fun"          # 학생 면에 정답이 안 찍힌다
     q = [b["fields"] for b in sets[3]["blocks"] if b["block"] == "q_prompt"][0]
     assert q == {"answer": "③", "q_prompt": "다음 글의 주제로 가장 적절한 것은?"}
+    head = [b for b in a2["blocks"] if b["block"] == "head"][0]              # 머리 띠가 유형마다 받는 정보 — 없어도 검수에 안 뜬다
+    assert head["optional"] and head["fields"]["code"] == "A2" and head["fields"]["type_title"] == "본문 O/X"
+    assert head["fields"]["step_tag"].startswith("STEP 01") and sets[1]["blocks"][1]["fields"]["step_tag"].startswith("STEP 02")
+    from core.units import store
+    assert all(store.validate("sets", s) is None for s in sets)
 
 
 def test_catalog_without_manuscript():
@@ -124,6 +129,37 @@ def test_answers_page_once_collects_all(lib):
             "sections": [{"id": "s", "name": "본문", "pages": [{"page": "ans", "repeat": "once", "sets": ["answers"]}]}]}
     out = render.plan_svgs(_ctx(lib, lib2), plan, _sets(), lib2)
     assert len(out) == 1 and "(1) fun" in out[0]["svg"] and "③" in out[0]["svg"]
+
+
+def test_two_passages_per_page(lib):
+    """「지문 2개씩 한 장」(per 2) — 지문 번호·본문 자리를 두 벌 그린 면에 지문 둘이 위·아래로. 유형별·지문별 둘 다."""
+    from core.units import render, store, workbook_src
+    mk = lambda no: {"step": 1, "logo": "A1", "title": "어휘 선택 1", "key": "step1_a1",
+                     "groups": [{"label": str(no), "units": [[{"role": "vocab_sel", "text": f"passage {no}"}]]}]}
+    sets = workbook_src.steps_to_sets([mk(20), mk(21), mk(22)])
+    lib2 = {k: list(v) for k, v in lib.items()}
+    lib2["pages"] = lib2["pages"] + [{"id": "a1", "name": "A1", "spec": "a4", "zones": [], "items": [
+        _text("pnum", 30, 6), _text("vocab_sel", 40, 90), _text("pnum", 150, 6), _text("vocab_sel", 160, 90)]}]
+    for order in (None, "by_set"):
+        plan = {"id": "p", "name": "p", "spec": "a4", "front": [], "back": [], "order": order,
+                "sections": [{"id": "s", "name": "본문", "pages": [{"page": "a1", "repeat": "each_set", "per": 2, "sets": ["A1 어휘 선택 1"]}]}]}
+        assert store.validate("plans", dict(plan, order="by_set")) is None
+        out = render.plan_svgs(_ctx(lib, lib2), plan, sets, lib2)
+        assert len(out) == 2, order                                               # 지문 셋 → 20·21 한 면, 22 한 면
+        assert "passage 20" in out[0]["svg"] and "passage 21" in out[0]["svg"] and "passage 22" in out[1]["svg"]
+
+
+def test_mirror_part_flips_inside():
+    """왼쪽 면(짝수 쪽) — 요소 안쪽 배치도 좌우로: 오른쪽 끝 옆 탭이 왼쪽 끝으로. 글자는 그대로."""
+    from core.units import render
+    part = {"id": "t", "w": 200, "h": 10, "atoms": [{"t": "rect", "x": 190, "y": 0, "w": 10, "h": 10},
+                                                   {"t": "line", "x1": 0, "y1": 0, "x2": 20, "y2": 0},
+                                                   {"t": "text", "x": 0, "y": 0, "w": 30, "h": 5, "text": "12"},
+                                                   {"t": "text", "x": 150, "y": 0, "w": 50, "h": 5, "text": "A2", "align": "right"}]}
+    m = render.mirror_part(part)
+    assert m["atoms"][0]["x"] == 0 and (m["atoms"][1]["x1"], m["atoms"][1]["x2"]) == (200, 180) and m["atoms"][2]["x"] == 170
+    assert m["atoms"][2]["text"] == "12" and part["atoms"][0]["x"] == 190                   # 원본은 안 바뀐다
+    assert "align" not in m["atoms"][2] and m["atoms"][3]["align"] == "left" and m["atoms"][3]["x"] == 0   # 정렬 준 글만 바깥쪽으로
 
 
 def test_bind_schema_allows_joined_slots():

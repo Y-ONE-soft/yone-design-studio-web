@@ -1218,8 +1218,11 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
         else:
             pending.append(it)                                  # 유형으로 못 짝지은 블록 — 아래에서 자리 이름으로 채워 본다
     _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid)
+    optional = {b.get("block") for b in sample_set.get("blocks") or [] if b.get("optional")}      # 받을 자리가 없어도 되는 원고(머리 정보)
     if ctx and not canvas:
         for bid, n in total.items():
+            if bid in optional:
+                continue
             k = filled.get(bid, 0)
             blk = ctx.blocks.get(bid) or {}
             if k == 0:
@@ -1421,6 +1424,12 @@ def is_fixed(ctx, it, page=None, H=None):
         bm = float((page.get("margins") or {}).get("bottom") or 20)
         if float(it.get("y") or 0) >= float(H) - bm - 0.01:
             return True
+        if blk is not None and blk.get("source") != "content":
+            # 원고를 안 받는 요소가 꼬리말 자리까지 내려오면(옆 탭 + 쪽 번호 묶음) 마스터 꼬리처럼 고정 — 흘림이 다음 면으로 떠밀지 않는다
+            v = variant_of(ctx, blk)
+            part = ctx.parts.get(v.get("part")) if v else None
+            if part and float(it.get("y") or 0) + float(part.get("h") or 0) * float(it.get("s") or 1) > float(H) - bm + 0.01:
+                return True
     return False
 
 
@@ -1497,6 +1506,8 @@ def _item_frag(ctx, it, at=None):
             ctx._at = None
     if it.get("atom"):
         part = atom_part(it["atom"])
+        if at and at[2]:
+            part = mirror_part(part)                                   # 낱개 글상자 — 자리는 _page_wrap 이, 정렬은 여기서 뒤집는다
         w = float(it.get("w") or part["w"])
         origin(w)
         values = it.get("fields") or {}                                # 원고 자리 글상자 — 세트가 끼운 값
@@ -1509,6 +1520,8 @@ def _item_frag(ctx, it, at=None):
         part = ctx.parts.get(v.get("part")) if v else None
         if not part:
             return None, None, 0, 0
+        if at and at[2]:
+            part = mirror_part(part)
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
         values = {k: "" for k in types} if it.get("_empty") else sample.fill(blk, it.get("fields"))   # 책에서 원고 없는 자리는 빈 채로
@@ -1522,10 +1535,29 @@ def _item_frag(ctx, it, at=None):
     part = ctx.parts.get(it.get("part"))
     if not part:
         return None, None, 0, 0
+    if at and at[2]:
+        part = mirror_part(part)
     w = float(it.get("w") or part.get("w") or 0)
     origin(w)
     frag, h = part_svg(ctx, part, {}, width=w)
     return frag, part, w, h
+
+
+def mirror_part(part):
+    """왼쪽 면(짝수 쪽) — 요소 안쪽 배치도 좌우로 뒤집는다(글자는 안 뒤집는다). 인디자인의 좌우 마스터처럼
+    오른쪽 면에 그린 요소의 「바깥쪽」(옆 탭·쪽 번호)이 왼쪽 면에선 왼쪽 바깥에 온다. 요소 상자 자리는 _page_wrap 이 뒤집는다."""
+    pw = float(part.get("w") or 0)
+    atoms = []
+    for a in part.get("atoms") or []:
+        a = dict(a)
+        if a.get("t") == "line":
+            a["x1"], a["x2"] = pw - float(a["x1"]), pw - float(a["x2"])
+        else:
+            a["x"] = pw - float(a.get("x") or 0) - float(a.get("w") or 0)
+        if a.get("align") in ("left", "right"):                          # 정렬을 준 글만 — 바깥쪽 정렬(인디자인 「책등 반대쪽 정렬」)
+            a["align"] = "left" if a["align"] == "right" else "right"
+        atoms.append(a)
+    return dict(part, atoms=atoms)
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
@@ -1552,6 +1584,23 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
             sets.append({"kind": kind, "id": z["id"], "blocks": blocks})
     ctx.sys.setdefault("section", "STEP 2")
     return page_svgs(ctx, pg, sets, spec, 1, pg.get("name", ""))
+
+
+def _per(pg):
+    """그 면에 원고 몇 개씩 — 「지문 2개씩 한 장」이면 2 (인디자인 데이터 병합의 여러 레코드)."""
+    try:
+        return max(1, int(pg.get("per") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _merge_sets(ss):
+    """원고 여럿 → 한 면에 넣을 한 원고. 자리 이름이 같은 값은 차례로 — 지문 번호 상자 둘이면 20 · 21."""
+    if len(ss) == 1:
+        return ss[0]
+    return {"kind": ss[0].get("kind"), "id": " · ".join(str(s.get("id", "")) for s in ss), "group": ss[0].get("group"),
+            "labels": ss[0].get("labels"),
+            "blocks": [b for k, s in enumerate(ss) for b in s.get("blocks") or [] if k == 0 or not b.get("optional")]}   # 머리 정보(optional)는 첫 원고 것만
 
 
 def plan_svgs(ctx, plan, sets, lib):
@@ -1602,24 +1651,33 @@ def plan_svgs(ctx, plan, sets, lib):
                 emit(pg["page"], ss, sec.get("name", ""))
                 i += 1
                 continue
-            if not by_set:                                          # 유형별 — 이 면을 원고 수만큼 몰아서
-                for s in pg_sets(pg):
-                    emit(pg["page"], [s], f"{sec.get('name', '')} · {s.get('id', '')}")
+            if not by_set:                                          # 유형별 — 이 면을 원고 수만큼 몰아서 (per 개씩 한 면)
+                ss = pg_sets(pg)
+                per = _per(pg)
+                for k in range(0, len(ss), per):
+                    m = _merge_sets(ss[k:k + per])
+                    emit(pg["page"], [m], f"{sec.get('name', '')} · {m.get('id', '')}")
                 i += 1
                 continue
             j = i                                                   # 지문별 — 잇닿은 「지문마다」 면들을 한 벌로 묶어 원고마다 한 벌씩
             while j < len(pgs) and pgs[j].get("repeat") == "each_set":
                 j += 1
             run = pgs[i:j]
-            order = {}                                              # 같은 지문(group)의 세트끼리 — 스텝마다 세트가 따로 와도 지문 20 의 A1·A2… 가 한 벌
+            groups = []                                             # 같은 지문(group)의 세트끼리 — 스텝마다 세트가 따로 와도 지문 20 의 A1·A2… 가 한 벌
             for s in sets or []:
-                order.setdefault(str(s.get("group") or s.get("id")), len(order))
-            for s in sorted(sets or [], key=lambda s: order[str(s.get("group") or s.get("id"))]):
+                g = str(s.get("group") or s.get("id"))
+                if g not in groups:
+                    groups.append(g)
+            n = max(_per(p2) for p2 in run)                          # 한 면에 지문 둘인 면이 있으면 지문 둘씩 한 벌
+            for gi in range(0, len(groups), n):
+                chunk = set(groups[gi:gi + n])
                 for p2 in run:
                     kinds = p2.get("sets")
-                    if kinds and s.get("kind") not in kinds:
-                        continue
-                    emit(p2["page"], [s], f"{sec.get('name', '')} · {s.get('id', '')}")
+                    ss = [s for s in sets or [] if str(s.get("group") or s.get("id")) in chunk and (not kinds or s.get("kind") in kinds)]
+                    per = _per(p2)
+                    for k in range(0, len(ss), per):
+                        m = _merge_sets(ss[k:k + per])
+                        emit(p2["page"], [m], f"{sec.get('name', '')} · {m.get('id', '')}")
             i = j
     ctx.sys["section"] = ""
     for pid in plan.get("back") or []:

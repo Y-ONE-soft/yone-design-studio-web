@@ -1867,6 +1867,7 @@ function side() {
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span title="인디자인 글꼴">글꼴</span><select data-a="font">${Object.entries(sk.tokens.font || {}).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}</select></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
+        <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
         <details class="more" ${view.adv ? "open" : ""}><summary>글자 더 보기 — 정렬 · 행간 · 자간 · 들여쓰기 · 단락 · 탭</summary>
         <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
@@ -1931,7 +1932,7 @@ function side() {
     const nOf = (q) => (LIB.sets || []).filter(s => !(q.sets || []).length || q.sets.includes(s.kind)).length;   // 그 면이 받는 원고 수(받는 원고 유형만)
     const nSheets = eachPgs.reduce((t, q) => t + nOf(q), 0), perPg = eachN ? Math.round(nSheets / eachN) : 0;
     const bookRow = !pe ? `<div class="note">앞붙이·뒤붙이 — 원고 없이 한 장</div>` : `
-      <div class="f"><span title="인디자인 데이터 병합의 「여러 레코드」 — 원고(지문)가 12개면 이 면을 12장 찍고 한 장에 한 지문씩 넣는다">원고마다</span><select id="s-rep"><option value="once" ${pe.repeat === "each_set" ? "" : "selected"}>한 번만 — 1장</option><option value="each_set" ${pe.repeat === "each_set" ? "selected" : ""}>지문마다 한 장</option></select></div>
+      <div class="f"><span title="인디자인 데이터 병합의 「여러 레코드」 — 원고(지문)가 12개면 이 면을 12장 찍고 한 장에 한 지문씩 넣는다">원고마다</span><select id="s-rep"><option value="once" ${pe.repeat === "each_set" ? "" : "selected"}>한 번만 — 1장</option><option value="each_set" ${pe.repeat === "each_set" && !(pe.per > 1) ? "selected" : ""}>지문마다 한 장</option><option value="each_set_2" ${pe.repeat === "each_set" && pe.per === 2 ? "selected" : ""}>지문 2개씩 한 장</option></select></div>
       <div class="f"><span title="비우면 모든 원고를 받는다. 「정답지」를 고르면 앞 구간 원고들의 정답을 모은 원고가 저절로 생긴다">받는 원고</span><select id="s-sets"><option value="" ${curK ? "" : "selected"}>모두</option>${kinds.map(k => `<option value="${esc(k)}" ${curK === k ? "selected" : ""}>${esc(k)}</option>`).join("")}<option value="answers" ${curK === "answers" ? "selected" : ""}>정답지 (answers)</option>${curK && curK !== "answers" && !kinds.includes(curK) ? `<option value="${esc(curK)}" selected>${esc(curK)}</option>` : ""}</select></div>
       ${page.items.some(it => it.flow) ? `<div class="note">쌓기 자리가 있다 — 그 자리엔 세트를 하나씩 아래로 쌓고 면이 차면 다음 면으로 넘긴다</div>` : ""}
       ${eachN >= 2 ? `<div class="f"><span title="같은 문서에 「지문마다」 면이 여럿일 때 — 유형별은 한 유형을 원고 수만큼 몰아 찍고 다음 유형으로, 지문별은 원고 하나에 유형 한 벌씩">묶는 순서</span><select id="s-order"><option value="by_page" ${(plan.order || "by_page") === "by_set" ? "" : "selected"}>유형별 — 같은 면을 원고마다 몰아서</option><option value="by_set" ${plan.order === "by_set" ? "selected" : ""}>지문별 — 원고마다 면 한 벌씩</option></select></div>
@@ -2062,7 +2063,9 @@ function side() {
     save(); applyView(); side(); say(`여백을 요소에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
   });
   on("#s-mg-clr", "click", () => { hist(); delete page.margins; save(); applyView(); side(); });
-  on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; q.repeat = e.target.value; await savePlan(); drawRail(); side(); });
+  on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
+    q.repeat = v === "once" ? "once" : "each_set"; if (v === "each_set_2") q.per = 2; else delete q.per;     // 지문 2개씩 = 그 면에 지문 자리를 두 벌 그려 둔다
+    await savePlan(); drawRail(); side(); });
   on("#s-sets", "change", async (e) => { const q = planPg(page.id); if (!q) return; if (e.target.value) q.sets = [e.target.value]; else delete q.sets; await savePlan(); pageSvg = {}; render(); drawRail(); side(); });   // 받는 원고가 바뀌면 캔버스도 그 유형 원고로
   on("#s-order", "change", async (e) => { if (e.target.value === "by_page") delete plan.order; else plan.order = e.target.value; await savePlan(); side(); });
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);

@@ -16,6 +16,7 @@ import tempfile
 
 LABELS = {
     "pnum": "지문 번호", "no": "번호", "answer": "정답",
+    "step_tag": "스텝 표시", "code": "유형 코드", "type_title": "유형 제목",          # 머리 — 원고가 유형마다 채운다
     "vocab_sel": "어휘 선택 지문", "box_body": "본문 박스", "ox_item": "O/X 문항",
     "sum_topic": "내용 정리 · 주제", "sum_title": "내용 정리 · 제목", "sum_line": "내용 정리 · 줄",
     "b2_q": "내용 종합 발문", "b2_choice": "내용 종합 선지",
@@ -95,6 +96,11 @@ def unit_fields(u):
     return role, f
 
 
+def _step_tag(st):
+    """「STEP 01   FRAME」 — 기준 틀 머리의 스텝 표시 (빈칸은 줄바꿈 없는 빈칸이라 안 합쳐진다)."""
+    return f"STEP {int(st.get('step') or 0):02d}\u00a0\u00a0\u00a0{st.get('tag') or ''}".rstrip()
+
+
 def steps_to_sets(steps):
     """스텝 목록(data_mod.from_plan 의 steps) → 세트 목록. 스텝 3(실전)은 아직 뺀다."""
     sets = []
@@ -106,13 +112,16 @@ def steps_to_sets(steps):
             label = str(g.get("label") or "").strip()
             if not label:
                 continue
-            blocks = [{"block": "pnum", "fields": {"pnum": label}}]
+            blocks = [{"block": "pnum", "fields": {"pnum": label}},
+                      # 머리 정보 — 머리 띠 하나가 모든 유형·스텝에 맞게. 받을 자리가 없는 면이 많으니 없어도 검수에 안 뜬다(optional)
+                      {"block": "head", "optional": True, "fields": {"step_tag": _step_tag(st), "code": st.get("logo", ""),
+                                                                     "type_title": st.get("title", "")}}]
             for unit in list(g.get("units") or []) + list(g.get("attach") or []):
                 for u in unit:
                     r = unit_fields(u)
                     if r:
                         blocks.append({"block": r[0], "fields": r[1]})
-            if len(blocks) > 1:
+            if len(blocks) > 2:
                 # id 는 스텝까지 — Step1 B1(본문 정리)과 Step2 B1(어법 O/X)이 같은 로고라 겹치면 저장에서 덮인다
                 sets.append({"kind": kind, "id": f"{label}·{st.get('step')}{st.get('logo', '')}{'-2' if st.get('key', '').endswith('_2') else ''}",
                              "group": label, "step": st.get("key"), "labels": LABELS, "blocks": blocks})
