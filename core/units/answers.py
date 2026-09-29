@@ -3,7 +3,8 @@
     answer_sets(sets, blocks) → [{kind: "answers", id, blocks: [{block: "answer_row", fields: {no, answers}}]}]
 
 answers 값은 서식 조각 목록 — 블록 이름은 굵게, 번호·정답은 그대로. 정답이 하나도 없는 세트는 빠진다.
-정답 줄 블록(answer_row: no + answers)이 라이브러리에 없으면 빈 목록.
+정답 줄 블록(answer_row)이 라이브러리에 없어도 만든다 — 지면에 「정답 묶음」 자리 글상자만 그려도 받는다.
+라이브러리에 없는 블록(원고 형식이 준 역할 블록)은 자리에 answer 가 있으면 정답으로 본다 — 이름은 세트의 labels.
 """
 
 CIRC = "①②③④⑤⑥⑦⑧⑨⑩"
@@ -19,8 +20,6 @@ def _fmt(v, ftype):
 
 def answer_sets(sets, blocks, row_block="answer_row"):
     by_id = {b["id"]: b for b in blocks or []}
-    if row_block not in by_id:
-        return []
     out = []
     for s in sets or []:
         if s.get("kind") == "answers":
@@ -28,6 +27,8 @@ def answer_sets(sets, blocks, row_block="answer_row"):
         groups = []                                  # [(블록 이름, [(no, 정답)])]
         for b in s.get("blocks") or []:
             blk = by_id.get(b.get("block")) or {}
+            if not blk and "answer" in (b.get("fields") or {}):
+                blk = {"name": (s.get("labels") or {}).get(b.get("block"), b.get("block")), "fields": {"answer": {"type": "answer"}}}
             fields = blk.get("fields") or {}
             ans = next((f for f, d in fields.items() if (d or {}).get("type") in ("answer", "bool")), None)
             if not ans:

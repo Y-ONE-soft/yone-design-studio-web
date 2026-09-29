@@ -64,7 +64,7 @@ def layout(ctx, page, spec):
 
 def report(lib, plan, skin_id=None, sets=None):
     skins = store.by_id(lib.get("skins"))
-    skin = skins.get(skin_id) or skins.get(plan.get("skin")) or (lib["skins"][0] if lib.get("skins") else {"id": "", "tokens": {}})   # 문서가 입은 옷으로 — 남의 옷으로 검수하면 토큰 없음이 쏟아진다
+    skin = skins.get(skin_id) or skins.get(plan.get("skin")) or (lib["skins"][0] if lib.get("skins") else render.DEFAULT_SKIN)   # 문서가 입은 옷으로 — 남의 옷으로 검수하면 토큰 없음이 쏟아진다
     ctx = render.Ctx(skin, lib, {"title": plan.get("name", ""), "tag": ""})
     sets = list(sets if sets is not None else lib.get("sets") or [])
     pages = render.plan_svgs(ctx, plan, sets, lib)

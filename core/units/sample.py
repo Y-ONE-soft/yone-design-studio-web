@@ -26,6 +26,11 @@ BY_NAME = {
 def value(name, ftype):
     if name in BY_NAME:
         return BY_NAME[name]
+    from core.units.formats import labels_all                       # 원고 형식의 자리 — 지어낸 글 대신 자리 이름 (원고를 붓기 전)
+    LABELS = labels_all()
+    parts = name.split("+")
+    if all(p in LABELS for p in parts):
+        return "‹" + " + ".join(LABELS[p] for p in parts) + "›"
     return SAMPLE.get(ftype, "")
 
 

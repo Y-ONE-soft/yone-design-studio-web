@@ -85,7 +85,8 @@ class Blocks:
             return (al, None)
         if al and al in self.names:
             return self.names[al]
-        cands = [n for n in self.names if n.startswith(key) or key.startswith(n)]
+        # key 가 이름보다 길면 이름 뒤가 낱말 경계여야 한다 — `Normal_modified` 스타일이 자리 `no` 로 가지 않게
+        cands = [n for n in self.names if n.startswith(key) or (key.startswith(n) and not re.match(r"[a-z0-9_]", key[len(n):]))]
         if not cands:
             return None
         return self.names[min(cands, key=len)]
@@ -184,9 +185,14 @@ def from_paragraphs(paras, blocks, kind="passage", log=None, styles=None):
     last = None                      # 마지막으로 값을 넣은 (블록 dict, 자리)
     row_block = None                 # 번호 줄이 갈 블록 (머리글로 정한 것)
     counters = {}
+    key_set = None                   # 같은 번호가 다시 나오면(원고 뒤 「정답·해설」) 앞 세트 — 정답만 채운다
+    in_key = False                   # 「정답 및 해설」 제목 뒤
 
     def new_set(sid, k=None):
-        nonlocal cur, last, row_block
+        nonlocal cur, last, row_block, key_set
+        key_set = next((s for s in sets if s["id"] == str(sid)), None)
+        if key_set is not None:
+            return
         cur = {"kind": k or kind, "id": str(sid), "blocks": []}
         sets.append(cur)
         last = None
@@ -216,6 +222,22 @@ def from_paragraphs(paras, blocks, kind="passage", log=None, styles=None):
         if not plain:
             continue
         val = raw if isinstance(raw, list) else plain
+        # 「정답 및 해설」 제목부터는 정답 구간 — 문제 글에 붙이지 않고, 번호([20])가 다시 나오면 그 세트의 정답만 채운다
+        if _RE_KEY_HEAD.match(plain):
+            in_key = True
+            continue
+        if in_key:
+            m = _RE_SET.match(plain)
+            if m and (m.group(1) or m.group(2) or (m.group(3) and not m.group(4))) and len(plain) < 40:
+                sid = m.group(1) or m.group(2) or m.group(3)
+                key_set = next((s for s in sets if s["id"] == str(sid)), None)
+                if key_set is None:
+                    log.append(f"정답 구간의 [{sid}] — 앞에 없는 번호")
+            elif key_set is not None:
+                _fill_answers(key_set, plain, B, log)
+            else:
+                log.append(f"정답 구간 — 안 넣은 줄: {plain[:30]}")
+            continue
         # docx 단락 스타일 이름이 블록·자리 이름과 맞으면 그 자리로
         sname = styles[pi] if pi < len(styles) else None
         hit = B.lookup(sname) if sname and sname.lower() not in ("normal", "본문", "기본", "표준") else None
@@ -250,6 +272,9 @@ def from_paragraphs(paras, blocks, kind="passage", log=None, styles=None):
                 hit = B.lookup(rest)
                 k = rest if not hit else None
             new_set(sid, k)
+            continue
+        if key_set is not None:
+            _fill_answers(key_set, plain, B, log)
             continue
         # 블록 이름만 한 줄 → 이어지는 번호 줄이 갈 블록
         hit = B.lookup(plain)
@@ -323,6 +348,27 @@ def from_paragraphs(paras, blocks, kind="passage", log=None, styles=None):
                 continue
         log.append(f"못 맞춘 줄: {plain[:40]}")
     return [s for s in sets if len(s["blocks"]) > (1 if B.pnum else 0)], log
+
+
+_RE_KEY_HEAD = re.compile(r"^(?:정답\s*(?:및|과|·|&)?\s*해설|정답지)$")
+_RE_KEY_LINE = re.compile(r"^\(?(\d{1,3})[).]\s*(\S{1,6})$")
+
+
+def _fill_answers(st, plain, B, log):
+    """정답 구간의 단락 — 줄마다 `(1) F` 꼴이면 그 세트의 번호 줄 정답 자리에. 해설처럼 긴 글은 넣을 자리가 없어 log 로."""
+    lines = [x.strip() for x in plain.split("\n") if x.strip()]
+    hits = [_RE_KEY_LINE.match(x) for x in lines]
+    if not lines or not all(hits):
+        log.append(f"{st['id']} 정답 구간 — 안 넣은 단락: {plain[:30]}")
+        return
+    rows = [b for b in st["blocks"] if "no" in b["fields"]]
+    for m in hits:
+        blk = next((b for b in rows if str(b["fields"].get("no")) == m.group(1)), None)
+        f = next((f for f, d in B.fields(blk["block"]).items() if (d or {}).get("type") in ("answer", "bool")), None) if blk else None
+        if f:
+            blk["fields"][f] = coerce(m.group(2), B.ftype(blk["block"], f))
+        else:
+            log.append(f"{st['id']} 정답 ({m.group(1)}) — 받을 줄 없음")
 
 
 def _strip_prefix(val, n):

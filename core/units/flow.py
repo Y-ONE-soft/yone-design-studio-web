@@ -26,7 +26,9 @@ def _limit(page, spec):
 
 
 def _text_atoms(ctx, it):
-    """블록 요소의 (부품, [글 원자 with bind]) — 자를 후보."""
+    """블록 요소의 (부품, [글 원자 with bind]) — 자를 후보. 원고 자리 글상자(낱개 원자)는 그 하나."""
+    if render._atom_slot(it):
+        return render.atom_part(it["atom"]), [ctx.styled(it["atom"])]
     blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
     if not blk:
         return None, []
@@ -54,7 +56,7 @@ def _split_value(v, n):
     # 서식 조각 목록 — 조각 경계 따라 나눈다
     head, tail, used = [], [], 0
     for frag in v:
-        t = frag if isinstance(frag, str) else str(frag.get("t", ""))
+        t = _plain(frag)
         if used >= cut:
             tail.append(frag)
             continue
@@ -65,6 +67,10 @@ def _split_value(v, n):
         k = cut - used
         if isinstance(frag, str):
             head.append(frag[:k].rstrip()); tail.append(frag[k:].lstrip())
+        elif "para" in frag:                                           # 단락 묶음(상자) 안에서 자른다 — 양쪽에 같은 모양
+            a, b = _split_value(frag.get("c") or [], k)
+            head.append(dict(frag, c=a if isinstance(a, list) else [a]))
+            tail.append(dict(frag, c=b if isinstance(b, list) else [b]))
         else:
             a, b = dict(frag), dict(frag)
             a["t"], b["t"] = t[:k].rstrip(), t[k:].lstrip()
@@ -79,8 +85,7 @@ def split_fit(ctx, it, avail, width):
     if not part or not atoms:
         return None
     fields = dict(it.get("fields") or {})
-    blk = ctx.blocks.get(it["block"])
-    filled = sample.fill(blk, fields)
+    filled = fields if it.get("atom") else sample.fill(ctx.blocks.get(it["block"]), fields)
     # 가장 긴 글 원자를 자른다 (지문 상자 등). 나머지 원자 높이는 그대로 든다고 본다
     a = max(atoms, key=lambda a: len(_plain(filled.get(a["bind"]))))
     val = filled.get(a["bind"])
@@ -128,14 +133,18 @@ def thread(ctx, page, spec, max_pages=40):
             return out
         first = min(over, key=lambda p: p["y"])
         it = first["it"]
-        if first["dy"] < 0.01 and not (it.get("block") and split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w"))):
+        if first["dy"] < 0.01 and not ((it.get("block") or render._atom_slot(it)) and split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w"))):
             # 밀린 것도 없이 제자리에서 넘치고 자를 수도 없다 — 다음 면에 놓아도 똑같다. 그대로 두고 알린다
             ctx.warn(f"{page.get('id')}: 요소 {it.get('block') or it.get('part') or '원자'} 이 제자리에서 면 아래로 넘친다 ({first['y'] + first['h']:.0f}mm > {limit:.0f}mm) — 자리를 올릴 것")
             stuck.add(id(it))
             continue
         movers = {p["fi"] for p in placed if not p["fixed"] and p["y"] >= first["y"] - 0.01 and p["fi"] != first["fi"]}
-        nxt = json.loads(json.dumps(cur))
-        split = split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w")) if it.get("block") else None
+        # 이어 갈 면 — 이 면의 cont, 한 번 넘어간 뒤엔 그 면 모양을 계속(셋째 면부터도 머리가 있게)
+        cont = (getattr(ctx, "pages", {}) or {}).get(cur.get("cont") or cur.get("_cont") or "")
+        nxt = json.loads(json.dumps(cont if cont else cur))
+        if cont:
+            nxt["_cont"] = cont.get("cont") or cont["id"]
+        split = split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w")) if (it.get("block") or render._atom_slot(it)) else None
         items_now, items_next = [], []
         for fi, x in enumerate(cur.get("items") or []):
             fixed = is_fixed(ctx, x, cur, H)
@@ -160,11 +169,36 @@ def thread(ctx, page, spec, max_pages=40):
             return out
         cur["items"] = items_now
         out.append(cur)
+        if cont:
+            items_next = _onto(ctx, cont, it, items_next, cur, H)
+            nxt["_noguides"] = True
         nxt["items"] = items_next
         cur = nxt
         if not any(not is_fixed(ctx, x, cur, H) for x in items_next):
             return out
     ctx.warn(f"{page.get('id')}: 넘침이 {max_pages}면을 넘었다 — 멈춤")
+    return out
+
+
+def _onto(ctx, cont, it, items_next, cur, H):
+    """넘친 글을 「이어 갈 면」(page.cont) 템플릿에 — 그 면의 고정 요소는 그대로, 같은 원고 자리 글상자가 넘친 글을 받는다.
+
+    인디자인에서 첫 면(제목 있는 마스터)의 텍스트 프레임을 둘째 면(다른 마스터)의 프레임으로 잇는 것과 같다.
+    받을 글상자가 없으면 넘친 요소를 원래 자리에 그대로 둔다.
+    """
+    carried = [x for x in items_next if not is_fixed(ctx, x, cur, H)]
+    bind = ((it.get("atom") or {}).get("bind")) if it.get("atom") else None
+    out = [json.loads(json.dumps(x)) for x in cont.get("items") or []]
+    for x in carried:
+        b = ((x.get("atom") or {}).get("bind")) if x.get("atom") else None
+        target = next((y for y in out if b and (y.get("atom") or {}).get("bind") == b and "fields" not in y), None) if b == bind else None
+        if target is not None:
+            target["fields"] = x.get("fields")
+        else:
+            out.append(x)
+    for y in out:                                           # 이어 갈 면의 원고 자리 중 넘친 글을 안 받은 것은 비운다(다음 원고 값이 새지 않게)
+        if (y.get("atom") or {}).get("bind") and not str(y["atom"]["bind"]).startswith("sys.") and "fields" not in y:
+            y["fields"] = {y["atom"]["bind"]: ""}
     return out
 
 

@@ -1003,6 +1003,39 @@ def test_manuscript_matches_block_by_name(lib):
     assert "원고 본문 한 줄" not in svg2
 
 
+def test_manuscript_style_prefix_and_answer_section(lib):
+    """실제 워크북 원고(Step1 A2 본문OX) 모양 — 단락 스타일 `Normal_modified` 가 자리 `no` 로 가면 안 되고,
+    뒤쪽 「정답 및 해설」 구간은 문제에 붙지 않고 같은 번호 세트의 정답 자리만 채운다."""
+    from core.units import manuscript
+    paras = ["[20]", "Learning games need to be what we call fun enough, and many developers try too hard.",
+             "(1) Learning games must be extremely entertaining. ❮ T / F ❯", "(2) Developers attempt to entertain. ❮ T / F ❯",
+             "정답 및 해설", "번호", "정답", "해설", "[20]", "(1) F\n(2) T", "(1) False. 원문은 충분히 재미있어야 한다고 말한다."]
+    styles = ["Heading_num", "Normal_modified_box", "Normal_modified", "Normal_modified", "heading 1", None, None, None,
+              "Normal_exp", "Normal_exp", "Normal_exp"]
+    sets, log = manuscript.from_paragraphs(paras, lib["blocks"], styles=styles)
+    assert [s["id"] for s in sets] == ["20"]
+    rows = [b for b in sets[0]["blocks"] if "sentence" in b["fields"]]
+    assert [str(r["fields"]["no"]) for r in rows] == ["1", "2"]
+    assert [r["fields"].get("answer") for r in rows] == ["F", "T"]
+    assert rows[1]["fields"]["sentence"].endswith("❯")                 # 「정답」「해설」 제목이 문장에 안 붙는다
+    assert any(b["fields"].get("passage", "").startswith("Learning") for b in sets[0]["blocks"])
+    assert any("해설" in x or "안 넣은" in x for x in log)
+
+
+def test_fill_counts_by_source_block(lib):
+    """다른 id 의 블록이 원고를 받아도(받는 항목 accepts) 검수가 「자리가 없어 안 실린다」고 하지 않는다."""
+    from core.units import render, store
+    mine = {"id": "p_row", "name": "내 줄", "source": "content", "fields": {"no": {"type": "number"}, "sentence": {"type": "rich"}},
+            "accepts": ["gram_ox"], "variants": [{"id": "v1", "part": "gox_row"}]}
+    lib2 = dict(lib, blocks=lib["blocks"] + [mine])
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
+    pg = {"id": "t", "items": [{"block": "p_row", "x": 0, "y": 0}, {"block": "p_row", "x": 0, "y": 10}]}
+    st = {"id": "20", "blocks": [{"block": "gram_ox", "fields": {"no": 1, "sentence": "a"}}, {"block": "gram_ox", "fields": {"no": 2, "sentence": "b"}}]}
+    render._fill_items(pg, st, ctx)
+    assert [it["fields"]["sentence"] for it in pg["items"]] == ["a", "b"]
+    assert not [x for x in ctx.issues if "안 실린다" in x["msg"]]
+
+
 def test_block_accepts_items(lib):
     """블록의 「받는 항목」 — 블록 목록이 곧 매칭표. 원고 항목 이름이 accepts 에 있으면 꽂힌다."""
     from core.units import render, store

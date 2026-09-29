@@ -34,11 +34,19 @@ def _by_id(items):
 STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
 
 
+# 꾸밈없는 기본 견본 — 브랜드가 하나도 없어도 그린다(인디자인 기본 견본: 검정·종이·회색 · 기본 서체).
+# 새 디자인은 직접 색·서체로 그리고, 다 만든 뒤 「브랜드로 등록」하면 브랜드가 생긴다. 브랜드에 없는 견본도 여기서 찾는다.
+DEFAULT_SKIN = {"id": "", "name": "기본", "tokens": {
+    "color": {"ink": "#231f20", "white": "#ffffff", "rule": "#b8b8b8", "gray": "#e6e6e6"},
+    "font": {"body": "Noto Sans CJK KR"}}}
+
+
 class Ctx(object):
     def __init__(self, skin, lib, sys=None):
-        self.skin = skin or {"id": "", "tokens": {}}
+        self.skin = skin or DEFAULT_SKIN
         self.parts = _by_id(lib.get("parts"))
         self.blocks = _by_id(lib.get("blocks"))
+        self.pages = _by_id(lib.get("pages"))                 # 넘치면 이어 갈 면(page.cont) 찾기 — 인디자인의 다른 마스터 프레임으로 잇기
         self.sys = dict(sys or {})
         self.warnings = []
         self.print = None                                 # 인쇄 모드 {"bleed": mm, "marks": bool} — 도련 늘림·재단선
@@ -75,6 +83,8 @@ class Ctx(object):
         if not (isinstance(ref, str) and ref.startswith("$")):
             return ref                                    # 직접 값 — 분해 직후엔 허용
         v = ((self.skin.get("tokens") or {}).get(kind) or {}).get(ref[1:])
+        if v is None:
+            v = DEFAULT_SKIN["tokens"].get(kind, {}).get(ref[1:])          # 기본 견본(잉크·흰색·회색·기본 서체)
         if v is None:
             self.warn(f"토큰 없음 {ref} ({kind}) — 옷 {self.skin.get('id') or '(없음)'}")
             return "#ff00ff" if kind == "color" else "sans-serif"
@@ -143,8 +153,12 @@ def rich_html(v, ctx=None):
     if isinstance(v, str):
         return esc(v).replace("\n", "<br/>")
     if isinstance(v, list):
-        return "".join(rich_html(x, ctx) for x in v)
+        isp = lambda x: isinstance(x, dict) and "para" in x
+        return "".join(rich_html(x, ctx) for k, x in enumerate(v)
+                       if not (x == "\n" and ((k and isp(v[k - 1])) or (k + 1 < len(v) and isp(v[k + 1])))))
     if isinstance(v, dict):
+        if "para" in v:                                                    # 단락 묶음 — 테두리 상자·들여쓰기 (자리마다 서식)
+            return f'<div style="{para_css(v["para"], ctx)}">{rich_html(v.get("c"), ctx)}</div>'
         if v.get("anc"):
             return (anchored_html(v, ctx) if ctx else "") + esc(v.get("t", ""))
         t = esc(v.get("t", "")).replace("\n", "<br/>")
@@ -190,8 +204,25 @@ def rich_plain(v):
     if isinstance(v, list):
         return "".join(rich_plain(x) for x in v)
     if isinstance(v, dict):
+        if "para" in v:
+            return rich_plain(v.get("c"))
         return str(v.get("t", ""))
     return str(v)
+
+
+PARA_KEYS = ("box", "indent", "space")          # 단락 모양 — 자리마다 서식 중 단락에 입히는 것 (나머지 b·i·color·size·font 는 글 조각)
+
+
+def para_css(pf, ctx=None):
+    """단락 묶음 모양 → CSS. 글상자 안 px = mm (지면 좌표가 mm)."""
+    st = "display:block;"
+    if pf.get("box"):
+        st += f"border:0.3px solid {ctx.color('$ink', '#231f20') if ctx else '#231f20'};padding:1.2px 1.8px;margin:1px 0;"
+    if pf.get("indent"):
+        st += f"padding-left:{float(pf['indent']):.2f}px;"
+    if pf.get("space"):
+        st += f"margin-top:{float(pf['space']):.2f}px;"
+    return st
 
 
 def fmt(v, ftype, ctx=None):
@@ -708,8 +739,18 @@ def _text_content(ctx, a, values, types):
     if v is None:
         if a.get("text"):
             return rich_html(a["text"], ctx), rich_plain(a["text"])
-        return f'<span style="color:#b0b0b0">{{{esc(b)}}}</span>', "{" + b + "}"
+        hint = " + ".join(_slot_label(x) for x in b.split("+"))        # 견본 글도 원고도 없으면 자리 이름을 회색으로
+        return f'<span style="color:#b0b0b0">‹{esc(hint)}›</span>', "‹" + hint + "›"
     return fmt(v, types.get(b, "text"), ctx)
+
+
+_SLOT_NAMES = {"passage": "지문 본문", "pnum": "지문 번호", "prompt": "발문", "choices": "선지", "answer": "정답", "no": "번호",
+               "sentence": "문장 한 줄", "sentences": "문장 여럿", "kr": "한글 해석", "title": "제목", "label": "라벨", "answers": "정답 묶음"}
+
+
+def _slot_label(b):
+    from core.units.formats import labels_all
+    return labels_all().get(b) or _SLOT_NAMES.get(b) or b
 
 
 def _bounds(a):
@@ -1037,6 +1078,153 @@ def load_page_env(ctx, page):
     return ctx
 
 
+def _join_paras(a, b):
+    """두 값을 단락으로 잇는다 (문자열 / 서식 조각 목록)."""
+    if isinstance(a, str) and isinstance(b, str):
+        return a + "\n" + b
+    return (a if isinstance(a, list) else [a]) + ["\n"] + (b if isinstance(b, list) else [b])
+
+
+def _atom_slot(it):
+    """원고 자리가 붙은 낱개 글상자인가 (책이 채우는 sys.* 는 아니다)."""
+    a = it.get("atom") or {}
+    b = a.get("bind")
+    return a.get("t") == "text" and bool(b) and not str(b).startswith("sys.") and not it.get("hide")
+
+
+def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
+    """자리 이름으로 채우기 — 원고 자리 글상자(낱개 원자)와, 유형으로 못 짝지은 블록(요소)의 자리.
+
+    인디자인 데이터 병합처럼: 같은 자리가 여럿이면 읽는 순서(위→아래, 왼→오른)로 n번째 자리에 원고의 n번째 값.
+    그 자리가 하나뿐이면 원고의 그 자리 값이 전부 단락으로 흘러 들어간다(스토리). 자리 이름 a+b 는 원고에 나온 순서대로 섞는다.
+    같은 요소(블록)를 다섯 번 놓으면 O/X 한 줄씩 — 요소 안의 자리들이 같은 n번째 값을 받는다.
+    """
+    blocks = sample_set.get("blocks") or []
+    vals, src = {}, {}
+    for bi, b in enumerate(blocks):
+        for f, v in (b.get("fields") or {}).items():
+            vals.setdefault(f, []).append(v)
+            src.setdefault(f, []).append((bi, b.get("block")))
+    labels = sample_set.get("labels") or {}
+
+    def slot_keys(it):
+        if _atom_slot(it):
+            return [it["atom"]["bind"]]
+        blk = (ctx.blocks.get(it.get("block")) if ctx else None) or {}
+        return [f for f in (blk.get("fields") or {}) if not f.startswith("sys.")]
+
+    # 요소(블록)를 자리 이름으로 채우는 것은 **역할 원고**(원고 형식이 읽은 원고 — 세트의 블록이 단락 역할, labels 가 붙어 온다)일 때만.
+    # 라이브러리 블록 원고는 유형 이름으로만 짝짓는다 — 자리 이름이 같아도 다른 유형(어법 O/X ↔ 본문 O/X)으로 새지 않게
+    role_set = bool(sample_set.get("labels"))                   # 자리 이름 원고 — 원고 형식(core/units/formats)이 labels 를 붙인다
+    entries = []
+    for it in [x for x in pg.get("items") or [] if _atom_slot(x)] + pending:
+        keys = slot_keys(it)
+        if it.get("block") and not (role_set and any(k in vals or ("+" in k and any(w in vals for w in k.split("+"))) for k in keys)):
+            if ctx and not canvas:                               # 못 짝지은 블록 — 비워 두고 알린다
+                bid = it["block"]
+                blk = ctx.blocks.get(bid) or {}
+                it["fields"] = {}
+                it["_empty"] = True
+                n = sum(1 for b in blocks if b.get("block") == bid)
+                if n:
+                    ctx.issue("warn", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리 {sum(1 for x in pg['items'] if x.get('block') == bid)}개 중 {n}개만 찼다 — 나머지는 빈 채")
+                else:
+                    ctx.issue("error", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리에 넣을 원고가 없다 — 비워 둔다")
+            continue
+        entries.append((it, keys))
+    if not entries:
+        return
+    count = {}
+    for _, keys in entries:
+        for k in keys:
+            count[k] = count.get(k, 0) + 1
+    used, taken = set(), {}
+
+    set_fmt = sample_set.get("fmt") or {}
+
+    def styled(v, f, it):
+        """자리마다 서식(인디자인 단락 스타일 ↔ 원고 역할) — 글상자의 slot_fmt 가 원고 형식의 기본(fmt)보다 우선."""
+        fmt = dict(set_fmt.get(f) or {})
+        fmt.update(((it.get("atom") or {}).get("slot_fmt") or {}).get(f) or {})
+        fmt = {k: x for k, x in fmt.items() if x not in (None, "", False, 0) and k not in PARA_KEYS}
+        if not fmt or v in (None, ""):
+            return v
+        return [dict(fmt, t=x) if isinstance(x, str) else dict(fmt, **x) for x in (v if isinstance(v, list) else [v])]
+
+    def para_of(f, it):
+        pf = {k: x for k, x in (set_fmt.get(f) or {}).items() if k in PARA_KEYS}
+        pf.update({k: x for k, x in ((((it or {}).get("atom") or {}).get("slot_fmt") or {}).get(f) or {}).items() if k in PARA_KEYS})
+        return {k: x for k, x in pf.items() if x not in (None, "", False, 0)}
+
+    def with_no(v, bf):
+        no = bf.get("no")
+        return v if no in (None, "") else [f"{no} "] + (v if isinstance(v, list) else [v])
+
+    def flow(pairs, number, it=None, fields=None):
+        """(블록 번호, 값) 목록 → 한 스토리. number 면 번호를 글 앞에. fields 를 주면 값마다 그 자리의 서식,
+        단락 모양(상자·들여쓰기)이 있는 자리는 잇닿은 같은 자리 단락을 한 묶음으로 — 지문 여러 단락이 상자 하나에."""
+        joined, group, gf = None, None, None
+
+        def flush():
+            nonlocal joined, group
+            if group is not None:
+                piece = [{"para": para_of(gf, it), "c": group if isinstance(group, list) else [group]}]
+                joined = piece if joined is None else _join_paras(joined, piece)
+                group = None
+        for k, (bi, v) in enumerate(pairs):
+            f = fields[k] if fields is not None else None
+            if f is not None:
+                v = styled(v, f, it)
+            v = with_no(v, blocks[bi].get("fields") or {}) if number else v
+            used.add((bi, blocks[bi].get("block")))
+            if f is not None and para_of(f, it):
+                if group is not None and gf == f:
+                    group = _join_paras(group, v)
+                else:
+                    flush()
+                    group, gf = v, f
+                continue
+            flush()
+            joined = v if joined is None else _join_paras(joined, v)
+        flush()
+        return joined
+
+    for it, keys in sorted(entries, key=lambda e: (round(float(e[0].get("y") or 0), 1), float(e[0].get("x") or 0))):
+        out = {}
+        # 번호를 글 앞에 붙일까 — 흘려 넣는 자리는 번호 칸과 줄이 안 맞으니, 이 자리 곁에 번호 칸이 따로 없거나(면에 번호 자리 없음) 같은 요소 안이면 글 앞에
+        number = "no" not in count or "no" in keys
+        for f in sorted(keys, key=lambda x: x == "no"):          # 번호 자리는 맨 나중 — 흘려 넣었으면 비운다
+            k = taken.get(f, 0)
+            taken[f] = k + 1
+            if "+" in f:                                         # 자리 여럿 — 원고에 나온 순서대로 섞는다
+                want = [x for x in f.split("+") if x]
+                hits = [(bi, (b.get("fields") or {})[w], w) for bi, b in enumerate(blocks) for w in want
+                        if (b.get("fields") or {}).get(w) not in (None, "")]
+                out[f] = flow([(bi, v) for bi, v, _ in hits], number, it, [w for *_, w in hits]) if hits else ""
+            elif f != "no" and count[f] == 1 and len(vals.get(f) or []) > 1:
+                out[f] = flow([(bi, v) for (bi, _), v in zip(src[f], vals[f])], number, it, [f] * len(vals[f]))   # 자리 하나 — 전부 흘려 넣는다
+                taken[f] = len(vals[f])
+                if "no" in keys:
+                    out["no"] = ""
+                    taken["no"] = len(vals.get("no") or [])
+            elif f == "no" and "no" in out:
+                continue
+            elif k < len(vals.get(f) or []):
+                out[f] = styled(vals[f][k], f, it)
+                used.add(src[f][k])
+            elif ctx and not canvas:
+                out[f] = ""
+                ctx.issue("warn" if vals.get(f) else "error",
+                          f"원고 {sid}: 지면 {pg.get('id')} 의 「{labels.get(f, f)}」 자리 {k + 1}번째에 넣을 원고가 없다 — 비워 둔다")
+        it["fields"] = out
+    for bi, bid in used:
+        filled[bid] = filled.get(bid, 0) + 1
+    if ctx and not canvas:
+        for f, n in taken.items():
+            if "+" not in f and len(vals.get(f) or []) > n:
+                ctx.issue("error", f"원고 {sid}: 「{labels.get(f, f)}」 {len(vals[f])}개 중 {len(vals[f]) - n}개는 지면 {pg.get('id')} 에 자리가 없어 안 실린다")
+
+
 def _fill_items(pg, sample_set, ctx=None, canvas=False):
     """세트의 값을 지면의 블록 자리(items)에 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
 
@@ -1048,14 +1236,16 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
         b = (ctx.blocks.get(bid) if ctx else None) or {}
         return str(b.get("kind") or b.get("name") or bid or "").strip().lower()
 
-    queue, by_kind = {}, {}
+    queue, by_kind, origin = {}, {}, {}
     for b in sample_set.get("blocks") or []:
         bid = b.get("block")
         fs = b.get("fields") or {}
+        origin[id(fs)] = bid                                     # 채운 원고가 원래 어느 블록 것인지 — 검수 셈은 원고 쪽으로
         queue.setdefault(bid, []).append(fs)
         by_kind.setdefault(kind_of(bid), []).append(fs)          # id 가 달라도 유형 이름이 같으면 붙는다
     total = {k: len(v) for k, v in queue.items()}
     filled = {}
+    pending = []
     sid = sample_set.get("id", "")
     for it in pg.get("items") or []:
         bid = it.get("block")
@@ -1086,20 +1276,20 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
                 it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
             else:
                 it["fields"] = q.pop(0) if len(q) > 1 else q[0]
-            filled[bid] = filled.get(bid, 0) + 1
+            src = origin.get(id(it["fields"]), bid)
+            filled[src] = filled.get(src, 0) + 1
             if ctx and not canvas:
                 for f, d in (blk.get("fields") or {}).items():
                     if (d or {}).get("required") and (it["fields"].get(f) in (None, "", [])):
                         ctx.issue("error", f"원고 {sid}: {blk.get('name') or bid} 의 필수 자리 {f} 가 비었다")
-        elif ctx and not canvas:
-            it["fields"] = {}
-            it["_empty"] = True
-            if total.get(bid):
-                ctx.issue("warn", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리 {sum(1 for x in pg['items'] if x.get('block') == bid)}개 중 {total[bid]}개만 찼다 — 나머지는 빈 채")
-            else:
-                ctx.issue("error", f"원고 {sid}: 지면 {pg.get('id')} 의 {blk.get('name') or bid} 자리에 넣을 원고가 없다 — 비워 둔다")
+        else:
+            pending.append(it)                                  # 유형으로 못 짝지은 블록 — 아래에서 자리 이름으로 채워 본다
+    _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid)
+    optional = {b.get("block") for b in sample_set.get("blocks") or [] if b.get("optional")}      # 받을 자리가 없어도 되는 원고(머리 정보)
     if ctx and not canvas:
         for bid, n in total.items():
+            if bid in optional:
+                continue
             k = filled.get(bid, 0)
             blk = ctx.blocks.get(bid) or {}
             if k == 0:
@@ -1165,6 +1355,9 @@ def page_svgs(ctx, page, sets, spec, pno=1, label=""):
     load_page_env(ctx, page)                                   # 레이어·기준선 격자
     W, H = float(spec["w"]), float(spec["h"])
     slots = [it for it in page.get("items") or [] if it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"]
+    slots += [it for it in page.get("items") or [] if _atom_slot(it)]              # 원고 자리 글상자도 자리다
+    if not slots and not page.get("zones"):
+        sets = []                                              # 원고 자리가 없는 면(표지·간지) — 원고를 안 받는다
     if slots and any(it.get("flow") for it in slots) and sets and not page.get("_canvas"):
         out = []
         for k, fp in enumerate(_stack_pages(ctx, page, sets, spec)):        # 쌓기 자리 — 세트를 아래로 쌓고 차면 다음 면
@@ -1298,6 +1491,12 @@ def is_fixed(ctx, it, page=None, H=None):
         bm = float((page.get("margins") or {}).get("bottom") or 20)
         if float(it.get("y") or 0) >= float(H) - bm - 0.01:
             return True
+        if blk is not None and blk.get("source") != "content":
+            # 원고를 안 받는 요소가 꼬리말 자리까지 내려오면(옆 탭 + 쪽 번호 묶음) 마스터 꼬리처럼 고정 — 흘림이 다음 면으로 떠밀지 않는다
+            v = variant_of(ctx, blk)
+            part = ctx.parts.get(v.get("part")) if v else None
+            if part and float(it.get("y") or 0) + float(part.get("h") or 0) * float(it.get("s") or 1) > float(H) - bm + 0.01:
+                return True
     return False
 
 
@@ -1313,7 +1512,7 @@ def can_grow(it, part):
         return True
     a = it.get("atom")
     if a is not None:
-        return bool(a.get("bind"))
+        return bool(a.get("bind")) and not str(a["bind"]).startswith("sys.")      # 쪽 번호·책 제목(책이 채움)은 짧다 — 넘침 계산 중 자리 이름 길이로 자라 본문을 밀면 안 된다
     return any(x.get("bind") for x in (part.get("atoms") or []))
 
 
@@ -1374,9 +1573,13 @@ def _item_frag(ctx, it, at=None):
             ctx._at = None
     if it.get("atom"):
         part = atom_part(it["atom"])
+        if at and at[2]:
+            part = mirror_part(part)                                   # 낱개 글상자 — 자리는 _page_wrap 이, 정렬은 여기서 뒤집는다
         w = float(it.get("w") or part["w"])
         origin(w)
-        frag, h = part_svg(ctx, part, {}, width=w)
+        values = it.get("fields") or {}                                # 원고 자리 글상자 — 세트가 끼운 값
+        types = {k: ("rich" if isinstance(v, list) else "text") for k, v in values.items()}
+        frag, h = part_svg(ctx, part, values, types, width=w)
         return frag, part, w, h
     if it.get("block"):
         blk = ctx.blocks.get(it["block"])
@@ -1384,6 +1587,8 @@ def _item_frag(ctx, it, at=None):
         part = ctx.parts.get(v.get("part")) if v else None
         if not part:
             return None, None, 0, 0
+        if at and at[2]:
+            part = mirror_part(part)
         types = {k: (f or {}).get("type", "text") for k, f in (blk.get("fields") or {}).items()}
         w = float(it.get("w") or part.get("w") or 0)
         values = {k: "" for k in types} if it.get("_empty") else sample.fill(blk, it.get("fields"))   # 책에서 원고 없는 자리는 빈 채로
@@ -1397,10 +1602,29 @@ def _item_frag(ctx, it, at=None):
     part = ctx.parts.get(it.get("part"))
     if not part:
         return None, None, 0, 0
+    if at and at[2]:
+        part = mirror_part(part)
     w = float(it.get("w") or part.get("w") or 0)
     origin(w)
     frag, h = part_svg(ctx, part, {}, width=w)
     return frag, part, w, h
+
+
+def mirror_part(part):
+    """왼쪽 면(짝수 쪽) — 요소 안쪽 배치도 좌우로 뒤집는다(글자는 안 뒤집는다). 인디자인의 좌우 마스터처럼
+    오른쪽 면에 그린 요소의 「바깥쪽」(옆 탭·쪽 번호)이 왼쪽 면에선 왼쪽 바깥에 온다. 요소 상자 자리는 _page_wrap 이 뒤집는다."""
+    pw = float(part.get("w") or 0)
+    atoms = []
+    for a in part.get("atoms") or []:
+        a = dict(a)
+        if a.get("t") == "line":
+            a["x1"], a["x2"] = pw - float(a["x1"]), pw - float(a["x2"])
+        else:
+            a["x"] = pw - float(a.get("x") or 0) - float(a.get("w") or 0)
+        if a.get("align") in ("left", "right"):                          # 정렬을 준 글만 — 바깥쪽 정렬(인디자인 「책등 반대쪽 정렬」)
+            a["align"] = "left" if a["align"] == "right" else "right"
+        atoms.append(a)
+    return dict(part, atoms=atoms)
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
@@ -1429,6 +1653,23 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
     return page_svgs(ctx, pg, sets, spec, 1, pg.get("name", ""))
 
 
+def _per(pg):
+    """그 면에 원고 몇 개씩 — 「지문 2개씩 한 장」이면 2 (인디자인 데이터 병합의 여러 레코드)."""
+    try:
+        return max(1, int(pg.get("per") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _merge_sets(ss):
+    """원고 여럿 → 한 면에 넣을 한 원고. 자리 이름이 같은 값은 차례로 — 지문 번호 상자 둘이면 20 · 21."""
+    if len(ss) == 1:
+        return ss[0]
+    return {"kind": ss[0].get("kind"), "id": " · ".join(str(s.get("id", "")) for s in ss), "group": ss[0].get("group"),
+            "labels": ss[0].get("labels"),
+            "blocks": [b for k, s in enumerate(ss) for b in s.get("blocks") or [] if k == 0 or not b.get("optional")]}   # 머리 정보(optional)는 첫 원고 것만
+
+
 def plan_svgs(ctx, plan, sets, lib):
     """틀 → 면 목록. 앞면 → 구간(간지 + 지면 반복) → 뒷면. 쪽번호는 이어진다."""
     ctx.map = plan.get("map") or ctx.map or {}                 # 문서의 원고 연결표 — 책·PDF·검수에도 쓴다
@@ -1447,7 +1688,7 @@ def plan_svgs(ctx, plan, sets, lib):
         if not pg:
             ctx.warn(f"지면 없음 {pid}")
             return
-        res = page_svgs(ctx, pg, ss, spec, pno, label)
+        res = page_svgs(ctx, pg, ss, specs.get(pg.get("spec")) or spec, pno, label)     # 면마다 자기 판형 (B4 시험지 면 · A4 표지 …)
         out.extend(res)
         pno += len(res)
 
@@ -1470,25 +1711,43 @@ def plan_svgs(ctx, plan, sets, lib):
         i = 0
         while i < len(pgs):
             pg = pgs[i]
-            if pg.get("repeat") != "each_set":
-                emit(pg["page"], pg_sets(pg), sec.get("name", ""))
+            if pg.get("repeat") == "none":                          # 찍지 않는 면 — 다른 면이 넘친 글을 이어 받는 모양(page.cont)으로만
                 i += 1
                 continue
-            if not by_set:                                          # 유형별 — 이 면을 원고 수만큼 몰아서
-                for s in pg_sets(pg):
-                    emit(pg["page"], [s], f"{sec.get('name', '')} · {s.get('id', '')}")
+            if pg.get("repeat") != "each_set":
+                ss = pg_sets(pg)
+                if ss and (pg.get("sets") or []) == ["answers"]:        # 정답지 한 번만 — 정답을 한 흐름으로 모아 넘치면 다음 면
+                    ss = [{"kind": "answers", "id": "answers", "labels": {}, "blocks": [b for s in ss for b in s.get("blocks") or []]}]
+                emit(pg["page"], ss, sec.get("name", ""))
+                i += 1
+                continue
+            if not by_set:                                          # 유형별 — 이 면을 원고 수만큼 몰아서 (per 개씩 한 면)
+                ss = pg_sets(pg)
+                per = _per(pg)
+                for k in range(0, len(ss), per):
+                    m = _merge_sets(ss[k:k + per])
+                    emit(pg["page"], [m], f"{sec.get('name', '')} · {m.get('id', '')}")
                 i += 1
                 continue
             j = i                                                   # 지문별 — 잇닿은 「지문마다」 면들을 한 벌로 묶어 원고마다 한 벌씩
             while j < len(pgs) and pgs[j].get("repeat") == "each_set":
                 j += 1
             run = pgs[i:j]
+            groups = []                                             # 같은 지문(group)의 세트끼리 — 스텝마다 세트가 따로 와도 지문 20 의 A1·A2… 가 한 벌
             for s in sets or []:
+                g = str(s.get("group") or s.get("id"))
+                if g not in groups:
+                    groups.append(g)
+            n = max(_per(p2) for p2 in run)                          # 한 면에 지문 둘인 면이 있으면 지문 둘씩 한 벌
+            for gi in range(0, len(groups), n):
+                chunk = set(groups[gi:gi + n])
                 for p2 in run:
                     kinds = p2.get("sets")
-                    if kinds and s.get("kind") not in kinds:
-                        continue
-                    emit(p2["page"], [s], f"{sec.get('name', '')} · {s.get('id', '')}")
+                    ss = [s for s in sets or [] if str(s.get("group") or s.get("id")) in chunk and (not kinds or s.get("kind") in kinds)]
+                    per = _per(p2)
+                    for k in range(0, len(ss), per):
+                        m = _merge_sets(ss[k:k + per])
+                        emit(p2["page"], [m], f"{sec.get('name', '')} · {m.get('id', '')}")
             i = j
     ctx.sys["section"] = ""
     for pid in plan.get("back") or []:

@@ -21,6 +21,7 @@
 import json
 import os
 import re
+import unicodedata
 import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
@@ -46,7 +47,9 @@ def _lib_json(lib):
 @bp.route("/units")
 def canvas():
     """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
+    from core.units import formats
     lib = store.library()
+    lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
     return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기")
 
 
@@ -72,7 +75,10 @@ def api_thumbs():
 
 @bp.route("/api/units/library")
 def api_library():
-    return jsonify(store.library())
+    from core.units import formats
+    lib = store.library()
+    lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게
+    return jsonify(lib)
 
 
 @bp.route("/api/units/<kind>", methods=["POST"])
@@ -102,11 +108,32 @@ def api_check():
 
 @bp.route("/api/units/manuscript", methods=["POST"])
 def api_manuscript():
-    """원고 → 세트 (core/units/manuscript). 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
+    """원고 → 세트. 원고 형식(core/units/formats — 문서가 고른 form.format, 없으면 파일 이름으로 알아봄)이 있으면 그 형식으로,
+    아니면 기본 파서(core/units/manuscript): 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
+    from core.units import formats
     blocks = store.load("blocks")
-    f = request.files.get("file")
+    fs = [x for x in request.files.getlist("file") if x and x.filename]
+    f = fs[0] if fs else None
+    names = [unicodedata.normalize("NFC", os.path.basename(x.filename)) for x in fs]
+    fid = (request.form.get("format") or "").strip() or (formats.detect(names) if fs else None)
+    if fid and fid not in formats.BY_ID:
+        return jsonify({"error": f"모르는 원고 형식 {fid}"}), 400
     try:
-        if f and f.filename:
+        if fs and fid:
+            # 원고 형식 — 형식이 파일 이름을 읽을 수 있게(스텝·회차) 원래 이름으로 둔다
+            if any(os.path.splitext(n)[1].lower() not in (".docx", ".hwpx", ".hwp") for n in names):
+                return jsonify({"error": "원고 형식은 docx·hwpx 만"}), 400
+            d = os.path.join(_updir(), uuid.uuid4().hex[:12])
+            os.makedirs(d)
+            paths = []
+            for x, n in zip(fs, names):
+                p = os.path.join(d, n)
+                x.save(p)
+                paths.append(p)
+            sets, log = formats.parse(fid, paths)
+        elif len(fs) > 1:
+            return jsonify({"error": "여러 파일은 원고 형식(워크북·모의고사 …)을 알아볼 수 있을 때만 — 문서의 「원고 형식」을 고르거나 파일 이름을 확인"}), 400
+        elif f:
             ext = os.path.splitext(f.filename)[1].lower()
             if ext not in (".docx", ".hwpx", ".txt", ".md", ".json"):
                 return jsonify({"error": "docx·hwpx·txt·json 만"}), 400
@@ -123,7 +150,7 @@ def api_manuscript():
                 sets, log = manuscript.from_contents(body["contents"], blocks)
             else:
                 sets, log = manuscript.from_text(body.get("text") or "", blocks, body.get("kind") or "passage")
-    except (ValueError, KeyError, OSError) as e:
+    except (ValueError, KeyError, OSError, RuntimeError) as e:
         return jsonify({"error": str(e)}), 400
     if not sets:
         return jsonify({"error": "세트를 하나도 못 만들었다", "log": log}), 400
@@ -149,7 +176,7 @@ def api_delete(kind):
 
 def _ctx(lib, skin_id, sys=None, skin_item=None):
     skins = store.by_id(lib["skins"])
-    skin = skin_item if isinstance(skin_item, dict) and skin_item.get("tokens") else (skins.get(skin_id) or (lib["skins"][0] if lib["skins"] else {"id": "", "tokens": {}}))
+    skin = skin_item if isinstance(skin_item, dict) and skin_item.get("tokens") else (skins.get(skin_id) or (lib["skins"][0] if lib["skins"] else render.DEFAULT_SKIN))
     return render.Ctx(skin, lib, sys or {"title": "STEP BY STEP", "tag": "BUILD UP"})
 
 
@@ -191,7 +218,11 @@ def api_preview():
             spec = store.by_id(lib["specs"]).get(body.get("spec") or item.get("spec") or "a4") or render.DEFAULT_SPEC
             if body.get("mode") == "canvas":            # 자유 배치 요소를 견본(또는 고른 세트) 값으로
                 ss = store.get("sets", body["set"]) if body.get("set") else None
-                ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))     # 대지(지면 둘레)
+                if body.get("set") == "answers" and not ss:          # 정답지 면 — 모든 원고의 정답을 모은 한 흐름으로 보인다
+                    from core.units import answers as _answers
+                    rows = _answers.answer_sets(lib.get("sets") or [], lib.get("blocks") or [])
+                    ss = {"kind": "answers", "id": "answers", "blocks": [b for s in rows for b in s["blocks"]]} if rows else None
+                ctx.board =max(0.0, min(float(body.get("board") or 0), 200.0))     # 대지(지면 둘레)
                 ctx.map = body.get("map") or {}                                     # 문서의 원고 연결표
                 out.extend(render.page_canvas_svgs(ctx, item, spec, sample_set=ss))
             else:
