@@ -26,7 +26,9 @@ def _limit(page, spec):
 
 
 def _text_atoms(ctx, it):
-    """블록 요소의 (부품, [글 원자 with bind]) — 자를 후보."""
+    """블록 요소의 (부품, [글 원자 with bind]) — 자를 후보. 원고 자리 글상자(낱개 원자)는 그 하나."""
+    if render._atom_slot(it):
+        return render.atom_part(it["atom"]), [ctx.styled(it["atom"])]
     blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
     if not blk:
         return None, []
@@ -79,8 +81,7 @@ def split_fit(ctx, it, avail, width):
     if not part or not atoms:
         return None
     fields = dict(it.get("fields") or {})
-    blk = ctx.blocks.get(it["block"])
-    filled = sample.fill(blk, fields)
+    filled = fields if it.get("atom") else sample.fill(ctx.blocks.get(it["block"]), fields)
     # 가장 긴 글 원자를 자른다 (지문 상자 등). 나머지 원자 높이는 그대로 든다고 본다
     a = max(atoms, key=lambda a: len(_plain(filled.get(a["bind"]))))
     val = filled.get(a["bind"])
@@ -128,14 +129,14 @@ def thread(ctx, page, spec, max_pages=40):
             return out
         first = min(over, key=lambda p: p["y"])
         it = first["it"]
-        if first["dy"] < 0.01 and not (it.get("block") and split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w"))):
+        if first["dy"] < 0.01 and not ((it.get("block") or render._atom_slot(it)) and split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w"))):
             # 밀린 것도 없이 제자리에서 넘치고 자를 수도 없다 — 다음 면에 놓아도 똑같다. 그대로 두고 알린다
             ctx.warn(f"{page.get('id')}: 요소 {it.get('block') or it.get('part') or '원자'} 이 제자리에서 면 아래로 넘친다 ({first['y'] + first['h']:.0f}mm > {limit:.0f}mm) — 자리를 올릴 것")
             stuck.add(id(it))
             continue
         movers = {p["fi"] for p in placed if not p["fixed"] and p["y"] >= first["y"] - 0.01 and p["fi"] != first["fi"]}
         nxt = json.loads(json.dumps(cur))
-        split = split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w")) if it.get("block") else None
+        split = split_fit(ctx, it, (limit - first["y"]) / float(it.get("s") or 1), it.get("w")) if (it.get("block") or render._atom_slot(it)) else None
         items_now, items_next = [], []
         for fi, x in enumerate(cur.get("items") or []):
             fixed = is_fixed(ctx, x, cur, H)

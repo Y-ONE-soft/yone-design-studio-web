@@ -21,6 +21,7 @@
 import json
 import os
 import re
+import unicodedata
 import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
@@ -104,9 +105,26 @@ def api_check():
 def api_manuscript():
     """원고 → 세트 (core/units/manuscript). 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
     blocks = store.load("blocks")
-    f = request.files.get("file")
+    fs = [x for x in request.files.getlist("file") if x and x.filename]
+    f = fs[0] if fs else None
     try:
-        if f and f.filename:
+        if len(fs) > 1:
+            # 워크북 원고 묶음(Step1 A1 …docx 여러 개) — 엔진이 파일 이름으로 스텝을 가르므로 원래 이름으로 둔다
+            from core.units import workbook_src
+            names = [unicodedata.normalize("NFC", os.path.basename(x.filename)) for x in fs]
+            if any(os.path.splitext(n)[1].lower() not in (".docx", ".hwpx") for n in names):
+                return jsonify({"error": "여러 파일은 docx·hwpx 만"}), 400
+            if not workbook_src.looks_like_workbook(names):
+                return jsonify({"error": "여러 파일은 워크북 원고(Step1 A1 … 처럼 스텝 이름)만"}), 400
+            d = os.path.join(_updir(), uuid.uuid4().hex[:12])
+            os.makedirs(d)
+            paths = []
+            for x, n in zip(fs, names):
+                p = os.path.join(d, n)
+                x.save(p)
+                paths.append(p)
+            sets, log = workbook_src.from_files(paths)
+        elif f:
             ext = os.path.splitext(f.filename)[1].lower()
             if ext not in (".docx", ".hwpx", ".txt", ".md", ".json"):
                 return jsonify({"error": "docx·hwpx·txt·json 만"}), 400
@@ -123,7 +141,7 @@ def api_manuscript():
                 sets, log = manuscript.from_contents(body["contents"], blocks)
             else:
                 sets, log = manuscript.from_text(body.get("text") or "", blocks, body.get("kind") or "passage")
-    except (ValueError, KeyError, OSError) as e:
+    except (ValueError, KeyError, OSError, RuntimeError) as e:
         return jsonify({"error": str(e)}), 400
     if not sets:
         return jsonify({"error": "세트를 하나도 못 만들었다", "log": log}), 400
