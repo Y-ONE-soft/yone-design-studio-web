@@ -2,6 +2,7 @@
 
 _EN = ("The boy ", {"t": "who", "u": True}, " I met at the station yesterday turned out to be my cousin, "
        "and we spent the whole afternoon talking about the years we had missed.")
+_ONE = ("The boy ", {"t": "who", "u": True}, " I met at the station was my cousin.")   # 한 줄짜리 — 문장 자리는 책에서도 한 줄이라, 견본이 길면 판이 실제와 다르게 보인다
 
 SAMPLE = {
     "text": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
@@ -16,7 +17,7 @@ SAMPLE = {
 # 블록 필드 이름으로 더 맞는 견본이 있으면 그것을 — 이름은 관행일 뿐 규칙이 아니다
 BY_NAME = {
     "no": 1, "pnum": "20", "title": "어법 O/X", "tag": "BUILD UP", "logo": "B1",
-    "sentence": list(_EN), "passage": list(_EN) * 3,
+    "sentence": list(_ONE), "passage": list(_EN) * 3,
     "prompt": "다음 글의 밑줄 친 부분 중, 어법상 틀린 것은?",
     "answer": "③", "kr": "내가 어제 역에서 만난 그 소년은 내 사촌으로 밝혀졌다.",
 }
