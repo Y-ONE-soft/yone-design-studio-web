@@ -305,6 +305,29 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
 
 
+def text_end(plain, w_mm, size_pt, a=None):
+    """글이 끝나는 가로 자리(mm) — 마지막 줄의 끝. 문장 끝에 붙는 개체(인디자인 앵커 개체)가 쓴다.
+
+    text_h 와 같은 어림(한글 1em · 로마자 0.52em)을 쓴다. 줄이 넘어가면 마지막 줄만 센다.
+    """
+    a = a or {}
+    em = size_pt * PT
+    it, ir, ib, il = insets(a)
+    track = em * float(a.get("tracking") or 0) / 1000.0
+    col_w = max(w_mm - il - ir - float(a.get("indent") or 0) - float(a.get("indent_right") or 0), 0.1)
+    last = 0.0
+    for para in (plain or "").split("\n"):
+        run = 0.0
+        for c in para:
+            cw = em * (1.0 if ord(c) > 0x2E7F else 0.52) + track
+            if run + cw > col_w:
+                run = cw                      # 줄바꿈 — 새 줄에서 다시
+            else:
+                run += cw
+        last = run
+    return il + last
+
+
 _BULLET = {"disc": "disc", "circle": "circle", "square": "square", "decimal": "decimal",
            "decimal-paren": "decimal", "upper-alpha": "upper-alpha", "lower-alpha": "lower-alpha"}
 
@@ -793,12 +816,14 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     # 1) 글이 자라는 만큼
     grown = []                                # (원자 번호, 원래 위, 원래 아래, 왼쪽, 오른쪽, 늘어난 양)
     content = {}
+    plains = {}
     heights = {}
     for i, a in enumerate(atoms):
         if a.get("t") != "text":
             continue
         html, plain = _text_content(ctx, a, values, types)
         content[i] = html
+        plains[i] = plain
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
         if a.get("auto_size") is False:                          # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
             heights[i] = a["h"]
@@ -808,6 +833,27 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         heights[i] = max(a["h"], need)
         if need > a["h"] + 0.01:
             grown.append((i, a["y"], a["y"] + a["h"], a["x"], a["x"] + a["w"], need - a["h"]))
+    # 1b) 문장 끝에 붙는 개체 (인디자인 앵커 개체) — anchor.after 로 자리 이름을 가리킨다
+    bybind = {a.get("bind"): (i, a) for i, a in enumerate(atoms) if a.get("bind")}
+    pw_now = float(width or part.get("w") or 0)
+    for a in atoms:
+        an = a.get("anchor")
+        if not an or not an.get("after"):
+            continue
+        tgt = bybind.get(an["after"])
+        if not tgt:
+            ctx.warn(f"붙일 자리 {an['after']} 가 부품 {part.get('id')} 에 없다")
+            continue
+        ti, t = tgt
+        plain = plains.get(ti, "")
+        x = float(t["x"]) + text_end(plain, float(t["w"]), float(t["size"]), t) + float(an.get("gap") or 2)
+        if pw_now:
+            x = min(x, pw_now - float(a.get("w") or 0))                    # 부품 밖으로는 안 나간다
+        a["x"] = round(max(x, float(t["x"])), 3)
+        lead = (t.get("leading") or t["size"] * 1.45) * PT
+        need = text_h(plain, float(t["w"]), float(t["size"]), t.get("leading"), t)
+        lines = max(1, int(round(need / lead))) if lead else 1
+        a["y"] = round(float(a["y"]) + (lines - 1) * lead, 3)              # 마지막 줄 옆으로
     # 2) 밀기·늘리기 — 자란 글 아래에 있는 원자는 내려가고, 자란 글을 **가로세로로 감싸는** 상자는 늘어난다
     #    (옆에 나란히 선 원 O/X 는 세로 범위가 같아도 감싸는 게 아니다 — 실측: 원이 타원이 됐다)
     out = []
@@ -821,7 +867,8 @@ def part_svg(ctx, part, values=None, types=None, width=None):
                 continue                                          # 자기 자신
             if y >= gy1 - 0.01:
                 dy += d                                           # 아래 것 → 민다
-            elif (a.get("t") in ("rect", "image") and y <= gy0 + 0.01 and y + h >= gy1 - 0.01
+            elif (a.get("t") in ("rect", "image") and not a.get("anchor")      # 문장 끝에 붙는 개체는 안 늘어난다
+                  and y <= gy0 + 0.01 and y + h >= gy1 - 0.01
                   and a["x"] <= gx0 + 0.01 and a["x"] + a["w"] >= gx1 - 0.01):
                 dh += d                                           # 감싸는 상자 → 늘인다
         if a.get("t") == "text":

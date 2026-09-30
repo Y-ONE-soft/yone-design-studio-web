@@ -1851,6 +1851,10 @@ function side() {
     } else {
       const a = it.atom;
       h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `` : ""}`;
+      const sibs = editing && editing.part ? (page.items.map(x => x.atom).filter(x => x && x.bind && x !== a)) : [];   // 같은 요소 안의 글 자리들
+      if (sibs.length) h += `<div class="f"><span title="인디자인 앵커 개체 — 글이 길어지면 이 개체도 따라 밀린다. 실제 워크북의 O/X 상자가 이렇게 문장 끝에 붙는다">문장 끝에 붙이기</span><span style="display:flex;gap:4px">
+        <select data-a="anchor.after"><option value="">안 붙임 (자리 고정)</option>${sibs.map(x => `<option value="${esc(x.bind)}" ${(a.anchor || {}).after === x.bind ? "selected" : ""}>${esc((Object.fromEntries(allSlots()))[x.bind] || x.bind)} 끝에</option>`).join("")}</select>
+        ${(a.anchor || {}).after ? `<input type="number" step="0.5" min="0" style="width:56px" data-a="anchor.gap" value="${a.anchor.gap == null ? 2 : a.anchor.gap}" title="글 끝과의 사이 mm">` : ""}</span></div>`;
       if (a.t === "text") h += `<h3>원고 <span class="note" style="display:inline">이 상자에 무엇이 들어오나 — 우리 것(인디자인의 XML 태그 자리)</span></h3>
         <div class="f"><span>원고 자리</span><span style="display:flex;gap:4px">
           <select data-a="bindsel" title="이 글상자에 원고의 무엇이 들어올지 고른다. 「고정 글」이면 원고와 상관없는 글">
@@ -2050,6 +2054,9 @@ function side() {
     else if (k === "grad") { if (v) a.gradient = {type: "linear", angle: 90, stops: [{c: a.fill || "$s1"}, {c: "$white"}]}; else delete a.gradient; }
     else if (k.startsWith("grad.")) { const g = a.gradient; if (!g) return; const kk = k.slice(5); if (kk === "c0") g.stops[0].c = v || "$ink"; else if (kk === "c1") g.stops[g.stops.length - 1].c = v || "$white"; else if (kk === "angle") g.angle = v; else if (kk === "type") { g.type = v; if (v === "radial") delete g.angle; } }
     else if (k === "radius4") { const r = String(v).split(/[,\s]+/).filter(Boolean).map(Number); if (r.length === 4 && r.every(x => x >= 0)) a.radius = r.every(x => x === r[0]) ? r[0] : r; else if (!v) { if (Array.isArray(a.radius)) delete a.radius; } }
+    else if (k.startsWith("anchor.")) { const kk = k.slice(7);          // 문장 끝에 붙이기 (앵커 개체)
+      if (kk === "after") { if (v) a.anchor = Object.assign({}, a.anchor, {after: v}); else delete a.anchor; }
+      else if (a.anchor) a.anchor.gap = v; }
     else if (k.startsWith("img.")) { const kk = k.slice(4); if (i.value === "") { delete a.img; } else { a.img = a.img || {x: 0, y: 0, w: a.w, h: a.h}; a.img[kk] = v; } }
     else if (["tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "inset", "gutter", "leading"].includes(k)) { if (v) a[k] = v; else delete a[k]; }
     else if (k === "num") { if (v) a.num = v; else { delete a.num; delete a.num_start; } }

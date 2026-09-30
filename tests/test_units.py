@@ -97,6 +97,26 @@ def test_load_failure_does_not_wipe(lib, tmp_path):
     assert len(store.load("pages")) == len(lib["pages"])
 
 
+def test_anchor_follows_sentence(lib):
+    """문장 끝에 붙는 개체 — 문장이 길면 오른쪽으로, 두 줄이면 아래 줄 옆으로 (실제 워크북의 O/X 상자)."""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib)
+    part = {"id": "ox", "name": "O/X 줄", "w": 170, "h": 6, "atoms": [
+        {"t": "text", "x": 8, "y": 0, "w": 120, "h": 5, "font": "$body", "size": 9, "bind": "sentence", "text": "짧다"},
+        {"t": "rect", "x": 0, "y": 0, "w": 21, "h": 4.5, "fill": "$white", "anchor": {"after": "sentence", "gap": 3}}]}
+    assert store.validate("parts", part) is None
+
+    def box_x(sentence):
+        import re
+        svg, _h = render.part_svg(ctx, part, {"sentence": sentence}, {"sentence": "rich"})
+        m = re.findall(r'<rect[^>]*?\sx="([\d.]+)"', svg)
+        return float(m[-1])
+    short = box_x("Ten words.")
+    longer = box_x("This sentence is quite a lot longer than the first one.")
+    assert longer > short + 5, (short, longer)                       # 글이 길수록 오른쪽으로
+    assert box_x("x" * 400) <= 170 - 21 + 0.01                       # 부품 밖으로는 안 나간다
+
+
 def test_layout_check_catches_mess(lib):
     """판 짜임새 검수 — 면 밖 · 자리 겹침 · 줄 간격 들쭉날쭉을 잡는다 (눈으로 보기 전에)."""
     from core.units import check, render, store

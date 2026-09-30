@@ -890,13 +890,14 @@ try:
         if not k: return (False, "「어법 O/X」 줄 없음")
         click(*k)
         ok = wait(f"LIB.blocks.length === {nb + 1}", 15)
+        js("window.__q1 = LIB.blocks[LIB.blocks.length - 1].id")      # Q2 가 쓸 블록 — 라이브러리에 다른 블록이 있어도 흔들리지 않게
         blk = js("(() => { const b = LIB.blocks[LIB.blocks.length - 1]; return JSON.stringify({name: b.name, vs: (b.variants || []).length}); })()")
         return (ok and "무엇의 모양" in head, f"창 머리 「{head[:16]}」 · {blk}")
     step("Q1 ★ 저장 → 새 유형으로 저장", q1)
 
     def q2():
         """같은 자리 조합을 다시 저장하면 그 유형의 **새 모양**이 된다 (블록은 안 늘어난다)"""
-        nb = js("LIB.blocks.length"); bid = js("LIB.blocks[LIB.blocks.length - 1].id")
+        nb = js("LIB.blocks.length"); bid = js("window.__q1 || LIB.blocks[LIB.blocks.length - 1].id")
         vs0 = js(f"(LIB.blocks.find(b => b.id === '{bid}').variants || []).length")
         mkrow(210)
         click(*center("#t-up")); time.sleep(1.0)
