@@ -124,6 +124,7 @@ try:
     NAME = "감사문서" + str(int(time.time()) % 100000)
     OLD_PLANS = set(js("(LIB.plans || []).map(p => p.id)") or [])      # 감사는 남의 문서를 절대 안 건드린다
     OLD_PAGES = list(js("(LIB.pages || []).map(p => p.id)") or [])     # 원래 있던 지면 — 뒷정리에서 안 건드린다
+    OLD_UNITS = {k: list(js(f"(LIB.{k} || []).map(x => x.id)") or []) for k in ("blocks", "parts")}   # 원래 있던 요소 — 감사가 만든 것만 끝에 지운다
     def a2():
         js(f"window.__promptv = {json.dumps(NAME)}"); c0 = center("#pcards .pcard.new"); t0 = time.time(); click(*c0); js("window.__promptv = null")
         # 새 문서는 빈 종이라 요소가 없다 — 지면이 그려지면 열린 것
@@ -532,10 +533,7 @@ try:
         js(f"select([{TXT}, {RECT}], {RECT})"); time.sleep(0.4); nb = js("LIB.blocks.length")
         b = center("#t-up") if visible("#t-up") else None
         if not b: return (False, "★ 요소로 저장 버튼 안 보임")
-        click(*b); time.sleep(1.0)
-        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-item]')].find(x => !x.dataset.item.startsWith('__')); if (!d) return null; d.scrollIntoView({block: 'center'}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
-        if k:
-            click(*k)                                            # ★ 요소로 저장 → 유형 고르기 창에서 하나 고른다
+        click(*b)                                                # ★ 요소로 저장 → 이름만 (기본값) → 바로 저장
         ok = wait(f"LIB.blocks.length === {nb + 1}", 12)
         return (ok and js("page.items.some(it => it.block && it.block.startsWith('x'))") or ok, f"blocks {nb}→{js('LIB.blocks.length')}")
     step("M1 둘 골라 ★ 요소로 저장 → 팔레트에 새 요소", m1)
@@ -879,40 +877,16 @@ try:
               const n = page.items.length; select([n - 3, n - 2, n - 1], n - 1); save(); render(); })()""" % y)
         time.sleep(1.2)
     def q1():
-        """★ 저장 → 창에서 새 유형을 고르면 그 이름의 블록이 생긴다"""
+        """★ 저장 → 이름만 적으면 바로 그 이름의 블록 (고르는 창 없음)"""
         nb = js("LIB.blocks.length"); mkrow(180)
         b = center("#t-up")
         if not b: return (False, "★ 요소로 저장 버튼 안 보임")
-        click(*b); time.sleep(1.0)
-        if not wait("sheetKind === 'newblock'", 5): return (False, "창이 안 뜸")
-        head = js("(document.querySelector('#shd') || {}).textContent || ''")
-        k = js("(() => { const d = [...document.querySelectorAll('#sbody [data-item]')].find(x => x.dataset.item === 'grammar-ox'); if (!d) return null; d.scrollIntoView({block: 'center'}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
-        if not k: return (False, "「어법 O/X」 줄 없음")
-        click(*k)
-        ok = wait(f"LIB.blocks.length === {nb + 1}", 15)
-        js("window.__q1 = LIB.blocks[LIB.blocks.length - 1].id")      # Q2 가 쓸 블록 — 라이브러리에 다른 블록이 있어도 흔들리지 않게
-        blk = js("(() => { const b = LIB.blocks[LIB.blocks.length - 1]; return JSON.stringify({name: b.name, vs: (b.variants || []).length}); })()")
-        return (ok and "무엇의 모양" in head, f"창 머리 「{head[:16]}」 · {blk}")
-    step("Q1 ★ 저장 → 새 유형으로 저장", q1)
-
-    def q2():
-        """같은 자리 조합을 다시 저장하면 그 유형의 **새 모양**이 된다 (블록은 안 늘어난다)"""
-        nb = js("LIB.blocks.length"); bid = js("window.__q1 || LIB.blocks[LIB.blocks.length - 1].id")
-        vs0 = js(f"(LIB.blocks.find(b => b.id === '{bid}').variants || []).length")
-        mkrow(210)
-        click(*center("#t-up")); time.sleep(1.0)
-        if not wait("sheetKind === 'newblock'", 5): return (False, "창이 안 뜸")
-        k = js(f"(() => {{ const d = document.querySelector('#sbody [data-var=\"{bid}\"]'); if (!d) return null; d.scrollIntoView({{block: 'center'}}); const r = d.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }})()")
-        if not k: return (False, "「… 의 새 모양」 줄 없음")
-        click(*k)
-        ok = wait(f"(LIB.blocks.find(b => b.id === '{bid}').variants || []).length === {vs0 + 1}", 15)
-        same_n = js("LIB.blocks.length") == nb                     # 유형은 안 늘어난다
-        inskin = js(f"(skin().variants || {{}})['{bid}'] === 'v{vs0 + 1}'")   # 이 책은 새 모양을 쓴다
-        js(f"(() => {{ const i = page.items.findIndex(it => it.block === '{bid}'); if (i >= 0) select([i], i); }})()"); time.sleep(0.8)
-        hasui = visible("#var")                                     # 오른쪽에 「모양」 고르는 칸
-        return (ok and same_n and inskin and hasui,
-                f"모양 {vs0}→{js(f'(LIB.blocks.find(b => b.id === \'{bid}\').variants || []).length')} · 유형 그대로={same_n} · 옷에 저장={inskin} · 오른쪽 모양 칸={hasui}")
-    step("Q2 같은 유형의 새 모양 — 블록은 안 늘고 옷이 고른다", q2)
+        js("window.__promptv = '감사 줄'"); click(*b)
+        ok = wait(f"LIB.blocks.length === {nb + 1}", 15); js("window.__promptv = null")
+        nosheet = js("sheetKind === ''")
+        blk = js("(() => { const b = LIB.blocks[LIB.blocks.length - 1]; return JSON.stringify({name: b.name, accepts: b.accepts || []}); })()")
+        return (ok and nosheet and '"감사 줄"' in (blk or ""), f"창 없음={nosheet} · {blk}")
+    step("Q1 ★ 저장 → 이름만 적으면 바로 저장", q1)
 
     # ───────── R. 번호 매기기 ─────────
     def r1():
@@ -1013,6 +987,10 @@ try:
             if (!used) await api('/api/units/pages', {id: p.id}, 'DELETE');
         }
         await api('/api/units/sets', {id: '77'}, 'DELETE'); })()""" % json.dumps(OLD_PAGES)); time.sleep(3)
+    js("""(async () => {                                      // 감사가 만든 요소(★ 저장·설명으로 만들기)도 — 안 지우면 라이브러리에 쌓인다
+        const keep = %s, j = await api('/api/units/library');
+        for (const k of ["blocks", "parts"]) for (const x of j[k] || []) if (!keep[k].includes(x.id)) await api('/api/units/' + k, {id: x.id}, 'DELETE');
+        })()""" % json.dumps(OLD_UNITS)); time.sleep(3)
     if MADE_SEED:
         js("(async () => { await api('/api/units/blocks', {id: 'passage'}, 'DELETE'); await api('/api/units/parts', {id: 'audit_passage'}, 'DELETE'); })()"); time.sleep(1.5)
 finally:
