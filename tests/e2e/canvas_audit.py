@@ -200,12 +200,12 @@ try:
 
     # ───────── C. 요소 넣기 ─────────
     # 감사가 쓰는 씨앗 요소 — 라이브러리를 비운 상태에서도 돌게 직접 만든다 (끝에 지운다)
-    MADE_SEED = not js("!!(LIB.blocks || []).some(b => b.id === 'passage')")
+    MADE_SEED = not js("!!(LIB.blocks || []).some(b => b.id === 'passage' && b.name === '지문 상자 (감사)')")
     if MADE_SEED:
         js("""(async () => {
-            await api('/api/units/parts', {id: 'audit_passage', name: '지문 상자', w: 149, h: 41,
+            await api('/api/units/parts', {id: 'audit_passage', name: '지문 상자 (감사)', w: 149, h: 41,
                 atoms: [{t: 'text', x: 0, y: 0, w: 149, h: 41, font: '$body', size: 9, color: '$ink', bind: 'passage', text: '지문이 여기에 들어온다.'}]});
-            await api('/api/units/blocks', {id: 'passage', name: '지문 상자', source: 'content',
+            await api('/api/units/blocks', {id: 'passage', name: '지문 상자 (감사)', source: 'content',
                 fields: {passage: {type: 'rich', required: true}}, variants: [{id: 'v1', name: '기본', part: 'audit_passage'}]});
             const j2 = await api('/api/units/library'); LIB.parts = j2.parts; LIB.blocks = j2.blocks; panel(); })()"""); time.sleep(2.0)
         wait("(LIB.blocks || []).some(b => b.id === 'passage')", 10)
@@ -223,8 +223,8 @@ try:
     step("C1 「글상자」 고르고 지면에서 끌면 그 크기로 그려진다 (인디자인처럼)", c1)
     def c2():
         n0 = n_items()
-        js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자'); if (el) el.scrollIntoView({block: 'center'}); })()"); time.sleep(0.5)
-        cardc = js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자'); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자 (감사)'); if (el) el.scrollIntoView({block: 'center'}); })()"); time.sleep(0.5)
+        cardc = js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자 (감사)'); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not cardc: return (False, "지문 상자 카드 없음")
         tx, ty = paper_pt(30, 100); drag(cardc[0], cardc[1], tx, ty, steps=12)
         ok = wait(f"page.items.length === {n0 + 1}", 8)
