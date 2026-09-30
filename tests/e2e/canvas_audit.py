@@ -528,15 +528,15 @@ try:
         return (ok and ok2, f"pdf={u and u[:40]} print={ok2}")
     step("L5 ⬇ PDF · 🖨 인쇄용 → PDF 가 나온다", l5)
 
-    # ───────── M. 요소로 저장 · 설명으로 만들기 ─────────
+    # ───────── M. 블록으로 저장 · 설명으로 만들기 ─────────
     def m1():
         js(f"select([{TXT}, {RECT}], {RECT})"); time.sleep(0.4); nb = js("LIB.blocks.length")
         b = center("#t-up") if visible("#t-up") else None
-        if not b: return (False, "★ 요소로 저장 버튼 안 보임")
-        click(*b)                                                # ★ 요소로 저장 → 이름만 (기본값) → 바로 저장
+        if not b: return (False, "★ 블록으로 저장 버튼 안 보임")
+        click(*b)                                                # ★ 블록으로 저장 → 이름만 (기본값) → 바로 저장
         ok = wait(f"LIB.blocks.length === {nb + 1}", 12)
         return (ok and js("page.items.some(it => it.block && it.block.startsWith('x'))") or ok, f"blocks {nb}→{js('LIB.blocks.length')}")
-    step("M1 둘 골라 ★ 요소로 저장 → 팔레트에 새 요소", m1)
+    step("M1 둘 골라 ★ 블록으로 저장 → 팔레트에 새 요소", m1)
     def m2():
         r = rect("#ai");
         if not r: return (False, "설명 입력 없음")
@@ -692,8 +692,8 @@ try:
         alive = js(f"LIB.blocks.filter(b => b.group === {json.dumps(gid)}).length")
         head = js("[...document.querySelectorAll('#pbody h3')].map(h => h.textContent.replace(/[▾▸✎✕]/g, ''))")
         js(f"(async () => {{ for (const b of LIB.blocks.filter(b => b.group === {json.dumps(gid)})) {{ delete b.group; await api('/api/units/blocks', b); }} }})()"); time.sleep(1.2)
-        return (ok and alive >= 1 and any("내가 만든 요소" in h for h in head),
-                f"지운 뒤 줄 {head} · 그 안에 있던 요소 {alive}개는 살아서 「내가 만든 요소」로")
+        return (ok and alive >= 1 and any("내가 만든 블록" in h for h in head),
+                f"지운 뒤 줄 {head} · 그 안에 있던 요소 {alive}개는 살아서 「내가 만든 블록」로")
     step("O4 카테고리 지우기 (✕) — 요소는 안 지운다", o4)
 
     def o5():
@@ -880,7 +880,7 @@ try:
         """★ 저장 → 이름만 적으면 바로 그 이름의 블록 (고르는 창 없음)"""
         nb = js("LIB.blocks.length"); mkrow(180)
         b = center("#t-up")
-        if not b: return (False, "★ 요소로 저장 버튼 안 보임")
+        if not b: return (False, "★ 블록으로 저장 버튼 안 보임")
         js("window.__promptv = '감사 줄'"); click(*b)
         ok = wait(f"LIB.blocks.length === {nb + 1}", 15); js("window.__promptv = null")
         nosheet = js("sheetKind === ''")

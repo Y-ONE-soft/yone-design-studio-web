@@ -312,7 +312,7 @@
       <div class="rsz" data-rsz="l" title="끌어서 폭 바꾸기 (두 번 누르면 기본)"></div>
       <div class="hd" id="phd"></div>
       <div class="body" id="pbody"></div>
-      <div class="ft"><a href="/units/library">PDF·그림에서 요소 뽑기 · 고급(JSON) →</a></div>
+      <div class="ft"><a href="/units/library">PDF·그림에서 블록 뽑기 · 고급(JSON) →</a></div>
     </div>
   </div>
 
@@ -334,7 +334,7 @@
       <span class="ctrl" id="ctrl"></span>
       <span class="st" id="st"></span>
     </div>
-    <button class="unfold" id="unfold-left" title="요소 패널 펴기 (Ctrl+\\)">▶</button>
+    <button class="unfold" id="unfold-left" title="블록 패널 펴기 (Ctrl+\\)">▶</button>
     <div class="thint" id="thint"></div>
     <div class="sheet-bg" id="sheetbg"><div class="sheetbox"><div class="shd"><div id="shd"></div><button class="btn sm sub" id="sheet-x">닫기</button></div><div class="sbody" id="sbody"></div></div></div>
     <div class="trail" id="trail">
@@ -356,7 +356,7 @@
     <div class="pv" id="pv" style="display:none"><div class="pvbar"><b id="pvtitle"></b><span class="note" id="pvinfo"></span><a class="btn sm" id="pvpdf" target="_blank">⬇ PDF</a><button class="btn sm sub" id="pvclose">닫기</button></div><div class="pvbody" id="pvbody"></div></div>
     <div class="area" id="area">
       <div id="warn" class="warn" style="display:none"></div>
-      <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">편집 중 · 저장하면 이 요소를 쓴 곳 전부에 반영</span><button class="btn sm" id="edit-done">저장</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
+      <div id="editbar" class="editbar" style="display:none"><b id="editnm"></b><span class="note">편집 중 · 저장하면 이 블록을 쓴 곳 전부에 반영</span><button class="btn sm" id="edit-done">저장</button><button class="btn sm sub" id="edit-cancel">취소</button></div>
       <div class="pages" id="pages">
       <div class="paper" id="paper"><div class="svgwrap" id="svgwrap"></div>
         <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rot" data-rot title="회전 (Shift = 15°)"></span><span class="hd" data-h="nw"></span><span class="hd" data-h="n"></span><span class="hd" data-h="ne"></span><span class="hd" data-h="w"></span><span class="hd" data-h="e"></span><span class="hd" data-h="sw"></span><span class="hd" data-h="s"></span><span class="hd" data-h="se"></span></div>
@@ -365,7 +365,7 @@
         <textarea id="tedit" class="tedit" style="display:none"></textarea>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
         <div class="tools" id="tools">
-          <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 요소를 고치려면 풀어서 고친 뒤 다시 요소로 저장">그룹 해제</button><button id="t-up" title="고른 것을 요소 패널에 저장한다. 글상자의 「자리 이름」이 원고가 들어올 자리가 된다">★ 요소로 저장</button>
+          <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 블록을 고치려면 풀어서 고친 뒤 다시 블록으로 저장">그룹 해제</button><button id="t-up" title="고른 것을 블록 패널에 저장한다. 글상자의 「자리 이름」이 원고가 들어올 자리가 된다">★ 블록으로 저장</button>
           <span class="sep"></span>
           <button data-al="l" title="왼쪽 맞춤">⇤</button><button data-al="c" title="가로 가운데">⇹</button><button data-al="r" title="오른쪽 맞춤">⇥</button><button data-al="t" title="위 맞춤">⤒</button><button data-al="m" title="세로 가운데">⇳</button><button data-al="b" title="아래 맞춤">⤓</button><button data-ds="h" title="가로 간격 같게">↔</button><button data-ds="v" title="세로 간격 같게">↕</button><button data-ms="w" title="폭 같게">⊟</button><button data-ms="h" title="높이 같게">⊞</button>
           <span class="sep"></span>
@@ -379,12 +379,12 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span class="help" title="도구: V 선택 · H 손 · T 글상자 · R 면 · O 원 · L 선 · P 도형 · I 그림 — 고르고 지면에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 요소 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(요소 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 쪽 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
+        <span class="help" title="도구: V 선택 · H 손 · T 글상자 · R 면 · O 원 · L 선 · P 도형 · I 그림 — 고르고 지면에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · 빈 곳(페이지 밖도) 끌기 = 범위 · 개체 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(블록 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 쪽 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <button class="btn sm sub" id="f-cnt" title="쪽 띠 펴기·접기 (Ctrl+Alt+\\)"><span class="cnt" id="cnt"></span></button>
         <button class="btn sm sub" id="f-addpg" title="이 페이지 뒤에 새 본문 페이지">＋ 쪽</button>
-        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 요소 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="이어 보기 — 지면을 세로로 이어 놓는다. 굴리면 다음 쪽으로 넘어간다">연속</button><button class="btn sm sub" id="tg-spread" title="펼침면 — 인디자인의 「페이지 마주보기」. 2·3쪽이 한 장처럼 붙어 보이고 1쪽은 오른쪽에 선다. 펼침 보기에선 지면 둘레 대지를 안 그린다">펼침</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
+        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 블록 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 쪽 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="이어 보기 — 지면을 세로로 이어 놓는다. 굴리면 다음 쪽으로 넘어간다">연속</button><button class="btn sm sub" id="tg-spread" title="펼침면 — 인디자인의 「페이지 마주보기」. 2·3쪽이 한 장처럼 붙어 보이고 1쪽은 오른쪽에 선다. 펼침 보기에선 지면 둘레 대지를 안 그린다">펼침</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
-        <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 요소·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button><button class="btn sm sub" id="tg-slots" title="원고 자리 — 글이 들어올 칸에 이름표를 띄운다">자리</button>
+        <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 개체·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button><button class="btn sm sub" id="tg-slots" title="원고 자리 — 글이 들어올 칸에 이름표를 띄운다">자리</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
         <select id="fitsel" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 쪽이 다 보이게"><option value="width">폭 맞춤</option><option value="page">전체 맞춤</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
       </div>
@@ -510,7 +510,7 @@ async function movePageTo(fromId, toIndex) {
 async function deletePage(p) {
   p = p || page; if (!p || !plan) return;
   const n = (p.items || []).length; const shared = usedElsewhere(p.id);
-  if (!confirm(`페이지 「${p.name || p.id}」 을 지울까?${n ? ` (요소 ${n}개도 함께)` : ""}${shared ? "\n다른 문서에서도 쓰는 페이지라 라이브러리엔 남는다." : ""}`)) return;
+  if (!confirm(`페이지 「${p.name || p.id}」 을 지울까?${n ? ` (개체 ${n}개도 함께)` : ""}${shared ? "\n다른 문서에서도 쓰는 페이지라 라이브러리엔 남는다." : ""}`)) return;
   const ids = planIds(plan); const i = ids.indexOf(p.id); ids.splice(i, 1); setPlanIds(ids); await savePlan();
   if (!shared) { await api("/api/units/pages", {id: p.id}, "DELETE"); LIB.pages = LIB.pages.filter(x => x.id !== p.id); delete pageSvg[p.id]; }
   const dp = docPages();
@@ -802,7 +802,7 @@ function steps() {
     return `<div class="steps done">✓ <b>${esc(blk.name)}</b> — 원고 자리 ${esc(fs.join(" · "))} 를 받는다<div class="note">원고를 고르면 이 자리에 글이 들어온다</div></div>`;
   }
   if (atoms.length && binds.length === atoms.length) {           // 원고 자리만 달아도 원고가 들어온다 (인디자인 데이터 병합처럼)
-    return `<div class="steps done">✓ 원고 자리 연결 — 오른쪽 <b>「원고」</b>를 고르면 이 상자에 글이 들어온다<div class="note">여러 지면에 다시 쓸 모양이면 <b>★ 요소로 저장</b></div></div>`;
+    return `<div class="steps done">✓ 원고 자리 연결 — 오른쪽 <b>「원고」</b>를 고르면 이 상자에 글이 들어온다<div class="note">여러 지면에 다시 쓸 모양이면 <b>★ 블록으로 저장</b></div></div>`;
   }
   else if (atoms.length) { n = 2; tip = "아래 <b>「원고 자리」</b> 에서 무엇이 들어올지 고른다"; }
   const lbl = ["글상자 그리기", "원고 자리 고르기", "원고 고르기"];
@@ -1184,7 +1184,7 @@ function cmenu(e) {
   if (hit && !sels.has(+hit.dataset.fi)) select([+hit.dataset.fi]);
   const it = sel != null ? page.items[sel] : null;
   const rows = it ? [["오려두기", "Ctrl+X", cutSel], ["복사", "Ctrl+C", copySel], ["붙여넣기", "Ctrl+V", paste], ["복제", "Ctrl+D", dupSel], null,
-    ...(sels.size > 1 ? [["그룹", "Ctrl+G", () => groupToPart()]] : []), ...(it.block || it.part ? [["편집 (안으로)", "더블클릭", () => enterEdit(sel)], ["그룹 해제", "Ctrl+Shift+G", ungroup]] : []), ["★ 요소로 저장", "", saveAsElement], null,
+    ...(sels.size > 1 ? [["그룹", "Ctrl+G", () => groupToPart()]] : []), ...(it.block || it.part ? [["편집 (안으로)", "더블클릭", () => enterEdit(sel)], ["그룹 해제", "Ctrl+Shift+G", ungroup]] : []), ["★ 블록으로 저장", "", saveAsElement], null,
     ["맨 앞으로", "Ctrl+Shift+]", () => zorder(true)], ["앞으로", "Ctrl+]", () => zstep(true)], ["뒤로", "Ctrl+[", () => zstep(false)], ["맨 뒤로", "Ctrl+Shift+[", () => zorder(false)], null,
     [it.lock ? "잠금 해제" : "잠금", "Ctrl+L", lockSel], ["숨기기", "", () => hideItem(sel)], ["지우기", "Delete", removeSel]]
     : [["붙여넣기", "Ctrl+V", paste], ["전체 선택", "Ctrl+A", () => select(page.items.map((_, i) => i))], null, ["페이지 복제", "", () => addPage("dup")], ["페이지 지우기", "", () => deletePage()]];
@@ -1423,7 +1423,7 @@ function itemList() {
     const fs = Object.keys(b.fields || {});
     for (const acc of (b.accepts || [])) if (!m.has(acc)) m.set(acc, {key: acc, name: acc, hint: "", fields: fs});
     const k = (b.kind || b.name || b.id).trim();
-    if (!m.has(k)) m.set(k, {key: k, name: b.name || k, hint: "지금 있는 요소", fields: fs});
+    if (!m.has(k)) m.set(k, {key: k, name: b.name || k, hint: "지금 있는 블록", fields: fs});
     else if (!m.get(k).fields.length) m.get(k).fields = fs;
   }
   for (const st of LIB.sets || []) {
@@ -1445,22 +1445,22 @@ function suggestName() {
     if (TYPE_BY_SLOT[b]) return TYPE_BY_SLOT[b];
   }
   if (binds.includes("sentence") && binds.includes("answer")) return "O/X 줄";
-  return "새 요소";
+  return "새 블록";
 }
 function saveAsElement() {
   // 고른 것 → 블록. 이름만 묻고 바로 저장 — 원고 자리가 있으면 그 원고가 들어오고, 없으면 장식.
   const binds = [...sels].map(i => page.items[i] && page.items[i].atom && page.items[i].atom.bind).filter(Boolean);
-  const v = prompt("요소 이름", suggestName()); if (v == null || !v.trim()) return;
+  const v = prompt("블록 이름", suggestName()); if (v == null || !v.trim()) return;
   const name = v.trim(), accepts = binds.length ? [...new Set([name, ...matchItems(binds)])] : [];
   (async () => {
     if (sels.size > 1 || [...sels].every(i => page.items[i] && page.items[i].atom)) { await groupToPart(name); await new Promise(r => setTimeout(r, 150)); }
     if (sel != null && page.items[sel] && page.items[sel].part) await partToBlock(sel, name, name, accepts);
-    say(`「${name}」 저장 — 왼쪽 「내가 만든 요소」에서 다른 지면에 끌어다 쓴다${accepts.length ? "" : " (원고 안 들어오는 장식)"}`);
+    say(`「${name}」 저장 — 왼쪽 「내가 만든 블록」에서 다른 지면에 끌어다 쓴다${accepts.length ? "" : " (원고 안 들어오는 장식)"}`);
   })();
 }
 async function partToBlock(i, name, kind, accepts) {
   const it = page.items[i]; const part = byId("parts")[it.part]; if (!part) return;
-  if (name == null) { name = prompt("요소 이름", part.name); if (name == null) return; }
+  if (name == null) { name = prompt("블록 이름", part.name); if (name == null) return; }
   const fields = {}; for (const a of part.atoms) if (a.bind && !a.bind.startsWith("sys.")) fields[a.bind] = {type: a.bind === "no" ? "number" : (a.bind === "choices" ? "choices" : (a.bind === "answer" ? "answer" : "rich"))};
   let bid = part.id; if (byId("blocks")[bid]) { let n = 1; while (byId("blocks")[part.id + "_" + n]) n++; bid = part.id + "_" + n; }
   const block = {id: bid, name, source: Object.keys(fields).length ? "content" : "none", fields, variants: [{id: "v1", name: "기본", part: part.id}]};
@@ -1527,13 +1527,13 @@ function panel() {
   const hd = $("#phd"), body = $("#pbody"); body.innerHTML = "";
   if (sheetKind) fillSheet();                       // 열려 있는 브랜드·원고 창도 같이
   {
-    hd.innerHTML = `<div class="ttl"><b>요소</b><button class="fold" id="fold-left" title="접기 (Ctrl+\\)">◧</button></div>
-      <div class="ai"><div class="box"><input type="text" id="ai" placeholder="설명으로 요소 만들기…" title="클로드가 그려서 요소로 저장하고 넣는다 (15초)"><button class="btn sm" id="btn-ai">만들기</button></div><div class="note" id="ainote" style="display:none"></div></div>
+    hd.innerHTML = `<div class="ttl"><b>블록</b><button class="fold" id="fold-left" title="접기 (Ctrl+\\)">◧</button></div>
+      <div class="ai"><div class="box"><input type="text" id="ai" placeholder="설명으로 블록 만들기…" title="클로드가 그려서 블록으로 저장하고 넣는다 (15초)"><button class="btn sm" id="btn-ai">만들기</button></div><div class="note" id="ainote" style="display:none"></div></div>
       <div class="howto"><button class="btn sm sub" id="howto-btn">? 원고 들어오는 블록 만드는 법</button>
         <ol id="howto" style="display:none">
           <li>도구로 <b>글상자</b>를 그린다</li>
           <li>오른쪽 <b>「원고 자리」</b>에서 무엇이 들어올지 고른다 (지문 본문 · 발문 · 선지 …)</li>
-          <li>다 고르면 <b>★ 요소로 저장</b> → 이름만 적으면 왼쪽 「내가 만든 요소」에 들어간다</li>
+          <li>다 고르면 <b>★ 블록으로 저장</b> → 이름만 적으면 왼쪽 「내가 만든 블록」에 들어간다</li>
           <li>그 카드를 지면에 놓고, 오른쪽 <b>「원고」</b> 를 고르면 글이 들어온다</li>
         </ol></div>`;
     $("#howto-btn").onclick = () => { const o = $("#howto"); const on = o.style.display === "none";
@@ -1569,12 +1569,12 @@ function panel() {
         d.querySelector(".cact").onclick = (e) => { e.stopPropagation(); moveMenu(e.currentTarget, it); };
         g.appendChild(d);
       }
-      if (!items.length) g.insertAdjacentHTML("beforeend", `<div class="note" style="grid-column:1/-1">비었다 — 요소 카드의 ▾ 로 옮겨 온다</div>`);
+      if (!items.length) g.insertAdjacentHTML("beforeend", `<div class="note" style="grid-column:1/-1">비었다 — 블록 카드의 ▾ 로 옮겨 온다</div>`);
       body.appendChild(g); foldWire(h, g, key);
     };
     for (const g of gs) put(g.name, bag.get(g.id), g.id);
-    if (rest.length) put("내가 만든 요소", rest, "");
-    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:12px"><button class="btn sm sub" id="g-new" title="요소를 묶을 새 카테고리">＋ 카테고리</button></div>`);
+    if (rest.length) put("내가 만든 블록", rest, "");
+    body.insertAdjacentHTML("beforeend", `<div class="row" style="margin-top:12px"><button class="btn sm sub" id="g-new" title="블록을 묶을 새 카테고리">＋ 카테고리</button></div>`);
     $("#g-new").onclick = newGroup;
     body.querySelectorAll("[data-gren]").forEach(b => b.onclick = (e) => { e.stopPropagation(); renGroup(b.closest("h3").dataset.g); });
     body.querySelectorAll("[data-gdel]").forEach(b => b.onclick = (e) => { e.stopPropagation(); delGroup(b.closest("h3").dataset.g); });
@@ -1586,7 +1586,7 @@ const gFold = new Set(JSON.parse(localStorage.getItem("units.gfold") || "[]"));
 function foldHead(body, title, key, gid) {
   const open = !gFold.has(key);
   body.insertAdjacentHTML("beforeend", `<h3 class="fold" data-g="${esc(gid || "")}" data-k="${esc(key)}"><span class="tw">${open ? "▾" : "▸"}</span>${title}`
-    + (gid ? `<span class="gact"><button data-gren title="카테고리 이름 바꾸기">✎</button><button data-gdel title="카테고리 지우기 — 안의 요소는 「내가 만든 요소」로 간다">✕</button></span>` : "") + `</h3>`);
+    + (gid ? `<span class="gact"><button data-gren title="카테고리 이름 바꾸기">✎</button><button data-gdel title="카테고리 지우기 — 안의 블록은 「내가 만든 블록」으로 간다">✕</button></span>` : "") + `</h3>`);
   return body.lastElementChild;
 }
 function foldWire(h, g, key) {
@@ -1623,7 +1623,7 @@ async function renGroup(id) {
 async function delGroup(id) {
   const g = byId("groups")[id]; if (!g) return;
   const n = LIB.blocks.filter(b => groupOf(b) === id).length;
-  if (!confirm(`카테고리 「${g.name}」 을 지울까?${n ? `\n안에 있던 요소 ${n}개는 「내가 만든 요소」 로 간다 (요소 자체는 안 지운다).` : ""}`)) return;
+  if (!confirm(`카테고리 「${g.name}」 을 지울까?${n ? `\n안에 있던 블록 ${n}개는 「내가 만든 블록」으로 간다 (블록 자체는 안 지운다).` : ""}`)) return;
   const j = await api("/api/units/groups", {id: id}, "DELETE"); if (j.error) { $("#st").textContent = j.error; return; }
   LIB.groups = LIB.groups.filter(x => x.id !== id); panel(); $("#st").textContent = `카테고리 「${g.name}」 지움`;
 }
@@ -1632,7 +1632,7 @@ function moveMenu(btn, b) {
   let m = $("#gmenu");
   if (!m) { m = document.createElement("div"); m.className = "menu"; m.id = "gmenu"; document.body.appendChild(m); }
   m.innerHTML = (LIB.groups || []).map(g => `<button data-to="${esc(g.id)}">${esc(g.name)}${groupOf(b) === g.id ? " ✓" : ""}</button>`).join("")
-    + `<button data-to="">내가 만든 요소${groupOf(b) ? "" : " ✓"}</button><button data-to="+">＋ 새 카테고리…</button>`;
+    + `<button data-to="">내가 만든 블록${groupOf(b) ? "" : " ✓"}</button><button data-to="+">＋ 새 카테고리…</button>`;
   const r = btn.getBoundingClientRect();
   m.style.left = Math.min(r.left, innerWidth - 200) + "px"; m.style.top = (r.bottom + 4) + "px"; m.style.bottom = "auto";
   m.classList.add("on");
@@ -1647,7 +1647,7 @@ function moveMenu(btn, b) {
     const blk = byId("blocks")[b.id]; if (!blk) return;
     if (to) blk.group = to; else delete blk.group;
     const j = await api("/api/units/blocks", blk); if (j.error) { $("#st").textContent = j.error; return; }
-    panel(); $("#st").textContent = `「${blk.name}」 → ${to ? (byId("groups")[to] || {}).name : "내가 만든 요소"}`;
+    panel(); $("#st").textContent = `「${blk.name}」 → ${to ? (byId("groups")[to] || {}).name : "내가 만든 블록"}`;
   });
 }
 
@@ -1703,7 +1703,7 @@ function panelSkins(hd, body) {
         <div class="m3"><label>색<select data-st="${n}:color"><option value="">-</option>${Object.entries(sk.tokens.color || {}).map(([c, v]) => `<option value="$${c}" ${st.color === "$" + c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
         <div class="m3"><label>첫 줄 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div></div>`).join("")}
       <div class="row"><button class="btn sm sub" id="st-new">＋ 단락 스타일</button></div>
-      ${LIB.blocks.filter(b => (b.variants || []).length > 1).length ? `<h3>요소 모양 고르기</h3>${LIB.blocks.filter(b => (b.variants || []).length > 1).map(b => `<div class="f"><span>${esc(b.name)}</span><select data-var="${b.id}">${b.variants.map(v => `<option value="${v.id}" ${((sk.variants || {})[b.id] || b.variants[0].id) === v.id ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>`).join("")}` : ""}`);
+      ${LIB.blocks.filter(b => (b.variants || []).length > 1).length ? `<h3>블록 모양 고르기</h3>${LIB.blocks.filter(b => (b.variants || []).length > 1).map(b => `<div class="f"><span>${esc(b.name)}</span><select data-var="${b.id}">${b.variants.map(v => `<option value="${v.id}" ${((sk.variants || {})[b.id] || b.variants[0].id) === v.id ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>`).join("")}` : ""}`);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-font]").forEach(i => i.onchange = () => { sk.tokens.font[i.dataset.font] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-var]").forEach(i => i.onchange = () => { sk.variants = sk.variants || {}; sk.variants[i.dataset.var] = i.value; saveSkin(); render(); });
@@ -1739,7 +1739,7 @@ function panelSets(hd, body) {
       const r = await fetch("/api/units/manuscript?save=1", {method: "POST", body: fd}); gotSets(await r.json()); $("#set-file").value = ""; };
     $("#set-new").onclick = () => {
       const slots = (page ? page.items : []).filter(it => it.block && (byId("blocks")[it.block] || {}).source === "content");
-      if (!slots.length) { $("#setform").innerHTML = `<div class="note">이 페이지엔 원고가 들어갈 자리가 없다 — 자리 이름이 있는 요소를 놓는다</div>`; return; }
+      if (!slots.length) { $("#setform").innerHTML = `<div class="note">이 페이지엔 원고가 들어갈 자리가 없다 — 자리 이름이 있는 블록을 놓는다</div>`; return; }
       let n = 1; while (LIB.sets.some(x => x.id === String(n))) n++;
       $("#setform").innerHTML = `<div class="f"><span>종류</span><input type="text" id="sf-kind" value="passage"></div><div class="f"><span>번호</span><input type="text" id="sf-id" value="${n}"></div>` +
         slots.map((it, k) => { const b = byId("blocks")[it.block]; return `<h3>${k + 1}. ${esc(b.name)}</h3>` + Object.entries(b.fields || {}).map(([f, d]) => `<div class="f"><span>${f}</span>${d.type === "rich" || d.type === "text" ? `<textarea rows="2" data-sf="${k}:${f}"></textarea>` : `<input type="text" data-sf="${k}:${f}" placeholder="${d.type === "choices" ? "선지를 | 로 나눈다" : d.type}">`}</div>`).join(""); }).join("") +
@@ -1801,10 +1801,10 @@ function side() {
     } else if (u === "part") {
       const part = byId("parts")[it.part] || {atoms: []};
       h += `<div class="note">그룹 · ${part.atoms.length}개</div>
-        <div class="row"><button class="btn sm" id="s-toblock">★ 요소로 저장</button><button class="btn sm sub" id="s-down">그룹 해제</button></div>`;
+        <div class="row"><button class="btn sm" id="s-toblock">★ 블록으로 저장</button><button class="btn sm sub" id="s-down">그룹 해제</button></div>`;
     } else {
       const a = it.atom;
-      h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 요소로 저장</button></div>${sels.size > 1 ? `` : ""}`;
+      h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 블록으로 저장</button></div>${sels.size > 1 ? `` : ""}`;
       const sibs = editing && editing.part ? (page.items.map(x => x.atom).filter(x => x && x.bind && x !== a)) : [];   // 같은 요소 안의 글 자리들
       if (sibs.length) h += `<div class="f"><span title="인디자인 앵커 개체 — 글이 길어지면 이 개체도 따라 밀린다. 실제 워크북의 O/X 상자가 이렇게 문장 끝에 붙는다">문장 끝에 붙이기</span><span style="display:flex;gap:4px">
         <select data-a="anchor.after"><option value="">안 붙임 (자리 고정)</option>${sibs.map(x => `<option value="${esc(x.bind)}" ${(a.anchor || {}).after === x.bind ? "selected" : ""}>${esc((Object.fromEntries(allSlots()))[x.bind] || x.bind)} 끝에</option>`).join("")}</select>
@@ -1874,7 +1874,7 @@ function side() {
 `;
       h += `<details class="more" ${view.adv ? "open" : ""}><summary>모양 더 보기 — 개체 스타일 · 회전 · 불투명 · 그림자 · 감싸기</summary>
         <h3 style="border-top:0;margin-top:4px;padding-top:0">개체 스타일 · 레이어</h3>
-        <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">(직접)</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">기본</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 요소의 채움·획·모서리·효과를 이름 붙여 옷에 저장한다">스타일로</button></label></div>
+        <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">(직접)</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">기본</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 개체의 채움·획·모서리·효과를 이름 붙여 옷에 저장한다">스타일로</button></label></div>
         <h3>변형 — 인디자인 변형 패널</h3>
         <div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}" title="채움 색의 색조(인디자인 Tint)"></label></div>
         <div class="m3"><label>뒤집기<select data-a="flip"><option value="">없음</option>${[["h", "좌우"], ["v", "상하"], ["hv", "둘 다"]].map(([v, n]) => `<option value="${v}" ${a.flip === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>기울이기 가로 °<input type="number" data-a="skewx" step="1" value="${(a.skew || [0, 0])[0] || 0}"></label><label>세로 °<input type="number" data-a="skewy" step="1" value="${(a.skew || [0, 0])[1] || 0}"></label></div>
@@ -1888,7 +1888,7 @@ function side() {
         <div class="m4"><label>엠보스 크기<input type="number" data-a="fx.bevel.size" step="0.2" value="${((a.fx || {}).bevel || {}).size ?? ""}" placeholder="없음" title="경사와 엠보스"></label><label>깊이<input type="number" data-a="fx.bevel.depth" step="0.5" value="${((a.fx || {}).bevel || {}).depth ?? ""}"></label><label>빛 °<input type="number" data-a="fx.bevel.angle" step="15" value="${((a.fx || {}).bevel || {}).angle ?? ""}"></label><label>새틴 번짐<input type="number" data-a="fx.satin.blur" step="0.5" value="${((a.fx || {}).satin || {}).blur ?? ""}" placeholder="없음"></label></div></details>`;
     }
     h += `<h3>자리</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
-      ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="요소·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
+      ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="개체·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
       <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm sub" id="s-lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button><button class="btn sm danger" id="s-x">지우기</button></div>
       ${layersHtml()}`;
   } else {
@@ -1913,14 +1913,14 @@ function side() {
       ${facing() ? `<div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label title="제본쪽 — 풀칠에 글이 안 먹히게 보통 더 준다">안쪽<input type="number" id="s-mg-inside" step="1" value="${(page.margins || {}).inside ?? marg(page).left}"></label><label>바깥쪽<input type="number" id="s-mg-outside" step="1" value="${(page.margins || {}).outside ?? marg(page).right}"></label></div>
       <div class="note">이 면은 펼쳤을 때 <b>${rightHand(page) ? "오른쪽" : "왼쪽"}</b> — 안쪽이 ${rightHand(page) ? "왼" : "오른"}쪽에 온다</div>`
       : `<div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label>왼쪽<input type="number" id="s-mg-left" step="1" value="${marg(page).left}"></label><label>오른쪽<input type="number" id="s-mg-right" step="1" value="${marg(page).right}"></label></div>`}
-      <div class="row"><button class="btn sm sub" id="s-mg-fit" title="이 지면에 놓인 것들이 실제로 차지한 자리를 재서 여백을 맞춘다">요소에 맞추기</button>${page.margins ? `<button class="btn sm sub" id="s-mg-clr">기본값으로</button>` : ""}</div>
+      <div class="row"><button class="btn sm sub" id="s-mg-fit" title="이 지면에 놓인 것들이 실제로 차지한 자리를 재서 여백을 맞춘다">개체에 맞추기</button>${page.margins ? `<button class="btn sm sub" id="s-mg-clr">기본값으로</button>` : ""}</div>
       <div class="m3"><label>기준선 격자 시작 mm<input type="number" id="s-grid-start" step="0.5" value="${(page.baseline_grid || {}).start ?? ""}" placeholder="없음"></label><label>줄 간격 mm<input type="number" id="s-grid-step" step="0.5" value="${(page.baseline_grid || {}).step ?? ""}"></label><label></label></div>
-      <h3>레이어 <span class="note" style="display:inline">요소를 층으로 — 숨기기·잠금·비인쇄</span></h3>
+      <h3>레이어 <span class="note" style="display:inline">개체를 층으로 — 숨기기·잠금·비인쇄</span></h3>
       ${(page.layers || []).map(l => `<div class="f"><span>${esc(l.name)}</span><span style="display:flex;gap:6px;align-items:center">
         <label title="숨기기"><input type="checkbox" data-lay="${l.id}:hide" ${l.hide ? "checked" : ""} style="width:auto">숨김</label>
         <label title="잠금"><input type="checkbox" data-lay="${l.id}:lock" ${l.lock ? "checked" : ""} style="width:auto">잠금</label>
         <label title="인쇄 안 함"><input type="checkbox" data-lay="${l.id}:nonprint" ${l.nonprint ? "checked" : ""} style="width:auto">비인쇄</label>
-        <button class="btn sm sub" data-layx="${l.id}" title="레이어 지우기(요소는 기본 레이어로)">✕</button></span></div>`).join("")}
+        <button class="btn sm sub" data-layx="${l.id}" title="레이어 지우기(개체는 기본 레이어로)">✕</button></span></div>`).join("")}
       <div class="row"><button class="btn sm sub" id="s-lay-new">＋ 레이어</button></div>
       <h3>문서</h3>
       <div class="f"><span>페이지 마주보기</span><input id="s-facing" type="checkbox" ${facing() ? "checked" : ""} title="인디자인 「파일 > 문서 설정 > 페이지 마주보기」 — 켜면 2·3쪽이 한 장(펼침면)이 되고 1쪽은 오른쪽에 선다. 문서마다 저장된다" style="width:auto"></div>
@@ -2030,12 +2030,12 @@ function side() {
   on("#s-mg-fit", "click", () => {                              // 놓인 것들이 실제로 차지한 자리로
     const S = specOf(); const bs = page.items.map((_, i) => bboxOf(i)).filter(Boolean)
       .filter(b => b.w * b.h < S.w * S.h * 0.6);                // 전면 바탕은 빼고
-    if (!bs.length) { say("잴 요소가 없다"); return; }
+    if (!bs.length) { say("잴 개체가 없다"); return; }
     hist();
     page.margins = {left: Math.round(Math.min(...bs.map(b => b.x))), top: Math.round(Math.min(...bs.map(b => b.y))),
                     right: Math.round(S.w - Math.max(...bs.map(b => b.x + b.w))), bottom: Math.round(S.h - Math.max(...bs.map(b => b.y + b.h)))};
     for (const k of ["left", "top", "right", "bottom"]) page.margins[k] = Math.max(0, page.margins[k]);
-    save(); applyView(); side(); say(`여백을 요소에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
+    save(); applyView(); side(); say(`여백을 개체에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
   });
   on("#s-mg-clr", "click", () => { hist(); delete page.margins; save(); applyView(); side(); });
   on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
@@ -2075,7 +2075,7 @@ function side() {
   });
   box.querySelectorAll("[data-layx]").forEach(b => b.onclick = () => {
     const lid = b.dataset.layx; const l = (page.layers || []).find(x => x.id === lid); if (!l) return;
-    if (!confirm(`레이어 「${l.name}」 을 지울까? 그 안의 요소는 기본 레이어로 간다(요소는 안 지운다).`)) return;
+    if (!confirm(`레이어 「${l.name}」 을 지울까? 그 안의 개체는 기본 레이어로 간다(개체는 안 지운다).`)) return;
     page.layers = (page.layers || []).filter(x => x.id !== lid);
     page.items.forEach(it => { if (it.atom && it.atom.layer === lid) delete it.atom.layer; });
     save(); render(); side();
