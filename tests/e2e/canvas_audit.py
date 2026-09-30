@@ -312,8 +312,11 @@ try:
         return (s and s > 1.05, f"s={s} label={lb}")
     step("E3 요소(지문 상자) 모서리 → 글자까지 균일 배율", e3)
     def e4():
-        js(f"select([{PAS}], {PAS})"); time.sleep(0.3); w0 = js(f"page.items[{PAS}].w"); e = rect('#selbox .hd[data-h="e"]'); drag(e[0] + 4, e[1] + 4, e[0] + 4 - 50, e[1] + 4)
-        return (js(f"page.items[{PAS}].w") < w0 - 5, f"w {w0}→{js(f'page.items[{PAS}].w')}")
+        js(f"select([{PAS}], {PAS})"); time.sleep(0.3)
+        w0 = js(f"page.items[{PAS}].w || Math.round((gOf({PAS}) ? gOf({PAS}).getBBox().width : 0) * 10) / 10")   # 폭을 안 적어 둔 요소는 그려진 폭으로
+        e = rect('#selbox .hd[data-h="e"]'); drag(e[0] + 4, e[1] + 4, e[0] + 4 - 50, e[1] + 4)
+        w1 = js(f"page.items[{PAS}].w")
+        return (w1 is not None and w0 and w1 < w0 - 5, f"w {w0}→{w1}")
     step("E4 요소 옆 손잡이 → 폭만", e4)
     def e5():
         js(f"select([{RECT}], {RECT})"); time.sleep(0.3); ro = rect("#selbox .rot")
