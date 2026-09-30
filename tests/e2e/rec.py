@@ -1,10 +1,23 @@
-"""화면을 녹화한다 — 헤드리스 크롬 + 단계 목록 → mp4.
+"""화면을 녹화한다 — 헤드리스 크롬에 **진짜 마우스·키보드**를 넣고 프레임을 모아 mp4.
 
-사용: python3 rec.py <url> <steps.json> <out.mp4> [W H FPS]
-단계: {"say": "자막"} · {"js": "..."} · {"wait": ms} · {"shot": "이름.png"}
-자막은 다음 say 까지 남는다. 프레임은 wait 동안 FPS 로 찍는다.
+사용: python3 tests/e2e/rec.py <url> <steps.json> <out.mp4> [W H FPS]
+
+단계 (모두 실제 입력이다 — js 는 되도록 쓰지 않는다):
+  {"say": "자막", "wait": ms}          자막 (다음 say 까지 남는다)
+  {"move": 자리}                        마우스 옮기기
+  {"click": 자리, "shift": true}        누르기(시프트 = 더 고르기) · {"dbl": 자리} 두 번
+  {"drag": {"from": 자리, "to": 자리}}   끌기
+  {"type": "글"}                        키보드로 치기   · {"key": "Enter"} 키
+  {"fill": {"at": "#sel", "value": "216"}}  칸을 눌러 다 지우고 쳐 넣기
+  {"write": {"at": {"mm": [30, 20]}, "value": "A1"}}  지면의 글상자를 두 번 눌러 글 치기
+  {"pick": {"at": 자리, "value": "wb216"}}  select 을 눌러 키보드로 고르기
+  {"clickif": {"at": "#tg-side", "when": "!view.side"}}   조건이 맞을 때만 누르기
+  {"wait": ms} · {"shot": "이름.png"} · {"js": "…"}(마지막 수단)
+
+자리: "#sel" (그 요소 가운데) · [x, y] (화면 픽셀) · {"mm": [x, y]} (지면 좌표)
+커서는 화면에 점으로 그려 준다 — 헤드리스는 진짜 커서가 안 찍힌다.
 """
-import base64, json, os, subprocess, sys, time, urllib.parse, urllib.request
+import base64, json, math, os, subprocess, sys, time, urllib.parse, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cdp import CDP, CHROME                                             # noqa: E402
@@ -12,7 +25,7 @@ from cdp import CDP, CHROME                                             # noqa: 
 FFMPEG = os.environ.get("FFMPEG") or ("/opt/homebrew/bin/ffmpeg" if os.path.exists("/opt/homebrew/bin/ffmpeg") else "ffmpeg")
 SP = os.environ.get("REC_TMP") or os.path.join(os.path.expanduser("~"), ".cache", "yone-rec")
 os.makedirs(SP, exist_ok=True)
-PORT = 9466
+PORT = int(os.environ.get("REC_PORT") or 9466)
 url, steps_path, out = sys.argv[1], sys.argv[2], sys.argv[3]
 W = int(sys.argv[4]) if len(sys.argv) > 4 else 1600
 H = int(sys.argv[5]) if len(sys.argv) > 5 else 1000
@@ -21,23 +34,32 @@ frames = os.path.join(SP, "frames_" + os.path.basename(out).split(".")[0])
 subprocess.run(["rm", "-rf", frames], capture_output=True)
 os.makedirs(frames, exist_ok=True)
 
-NARR = """(() => { let d = document.querySelector('#narr');
-  if (!d) { d = document.createElement('div'); d.id = 'narr'; document.body.appendChild(d);
-    const st = document.createElement('style'); st.textContent = `
-      #narr { position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 99999;
-        background: rgba(20,18,30,.92); color: #fff; font: 600 20px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif;
-        padding: 12px 22px; border-radius: 12px; max-width: 78%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.28);
-        opacity: 0; transition: opacity .25s; }
-      #narr.on { opacity: 1; }`;
-    document.head.appendChild(st); }
+CHROME_SETUP = """(() => {
+  if (document.querySelector('#cur')) return true;
+  const st = document.createElement('style'); st.textContent = `
+    #cur { position: fixed; z-index: 99999; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+      background: rgba(125,42,232,.28); border: 2px solid #7d2ae8; pointer-events: none; transition: left .06s linear, top .06s linear; }
+    #cur.down { background: rgba(125,42,232,.6); transform: scale(.7); }
+    #narr { position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 99998;
+      background: rgba(20,18,30,.92); color: #fff; font: 600 20px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif;
+      padding: 12px 22px; border-radius: 12px; max-width: 78%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.28);
+      opacity: 0; transition: opacity .25s; }
+    #narr.on { opacity: 1; }`;
+  document.head.appendChild(st);
+  const c = document.createElement('div'); c.id = 'cur'; c.style.left = '-50px'; c.style.top = '-50px'; document.body.appendChild(c);
+  const n = document.createElement('div'); n.id = 'narr'; document.body.appendChild(n);
+  window.__cur = (x, y, down) => { const e = document.querySelector('#cur'); e.style.left = x + 'px'; e.style.top = y + 'px'; e.classList.toggle('down', !!down); };
   return true; })()"""
 
 subprocess.run(["pkill", "-f", f"remote-debugging-port={PORT}"], capture_output=True)
+time.sleep(1.5)                                      # 앞 크롬이 프로필을 놓을 때까지
+PROF = f"{SP}/chrome-rec-{PORT}-{int(time.time())}"  # 프로필은 실행마다 새로 — 잠금 충돌 방지
 proc = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run",
-                         f"--remote-debugging-port={PORT}", f"--user-data-dir={SP}/chrome-rec",
+                         f"--remote-debugging-port={PORT}", f"--user-data-dir={PROF}",
                          f"--window-size={W},{H}", "about:blank"],
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 n = [0]
+pos = [W / 2, H / 2]
 try:
     for _ in range(80):
         try:
@@ -49,7 +71,7 @@ try:
     tab = json.load(urllib.request.urlopen(req, timeout=30))
     c = CDP(tab["webSocketDebuggerUrl"])
     time.sleep(3.0)
-    c.js(NARR)
+    c.js(CHROME_SETUP)
 
     def frame():
         d = c.call("Page.captureScreenshot", format="jpeg", quality=72)
@@ -63,32 +85,171 @@ try:
             left = ms / 1000 - (time.time() - t0)
             time.sleep(max(0, min(1 / FPS, left)))
 
+    def at(spot):
+        """자리 → 화면 픽셀."""
+        if isinstance(spot, (list, tuple)):
+            return float(spot[0]), float(spot[1])
+        if isinstance(spot, dict) and "mm" in spot:
+            r = c.js("(() => { const p = document.querySelector('#paper'); const b = p.getBoundingClientRect(); return [b.left, b.top, scale]; })()")
+            return r[0] + spot["mm"][0] * r[2], r[1] + spot["mm"][1] * r[2]
+        r = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; "
+                  "let d = e.closest('details'); while (d) { d.open = true; d = d.parentElement && d.parentElement.closest('details'); } "   # 접힌 칸은 펴고 쓴다
+                  "e.scrollIntoView({block:'center'}); const b = e.getBoundingClientRect(); return [b.left + b.width/2, b.top + b.height/2]; })()")
+        if not r:
+            raise RuntimeError(f"못 찾음 {spot}")
+        return float(r[0]), float(r[1])
+
+    def cursor(x, y, down=False):
+        c.js(f"__cur({x:.0f},{y:.0f},{'true' if down else 'false'})")
+
+    def move(x, y, steps=12, shoot=True):
+        x0, y0 = pos
+        for i in range(1, steps + 1):
+            cx, cy = x0 + (x - x0) * i / steps, y0 + (y - y0) * i / steps
+            c.call("Input.dispatchMouseEvent", type="mouseMoved", x=cx, y=cy, button="none", clickCount=0)
+            cursor(cx, cy)
+            if shoot and i % max(1, steps // 6) == 0:
+                frame()
+        pos[0], pos[1] = x, y
+
+    def press(x, y, count=1):
+        c.call("Input.dispatchMouseEvent", type="mousePressed", x=x, y=y, button="left", clickCount=count, buttons=1)
+        cursor(x, y, True)
+        frame()
+
+    def release(x, y, count=1):
+        c.call("Input.dispatchMouseEvent", type="mouseReleased", x=x, y=y, button="left", clickCount=count, buttons=0)
+        cursor(x, y, False)
+        frame()
+
+    def click(spot, count=1, mod=0):
+        x, y = at(spot)
+        move(x, y)
+        if mod:
+            c.call("Input.dispatchMouseEvent", type="mousePressed", x=x, y=y, button="left", clickCount=count, buttons=1, modifiers=mod)
+            cursor(x, y, True); frame()
+            c.call("Input.dispatchMouseEvent", type="mouseReleased", x=x, y=y, button="left", clickCount=count, buttons=0, modifiers=mod)
+            cursor(x, y, False); frame()
+            return
+        press(x, y, count)
+        release(x, y, count)
+        if count == 2:
+            press(x, y, 2); release(x, y, 2)
+
+    def drag(a, b, steps=16):
+        x0, y0 = at(a)
+        x1, y1 = at(b)
+        move(x0, y0)
+        press(x0, y0)
+        for i in range(1, steps + 1):
+            cx, cy = x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps
+            c.call("Input.dispatchMouseEvent", type="mouseMoved", x=cx, y=cy, button="left", buttons=1, clickCount=0)
+            cursor(cx, cy, True)
+            if i % 3 == 0:
+                frame()
+        release(x1, y1)
+        pos[0], pos[1] = x1, y1
+
+    def typetext(t, per=0.035):
+        for ch in t:
+            c.call("Input.insertText", text=ch)
+            if len(t) < 40 or ord(ch) % 3 == 0:
+                frame()
+            time.sleep(per)
+        frame()
+
+    def key(name):
+        codes = {"Enter": (13, "Enter"), "Escape": (27, "Escape"), "Tab": (9, "Tab"),
+                 "ArrowDown": (40, "ArrowDown"), "ArrowUp": (38, "ArrowUp")}
+        code, k = codes.get(name, (0, name))
+        c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=code, key=k, code=k)
+        c.call("Input.dispatchKeyEvent", type="keyUp", windowsVirtualKeyCode=code, key=k, code=k)
+        frame()
+
+    def wipe(times=14):
+        """칸 안의 글을 지운다 — 백스페이스·딜리트를 사람처럼 눌러서."""
+        for _ in range(times):
+            for t in ("rawKeyDown", "keyUp"):
+                c.call("Input.dispatchKeyEvent", type=t, windowsVirtualKeyCode=8, key="Backspace", code="Backspace")
+            for t in ("rawKeyDown", "keyUp"):
+                c.call("Input.dispatchKeyEvent", type=t, windowsVirtualKeyCode=46, key="Delete", code="Delete")
+        frame()
+
+    def fill_in(spot, value):
+        """칸을 눌러 고르고, 다 지우고, 쳐 넣고, 확정 — 사람이 하는 그대로."""
+        for tryn in range(2):
+            click(spot, 2)
+            wipe()
+            typetext(str(value))
+            key("Enter")
+            c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (e) { e.dispatchEvent(new Event('change', {bubbles:true})); e.blur(); } return true; })()")
+            frame()
+            got = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value) : null; })()")
+            if got is None or str(got).strip() == str(value).strip():
+                return
+        print(f"  ! {spot} 에 {value} 대신 {got}", flush=True)
+
+    def pick(spot, value):
+        """select 을 눌러 고른다 — 헤드리스는 목록이 안 그려지므로 누른 뒤 값을 넣는다(누르는 건 진짜)."""
+        click(spot)
+        sel = spot if isinstance(spot, str) else None
+        ok = c.js("(() => { const e = document.querySelector(" + json.dumps(sel) + "); if (!e) return false; "
+                  "e.value = " + json.dumps(value) + "; e.dispatchEvent(new Event('change', {bubbles: true})); return e.value === " + json.dumps(value) + "; })()")
+        if not ok:
+            raise RuntimeError(f"{value} 안 골라짐")
+        frame()
+
     for st in json.load(open(steps_path, encoding="utf-8")):
-        if "say" in st:
-            c.js("(() => { const d = document.querySelector('#narr'); d.textContent = " + json.dumps(st["say"]) +
-                 "; d.classList.add('on'); return true; })()")
-            hold(st.get("wait", 1800))
-        elif "hide" in st:
-            c.js("(() => { document.querySelector('#narr').classList.remove('on'); return true; })()")
-            hold(st.get("wait", 400))
-        elif "js" in st:
-            try:
+        try:
+            if "say" in st:
+                c.js("(() => { const d = document.querySelector('#narr'); d.textContent = " + json.dumps(st["say"]) + "; d.classList.add('on'); return true; })()")
+            if "hide" in st:
+                c.js("(() => { document.querySelector('#narr').classList.remove('on'); return true; })()")
+            if "move" in st:
+                x, y = at(st["move"]); move(x, y)
+            if "click" in st:
+                click(st["click"], mod=8 if st.get("shift") else 0)
+            if "clickif" in st:                                   # 조건이 맞을 때만 누른다 (토글 버튼)
+                if c.js("!!(" + st["clickif"]["when"] + ")"):
+                    click(st["clickif"]["at"])
+            if "dbl" in st:
+                click(st["dbl"], 2)
+            if "drag" in st:
+                drag(st["drag"]["from"], st["drag"]["to"])
+            if "type" in st:
+                typetext(st["type"])
+            if "fill" in st:
+                fill_in(st["fill"]["at"], st["fill"]["value"])
+            if "write" in st:                                  # 지면의 글상자를 두 번 눌러 글을 친다
+                click(st["write"]["at"], 2)
+                time.sleep(0.4)
+                if not c.js("!!(document.querySelector('#tedit') && document.querySelector('#tedit').offsetParent)"):
+                    raise RuntimeError("글 편집칸이 안 열렸다")
+                wipe(30)
+                typetext(st["write"]["value"])
+                c.js("(() => { const t = document.querySelector('#tedit'); if (t) t.blur(); return true; })()")   # 칸 밖을 누른 것과 같다 — Esc 는 취소다
+                frame()
+                click(st["write"]["at"])                       # 방금 쓴 글상자를 다시 고른다
+            if "key" in st:
+                key(st["key"])
+            if "pick" in st:
+                pick(st["pick"]["at"], st["pick"]["value"])
+            if "js" in st:
                 v = c.js(st["js"])
                 if v not in (None, True):
-                    print("  js →", str(v)[:120], flush=True)
-            except Exception as e:
-                print("  ERR", str(e)[:200], flush=True)
-            hold(st.get("wait", 500))
-        elif "wait" in st:
-            hold(st["wait"])
-        elif "shot" in st:
-            d = c.call("Page.captureScreenshot", format="png")
-            open(os.path.join(SP, st["shot"]), "wb").write(base64.b64decode(d["data"]))
+                    print("  js →", str(v)[:140], flush=True)
+            if "shot" in st:
+                d = c.call("Page.captureScreenshot", format="png")
+                open(os.path.join(SP, st["shot"]), "wb").write(base64.b64decode(d["data"]))
+        except Exception as e:
+            print("  ERR", json.dumps(st, ensure_ascii=False)[:70], "→", str(e)[:160], flush=True)
+        hold(st.get("wait", 600))
 finally:
     proc.terminate()
 
 if n[0] < 2:
     raise SystemExit("프레임이 없다")
+subprocess.run(["rm", "-rf", PROF], capture_output=True)
 subprocess.run([FFMPEG, "-y", "-framerate", str(FPS), "-i", os.path.join(frames, "%05d.jpg"),
                 "-c:v", "libx264", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
                 "-movflags", "+faststart", out], capture_output=True)

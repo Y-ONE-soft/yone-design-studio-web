@@ -1787,7 +1787,7 @@ function side() {
   let h = steps(); const sk = skin();
   // 색 — 견본(브랜드 + 기본) 또는 직접 고르기. 새 디자인은 직접 색으로 그리고, 다 만든 뒤 「브랜드로 등록」하면 견본이 된다
   const colorSel = (k, cur, none) => { const toks = Object.assign({}, DEFAULT_SKIN.tokens.color, sk.tokens.color || {}); const raw = !!cur && !String(cur).startsWith("$");
-    return `<span style="display:flex;gap:4px;align-items:center"><select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries(toks).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}<option value="__raw" ${raw ? "selected" : ""}>직접 고르기…</option></select>${raw ? `<input type="color" data-a="${k}" value="${esc(cur)}" title="직접 색">` : ""}</span>`; };
+    return `<span style="display:flex;gap:4px;align-items:center"><select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries(toks).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}<option value="__raw" ${raw ? "selected" : ""}>직접 고르기…</option></select>${raw ? `<input type="color" data-a="${k}" value="${esc(cur)}" title="직접 색"><input type="text" data-a="${k}" value="${esc(cur)}" maxlength="7" style="width:74px" title="색 번호로 — #f9f7ed" spellcheck="false">` : ""}</span>`; };
   if (sel != null && page.items[sel]) {
     const it = page.items[sel]; const u = unitOf(it);
     $("#stitle").textContent = nameOf(it);
