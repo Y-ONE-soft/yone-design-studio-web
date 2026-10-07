@@ -100,16 +100,9 @@
 
   {% if folder %}
   <section id="designs">
-    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개 — 골라서 새 책</span>
-      <a class="lnk" href="/catalog/dir/{{ folder.id }}" title="이 폴더의 틀 목록 — 다른 폴더로 옮기기">틀 관리 →</a>
-      <a class="lnk" href="/catalog/intake" title="완성본 PDF 를 판정해 새 틀·디자인으로">PDF 판정 →</a></h2>
-    {% if designs or bare %}<div class="dsg">
-      {% for t in bare %}<div class="d bare" data-series="{{ t.series }}">
-        <div class="th"><span class="ph">▦</span><span class="tag">{{ t.name }}</span></div>
-        <div class="tt">{{ t.name }}</div>
-        <div class="mt"><i class="dot {{ t.ready }}"></i>디자인 없음 — 완성본 PDF 로 등록</div>
-        <div class="acts"><a class="go" href="/project/new">디자인 등록</a><a href="/catalog/{{ t.series }}">틀 보기</a></div>
-      </div>{% endfor %}
+    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개 — 골라서 새 책</span></h2>
+    {# 틀 관리 · PDF 판정 · 디자인 없는 틀(등록 단추)은 지금 작업 범위 밖이라 뺐다 — 주소로는 그대로 열린다 #}
+    {% if designs %}<div class="dsg">
       {% for d in designs %}<div class="d" data-series="{{ d.series }}" data-id="{{ d.id }}" data-name="{{ d.name }}">
         <div class="th">{% if d.img %}<img src="{{ d.img }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
           <span class="tag {{ 'draft' if d.draft else '' }}">{{ '초안 · 확인 필요' if d.draft else d.tname }}</span>
@@ -119,7 +112,7 @@
         <div class="acts"><a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">원고 넣기</a><a href="/design/{{ d.series }}/{{ d.id }}">지면 보기</a></div>
       </div>{% endfor %}
     </div>
-    {% else %}<div class="empty" style="padding:24px 0"><b>이 폴더에 틀이 없어요</b>새 프로젝트 → AI → / 틀 등록하기 로 PDF 를 판정해 넣거나, 새 틀 요청을 남기세요.</div>{% endif %}
+    {% else %}<div class="empty" style="padding:24px 0"><b>이 라인업에 아직 디자인이 없어요</b></div>{% endif %}
   </section>
   {% endif %}
 
@@ -127,12 +120,11 @@
   <section id="all">
     <h2>{{ '책' if folder else '검색 결과' }} <span class="n">{{ books|length }}권</span></h2>
     {% if books %}<div class="cards" id="all-cards">{% for b in books %}{% include "_book_card.html" %}{% endfor %}</div>
-    {% else %}<div class="empty"><div class="big">🔍</div><b>{{ '이 폴더에 아직 책이 없어요' if folder else '맞는 책이 없어요' }}</b>{{ '+ → 프로젝트에서 이 갈래의 디자인을 골라 만들 수 있어요.' if folder else '다른 말로 찾아 보세요.' }}</div>{% endif %}
+    {% else %}<div class="empty"><div class="big">🔍</div><b>{{ '이 라인업에 아직 책이 없어요' if folder else '맞는 책이 없어요' }}</b>{{ ('위 틀 · 디자인에서 「원고 넣기」로 만들 수 있어요.' if designs else '') if folder else '다른 말로 찾아 보세요.' }}</div>{% endif %}
   </section>
   {% else %}
   <section id="folders">
-    <h2><span class="tg" data-for="folder-list">▾</span>폴더 <span class="n">카탈로그 디렉토리</span>
-      <a class="lnk" href="/catalog">틀 전체 →</a><a class="lnk" href="/catalog/intake">PDF 판정 →</a></h2>
+    <h2><span class="tg" data-for="folder-list">▾</span>라인업</h2>
     <div class="folders" id="folder-list">
       {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
          data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
