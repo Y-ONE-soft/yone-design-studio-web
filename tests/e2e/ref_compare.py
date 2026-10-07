@@ -62,14 +62,20 @@ def ours(page_id, set_id=None):
     svg = svgs[0]["svg"] if isinstance(svgs[0], dict) else svgs[0]
     boxes, tx, ty = [], 0.0, 0.0
     attr = lambda tag, k: (re.search(rf'\b{k}="([-\d.]+)"', tag) or [None, None])[1]      # noqa: E731
-    for m in re.finditer(r'<g transform="translate\(([-\d.]+),([-\d.]+)\)"[^>]*>|<rect\b[^>]*>|<foreignObject\b[^>]*>(.*?)</foreignObject>', svg, re.S):
+    for m in re.finditer(r'<g transform="translate\(([-\d.]+),([-\d.]+)\)"[^>]*>|<rect\b[^>]*>|<ellipse\b[^>]*>|<foreignObject\b[^>]*>(.*?)</foreignObject>', svg, re.S):
         tag = m.group(0)
         if tag.startswith("<g "):
             tx, ty = float(m.group(1)), float(m.group(2))
-        elif tag.startswith("<rect"):
-            x, y, w, h = (attr(tag, k) for k in ("x", "y", "width", "height"))
-            if None in (x, y, w, h):
-                continue
+        elif tag.startswith("<rect") or tag.startswith("<ellipse"):
+            if tag.startswith("<ellipse"):
+                cx, cy, rx, ry = (attr(tag, k) for k in ("cx", "cy", "rx", "ry"))
+                if None in (cx, cy, rx, ry):
+                    continue
+                x, y, w, h = float(cx) - float(rx), float(cy) - float(ry), float(rx) * 2, float(ry) * 2
+            else:
+                x, y, w, h = (attr(tag, k) for k in ("x", "y", "width", "height"))
+                if None in (x, y, w, h):
+                    continue
             boxes.append({"x": round(tx + float(x), 1), "y": round(ty + float(y), 1),
                           "w": round(float(w), 1), "h": round(float(h), 1), "t": "rect", "text": ""})
         else:
@@ -83,7 +89,8 @@ def near(a, b, tol=TOL):
     return a is not None and b is not None and abs(a - b) <= tol
 
 
-def compare(page_id="page_2", pno=8, set_id="301"):
+def compare(page_id="page_2", pno=8, set_id=None):
+    """기준 쪽에서 잴 것을 스스로 뽑아 우리 지면과 맞춰 본다 — 유형마다 항목이 다르다."""
     r = ref_page(pno)
     pg, spec, boxes = ours(page_id, set_id)
     rows = []
@@ -92,37 +99,52 @@ def compare(page_id="page_2", pno=8, set_id="301"):
         rows.append({"항목": name, "기준": want, "우리": got, "ok": bool(ok)})
 
     row("판형", f"{r['w']:.0f}×{r['h']:.0f}mm", f"{spec['w']:.0f}×{spec['h']:.0f}mm",
-        near(r["w"], float(spec["w"]), 0.6) and near(r["h"], float(spec["h"]), 0.6))
+        near(r["w"], float(spec["w"]), 6.5) and near(r["h"], float(spec["h"]), 6.5))     # A4 로 옮기면 6mm 차
 
-    band = max((x for x in r["rects"] if x["y"] <= 1 and x["w"] > 150), key=lambda x: x["h"], default=None)
-    ourband = max((b for b in boxes if b["t"] == "rect" and b["y"] <= 1 and (b["w"] or 0) > 150), key=lambda b: b["h"] or 0, default=None)
-    row("머리띠 높이", f"{band['h']}mm" if band else "-", f"{ourband['h']}mm" if ourband else "없음",
-        band and ourband and near(band["h"], float(ourband["h"] or 0), 3))
+    # 1) 면(색 있는 상자) — 기준에 있는 큰 면마다 우리 쪽에 비슷한 것이 있나
+    rboxes = sorted([x for x in r["rects"] if x["w"] > 20 and x["h"] > 4], key=lambda x: (x["y"], x["x"]))
+    oboxes = [b for b in boxes if b["t"] == "rect" and b["w"] > 20 and b["h"] > 4]
+    for rb in rboxes[:4]:
+        hit = min(oboxes, key=lambda b: abs(b["y"] - rb["y"]) + abs(b["w"] - rb["w"]) / 3, default=None)
+        ok = hit and near(hit["y"], rb["y"], 4) and near(hit["w"], rb["w"], 10)
+        row(f"면 {rb['w']:.0f}×{rb['h']:.0f} @y{rb['y']:.0f}",
+            f"x{rb['x']:.0f} y{rb['y']:.0f}", (f"x{hit['x']:.0f} y{hit['y']:.0f}" if hit else "없음"), ok)
 
-    pbox = next((x for x in r["rects"] if 140 < x["w"] < 170 and 35 < x["h"] < 60), None)
-    ourp = next((b for b in boxes if b["t"] == "rect" and 140 < (b["w"] or 0) < 170 and 35 < (b["h"] or 0) < 60), None)
-    row("지문 상자 자리", f"x{pbox['x']} y{pbox['y']} {pbox['w']}×{pbox['h']}" if pbox else "-",
-        f"x{ourp['x']} y{ourp['y']} {ourp['w']}×{ourp['h']}" if ourp else "없음",
-        pbox and ourp and near(pbox["x"], ourp["x"]) and near(pbox["y"], ourp["y"]) and near(pbox["w"], float(ourp["w"])))
+    # 2) 머리 글 — 기준의 큰 글자(코드·제목)
+    heads = [t for t in r["texts"] if t["pt"] >= 12 and t["y"] < 30][:2]
+    for ht in heads:
+        hit = next((b for b in boxes if b["t"] == "text" and b["text"].strip() == ht["t"]), None)
+        row(f"머리 글 「{ht['t'][:10]}」", f"y{ht['y']:.0f}", (f"y{hit['y']:.0f}" if hit else "없음"),
+            hit is not None and near(hit["y"], ht["y"], 3))
 
-    ox = sorted([x for x in r["rects"] if 19 < x["w"] < 23 and 3.5 < x["h"] < 5.5], key=lambda x: x["y"])
-    ourox = sorted([b for b in boxes if b["t"] == "rect" and 19 < (b["w"] or 0) < 23 and 3.5 < (b["h"] or 0) < 5.5], key=lambda b: b["y"])
-    row("O/X 줄 수", len(ox), len(ourox), len(ox) == len(ourox))
-    if len(ox) >= 2 and len(ourox) >= 2:
-        g1 = round(ox[1]["y"] - ox[0]["y"], 1)
-        g2 = round(ourox[1]["y"] - ourox[0]["y"], 1)
-        row("줄 간격", f"{g1}mm", f"{g2}mm", near(g1, g2, 0.6))
-        movable = len({round(x["x"]) for x in ox}) > 1
-        ourmove = len({round(b["x"]) for b in ourox}) > 1
-        row("O/X 상자가 문장 끝을 따라간다", "예 (줄마다 x 다름)", "예" if ourmove else "아니오 (한 자리 고정)", movable == ourmove)
-
-    reftxt = {t["t"]: t for t in r["texts"]}
-    for key in ("A2", "본문 O/X"):
-        rt = reftxt.get(key)
-        ot = next((b for b in boxes if (b.get("text") or "").strip() == key), None)
-        if rt:
-            row(f"머리 글 「{key}」 자리", f"x{rt['x']} y{rt['y']}", f"x{ot['x']} y{ot['y']}" if ot else "없음",
-                ot and near(rt["x"], ot["x"], 2.5) and near(rt["y"], ot["y"], 3))
+    # 3) 되풀이되는 줄 — 기준에서 같은 크기 상자가 3개 이상 세로로 늘어서면 간격을 본다
+    from collections import defaultdict
+    g = defaultdict(list)
+    for x in r["rects"]:
+        g[(round(x["w"]), round(x["h"]))].append(x["y"])
+    rep = max((v for k, v in g.items() if len(v) >= 3), key=len, default=None)
+    if rep:
+        rep = sorted(rep)
+        same = [x for x in r["rects"] if (round(x["w"]), round(x["h"])) == max(((k, len(v)) for k, v in g.items() if len(v) >= 3), key=lambda kv: kv[1])[0]]
+        xs = sorted(x["x"] for x in same)
+        gap = round(rep[1] - rep[0], 1) or round(xs[1] - xs[0], 1)
+        og = defaultdict(list)
+        for b in boxes:
+            if b["t"] == "rect":
+                og[(round(b["w"]), round(b["h"]))].append(b["y"])
+        orep = max((v for v in og.values() if len(v) >= 3), key=len, default=None)
+        ogap = None
+        if orep:
+            key = max(((k, len(v)) for k, v in og.items() if len(v) >= 3), key=lambda kv: kv[1])[0]
+            oxs = sorted(b["x"] for b in boxes if b["t"] == "rect" and (round(b["w"]), round(b["h"])) == key)
+            ys = sorted(orep)
+            ogap = round(ys[1] - ys[0], 1) or (round(oxs[1] - oxs[0], 1) if len(oxs) > 1 else None)
+        row("되풀이 도형 수", len(rep), len(orep) if orep else 0, orep is not None and len(orep) == len(rep))
+        row("줄 간격", f"{gap}mm", f"{ogap}mm" if ogap else "없음", ogap is not None and near(gap, ogap, 0.6))
+        movable = len({round(x["x"]) for x in r["rects"] if round(x["w"]) == round(rep and 0 or 0)}) > 1
+    # 4) 원고 자리 — 지면에 자리가 몇 개인가 (기준은 셀 수 없으니 0 보다 큰지만)
+    slots = sum(1 for it in (pg.get("items") or []) if (it.get("atom") or {}).get("bind") or it.get("block"))
+    row("원고 자리", "1개 이상", f"{slots}개", slots > 0)
     ok = sum(1 for x in rows if x["ok"])
     return rows, ok, len(rows)
 

@@ -286,8 +286,11 @@ def insets(a):
     return (float(v),) * 4
 
 
+ROMAN_EM = 0.47          # 로마자 한 글자 폭 어림 (기준 책 실측 0.455 — 본문 서체마다 조금 다르다)
+
+
 def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
-    """글이 차지할 높이(mm) 어림 — 한글·한자는 1em, 로마자는 0.52em. 자간·들여쓰기·여백·다단·단락 간격을 넣는다."""
+    """글이 차지할 높이(mm) 어림 — 한글·한자는 1em, 로마자는 ROMAN_EM. 자간·들여쓰기·여백·다단·단락 간격을 넣는다."""
     a = a or {}
     em = size_pt * PT
     lead = (leading_pt or size_pt * 1.45) * PT
@@ -299,7 +302,7 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     lines = 0
     paras = (plain or "").split("\n")
     for para in paras:
-        width = sum(em * (1.0 if ord(c) > 0x2E7F else 0.52) + track for c in para)
+        width = sum(em * (1.0 if ord(c) > 0x2E7F else ROMAN_EM) + track for c in para)
         lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
     gaps = (len(paras) - 1) * (float(a.get("space_before") or 0) + float(a.get("space_after") or 0))
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
@@ -308,7 +311,7 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
 def text_end(plain, w_mm, size_pt, a=None):
     """글이 끝나는 가로 자리(mm) — 마지막 줄의 끝. 문장 끝에 붙는 개체(인디자인 앵커 개체)가 쓴다.
 
-    text_h 와 같은 어림(한글 1em · 로마자 0.52em)을 쓴다. 줄이 넘어가면 마지막 줄만 센다.
+    text_h 와 같은 어림(한글 1em · 로마자 ROMAN_EM)을 쓴다. 줄이 넘어가면 마지막 줄만 센다.
     """
     a = a or {}
     em = size_pt * PT
@@ -319,7 +322,7 @@ def text_end(plain, w_mm, size_pt, a=None):
     for para in (plain or "").split("\n"):
         run = 0.0
         for c in para:
-            cw = em * (1.0 if ord(c) > 0x2E7F else 0.52) + track
+            cw = em * (1.0 if ord(c) > 0x2E7F else ROMAN_EM) + track
             if run + cw > col_w:
                 run = cw                      # 줄바꿈 — 새 줄에서 다시
             else:
@@ -1318,6 +1321,17 @@ def _fill_items(pg, sample_set, ctx=None, canvas=False):
                 q = queue.get(src) or by_kind.get(str(src).strip().lower())
                 if q:
                     break
+        if not q:                                                # 자리가 여럿인 요소 — 원고의 자리들을 모아 한 벌로
+            want = [k for k in (blk.get("fields") or {})]
+            if len(want) > 1 and all(queue.get(k) or by_kind.get(k) for k in want):
+                merged = {}
+                for k in want:
+                    qq = queue.get(k) or by_kind.get(k)
+                    fs = qq.pop(0) if (ctx and not canvas) or len(qq) > 1 else qq[0]
+                    merged.update({k2: v2 for k2, v2 in (fs or {}).items()})
+                it["fields"] = merged
+                filled[bid] = filled.get(bid, 0) + 1
+                continue
         if q:
             if ctx and not canvas:
                 it["fields"] = q.pop(0)                      # 책: 원고를 하나씩 소진 — 같은 줄이 두 번 실리지 않게
