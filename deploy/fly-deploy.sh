@@ -92,7 +92,9 @@ set_if_missing YOS_WEBHOOK_URL   "$YOS_WEBHOOK_URL"
 src=$(mktemp -d)
 git archive HEAD | tar -x -C "$src"
 echo "■ fly deploy  $(git rev-parse --short HEAD)  $(git log -1 --format=%s | cut -c1-60)"
-fly deploy "$src" -a "$APP" --ha=false &
+# --depot=false: Depot 빌더는 158MB 컨텍스트 업로드("transferring context")에서 두 번 멈췄다(2026-10-07).
+# fly 자체 원격 빌더는 같은 날 끝까지 올라갔다.
+fly deploy "$src" -a "$APP" --ha=false --depot=false &
 child=$!
 wait "$child"; child=""
 fly scale count 1 -a "$APP" --yes >/dev/null 2>&1 || true
