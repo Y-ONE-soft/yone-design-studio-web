@@ -26,6 +26,32 @@ if [ "$1" = "fonts" ]; then
   exit 0
 fi
 
+# ── 한 번에 하나만 (2026-10-07: 세션 둘이 동시에 배포 → 빌더 충돌·고아 fly deploy·옛 코드로 되돌림) ──
+# 1) 잠금: 이 맥에서 배포는 한 번에 하나. 주인이 죽은 잠금은 넘겨받는다.
+LOCK=/tmp/$APP-deploy.lock
+if ! mkdir "$LOCK" 2>/dev/null; then
+  owner=$(cat "$LOCK/pid" 2>/dev/null)
+  if [ -n "$owner" ] && kill -0 "$owner" 2>/dev/null; then
+    echo "✗ 다른 배포가 진행 중 — $(cat "$LOCK/info" 2>/dev/null). 끝난 뒤 다시."; exit 3
+  fi
+  echo "■ 주인 없는 잠금 정리 ($(cat "$LOCK/info" 2>/dev/null))"
+  rm -rf "$LOCK"; mkdir "$LOCK"
+fi
+echo $$ > "$LOCK/pid"
+echo "pid $$ · $(git rev-parse --short HEAD) · $(date '+%H:%M') 시작 · $(pwd)" > "$LOCK/info"
+src=""; child=""
+trap 'rm -rf "$LOCK"; [ -n "$src" ] && rm -rf "$src"' EXIT
+trap '[ -n "$child" ] && kill "$child" 2>/dev/null; exit 130' INT TERM HUP   # 스크립트가 죽으면 fly deploy 도 같이 — 고아 방지
+# 2) 잠금 밖에서 돈 fly deploy(다른 맥·고아 프로세스)가 있으면 멈춘다.
+if pgrep -f "fly deploy .* -a $APP" >/dev/null; then
+  echo "✗ 이미 돌고 있는 fly deploy -a $APP 가 있다 (pgrep -fl 'fly deploy'). 끝나거나 멈춘 뒤 다시."; exit 3
+fi
+# 3) origin/main 과 같은 커밋만 올린다 — 옛 HEAD(다른 워크트리·푸시 전)로 배포서버를 되돌리지 않게.
+git fetch -q origin main
+if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+  echo "✗ HEAD($(git rev-parse --short HEAD)) ≠ origin/main($(git rev-parse --short origin/main)). main 을 push/pull 해 맞춘 뒤 다시."; exit 3
+fi
+
 # ── 앱 · 볼륨 ──
 if ! fly apps list --json 2>/dev/null | grep -q "\"$APP\""; then
   echo "■ 앱 만들기: $APP ($REGION)"
@@ -63,10 +89,12 @@ set_if_missing YOS_WEBHOOK_URL   "$YOS_WEBHOOK_URL"
 
 # ── 배포 (단일 머신 · 볼륨) — 커밋된 HEAD 만 ──
 [ -z "$(git status --porcelain --untracked-files=no)" ] || echo "■ 주의: 커밋 안 된 변경은 올라가지 않는다 (HEAD 만 배포)"
-src=$(mktemp -d); trap 'rm -rf "$src"' EXIT
+src=$(mktemp -d)
 git archive HEAD | tar -x -C "$src"
 echo "■ fly deploy  $(git rev-parse --short HEAD)  $(git log -1 --format=%s | cut -c1-60)"
-fly deploy "$src" -a "$APP" --ha=false
+fly deploy "$src" -a "$APP" --ha=false &
+child=$!
+wait "$child"; child=""
 fly scale count 1 -a "$APP" --yes >/dev/null 2>&1 || true
 echo "■ 헬스:"
 curl -fsS "https://$APP.fly.dev/api/v1/health" && echo
