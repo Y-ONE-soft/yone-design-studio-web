@@ -346,6 +346,7 @@ def test_gradient_corners_and_image_crop_render(lib):
     assert '<radialGradient id="u2">' in frag and 'offset="100.0%" stop-color="#00559f"' in frag
     assert '<clipPath id="u3"><rect x="0" y="15.000" width="20" height="10.000"/></clipPath>' in frag
     assert '<image x="-5.000" y="13.000" width="30.000" height="14.000"' in frag and 'clip-path="url(#u3)"' in frag
+    assert 'href="data:' in frag or 'href="/api/units/image/' in frag          # 그림은 박아 넣거나(PDF) 주소로(화면)
     assert not ctx.warnings, ctx.warnings
 
 

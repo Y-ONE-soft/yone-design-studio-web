@@ -1,0 +1,5 @@
+[
+ {"wait": 3000},
+ {"js": "window.confirm=()=>true; window.prompt=(m,d)=>d; true"},
+ {"js": "(async () => { const j = await api('/api/units/library');\n  for (const p of j.plans || []) await api('/api/units/plans', {id: p.id}, 'DELETE');\n  for (const p of j.pages || []) await api('/api/units/pages', {id: p.id}, 'DELETE');\n  for (const b of j.blocks || []) await api('/api/units/blocks', {id: b.id}, 'DELETE');\n  for (const p of j.parts || []) await api('/api/units/parts', {id: p.id}, 'DELETE');\n  for (const s of j.sets || []) await api('/api/units/sets', {id: s.id}, 'DELETE');\n  const k = await api('/api/units/library');\n  return '문서 ' + k.plans.length + ' · 지면 ' + k.pages.length + ' · 부품 ' + k.parts.length + ' · 블록 ' + k.blocks.length + ' · 원고 ' + k.sets.length; })()", "wait": 8000}
+]

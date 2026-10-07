@@ -7,6 +7,7 @@
   {"move": 자리}                        마우스 옮기기
   {"click": 자리, "shift": true}        누르기(시프트 = 더 고르기) · {"dbl": 자리} 두 번
   {"drag": {"from": 자리, "to": 자리}}   끌기
+  {"draw": {"tool": "rect", "from": …, "to": …}}  도구 고르고 그리기(확인·재시도)
   {"type": "글"}                        키보드로 치기   · {"key": "Enter"} 키
   {"fill": {"at": "#sel", "value": "216"}}  칸을 눌러 다 지우고 쳐 넣기
   {"write": {"at": {"mm": [30, 20]}, "value": "A1"}}  지면의 글상자를 두 번 눌러 글 치기
@@ -181,11 +182,16 @@ try:
             click(spot, 2)
             wipe()
             typetext(str(value))
-            key("Enter")
-            c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (e) { e.dispatchEvent(new Event('change', {bubbles:true})); e.blur(); } return true; })()")
+            key("Enter")                                 # 칸은 Enter 로 확정된다
+            time.sleep(0.25)
             frame()
             got = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value) : null; })()")
-            if got is None or str(got).strip() == str(value).strip():
+            same = str(got).strip() == str(value).strip()
+            try:
+                same = same or abs(float(got) - float(value)) < 0.01       # 98 과 98.0 은 같다
+            except (TypeError, ValueError):
+                pass
+            if got is None or same:
                 return
         print(f"  ! {spot} 에 {value} 대신 {got}", flush=True)
 
@@ -216,20 +222,37 @@ try:
                 click(st["dbl"], 2)
             if "drag" in st:
                 drag(st["drag"]["from"], st["drag"]["to"])
+            if "draw" in st:                                   # 도구 고르고 끌어 그리기 — 안 생기면 한 번 더
+                d = st["draw"]
+                for tryn in range(2):
+                    n0 = c.js("page.items.length")
+                    click(f'[data-tool="{d["tool"]}"]')
+                    time.sleep(0.25)
+                    drag(d["from"], d["to"])
+                    time.sleep(0.4)
+                    if c.js("page.items.length") > n0:
+                        break
+                    print(f"  ! {d['tool']} 안 그려짐 — 다시", flush=True)
             if "type" in st:
                 typetext(st["type"])
             if "fill" in st:
                 fill_in(st["fill"]["at"], st["fill"]["value"])
             if "write" in st:                                  # 지면의 글상자를 두 번 눌러 글을 친다
-                click(st["write"]["at"], 2)
-                time.sleep(0.4)
-                if not c.js("!!(document.querySelector('#tedit') && document.querySelector('#tedit').offsetParent)"):
-                    raise RuntimeError("글 편집칸이 안 열렸다")
-                wipe(30)
-                typetext(st["write"]["value"])
-                c.js("(() => { const t = document.querySelector('#tedit'); if (t) t.blur(); return true; })()")   # 칸 밖을 누른 것과 같다 — Esc 는 취소다
-                frame()
-                click(st["write"]["at"])                       # 방금 쓴 글상자를 다시 고른다
+                want = st["write"]["value"]
+                for tryn in range(3):
+                    click(st["write"]["at"], 2)
+                    time.sleep(0.4)
+                    if not c.js("!!(document.querySelector('#tedit') && document.querySelector('#tedit').offsetParent)"):
+                        print("  ! 글 편집칸이 안 열렸다 — 다시", flush=True)
+                        continue
+                    wipe(40)
+                    typetext(want)
+                    click(st.get("away") or [W - 60, H - 120])     # 칸 밖을 눌러 확정 (Esc 는 취소다)
+                    click(st["write"]["at"])                       # 방금 쓴 글상자를 다시 고른다
+                    got = c.js("(() => { const it = page.items[sel]; return it && it.atom ? String(it.atom.text || '') : null; })()")
+                    if got is not None and want[:6] in got:
+                        break
+                    print(f"  ! 글이 「{str(got)[:14]}」 — 다시", flush=True)
             if "key" in st:
                 key(st["key"])
             if "pick" in st:

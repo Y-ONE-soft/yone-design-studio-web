@@ -1,0 +1,30 @@
+"""구성 01 표지 — 기준 reference.pdf 1쪽을 A4 로."""
+import json, os, sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mkpage import *                                                    # noqa
+
+st = open_doc("스텝바이스텝 워크북 (A4)")
+st += [S("구성 ① 표지 — 바탕부터", 2000)]
+st += box(0, 0, 210, 297, "#faf7f0")
+st += box(25.1, 0, 2.1, 41, "#8aabc9", label="왼쪽 파란 막대")
+st += box(176.6, 17.6, 30.4, 5.6, "#bab4a2", label="오른쪽 위 꼬리표")
+st += text(179, 18.8, 26, 3.4, "STEP BY STEP", 6.5, WHITE, align="center")
+st += text(25, 55, 70, 16, "STEP", 46, "#333b3d", label="큰 제목 — STEP / BY / STEP")
+st += text(25, 73, 70, 16, "BY", 46, "#8aabc9")
+st += text(25, 91, 70, 16, "STEP", 46, "#333b3d")
+st += box(25.3, 123.5, 51.9, 0.5, "#b5ac9c", label="밑줄과 한글 제목")
+st += box(25.3, 123.5, 15.9, 1.6, "#8aabc9")
+st += text(25.3, 129, 70, 6, "스텝바이스텝 워크북", 12, INK)
+st += text(25.3, 138, 70, 4, "MOCKTEST WORKBOOK", 7, TAB)
+st += box(25.3, 172.5, 11.1, 11.1, "#8aabc9", label="단계 세 칸 — 블루·베이지·브릭", radius=1.5)
+st += box(59.2, 172.5, 11.1, 11.1, "#cfa76b", radius=1.5)
+st += box(93.4, 172.5, 11.1, 11.1, "#bd7d70", radius=1.5)
+st += box(37.8, 178, 20.1, 0.5, "#b5ac9c")
+st += box(71.9, 178, 19.9, 0.5, "#b5ac9c")
+st += box(25.3, 257, 6.9, 2.6, "#8aabc9", label="아래 색 점 셋과 로고")
+st += box(33.5, 257, 6.9, 2.6, "#cfa76b")
+st += box(41.7, 257, 6.9, 2.6, "#bd7d70")
+st += text(25.3, 264, 50, 5, "각인 Books", 10, INK)
+st += done("표지", "c01.png")
+json.dump(st, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "c01.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+print("c01 단계", len(st))

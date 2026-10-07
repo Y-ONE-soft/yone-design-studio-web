@@ -100,6 +100,32 @@ class Ctx(object):
         p = ((self.skin.get("images") or {}).get(src)) if src else None
         return p
 
+    def image_href(self, src):
+        """그림을 SVG 안에 **박아 넣는다** — PDF 는 파일로 열리므로 서버 주소를 못 읽는다."""
+        rel = self.image(src)
+        if not rel:
+            return None
+        key = f"_img_{src}"
+        hit = getattr(self, "_imgcache", None)
+        if hit is None:
+            hit = self._imgcache = {}
+        if key in hit:
+            return hit[key]
+        import base64
+        import mimetypes
+        import os as _os
+        from core.units import store as _store
+        path = rel if _os.path.isabs(rel) else _os.path.join(_store.udir(), rel)
+        try:
+            with open(path, "rb") as fh:
+                raw = fh.read()
+        except OSError:
+            hit[key] = None          # 파일을 못 읽으면 화면용 주소로 넘어간다 (PDF 는 빈 자리)
+            return None
+        mime = mimetypes.guess_type(path)[0] or "image/png"
+        hit[key] = f"data:{mime};base64," + base64.b64encode(raw).decode()
+        return hit[key]
+
     def styled(self, a):
         """글 원자에 옷의 단락 스타일(a.style)을 입힌다 — 스타일 값이 원자 값보다 우선. 없는 스타일은 경고 + 원자 값 그대로."""
         name = a.get("style")
@@ -1017,7 +1043,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
     if t == "image":
         src = a.get("src") or ""
         if ctx.image(src):
-            href = f"/api/units/image/{esc(ctx.skin.get('id', ''))}/{esc(src)}"
+            href = ctx.image_href(src) or f"/api/units/image/{esc(ctx.skin.get('id', ''))}/{esc(src)}"
             im = a.get("img")
             if im:
                 # 틀 안 그림의 자리 — 틀 밖은 클립으로 자른다 (인디자인 프레임 안 그래픽)

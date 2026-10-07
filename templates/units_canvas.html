@@ -1885,7 +1885,9 @@ function side() {
         ${a.gradient ? `<div class="m3"><label>시작${colorSel("grad.c0", a.gradient.stops[0].c)}</label><label>끝${colorSel("grad.c1", a.gradient.stops[a.gradient.stops.length - 1].c)}</label><label>${a.gradient.type === "radial" ? "원형" : "각도 °"}<input type="number" data-a="grad.angle" step="15" value="${a.gradient.angle || 0}"></label></div><div class="f"><span>모양</span><select data-a="grad.type"><option value="linear" ${a.gradient.type !== "radial" ? "selected" : ""}>선형</option><option value="radial" ${a.gradient.type === "radial" ? "selected" : ""}>원형</option></select></div>` : ""}
         ${a.t === "rect" ? `<div class="m3"><label>모서리 모양<select data-a="corner">${[["round", "둥글게"], ["inverse", "역둥글게"], ["bevel", "경사"], ["inset", "빗면"], ["fancy", "팬시"]].map(([v, n]) => `<option value="${v}" ${(a.corner || "round") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>모서리 따로<input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위,오위,오아래,왼아래"></label><label></label></div>` : ""}
         ${strokeMore(a, a.t === "path")}`;
-      else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림 키</span><input type="text" data-a="src" value="${esc(a.src || "")}"></div>
+      else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림</span><span style="display:flex;gap:4px;align-items:center">
+        <label class="btn sm sub" title="그림 파일을 골라 바로 넣는다 (PNG·JPG·WEBP·SVG). 로고처럼 또렷해야 하면 SVG">📎 파일<input type="file" id="img-file" accept=".png,.jpg,.jpeg,.webp,.svg" style="display:none"></label>
+        <select data-a="src" title="이 브랜드에 등록된 그림"><option value="">없음</option>${Object.keys((sk.images || {})).map(k => `<option value="${esc(k)}" ${a.src === k ? "selected" : ""}>${esc(k)}</option>`).join("")}</select></span></div>
         <div class="f"><span>클리핑 패스</span><input type="text" data-a="clip" value="${esc(a.clip || "")}" placeholder="M L C Q Z · 0~1 비율 — 이 모양으로 오려 낸다"></div>
         <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
@@ -2061,6 +2063,17 @@ function side() {
   on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
     q.repeat = v === "once" || v === "none" ? v : "each_set"; if (v === "each_set_2") q.per = 2; else delete q.per;     // 지문 2개씩 = 그 면에 지문 자리를 두 벌 그려 둔다
     await savePlan(); drawRail(); side(); });
+  on("#img-file", "change", async (e) => {                                 // 그림 넣기 — 올려서 브랜드 그림 목록에 등록
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    const fd = new FormData(); fd.append("file", f); fd.append("skin", skin().id); fd.append("key", f.name.replace(/\.[^.]+$/, ""));
+    say("그림 올리는 중…");
+    const r = await fetch("/api/units/image", {method: "POST", body: fd});
+    const j = await r.json().catch(() => ({error: "올리기 실패"}));
+    if (j.error) { say(j.error); return; }
+    const sk2 = byId("skins")[skin().id]; sk2.images = Object.assign({}, sk2.images, {[j.key]: true});
+    hist(); page.items[sel].atom.src = j.key; save(); render(); side();
+    say(`그림 「${j.key}」 넣음`);
+  });
   on("#s-per", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = Math.max(1, +e.target.value || 1);
     if (v > 1) q.per = v; else delete q.per; await savePlan(); side(); });
   on("#s-sets", "change", async (e) => { const q = planPg(page.id); if (!q) return; if (e.target.value) q.sets = [e.target.value]; else delete q.sets; await savePlan(); pageSvg = {}; render(); drawRail(); side(); });   // 받는 원고가 바뀌면 캔버스도 그 유형 원고로

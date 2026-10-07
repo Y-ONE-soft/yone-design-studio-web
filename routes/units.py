@@ -250,8 +250,8 @@ def api_upload():
     if not f or not f.filename:
         return jsonify({"error": "파일 없음"}), 400
     ext = os.path.splitext(f.filename)[1].lower()
-    if ext not in (".pdf", ".png", ".jpg", ".jpeg", ".webp"):
-        return jsonify({"error": "PDF·PNG·JPG·WEBP 만"}), 400
+    if ext not in (".pdf", ".png", ".jpg", ".jpeg", ".webp", ".svg"):
+        return jsonify({"error": "PDF·PNG·JPG·WEBP·SVG 만"}), 400
     uid = uuid.uuid4().hex[:12]
     path = os.path.join(_updir(), uid + ext)
     f.save(path)
@@ -472,6 +472,33 @@ def api_part_from_preview():
     skin = body.get("skin_item") or {"id": "", "tokens": {}}
     ctx = render.Ctx(skin, {"parts": [], "blocks": []})
     return jsonify({"item": part, "svg": render.part_standalone(ctx, part), "warnings": ctx.warnings})
+
+
+@bp.route("/api/units/image", methods=["POST"])
+def api_image_put():
+    """그림 파일 → 옷(브랜드)의 그림 목록에 키로 등록. 지면의 그림 원자는 그 키를 쓴다."""
+    f = request.files.get("file")
+    sid = (request.form.get("skin") or "").strip()
+    key = (request.form.get("key") or "").strip() or (os.path.splitext(f.filename)[0] if f else "")
+    key = re.sub(r"[^a-zA-Z0-9_가-힣]", "_", key)[:40] or "img"
+    if not f or not f.filename:
+        return jsonify({"error": "파일 없음"}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in (".png", ".jpg", ".jpeg", ".webp", ".svg"):
+        return jsonify({"error": "PNG·JPG·WEBP·SVG 만"}), 400
+    skin = store.get("skins", sid)
+    if not skin:
+        return jsonify({"error": f"옷 {sid} 없음"}), 404
+    d = os.path.join(store.udir(), "_img")
+    os.makedirs(d, exist_ok=True)
+    name = f"{key}{ext}"
+    f.save(os.path.join(d, name))
+    skin.setdefault("images", {})[key] = os.path.join("_img", name)
+    err = store.validate("skins", skin)
+    if err:
+        return jsonify({"error": err}), 400
+    store.put("skins", skin)
+    return jsonify({"ok": True, "key": key, "skin": sid})
 
 
 @bp.route("/api/units/image/<sid>/<key>")
