@@ -1,7 +1,7 @@
 {#
   단독 실행용 껍데기 — Canva 식 레이아웃.
 
-  왼쪽 세로 레일(만들기 · 홈 · 프로젝트 · 구성요소) + (있으면) 보조 사이드바(`side` 블록) + 본문.
+  왼쪽 세로 레일(새로 · 편집기 · 간편 제작 · 관리 — 시스템 구성요소 그대로) +(있으면) 보조 사이드바(`side` 블록) + 본문.
   블록: `title` · `side` · `content` · `scripts` · `theme`(light 기본, 옛 어두운 화면은 dark).
   `book_studio.html` 은 `.ide` 를 `--rail-w` 만큼 띄우고 `--ide-top` 은 0 이다(위 머리띠가 없다).
 #}
@@ -78,11 +78,11 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
   <nav class="rail">
-    <a class="logo" href="/">Y.ONE<small>STUDIO</small></a>
-    <a class="item mk" href="/projects" data-new-menu title="새로 만들기"><span class="ic">+</span>새로</a>
-    <a class="item {{ 'on' if active_nav == '홈' else '' }}" href="/"><span class="ic">⌂</span>홈</a>
-    <a class="item {{ 'on' if active_nav in ('프로젝트', '책', '작업대', 'PDF', '틀', '조립') else '' }}" href="/projects"><span class="ic">🗂</span>프로젝트{% if intake_open %}<span class="badge" title="PDF 판정 — 결정 대기 · 새 틀 요청">{{ intake_open }}</span>{% endif %}</a>
-    <a class="item {{ 'on' if active_nav in ('만들기', '단위') else '' }}" href="/units"><span class="ic">✎</span>만들기</a>
+    <a class="logo" href="/units">Y.ONE<small>STUDIO</small></a>
+    <a class="item mk" href="/units" data-new-menu title="새로 만들기"><span class="ic">+</span>새로</a>
+    <a class="item {{ 'on' if active_nav in ('만들기', '단위') else '' }}" href="/units"><span class="ic">✎</span>편집기</a>
+    <a class="item {{ 'on' if active_nav == '간편 제작' else '' }}" href="/easy"><span class="ic">▤</span>간편 제작</a>
+    <a class="item {{ 'on' if active_nav in ('프로젝트', '책', '작업대', 'PDF', '틀', '조립') else '' }}" href="/projects"><span class="ic">🗂</span>관리</a>
     <span class="grow"></span>
     <span class="hint">로컬 실행<br>인증 없음</span>
   </nav>
@@ -92,9 +92,8 @@
   </main>
   <div class="newmenu" id="newmenu">
     <div class="h">새 항목 추가</div>
-    <button id="new-folder"><span class="ic">📁</span>새 폴더</button>
-    <button id="new-design"><span class="ic">▦</span>프로젝트</button>
-    <button id="new-units"><span class="ic">✎</span>만들기 — 지면을 직접 디자인</button>
+    <button id="new-units"><span class="ic">✎</span>새 문서 — 편집기에서 직접 디자인</button>
+    <button id="new-folder"><span class="ic">📁</span>새 라인업 폴더</button>
   </div>
   <div class="panel" id="dir-panel">
     <div class="sheet">
@@ -175,7 +174,6 @@
         b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); m.classList.contains('on') ? m.classList.remove('on') : open(b); });
       });
       document.addEventListener('click', function (e) { if (!m.contains(e.target)) m.classList.remove('on'); });
-      document.getElementById('new-design').addEventListener('click', function () { m.classList.remove('on'); window.open('/project/new', '_blank'); });   // 새 창: 디자인 고르기 → 원고
       document.getElementById('new-folder').addEventListener('click', function () { m.classList.remove('on'); dirSheet.open(null); });
       document.getElementById('new-units').addEventListener('click', function () { m.classList.remove('on'); location.href = '/units'; });   // 지면을 직접 디자인
     })();

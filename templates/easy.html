@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{# 간편 제작 — 만들어 둔 블록을 단계별로 붙여 만드는 곳(디자인 마법사). 아직 자리만 있다. #}
+{% block title %}간편 제작{% endblock %}
+{% block theme %}light{% endblock %}
+
+{% block content %}
+<style>
+  .easy { max-width: 640px; margin: 0 auto; padding: 80px 32px; }
+  .easy .tag { display: inline-block; font-size: 12px; font-weight: 600; color: var(--pp); background: var(--pp-bg); border-radius: 999px; padding: 4px 12px; }
+  .easy h1 { margin: 14px 0 8px; font-size: 30px; letter-spacing: -.02em; }
+  .easy p { margin: 0 0 28px; color: var(--mute); font-size: 15px; line-height: 1.6; }
+  .easy ol { margin: 0 0 32px; padding: 0; list-style: none; counter-reset: s; }
+  .easy li { counter-increment: s; display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+  .easy li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; background: #f1f0f6; color: var(--mute); display: grid; place-items: center; font-size: 13px; font-weight: 600; flex: none; }
+  .easy a.btn { text-decoration: none; display: inline-block; }
+</style>
+<div class="easy">
+  <span class="tag">준비 중</span>
+  <h1>간편 제작</h1>
+  <p>만들어 둔 블록을 가져다 붙여 단계별로 쉽게 만드는 곳입니다.<br>디자인을 몰라도 작업자와 고객이 직접 구성할 수 있게 만들 예정입니다.</p>
+  <ol>
+    <li>판형 고르기</li>
+    <li>지면 틀 고르기</li>
+    <li>블록 끌어 놓기</li>
+    <li>브랜드 고르기</li>
+    <li>원고 넣기</li>
+    <li>검수 후 PDF</li>
+  </ol>
+  <a class="btn go" href="/units">지금은 편집기에서 만들기 →</a>
+</div>
+{% endblock %}

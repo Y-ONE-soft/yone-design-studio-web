@@ -67,11 +67,16 @@ def create_app():
             n = 0
         return {"intake_open": n, "dir_colors": DIR_COLORS}   # dir_colors: base.html 의 폴더 시트 색 고르기
 
+    # 메뉴 = 구성요소 셋(편집기 · 간편 제작 · 관리). 홈은 없다 — 첫 화면은 편집기.
     @app.route("/")
     def home():
+        return redirect("/units")
+
+    @app.route("/easy")
+    def easy():
+        """간편 제작 — 만들어 둔 블록을 단계별로 붙여 만드는 곳. 아직 자리만(준비 중)."""
         from flask import render_template
-        from routes.books import projects
-        return render_template("home.html", books=projects(), active_nav="홈")
+        return render_template("easy.html", active_nav="간편 제작")
 
     @app.route("/api/studio/restart", methods=["POST"])
     def restart():
