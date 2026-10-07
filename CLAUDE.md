@@ -99,6 +99,7 @@ docx/hwp/hwpx에서 단락 + 밑줄 정보를 추출하고, 발문/지문/선지
 2. `bin/studio` 재기동 → http://127.0.0.1:5099 에서 바꾼 화면 확인.
 3. `git push origin main`.
 4. `deploy/fly-deploy.sh` — 메인 체크아웃에서. **커밋된 HEAD 만** 올라간다(`git archive`) — 다른 세션의 미커밋 파일은 섞이지 않는다. 빌드 5~10분. 비밀값은 없는 것만 채운다(클로드 키는 `~/.config/yone/env` 에서 자동).
+   **배포는 한 번에 하나**(2026-10-07): 스크립트가 `/tmp/yos-studio-deploy.lock` 잠금 · 돌고 있는 `fly deploy` · `HEAD ≠ origin/main` 이면 멈춘다(exit 3). 멈추면 기다렸다 다시 — 잠금을 지우거나 우회하지 않는다. 배포 명령은 `run_in_background` 시간 제한(최대 2시간)을 넉넉히.
 5. `curl -s https://yos-studio.fly.dev/api/v1/health` 가 `"ok":true,"claude":true` 이고, 바꾼 화면이 배포서버에서도 로컬과 같게 보여야 완료. 다르면 원인 해결 전까지 미완료.
 
 - 건너뛰는 경우: 문서·CLAUDE.md·docs/ 만 바뀐 커밋. 사용자가 "로컬만"이라고 한 경우.
