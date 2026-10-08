@@ -285,9 +285,11 @@ def grep_html(html, rules, ctx=None):
 
 def keep_spaces(html):
     """연속 공백을 지킨다 — HTML 은 공백 여럿을 하나로 줄이지만 인디자인은 친 만큼 띄운다.
-    두 번째 공백부터 줄 안 바뀜 공백(&#160;)으로 — 첫 공백에서는 그대로 줄이 바뀔 수 있다."""
-    return "".join(p if p.startswith("<") else re.sub(r" {2,}", lambda m: " " + "&#160;" * (len(m.group(0)) - 1), p)
+    두 번째 공백부터 줄 안 바뀜 공백(&#160;)으로 — 첫 공백에서는 그대로 줄이 바뀔 수 있다.
+    글(단락) 끝 공백도 지킨다 — 브라우저는 버리지만 인디자인은 남기고, 그 공백을 보고 끝 글자의 문맥 대체 글자를 고른다(영도체 숫자 「01 」)."""
+    html = "".join(p if p.startswith("<") else re.sub(r" {2,}", lambda m: " " + "&#160;" * (len(m.group(0)) - 1), p)
                    for p in _TAG.split(html))
+    return re.sub(r" ((?:&#160;)*)(?=(?:</[a-z]+>)*(?:<br/>|$))", r"&#160;\1", html)
 
 
 def soft_breaks(x, justify=False, word_min=None):

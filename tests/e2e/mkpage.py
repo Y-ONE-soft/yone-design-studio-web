@@ -154,9 +154,10 @@ def slot(name, label=None):
 
 
 def put_content(obj, label="원고 넣기 — 바깥 시스템이 보내는 꼴(자리 이름 → 글)"):
-    """문서 패널의 「원고 넣기」에 원고 JSON 을 치고 넣는다 — 빈 곳을 눌러 선택을 풀면 문서 패널이 나온다"""
+    """문서 패널의 「원고 넣기」에 원고 JSON 을 치고 넣는다 — Esc 로 선택을 풀면 문서 패널이 나온다
+    (빈 곳 누르기는 지면 전체를 덮은 바탕 면이 있으면 그 면이 골라져서 안 된다 — 간지)"""
     import json as _json
-    return [S(label, 1800), {"click": {"mm": [205, 294]}, "wait": 900},
+    return [S(label, 1800), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 900},
             F("#side #s-content", _json.dumps(obj, ensure_ascii=False), 900),
             {"click": "#side #s-content-put", "wait": 2500},
             {"js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"}]
