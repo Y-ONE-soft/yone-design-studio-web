@@ -1225,7 +1225,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                 a = dict(a, first_baseline=max(0.0, first - top))     # 첫 줄을 격자 줄에 세운다
         style = (f"margin:0;font-family:{esc(ctx.font(a.get('font')))};font-size:{a['size'] * PT:.3f}px;"
                  f"line-height:{lead:.3f}px;color:{ctx.color(a.get('color'))};text-align:{a.get('align', 'left')};"
-                 f"overflow:hidden;word-break:break-word;white-space:normal")
+                 f"overflow-x:visible;overflow-y:clip;word-break:break-word;white-space:normal")   # 옆으로는 상자 밖까지(줄 끝 공백 밑줄이 단 끝을 넘는다 — 인디자인), 아래로는 자른다
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
             # 브라우저는 자간이 있으면 합자·문맥 대체 글자를 끈다 — 인디자인은 자간을 줘도 그대로 쓴다(fi 합자·영도체 이어지는 숫자)
@@ -1259,7 +1259,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         # 글 잇기 — 같은 이야기의 상자끼리 넘친 줄을 차례로 넘긴다(units_compose.js 의 thread)
         st = f' data-story="{esc(a["story"])}" data-seq="{story_seq(a)}"' if a.get("story") else ""
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
-                f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}">'
+                f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}" style="overflow:visible">'
                 f'<div xmlns="http://www.w3.org/1999/xhtml" lang="{esc(a.get("lang") or "en")}"{st} style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
     if t == "line":
         adefs, aattrs = _arrows(ctx, a.get("stroke"))

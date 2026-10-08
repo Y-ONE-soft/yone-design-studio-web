@@ -52,6 +52,21 @@
     return r;
   }
 
+  // 줄을 꺾는 공백이 밑줄 친 글 안이면 그 밑줄 모양(굵기·내림·색)과 공백 하나 폭 — 없으면 null
+  function brkUnderline(t, p) {
+    if (!t || !t.space || t.zero || !t.a || t.a[1] < 0) return null;
+    for (let el = t.a[0].parentElement; el && el !== p; el = el.parentElement) {
+      const cs = getComputedStyle(el);
+      if (!(cs.textDecorationLine || "").includes("underline")) continue;
+      const fs = parseFloat(cs.fontSize) || 10;
+      const th = cs.textDecorationThickness, off = cs.textUnderlineOffset;
+      return {w: t.w / Math.max(t.n, 1), col: cs.textDecorationColor || cs.color,
+              th: th && th !== "auto" && th !== "from-font" ? th : (fs * 0.05).toFixed(3) + "px",
+              off: off && off !== "auto" ? off : (fs * 0.1).toFixed(3) + "px"};
+    }
+    return null;
+  }
+
   function compose(p) {
     if (p.dataset.jcDone) return;
     const OK = new Set(["span", "b", "i", "u", "s", "sup", "sub"]);        // 글 안 표·떠 있는 그림 등은 건드리지 않는다 — inline-block 개체 속(SVG)은 괜찮다
@@ -143,7 +158,7 @@
       const sum = (f) => ws.reduce((x, t) => x + f(t), 0);
       lines.push({first: toks[s], last: toks[e - 1], start: lead, L: sum(t => t.w) + (lead ? g0.w * f0 : 0),
                   nsp: sum(t => t.space ? t.n : 0) + (lead ? g0.n - 1 : 0), S0: sum(t => t.space ? t.sp0 : 0) + (lead ? g0.sp0 * f0 : 0),
-                  nc: sum(t => t.c) + (lead ? g0.n - 1 : 0)});
+                  nc: sum(t => t.c) + (lead ? g0.n - 1 : 0), ul: brkUnderline(toks[e], p)});
       s = e + 1;
     }
     const frag = [];
@@ -172,6 +187,15 @@
       }
       sp.setAttribute("style", st);
       sp.appendChild(frag[li]);
+      if (ln.ul && !isLast(li)) {                                         // 줄 끝 공백에 걸린 밑줄 — 인디자인은 그 공백까지 긋는다(단 끝을 넘어). 폭은 0 으로 쳐서 양끝맞춤은 그대로
+        const u = document.createElement("span"), v = document.createElement("span");   // 같은 서체의 공백에 같은 밑줄 — 자리가 글 밑줄과 똑같다
+        u.setAttribute("style", `display:inline-block;white-space:pre;width:${(ln.ul.w / k).toFixed(4)}px;margin-right:${(-ln.ul.w / k).toFixed(4)}px`);   // 줄 폭에 0 — 양끝맞춤 그대로
+        v.setAttribute("style", `word-spacing:0;text-decoration:underline;text-decoration-thickness:${ln.ul.th};text-underline-offset:${ln.ul.off};` +
+          `text-decoration-color:${ln.ul.col};text-decoration-skip-ink:none`);
+        v.textContent = " ";
+        u.appendChild(v);
+        sp.appendChild(u);
+      }
       p.appendChild(sp);
     });
     p.dataset.jcDone = "1";
