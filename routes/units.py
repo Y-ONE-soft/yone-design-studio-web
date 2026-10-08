@@ -505,6 +505,11 @@ def api_image_put():
 def api_image(sid, key):
     skin = store.get("skins", sid) or {}
     p = (skin.get("images") or {}).get(key)
+    if not p:                                                   # 다른 옷에 등록돼 있어도 찾는다
+        for sk in store.load("skins"):
+            p = (sk.get("images") or {}).get(key)
+            if p:
+                break
     if not p:
         abort(404)
     if not os.path.isabs(p):

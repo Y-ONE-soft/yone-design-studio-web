@@ -31,6 +31,8 @@ url, steps_path, out = sys.argv[1], sys.argv[2], sys.argv[3]
 W = int(sys.argv[4]) if len(sys.argv) > 4 else 1600
 H = int(sys.argv[5]) if len(sys.argv) > 5 else 1000
 FPS = int(sys.argv[6]) if len(sys.argv) > 6 else 8
+FAST = os.environ.get("REC_FAST") == "1"        # 빠른 모드 — 기다리지 않고 프레임도 안 찍는다 (대본 검사용)
+SPEED = float(os.environ.get("REC_SPEED", "2"))  # 녹화 배율 — 2 면 기다림·타이핑이 절반 (영상도 절반 길이)
 frames = os.path.join(SP, "frames_" + os.path.basename(out).split(".")[0])
 subprocess.run(["rm", "-rf", frames], capture_output=True)
 os.makedirs(frames, exist_ok=True)
@@ -67,22 +69,33 @@ try:
             urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json/version", timeout=1)
             break
         except Exception:
-            time.sleep(0.25)
+            time.sleep(0.25 / SPEED)
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}/json/new?{urllib.parse.quote(url, safe='')}", method="PUT")
     tab = json.load(urllib.request.urlopen(req, timeout=30))
     c = CDP(tab["webSocketDebuggerUrl"])
     time.sleep(3.0)
     c.js(CHROME_SETUP)
 
-    def frame():
+    fc = [0]
+
+    def frame(force=False):
+        if FAST:
+            return
+        fc[0] += 1
+        if not force and SPEED > 1 and fc[0] % int(round(SPEED)) != 0:
+            return                                  # 배속 — 동작 프레임을 솎는다
         d = c.call("Page.captureScreenshot", format="jpeg", quality=72)
         n[0] += 1
         open(os.path.join(frames, f"{n[0]:05d}.jpg"), "wb").write(base64.b64decode(d["data"]))
 
     def hold(ms):
+        ms = ms / SPEED
+        if FAST:
+            time.sleep(min(ms, 300) / 1000.0)      # 화면이 따라올 최소한만
+            return
         t0 = time.time()
         while (time.time() - t0) * 1000 < ms:
-            frame()
+            frame(True)
             left = ms / 1000 - (time.time() - t0)
             time.sleep(max(0, min(1 / FPS, left)))
 
@@ -152,6 +165,7 @@ try:
         pos[0], pos[1] = x1, y1
 
     def typetext(t, per=0.035):
+        per = per / SPEED
         for ch in t:
             c.call("Input.insertText", text=ch)
             if len(t) < 40 or ord(ch) % 3 == 0:
@@ -169,6 +183,7 @@ try:
 
     def wipe(times=14):
         """칸 안의 글을 지운다 — 백스페이스·딜리트를 사람처럼 눌러서."""
+        times = max(5, int(round(times / SPEED)))
         for _ in range(times):
             for t in ("rawKeyDown", "keyUp"):
                 c.call("Input.dispatchKeyEvent", type=t, windowsVirtualKeyCode=8, key="Backspace", code="Backspace")
@@ -183,7 +198,7 @@ try:
             wipe()
             typetext(str(value))
             key("Enter")                                 # 칸은 Enter 로 확정된다
-            time.sleep(0.25)
+            time.sleep(0.25 / SPEED)
             frame()
             got = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value) : null; })()")
             same = str(got).strip() == str(value).strip()
@@ -227,9 +242,9 @@ try:
                 for tryn in range(2):
                     n0 = c.js("page.items.length")
                     click(f'[data-tool="{d["tool"]}"]')
-                    time.sleep(0.25)
+                    time.sleep(0.25 / SPEED)
                     drag(d["from"], d["to"])
-                    time.sleep(0.4)
+                    time.sleep(0.4 / SPEED)
                     if c.js("page.items.length") > n0:
                         break
                     print(f"  ! {d['tool']} 안 그려짐 — 다시", flush=True)
@@ -241,7 +256,7 @@ try:
                 want = st["write"]["value"]
                 for tryn in range(3):
                     click(st["write"]["at"], 2)
-                    time.sleep(0.4)
+                    time.sleep(0.4 / SPEED)
                     if not c.js("!!(document.querySelector('#tedit') && document.querySelector('#tedit').offsetParent)"):
                         print("  ! 글 편집칸이 안 열렸다 — 다시", flush=True)
                         continue
@@ -261,6 +276,14 @@ try:
                 v = c.js(st["js"])
                 if v not in (None, True):
                     print("  js →", str(v)[:140], flush=True)
+            if "upload" in st:                                 # 파일 고르기 — 사람이 창에서 고르는 것과 같다
+                u = st["upload"]
+                doc = c.call("DOM.getDocument")
+                node = c.call("DOM.querySelector", nodeId=doc["root"]["nodeId"], selector=u["at"])
+                if not node.get("nodeId"):
+                    raise RuntimeError(f"파일 칸 없음 {u['at']}")
+                c.call("DOM.setFileInputFiles", files=[u["path"]], nodeId=node["nodeId"])
+                frame()
             if "shot" in st:
                 d = c.call("Page.captureScreenshot", format="png")
                 open(os.path.join(SP, st["shot"]), "wb").write(base64.b64decode(d["data"]))

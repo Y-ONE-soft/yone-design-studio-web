@@ -44,6 +44,7 @@ DEFAULT_SKIN = {"id": "", "name": "기본", "tokens": {
 class Ctx(object):
     def __init__(self, skin, lib, sys=None):
         self.skin = skin or DEFAULT_SKIN
+        self.skins = list(lib.get("skins") or [])          # 그림은 어느 옷에 등록돼 있든 찾는다
         self.parts = _by_id(lib.get("parts"))
         self.blocks = _by_id(lib.get("blocks"))
         self.pages = _by_id(lib.get("pages"))                 # 넘치면 이어 갈 면(page.cont) 찾기 — 인디자인의 다른 마스터 프레임으로 잇기
@@ -97,8 +98,17 @@ class Ctx(object):
         return font_family(self._tok(ref, "font", "sans-serif"))
 
     def image(self, src):
-        p = ((self.skin.get("images") or {}).get(src)) if src else None
-        return p
+        """그림 찾기 — 이 옷에 없으면 다른 옷에서도 찾는다 (그림은 옷을 갈아입어도 그대로여야 한다)."""
+        if not src:
+            return None
+        p = (self.skin.get("images") or {}).get(src)
+        if p:
+            return p
+        for sk in getattr(self, "skins", []):
+            p = (sk.get("images") or {}).get(src)
+            if p:
+                return p
+        return None
 
     def image_href(self, src):
         """그림을 SVG 안에 **박아 넣는다** — PDF 는 파일로 열리므로 서버 주소를 못 읽는다."""

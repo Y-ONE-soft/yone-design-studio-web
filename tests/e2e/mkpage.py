@@ -43,7 +43,7 @@ def box(x, y, w, h, fill=None, label=None, radius=None):
     return st
 
 
-def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None):
+def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None):
     st = ([S(label)] if label else [])
     tw, th = max(min(w, 60), 24), max(min(h, 24), 9)         # 임시 상자는 글을 치기 쉽게 넉넉히
     st += [{"draw": {"tool": "text", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + tw, SPOT["mm"][1] + th]}}, "wait": 750},
@@ -53,6 +53,13 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
         st.append(F('#side input[data-a="leading"]', leading))
     if align:
         st.append({"pick": {"at": '#side select[data-a="align"]', "value": align}, "wait": 550})
+    if font:                                                                   # 글꼴 — 「직접 입력…」 뒤 이름을 친다
+        st.append({"pick": {"at": '#side select[data-a="font"]', "value": "__raw"}, "wait": 600})
+        st.append(F('#side input[type="text"][data-a="font"]', font, 600))
+    if track:
+        st.append(F('#side input[data-a="tracking"]', track))
+    if bold:
+        st.append({"click": '#side input[data-a="b"]', "wait": 500})           # 굵게
     st += _color("color", color)
     st += [F('#side input[data-it="w"]', w), F('#side input[data-a="h"]', h),
            F('#side input[data-it="x"]', x), F('#side input[data-it="y"]', y, 550)]
@@ -61,10 +68,43 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
     return st
 
 
-def ellipse(x, y, d, fill):
+def image(x, y, w, h, path, label=None):
+    """그림 — 「그림」 도구로 자리를 끌고, 속성에서 파일을 골라 넣는다"""
+    st = ([S(label)] if label else [])
+    st += [{"draw": {"tool": "image", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + min(w, 60), SPOT["mm"][1] + min(h, 30)]}}, "wait": 750}]
+    st += _place(x, y, w, h)
+    st += [{"upload": {"at": "#side #img-file", "path": path}, "wait": 2500}]
+    return st
+
+
+SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z",
+          "삼각형": "M0.5 0 L1 1 L0 1 Z", "마름모": "M0.5 0 L1 0.5 L0.5 1 L0 0.5 Z",
+          "육각형": "M0.25 0 L0.75 0 L1 0.5 L0.75 1 L0.25 1 L0 0.5 Z",
+          "평행사변형": "M0.12 0 L1 0 L1 1 L0 1 Z", "모서리 자른 띠": "M0 0 L1 0 L0.88 1 L0 1 Z"}
+
+
+def shape(x, y, w, h, fill, name="평행사변형", label=None):
+    """도형 — 「도형」 도구로 그린 뒤 오른쪽 「모양」 칸에서 고른다"""
+    st = ([S(label)] if label else [])
+    st += [{"draw": {"tool": "path", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + min(w, 60), SPOT["mm"][1] + min(h, 30)]}}, "wait": 750},
+           {"pick": {"at": '#side select[data-a="d"]', "value": SHAPES[name]}, "wait": 800}]
+    st += _place(x, y, w, h)
+    st += _color("fill", fill)
+    return st
+
+
+def ellipse(x, y, d, fill=None, stroke=None, sw=None):
+    """원 — 채움 없이 테두리만도 된다"""
     st = [{"draw": {"tool": "ellipse", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + d, SPOT["mm"][1] + d]}}, "wait": 700}]
     st += _place(x, y, d, d)
-    st += _color("fill", fill)
+    if fill:
+        st += _color("fill", fill)
+    else:
+        st.append({"pick": {"at": '#side select[data-a="fill"]', "value": ""}, "wait": 550})      # 채움 없음
+    if stroke:
+        st += _color("stroke.color", stroke)
+        if sw:
+            st.append(F('#side input[data-a="stroke.w"]', sw))
     return st
 
 
@@ -77,6 +117,11 @@ def open_doc(name=None):
     return [{"js": "window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; true", "wait": 300},
             {"click": "#pcards .pcard:not(.new)", "wait": 4800},
             {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000}]
+
+
+def expect_pages(n):
+    """녹화 시작 전 — 문서가 딱 이만큼이어야 한다. 아니면 거기서 멈춘다(찌꺼기 위에 찍지 않게)."""
+    return [{"js": f"(() => {{ const k = docPages().length; if (k !== {n}) throw new Error('시작 쪽 수가 {n} 이 아니라 ' + k); return '시작 쪽 {n} 확인'; }})()", "wait": 500}]
 
 
 def add_page(label):

@@ -452,7 +452,8 @@ const ATOM_NM = Object.fromEntries(ATOMS.map(a => [a[0], a[1]]));
 // 도형 견본 — 좌표는 0~1 비율. 인디자인 Polygon·펜 패스 대신 여기서 고르거나 d 를 직접 적는다
 const SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", "삼각형": "M0.5 0 L1 1 L0 1 Z", "체크": "M0.05 0.55 L0.35 0.9 L0.95 0.1",
   "별": "M0.5 0 L0.62 0.38 L1 0.38 L0.69 0.6 L0.81 1 L0.5 0.76 L0.19 1 L0.31 0.6 L0 0.38 L0.38 0.38 Z", "말풍선": "M0.1 0 L0.9 0 C0.95 0 1 0.05 1 0.1 L1 0.65 C1 0.7 0.95 0.75 0.9 0.75 L0.35 0.75 L0.2 1 L0.22 0.75 L0.1 0.75 C0.05 0.75 0 0.7 0 0.65 L0 0.1 C0 0.05 0.05 0 0.1 0 Z",
-  "마름모": "M0.5 0 L1 0.5 L0.5 1 L0 0.5 Z", "육각형": "M0.25 0 L0.75 0 L1 0.5 L0.75 1 L0.25 1 L0 0.5 Z"};
+  "마름모": "M0.5 0 L1 0.5 L0.5 1 L0 0.5 Z", "육각형": "M0.25 0 L0.75 0 L1 0.5 L0.75 1 L0.25 1 L0 0.5 Z",
+  "평행사변형": "M0.12 0 L1 0 L1 1 L0 1 Z", "모서리 자른 띠": "M0 0 L1 0 L0.88 1 L0 1 Z"};
 const plainText = (t) => Array.isArray(t) ? t.map(r => typeof r === "string" ? r : (r.t || "")).join("") : (t || "");
 
 let plan = null, page = null, sel = null, sels = new Set(), scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {}, curSet = "";
@@ -1274,7 +1275,7 @@ function armDraw(t) {
   const hint = $("#thint");                                  // 도구 설명은 도구 상자 옆 (위 줄은 문서 일만)
   hint.style.display = drawTool ? "block" : "none";
   if (drawTool) { hint.innerHTML = esc(`${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소`)
-      + (drawTool === "path" ? `<div class="shp">${Object.entries(SHAPES).map(([n, d]) => `<button data-shp="${esc(d)}" class="${(shapeD || ATOMS.find(x => x[0] === "path")[2].d) === d ? "on" : ""}">${esc(n)}</button>`).join("")}</div>` : "");
+      + (drawTool === "path" ? `<div class="shp">${Object.entries(SHAPES).map(([n, d]) => `<button data-shp="${esc(d)}" data-shpname="${esc(n)}" class="${(shapeD || ATOMS.find(x => x[0] === "path")[2].d) === d ? "on" : ""}">${esc(n)}</button>`).join("")}</div>` : "");
     hint.querySelectorAll("[data-shp]").forEach(b => b.onclick = (ev) => { ev.stopPropagation(); shapeD = b.dataset.shp; hint.querySelectorAll("[data-shp]").forEach(x => x.classList.toggle("on", x === b)); });
     const b = $("#trail").querySelector(`[data-tool="${drawTool}"]`); hint.style.top = (b ? b.offsetTop + $("#trail").offsetTop : 60) + "px"; }
 }
@@ -2070,8 +2071,9 @@ function side() {
     const r = await fetch("/api/units/image", {method: "POST", body: fd});
     const j = await r.json().catch(() => ({error: "올리기 실패"}));
     if (j.error) { say(j.error); return; }
-    const sk2 = byId("skins")[skin().id]; sk2.images = Object.assign({}, sk2.images, {[j.key]: true});
-    hist(); page.items[sel].atom.src = j.key; save(); render(); side();
+    const lib2 = await api("/api/units/library");                          // 브랜드 그림 목록을 서버에서 다시 읽는다
+    LIB.skins = lib2.skins;
+    hist(); page.items[sel].atom.src = j.key; save(); pageSvg = {}; render(); side(); thumbsLoad();
     say(`그림 「${j.key}」 넣음`);
   });
   on("#s-per", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = Math.max(1, +e.target.value || 1);
