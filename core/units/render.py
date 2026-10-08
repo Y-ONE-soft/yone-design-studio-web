@@ -316,9 +316,11 @@ def grep_html(html, rules, ctx=None):
 def keep_spaces(html):
     """연속 공백을 지킨다 — HTML 은 공백 여럿을 하나로 줄이지만 인디자인은 친 만큼 띄운다.
     두 번째 공백부터 줄 안 바뀜 공백(&#160;)으로 — 첫 공백에서는 그대로 줄이 바뀔 수 있다.
-    글(단락) 끝 공백도 지킨다 — 브라우저는 버리지만 인디자인은 남기고, 그 공백을 보고 끝 글자의 문맥 대체 글자를 고른다(영도체 숫자 「01 」)."""
+    글(단락) 끝 공백도 지킨다 — 브라우저는 버리지만 인디자인은 남기고, 그 공백을 보고 끝 글자의 문맥 대체 글자를 고른다(영도체 숫자 「01 」).
+    글(단락) 첫 공백도 — 인디자인은 친 자리만큼 띄우고 시작한다(배열 조각 「 on / was found」, 단위 12)."""
     html = "".join(p if p.startswith("<") else re.sub(r" {2,}", lambda m: " " + "&#160;" * (len(m.group(0)) - 1), p)
                    for p in _TAG.split(html))
+    html = re.sub(r"(^|<br/>)((?:<[^/>][^>]*>)*) ", r"\1\2&#160;", html)
     return re.sub(r" ((?:&#160;)*)(?=(?:</[a-z]+>)*(?:<br/>|$))", r"&#160;\1", html)
 
 
@@ -345,6 +347,22 @@ def ko_glyphs(html, a, ctx):
             return t
         return f'<span lang="ko">{t}</span>'
     return "".join(p if p.startswith("<") else _KO_RUN.sub(wrap, p) for p in _TAG.split(html))
+
+
+JC_DEFAULT = (100, 133, -8, 120, 1, 5, -10)   # 낱말 최소·최대 % · 자간 최소·최대 ‰ · 줄이기 비용 · 줄 비용 · 끝 줄 자간 최소 ‰ (units_compose.js)
+
+
+def jc_spec(a):
+    """양끝 정렬 설정(인디자인 「균등 배치」) → 컴포저 data-jc. 글상자 atom.jc 가 있으면 그 값, 없으면 기본.
+    끝 줄은 자간을 조금 더 줄여 넣는다(기본 -10) — 자간 최소를 정하면 그보다 2‰ 더, 0 이면 끝 줄도 안 줄인다."""
+    j = a.get("jc") or {}
+    v = list(JC_DEFAULT)
+    for i, k in ((0, "word_min"), (1, "word_max"), (2, "letter_min"), (3, "letter_max")):
+        if j.get(k) is not None:
+            v[i] = j[k]
+    if j.get("letter_min") is not None:
+        v[6] = min(j["letter_min"] - 2, 0) if j["letter_min"] < 0 else 0
+    return ",".join(f"{x:g}" for x in v)
 
 
 def soft_breaks(x, justify=False, word_min=None):
@@ -632,7 +650,7 @@ def _text_html(a, html, h, ctx=None):
     paras = (html or "").split("<br/>")
     just = a.get("align") == "justify"
     # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
-    jc = (lambda x: ' data-jc="100,133,-8,120,1,5,-10"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
+    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
     inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:

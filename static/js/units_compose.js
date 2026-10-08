@@ -38,8 +38,8 @@
         out.push({space: true, zero: true, breakable: true, n: 0, w: 0, sp0: 0, c: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
       i = j;
     }
-    while (out.length && out[0].space) out.shift();
-    while (out.length && out[out.length - 1].space) out.pop();
+    while (out.length && out[0].space && out[0].breakable) out.shift();             // 줄 안 바뀜 공백(렌더러가 지킨 첫·끝 공백)은 남긴다
+    while (out.length && out[out.length - 1].space && out[out.length - 1].breakable) out.pop();
     return out;
   }
 

@@ -44,6 +44,8 @@ def chrome_extent(family, weight, size, s):
     if key not in _EXT:
         body = _h.escape(s)
         if "CJK" in family:                                                    # 편집기처럼 공백·문장부호는 한국어 꼴(render.ko_glyphs)
+            import sys
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))   # 리포 뿌리 — 대본은 단위 폴더에서 돈다
             from core.units import render
             body = re.sub("&#?\\w+;|[" + render.KO_LOCL + "]+", lambda m: m.group(0) if m.group(0).startswith("&") and m.group(0) not in ("&#160;", "&quot;", "&#x27;")
                           else f'<span lang="ko">{m.group(0)}</span>', body)
