@@ -3,7 +3,9 @@
 
 볼륨이 정본이다(화면에서 디렉토리를 옮기고 디자인을 등록한다). 그래서 덮어쓰지 않고:
   · 볼륨에 없는 틀(catalog.json 의 키)          → 항목을 더한다
+  · 볼륨에 없는 디렉토리(dirs.json 의 id)        → 기타 앞에 더한다
   · 볼륨에 없는 디자인 폴더(<틀>/designs/<id>/)  → 폴더째 복사한다
+  · 있는 디자인인데 기준 PDF(참고/reference.pdf)가 없으면 → 그 파일만 복사한다
   · 볼륨에 없는 틀 폴더                          → 폴더째 복사한다
   · 디자인 단위 시드(_units/<kind>.json) → 없는 파일은 복사, 있는 파일엔 새 항목·스타일·구간만 보탠다(core/units/seed.py)
 이미 있는 파일은 손대지 않는다 — 리포에서 디자인을 고쳤으면(overrides.css 등) 화면의
@@ -38,6 +40,18 @@ def main(seed, vol):
                 json.dump(vc, f, ensure_ascii=False, indent=2)
             added_series += list(new)
 
+    # ①-2 dirs.json — 없는 디렉토리(관리 화면의 폴더)만, 기타(etc) 앞에. 화면에서 고친 폴더는 그대로
+    sd, vd = _load(os.path.join(seed, "dirs.json")), _load(os.path.join(vol, "dirs.json"))
+    if isinstance(sd, list) and isinstance(vd, list):
+        have = {d.get("id") for d in vd}
+        new = [d for d in sd if d.get("id") not in have]
+        if new:
+            at = next((i for i, d in enumerate(vd) if d.get("id") == "etc"), len(vd))
+            vd[at:at] = new
+            with open(os.path.join(vol, "dirs.json"), "w", encoding="utf-8") as f:
+                json.dump(vd, f, ensure_ascii=False, indent=2)
+            added_series += [f"폴더 {d.get('id')}" for d in new]
+
     # ② 틀 폴더 · 디자인 폴더 — 없는 것만 통째로
     for series in sorted(os.listdir(seed)):
         sdir = os.path.join(seed, series)
@@ -56,6 +70,14 @@ def main(seed, vol):
             if os.path.isdir(os.path.join(sdes, d)) and not os.path.exists(os.path.join(vdes, d)):
                 shutil.copytree(os.path.join(sdes, d), os.path.join(vdes, d))
                 added_designs.append(f"{series}/{d}")
+                continue
+            # 이미 있는 디자인 — 기준 PDF(참고/reference.pdf)가 볼륨에 없을 때만 보탠다(구성·전체 면이 이걸로 그려진다)
+            sref, vref = os.path.join(sdes, d, "참고", "reference.pdf"), os.path.join(vdes, d, "참고", "reference.pdf")
+            if os.path.isfile(sref) and os.path.isdir(os.path.join(vdes, d)) and not os.path.exists(vref) \
+                    and not os.path.exists(os.path.join(vdes, d, "reference.pdf")):
+                os.makedirs(os.path.dirname(vref), exist_ok=True)
+                shutil.copy2(sref, vref)
+                added_designs.append(f"{series}/{d} 기준 PDF")
 
     # ③ 디자인 단위 시드(_units/<kind>.json) — 없는 파일은 통째로, 있는 파일엔 **새로 생긴 항목·스타일·구간만** 보탠다
     #    (core/units/seed.py). 화면에서 고친 항목은 그대로.

@@ -64,8 +64,8 @@
     <div class="meta"><i class="dot {{ t.ready }}"></i>{{ t.name }} · {{ '기준 PDF ' ~ total ~ '면' if total else '지면 ' ~ pages|length ~ '면' }}{% if d.date %} · {{ d.date }}{% endif %}{% if d.desc %} · {{ d.desc }}{% endif %}</div>
   </div>
   <div class="acts">
-    <a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">원고 넣기 → 조판</a>
-    <a href="/project/new?pick={{ t.series }}/{{ d.id }}" target="_blank">새 프로젝트에서 열기</a>
+    {% if t.manuscript %}<a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">원고 넣기 → 조판</a>
+    <a href="/project/new?pick={{ t.series }}/{{ d.id }}" target="_blank">새 프로젝트에서 열기</a>{% endif %}
     {% if d.draft %}<button class="ok" id="confirm">확인 완료</button>{% endif %}
     <button class="del" id="del">삭제</button>
   </div>
@@ -81,7 +81,9 @@
     <div class="info">
       <div class="box"><h3>디자인</h3>
         <dl><dt>틀</dt><dd>{{ t.name }} (<code>{{ t.series }}</code>)</dd><dt>폴더</dt><dd>{{ t.dir_name }}</dd><dt>판형</dt><dd>{{ t.page.width_mm ~ '×' ~ t.page.height_mm ~ 'mm' if t.page and t.page.width_mm else '틀 기본' }}</dd>
-        {% if d.source %}<dt>출처</dt><dd>{{ d.source }}</dd>{% endif %}</dl></div>
+        {% if d.source %}<dt>출처</dt><dd>{{ d.source }}</dd>{% endif %}
+        {% for k, v in (d.tags or {}).items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}
+        {% if d.pairs %}<dt>짝 내지</dt><dd><a href="/design/{{ d.pairs }}">{{ d.pairs }}</a></dd>{% endif %}</dl></div>
       {% if t.fonts_missing %}<div class="box" style="background:#fff4e5;color:#8a5a00"><h3 style="color:#8a5a00">서체 부족</h3>{{ t.fonts_missing|join(' · ') }}</div>{% endif %}
       {% if d.draft %}<div class="box"><h3>초안</h3>PDF 에서 잰 색·판형으로 만든 초안입니다. 레이아웃은 틀 것이라 견본과 대조해 맞으면 <b>확인 완료</b>.</div>{% endif %}
     </div>
