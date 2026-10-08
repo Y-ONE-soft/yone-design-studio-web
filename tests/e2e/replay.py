@@ -71,7 +71,7 @@ def page_ids():
 def run_steps(fast, video):
     subprocess.run([PY, os.path.join(udir, "make.py")], check=True)          # → steps.json
     env = dict(os.environ, REC_FAST="1" if fast else "0")
-    env.setdefault("REC_SPEED", "4")                                         # 녹화는 확인용 — 빠르게
+    env.setdefault("REC_SPEED", "8")                                         # 녹화는 확인용 — 빠르게 (2026-10-08 사용자: 8배)
     r = subprocess.run([PY, "tests/e2e/rec.py", BASE + "/units", os.path.join(udir, "steps.json"),
                         video, "1600", "1000", "8"], cwd=REPO, env=env, capture_output=True, text=True)
     open(os.path.join(out, "rec.log"), "w").write(r.stdout + r.stderr)
