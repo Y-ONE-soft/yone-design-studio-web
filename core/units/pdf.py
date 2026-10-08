@@ -84,7 +84,7 @@ def stamp_boxes(path, trim_w, trim_h, bleed, marks, log=None):
         mb = pg.mediabox                                             # 크로미움이 매체를 0.1mm 쯤 반올림한다 — 재단은 정확히 판형 크기로, 가운데에
         cx, cy = (mb.x0 + mb.x1) / 2, (mb.y0 + mb.y1) / 2
         trim = fitz.Rect(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2)
-        pg.set_bleedbox(fitz.Rect(trim.x0 - b, trim.y0 - b, trim.x1 + b, trim.y1 + b))
+        pg.set_bleedbox(fitz.Rect(trim.x0 - b, trim.y0 - b, trim.x1 + b, trim.y1 + b) & mb)   # 재단선 없이(도련 = 매체)면 반올림만큼 매체 밖 — 매체 안으로
         pg.set_trimbox(trim)
     tmp = path + ".box"
     doc.save(tmp, garbage=3, deflate=True)

@@ -1017,7 +1017,9 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += ";" + dec
         if a.get("baseline"):
             style += f";position:relative;top:{-float(a['baseline']) * PT:.3f}px"
-        if a.get("b"):
+        if a.get("weight"):                                                    # 굵기(100~900)가 굵게보다 먼저
+            style += f";font-weight:{int(a['weight'])}"
+        elif a.get("b"):
             style += ";font-weight:700"
         if a.get("i"):
             style += ";font-style:italic"
@@ -1544,7 +1546,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     # system 블록과 부품은 언제나 그린다.
     for pl in place_items(ctx, page, W, H, mirror):
         it = pl["it"]
-        if pl["y"] + pl["h"] > H + 0.01:
+        if pl["y"] + pl["h"] > H + 0.01 and not bleeds(pl, H, (ctx.print or {}).get("bleed")):
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
         x = W - it["x"] - pl["w"] if mirror else it["x"]
         tf = f"translate({x:.3f},{pl['y']:.3f})" + (f" scale({pl['s']:.4f})" if abs(pl["s"] - 1) > 1e-6 else "")
@@ -1725,6 +1727,13 @@ def mirror_part(part):
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
+
+
+def bleeds(pl, H, bleed=None):
+    """재단 여백까지 칠한 요소(바탕·막대)인가 — 넘침이 아니다. 제자리(밀리지 않은) 원자이고 끝이 도련 안."""
+    it = pl["it"]
+    b = float(bleed if bleed is not None else DEFAULT_SPEC["bleed"])
+    return pl.get("dy", 0) < 0.01 and not it.get("block") and not _atom_slot(it) and pl["y"] + pl["h"] <= H + b + 0.01
 
 
 def page_canvas_svgs(ctx, page, spec, sample_set=None):

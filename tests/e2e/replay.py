@@ -3,6 +3,7 @@
     python3 tests/e2e/replay.py <단위> check     만들기(녹화 없음) + 원본과 비교 → 일치율
     python3 tests/e2e/replay.py <단위> rec       같은 대본으로 녹화(기본 4배속) + 비교
     python3 tests/e2e/replay.py <단위> reset     그 단위의 데이터·그림·영상 지우기 (make.py 는 남김)
+    python3 tests/e2e/replay.py _audit audit     기능을 고친 뒤 편집기 전체 감사 (빈 데이터로)
 
 단위 폴더 tests/e2e/replay/<단위>/ 에
   make.py   대본 생성기 — 실행하면 같은 폴더에 steps.json 을 쓴다
@@ -38,6 +39,12 @@ def fresh_data():
 
 def server():
     env = dict(os.environ, YONE_CATALOG_DIR=data, YONE_AUTH="off")
+    envf = os.path.expanduser("~/.config/yone/env")                          # bin/studio 와 같이 — 클로드 키
+    if os.path.exists(envf):
+        for ln in open(envf):
+            k, _, v = ln.strip().removeprefix("export ").partition("=")
+            if k and v and not k.startswith("#"):
+                env.setdefault(k, v.strip("'\""))
     log = open(os.path.join(out, "server.log"), "w")
     p = subprocess.Popen([PY, "-u", "studio_server.py", "--port", str(PORT)], cwd=REPO, env=env, stdout=log, stderr=log)
     for _ in range(80):
@@ -86,6 +93,9 @@ def compare(new_ids, state):
         try:                                                                              # 재단 여백 포함 — 원본과 같은 216×303
             urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0",
                                        os.path.join(out, f"p{rp}_print.pdf"))
+            warns = json.load(urllib.request.urlopen(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0&json=1"))["warnings"]
+            for w in warns:
+                print(f"  ! 편집기 경고 p{rp}: {w}")
         except urllib.error.HTTPError as e:
             print(f"  ! 인쇄용 PDF 실패 p{rp}: {e.read().decode()[:300]}")
         ref[rp - 1].get_pixmap(dpi=DPI).save(os.path.join(out, f"p{rp}_ref.png"))
@@ -120,6 +130,11 @@ os.makedirs(out, exist_ok=True)
 fresh_data()
 srv = server()
 try:
+    if cmd == "audit":                                                       # 기능을 고친 뒤 — 편집기 전체 감사(다른 곳이 안 깨졌나)
+        r = subprocess.run([PY, "tests/e2e/canvas_audit.py", BASE], cwd=REPO, capture_output=True, text=True)
+        open(os.path.join(out, "audit.log"), "w").write(r.stdout + r.stderr)
+        print("\n".join((r.stdout + r.stderr).strip().splitlines()[-6:]))
+        sys.exit(r.returncode)
     before = set(page_ids())
     t0 = time.time()
     ok = run_steps(cmd != "rec", os.path.join(out, unit + ".mp4") if cmd == "rec" else os.path.join(out, "_fast.mp4"))

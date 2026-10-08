@@ -127,7 +127,8 @@ def thread(ctx, page, spec, max_pages=40):
     for _ in range(max_pages * 3):
         cur["_flowed"] = True
         placed = render.place_items(ctx, cur, W, H)
-        over = [p for p in placed if not p["fixed"] and p["y"] + p["h"] > limit + 0.01 and id(p["it"]) not in stuck]
+        over = [p for p in placed if not p["fixed"] and p["y"] + p["h"] > limit + 0.01 and id(p["it"]) not in stuck
+                and not render.bleeds(p, float(spec["h"]), spec.get("bleed"))]                # 재단 여백까지 칠한 바탕은 넘침 아님
         if not over:
             out.append(cur)
             return out

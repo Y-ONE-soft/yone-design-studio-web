@@ -43,7 +43,7 @@ def box(x, y, w, h, fill=None, label=None, radius=None):
     return st
 
 
-def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None):
+def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None, weight=None):
     st = ([S(label)] if label else [])
     tw, th = max(min(w, 60), 24), max(min(h, 24), 9)         # 임시 상자는 글을 치기 쉽게 넉넉히
     st += [{"draw": {"tool": "text", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + tw, SPOT["mm"][1] + th]}}, "wait": 750},
@@ -60,6 +60,8 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
         st.append(F('#side input[data-a="tracking"]', track))
     if bold:
         st.append({"click": '#side input[data-a="b"]', "wait": 500})           # 굵게
+    if weight:                                                                 # 굵기 — 「굵기」 칸에서 고른다 (500·600 …)
+        st.append({"pick": {"at": '#side select[data-a="weight"]', "value": str(weight)}, "wait": 550})
     st += _color("color", color)
     st += [F('#side input[data-it="w"]', w), F('#side input[data-a="h"]', h),
            F('#side input[data-it="x"]', x), F('#side input[data-it="y"]', y, 550)]

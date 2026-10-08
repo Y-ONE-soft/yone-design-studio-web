@@ -1854,6 +1854,7 @@ function side() {
         <div class="f"><span title="인디자인 글꼴">글꼴</span><span style="display:flex;gap:4px"><select data-a="font">${Object.entries(Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {})).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}<option value="__raw" ${a.font && !a.font.startsWith("$") ? "selected" : ""}>직접 입력…</option></select>${a.font && !a.font.startsWith("$") ? `<input type="text" data-a="font" value="${esc(a.font)}" title="서체 이름 (예: Montserrat)" style="width:110px">` : ""}</span></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div>
+        <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${[[100, "Thin"], [200, "ExtraLight"], [300, "Light"], [400, "Regular"], [500, "Medium"], [600, "SemiBold"], [700, "Bold"], [800, "ExtraBold"], [900, "Black"]].map(([v, n]) => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${n}</option>`).join("")}</select></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
         <details class="more" ${view.adv ? "open" : ""}><summary>글자 더 보기 — 정렬 · 행간 · 자간 · 들여쓰기 · 단락 · 탭</summary>
         <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
@@ -1970,6 +1971,7 @@ function side() {
     else if (k === "dashpat") { const d = String(v).split(/[,\s]+/).filter(Boolean).map(Number).filter(x => x > 0);
       a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (d.length) a.stroke.dash = d; else delete a.stroke.dash; }
     else if (k === "flip") { if (v) a.flip = v; else delete a.flip; }
+    else if (k === "weight") { if (v) a.weight = +v; else delete a.weight; }        // 굵기 — 같은 서체 집의 중간 굵기(500·600 …)
     else if (k === "skewx" || k === "skewy") { const sk2 = (a.skew || [0, 0]).slice(); sk2[k === "skewx" ? 0 : 1] = v || 0;
       if (sk2[0] || sk2[1]) a.skew = sk2; else delete a.skew; }
     else if (k === "scalex" || k === "scaley") { const sc = (a.scale || [100, 100]).slice(); sc[k === "scalex" ? 0 : 1] = v || 100;

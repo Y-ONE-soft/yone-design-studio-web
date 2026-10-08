@@ -157,7 +157,7 @@
   "wait": 750
  },
  {
-  "say": "② 굵기 — 서체 칸에 이름으로",
+  "say": "② 굵기 — 「굵기」 칸에서 고르기",
   "wait": 1500
  },
  {
@@ -186,7 +186,7 @@
      257.0
     ]
    },
-   "value": "STEP 01 Montserrat",
+   "value": "STEP 01 Montserrat 400",
    "away": {
     "mm": [
      205,
@@ -216,6 +216,13 @@
    "value": "Montserrat"
   },
   "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -285,7 +292,7 @@
      257.0
     ]
    },
-   "value": "STEP 01 Montserrat Medium",
+   "value": "STEP 01 Montserrat 500",
    "away": {
     "mm": [
      205,
@@ -312,9 +319,16 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat Medium"
+   "value": "Montserrat"
   },
   "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -384,7 +398,7 @@
      257.0
     ]
    },
-   "value": "STEP 01 Montserrat SemiBold",
+   "value": "STEP 01 Montserrat 600",
    "away": {
     "mm": [
      205,
@@ -411,9 +425,16 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat SemiBold"
+   "value": "Montserrat"
   },
   "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "600"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -483,7 +504,7 @@
      257.0
     ]
    },
-   "value": "STEP 01 Montserrat-SemiBold",
+   "value": "STEP 01 Montserrat 700",
    "away": {
     "mm": [
      205,
@@ -510,9 +531,16 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat-SemiBold"
+   "value": "Montserrat"
   },
   "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -582,7 +610,7 @@
      257.0
     ]
    },
-   "value": "STEP 01 Montserrat ExtraBold",
+   "value": "STEP 01 Montserrat 800",
    "away": {
     "mm": [
      205,
@@ -609,9 +637,16 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat ExtraBold"
+   "value": "Montserrat"
   },
   "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
  },
  {
   "pick": {
