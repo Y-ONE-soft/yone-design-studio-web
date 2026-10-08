@@ -3,6 +3,7 @@
 
 볼륨이 정본이다(화면에서 디렉토리를 옮기고 디자인을 등록한다). 그래서 덮어쓰지 않고:
   · 볼륨에 없는 틀(catalog.json 의 키)          → 항목을 더한다
+  · 볼륨에 없는 디렉토리(dirs.json 의 id)        → 기타 앞에 더한다
   · 볼륨에 없는 디자인 폴더(<틀>/designs/<id>/)  → 폴더째 복사한다
   · 볼륨에 없는 틀 폴더                          → 폴더째 복사한다
   · 디자인 단위 시드(_units/<kind>.json) → 없는 파일은 복사, 있는 파일엔 새 항목·스타일·구간만 보탠다(core/units/seed.py)
@@ -37,6 +38,18 @@ def main(seed, vol):
             with open(os.path.join(vol, "catalog.json"), "w", encoding="utf-8") as f:
                 json.dump(vc, f, ensure_ascii=False, indent=2)
             added_series += list(new)
+
+    # ①-2 dirs.json — 없는 디렉토리(관리 화면의 폴더)만, 기타(etc) 앞에. 화면에서 고친 폴더는 그대로
+    sd, vd = _load(os.path.join(seed, "dirs.json")), _load(os.path.join(vol, "dirs.json"))
+    if isinstance(sd, list) and isinstance(vd, list):
+        have = {d.get("id") for d in vd}
+        new = [d for d in sd if d.get("id") not in have]
+        if new:
+            at = next((i for i, d in enumerate(vd) if d.get("id") == "etc"), len(vd))
+            vd[at:at] = new
+            with open(os.path.join(vol, "dirs.json"), "w", encoding="utf-8") as f:
+                json.dump(vd, f, ensure_ascii=False, indent=2)
+            added_series += [f"폴더 {d.get('id')}" for d in new]
 
     # ② 틀 폴더 · 디자인 폴더 — 없는 것만 통째로
     for series in sorted(os.listdir(seed)):

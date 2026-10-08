@@ -155,10 +155,18 @@ def page_projects():
             for d in t["designs"]:
                 imgs = design_images(t["series"], d)      # 견본 > 페이지 틀 > 기준 PDF 앞 면
                 designs.append({"series": t["series"], "tname": t["name"], "ready": t["ready"], "id": d["id"], "name": d["name"],
-                                "draft": d.get("draft", False), "n": len(imgs), "img": imgs[0]["src"] if imgs else ""})
+                                "draft": d.get("draft", False), "n": len(imgs), "img": imgs[0]["src"] if imgs else "",
+                                "manuscript": t["manuscript"], "tags": d.get("tags") or {}})
+    # 필터 — 디자인 tags(design.json, 예: 학교·년도·교재 유형)의 값을 키마다 모은다. 값이 둘 이상 생기면 쓸모가 있지만 하나여도 보여 준다
+    filters = {}
+    for d in designs:
+        for k, v in d["tags"].items():
+            if v and v not in filters.setdefault(k, []):
+                filters[k].append(v)
+    filters = {k: sorted(v) for k, v in filters.items()}
     if q:
         bs = [b for b in bs if q in " ".join((b["title"], b["key"], b["series_name"] or "", b["design"])).lower()]
-    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs, bare=bare,
+    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs, bare=bare, filters=filters,
                            total=sum(counts.values()), active_nav="프로젝트")
 
 
@@ -169,7 +177,7 @@ def page_project_new():
     from routes.catalog import _dirs, design_images, templates
     from routes.intake import MODEL, have_key
     allt = templates()
-    ts = [t for t in allt if t["designs"]]
+    ts = [t for t in allt if t["designs"] and t["manuscript"]]      # 표지처럼 원고를 받지 않는 틀은 새 책 후보가 아니다
     for t in ts:
         for d in t["designs"]:
             d["images"] = design_images(t["series"], d)   # 타일·지면 그림 [{src, label}]
