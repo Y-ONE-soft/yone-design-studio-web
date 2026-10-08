@@ -270,10 +270,11 @@ SHAPE_IOU = 0.90        # 겹침(0.17mm 너그럽게)이 이보다 낮으면 글
 def measure(ref_pdf, ref_page, my_pdf, elems, dpi=300):
     """요소마다 원본과 결과의 같은 색 상자를 재서 차이(mm). elems: [{id, x, y, w, h, color, pad?}]"""
     ra, ma = page_array(ref_pdf, ref_page, dpi), page_array(my_pdf, 1, dpi)
-    if ma.shape != ra.shape:                                    # 결과 PDF 가 A4 그대로가 아니면 맞춘다
-        from PIL import Image
-        import numpy as np
-        ma = np.asarray(Image.fromarray(ma).resize((ra.shape[1], ra.shape[0])))
+    if ma.shape != ra.shape:                                    # 크롬 인쇄 쪽은 A4 보다 0.11mm 좁다(594.96pt, 크롬 반올림) — 늘리지 말고 같은 배율 그대로
+        import numpy as np                                      # 왼쪽 위에 맞춰 모자란 곳은 끝 화소로 채우고 남는 곳은 자른다 (늘리면 가는 선이 흐려지고 오른쪽 끝이 밀린다)
+        H, W = ra.shape[:2]
+        ma = ma[:H, :W]
+        ma = np.pad(ma, ((0, H - ma.shape[0]), (0, W - ma.shape[1]), (0, 0)), mode="edge")
     out = []
     for e in elems:
         pad = e.get("pad", 1.5)

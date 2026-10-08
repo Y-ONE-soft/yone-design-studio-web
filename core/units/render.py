@@ -253,6 +253,15 @@ def grep_html(html, rules, ctx=None):
             st += f"font-size:{float(r['size']) * PT:.3f}px;"
         if r.get("bshift"):                                                # 기준선 이동 pt — 양수면 위로
             st += f"position:relative;top:{-float(r['bshift']) * PT:.3f}px;"
+        if r.get("weight"):                                                # 굵기 100~900 — 굵게(700)보다 먼저
+            st += f"font-weight:{int(r['weight'])};"
+        ul = r.get("u") and not r.get("blank") and (r.get("line") or r.get("line_off") or r.get("line_color"))
+        if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
+            lw = float(r.get("line") or 0.18)
+            lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else "currentColor"
+            st += (f"text-decoration:underline;text-decoration-thickness:{lw:.3f}px;text-decoration-color:{lc};"
+                   f"text-underline-offset:{float(r.get('line_off') or 0.4) - lw / 2:.3f}px;text-decoration-skip-ink:none;")
+        tags = [k for k in ("u", "i", "b") if r.get(k) and not (k == "u" and ul) and not (k == "b" and r.get("weight"))]
 
         def wrap(m):
             if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
@@ -261,10 +270,10 @@ def grep_html(html, rules, ctx=None):
                 lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
                 return (f'<span style="display:inline-block;width:{float(r["blank"]):.3f}px;height:0;'
                         f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"></span>')
-            t = esc(m.group(0))
-            for k in ("u", "i", "b"):
-                if r.get(k):
-                    t = f"<{k}>{t}</{k}>"
+            # 표시 감추기 — 원고의 약속 표시(예: {밑줄 칠 곳})는 지우고 묶음 1 의 글에만 서식
+            t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
+            for k in tags:
+                t = f"<{k}>{t}</{k}>"
             return f'<span style="{st}">{t}</span>' if st else t
         out = []
         for p in _TAG.split(html):

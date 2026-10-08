@@ -160,11 +160,12 @@ def put_content(obj, label="원고 넣기 — 바깥 시스템이 보내는 꼴(
     return [S(label, 1800), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 900},
             F("#side #s-content", _json.dumps(obj, ensure_ascii=False), 900),
             {"click": "#side #s-content-put", "wait": 2500},
+            {"js": "(() => { const t = document.querySelector('#st').textContent; if (/저장 실패/.test(t)) throw new Error('원고 저장 실패 — ' + t); return '원고 저장 확인'; })()"},
             {"js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"}]
 
 
 def grep(n, pattern, color=None, bold=True, label=None, size=None, bshift=None, underline=False,
-         blank=None, line=None, line_off=None, line_color=None):
+         blank=None, line=None, line_off=None, line_color=None, weight=None, hide=False):
     """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색 · 크기 · 기준선 · 밑줄 · 칸으로 바꾸기.
     n = 이 글상자의 몇 번째 규칙(0부터). blank = 맞은 글 대신 이 폭(mm)의 밑줄 칸(원고의 ____ 빈칸) — line·line_off·line_color 로 선"""
     st = ([S(label)] if label else [])
@@ -176,8 +177,12 @@ def grep(n, pattern, color=None, bold=True, label=None, size=None, bshift=None, 
     for key, v in (("size", size), ("bshift", bshift), ("blank", blank), ("line", line), ("line_off", line_off)):
         if v is not None:
             st.append(F(f'#side input[data-a="grep.{n}.{key}"]', v, 600))
-    if underline:
+    if underline:                                                              # 밑줄 — line·line_off·line_color 로 굵기·내림(기준선→가운데)·색
         st.append({"click": f'#side input[data-a="grep.{n}.u"]', "wait": 500})
+    if weight:                                                                 # 굵기 100~900 (굵게보다 먼저)
+        st.append({"pick": {"at": f'#side select[data-a="grep.{n}.weight"]', "value": str(weight)}, "wait": 550})
+    if hide:                                                                   # 표시 감추기 — 원고의 {…} 같은 약속 표시는 지우고 묶음 1 만
+        st.append({"click": f'#side input[data-a="grep.{n}.hide"]', "wait": 500})
     if line_color:
         st += _color(f"grep.{n}.line_color", line_color)
     return st
