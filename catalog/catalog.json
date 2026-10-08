@@ -138,5 +138,12 @@
     "root": "동형모의고사",
     "ready": "manual",
     "base": "mockexam/동형모의고사__26-2-중간__배재1"
+  },
+  "cover": {
+    "name": "표지",
+    "dir": "cover",
+    "desc": "책 표지 펼침면(앞·책등·뒤). 조판 틀은 아직 없다 — 보기·찾기용. 디자인마다 학교·학년·년도·시험·교재 유형 태그(design.json tags)를 달아 필터로 거른다.",
+    "ready": "manual",
+    "manuscript": false
   }
 }

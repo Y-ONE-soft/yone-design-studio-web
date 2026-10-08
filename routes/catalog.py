@@ -282,7 +282,7 @@ def template_info(series):
             "root": meta.get("root", series), "ready": ready, "designs": designs,
             "dir": did, "dir_name": dirs[did]["name"] if did in dirs else did,
             "pipeline": meta.get("pipeline"), "fields": meta.get("fields") or [],
-            "slot_hint": meta.get("slot_hint", ""),
+            "slot_hint": meta.get("slot_hint", ""), "manuscript": meta.get("manuscript", True),   # false = 원고 넣는 틀이 아님(표지 등)
             "fonts_missing": r["fonts_missing"], "paths_missing": r["paths_missing"],
             "page": (cfg or {}).get("page")}
 
