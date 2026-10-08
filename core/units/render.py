@@ -327,14 +327,24 @@ def base_word_spacing(a, ctx):
     return float(a.get("word_spacing") or 0)
 
 
-def ko_spaces(html, a, ctx):
-    """Noto CJK 글의 공백을 한국어 꼴로 — 인디자인은 모든 공백에 한국어 공백(locl KOR 0.280em)을 놓는다.
-    글은 lang=en 이라야 라틴 합자가 켜지는데, 그러면 크롬은 한글과 한글 사이 공백만 0.280em, 나머지는 라틴 기본(0.224em)으로 그린다.
-    공백만 lang=ko 로 감싸면 모두 0.280em 이 되고 합자는 그대로 (낱말 간격으로 더하던 보정은 한글 사이 공백에 두 번 들어갔다 — 단위 07 해석 줄)."""
+KO_LOCL = " !'(),\\-./:;?\\[\\]{}~ ·‑—‘’‚“”„‼⁇⁈⁉⸺⸻"
+_KO_RUN = re.compile(r"&#?\w+;|[" + KO_LOCL + "]+")
+
+
+def ko_glyphs(html, a, ctx):
+    """Noto CJK 글의 공백·문장부호를 한국어 꼴로 — 인디자인(언어 한국어)은 서체의 locl KOR 글리프를 놓는다:
+    공백 0.280em(라틴 0.224em), 따옴표·괄호·빗금·마침표는 조금 위로, 줄표 — 1em, 가운뎃점 좁게 (서체 GSUB latn/KOR, 원본 글리프 번호 실측 — 단위 04·07).
+    글은 lang=en 이라야 라틴 합자가 켜진다 — 이 글자들만 lang=ko 로 감싼다(합자에 끼는 글자가 아니다).
+    (공백을 낱말 간격 +56‰ 로 더하던 보정은 크롬이 이미 0.280em 으로 그리는 한글 사이 공백에 두 번 들어갔다.)"""
     if a.get("lang") or not ctx or "CJK" not in ctx.font(a.get("font")):
         return html
-    return "".join(p if p.startswith("<") else re.sub(r"(?: |&#160;)+", lambda m: f'<span lang="ko">{m.group(0)}</span>', p)
-                   for p in _TAG.split(html))
+
+    def wrap(m):
+        t = m.group(0)
+        if t.startswith("&") and t not in ("&#160;", "&quot;"):
+            return t
+        return f'<span lang="ko">{t}</span>'
+    return "".join(p if p.startswith("<") else _KO_RUN.sub(wrap, p) for p in _TAG.split(html))
 
 
 def soft_breaks(x, justify=False, word_min=None):
@@ -1003,7 +1013,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         if a.get("t") != "text":
             continue
         html, plain = _text_content(ctx, a, values, types)
-        html = ko_spaces(keep_spaces(grep_html(html, a.get("grep"), ctx)), a, ctx)
+        html = ko_glyphs(keep_spaces(grep_html(html, a.get("grep"), ctx)), a, ctx)
         tail = tail_html(a, ctx)                                       # 글 끝에 붙는 개체 — 글자처럼 흘러 줄 나눔·컴포저에 낀다
         if tail:
             html += tail[0]

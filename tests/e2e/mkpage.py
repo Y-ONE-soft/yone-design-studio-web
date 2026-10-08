@@ -43,8 +43,10 @@ def chrome_extent(family, weight, size, s):
     zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
         body = _h.escape(s)
-        if "CJK" in family:                                                    # 편집기처럼 공백은 한국어 꼴(render.ko_spaces)
-            body = re.sub(r" +", lambda m: f'<span lang="ko">{m.group(0)}</span>', body)
+        if "CJK" in family:                                                    # 편집기처럼 공백·문장부호는 한국어 꼴(render.ko_glyphs)
+            from core.units import render
+            body = re.sub("&#?\\w+;|[" + render.KO_LOCL + "]+", lambda m: m.group(0) if m.group(0).startswith("&") and m.group(0) not in ("&#160;", "&quot;", "&#x27;")
+                          else f'<span lang="ko">{m.group(0)}</span>', body)
         doc = (f"<!doctype html><html lang=en><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
                f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{body}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const c=[],w=document.createTreeWalker(document.getElementById('t'),NodeFilter.SHOW_TEXT),r=document.createRange();"
