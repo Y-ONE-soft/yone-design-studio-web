@@ -521,7 +521,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -10
+   "value": 27
   },
   "wait": 420
  },
@@ -563,14 +563,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.01
+   "value": 25.1
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 71.33
+   "value": 68.96
   },
   "wait": 550
  },
@@ -2810,7 +2810,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -15
+   "value": -6
   },
   "wait": 420
  },
@@ -2852,14 +2852,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 22.0
+   "value": 21.92
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 36.16
+   "value": 28.96
   },
   "wait": 550
  },
