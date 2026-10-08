@@ -3410,14 +3410,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 120
+   "value": 126
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "600"
   },
   "wait": 550
  },
