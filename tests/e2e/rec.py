@@ -182,8 +182,7 @@ try:
         frame()
 
     def wipe(times=14):
-        """칸 안의 글을 지운다 — 백스페이스·딜리트를 사람처럼 눌러서."""
-        times = max(5, int(round(times / SPEED)))
+        """칸 안의 글을 지운다 — 백스페이스·딜리트를 사람처럼 눌러서. 횟수는 속도와 무관(덜 지우면 글이 섞인다)."""
         for _ in range(times):
             for t in ("rawKeyDown", "keyUp"):
                 c.call("Input.dispatchKeyEvent", type=t, windowsVirtualKeyCode=8, key="Backspace", code="Backspace")
@@ -195,7 +194,8 @@ try:
         """칸을 눌러 고르고, 다 지우고, 쳐 넣고, 확정 — 사람이 하는 그대로."""
         for tryn in range(2):
             click(spot, 2)
-            wipe()
+            n = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value).length : 0; })()") if isinstance(spot, str) else 0
+            wipe(max(14, (n or 0) + 2))
             typetext(str(value))
             key("Enter")                                 # 칸은 Enter 로 확정된다
             time.sleep(0.25 / SPEED)

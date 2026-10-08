@@ -61,7 +61,7 @@ def run_steps(fast, video):
     r = subprocess.run([PY, "tests/e2e/rec.py", BASE + "/units", os.path.join(udir, "steps.json"),
                         video, "1600", "1000", "8"], cwd=REPO, env=env, capture_output=True, text=True)
     open(os.path.join(out, "rec.log"), "w").write(r.stdout + r.stderr)
-    bad = [ln for ln in (r.stdout + r.stderr).splitlines() if "ERR" in ln or "Traceback" in ln or ln.startswith("!")]
+    bad = [ln for ln in (r.stdout + r.stderr).splitlines() if "ERR" in ln or "Traceback" in ln or ln.strip().startswith("!")]
     if fast and "프레임이 없다" in r.stdout + r.stderr:                         # 빠른 모드는 프레임을 안 찍는다 — 실패 아님
         r.returncode = 0
     if r.returncode or bad:
@@ -83,6 +83,11 @@ def compare(new_ids, state):
             continue
         pdf = os.path.join(out, f"p{rp}_my.pdf")
         urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}", pdf)
+        try:                                                                              # 재단 여백 포함 — 원본과 같은 216×303
+            urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0",
+                                       os.path.join(out, f"p{rp}_print.pdf"))
+        except urllib.error.HTTPError as e:
+            print(f"  ! 인쇄용 PDF 실패 p{rp}: {e.read().decode()[:300]}")
         ref[rp - 1].get_pixmap(dpi=DPI).save(os.path.join(out, f"p{rp}_ref.png"))
         pymupdf.open(pdf)[0].get_pixmap(dpi=DPI).save(os.path.join(out, f"p{rp}_my.png"))
         a = Image.open(os.path.join(out, f"p{rp}_ref.png")).convert("RGB")
