@@ -489,7 +489,7 @@ SECTION_RULES = {
                   (r"Unit\s*\d+|\d+과\s*본문", "원문 지문 · 연관어휘 (B1 + B5)")],
     "whitebook": [(r"DAY\s*\d+\s*EXERCISE", "DAY 실전문제 (EXERCISE · B6)"), (r"^정답", "정답 (B9)")],
     "pocketbook": [(r"FLOW\s*NOTE", "요약노트 FLOW NOTE (B3)"), (r"암기\s*TEST", "암기 TEST (B8)"), (r"^정답", "정답 (B9)"),
-                   (r"어휘\s*고교기본|Unit\s*\d+", "어휘 목록 (B5)"), (r"본문\s*\d|모의고사\s*\d+|\d강\s*\d+", "지문 분석 (B2 + B5 동반의어)")],
+                   (r"어휘\s*고교기본|Unit\s*\d+", "어휘 목록 (B5)"), (r"본문\s*\d|모의고사\s*\d+|\d강\s*(\d+|분석)", "지문 분석 (B2 + B5 동반의어)")],
     "final": [(r"문장\s*삽입", "문장 삽입 / 순서 배열 (B7)"), (r"문장\s*배열", "문장 배열 (B7)"),
               (r"중요\s*어휘", "중요 어휘 / 요약문 (B8 + B3)"), (r"내용\s*요약", "내용 요약 (B3)")],
     "special": [(r"WEEK\s*VOCABULARY", "WEEK 어휘 (B5)"), (r"APPENDIX|부록", "부록 어근·접두사·접미사 (B5)"),
@@ -506,6 +506,10 @@ SECTION_RULES = {
     "vocabook": [(r"표제어", "DAY 표제어 (B5)"), (r"파생어", "DAY 파생어 & 연관어휘 (B5)"), (r"VOCA\s*vs", "VOCA vs. VOCA (B4)"),
                  (r"워크북|주어진 단어에 해당하는|우리말 해석을 참고", "워크북 빈칸 드릴 (B8)"), (r"^정답|정 답", "정답 (B9)")],
 }
+
+
+# 같은 섹션 안에서 형태가 갈리는 면 — 본문에 이 말이 있으면 따로 묶는다 (포켓북: 삽화 칸 PICTURE 가 있는 지문 분석 면)
+VARIANT_RULES = {"pocketbook": [(r"\bPICTURE\b", "삽화 있음")]}
 
 
 def _head_text(page):
@@ -557,14 +561,14 @@ def design_layouts(series, design):
 
     섹션 = 틀별 규칙(SECTION_RULES, 블록 지도 기준) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
     라벨 없는 면은 직전 섹션이 이어진 것. 본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다.
-    좌/우·단 수는 구분하지 않는다. 결과는 `_pages/layouts3_<stamp>.json` 에 둔다.
+    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 결과는 `_pages/layouts4_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts3_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts4_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
@@ -574,7 +578,11 @@ def design_layouts(series, design):
         section = _section_of(series, page, section)
         W, H = page.rect.width, page.rect.height
         body = sum(1 for b in page.get_text("blocks") if H * 0.10 <= b[1] <= H * 0.93 and len(b[4].strip()) > 20)
-        key = ("간지", section) if body < 2 else ("본문", section)
+        sec = section
+        if body >= 2:
+            txt = page.get_text()
+            sec += "".join(f" · {v}" for pat, v in VARIANT_RULES.get(series, []) if re.search(pat, txt))
+        key = ("간지", section) if body < 2 else ("본문", sec)
         seen.setdefault(key, []).append(page.number + 1)
         if len(seen[key]) == 1:
             order.append(key)
