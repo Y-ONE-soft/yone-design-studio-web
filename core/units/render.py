@@ -306,7 +306,8 @@ def grep_html(html, rules, ctx=None):
                 t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
                 fs = st.replace(f"color:{col};", "") if col else st
                 # overflow:hidden 인 inline-block 은 아래 끝이 기준선에 선다 — 높이 0 이면 밑줄을 기준선에서 정확히 내린다. 글은 칸 폭만 잡고 안 보인다
-                return (f'<span style="display:inline-block;height:0;overflow:hidden;white-space:nowrap;{fs}padding-right:{float(r.get("blank") or 0):.3f}px;'
+                # 폭은 낱자 폭 합(합자·커닝 없이) — 원본 칸 71개가 그 식에 맞는다(「off」 의 ff 합자가 자간 한 칸을 먹던 것, 단위 11)
+                return (f'<span style="display:inline-block;height:0;overflow:hidden;white-space:nowrap;font-feature-settings:\'liga\' 0,\'calt\' 0;font-kerning:none;{fs}padding-right:{float(r.get("blank") or 0):.3f}px;'
                         f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"><span style="color:transparent">{t}</span></span>'
                         f'<span style="{fs}">⁠</span>')                    # 감춘 글 크기의 줄 높이는 남긴다(원본: 큰 정답 글이 든 줄은 기준선이 내려간다)
             if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
