@@ -1,0 +1,54 @@
+{
+  "series": "pocketbook",
+  "book": {
+    "id": "배재1_포켓북",
+    "title": "배재1 포켓북 26-2 중간"
+  },
+  "page": {
+    "width": 148,
+    "height": 210,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "배재1_포켓북(26-2-중간)_내지"
+  },
+  "options": {
+    "analysis": [
+      "${STUDIO}/조판/교재/포켓북/_idml/analysis/고1,고2(공통)/26-2-중간/광문1"
+    ],
+    "manuscript": [],
+    "folio_start": 2,
+    "illust_dirs": [
+      "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/포켓북 삽화정리"
+    ],
+    "school": "광문1",
+    "grade": "고1",
+    "review_tests": [
+      "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/앞글자빵구 폴더(구 리테모음)"
+    ],
+    "voca": [
+      "~/Library/CloudStorage/GoogleDrive-etyrano11@gmail.com/내 드라이브/콘텐츠 관리/내신대비/2026년/고1/광문고1/3. 26-2 중간/광문보카/어휘끝 고교기본 Unit 15~23 광문보카 (발음기호 포함).xlsx"
+    ],
+    "memtest": false
+  },
+  "finish": {
+    "trim": {
+      "bleed": 3
+    },
+    "inserts": [
+      {
+        "pdf": "참고/reference.pdf",
+        "at": 1,
+        "mode": "insert"
+      }
+    ],
+    "append": [
+      {
+        "pdf": "참고/reference.pdf"
+      }
+    ]
+  },
+  "_틀": "기준: 책별_설정/pocketbook/포켓북__26-2-중간__광문1 (2026-09-14 인계본). options.expect 는 뺐다 — 새 원고는 수량이 다르므로.",
+  "_디자인": "포켓북 — 배재1_포켓북(26-2-중간)_내지(수정5).pdf (2026-10-09)."
+}
