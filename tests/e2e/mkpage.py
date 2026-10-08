@@ -74,6 +74,17 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
     return st + opacity(alpha)
 
 
+def grep(n, pattern, color=None, bold=True, label=None):
+    """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색. n = 이 글상자의 몇 번째 규칙(0부터)"""
+    st = ([S(label)] if label else [])
+    st += [{"click": "#side #s-grep-add", "wait": 700}, F(f'#side input[data-a="grep.{n}.re"]', pattern, 700)]
+    if not bold:                                                               # 새 규칙은 굵게가 켜진 채로 생긴다
+        st.append({"click": f'#side input[data-a="grep.{n}.b"]', "wait": 500})
+    if color:
+        st += _color(f"grep.{n}.color", color)
+    return st
+
+
 def image(x, y, w, h, path, label=None):
     """그림 — 「그림」 도구로 자리를 끌고, 속성에서 파일을 골라 넣는다"""
     st = ([S(label)] if label else [])

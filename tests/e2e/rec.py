@@ -167,18 +167,22 @@ try:
     def typetext(t, per=0.035):
         per = per / SPEED
         for ch in t:
+            if ch == " ":                                # 줄 나눔 — Shift+Enter 를 진짜로 누른다
+                key("Enter", shift=True)
+                continue
             c.call("Input.insertText", text=ch)
             if len(t) < 40 or ord(ch) % 3 == 0:
                 frame()
             time.sleep(per)
         frame()
 
-    def key(name):
+    def key(name, shift=False):
         codes = {"Enter": (13, "Enter"), "Escape": (27, "Escape"), "Tab": (9, "Tab"),
                  "ArrowDown": (40, "ArrowDown"), "ArrowUp": (38, "ArrowUp")}
         code, k = codes.get(name, (0, name))
-        c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=code, key=k, code=k)
-        c.call("Input.dispatchKeyEvent", type="keyUp", windowsVirtualKeyCode=code, key=k, code=k)
+        mod = 8 if shift else 0
+        c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=code, key=k, code=k, modifiers=mod)
+        c.call("Input.dispatchKeyEvent", type="keyUp", windowsVirtualKeyCode=code, key=k, code=k, modifiers=mod)
         frame()
 
     def wipe(times=14):
@@ -289,6 +293,13 @@ try:
                 open(os.path.join(SP, st["shot"]), "wb").write(base64.b64decode(d["data"]))
         except Exception as e:
             print("  ERR", json.dumps(st, ensure_ascii=False)[:70], "→", str(e)[:160], flush=True)
+            shot1 = os.path.join(SP, "_첫오류.png")                  # 처음 실패한 순간의 화면 — 원인 찾기용
+            if not os.path.exists(shot1):
+                try:
+                    open(shot1, "wb").write(base64.b64decode(c.call("Page.captureScreenshot", format="png")["data"]))
+                    print("  첫 오류 화면:", shot1, flush=True)
+                except Exception:
+                    pass
         hold(st.get("wait", 600))
 finally:
     proc.terminate()

@@ -12,11 +12,13 @@
 import json
 import math
 import re
+from html import unescape as _unescape
 from xml.sax.saxutils import escape as _x
 
 from core.units import sample
 
 PT = 25.4 / 72.0
+TEXT_ZOOM = 10                     # 글상자 배치 해상도 — 지면 1mm 를 10px 로 (아래 _atom_svg_raw 의 글)
 GAP_BLOCK = 1.5      # mm — 한 세트 안 블록 사이
 GAP_SET = 4.0        # mm — 세트 사이
 CIRC = "①②③④⑤⑥⑦⑧⑨⑩"
@@ -232,6 +234,85 @@ def rich_html(v, ctx=None):
     return esc(v)
 
 
+_TAG = re.compile(r"(<[^>]+>)")
+
+
+def grep_html(html, rules, ctx=None):
+    """GREP 스타일 — 글 HTML 의 글자 부분(태그 밖)에서 패턴에 맞는 곳을 굵게·기울임·밑줄·색으로 감싼다.
+    태그를 걸쳐 맞는 곳은 건드리지 않는다. 패턴이 틀리면 그 규칙만 건너뛴다."""
+    for r in rules or []:
+        try:
+            rx = re.compile(r.get("re") or "")
+        except re.error:
+            continue
+        if not rx.pattern:
+            continue
+        st = f"color:{ctx.color(r['color']) if ctx else r['color']};" if r.get("color") else ""
+
+        def wrap(m):
+            t = esc(m.group(0))
+            for k in ("u", "i", "b"):
+                if r.get(k):
+                    t = f"<{k}>{t}</{k}>"
+            return f'<span style="{st}">{t}</span>' if st else t
+        out = []
+        for p in _TAG.split(html):
+            raw = _unescape(p) if not p.startswith("<") else ""
+            if not raw or not rx.search(raw):
+                out.append(p)
+                continue
+            k = 0
+            for m in rx.finditer(raw):
+                if m.end() == m.start():
+                    continue
+                out.append(esc(raw[k:m.start()]) + wrap(m))
+                k = m.end()
+            out.append(esc(raw[k:]))
+        html = "".join(out)
+    return html
+
+
+def keep_spaces(html):
+    """연속 공백을 지킨다 — HTML 은 공백 여럿을 하나로 줄이지만 인디자인은 친 만큼 띄운다.
+    두 번째 공백부터 줄 안 바뀜 공백(&#160;)으로 — 첫 공백에서는 그대로 줄이 바뀔 수 있다."""
+    return "".join(p if p.startswith("<") else re.sub(r" {2,}", lambda m: " " + "&#160;" * (len(m.group(0)) - 1), p)
+                   for p in _TAG.split(html))
+
+
+def soft_breaks(x, justify=False, word_min=None):
+    """줄 나눔(U+2028, Shift+Enter) — 문단은 그대로 두고 그 자리에서 줄만 꺾는다(인디자인 강제 줄바꿈).
+    양끝맞춤이면 꺾인 앞줄도 양끝을 맞춘다(인디자인과 같다). 조각마다 열린 태그를 닫았다 다시 연다.
+    word_min(‰ em, 음수) — 양끝을 맞추는 줄의 낱말 간격 최소(인디자인 양끝맞춤 「낱말 간격 최소」): 그만큼 좁혀 놓고 양끝까지 늘린다.
+    브라우저는 공백을 늘리기만 하므로, 인디자인이 공백을 줄여 한 줄에 넣은 글이 넘치지 않게."""
+    if " " not in (x or ""):
+        return x
+    segs, stack, cur = [], [], ""
+    for tok in _TAG.split(x):
+        if tok.startswith("<"):
+            if tok.startswith("</"):
+                if stack:
+                    stack.pop()
+            elif not tok.endswith("/>"):
+                stack.append(tok)
+            cur += tok
+            continue
+        for i, part in enumerate(tok.split(" ")):
+            if i:
+                cur += "".join("</" + re.match(r"<(\w+)", t).group(1) + ">" for t in reversed(stack))
+                segs.append(cur)
+                cur = "".join(stack)
+            cur += part
+    segs.append(cur)
+    last = len(segs) - 1
+    if last and not _unescape(_TAG.sub("", segs[-1])).strip():            # 끝에 친 줄 나눔 — 빈 줄은 안 그리고 마지막 줄도 양끝을 맞춘다
+        tail = segs.pop()
+        segs[-1] += tail
+        last = len(segs)
+    ws =f"word-spacing:{float(word_min) / 1000.0:.4f}em;" if justify and word_min else ""
+    return "".join(f'<span style="display:block;{"text-align-last:justify;" + ws if justify and i < last else ""}{"text-indent:0;" if i else ""}">'
+                   f'{s or "&#160;"}</span>' for i, s in enumerate(segs))
+
+
 def rich_plain(v):
     if v is None:
         return ""
@@ -336,7 +417,7 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     col_w = (w_mm - il - ir - gutter * (cols - 1)) / cols - float(a.get("indent") or 0) - float(a.get("indent_right") or 0)
     track = em * float(a.get("tracking") or 0) / 1000.0
     lines = 0
-    paras = (plain or "").split("\n")
+    paras = (plain or "").replace(" ", "\n").split("\n")             # 줄 나눔도 줄 하나
     for para in paras:
         width = sum(em * (1.0 if ord(c) > 0x2E7F else ROMAN_EM) + track for c in para)
         lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
@@ -481,7 +562,8 @@ def _text_html(a, html, h, ctx=None):
     if bul:
         ps += f"display:list-item;list-style-type:{bul};list-style-position:inside;"
     paras = (html or "").split("<br/>")
-    inner = "".join(f'<p style="margin:0;{ps}">{_tab_html(a, x, ctx) or x or "&#160;"}</p>' for x in paras)
+    just = a.get("align") == "justify"
+    inner = "".join(f'<p style="margin:0;{ps}">{soft_breaks(_tab_html(a, x, ctx) or x, just, a.get("word_min")) or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
         n = int(dc.get("chars") or 1)
@@ -861,6 +943,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         if a.get("t") != "text":
             continue
         html, plain = _text_content(ctx, a, values, types)
+        html = keep_spaces(grep_html(html, a.get("grep"), ctx))
         content[i] = html
         plains[i] = plain
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
@@ -1004,6 +1087,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                  f"overflow:hidden;word-break:break-word;white-space:normal")
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
+            # 브라우저는 자간이 있으면 합자·문맥 대체 글자를 끈다 — 인디자인은 자간을 줘도 그대로 쓴다(fi 합자·영도체 이어지는 숫자)
+            style += ";font-feature-settings:'liga' 1,'calt' 1"
         if a.get("kerning") == "none":
             style += ";font-kerning:none"
         if a.get("hyphenate"):
@@ -1025,8 +1110,12 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += ";font-style:italic"
         if a.get("tab"):
             style = style.replace("white-space:normal", "white-space:pre-wrap") + f";tab-size:{float(a['tab']):.3f}px"
-        return (f'<foreignObject x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}">'
-                f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h, ctx)}</div></foreignObject>')
+        # 글은 10배 해상도로 배치하고 1/10 로 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
+        # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
+        z = TEXT_ZOOM
+        return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
+                f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}">'
+                f'<div xmlns="http://www.w3.org/1999/xhtml" style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
     if t == "line":
         adefs, aattrs = _arrows(ctx, a.get("stroke"))
         return (adefs + f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '

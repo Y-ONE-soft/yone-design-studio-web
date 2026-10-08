@@ -1078,7 +1078,9 @@ function editTextInline(i) {
   ta.value = plainText(a.text); ta.focus(); ta.select();
   const done = (commit) => { ta.style.display = "none"; ta.onblur = ta.onkeydown = null; if (commit && ta.value !== plainText(a.text)) { hist(before); a.text = ta.value; save(); render(); side(); } };
   ta.onblur = () => done(true);
-  ta.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); done(false); } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); done(true); } e.stopPropagation(); };
+  ta.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); done(false); } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); done(true); }
+    else if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); ta.setRangeText(" ", ta.selectionStart, ta.selectionEnd, "end"); }   // 줄 나눔 — 문단은 그대로, 줄만 꺾는다(인디자인 강제 줄바꿈)
+    e.stopPropagation(); };
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
@@ -1856,6 +1858,12 @@ function side() {
         <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div>
         <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${[[100, "Thin"], [200, "ExtraLight"], [300, "Light"], [400, "Regular"], [500, "Medium"], [600, "SemiBold"], [700, "Bold"], [800, "ExtraBold"], [900, "Black"]].map(([v, n]) => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${n}</option>`).join("")}</select></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
+        <h3>GREP 스타일 <span class="note" style="display:inline">패턴에 맞는 글자만 서식 — 인디자인 GREP 스타일 · 원고 글에도</span></h3>
+        ${(a.grep || []).map((r, k) => `<div class="grep-rule"><div class="f"><span title="정규식 — 예: \\[[^\\]]*\\] = 대괄호 [ ] 와 그 안">패턴</span><input type="text" data-a="grep.${k}.re" value="${esc(r.re || "")}" spellcheck="false" placeholder="\\[[^\\]]*\\]"></div>
+        <div class="f"><span>굵게</span><input type="checkbox" data-a="grep.${k}.b" ${r.b ? "checked" : ""}></div><div class="f"><span>기울임</span><input type="checkbox" data-a="grep.${k}.i" ${r.i ? "checked" : ""}></div>
+        <div class="f"><span>색</span>${colorSel(`grep.${k}.color`, r.color, true)}</div>
+        <button class="btn sm sub grep-x" data-k="${k}">이 규칙 빼기</button></div>`).join("")}
+        <button class="btn sm sub" id="s-grep-add">＋ GREP 규칙</button>
         <details class="more" ${view.adv ? "open" : ""}><summary>글자 더 보기 — 정렬 · 행간 · 자간 · 들여쓰기 · 단락 · 탭</summary>
         <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
         <div class="m3"><label>높이 mm<input type="number" data-a="h" step="0.5" value="${a.h}"></label><label>행간 pt<input type="number" data-a="leading" step="0.5" value="${a.leading || ""}" placeholder="자동"></label><label>자간 ‰<input type="number" data-a="tracking" step="10" value="${a.tracking || 0}"></label></div>
@@ -1873,6 +1881,7 @@ function side() {
         <div class="m4"><label>밑줄 pt<input type="number" data-a="underline.w" step="0.1" value="${(a.underline || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("underline.color", (a.underline || {}).color, true)}</label><label>내림 pt<input type="number" data-a="underline.offset" step="0.5" value="${(a.underline || {}).offset || ""}"></label><label>모양<select data-a="underline.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.underline || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
         <div class="f"><span>탭 자리</span><input type="text" data-a="tabspec" value="${(a.tabs || []).map(t => [t.at, t.align || "left", t.leader || ""].filter(x => x !== "").join(" ")).join(", ")}" placeholder="예: 30 right ., 60 center — 자리mm 정렬 리더" title="인디자인 탭 패널. 글 안의 탭 문자가 이 자리에 선다"></div>
         <div class="m4"><label>하이픈<input type="checkbox" data-a="hyphenate" ${a.hyphenate ? "checked" : ""} style="width:auto"></label><label>양끝맞춤<select data-a="justify_mode"><option value="">낱말</option><option value="letter" ${a.justify_mode === "letter" ? "selected" : ""}>글자까지</option></select></label><label>낱말 사이 ‰<input type="number" data-a="word_spacing" step="10" value="${a.word_spacing || ""}" placeholder="0"></label><label>격자 맞춤<input type="checkbox" data-a="snap_baseline" ${a.snap_baseline ? "checked" : ""} style="width:auto" title="지면의 기준선 격자에 글줄을 세운다"></label></div>
+        <div class="f"><span title="양끝맞춤 줄의 낱말 간격 최소 — 줄 나눔(Shift+Enter)으로 꺾인 줄을 이만큼 좁혀 놓고 양끝까지 늘린다(인디자인 양끝맞춤 「낱말 간격 최소」). 음수">양끝 줄 낱말 최소 ‰</span><input type="number" data-a="word_min" step="10" max="0" value="${a.word_min || ""}" placeholder="0"></div>
         <div class="f"><span title="인디자인 앵커 개체 — 글에 붙어 같이 흐른다">앵커 개체</span><span style="display:flex;gap:4px"><select id="s-anc-part"><option value="">부품 고르기</option>${LIB.parts.map(pt => `<option value="${pt.id}">${esc(pt.name || pt.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-anc-add" title="글 끝에 그 부품을 끼운다(인디자인 앵커드 개체)">＋ 끼우기</button></span></div>
         <div class="m3"><label>취소선 pt<input type="number" data-a="strike.w" step="0.1" value="${(a.strike || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("strike.color", (a.strike || {}).color, true)}</label><label>모양<select data-a="strike.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.strike || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
         </details>`;
@@ -1964,7 +1973,9 @@ function side() {
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
     if (v === "__raw") v = k === "font" ? "Noto Sans CJK KR" : "#231f20";          // 직접 고르기 — 옆에 색 고르기·서체 이름 칸이 뜬다
-    if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
+    if (k.startsWith("grep.")) { const [, n, kk] = k.split("."); const r = (a.grep || [])[+n];     // GREP 스타일 규칙 하나의 칸
+      if (r) { if (kk === "re") r.re = v; else if (v === "" || v === false) delete r[kk]; else r[kk] = v; } }
+    else if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
     else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"};
       const dflt = {cap: "butt", join: "miter", align: "center", start: "none", end: "none", tint: 100, miter: 4};
       if (v === "" || v === dflt[kk]) delete a.stroke[kk]; else a.stroke[kk] = v; } }
@@ -2011,6 +2022,7 @@ function side() {
     else if (k === "hyphenate" || k === "snap_baseline") { if (v) a[k] = true; else delete a[k]; }
     else if (k === "justify_mode") { if (v) a.justify_mode = v; else delete a.justify_mode; }
     else if (k === "word_spacing") { if (v) a.word_spacing = +v; else delete a.word_spacing; }
+    else if (k === "word_min") { if (v && +v < 0) a.word_min = +v; else delete a.word_min; }
     else if (k === "corner") { if (v && v !== "round") a.corner = v; else delete a.corner; }
     else if (k === "origin") { if (v && v !== "center") a.origin = v; else delete a.origin; }
     else if (k === "case") { if (v) a.case = v; else delete a.case; }
@@ -2082,6 +2094,9 @@ function side() {
     if (v > 1) q.per = v; else delete q.per; await savePlan(); side(); });
   on("#s-sets", "change", async (e) => { const q = planPg(page.id); if (!q) return; if (e.target.value) q.sets = [e.target.value]; else delete q.sets; await savePlan(); pageSvg = {}; render(); drawRail(); side(); });   // 받는 원고가 바뀌면 캔버스도 그 유형 원고로
   on("#s-order", "change", async (e) => { if (e.target.value === "by_page") delete plan.order; else plan.order = e.target.value; await savePlan(); side(); });
+  on("#s-grep-add", "click", () => { hist(); const a = page.items[sel].atom; (a.grep = a.grep || []).push({re: "", b: true}); save(); side(); });
+  box.querySelectorAll(".grep-x").forEach(b => b.addEventListener("click", () => { hist(); const a = page.items[sel].atom;
+    a.grep.splice(+b.dataset.k, 1); if (!a.grep.length) delete a.grep; save(); pageSvg = {}; render(); side(); }));
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
   box.querySelectorAll("details.more").forEach(d => d.addEventListener("toggle", () => {      // 펴 둔 채로 기억한다
     view.adv = d.open; localStorage.setItem("units.view3", JSON.stringify(view));
