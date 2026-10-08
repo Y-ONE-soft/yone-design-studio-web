@@ -46,7 +46,7 @@ CHROME_SETUP = """(() => {
     #narr { position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 99998;
       background: rgba(20,18,30,.92); color: #fff; font: 600 20px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif;
       padding: 12px 22px; border-radius: 12px; max-width: 78%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.28);
-      opacity: 0; transition: opacity .25s; }
+      opacity: 0; transition: opacity .25s; pointer-events: none; }   /* 자막이 아래 쪽 줄(＋ 쪽 단추)을 가려 눌리지 않던 것 — 쪽 8개부터 */
     #narr.on { opacity: 1; }`;
   document.head.appendChild(st);
   const c = document.createElement('div'); c.id = 'cur'; c.style.left = '-50px'; c.style.top = '-50px'; document.body.appendChild(c);
