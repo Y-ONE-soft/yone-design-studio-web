@@ -17,11 +17,12 @@
     // 글자가 아닌 칸(빈칸 밑줄 같은 inline-block)도 낱말의 한 글자로 센다(폭이 있다).
     // 한글·한자·가나는 글자 사이에서도 꺾을 수 있다(인디자인처럼) — 폭 0 인 끊을 자리를 둔다.
     const chars = [];
-    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+    // 글자가 아닌 칸·개체(inline-block — 빈칸 밑줄, 글 끝에 붙인 O/X 상자)는 안을 보지 않고 한 글자로
+    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: (n) =>
+      n.nodeType === 1 && getComputedStyle(n).display === "inline-block" ? (chars.push([n, -1, "\ufffc"]), NodeFilter.FILTER_REJECT) : NodeFilter.FILTER_ACCEPT});
     let n;
     while ((n = w.nextNode())) {
-      if (n.nodeType === 3) { for (let i = 0; i < n.data.length; i++) chars.push([n, i, n.data[i]]); }
-      else if (!n.firstChild && getComputedStyle(n).display === "inline-block") chars.push([n, -1, "\ufffc"]);
+      if (n.nodeType === 3) for (let i = 0; i < n.data.length; i++) chars.push([n, i, n.data[i]]);
     }
     const out = [];
     let i = 0;
@@ -52,7 +53,8 @@
 
   function compose(p) {
     if (p.dataset.jcDone) return;
-    if (p.querySelector(":not(span):not(b):not(i):not(u):not(s):not(sup):not(sub)")) return;   // 글 안 그림·표 등은 건드리지 않는다
+    const OK = new Set(["span", "b", "i", "u", "s", "sup", "sub"]);        // 글 안 표·떠 있는 그림 등은 건드리지 않는다 — inline-block 개체 속(SVG)은 괜찮다
+    if ([...p.querySelectorAll("*")].some(e => !OK.has(e.tagName.toLowerCase()) && !(e.parentElement && e.parentElement.closest("span[style*='inline-block']")))) return;
     // 낱말 간격 최소 % · 최대 % · 줄이기 비용 배수 · 줄 하나 비용 · 끝 줄 최소 % — 원본 인디자인 지문 4개(줄 끝 32개)에 맞춘 값
     // (scratch jc_fit.py: 브라우저 그대로 17/32 → 이 값 30/32). 인디자인은 많이 늘리고 조금 줄이며, 끝 줄은 89.5% 까지 줄여 넣는다
     // (단위 02 지문 1 끝 줄 89.9% 는 줄여 넣고, 단위 06 문장 (D) 88% 는 다음 줄로 넘김 — 2026-10-08).

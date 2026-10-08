@@ -180,8 +180,29 @@ def anchored_html(v, ctx):
     if al in ("left", "right"):
         box += f"float:{al};margin:{0.5}px {1.0}px;"
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {part.get("w", w):.3f} {ph:.3f}" '
-           f'width="{w:.3f}" height="{ph:.3f}" style="display:block">{frag}</svg>')
+           f'width="{w:.3f}" height="{ph:.3f}" style="display:block;width:{w:.3f}px;height:{ph:.3f}px">{frag}</svg>')
     return f'<span style="{box}">{svg}</span>'
+
+
+def tail_html(a, ctx):
+    """글 끝에 붙이는 개체(인디자인 인라인 앵커) — atom.tail = {part, gap mm, drop mm, w?, h?}.
+    부품을 글줄 안 inline-block 으로 끝에 붙인다: 글자처럼 흘러 자리가 모자라면 마지막 낱말과 함께 다음 줄로 간다.
+    U+2060 으로 마지막 낱말과 붙인다(원본의 붙임 공백). drop = 기준선에서 개체 아래 끝까지 아래로(mm, 음수면 위로).
+    → (html, 폭 mm) 또는 None"""
+    t = a.get("tail") or {}
+    part = (ctx.parts or {}).get(t.get("part")) if (ctx and t.get("part")) else None
+    if not part:
+        if t.get("part") and ctx:
+            ctx.warn(f"글 끝에 붙일 부품 없음 {t.get('part')}")
+        return None
+    w = float(t.get("w") or part.get("w") or 10)
+    frag, ph = part_svg(ctx, part)
+    h = float(t.get("h") or part.get("h") or ph or 5)
+    gap, drop = float(t.get("gap") or 0), float(t.get("drop") or 0)
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {float(part.get("w") or w):.3f} {float(part.get("h") or h):.3f}" '
+           f'width="{w:.3f}" height="{h:.3f}" style="display:block;overflow:visible;width:{w:.3f}px;height:{h:.3f}px">{frag}</svg>')   # 크기를 스타일로도 — 바깥 .p svg 규칙(쪽 크기)이 안 걸리게
+    return (f'\u2060<span style="display:inline-block;width:{w:.3f}px;height:{h:.3f}px;margin-left:{gap:.3f}px;'
+            f'vertical-align:{-drop:.3f}px;letter-spacing:0;text-indent:0">{svg}</span>', w + gap)
 
 
 def rich_html(v, ctx=None):
@@ -968,6 +989,10 @@ def part_svg(ctx, part, values=None, types=None, width=None):
             continue
         html, plain = _text_content(ctx, a, values, types)
         html = keep_spaces(grep_html(html, a.get("grep"), ctx))
+        tail = tail_html(a, ctx)                                       # 글 끝에 붙는 개체 — 글자처럼 흘러 줄 나눔·컴포저에 낀다
+        if tail:
+            html += tail[0]
+            plain += "M" * int(tail[1] / max(a["size"] * PT * 0.6, 0.1) + 1)   # 높이 어림에 개체 폭만큼
         content[i] = html
         plains[i] = plain
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
