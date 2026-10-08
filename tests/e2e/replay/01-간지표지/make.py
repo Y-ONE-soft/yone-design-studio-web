@@ -23,17 +23,18 @@ def see(pg, color, alpha):
     """투명도가 있으면 바탕과 섞여 보이는 색 — 잴 때 쓴다."""
     if not alpha or alpha >= 100:
         return color
-    c, b = [int(color[i:i + 2], 16) for i in (1, 3, 5)], [int(BG[pg][i:i + 2], 16) for i in (1, 3, 5)]
-    return "#" + "".join("%02x" % round(bb + (cc - bb) * alpha / 100) for cc, bb in zip(c, b))
+    return "auto"            # 원본 그림에서 읽는다 — 원본은 투명을 CMYK 로 섞어 sRGB 계산과 다르다(단위 13 에서 찾음, pagecmp.shown_color)
 
 
 def T(pg, id, x, y, w, h, s, size, color, weight, track=0, font=MS, label=None, search=2, alpha=None, ctol=24):
     """원본 글 하나 — 원본 글자 상자(x,y,w,h) · 크기 pt · 색 · 굵기 · 자간 · 불투명. 글상자 위 끝은 기준선 공식으로."""
     ELEMS[pg].append({"id": id, "x": x, "y": y, "w": w, "h": h, "color": color, "see": see(pg, color, alpha), "ctol": ctol,
                       "search": search, "text": s, "size": size})
+    base = y + 0.9 * size * MM                                              # Type3 기준선 = 글자 상자 위 + 0.9 × 적힌 크기
+    size = round(size * 1.00708, 3)                                        # d1 의 Type3 서체는 FontMatrix 0.00100708 — 그리는 크기는 적힌 크기 × 1.00708 (PDF 값, 단위 08 에서 찾음)
     bw = round(w * 1.25 + size * 0.35, 1)                                  # 글상자는 넉넉히 — 줄바꿈 없게
     bh = round(size * 0.3528 * 1.5, 1)
-    top = top_of(y + 0.9 * size * MM, size, font, weight)                 # Type3 글자 상자 위 + 0.9em = 기준선
+    top = top_of(base, size, font, weight)
     track = track_from(REF[pg - 1], (x, y, w, h), s, font, weight, size)  # 자간 = 원본 글자 위치 - 브라우저(커닝 포함) 거리
     return text(x, round(top, 2), bw, bh, s, size, color, label=label, font=font, weight=weight, track=track or None, alpha=alpha)
 

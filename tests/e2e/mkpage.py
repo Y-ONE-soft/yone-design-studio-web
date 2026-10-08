@@ -40,9 +40,10 @@ def chrome_extent(family, weight, size, s):
     """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값"""
     import os, subprocess, tempfile, json as _j, html as _h
     key = (family, weight, size, s)
+    zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
         doc = (f"<!doctype html><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
-               f"font-size:{size * 10}pt;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{_h.escape(s)}</span><pre id=o></pre><script>"
+               f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{_h.escape(s)}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const n=document.getElementById('t').firstChild,r=document.createRange();"
                "const at=i=>{r.setStart(n,i);r.setEnd(n,i+1);return r.getBoundingClientRect().left};"
                f"document.getElementById('o').textContent=JSON.stringify(at({len(s) - 1})-at(0));}});</script>")
@@ -52,7 +53,7 @@ def chrome_extent(family, weight, size, s):
                               "--virtual-time-budget=4000", "--dump-dom", "file://" + path], capture_output=True, text=True, timeout=60).stdout
         os.remove(path)
         px = float(_j.loads(out[out.find('<pre id="o">') + 12: out.find("</pre>")]))
-        _EXT[key] = px / 10 * 25.4 / 96                                        # 10배로 그려 잰 px → mm
+        _EXT[key] = px / zm                                                    # 편집기와 같은 배율(1mm = zm px)로 그려 잰 px → mm
     return _EXT[key]
 
 

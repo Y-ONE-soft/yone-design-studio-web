@@ -237,7 +237,8 @@ def shape_match(ra, ma, color, tol, a, b, dpi=300):
         win = arr[max(0, y0 - 3):min(H, y1 + 3), max(0, x0 - 3):min(W, x1 + 3)].astype(float)
         rim = np.concatenate([win[0], win[-1], win[:, 0], win[:, -1]])
         vals, cnt = np.unique(rim.round(), axis=0, return_counts=True)
-        bg = vals[cnt.argmax()]
+        far = np.abs(vals - c).max(axis=1) > 60                         # 글자색에 가까운 색은 바탕이 아니다 — 흰 글 둘레에 흰 종이가 걸려도(꼬리표 밖) 꼬리표 색을 바탕으로
+        bg = vals[far][cnt[far].argmax()] if far.any() else vals[cnt.argmax()]
         d = c - bg
         if not (d * d).sum():
             return np.zeros((1, 1))
@@ -267,6 +268,20 @@ SHAPE_INK = 0.12        # 잉크 양이 원본과 이만큼(비율) 넘게 다�
 SHAPE_IOU = 0.90        # 겹침(0.17mm 너그럽게)이 이보다 낮으면 글자 모양이 다르다
 
 
+def shown_color(arr, e, dpi=300):
+    """원본 그림의 요소 상자 안에서 바탕(둘레의 가장 흔한 색)과 가장 다른 화소 색 = 글이 실제로 보이는 색"""
+    import numpy as np
+    k = dpi / 25.4
+    x0, y0 = max(0, int(e["x"] * k) - 3), max(0, int(e["y"] * k) - 3)
+    win = arr[y0:int((e["y"] + e["h"]) * k) + 4, x0:int((e["x"] + e["w"]) * k) + 4].astype(int)
+    rim = np.concatenate([win[0], win[-1], win[:, 0], win[:, -1]])
+    vals, cnt = np.unique(rim, axis=0, return_counts=True)
+    bg = vals[cnt.argmax()]
+    flat = win.reshape(-1, 3)
+    c = flat[np.abs(flat - bg).sum(1).argmax()]
+    return "#%02x%02x%02x" % tuple(int(v) for v in c)
+
+
 def measure(ref_pdf, ref_page, my_pdf, elems, dpi=300):
     """요소마다 원본과 결과의 같은 색 상자를 재서 차이(mm). elems: [{id, x, y, w, h, color, pad?}]"""
     ra, ma = page_array(ref_pdf, ref_page, dpi), page_array(my_pdf, 1, dpi)
@@ -279,6 +294,8 @@ def measure(ref_pdf, ref_page, my_pdf, elems, dpi=300):
     for e in elems:
         pad = e.get("pad", 1.5)
         col, tol = e.get("see", e["color"]), e.get("ctol", 40)          # see = 투명도까지 섞여 보이는 색
+        if col == "auto":                                               # 원본 그림에서 실제로 보이는 색 — 투명을 CMYK 로 섞은 원본(인디자인)은 계산과 다르다
+            col = shown_color(ra, e, dpi)
         a = color_box(ra, col, e["x"], e["y"], e["w"], e["h"], pad, tol, dpi=dpi)
         b = color_box(ma, col, e["x"], e["y"], e["w"], e["h"], max(pad, e.get("search", pad)), tol, dpi=dpi)
         r = {"id": e["id"], "ref": a, "my": b}
