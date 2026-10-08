@@ -157,6 +157,8 @@
         "kerning": {"enum": ["metrics", "none"], "description": "커닝 — metrics(기본) 또는 끄기"},
         "tail": {"type": "object", "required": ["part"], "description": "글 끝에 붙이는 개체(인디자인 인라인 앵커) — 부품을 글자처럼 끝에. gap = 마지막 글자와 사이(mm), drop = 기준선에서 개체 아래 끝까지 아래로(mm)",
                  "properties": {"part": {"$ref": "#/definitions/id"}, "gap": {"type": "number"}, "drop": {"type": "number"}, "w": {"type": "number"}, "h": {"type": "number"}}},
+        "story": {"type": "string", "minLength": 1, "maxLength": 40, "description": "글 잇기(인디자인 텍스트 스레드) — 이야기 이름. 같은 이야기의 글상자들은 글 하나를 story_seq 차례로 흘린다(단·쪽을 넘어도). 글·자리(bind)·스타일은 첫 상자 것, 넘친 줄은 다음 상자 맨 위로"},
+        "story_seq": {"type": "integer", "minimum": 1, "description": "글 잇기 순서 — 1(없으면 1) = 첫 상자(글·자리를 가진다), 2 이상 = 이어지는 상자(빈 그릇, 원고 자리가 아니다)"},
         "lang": {"type": "string", "description": "글의 언어(HTML lang) — 없으면 en. 크롬이 언어에 따라 합자·글자 꼴을 고른다(ko 면 Noto CJK 라틴 합자가 꺼짐)"},
         "grep": {"type": "array", "description": "GREP 스타일 — 패턴(정규식)에 맞는 글자에 서식(인디자인 단락 스타일의 GREP 스타일). 고정 글·원고 모두에 적용",
                  "items": {"type": "object", "required": ["re"], "properties": {

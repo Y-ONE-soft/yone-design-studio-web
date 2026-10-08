@@ -31,7 +31,8 @@ def html_of(svgs, w_mm, h_mm, title="지면"):
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>'
             f'@page{{size:{w_mm}mm {h_mm}mm;margin:0}} html,body{{margin:0;padding:0}} '
             f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:hidden;page-break-after:always;break-after:page}} '
-            f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm}} .p svg .zone{{display:none}}'
+            f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm}} .p svg .zone{{display:none}} '
+            f'.story-hint,.story-over{{display:none}}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
             f'</style></head><body>{pages}<script>{_compose_js()}</script></body></html>')
 
 

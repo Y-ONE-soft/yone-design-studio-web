@@ -374,7 +374,8 @@ def ko_glyphs(html, a, ctx):
     return "".join(p if p.startswith("<") else _KO_RUN.sub(wrap, p) for p in _TAG.split(html))
 
 
-JC_DEFAULT = (100, 133, -8, 120, 1, 5, -10)   # 낱말 최소·최대 % · 자간 최소·최대 ‰ · 줄이기 비용 · 줄 비용 · 끝 줄 자간 최소 ‰ (units_compose.js)
+JC_DEFAULT = (100, 133, -8, 250, 1, 20, -10)  # 낱말 최소·최대 % · 자간 최소·최대 ‰ · 줄이기 비용 · 줄 비용 · 끝 줄 자간 최소 ‰ (units_compose.js)
+# 원본 줄 끝 585개(d1 4~31쪽 + 57~65쪽)로 고름: 자간 최대 250·줄 비용 20·늘림 제곱 — 95→100/102, 14b 419→473/483, 깨진 줄 0
 
 
 def jc_spec(a):
@@ -529,8 +530,9 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     track = em * float(a.get("tracking") or 0) / 1000.0
     lines = 0
     paras = (plain or "").replace(" ", "\n").split("\n")             # 줄 나눔도 줄 하나
+    first = float(a.get("indent_first") or 0)                          # 첫 줄 들여쓰기(음수 = 내어쓰기 — 첫 줄이 그만큼 넓다, 단위 14c 한 줄 발문이 두 줄로 어림됐다)
     for para in paras:
-        width = sum(em * (1.0 if ord(c) > 0x2E7F else ROMAN_EM) + track for c in para)
+        width = first + sum(em * (1.0 if ord(c) > 0x2E7F else 0.28 if c == " " else ROMAN_EM) + track for c in para)   # 공백 0.28em(Noto CJK 한국어 꼴)
         lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
     gaps = (len(paras) - 1) * (float(a.get("space_before") or 0) + float(a.get("space_after") or 0))
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
@@ -979,6 +981,20 @@ def _wrap_atom(a, svg, cx, cy, ctx=None):
     return f"{fdefs}<g{attrs}>{svg}</g>"
 
 
+def story_seq(a):
+    """글 잇기 순서 — story_seq(없거나 잘못되면 1)."""
+    try:
+        return max(1, int(a.get("story_seq") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
+def story_cont(a):
+    """글 잇기(인디자인 텍스트 스레드)의 이어지는 상자인가 — story 가 있고 story_seq 가 2 이상.
+    story_seq 1(또는 없음) = 첫 상자: 글·자리(bind)·스타일을 가진다. 이어지는 상자는 빈 그릇이고 넘친 줄을 받는다."""
+    return bool(a.get("story")) and story_seq(a) > 1
+
+
 def _text_content(ctx, a, values, types):
     """글 원자의 (html, plain). bind → 값 → 없으면 sys → 없으면 견본 글 → 없으면 {bind} 회색.
 
@@ -1055,6 +1071,12 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     for i, a in enumerate(atoms):
         if a.get("t") != "text":
             continue
+        if a.get("story"):                                             # 글 잇기 — 상자 크기는 그대로, 넘친 줄은 다음 상자로(units_compose.js)
+            heights[i] = a["h"]
+            if story_cont(a):                                          # 이어지는 상자 = 빈 그릇. 글·자리·스타일은 첫 상자 것
+                content[i] = '<span class="story-hint" style="color:#b0b0b0">‹앞 상자에서 이어짐›</span>'
+                plains[i] = ""
+                continue
         html, plain = _text_content(ctx, a, values, types)
         html = ko_glyphs(keep_spaces(grep_html(html, a.get("grep"), ctx)), a, ctx)
         tail = tail_html(a, ctx)                                       # 글 끝에 붙는 개체 — 글자처럼 흘러 줄 나눔·컴포저에 낀다
@@ -1063,6 +1085,8 @@ def part_svg(ctx, part, values=None, types=None, width=None):
             plain += "M" * int(tail[1] / max(a["size"] * PT * 0.6, 0.1) + 1)   # 높이 어림에 개체 폭만큼
         content[i] = html
         plains[i] = plain
+        if a.get("story"):                                             # 첫 상자 — 자라지 않는다(넘침은 이어지는 상자가 받는다)
+            continue
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
         if a.get("auto_size") is False:                          # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
             heights[i] = a["h"]
@@ -1232,9 +1256,11 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         # 글은 TEXT_ZOOM 배 해상도로 배치하고 그만큼 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
         # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
         z = text_zoom(a, getattr(ctx, "zoom_out", 1))
+        # 글 잇기 — 같은 이야기의 상자끼리 넘친 줄을 차례로 넘긴다(units_compose.js 의 thread)
+        st = f' data-story="{esc(a["story"])}" data-seq="{story_seq(a)}"' if a.get("story") else ""
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
                 f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}">'
-                f'<div xmlns="http://www.w3.org/1999/xhtml" lang="{esc(a.get("lang") or "en")}" style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
+                f'<div xmlns="http://www.w3.org/1999/xhtml" lang="{esc(a.get("lang") or "en")}"{st} style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
     if t == "line":
         adefs, aattrs = _arrows(ctx, a.get("stroke"))
         return (adefs + f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
@@ -1382,10 +1408,10 @@ def _join_paras(a, b):
 
 
 def _atom_slot(it):
-    """원고 자리가 붙은 낱개 글상자인가 (책이 채우는 sys.* 는 아니다)."""
+    """원고 자리가 붙은 낱개 글상자인가 (책이 채우는 sys.* 는 아니다). 글 잇기의 이어지는 상자는 자리가 아니다(이야기 하나 = 자리 하나)."""
     a = it.get("atom") or {}
     b = a.get("bind")
-    return a.get("t") == "text" and bool(b) and not str(b).startswith("sys.") and not it.get("hide")
+    return a.get("t") == "text" and bool(b) and not str(b).startswith("sys.") and not it.get("hide") and not story_cont(a)
 
 
 def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):

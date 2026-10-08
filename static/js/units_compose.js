@@ -60,7 +60,7 @@
     // 원본 d1 PDF 에서 읽은 규칙(2026-10-08 scratch justify-analysis): 낱말 간격은 100%(희망) → 133%(최대)까지 먼저 늘고, 모자라면 자간이 는다
     // (낱말은 133% 에 멈춤 — 4~37쪽 줄 87개 모두 0.33×공백 ±0.6‰). 줄일 땐 낱말은 100% 아래로 안 가고 자간만 준다(-1~-5‰ 관찰). 글리프 비율 100%.
     // 공백 기준 = 서체의 U+0020 폭(Noto CJK KR 224/1000 — 인디자인이 실제로 놓는 locl 공백 280 이 아니다). 줄 끝 맞춤 4·5·8·9·16·17쪽 60/62.
-    const [wmn, wmx, lmn, lmx, sw, lp, lastLmn] = (p.dataset.jc || "100,133,-8,120,1,5,-10").split(",").map(Number);
+    const [wmn, wmx, lmn, lmx, sw, lp, lastLmn] = (p.dataset.jc || "100,133,-8,250,1,20,-10").split(",").map(Number);
     const save = [p.style.whiteSpace, p.style.textAlign];
     p.style.whiteSpace = "nowrap";
     p.style.textAlign = "left";                                         // 늘이기 전 자연 폭으로 잰다
@@ -116,7 +116,7 @@
         let bad;
         if (L <= lw) {
           const Y = S0 * (wmx - 100) / 100 + ng * Lmx;
-          bad = last ? 0 : Math.min(10000, 100 * Math.pow(Y > 0 ? (lw - L) / Y : 10, 3));
+          bad = last ? 0 : Math.min(10000, 100 * Math.pow(Y > 0 ? (lw - L) / Y : 10, 2));   // 늘림은 제곱 — 인디자인은 성긴 줄을 세제곱만큼 꺼리지 않는다(14b 「…that a photo」, 30쪽 첫 줄)
         } else {
           const z = S0 * (100 - wmn) / 100 + ng * (last ? LLmn : Lmn);  // 끝 줄은 자간을 조금 더 줄여 넣는다
           const r = z > 0 ? (lw - L) / z : -10;
@@ -177,8 +177,170 @@
     p.dataset.jcDone = "1";
   }
 
+  // ── 글 잇기 (인디자인 텍스트 스레드) ──
+  // 렌더러(render._atom_svg_raw)가 첫 상자에 글 전체를 넣고, 이어지는 상자는 빈 그릇으로 둔다 — 둘 다 data-story(이야기 이름)·data-seq(순서).
+  // 상자 높이를 넘는 줄을 줄 경계에서 잘라 다음 상자 맨 위로 옮긴다. 잘린 단락의 뒷부분은 같은 단락 모양으로(들여쓰기·앞 간격 없이).
+  // 끝 상자에서도 넘치면 넘침 표시(.story-over — 화면에만, PDF 는 숨김). 여러 번 불러도 된다 — 넘친 것만 다음 상자로 가므로
+  // 쪽 하나로 먼저 흘리고(편집기) 나중에 여러 쪽을 한꺼번에 불러도 이어진다. 높이 비교는 모두 화면 px(getBoundingClientRect) — zoom(TEXT_ZOOM)·확대가 같이 든다.
+  const seqOf = (o) => +o.dataset.seq || 1;
+  const boxOf = (o) => o.firstElementChild;                            // 높이·안쪽 여백을 가진 상자 — render._text_html
+  function holder(o) {                                                 // 단락(<p>)들의 부모 — 상자 자신 또는 장평 감싸개
+    const p = boxOf(o) && boxOf(o).querySelector("p");
+    return p ? p.parentElement : null;
+  }
+  const paras = (h) => [...h.children].filter(e => e.tagName === "P");
+
+  function limitOf(o) {                                                // 이 상자에서 글이 내려갈 수 있는 끝(화면 px)과 허용 오차(0.5 CSS px)
+    const b = boxOf(o), r = b.getBoundingClientRect(), k = r.height / (b.offsetHeight || 1) || 1;
+    return r.bottom - parseFloat(getComputedStyle(b).paddingBottom || 0) * k + 0.5 * k;
+  }
+
+  function charsOf(p) {                                                // 글자 자리 — 컴포저의 tokens 와 같게 펴고, inline-block 개체는 한 글자로
+    const out = [];
+    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: (n) =>
+      n.nodeType === 1 && getComputedStyle(n).display === "inline-block" ? (out.push([n, -1]), NodeFilter.FILTER_REJECT) : NodeFilter.FILTER_ACCEPT});
+    let n;
+    while ((n = w.nextNode())) if (n.nodeType === 3) for (let i = 0; i < n.data.length; i++) out.push([n, i]);
+    return out;
+  }
+  function bottomOf(c) {                                               // 그 글자의 아래 끝 — 공백·안 그려진 글자는 null
+    if (c[1] < 0) { const r = c[0].getBoundingClientRect(); return r.height ? r.bottom : null; }
+    if (/\s/.test(c[0].data[c[1]])) return null;
+    const r = document.createRange();
+    r.setStart(c[0], c[1]);
+    r.setEnd(c[0], c[1] + 1);
+    const rs = r.getClientRects();
+    return rs.length ? rs[rs.length - 1].bottom : null;
+  }
+  function firstOver(cs, L) {                                          // 아래 끝이 L 을 넘는 첫 (보이는) 글자 — 줄은 위에서 아래로 차례라 이분 탐색
+    const vis = (i) => { for (let j = i; j < cs.length; j++) { const b = bottomOf(cs[j]); if (b != null) return [j, b]; } return [cs.length, null]; };
+    let lo = 0, hi = cs.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1, [j, b] = vis(mid);
+      if (j >= cs.length || b > L) hi = mid; else lo = j + 1;
+    }
+    return vis(lo)[0];
+  }
+
+  function cutFrom(o) {                                                // 이 상자에서 넘는 것 → 다음 상자로 갈 단락들(잘린 뒷부분 포함). 안 넘치면 null
+    const h = holder(o), L = limitOf(o), ps = paras(h);
+    const i = ps.findIndex(p => p.getBoundingClientRect().bottom > L);
+    if (i < 0) return null;
+    const p = ps[i], rest = ps.slice(i + 1);
+    let p2 = null, whole = false;
+    if (p.dataset.jcDone) {                                            // 컴포저 단락 — 줄마다 span
+      const k = [...p.children].findIndex(s => s.getBoundingClientRect().bottom > L);
+      if (k === 0) whole = true;
+      else if (k > 0) { p2 = p.cloneNode(false); [...p.children].slice(k).forEach(s => p2.appendChild(s)); }
+    } else {                                                           // 브라우저가 꺾은 단락 — 넘는 줄의 첫 글자에서 자른다
+      const cs = charsOf(p), j = firstOver(cs, L);
+      if (j < cs.length) {
+        let before = false;
+        for (let q = 0; q < j && !before; q++) before = bottomOf(cs[q]) != null;
+        if (!before) whole = true;
+        else {
+          const r = document.createRange();
+          if (cs[j][1] < 0) r.setStartBefore(cs[j][0]); else r.setStart(cs[j][0], cs[j][1]);
+          r.setEnd(p, p.childNodes.length);
+          p2 = p.cloneNode(false);
+          p2.appendChild(r.extractContents());
+          if (getComputedStyle(p).textAlign === "justify") p.style.textAlignLast = "justify";   // 앞 상자 끝 줄은 단락 끝이 아니다 — 양끝 그대로
+        }
+      }
+    }
+    if (whole) return [p, ...rest];
+    if (p2) {
+      p2.style.textIndent = "0";                                       // 단락 가운데서 이어진다 — 첫 줄 들여쓰기·앞 간격·위 경계선·글머리 없이
+      p2.style.marginTop = "0";
+      if (p.style.borderTopStyle) { p2.style.borderTop = "none"; p2.style.paddingTop = "0"; }
+      if (getComputedStyle(p).display === "list-item") p2.style.listStyleType = "none";
+      if (p.style.borderBottomStyle) { p.style.borderBottom = "none"; p.style.paddingBottom = "0"; }   // 아래 경계선은 단락 끝(뒷부분)에만
+      p2.dataset.storyCont = "1";
+      return [p2, ...rest];
+    }
+    return rest.length ? rest : null;
+  }
+
+  function put(o, nodes, head, from) {                                 // 이어지는 상자 맨 위에 — 처음이면 빈 그릇을 비우고 첫 상자의 글 모양을 입힌다
+    const h = holder(o);
+    if (!h) return false;
+    if (!o.dataset.storyFilled) {
+      paras(h).forEach(e => e.remove());
+      const z = o.style.zoom;
+      o.setAttribute("style", head.getAttribute("style"));           // 서체·크기·행간·색·정렬 — 배율(zoom)은 이 상자 것
+      o.style.zoom = z;
+      o.lang = head.lang;
+      o.dataset.storyFilled = "1";
+    }
+    const first = paras(h)[0] || null;
+    nodes.forEach(n => h.insertBefore(n, first));
+    if (Math.abs(h.offsetWidth - from.offsetWidth) > 0.5) {           // 폭이 다른 상자 — 옮긴 컴포저 단락은 새 폭으로 다시 고른다
+      nodes.forEach(p => {
+        if (!p.dataset.jcDone) return;
+        const lines = [...p.children];
+        p.textContent = "";
+        lines.forEach((s, i) => { if (i) p.appendChild(document.createTextNode(" ")); while (s.firstChild) p.appendChild(s.firstChild); });
+        delete p.dataset.jcDone;
+        try { compose(p); } catch (e) { /* 브라우저 줄바꿈 */ }
+      });
+    }
+    return true;
+  }
+
+  function markOver(o) {                                               // 끝 상자에서도 넘친다 — 인디자인의 빨간 + (인쇄엔 안 나온다)
+    o.dataset.overflow = "1";
+    const b = boxOf(o);
+    if (getComputedStyle(b).position === "static") b.style.position = "relative";
+    const m = document.createElement("span");
+    m.className = "story-over";
+    m.title = "글이 넘친다 — 이을 상자가 더 없다";
+    m.setAttribute("style", "position:absolute;right:0;bottom:0;width:2.4px;height:2.4px;background:#e0245e;color:#fff;font:bold 2.2px/2.4px sans-serif;text-align:center;text-indent:0;letter-spacing:0;z-index:2");
+    m.textContent = "+";
+    b.appendChild(m);
+  }
+
+  function chains(root) {                                              // 이야기마다 [첫 상자, 이어지는 상자(순서대로)…] — 같은 쪽의 첫 상자, 없으면 앞에서 가장 가까운 첫 상자에 붙는다
+    const all = [...root.querySelectorAll("[data-story]")];
+    const pg = (o) => o.closest("svg[data-tpl]");
+    const heads = all.filter(o => seqOf(o) <= 1);
+    const by = new Map(heads.map(o => [o, [o]]));
+    all.forEach((o, i) => {
+      if (seqOf(o) <= 1) return;
+      const st = o.dataset.story;
+      let hd = heads.find(x => x.dataset.story === st && pg(x) && pg(x) === pg(o));
+      for (let j = i - 1; !hd && j >= 0; j--) if (all[j].dataset.story === st && seqOf(all[j]) <= 1) hd = all[j];
+      if (hd) by.get(hd).push(o);
+    });
+    return [...by.values()].map(c => [c[0], ...c.slice(1).sort((a, b) => seqOf(a) - seqOf(b))]);
+  }
+
+  function thread(root) {
+    for (const ch of chains(root || document)) {
+      if (!ch.every(o => holder(o))) continue;
+      if (ch.some(o => parseInt(getComputedStyle(holder(o)).columnCount) > 1)) continue;   // 상자 안 다단은 아직 — 브라우저 단 나눔 그대로
+      ch.forEach(o => {                                                // 지난번 넘침을 되돌린다 — 그사이 이을 상자가 생겼으면(여러 쪽을 한꺼번에) 그리로 간다
+        delete o.dataset.overflow;
+        o.querySelectorAll(".story-over").forEach(m => m.remove());
+        const rest = o.querySelector(".story-rest");
+        if (rest) { const h = holder(o); while (rest.firstChild) h.appendChild(rest.firstChild); rest.remove(); }
+      });
+      for (let i = 0; i < ch.length; i++) {
+        const nodes = cutFrom(ch[i]);
+        if (!nodes) continue;
+        if (i < ch.length - 1) { put(ch[i + 1], nodes, ch[0], holder(ch[i])); continue; }
+        const rest = document.createElement("div");                    // 끝 상자에서도 넘친 줄 — 반쯤 잘린 줄이 보이지 않게 숨겨 둔다(인디자인의 넘친 글)
+        rest.className = "story-rest";
+        rest.style.display = "none";
+        nodes.forEach(n => rest.appendChild(n));
+        boxOf(ch[i]).appendChild(rest);
+        markOver(ch[i]);
+      }
+    }
+  }
+
   function composeAll(root) {
     (root || document).querySelectorAll("[data-jc]").forEach(p => { try { compose(p); } catch (e) { /* 못 하면 브라우저 줄바꿈 */ } });
+    try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
   }
 
   window.unitsCompose = composeAll;

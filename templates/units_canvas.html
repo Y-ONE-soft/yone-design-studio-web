@@ -658,9 +658,16 @@ function render() {
     pageSvg[page.id] = svg;
     document.querySelectorAll(`.pg[data-id="${page.id}"] .th`).forEach(th => { th.innerHTML = svg; strip(th); });
     document.querySelectorAll(`#pages .pslot[data-id="${page.id}"]:not(.cur)`).forEach(sl => fillPrev(sl, page));
+    if (storyAcross()) threadPages();
     w.style.display = (j.warnings || []).length ? "" : "none"; w.textContent = (j.warnings || []).join("\n");
     wire(); selbox(); slotTags();
   }, 40);
+}
+// 쪽을 넘는 글 잇기 — 쪽 그림은 쪽마다 따로 받지만 이어 보기(#pages)에 같이 있다. 앞뒤 쪽 그림을 잇기 전 그대로 다시 넣고 지금 쪽과 한꺼번에 흘린다
+function storyAcross() { const at = {}; for (const p of docPages()) for (const it of p.items || []) { const s = it.atom && it.atom.story; if (s) (at[s] = at[s] || new Set()).add(p.id); } return Object.values(at).some(x => x.size > 1); }
+function threadPages() {
+  document.querySelectorAll("#pages .pslot:not(.cur)").forEach(sl => { const p = byId("pages")[sl.dataset.id]; if (p) fillPrev(sl, p); });
+  if (window.unitsCompose) (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => unitsCompose($("#pages")));
 }
 function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); }
   if (window.unitsCompose) (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => unitsCompose(box)); }   // 단락 컴포저 — 양끝맞춤 줄 끝을 문단 전체를 보고
@@ -688,6 +695,7 @@ function sizeSlots() {
     d.style.width = (sp.w * scale) + "px"; d.style.height = (sp.h * scale) + "px";
     if (!d.classList.contains("cur")) fillPrev(d, p);
   });
+  if (page && storyAcross()) render();                          // 앞뒤 쪽 그림을 새로 넣었다 — 쪽을 넘는 글 잇기를 다시 흘린다
 }
 function drawPages() {
   const box = $("#pages"); if (!box) return;
@@ -768,13 +776,16 @@ async function drawRail() {
   add.querySelectorAll("[data-new]").forEach(b => b.onclick = (e) => { e.stopPropagation(); add.querySelector(".menu").classList.remove("on"); addPage(b.dataset.new); });
   rail.appendChild(add);
   $("#cnt").textContent = page ? `${idx() + 1} / ${dp.length}` : `0 / ${dp.length}`;
+  let got = false;
   for (const p of dp) {
     if (pageSvg[p.id]) continue;
     const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec, set: setFor(p), ...fillArg()});
     pageSvg[p.id] = ((j.svgs || [])[0] || {}).svg || "";
     document.querySelectorAll(`.pg[data-id="${p.id}"] .th`).forEach(th => { th.innerHTML = pageSvg[p.id]; strip(th); });
     document.querySelectorAll(`#pages .pslot[data-id="${p.id}"]:not(.cur)`).forEach(sl => fillPrev(sl, p));
+    got = true;
   }
+  if (got && page && storyAcross()) render();                   // 앞뒤 쪽 그림이 새로 왔다 — 쪽을 넘는 글 잇기를 다시 흘린다
 }
 document.addEventListener("click", () => document.querySelectorAll(".menu.on").forEach(m => m.classList.remove("on")));
 
@@ -808,6 +819,7 @@ function wire() {
       if (e.button !== 0) return; if (e.ctrlKey || e.metaKey) return;          // Ctrl/⌘+끌기 = 범위 선택 (area 가 받는다)
       e.stopPropagation();
       const i = +g.dataset.fi;
+      if (linkPick) { linkTo(i); return; }                                   // 다음 상자 잇기 — 누른 글상자가 이어 받는다
       if (e.shiftKey) { const ids = new Set(sels); if (ids.has(i)) ids.delete(i); else ids.add(i); select([...ids], ids.has(i) ? i : null); return; }
       const under = hitStack(mmOf(e));                                   // 그 자리에 겹쳐 있는 것들 (위에서부터)
       if (e.altKey && under.length > 1) {                                  // Alt+클릭 = 겹친 것 중 그 아래 것 (인디자인 ⌘+클릭 — ⌘ 끌기는 범위 선택이라 Alt). 그냥 다시 누르면 그대로 — 두 번 눌러 글을 고칠 때 아래 상자가 잡히지 않게
@@ -1030,6 +1042,7 @@ $("#t-down").onclick = (e) => { e.stopPropagation(); ungroup(); };
 document.addEventListener("keydown", (e) => {
   if ((e.target.matches && e.target.matches("input,textarea,select")) || !page) return;
   const mod = e.metaKey || e.ctrlKey, k = (e.key || "").toLowerCase();
+  if (e.key === "Escape" && linkPick) { linkPick = null; side(); return; }              // 다음 상자 잇기 취소
   if (e.key === "Escape" && (drawTool || handTool)) { armDraw("select"); return; }
   if (!mod && !e.shiftKey && !e.altKey && TOOLKEY[k]) { e.preventDefault(); armDraw(TOOLKEY[k]); return; }   // V 선택 · H 손 · T 글상자 · R 면 · O 원 · L 선 · P 도형 · I 그림
   if (mod && k === "z") { e.preventDefault(); undoIt(!e.shiftKey); return; }
@@ -1823,6 +1836,30 @@ async function makeByPrompt() {
 }
 
 // ── 오른쪽: 고른 것의 단위 사슬 ──
+// ── 글 잇기 (인디자인 텍스트 스레드) — 같은 이야기(story)의 글상자들이 글 하나를 story_seq 차례로 흘린다 ──
+//  1 = 첫 상자(글·원고 자리·글 모양), 2·3… = 이어지는 상자(빈 그릇). 넘친 줄은 단락 컴포저 스크립트(units_compose.js)가 넘긴다
+let linkPick = null;                                                       // 「다음 상자 잇기」 — 누르기를 기다리는 첫 상자 {fi}
+const storyCont = (a) => !!(a && a.story) && (+a.story_seq || 1) > 1;
+function storyBoxes(name) {                                                // 문서(없으면 이 쪽)에서 그 이야기의 글상자 원자들
+  const out = []; for (const p of (plan ? docPages() : [page])) for (const it of p.items || []) if (it.atom && it.atom.t === "text" && it.atom.story && (name == null || it.atom.story === name)) out.push(it.atom);
+  return out;
+}
+const storyNames = () => [...new Set(storyBoxes().map(a => a.story))];
+const storyNext = (name, self) => Math.max(0, ...storyBoxes(name).filter(a => a !== self).map(a => +a.story_seq || 1)) + 1;
+function storyNew() { const ns = new Set(storyNames()); let n = 1; while (ns.has("이야기" + n)) n++; return "이야기" + n; }
+function storyHtml(a) {
+  return `<h3>글 잇기 <span class="note" style="display:inline">인디자인 텍스트 스레드 — 넘친 줄이 다음 상자로(단·쪽을 넘어도)</span></h3>
+    <div class="f"><span title="같은 이야기의 글상자들이 글 하나를 순서대로 흘린다. 원고 자리는 첫 상자 하나">이야기</span><span style="display:flex;gap:4px">
+      <select data-a="story"><option value="">잇지 않음</option>${storyNames().map(n => `<option value="${esc(n)}" ${a.story === n ? "selected" : ""}>${esc(n)}</option>`).join("")}<option value="__new">＋ 새 이야기</option></select>
+      ${a.story ? `<input type="number" data-a="story_seq" min="1" step="1" value="${a.story_seq || 1}" style="width:52px" title="순서 — 1 = 첫 상자(글·원고 자리를 가진다), 2·3… = 이어지는 상자">` : ""}</span></div>
+    <div class="f"><span></span><button class="btn sm${linkPick ? "" : " sub"}" id="s-link" title="누르고 이어 받을 글상자를 누른다 — 다른 쪽 상자는 그 쪽에서 이 이야기를 고르고 순서를 적는다">${linkPick ? "이어 받을 글상자를 누르기… (Esc 취소)" : "＋ 다음 상자 잇기"}</button></div>`;
+}
+function linkTo(i) {                                                       // 누른 글상자를 이 이야기의 다음 상자로
+  const src = page.items[(linkPick || {}).fi], dst = page.items[i]; linkPick = null;
+  if (!src || !src.atom || !src.atom.story || !dst || !dst.atom || dst.atom.t !== "text" || dst === src) { say("글상자를 눌러야 이어진다"); side(); return; }
+  hist(); dst.atom.story = src.atom.story; dst.atom.story_seq = storyNext(src.atom.story, dst.atom);
+  save(); render(); select([i], i); say(`이야기 ${src.atom.story} — ${dst.atom.story_seq}번째 상자로 이었다`);
+}
 function side() {
   const box = $("#side"); if (!page) { box.innerHTML = ""; return; }
   let h = steps(); const sk = skin();
@@ -1850,7 +1887,8 @@ function side() {
       if (sibs.length) h += `<div class="f"><span title="인디자인 앵커 개체 — 글이 길어지면 이 개체도 따라 밀린다. 실제 워크북의 O/X 상자가 이렇게 문장 끝에 붙는다">문장 끝에 붙이기</span><span style="display:flex;gap:4px">
         <select data-a="anchor.after"><option value="">안 붙임 (자리 고정)</option>${sibs.map(x => `<option value="${esc(x.bind)}" ${(a.anchor || {}).after === x.bind ? "selected" : ""}>${esc((Object.fromEntries(allSlots()))[x.bind] || x.bind)} 끝에</option>`).join("")}</select>
         ${(a.anchor || {}).after ? `<input type="number" step="0.5" min="0" style="width:56px" data-a="anchor.gap" value="${a.anchor.gap == null ? 2 : a.anchor.gap}" title="글 끝과의 사이 mm">` : ""}</span></div>`;
-      if (a.t === "text") h += `<h3>원고 <span class="note" style="display:inline">이 상자에 무엇이 들어오나 — 우리 것(인디자인의 XML 태그 자리)</span></h3>
+      if (a.t === "text") h += storyHtml(a) + (storyCont(a) ? `<div class="note">앞 상자에서 이어짐 — 이야기 <b>${esc(a.story)}</b>의 ${a.story_seq}번째 상자. 글·원고 자리·글 모양은 첫 상자 것을 쓰고, 넘친 줄이 여기로 흘러 온다</div>
+        <h3>글자 <span class="note" style="display:inline">상자 여백·세로 정렬만 이 상자 것</span></h3>` : `<h3>원고 <span class="note" style="display:inline">이 상자에 무엇이 들어오나 — 우리 것(인디자인의 XML 태그 자리)</span></h3>
         <div class="f"><span>원고 자리</span><span style="display:flex;gap:4px">
           <select data-a="bindsel" title="이 글상자에 원고의 무엇이 들어올지 고른다. 「고정 글」이면 원고와 상관없는 글">
             <option value="">고정 글 (원고 안 들어옴)</option>
@@ -1870,7 +1908,7 @@ function side() {
         ${a.num ? `<div class="note">번호는 저절로 매겨진다 — 원고가 번호를 주면 그 번호를 쓰고, 그다음부터 이어 센다</div>` : ""}
         <div class="f"><span title="${a.bind ? "임시 글 — 스타일을 매길 때 보는 글. 원고를 넣으면 원고 글로 바뀐다" : "이 상자에 늘 찍힐 글"}">${a.bind ? "임시 글" : "글"}</span><textarea data-a="text" rows="2">${esc(plainText(a.text))}</textarea></div>
         ${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
-        <h3>글자 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>
+        <h3>글자 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>`) + `
         <div class="f"><span title="인디자인 단락 스타일 — 옷(브랜드)에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span title="인디자인 글꼴">글꼴</span><span style="display:flex;gap:4px"><select data-a="font">${Object.entries(Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {})).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}<option value="__raw" ${a.font && !a.font.startsWith("$") ? "selected" : ""}>직접 입력…</option></select>${a.font && !a.font.startsWith("$") ? `<input type="text" data-a="font" value="${esc(a.font)}" title="서체 이름 (예: Montserrat)" style="width:110px">` : ""}</span></div>
@@ -2075,6 +2113,8 @@ function side() {
     else if (k === "bindsel") { if (v === "__other") { a.bind = (a.bind && !allSlots().some(([x]) => x === a.bind)) ? a.bind : "자리"; }   // 직접 적기 — 빈 이름은 저장이 안 되니 「자리」로 시작 else if (v) a.bind = v; else delete a.bind;
       if (a.bind && a.text === DEFAULT_TEXT) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 자리 이름이 회색으로 보인다
     else if (k === "bind" && !v) delete a.bind;
+    else if (k === "story") { if (v === "__new") { a.story = storyNew(); a.story_seq = 1; } else if (v) { a.story = v; a.story_seq = storyNext(v, a); } else { delete a.story; delete a.story_seq; } }   // 글 잇기 — 있는 이야기를 고르면 그 끝 다음 순서로
+    else if (k === "story_seq") a.story_seq = Math.max(1, Math.round(+v || 1));
     else if (k === "style") { if (v) a.style = v; else delete a.style; }
     else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
@@ -2096,6 +2136,10 @@ function side() {
     save(); render(); side();
   }));
   on("#var", "change", async (e) => { sk.variants = sk.variants || {}; sk.variants[page.items[sel].block] = e.target.value; await api("/api/units/skins", sk); pageSvg = {}; render(); thumbsLoad(); drawRail(); side(); });
+  on("#s-link", "click", () => {                                    // 다음 상자 잇기 — 아직 이야기가 없으면 이 상자가 첫 상자
+    if (linkPick) { linkPick = null; side(); return; }
+    const a = page.items[sel].atom; if (!a.story) { hist(); a.story = storyNew(); a.story_seq = 1; save(); render(); }
+    linkPick = {fi: sel}; side(); say("이어 받을 글상자를 누른다 (Esc 취소)"); });
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement);
  on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   ["top", "bottom", "left", "right", "inside", "outside"].forEach(k => on("#s-mg-" + k, "change", (e) => {

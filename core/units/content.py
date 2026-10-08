@@ -3,6 +3,7 @@
 틀   = 글상자마다 자리 이름(atom.bind) + 임시 글(atom.text) + 스타일. 스타일은 틀이 가진다.
 원고 = {"자리 이름": "글" | ["글1", "글2", …]} — 같은 자리가 여러 번이면 문서 읽는 순서
        (쪽 순서 → 위에서 아래 → 왼쪽에서 오른쪽)대로 하나씩. 원고에는 글만 온다.
+글 잇기(atom.story) = 상자 여럿이 글 하나를 차례로 흘린다 — 자리는 첫 상자 하나, 넘친 줄은 그리기(units_compose.js)가 넘긴다.
 넣으면 그 자리의 임시 글 대신 원고 글이 나온다. 원고에 없는 자리는 임시 글 그대로.
 
 규약: docs/편집기_재현/원고자리_규약.md
@@ -22,8 +23,11 @@ def plan_page_ids(plan):
 
 
 def _slot(it):
-    b = ((it.get("atom") or {}).get("bind") or "").strip()
-    return b if b and not b.startswith("sys.") and (it.get("atom") or {}).get("t") == "text" else None
+    """글상자의 자리 이름. 글 잇기의 이어지는 상자(story_seq ≥ 2)는 자리가 아니다 — 이야기 하나 = 자리 하나, 원고는 첫 상자에만."""
+    from core.units.render import story_cont
+    a = it.get("atom") or {}
+    b = (a.get("bind") or "").strip()
+    return b if b and not b.startswith("sys.") and a.get("t") == "text" and not story_cont(a) else None
 
 
 def slots(pages):
