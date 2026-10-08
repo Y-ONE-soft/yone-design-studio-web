@@ -27,14 +27,21 @@ out = os.path.expanduser(f"~/Downloads/편집기재현/{unit}")
 
 
 def fresh_data():
-    """카탈로그는 리포를 가리키는 링크로, 편집기 저장 데이터(_units)만 리포 시드에서 새로 복사."""
+    """카탈로그는 리포를 가리키는 링크로, 편집기 저장 데이터(_units)는 **빈 상태**로 — 판형 정의와 빈 브랜드 하나만.
+    시드의 블록·지면·문서가 화면(블록 패널·문서 목록)에 섞이지 않게, 대본이 만든 것만 남는다.
+    빈 브랜드는 그림(로고)을 올릴 자리 — 올린 그림은 브랜드 그림 목록에 들어간다."""
     shutil.rmtree(os.path.dirname(data), ignore_errors=True)
-    os.makedirs(data)
+    os.makedirs(os.path.join(data, "_units"))
     src = os.path.join(REPO, "catalog")
     for n in os.listdir(src):
         if n != "_units":
             os.symlink(os.path.join(src, n), os.path.join(data, n))
-    shutil.copytree(os.path.join(src, "_units"), os.path.join(data, "_units"))
+    shutil.copy(os.path.join(src, "_units", "specs.json"), os.path.join(data, "_units", "specs.json"))
+    base = {"id": "base", "name": "기본 (브랜드 없음)",
+            "tokens": {"color": {"ink": "#231f20", "white": "#ffffff", "rule": "#b8b8b8", "gray": "#e6e6e6"},
+                       "font": {"body": "Noto Sans CJK KR"}}, "styles": {}}
+    for k, v in (("skins", [base]), ("blocks", []), ("parts", []), ("pages", []), ("plans", []), ("sets", [])):
+        json.dump(v, open(os.path.join(data, "_units", k + ".json"), "w", encoding="utf-8"), ensure_ascii=False)
 
 
 def server():
