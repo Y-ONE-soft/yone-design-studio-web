@@ -447,14 +447,13 @@ JC_DEFAULT = (80, 133, 0, 0, 1, 20, 0)  # 낱말 최소·최대 % · 자간 최�
 
 def jc_spec(a):
     """양끝 정렬 설정(인디자인 「균등 배치」) → 컴포저 data-jc. 글상자 atom.jc 가 있으면 그 값, 없으면 기본.
-    끝 줄은 자간을 조금 더 줄여 넣는다(기본 -10) — 자간 최소를 정하면 그보다 2‰ 더, 0 이면 끝 줄도 안 줄인다."""
+    끝 줄도 자간 최소까지만 줄인다(인디자인처럼 — 끝 줄만 더 줄이던 것은 원본 끝 줄 41개가 모두 최소 안이라 뺐다, 단위 14b·14c 「studio.」)."""
     j = a.get("jc") or {}
     v = list(JC_DEFAULT)
     for i, k in ((0, "word_min"), (1, "word_max"), (2, "letter_min"), (3, "letter_max")):
         if j.get(k) is not None:
             v[i] = j[k]
-    if j.get("letter_min") is not None:
-        v[6] = min(j["letter_min"] - 2, 0) if j["letter_min"] < 0 else 0
+    v[6] = v[2]
     return ",".join(f"{x:g}" for x in v)
 
 

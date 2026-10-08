@@ -25,15 +25,19 @@ def browser():
     return None
 
 
-def html_of(svgs, w_mm, h_mm, title="지면"):
-    """면마다 한 장. @page 크기 = 판형, 여백 0. SVG 는 width/height 가 mm 로 박혀 있다."""
-    pages = "".join(f'<div class="p">{s["svg"] if isinstance(s, dict) else s}</div>' for s in svgs)
+def html_of(svgs, w_mm, h_mm, title="지면", keep=None):
+    """면마다 한 장. @page 크기 = 판형, 여백 0. SVG 는 width/height 가 mm 로 박혀 있다.
+    keep — 낼 면 번호들(없으면 전부). 나머지 면은 함께 그려 글 잇기를 흘린 뒤 인쇄 전에 뺀다(쪽 하나 PDF 에 앞 쪽 이야기가 흘러오게)."""
+    pages = "".join(f'<div class="p{"" if keep is None or i in keep else " drop"}">{s["svg"] if isinstance(s, dict) else s}</div>'
+                    for i, s in enumerate(svgs))
+    drop = ("<script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => "
+            "document.querySelectorAll('.p.drop').forEach(e => e.remove()), 0));</script>") if keep is not None else ""
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>'
             f'@page{{size:{w_mm}mm {h_mm}mm;margin:0}} html,body{{margin:0;padding:0}} '
             f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:hidden;page-break-after:always;break-after:page}} '
             f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm}} .p svg .zone{{display:none}} '
             f'.story-hint,.story-over{{display:none}}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
-            f'</style></head><body>{pages}<script>{_compose_js()}</script></body></html>')
+            f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}</body></html>')
 
 
 def _compose_js():
@@ -46,7 +50,7 @@ def _compose_js():
         return ""
 
 
-def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180):
+def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None):
     """svgs → PDF 파일. 브라우저가 없으면 RuntimeError."""
     b = browser()
     if not b:
@@ -54,7 +58,7 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180):
     d = tempfile.mkdtemp(prefix="units_pdf_")
     html = os.path.join(d, "index.html")
     with open(html, "w", encoding="utf-8") as f:
-        f.write(html_of(svgs, w_mm, h_mm, title))
+        f.write(html_of(svgs, w_mm, h_mm, title, keep))
     # ⚠ --user-data-dir 를 주면 이 맥의 크롬이 멎는다(첫 실행 프로필 준비에서) — 실측. 플래그는 최소로.
     cmd = [b, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-pdf-header-footer",
            "--virtual-time-budget=3000", f"--print-to-pdf={out_path}", "file://" + html]

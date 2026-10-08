@@ -483,6 +483,7 @@ def api_pdf():
         pg0 = store.by_id(lib["pages"]).get(page_id or "") or {}
         sp0 = store.by_id(lib["specs"]).get(pl.get("spec") or pg0.get("spec") or "a4") or render.DEFAULT_SPEC
         ctx.print = {"bleed": float(sp0.get("bleed") or 3.0), "marks": request.args.get("marks") != "0"}
+    keep = None
     if plan_id:
         plan = store.by_id(lib["plans"]).get(plan_id)
         if not plan:
@@ -497,13 +498,19 @@ def api_pdf():
         spec = store.by_id(lib["specs"]).get(pg.get("spec") or "a4") or render.DEFAULT_SPEC
         ss = store.get("sets", request.args["set"]) if request.args.get("set") else None
         fid = request.args.get("fill")                                         # 원고 보기 — ?fill=<문서> 또는 auto(이 쪽이 든 문서)
+        before = []
         if fid:
             pl = next((p for p in lib["plans"] if (p["id"] == fid or fid == "auto") and page_id in content.plan_page_ids(p)), None)
             if pl:
                 filled, _rep = content.fill(_plan_pages(lib, pl), pl.get("content") or {})
-                pg = next((p for p in filled if p.get("id") == page_id), pg)
+                k = next((i for i, p in enumerate(filled) if p.get("id") == page_id), None)
+                if k is not None:
+                    pg, before = filled[k], filled[:k]                         # 앞 쪽들도 함께 그린다 — 글 잇기가 앞 쪽 이야기를 이 쪽으로 흘린다
                 ss = None
-        svgs = render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        pre = [s for p in before for s in render.page_canvas_svgs(ctx, p, spec)] if any(
+            (it.get("atom") or {}).get("story") for p in before + [pg] for it in p.get("items") or []) else []
+        svgs = pre + render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        keep = set(range(len(pre), len(svgs))) if pre else None
         title = pg.get("name") or page_id
     else:
         return jsonify({"error": "plan 또는 page"}), 400
@@ -519,7 +526,7 @@ def api_pdf():
             if request.args.get("json") == "1":
                 return jsonify({"pages": r["pages"], "cmyk": r["cmyk"], "note": r["note"], "warnings": ctx.warnings})
         else:
-            _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title)
+            _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title, keep=keep)
     except Exception as e:
         return jsonify({"error": f"{type(e).__name__}: {e}", "warnings": ctx.warnings}), 500
     return send_file(path, mimetype="application/pdf", as_attachment=request.args.get("dl") == "1",

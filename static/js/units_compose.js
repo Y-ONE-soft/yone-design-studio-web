@@ -11,7 +11,9 @@
 
   const CJK = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3\u3040-\u30FF\u4E00-\u9FFF]/;
   const ENC = /[\u2460-\u24FF\u2776-\u2793\u3251-\u325F\u32B1-\u32BF]/;   // 원문자 ①②… — 한중일 글자처럼 앞뒤에서 꺾을 수 있다(인디자인: 「③shouting」 을 ③ 뒤에서 꺾음, 단위 14c)
-  const brkOK = (a, b) => (CJK.test(a) && CJK.test(b)) || (ENC.test(a) && !isSp(b)) || (!isSp(a) && ENC.test(b));   // 공백 없이 꺾을 수 있는 글자 사이
+  const OPEN = /[(\[{‘“「『（]/, CLOSE = /[)\]}’”」』）.,;:!?。、]/;   // 금칙 — 여는 괄호 뒤·닫는 괄호와 문장부호 앞에서는 안 꺾는다(「(④)」, 단위 06)
+  const brkOK = (a, b) => !OPEN.test(a) && !CLOSE.test(b) && ((CJK.test(a) && CJK.test(b)) || (ENC.test(a) && !isSp(b)) || (!isSp(a) && ENC.test(b))
+    || (a === "/" && !isSp(b) && !/\d/.test(b)));   // 공백 없이 꺾을 수 있는 글자 사이 — 빗금 뒤도(「(T/ | F)」, 인디자인·유니코드 줄 나눔, 단위 14a)
   const isSp = (c) => c === " " || c === "\u00a0";
 
   function tokens(p) {
