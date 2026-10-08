@@ -4,8 +4,9 @@
 (아래는 단위 02 설명) 단위 02 A어휘선택 — 원본 d1 reference.pdf 4·5쪽을 A4 한 문서 두 쪽으로. 전부 마우스·키보드, 블록 없이 그리기만.
 
 값은 모두 원본 PDF 에서 뽑는다 — 글 조각(서체·크기·색·기준선)과 도형 좌표. 지문 글도 PDF 에서 그대로 읽어 친다.
-글상자 위 끝 = 원본 기준선 - (반 행간 + 서체 윗높이) — 서체 파일의 hhea 값으로 계산(측정 보정 없이 첫 판에 맞추려고).
-그래도 남는 차이는 보정.json(측정해서 채움)으로. 이 파일은 steps.json(녹화기 대본)과 elems.json(측정할 요소 목록)을 쓴다.
+글상자 위 끝 = 원본 기준선 - (반 행간 + 서체 윗높이) — 서체 파일의 hhea 값으로 계산. 측정 보정(보정.json) 없음.
+돌린 탭 글은 단위 04 의 TR 과 같은 계산(돌림 축 = 상자 가운데, 기준선 공식, 원본 글자 원점, 크롬 끝 글자 뒤 자간).
+이 파일은 steps.json(녹화기 대본)과 elems.json(측정할 요소 목록)을 쓴다.
 """
 import json, os, re, subprocess, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +17,6 @@ import pymupdf
 
 REF = os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf")
 REFDOC = pymupdf.open(REF)
-FIX = json.load(open(os.path.join(HERE, "보정.json"))) if os.path.exists(os.path.join(HERE, "보정.json")) else {}
 ELEMS = {1: [], 2: []}
 PAGES = json.load(open(os.path.join(HERE, "상태.json")))["pages"]
 MM = 25.4 / 72
@@ -24,30 +24,63 @@ NOTO, MS, EL, YD, MAMA = "Noto Sans CJK KR", "Montserrat", "Elice DX Neolli OTF"
 GM = "Gmarket Sans TTF"        # 「Gmarket Sans」+500 은 Chrome 이 Bold 를 고르고 한 번 더 굵힌다 — TTF 집은 500 이 진짜 Medium
 
 
-def T(pg, id, x, base, s, size, color, family, weight, bbox, leading=None, label=None, search=1.5, rotate=None, at=None, w=None, align=None, temp=None):
-    """원본 글 하나. x = 글자 시작, base = 기준선, bbox = 원본 글자 상자(잴 자리). 자간은 원본 폭에서 계산한다."""
-    f = FIX.get(id if pg == 1 else f"p{PAGES[pg - 1]}:{id}", {})   # 보정 이름표 = 원본 쪽 번호 (측정이 그렇게 쓴다)
+def T(pg, id, x, base, s, size, color, family, weight, bbox, leading=None, label=None, search=1.5, w=None, align=None, temp=None):
+    """원본 글 하나. x = 글자 시작, base = 기준선, bbox = 원본 글자 상자(잴 자리). 자간은 원본 글자 위치에서 계산한다."""
     _, _, adv = face(family, weight)
     nat = adv(s) * size * MM
-    length = bbox[3] if rotate else bbox[2]                                 # 돌린 글은 원본 상자의 세로가 글 길이
-    if rotate:                                                              # 돌린 글은 글자 위치가 세로 — 상자 길이로
-        track = round((length - nat) / max(len(s), 1) / (size * MM) * 1000) if len(s) > 1 else 0
-    else:                                                                   # 원본 글자 위치 - 브라우저(커닝·대체 글자 포함) 거리
-        track = track_from(REFDOC[PAGES[pg - 1] - 1], bbox, s, family, weight, size)
+    track = track_from(REFDOC[PAGES[pg - 1] - 1], bbox, s, family, weight, size)  # 원본 글자 위치 - 브라우저(커닝·대체 글자 포함) 거리
     track = track if abs(track) > 8 else 0
     ELEMS[pg].append({"id": id, "x": bbox[0], "y": bbox[1], "w": bbox[2], "h": bbox[3], "color": color, "see": color,
                       "ctol": 30, "search": search, "text": s, "size": size})
     bw = w or round(nat * 1.3 + size * 0.5 + max(track, 0) * len(s) * size * MM / 1000, 1)
     bh = round((leading or size * 1.45) * MM + 0.4, 1)
-    if at:                                                                  # 돌린 글 — 상자 가운데를 원본 글 가운데에
-        cx, cy = at
-        bx, by = cx - bw / 2, cy - bh / 2
-    else:
-        bx, by = x, top_of(base, size, family, weight, leading)
-    st = text(round(bx - f.get("dx", 0), 2), round(by - f.get("dy", 0), 2), bw, bh, temp or s, size, color, label=label,
-              font=family, weight=weight if weight != 400 else None, track=round(track - f.get("dtr", 0)) or None, leading=leading, align=align)
-    if rotate:
-        st.append(F('#side input[data-a="rotate"]', rotate, 600))
+    return text(x, round(top_of(base, size, family, weight, leading), 2), bw, bh, temp or s, size, color, label=label,
+                font=family, weight=weight if weight != 400 else None, track=track or None, leading=leading, align=align)
+
+
+def tab_spans(pno):
+    """원본 쪽의 돌린 글 조각(아래에서 위로 읽는 탭 글) — 지면 좌표 mm. 원본은 같은 글이 두 번 겹쳐 있어 한 번씩만"""
+    p = REFDOC[pno - 1]
+    ox, oy = p.trimbox.x0, p.trimbox.y0
+    out, seen = [], set()
+    for b in p.get_text("rawdict")["blocks"]:
+        for l in b.get("lines", []):
+            if l["dir"] != (0.0, -1.0):
+                continue
+            for sp in l["spans"]:
+                ink = [c for c in sp["chars"] if c["c"].strip()]
+                t = "".join(c["c"] for c in sp["chars"]).strip()
+                if not ink or t in seen:
+                    continue
+                seen.add(t)
+                out.append({"text": t, "color": "#%06x" % sp["color"], "x0": (ink[0]["bbox"][0] - ox) * MM,
+                            "chars": [(c["c"], (c["origin"][0] - ox) * MM, (c["origin"][1] - oy) * MM) for c in ink]})
+    return out
+
+
+def TR(pg, id, sp, size, color, family, weight, w=14, label=None):
+    """돌린 글(아래에서 위로 읽는 탭 글) — 단위 04 의 TR 과 같은 계산. 편집기는 글상자를 가운데 기준으로 돌린다.
+    자간 = (원본 첫~끝 글자 원점 거리 - 브라우저 거리) / 사이 수.
+    가운데 정렬 줄은 끝 글자 뒤 자간까지 폭에 들어가 글자 묶음 가운데가 상자 가운데에서 자간/2 만큼 앞으로 온다 → 그만큼 뒤로.
+    가로(돌린 뒤): 원본 기준선 x = 상자 가운데 + (기준선 깊이 - 상자 높이/2)."""
+    s = sp["text"]
+    _, _, adv = face(family, weight)
+    ch = sp["chars"]
+    n = len(s)
+    first_y, last_y, base_x = ch[0][2], ch[-1][2], ch[0][1]
+    orig = abs(first_y - last_y)
+    t_mm = (orig - chrome_extent(family, weight, size, s)) / (n - 1)
+    track = round(t_mm / (size * MM) * 1000)
+    run_c = (first_y + last_y - adv(s[-1]) * size * MM) / 2                  # 원본 글자 묶음 가운데 (위로 읽으니 끝 글자는 위로 폭만큼)
+    bh = round(size * 1.45 * MM + 0.4, 1)
+    depth = 10 - top_of(10, size, family, weight)                            # 기준선 10 일 때 상자 위 → 기준선 깊이 = 10 - 위
+    cx = base_x - (depth - bh / 2)
+    cy = run_c - t_mm / 2
+    ELEMS[pg].append({"id": id, "x": sp["x0"], "y": min(c[2] for c in ch) - adv(s[-1]) * size * MM, "w": 3.08,
+                      "h": orig + adv(s[-1]) * size * MM, "color": color, "see": color, "ctol": 30, "search": 0.8, "text": s, "size": size})
+    st = text(round(cx - w / 2, 2), round(cy - bh / 2, 2), w, bh, s, size, color, label=label, font=family,
+              weight=weight if weight != 400 else None, track=track or None, align="center")
+    st.append(F('#side input[data-a="rotate"]', -90, 600))
     return st
 
 
@@ -108,7 +141,6 @@ WORD_MIN = -60       # 양끝 줄 낱말 간격 최소 — 원본 줄이 다 들
 def P(pg, id, x, base, txt, lines, yb, right, label):
     """지문 한 덩어리 — 글상자 하나에 원본 글 그대로, 양끝맞춤 · 행간 22pt · 자간 -40 · 줄 나눔, GREP 스타일로 [ ⓐ … / ⓑ … ] 만 굵은 파랑.
     글상자 폭 = 원본 글자 끝 - 시작 - 끝 글자 뒤 자간(Chrome 은 줄 끝 글자 뒤에도 자간을 둔다)"""
-    f = FIX.get(id if pg == 1 else f"p{PAGES[pg - 1]}:{id}", {})   # 보정 이름표 = 원본 쪽 번호 (측정이 그렇게 쓴다)
     w = round(right - x + TRACK / 1000 * 8.5 * MM, 2)
     for k, col in (("", "#231f20"), ("-b", "#00559f")):
         ELEMS[pg].append({"id": id + k, "x": x, "y": yb[0], "w": round(right - x, 2), "h": yb[1] - yb[0], "color": col, "see": col,
@@ -116,7 +148,7 @@ def P(pg, id, x, base, txt, lines, yb, right, label):
                           "shape_iou": 0.80})          # 문단은 양끝맞춤에서 단어가 0.2mm 안팎 다르게 놓인다 — 겹침 기준을 낮춘다
     y = top_of(base, 8.5, NOTO, 400, 22)
     CONTENT["지문"].append(txt.replace("\u2028", " ").strip())              # 원고 — 줄 나눔 없이(원고는 글만)
-    st = text(round(x - f.get("dx", 0), 2), round(y - f.get("dy", 0), 2), w, round(lines * 22 * MM, 1), temp_passage(len(txt)), 8.5, "#231f20",
+    st = text(round(x, 2), round(y, 2), w, round(lines * 22 * MM, 1), temp_passage(len(txt)), 8.5, "#231f20",
               label=label, leading=22, align="justify", font=NOTO, track=TRACK)
     st += slot("지문", label="자리 이름 「지문」")
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
@@ -186,9 +218,8 @@ st += [S("오른쪽 탭 셋 — 면 · 돌린 글", 1500)]
 st += B(2, "tab1", 201.5, 60, 11.5, 26, "#77a1c4")
 st += B(2, "tab2", 201.5, 90, 11.5, 26, "#f9efda")
 st += B(2, "tab3", 201.5, 120, 11.5, 26, "#f8e1da")
-for k, (s, y, h, col) in enumerate((("STEP 01", 68.93, 8.13, "#ffffff"), ("02", 101.64, 2.72, "#cba56f"), ("03", 131.64, 2.72, "#bc736c"))):
-    st += T(2, f"tab{k + 1}-t", 204.54, 0, s, 6.5, col, MS, 700, (204.54, y, 3.08, h), search=0.8, rotate=-90,
-            at=(204.54 + 3.08 / 2, y + h / 2), w=14, align="center")     # 원본은 아래에서 위로 읽는 글 · 돌려도 가운데가 남게 가운데 정렬
+for k, sp in enumerate(tab_spans(5)):                                       # 원본 글자 원점에서 — 단위 04 와 같은 계산
+    st += TR(2, f"tab{k + 1}-t", sp, 6.5, sp["color"], MS, 700)
 P5 = passages(5)
 NO5 = ((22.0, 35.90, 26.04, 4.03), (22.02, 157.90, 148.04, 4.07))
 for k, (x, b0, b1, txt, yb, right) in enumerate(P5):

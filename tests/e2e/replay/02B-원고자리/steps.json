@@ -2914,7 +2914,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -69
+   "value": -75
   },
   "wait": 420
  },
@@ -2956,14 +2956,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 199.33
+   "value": 199.37
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 71.49
+   "value": 71.29
   },
   "wait": 550
  },
@@ -3041,7 +3041,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -10
+   "value": -77
   },
   "wait": 420
  },
@@ -3083,14 +3083,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 199.08
+   "value": 199.37
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 101.15
+   "value": 101.28
   },
   "wait": 550
  },
@@ -3166,6 +3166,13 @@
   "wait": 600
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -75
+  },
+  "wait": 420
+ },
+ {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
    "value": "700"
@@ -3203,14 +3210,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 199.08
+   "value": 199.37
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 131.15
+   "value": 131.29
   },
   "wait": 550
  },
@@ -4072,12 +4079,11 @@
   "wait": 1800
  },
  {
-  "click": {
-   "mm": [
-    205,
-    294
-   ]
-  },
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
   "wait": 900
  },
  {
@@ -4090,6 +4096,9 @@
  {
   "click": "#side #s-content-put",
   "wait": 2500
+ },
+ {
+  "js": "(() => { const t = document.querySelector('#st').textContent; if (/저장 실패/.test(t)) throw new Error('원고 저장 실패 — ' + t); return '원고 저장 확인'; })()"
  },
  {
   "js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"
