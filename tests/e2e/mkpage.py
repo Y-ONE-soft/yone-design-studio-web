@@ -38,14 +38,18 @@ _EXT = {}
 
 def chrome_extent(family, weight, size, s):
     """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값"""
-    import os, subprocess, tempfile, json as _j, html as _h
+    import os, re, subprocess, tempfile, json as _j, html as _h
     key = (family, weight, size, s)
     zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
+        body = _h.escape(s)
+        if "CJK" in family:                                                    # 편집기처럼 공백은 한국어 꼴(render.ko_spaces)
+            body = re.sub(r" +", lambda m: f'<span lang="ko">{m.group(0)}</span>', body)
         doc = (f"<!doctype html><html lang=en><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
-               f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1;word-spacing:{0.056 if 'CJK' in family else 0}em\">{_h.escape(s)}</span><pre id=o></pre><script>"
-               "document.fonts.ready.then(()=>{const n=document.getElementById('t').firstChild,r=document.createRange();"
-               "const at=i=>{r.setStart(n,i);r.setEnd(n,i+1);return r.getBoundingClientRect().left};"
+               f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{body}</span><pre id=o></pre><script>"
+               "document.fonts.ready.then(()=>{const c=[],w=document.createTreeWalker(document.getElementById('t'),NodeFilter.SHOW_TEXT),r=document.createRange();"
+               "let n;while((n=w.nextNode()))for(let i=0;i<n.data.length;i++)c.push([n,i]);"
+               "const at=i=>{r.setStart(c[i][0],c[i][1]);r.setEnd(c[i][0],c[i][1]+1);return r.getBoundingClientRect().left};"
                f"document.getElementById('o').textContent=JSON.stringify(at({len(s) - 1})-at(0));}});</script>")
         fd, path = tempfile.mkstemp(suffix=".html")
         os.write(fd, doc.encode("utf-8")); os.close(fd)

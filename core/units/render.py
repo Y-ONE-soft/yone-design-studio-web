@@ -18,7 +18,6 @@ from xml.sax.saxutils import escape as _x
 from core.units import sample
 
 PT = 25.4 / 72.0
-CJK_SPACE_FIX = 56                 # ‰ em — Noto CJK 한국어 공백(locl KOR 0.280em) − 라틴 기본 공백(0.224em)
 TEXT_ZOOM = 100                    # 글상자 배치 해상도 — 지면 1mm 를 100px 로 (아래 _atom_svg_raw 의 글). 10 이면 0.1mm 단위로 반올림돼 빈칸 밑줄 0.176mm 가 0.1mm 로 나왔다
 GAP_BLOCK = 1.5      # mm — 한 세트 안 블록 사이
 GAP_SET = 4.0        # mm — 세트 사이
@@ -324,12 +323,18 @@ def keep_spaces(html):
 
 
 def base_word_spacing(a, ctx):
-    """글상자의 기본 낱말 간격(‰ em) — 「낱말 사이」 + Noto CJK 공백 보정.
-    lang=en 이면 Noto CJK 공백이 라틴 기본(0.224em)이 되는데 인디자인은 한국어 꼴(0.280em)을 쓴다 — 합자(en 에만 있음)와 한국어 공백 폭을 함께 (단위 02·04, 서체 GSUB 실측)."""
-    ws = float(a.get("word_spacing") or 0)
-    if not a.get("lang") and ctx and "CJK" in ctx.font(a.get("font")):
-        ws += CJK_SPACE_FIX
-    return ws
+    """글상자의 기본 낱말 간격(‰ em) — 「낱말 사이」."""
+    return float(a.get("word_spacing") or 0)
+
+
+def ko_spaces(html, a, ctx):
+    """Noto CJK 글의 공백을 한국어 꼴로 — 인디자인은 모든 공백에 한국어 공백(locl KOR 0.280em)을 놓는다.
+    글은 lang=en 이라야 라틴 합자가 켜지는데, 그러면 크롬은 한글과 한글 사이 공백만 0.280em, 나머지는 라틴 기본(0.224em)으로 그린다.
+    공백만 lang=ko 로 감싸면 모두 0.280em 이 되고 합자는 그대로 (낱말 간격으로 더하던 보정은 한글 사이 공백에 두 번 들어갔다 — 단위 07 해석 줄)."""
+    if a.get("lang") or not ctx or "CJK" not in ctx.font(a.get("font")):
+        return html
+    return "".join(p if p.startswith("<") else re.sub(r"(?: |&#160;)+", lambda m: f'<span lang="ko">{m.group(0)}</span>', p)
+                   for p in _TAG.split(html))
 
 
 def soft_breaks(x, justify=False, word_min=None):
@@ -998,7 +1003,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         if a.get("t") != "text":
             continue
         html, plain = _text_content(ctx, a, values, types)
-        html = keep_spaces(grep_html(html, a.get("grep"), ctx))
+        html = ko_spaces(keep_spaces(grep_html(html, a.get("grep"), ctx)), a, ctx)
         tail = tail_html(a, ctx)                                       # 글 끝에 붙는 개체 — 글자처럼 흘러 줄 나눔·컴포저에 낀다
         if tail:
             html += tail[0]

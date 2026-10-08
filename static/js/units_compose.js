@@ -75,6 +75,17 @@
     const em = parseFloat(cs.fontSize) * k;
     const ls = parseFloat(cs.letterSpacing) * k || 0, wsp = parseFloat(cs.wordSpacing) * k || 0;   // 단락 자간 · 낱말 간격(보정) — 공백 글리프 폭을 꺼내려고
     for (const t of toks) if (t.space && !t.zero) t.sp0 = Math.max(0, t.w - t.n * (ls + wsp));       // 공백 글리프 폭 합 = 낱말 간격 % 의 기준
+    // 한국어 꼴로 감싼 공백(렌더러 ko_spaces — 0.280em)도 기준은 서체의 U+0020 폭(0.224em)이다: 인디자인이 그렇게 늘린다
+    if (p.querySelector("span[lang='ko']")) {
+      const m = (lang, s) => { const e = document.createElement("span"); e.lang = lang; e.style.whiteSpace = "pre"; e.textContent = s; p.appendChild(e);
+                               const w = e.getBoundingClientRect().width; e.remove(); return w; };
+      const g = (lang) => m(lang, "x x") - m(lang, "xx") - ls - wsp;
+      const gk = g("ko"), r = gk > 0 ? g("en") / gk : 1;
+      for (const t of toks) if (t.space && !t.zero && t.a[1] >= 0) {
+        const l = t.a[0].parentElement && t.a[0].parentElement.closest("[lang]");
+        if (l && l.lang === "ko") t.sp0 *= r;
+      }
+    }
     p.style.whiteSpace = save[0];
     p.style.textAlign = save[1];
     const Lmx = lmx / 1000 * em, Lmn = -lmn / 1000 * em, LLmn = -lastLmn / 1000 * em;   // 글자 사이 하나가 늘·줄 수 있는 폭(px)
@@ -147,7 +158,7 @@
     p.textContent = "";
     lines.forEach((ln, li) => {
       const sp = document.createElement("span");
-      let st = "display:block;" + (li ? "text-indent:0;" : "");
+      let st = "display:block;white-space:nowrap;" + (li ? "text-indent:0;" : "");   // 줄 끝은 컴포저가 정했다 — 인쇄 때 다시 꺾지 않게
       // 줄마다 인디자인 순서로 나눈다: 낱말 간격(최소~최대) 먼저, 남는 것은 자간. 끝 줄은 넘칠 때만(줄여 넣기).
       const slack = lw0(li) - ln.L, ng = Math.max(1, ln.nc - 1);
       let xw = 0, dl = 0;
