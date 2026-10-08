@@ -42,7 +42,7 @@ def chrome_extent(family, weight, size, s):
     key = (family, weight, size, s)
     zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
-        doc = (f"<!doctype html><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
+        doc = (f"<!doctype html><html lang=en><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
                f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{_h.escape(s)}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const n=document.getElementById('t').firstChild,r=document.createRange();"
                "const at=i=>{r.setStart(n,i);r.setEnd(n,i+1);return r.getBoundingClientRect().left};"

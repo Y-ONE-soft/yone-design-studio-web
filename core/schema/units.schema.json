@@ -151,6 +151,7 @@
         "v_scale": {"type": "number", "minimum": 1, "description": "장평 세로 % (인디자인 수직 비율). 없으면 100"},
         "baseline": {"$ref": "#/definitions/pt", "description": "기준선 이동 pt — 양수면 위로"},
         "kerning": {"enum": ["metrics", "none"], "description": "커닝 — metrics(기본) 또는 끄기"},
+        "lang": {"type": "string", "description": "글의 언어(HTML lang) — 없으면 en. 크롬이 언어에 따라 합자·글자 꼴을 고른다(ko 면 Noto CJK 라틴 합자가 꺼짐)"},
         "grep": {"type": "array", "description": "GREP 스타일 — 패턴(정규식)에 맞는 글자에 서식(인디자인 단락 스타일의 GREP 스타일). 고정 글·원고 모두에 적용",
                  "items": {"type": "object", "required": ["re"], "properties": {
                    "re": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"},

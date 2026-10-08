@@ -99,7 +99,8 @@
           if (r < -1) break;                                           // 더 붙이면 줄여도 안 들어간다
           bad = last ? 0 : Math.min(10000, sw * 100 * Math.pow(-r, 3));
         }
-        const dem = Math.pow(lp + bad, 2);
+        const gb = b < brk.length - 1 ? toks[brk[b]] : null;               // 공백 여러 칸 안에서 꺾으면 다음 줄이 공백으로 시작 — 꼭 필요할 때만(작은 비용)
+        const dem = Math.pow(lp + bad, 2) + (gb && gb.n > 1 ? 30 : 0);
         if (best[a] + dem < best[b]) { best[b] = best[a] + dem; from[b] = a; }
       }
     }
