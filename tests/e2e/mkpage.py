@@ -7,6 +7,78 @@ BLUE, BEIGE, BRICK, CREAM, INK, TAB = "#77a1c4", "#cfa76b", "#af9d81", "#f9f7ed"
 PURPLE, SKY, GRAYBOX, WHITE = "#8d7cba", "#e5f2f9", "#f5f4ef", "#ffffff"
 SPOT = {"mm": [120, 250]}        # 임시로 끌어 그리는 빈 자리 (면 아래 오른쪽)
 AWAY = {"mm": [205, 294]}        # 글 확정용 빈 구석
+MM = 25.4 / 72                   # 1pt = mm
+_STYLE = {100: "Thin", 200: "ExtraLight", 300: "Light", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black"}
+_FACES = {}
+
+
+def face(family, weight=400):
+    """서체 집·굵기 → (윗높이, 아랫높이, 글 폭 함수 em) — 브라우저가 쓰는 그 파일의 hhea·hmtx (fc-match 로 찾는다)"""
+    import subprocess
+    from fontTools.ttLib import TTFont
+    key = (family, weight)
+    if key not in _FACES:
+        got = None
+        for q in (f"{family}:style={_STYLE.get(weight, 'Regular')}", family):
+            fam, path, idx = subprocess.check_output(["fc-match", "-f", "%{family}|%{file}|%{index}", q], text=True).split("|")
+            if family.lower() in fam.lower():                                  # 그 집을 못 찾으면 굵기 없이 다시
+                got = (path, idx)
+                break
+        if not got:
+            raise RuntimeError(f"서체 없음: {family} — 설치할 것")
+        f = TTFont(got[0], fontNumber=int(got[1] or 0))
+        upm, hh, cmap, hm = f["head"].unitsPerEm, f["hhea"], f.getBestCmap(), f["hmtx"]
+        adv = lambda s: sum(hm[cmap[ord(c)]][0] for c in s if ord(c) in cmap) / upm
+        _FACES[key] = (hh.ascent / upm, -hh.descent / upm, adv)
+    return _FACES[key]
+
+
+_EXT = {}
+
+
+def chrome_extent(family, weight, size, s):
+    """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값"""
+    import os, subprocess, tempfile, json as _j
+    key = (family, weight, size, s)
+    if key not in _EXT:
+        doc = (f"<!doctype html><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
+               f"font-size:{size * 10}pt;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{s}</span><pre id=o></pre><script>"
+               "document.fonts.ready.then(()=>{const n=document.getElementById('t').firstChild,r=document.createRange();"
+               "const at=i=>{r.setStart(n,i);r.setEnd(n,i+1);return r.getBoundingClientRect().left};"
+               f"document.getElementById('o').textContent=JSON.stringify(at({len(s) - 1})-at(0));}});</script>")
+        fd, path = tempfile.mkstemp(suffix=".html")
+        os.write(fd, doc.encode("utf-8")); os.close(fd)
+        out = subprocess.run(["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "--headless=new", "--disable-gpu",
+                              "--virtual-time-budget=4000", "--dump-dom", "file://" + path], capture_output=True, text=True, timeout=60).stdout
+        os.remove(path)
+        px = float(_j.loads(out[out.find('<pre id="o">') + 12: out.find("</pre>")]))
+        _EXT[key] = px / 10 * 25.4 / 96                                        # 10배로 그려 잰 px → mm
+    return _EXT[key]
+
+
+def track_from(pdf_page, box, s, family, weight, size):
+    """원본 PDF 쪽의 글자 위치로 자간(‰) — (원본 첫~끝 글자 거리 - 브라우저 같은 거리) / 사이 수. 커닝은 양쪽 다 들어 있다.
+    box = 원본 글자 상자(x, y, w, h mm, 재단 여백 뺀 지면 좌표)"""
+    import pymupdf
+    if len(s) < 2:
+        return 0
+    t = pdf_page.trimbox
+    x, y, w, h = box
+    R = pymupdf.Rect(t.x0 + (x - 0.3) / MM, t.y0 + (y - 0.3) / MM, t.x0 + (x + w + 0.3) / MM, t.y0 + (y + h + 0.3) / MM)
+    ch = [c for b in pdf_page.get_text("rawdict", clip=R)["blocks"] for l in b.get("lines", []) for sp in l["spans"] for c in sp["chars"] if c["c"].strip()]
+    if len(ch) < 2:
+        return 0
+    orig = (ch[-1]["origin"][0] - ch[0]["origin"][0]) * MM
+    return round((orig - chrome_extent(family, weight, size, s)) / (len(s) - 1) / (size * MM) * 1000)
+
+
+def top_of(base, size, family, weight=400, leading=None):
+    """원본 기준선(mm) → 편집기 글상자 위 끝(mm). 편집기 글줄 = CSS 줄 상자: 위 끝 + 반 행간 + 서체 윗높이 = 기준선.
+    측정 보정 없이 첫 판에 맞추는 공식 — 어긋나면 덮지 말고 원인(서체·반올림·행간)을 찾는다."""
+    asc, desc, _ = face(family, weight)
+    s = size * MM
+    lead = (leading or size * 1.45) * MM
+    return base - ((lead - (asc + desc) * s) / 2 + asc * s)
 
 
 def S(t, w=1700):

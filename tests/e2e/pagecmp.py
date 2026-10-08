@@ -221,6 +221,52 @@ def color_box(arr, color, x, y, w, h, pad=1.5, tol=40, dpi=300):
             round(float(xs.max() - xs.min() + 1) / k, 2), round(float(ys.max() - ys.min() + 1) / k, 2)]
 
 
+def shape_match(ra, ma, color, tol, a, b, dpi=300):
+    """글자 모양 비교 — 원본 상자 a 와 결과 상자 b 안의 그 색 잉크를 같은 크기로 맞대고
+    (잉크 양 비율 = 굵기, 겹침 IoU = 글자 모양·서체·대체 글자). 위치·크기 측정이 못 잡는 차이를 잡는다."""
+    import numpy as np
+    from PIL import Image
+    k = dpi / 25.4
+    c = np.array([int(color[i:i + 2], 16) for i in (1, 3, 5)])
+
+    def cover(arr, bx):
+        """화소마다 바탕색 → 글자색 사이 어디쯤인가(0~1) — 가장자리 흐린 화소도 그만큼만 센다. 바탕 = 상자 둘레의 가장 흔한 색"""
+        x0, y0 = int(bx[0] * k), int(bx[1] * k)
+        x1, y1 = int((bx[0] + bx[2]) * k) + 1, int((bx[1] + bx[3]) * k) + 1
+        H, W = arr.shape[:2]
+        win = arr[max(0, y0 - 3):min(H, y1 + 3), max(0, x0 - 3):min(W, x1 + 3)].astype(float)
+        rim = np.concatenate([win[0], win[-1], win[:, 0], win[:, -1]])
+        vals, cnt = np.unique(rim.round(), axis=0, return_counts=True)
+        bg = vals[cnt.argmax()]
+        d = c - bg
+        if not (d * d).sum():
+            return np.zeros((1, 1))
+        t = ((arr[y0:y1, x0:x1].astype(float) - bg) * d).sum(axis=2) / (d * d).sum()
+        near = np.abs(arr[y0:y1, x0:x1].astype(int) - c).max(axis=2) <= max(tol, 90)   # 다른 색 글(옆 요소)은 빼고
+        return np.clip(t, 0, 1) * near
+    ca, cb = cover(ra, a), cover(ma, b)
+    if not ca.size or not cb.size or ca.sum() < 1:
+        return None, None
+    cb = np.asarray(Image.fromarray((cb * 255).astype(np.uint8)).resize((ca.shape[1], ca.shape[0]), Image.BILINEAR)) / 255.0
+    ink = float(cb.sum()) / float(ca.sum())
+    ma_, mb_ = ca > 0.5, cb > 0.5
+
+    def grow(m, r=2):                                          # 2화소(0.17mm) 넓힌다 — 0.1mm 어긋남에 겹침이 무너지지 않게
+        g = m.copy()
+        for dy in range(-r, r + 1):
+            for dx in range(-r, r + 1):
+                g[max(0, dy):m.shape[0] + min(0, dy), max(0, dx):m.shape[1] + min(0, dx)] |= \
+                    m[max(0, -dy):m.shape[0] + min(0, -dy), max(0, -dx):m.shape[1] + min(0, -dx)]
+        return g
+    hit_b = float((mb_ & grow(ma_)).sum()) / max(1.0, float(mb_.sum()))     # 내 잉크가 원본 자리에 있는 비율
+    hit_a = float((ma_ & grow(mb_)).sum()) / max(1.0, float(ma_.sum()))     # 원본 잉크가 내 자리에 있는 비율
+    return round(ink, 2), round(min(hit_a, hit_b), 2)
+
+
+SHAPE_INK = 0.12        # 잉크 양이 원본과 이만큼(비율) 넘게 다르면 굵기가 다르다
+SHAPE_IOU = 0.90        # 겹침(0.17mm 너그럽게)이 이보다 낮으면 글자 모양이 다르다
+
+
 def measure(ref_pdf, ref_page, my_pdf, elems, dpi=300):
     """요소마다 원본과 결과의 같은 색 상자를 재서 차이(mm). elems: [{id, x, y, w, h, color, pad?}]"""
     ra, ma = page_array(ref_pdf, ref_page, dpi), page_array(my_pdf, 1, dpi)
@@ -238,6 +284,11 @@ def measure(ref_pdf, ref_page, my_pdf, elems, dpi=300):
         if a and b:
             r.update(dx=round(b[0] - a[0], 2), dy=round(b[1] - a[1], 2), dw=round(b[2] - a[2], 2), dh=round(b[3] - a[3], 2))
             r["ok"] = bool(max(abs(r["dx"]), abs(r["dy"]), abs(r["dw"]), abs(r["dh"])) <= e.get("tol", 0.3))
+            if "text" in e:                                            # 글은 모양(굵기·서체)까지
+                r["ink"], r["iou"] = shape_match(ra, ma, col, tol, a, b, dpi)
+                if r["ink"] is not None:
+                    r["shape_ok"] = bool(abs(r["ink"] - 1) <= SHAPE_INK and r["iou"] >= e.get("shape_iou", SHAPE_IOU))
+                    r["ok"] = r["ok"] and r["shape_ok"]
         else:
             r["ok"] = False
         out.append(r)

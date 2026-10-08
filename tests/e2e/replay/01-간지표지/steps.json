@@ -291,14 +291,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 232
+   "value": 222
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -340,7 +340,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 16.38
+   "value": 15.96
   },
   "wait": 550
  },
@@ -450,14 +450,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.09
+   "value": 25.01
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 50.79
+   "value": 50.35
   },
   "wait": 550
  },
@@ -521,7 +521,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 27
+   "value": 25
   },
   "wait": 420
  },
@@ -563,14 +563,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.1
+   "value": 25.01
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 68.96
+   "value": 68.35
   },
   "wait": 550
  },
@@ -676,14 +676,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.09
+   "value": 25.01
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 87.06
+   "value": 86.62
   },
   "wait": 550
  },
@@ -889,14 +889,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -2
+   "value": -4
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "400"
+   "value": "500"
   },
   "wait": 550
  },
@@ -938,7 +938,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 128.72
+   "value": 127.92
   },
   "wait": 550
  },
@@ -1002,14 +1002,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 249
+   "value": 240
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "600"
+   "value": "700"
   },
   "wait": 550
  },
@@ -1051,7 +1051,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 136.1
+   "value": 136.09
   },
   "wait": 550
  },
@@ -1186,7 +1186,7 @@
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "800"
   },
   "wait": 550
  },
@@ -1228,7 +1228,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 175.13
+   "value": 174.82
   },
   "wait": 550
  },
@@ -1292,14 +1292,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 142
+   "value": 120
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -1341,7 +1341,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 186.6
+   "value": 185.77
   },
   "wait": 550
  },
@@ -1472,7 +1472,7 @@
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "800"
   },
   "wait": 550
  },
@@ -1507,14 +1507,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 63.27
+   "value": 63.35
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 175.05
+   "value": 174.82
   },
   "wait": 550
  },
@@ -1578,14 +1578,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 130
+   "value": 120
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -1627,7 +1627,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 186.6
+   "value": 185.77
   },
   "wait": 550
  },
@@ -1758,7 +1758,7 @@
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "800"
   },
   "wait": 550
  },
@@ -1793,14 +1793,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 97.27
+   "value": 97.35
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 175.13
+   "value": 174.82
   },
   "wait": 550
  },
@@ -1864,14 +1864,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 155
+   "value": 121
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -1906,14 +1906,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 94.76
+   "value": 94.85
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 186.6
+   "value": 185.77
   },
   "wait": 550
  },
@@ -2690,7 +2690,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 420
+   "value": 429
   },
   "wait": 420
  },
@@ -2739,7 +2739,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 31.29
+   "value": 30.51
   },
   "wait": 550
  },
@@ -2810,7 +2810,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -6
+   "value": -11
   },
   "wait": 420
  },
@@ -2852,14 +2852,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 21.92
+   "value": 22.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 28.96
+   "value": 29.04
   },
   "wait": 550
  },
@@ -3304,7 +3304,7 @@
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "800"
   },
   "wait": 550
  },
@@ -3339,14 +3339,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.26
+   "value": 28.35
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 219.52
+   "value": 219.49
   },
   "wait": 550
  },
@@ -3410,14 +3410,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 138
+   "value": 120
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -3459,7 +3459,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 231.83
+   "value": 231.62
   },
   "wait": 550
  },
@@ -3530,7 +3530,7 @@
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "800"
   },
   "wait": 550
  },
@@ -3565,14 +3565,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 71.72
+   "value": 71.81
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 219.43
+   "value": 219.49
   },
   "wait": 550
  },
@@ -3643,14 +3643,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 134
+   "value": 120
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -3685,14 +3685,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 64.31
+   "value": 64.39
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 231.83
+   "value": 231.62
   },
   "wait": 550
  },
@@ -3763,7 +3763,7 @@
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "700"
+   "value": "800"
   },
   "wait": 550
  },
@@ -3798,14 +3798,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 115.72
+   "value": 115.8
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 219.52
+   "value": 219.49
   },
   "wait": 550
  },
@@ -3876,14 +3876,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 147
+   "value": 120
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "500"
+   "value": "700"
   },
   "wait": 550
  },
@@ -3925,7 +3925,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 231.83
+   "value": 231.62
   },
   "wait": 550
  },
@@ -4000,14 +4000,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 480
+   "value": 491
   },
   "wait": 420
  },
  {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
+   "value": "700"
   },
   "wait": 550
  },
@@ -4049,7 +4049,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 263.92
+   "value": 264.1
   },
   "wait": 550
  },

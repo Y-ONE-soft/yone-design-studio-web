@@ -293,13 +293,6 @@
   "wait": 600
  },
  {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": 15
-  },
-  "wait": 420
- },
- {
   "pick": {
    "at": "#side select[data-a=\"color\"]",
    "value": "__raw"
@@ -316,7 +309,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 18.1
+   "value": 17.8
   },
   "wait": 420
  },
@@ -414,6 +407,13 @@
   "wait": 600
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": 10
+  },
+  "wait": 420
+ },
+ {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
    "value": "700"
@@ -437,7 +437,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 16.4
+   "value": 16.5
   },
   "wait": 420
  },
@@ -618,14 +618,14 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Gmarket Sans"
+   "value": "Gmarket Sans TTF"
   },
   "wait": 600
  },
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -81
+   "value": -75
   },
   "wait": 420
  },
@@ -1413,7 +1413,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -25
+   "value": -50
   },
   "wait": 420
  },
@@ -1683,7 +1683,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -34
+   "value": -50
   },
   "wait": 420
  },
@@ -2010,7 +2010,7 @@
    },
    "to": {
     "mm": [
-     145.6,
+     145.7,
      259
     ]
    }
@@ -2021,7 +2021,7 @@
   "write": {
    "at": {
     "mm": [
-     132.8,
+     132.85,
      254.5
     ]
    },
@@ -2059,7 +2059,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 46
+   "value": 50
   },
   "wait": 420
  },
@@ -2087,7 +2087,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 25.6
+   "value": 25.7
   },
   "wait": 420
  },
@@ -2416,13 +2416,6 @@
   "wait": 600
  },
  {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": 31
-  },
-  "wait": 420
- },
- {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
    "value": "700"
@@ -2446,7 +2439,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 22.8
+   "value": 22.0
   },
   "wait": 420
  },
@@ -2486,7 +2479,7 @@
    },
    "to": {
     "mm": [
-     155.4,
+     155.0,
      268.8
     ]
    }
@@ -2497,7 +2490,7 @@
   "write": {
    "at": {
     "mm": [
-     137.7,
+     137.5,
      259.4
     ]
    },
@@ -2533,13 +2526,6 @@
   "wait": 600
  },
  {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": 15
-  },
-  "wait": 420
- },
- {
   "pick": {
    "at": "#side select[data-a=\"weight\"]",
    "value": "500"
@@ -2563,7 +2549,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 35.4
+   "value": 35.0
   },
   "wait": 420
  },
@@ -3231,7 +3217,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -36
+   "value": -50
   },
   "wait": 420
  },
@@ -3501,7 +3487,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -40
+   "value": -50
   },
   "wait": 420
  },
@@ -3771,7 +3757,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 42
+   "value": 50
   },
   "wait": 420
  },
@@ -3799,7 +3785,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 15.3
+   "value": 15.4
   },
   "wait": 420
  },

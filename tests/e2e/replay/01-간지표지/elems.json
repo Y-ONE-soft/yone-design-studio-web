@@ -27,8 +27,8 @@
    "h": 2.29,
    "color": "#ffffff",
    "see": "#ffffff",
-   "ctol": 24,
-   "search": 0.6,
+   "ctol": 12,
+   "search": 0.25,
    "text": "STEP BY STEP",
    "size": 6.5
   },

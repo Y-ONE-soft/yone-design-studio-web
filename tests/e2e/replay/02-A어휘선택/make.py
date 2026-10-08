@@ -10,38 +10,15 @@ REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 from mkpage import *                                                    # noqa
 import pymupdf
-from fontTools.ttLib import TTFont
 
 REF = os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf")
+REFDOC = pymupdf.open(REF)
 FIX = json.load(open(os.path.join(HERE, "보정.json"))) if os.path.exists(os.path.join(HERE, "보정.json")) else {}
 ELEMS = {1: [], 2: []}
 PAGES = json.load(open(os.path.join(HERE, "상태.json")))["pages"]
 MM = 25.4 / 72
 NOTO, MS, EL, YD, MAMA = "Noto Sans CJK KR", "Montserrat", "Elice DX Neolli OTF", "Yeongdo OTF", "NUXZQS+TTMamablockB"
-GM = "Gmarket Sans"
-STYLE = {400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold"}
-_FONTS = {}
-
-
-def face(family, weight):
-    """서체 집·굵기 → (윗높이, 아랫높이, 글자 폭 함수) — Chrome 이 쓰는 그 파일의 hhea·hmtx"""
-    key = (family, weight)
-    if key not in _FONTS:
-        q = f"{family}:style={STYLE.get(weight, 'Regular')}" if family not in (MAMA, YD) else family
-        path, idx = subprocess.check_output(["fc-match", "-f", "%{file}|%{index}", q], text=True).split("|")
-        f = TTFont(path, fontNumber=int(idx or 0))
-        upm, hh, cmap, hm = f["head"].unitsPerEm, f["hhea"], f.getBestCmap(), f["hmtx"]
-        adv = lambda s: sum(hm[cmap[ord(c)]][0] for c in s if ord(c) in cmap) / upm
-        _FONTS[key] = (hh.ascent / upm, -hh.descent / upm, adv)
-    return _FONTS[key]
-
-
-def top_of(base, size, family, weight, leading=None):
-    """원본 기준선 → 편집기 글상자 위 끝 (CSS 줄 상자: 반 행간 + 윗높이 아래가 기준선)"""
-    asc, desc, _ = face(family, weight)
-    s = size * MM
-    lead = (leading or size * 1.45) * MM
-    return base - ((lead - (asc + desc) * s) / 2 + asc * s)
+GM = "Gmarket Sans TTF"        # 「Gmarket Sans」+500 은 Chrome 이 Bold 를 고르고 한 번 더 굵힌다 — TTF 집은 500 이 진짜 Medium
 
 
 def T(pg, id, x, base, s, size, color, family, weight, bbox, leading=None, label=None, search=1.5, rotate=None, at=None, w=None, align=None):
@@ -50,7 +27,10 @@ def T(pg, id, x, base, s, size, color, family, weight, bbox, leading=None, label
     _, _, adv = face(family, weight)
     nat = adv(s) * size * MM
     length = bbox[3] if rotate else bbox[2]                                 # 돌린 글은 원본 상자의 세로가 글 길이
-    track = round((length - nat) / max(len(s), 1) / (size * MM) * 1000) if len(s) > 1 else 0
+    if rotate:                                                              # 돌린 글은 글자 위치가 세로 — 상자 길이로
+        track = round((length - nat) / max(len(s), 1) / (size * MM) * 1000) if len(s) > 1 else 0
+    else:                                                                   # 원본 글자 위치 - 브라우저(커닝·대체 글자 포함) 거리
+        track = track_from(REFDOC[PAGES[pg - 1] - 1], bbox, s, family, weight, size)
     track = track if abs(track) > 8 else 0
     ELEMS[pg].append({"id": id, "x": bbox[0], "y": bbox[1], "w": bbox[2], "h": bbox[3], "color": color, "see": color,
                       "ctol": 30, "search": search, "text": s, "size": size})
@@ -119,7 +99,8 @@ def P(pg, id, x, base, txt, lines, yb, right, label):
     w = round(right - x + TRACK / 1000 * 8.5 * MM, 2)
     for k, col in (("", "#231f20"), ("-b", "#00559f")):
         ELEMS[pg].append({"id": id + k, "x": x, "y": yb[0], "w": round(right - x, 2), "h": yb[1] - yb[0], "color": col, "see": col,
-                          "ctol": 40, "search": 1.0, "text": txt[:30], "size": 8.5})
+                          "ctol": 40, "search": 1.0, "text": txt[:30], "size": 8.5,
+                          "shape_iou": 0.80})          # 문단은 양끝맞춤에서 단어가 0.2mm 안팎 다르게 놓인다 — 겹침 기준을 낮춘다
     y = top_of(base, 8.5, NOTO, 400, 22)
     st = text(round(x - f.get("dx", 0), 2), round(y - f.get("dy", 0), 2), w, round(lines * 22 * MM, 1), txt, 8.5, "#231f20",
               label=label, leading=22, align="justify", font=NOTO, track=TRACK)

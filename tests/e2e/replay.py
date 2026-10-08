@@ -145,7 +145,8 @@ def measure_units(new_ids, state, fix=False):
             if r["ok"]:
                 continue
             bad += 1
-            print(f"  ✗ p{rp} {r['id']:9s} " + (f"dx {r['dx']:+.2f} dy {r['dy']:+.2f} dw {r['dw']:+.2f} dh {r['dh']:+.2f}" if r.get("my") and r.get("ref")
+            shape = (f"  · 모양 잉크 {r['ink']:.2f} 겹침 {r['iou']:.2f}" + ("" if r.get("shape_ok") else " ✗") if r.get("ink") is not None else "")
+            print(f"  ✗ p{rp} {r['id']:9s} " + (f"dx {r['dx']:+.2f} dy {r['dy']:+.2f} dw {r['dw']:+.2f} dh {r['dh']:+.2f}" + shape if r.get("my") and r.get("ref")
                                                 else f"못 찾음 (원본 {r['ref']} · 결과 {r['my']})"))
             if fix and "text" in e and r.get("my") and r.get("ref"):
                 key = r["id"] if k == 0 else f"p{rp}:{r['id']}"
@@ -156,7 +157,7 @@ def measure_units(new_ids, state, fix=False):
                 if n > 1:
                     c["dtr"] = round(c.get("dtr", 0) + r["dw"] / (n - 1) / (e["size"] * 25.4 / 72) * 1000)
     n_all = sum(len(v) for v in allres.values())
-    print(f"  요소 {n_all - bad}/{n_all} 맞음 (위치·크기 0.3mm 안)")
+    print(f"  요소 {n_all - bad}/{n_all} 맞음 (위치·크기 0.3mm 안 · 글은 모양까지: 잉크 ±{pagecmp.SHAPE_INK:.0%} · 겹침 {pagecmp.SHAPE_IOU})")
     json.dump(allres, open(os.path.join(out, "측정.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if fix:
         json.dump(corr, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)

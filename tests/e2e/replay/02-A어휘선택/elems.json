@@ -203,7 +203,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "<BREAKING NEWS: An Unusual Res",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "p1-b",
@@ -216,7 +217,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "<BREAKING NEWS: An Unusual Res",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "no2",
@@ -242,7 +244,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "Compean was [ ⓐ shallow   / ⓑ ",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "p2-b",
@@ -255,7 +258,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "Compean was [ ⓐ shallow   / ⓑ ",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "f-no",
@@ -437,7 +441,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "As Compean had already spent o",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "p3-b",
@@ -450,7 +455,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "As Compean had already spent o",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "no4",
@@ -476,7 +482,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "As a final step, Kuo compared ",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "p4-b",
@@ -489,7 +496,8 @@
    "ctol": 40,
    "search": 1.0,
    "text": "As a final step, Kuo compared ",
-   "size": 8.5
+   "size": 8.5,
+   "shape_iou": 0.8
   },
   {
    "id": "f-t",
