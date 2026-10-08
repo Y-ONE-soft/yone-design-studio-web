@@ -48,6 +48,7 @@ def server():
 def run_steps(fast, video):
     subprocess.run([PY, os.path.join(udir, "make.py")], check=True)          # → steps.json
     env = dict(os.environ, REC_FAST="1" if fast else "0")
+    env.setdefault("REC_SPEED", "4")                                     # 녹화는 확인용 — 빠르게
     subprocess.run([PY, "tests/e2e/rec.py", BASE + "/units", os.path.join(udir, "steps.json"),
                     video, "1600", "1000", "8"], cwd=REPO, env=env, check=True)
 
