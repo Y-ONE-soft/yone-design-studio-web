@@ -77,7 +77,7 @@
     // 원본 d1 PDF 에서 읽은 규칙(2026-10-08 scratch justify-analysis): 낱말 간격은 100%(희망) → 133%(최대)까지 먼저 늘고, 모자라면 자간이 는다
     // (낱말은 133% 에 멈춤 — 4~37쪽 줄 87개 모두 0.33×공백 ±0.6‰). 줄일 땐 낱말은 100% 아래로 안 가고 자간만 준다(-1~-5‰ 관찰). 글리프 비율 100%.
     // 공백 기준 = 서체의 U+0020 폭(Noto CJK KR 224/1000 — 인디자인이 실제로 놓는 locl 공백 280 이 아니다). 줄 끝 맞춤 4·5·8·9·16·17쪽 60/62.
-    const [wmn, wmx, lmn, lmx, sw, lp, lastLmn] = (p.dataset.jc || "100,133,-8,250,1,20,-10").split(",").map(Number);
+    const [wmn, wmx, lmn, lmx, sw, lp, lastLmn] = (p.dataset.jc || "80,133,0,0,1,20,0").split(",").map(Number);
     const cs1 = getComputedStyle(p), lh1 = parseFloat(cs1.lineHeight);   // 브라우저가 한 줄에 다 넣은 단락 — 끝 줄 하나뿐이라 고를 게 없다.
     if (lh1 > 0 && p.offsetHeight - parseFloat(cs1.paddingTop) - parseFloat(cs1.paddingBottom) < lh1 * 1.5) return;   // 글 폭에 맞춘 상자(자동 크기 높이와 너비)에서 낱자 폭 합의 반올림으로 두 줄로 꺾이던 것
     const save = [p.style.whiteSpace, p.style.textAlign];
@@ -185,7 +185,7 @@
       const slack = lw0(li) - ln.L, ng = Math.max(1, ln.nc - 1);
       let xw = 0, dl = 0;
       if (slack < 0) { xw = Math.max(slack, -ln.S0 * (100 - wmn) / 100); dl = (slack - xw) / ng; }
-      else if (!isLast(li)) { xw = Math.min(slack, ln.S0 * (wmx - 100) / 100); dl = (slack - xw) / ng; }
+      else if (!isLast(li)) { xw = lmx > 0 ? Math.min(slack, ln.S0 * (wmx - 100) / 100) : slack; dl = (slack - xw) / ng; }   // 자간 최대 0(인디자인 기본) — 낱말 최대를 넘겨 낱말로
       if (!isLast(li) || slack < 0) {
         st += "text-align-last:justify;";                               // 반올림 찌꺼기만 크롬이 공백에 나눈다
         if (ln.nsp && xw) st += `word-spacing:${((wsp + xw / ln.nsp) / k).toFixed(4)}px;`;
