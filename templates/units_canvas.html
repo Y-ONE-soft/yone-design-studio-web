@@ -401,6 +401,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/units_compose.js"></script>
 <script>
 const LIB = {{ library_json | safe }};
 const $ = (s) => document.querySelector(s);
@@ -658,7 +659,8 @@ function render() {
     wire(); selbox(); slotTags();
   }, 40);
 }
-function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); } }
+function strip(box) { const s = box.querySelector("svg"); if (s) { s.removeAttribute("width"); s.removeAttribute("height"); }
+  if (window.unitsCompose) (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => unitsCompose(box)); }   // 단락 컴포저 — 양끝맞춤 줄 끝을 문단 전체를 보고
 // 대지가 있는 SVG 는 지면보다 크다 — 지면 왼쪽 위가 #paper 의 (0,0) 이 되도록 음수로 민다(좌표 계산은 그대로)
 function placeBoard() {
   const wrap = $("#svgwrap"), svg = wrap.querySelector("svg"); if (!svg) return;

@@ -32,7 +32,17 @@ def html_of(svgs, w_mm, h_mm, title="지면"):
             f'@page{{size:{w_mm}mm {h_mm}mm;margin:0}} html,body{{margin:0;padding:0}} '
             f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:hidden;page-break-after:always;break-after:page}} '
             f'.p svg{{display:block;width:{w_mm}mm;height:{h_mm}mm}} .p svg .zone{{display:none}}'
-            f'</style></head><body>{pages}</body></html>')
+            f'</style></head><body>{pages}<script>{_compose_js()}</script></body></html>')
+
+
+def _compose_js():
+    """단락 컴포저 — 인쇄 전에 양끝맞춤 단락의 줄 끝을 고른다(편집기 화면과 같은 코드)."""
+    p = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "static", "js", "units_compose.js")
+    try:
+        with open(p, encoding="utf-8") as f:
+            return f.read().replace("</script", "<\\/script")
+    except OSError:
+        return ""
 
 
 def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180):
