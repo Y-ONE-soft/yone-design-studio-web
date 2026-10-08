@@ -62,7 +62,8 @@
       if (!(cs.textDecorationLine || "").includes("underline")) continue;
       const fs = parseFloat(cs.fontSize) || 10;
       const th = cs.textDecorationThickness, off = cs.textUnderlineOffset;
-      return {w: t.w / Math.max(t.n, 1), col: cs.textDecorationColor || cs.color,
+      const lg = t.a[0].parentElement.closest("[lang]");
+      return {w: t.w / Math.max(t.n, 1), col: cs.textDecorationColor || cs.color, lang: lg ? lg.lang : "",   // 공백 꼴도 같은 언어로(한국어 0.280em)
               th: th && th !== "auto" && th !== "from-font" ? th : (fs * 0.05).toFixed(3) + "px",
               off: off && off !== "auto" ? off : (fs * 0.1).toFixed(3) + "px"};
     }
@@ -200,6 +201,7 @@
         v.setAttribute("style", `word-spacing:0;text-decoration:underline;text-decoration-thickness:${ln.ul.th};text-underline-offset:${ln.ul.off};` +
           `text-decoration-color:${ln.ul.col};text-decoration-skip-ink:none`);
         v.textContent = " ";
+        if (ln.ul.lang) v.lang = ln.ul.lang;
         u.appendChild(v);
         sp.appendChild(u);
       }
