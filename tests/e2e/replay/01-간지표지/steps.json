@@ -19,8 +19,8 @@
   "wait": 1000
  },
  {
-  "say": "① 표지 — 바탕부터",
-  "wait": 2000
+  "say": "① 표지 — 바탕은 재단 여백까지",
+  "wait": 1500
  },
  {
   "draw": {
@@ -43,27 +43,34 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 210
+   "value": 216
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 297
+   "value": 303
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 0
+   "value": -3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
+   "value": -3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
    "value": 0
   },
   "wait": 420
@@ -97,7 +104,7 @@
    },
    "to": {
     "mm": [
-     122.1,
+     122.12,
      280
     ]
    }
@@ -107,27 +114,34 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 2.1
+   "value": 2.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 41.3
+   "value": 42.09
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.1
+   "value": 25.06
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
+   "value": -3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
    "value": 0
   },
   "wait": 420
@@ -147,7 +161,7 @@
   "wait": 750
  },
  {
-  "say": "오른쪽 위 꼬리표 — 「도형」에서 평행사변형",
+  "say": "오른쪽 위 꼬리표 — 도형, 원본 꼭짓점 그대로",
   "wait": 1700
  },
  {
@@ -161,45 +175,45 @@
    },
    "to": {
     "mm": [
-     150.4,
-     255.6
+     156.42000000000002,
+     255.7
     ]
    }
   },
   "wait": 750
  },
  {
-  "pick": {
-   "at": "#side select[data-a=\"d\"]",
-   "value": "M0.12 0 L1 0 L1 1 L0 1 Z"
+  "fill": {
+   "at": "#side input[data-a=\"d\"]",
+   "value": "M0.1403 0 L1 0 L1 1 L0 1 Z"
   },
   "wait": 800
  },
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 30.4
+   "value": 36.42
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 5.6
+   "value": 5.7
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 179.6
+   "value": 176.58
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 17.6
+   "value": 15.01
   },
   "wait": 420
  },
@@ -228,7 +242,7 @@
    },
    "to": {
     "mm": [
-     150,
+     150.1,
      259
     ]
    }
@@ -239,7 +253,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     135.05,
      254.5
     ]
    },
@@ -262,13 +276,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -284,9 +291,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 340
+   "value": 232
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -305,7 +319,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 30.1
   },
   "wait": 420
  },
@@ -319,19 +333,19 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 177.8
+   "value": 184.59
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 18.8
+   "value": 16.38
   },
   "wait": 550
  },
  {
-  "say": "큰 제목 — 글꼴 Montserrat · 굵게",
+  "say": "큰 제목 — Montserrat ExtraBold",
   "wait": 1700
  },
  {
@@ -346,7 +360,7 @@
    "to": {
     "mm": [
      180,
-     267
+     274
     ]
    }
   },
@@ -357,7 +371,7 @@
    "at": {
     "mm": [
      150.0,
-     258.5
+     262.0
     ]
    },
    "value": "STEP",
@@ -394,13 +408,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 20
+   "value": 10
   },
   "wait": 420
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -419,28 +436,28 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 80
+   "value": 71.2
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 17
+   "value": 24.3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28
+   "value": 25.09
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 55.2
+   "value": 50.79
   },
   "wait": 550
  },
@@ -455,8 +472,8 @@
    },
    "to": {
     "mm": [
-     180,
-     267
+     165.8,
+     274
     ]
    }
   },
@@ -466,8 +483,8 @@
   "write": {
    "at": {
     "mm": [
-     150.0,
-     258.5
+     142.9,
+     262.0
     ]
    },
    "value": "BY",
@@ -504,13 +521,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 30
+   "value": -10
   },
   "wait": 420
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -529,28 +549,28 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 80
+   "value": 45.8
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 17
+   "value": 24.3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28
+   "value": 25.01
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 72.8
+   "value": 71.33
   },
   "wait": 550
  },
@@ -566,7 +586,7 @@
    "to": {
     "mm": [
      180,
-     267
+     274
     ]
    }
   },
@@ -577,7 +597,7 @@
    "at": {
     "mm": [
      150.0,
-     258.5
+     262.0
     ]
    },
    "value": "STEP",
@@ -614,13 +634,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 20
+   "value": 10
   },
   "wait": 420
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -639,33 +662,33 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 80
+   "value": 71.2
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 17
+   "value": 24.3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28
+   "value": 25.09
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 90.8
+   "value": 87.06
   },
   "wait": 550
  },
  {
-  "say": "밑줄 — 베이지 가는 선 위에 파란 굵은 선",
+  "say": "밑줄 두 겹",
   "wait": 1700
  },
  {
@@ -679,8 +702,8 @@
    },
    "to": {
     "mm": [
-     171.9,
-     250.5
+     171.88,
+     250.53
     ]
    }
   },
@@ -689,28 +712,35 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 51.9
+   "value": 51.88
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 0.5
+   "value": 0.53
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 25.32
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 123.5
+   "value": 123.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
   },
   "wait": 420
  },
@@ -739,8 +769,8 @@
    },
    "to": {
     "mm": [
-     135.9,
-     251.6
+     135.88,
+     251.59
     ]
    }
   },
@@ -749,28 +779,35 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 15.9
+   "value": 15.88
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 1.6
+   "value": 1.59
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 25.32
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 123.5
+   "value": 123.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
   },
   "wait": 420
  },
@@ -789,6 +826,10 @@
   "wait": 750
  },
  {
+  "say": "한글 제목 — SUIT",
+  "wait": 1700
+ },
+ {
   "draw": {
    "tool": "text",
    "from": {
@@ -799,7 +840,7 @@
    },
    "to": {
     "mm": [
-     180,
+     166.8,
      259
     ]
    }
@@ -810,7 +851,7 @@
   "write": {
    "at": {
     "mm": [
-     150.0,
+     143.4,
      254.5
     ]
    },
@@ -841,16 +882,23 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "GmarketSans"
+   "value": "SUIT"
   },
   "wait": 600
  },
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -90
+   "value": -2
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -862,35 +910,35 @@
  {
   "fill": {
    "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#231f20"
+   "value": "#000000"
   },
   "wait": 750
  },
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 80
+   "value": 46.8
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 6.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 25.31
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 129.1
+   "value": 128.72
   },
   "wait": 550
  },
@@ -954,9 +1002,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 239
+   "value": 249
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "600"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -975,34 +1030,34 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 90
+   "value": 66.9
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.2
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 25.31
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 136.8
+   "value": 136.1
   },
   "wait": 550
  },
  {
-  "say": "단계 셋 — 원 · 숫자 · 라벨",
-  "wait": 2200
+  "say": "단계 셋 — 원 · 숫자 · 선 · 라벨",
+  "wait": 1500
  },
  {
   "draw": {
@@ -1015,8 +1070,8 @@
    },
    "to": {
     "mm": [
-     131.1,
-     261.1
+     131.12,
+     261.12
     ]
    }
   },
@@ -1025,28 +1080,28 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 11.1
+   "value": 11.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 11.1
+   "value": 11.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 25.32
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 172.5
+   "value": 173.03
   },
   "wait": 420
  },
@@ -1063,6 +1118,13 @@
    "value": "#8aabc9"
   },
   "wait": 750
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": ""
+  },
+  "wait": 550
  },
  {
   "draw": {
@@ -1109,13 +1171,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -1129,8 +1184,11 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -1149,28 +1207,28 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 11.1
+   "value": 7.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 7.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 29.81
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 175.2
+   "value": 175.13
   },
   "wait": 550
  },
@@ -1185,7 +1243,7 @@
    },
    "to": {
     "mm": [
-     150,
+     144,
      259
     ]
    }
@@ -1196,7 +1254,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.0,
      254.5
     ]
    },
@@ -1219,13 +1277,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -1241,9 +1292,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 160
+   "value": 142
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -1262,90 +1320,30 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 16.7
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 18.8
+   "value": 25.03
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 185.6
+   "value": 186.6
   },
   "wait": 550
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.5,
-     250.4
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.5
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 0.4
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 40.8
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 177.4
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
  },
  {
   "draw": {
@@ -1358,8 +1356,8 @@
    },
    "to": {
     "mm": [
-     131.1,
-     261.1
+     131.12,
+     261.12
     ]
    }
   },
@@ -1368,28 +1366,28 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 11.1
+   "value": 11.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 11.1
+   "value": 11.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 62.2
+   "value": 59.21
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 172.5
+   "value": 173.03
   },
   "wait": 420
  },
@@ -1406,6 +1404,13 @@
    "value": "#cfa76b"
   },
   "wait": 750
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": ""
+  },
+  "wait": 550
  },
  {
   "draw": {
@@ -1452,13 +1457,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -1472,8 +1470,11 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -1492,28 +1493,28 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 11.1
+   "value": 8.6
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 7.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 62.2
+   "value": 63.27
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 175.2
+   "value": 175.05
   },
   "wait": 550
  },
@@ -1528,7 +1529,7 @@
    },
    "to": {
     "mm": [
-     150,
+     144,
      259
     ]
    }
@@ -1539,7 +1540,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.0,
      254.5
     ]
    },
@@ -1562,13 +1563,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -1584,9 +1578,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 160
+   "value": 130
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -1605,90 +1606,30 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 22.3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 52.7
+   "value": 56.79
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 185.6
+   "value": 186.6
   },
   "wait": 550
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.5,
-     250.4
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.5
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 0.4
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 74.7
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 177.4
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
  },
  {
   "draw": {
@@ -1701,8 +1642,8 @@
    },
    "to": {
     "mm": [
-     131.1,
-     261.1
+     131.12,
+     261.12
     ]
    }
   },
@@ -1711,28 +1652,28 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 11.1
+   "value": 11.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 11.1
+   "value": 11.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 96.4
+   "value": 93.35
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 172.5
+   "value": 173.03
   },
   "wait": 420
  },
@@ -1749,6 +1690,13 @@
    "value": "#bd7d70"
   },
   "wait": 750
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": ""
+  },
+  "wait": 550
  },
  {
   "draw": {
@@ -1795,13 +1743,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -1815,8 +1756,11 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -1835,28 +1779,28 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 11.1
+   "value": 8.6
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 7.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 96.4
+   "value": 97.27
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 175.2
+   "value": 175.13
   },
   "wait": 550
  },
@@ -1871,7 +1815,7 @@
    },
    "to": {
     "mm": [
-     150,
+     144,
      259
     ]
    }
@@ -1882,7 +1826,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.0,
      254.5
     ]
    },
@@ -1905,13 +1849,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -1927,9 +1864,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 160
+   "value": 155
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -1948,34 +1892,30 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 12.2
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 86.9
+   "value": 94.76
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 185.6
+   "value": 186.6
   },
   "wait": 550
- },
- {
-  "say": "아래 색 점 셋",
-  "wait": 1700
  },
  {
   "draw": {
@@ -1988,8 +1928,8 @@
    },
    "to": {
     "mm": [
-     126.9,
-     252.6
+     140.12,
+     250.53
     ]
    }
   },
@@ -1998,28 +1938,173 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 6.9
+   "value": 20.12
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 2.6
+   "value": 0.53
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 37.76
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 256.9
+   "value": 178.59
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b5ac9c"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     139.85,
+     250.53
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 19.85
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.53
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 71.91
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 178.59
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b5ac9c"
+  },
+  "wait": 750
+ },
+ {
+  "say": "아래 색 점 셋",
+  "wait": 1200
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     126.88,
+     252.65
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 6.88
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 2.65
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 25.32
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 259.06
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
   },
   "wait": 420
  },
@@ -2048,8 +2133,8 @@
    },
    "to": {
     "mm": [
-     126.9,
-     252.6
+     126.88,
+     252.65
     ]
    }
   },
@@ -2058,28 +2143,35 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 6.9
+   "value": 6.88
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 2.6
+   "value": 2.65
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 36.5
+   "value": 33.53
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 256.9
+   "value": 259.06
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
   },
   "wait": 420
  },
@@ -2108,8 +2200,8 @@
    },
    "to": {
     "mm": [
-     126.9,
-     252.6
+     126.88,
+     252.65
     ]
    }
   },
@@ -2118,28 +2210,35 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 6.9
+   "value": 6.88
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 2.6
+   "value": 2.65
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 44.7
+   "value": 41.74
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 256.9
+   "value": 259.06
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
   },
   "wait": 420
  },
@@ -2158,7 +2257,7 @@
   "wait": 750
  },
  {
-  "say": "로고 — 「그림」 자리를 끌고 파일을 고른다 (SVG)",
+  "say": "로고 — 「그림」에 SVG",
   "wait": 1700
  },
  {
@@ -2172,7 +2271,7 @@
    },
    "to": {
     "mm": [
-     154,
+     154.01,
      259.5
     ]
    }
@@ -2182,7 +2281,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 34
+   "value": 34.01
   },
   "wait": 420
  },
@@ -2196,14 +2295,14 @@
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 28.3
+   "value": 25.03
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 267.1
+   "value": 269.48
   },
   "wait": 420
  },
@@ -2230,7 +2329,7 @@
   "wait": 500
  },
  {
-  "say": "② STEP 간지 — 새 쪽",
+  "say": "② STEP 01 간지 — 새 쪽",
   "wait": 1700
  },
  {
@@ -2252,8 +2351,8 @@
   "js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"
  },
  {
-  "say": "바탕 전체를 블루로",
-  "wait": 1800
+  "say": "바탕 블루 — 재단 여백까지",
+  "wait": 1700
  },
  {
   "draw": {
@@ -2276,27 +2375,34 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 210
+   "value": 216
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 297
+   "value": 303
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 0
+   "value": -3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
+   "value": -3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
    "value": 0
   },
   "wait": 420
@@ -2316,7 +2422,7 @@
   "wait": 750
  },
  {
-  "say": "위쪽 크림 띠와 세로 막대",
+  "say": "위 크림 띠 · 가는 선 · 세로 막대",
   "wait": 1700
  },
  {
@@ -2331,7 +2437,7 @@
    "to": {
     "mm": [
      180,
-     256.8
+     256.88
     ]
    }
   },
@@ -2340,27 +2446,34 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 210
+   "value": 216
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6.8
+   "value": 6.88
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 0
+   "value": -3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
+   "value": -3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
    "value": 0
   },
   "wait": 420
@@ -2390,8 +2503,8 @@
    },
    "to": {
     "mm": [
-     122.4,
-     279.3
+     180,
+     250.53
     ]
    }
   },
@@ -2400,27 +2513,101 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 2.4
+   "value": 216
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 29.3
+   "value": 0.53
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.9
+   "value": -3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
+   "value": 3.88
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b5ac9c"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     122.38,
+     279.9
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 2.38
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 29.9
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 22.93
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": -3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
    "value": 0
   },
   "wait": 420
@@ -2454,7 +2641,7 @@
    },
    "to": {
     "mm": [
-     150,
+     144.9,
      259
     ]
    }
@@ -2465,7 +2652,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.45,
      254.5
     ]
    },
@@ -2503,9 +2690,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 380
+   "value": 420
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "600"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -2524,30 +2718,37 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 24.9
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 5
+   "value": 6.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 26
+   "value": 23.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 33.6
+   "value": 31.29
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 80
+  },
+  "wait": 420
  },
  {
   "draw": {
@@ -2607,8 +2808,18 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -15
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -2627,34 +2838,34 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 90
+   "value": 90.6
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 42
+   "value": 58.2
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25
+   "value": 22.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 38.4
+   "value": 36.16
   },
   "wait": 550
  },
  {
-  "say": "아래 단계 셋 — 흰 원과 라벨",
-  "wait": 2200
+  "say": "단계 셋 — 흰 원 · 테두리 원 · 선 · 숫자 · 라벨",
+  "wait": 1500
  },
  {
   "draw": {
@@ -2667,8 +2878,8 @@
    },
    "to": {
     "mm": [
-     133,
-     263
+     132.97,
+     263.23
     ]
    }
   },
@@ -2677,28 +2888,28 @@
  {
   "fill": {
    "at": "#side input[data-a=\"w\"]",
-   "value": 13
+   "value": 12.97
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 13
+   "value": 13.23
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.9
+   "value": 22.93
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 215.6
+   "value": 216.88
   },
   "wait": 420
  },
@@ -2715,6 +2926,323 @@
    "value": "#ffffff"
   },
   "wait": 750
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": ""
+  },
+  "wait": 550
+ },
+ {
+  "draw": {
+   "tool": "ellipse",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     132.7,
+     262.97
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 12.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 12.97
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 67.25
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 217.01
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": ""
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"stroke.w\"]",
+   "value": 0.74
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 55
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "ellipse",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     132.7,
+     262.97
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 12.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 12.97
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 111.17
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 217.01
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": ""
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"stroke.w\"]",
+   "value": 0.74
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 55
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     148.05,
+     250.53
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 28.05
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.53
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 37.48
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 223.49
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 50
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     148.05,
+     250.53
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 28.05
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.53
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 81.41
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 223.49
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 50
+  },
+  "wait": 420
  },
  {
   "draw": {
@@ -2761,13 +3289,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -2781,8 +3302,11 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -2801,28 +3325,28 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 13
+   "value": 8.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 8.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 25.9
+   "value": 28.26
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 219.1
+   "value": 219.52
   },
   "wait": 550
  },
@@ -2837,7 +3361,7 @@
    },
    "to": {
     "mm": [
-     150,
+     144,
      259
     ]
    }
@@ -2848,7 +3372,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.0,
      254.5
     ]
    },
@@ -2886,9 +3410,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 250
+   "value": 138
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -2907,162 +3438,35 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 18.9
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 26.0
+   "value": 22.96
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 230.5
+   "value": 231.83
   },
   "wait": 550
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     148,
-     250.5
-    ]
-   }
-  },
-  "wait": 750
- },
- {
   "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 28
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 0.5
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 40.5
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 222.0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "ellipse",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     133,
-     263
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 13
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 13
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 70.3
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 215.6
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": ""
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.6
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 85
   },
   "wait": 420
  },
@@ -3111,13 +3515,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -3131,8 +3528,11 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -3151,30 +3551,37 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 13
+   "value": 9.8
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 8.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 70.3
+   "value": 71.72
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 219.1
+   "value": 219.43
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 75
+  },
+  "wait": 420
  },
  {
   "draw": {
@@ -3187,7 +3594,7 @@
    },
    "to": {
     "mm": [
-     150,
+     145.3,
      259
     ]
    }
@@ -3198,7 +3605,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.65,
      254.5
     ]
    },
@@ -3236,9 +3643,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 250
+   "value": 134
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -3257,162 +3671,35 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 25.3
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 70.4
+   "value": 64.31
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 230.5
+   "value": 231.83
   },
   "wait": 550
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     148,
-     250.5
-    ]
-   }
-  },
-  "wait": 750
- },
- {
   "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 28
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 0.5
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 84.9
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 222.0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "ellipse",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     133,
-     263
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 13
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 13
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 114.2
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 215.6
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": ""
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.6
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 85
   },
   "wait": 420
  },
@@ -3461,13 +3748,6 @@
  },
  {
   "pick": {
-   "at": "#side select[data-a=\"align\"]",
-   "value": "center"
-  },
-  "wait": 550
- },
- {
-  "pick": {
    "at": "#side select[data-a=\"font\"]",
    "value": "__raw"
   },
@@ -3481,8 +3761,11 @@
   "wait": 600
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -3501,30 +3784,37 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 13
+   "value": 9.9
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 6
+   "value": 8.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 114.2
+   "value": 115.72
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 219.1
+   "value": 219.52
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 75
+  },
+  "wait": 420
  },
  {
   "draw": {
@@ -3537,7 +3827,7 @@
    },
    "to": {
     "mm": [
-     150,
+     144,
      259
     ]
    }
@@ -3548,7 +3838,7 @@
   "write": {
    "at": {
     "mm": [
-     135.0,
+     132.0,
      254.5
     ]
    },
@@ -3586,9 +3876,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 250
+   "value": 147
   },
   "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -3607,30 +3904,37 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 30
+   "value": 13.8
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 4
+   "value": 4.5
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 114.3
+   "value": 112.98
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 230.5
+   "value": 231.83
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"opacity\"]",
+   "value": 85
+  },
+  "wait": 420
  },
  {
   "say": "아래 큰 로고 글",
@@ -3648,7 +3952,7 @@
    "to": {
     "mm": [
      180,
-     261
+     263.8
     ]
    }
   },
@@ -3659,7 +3963,7 @@
    "at": {
     "mm": [
      150.0,
-     255.5
+     256.9
     ]
    },
    "value": "STEP BY STEP",
@@ -3696,13 +4000,16 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": 370
+   "value": 480
   },
   "wait": 420
  },
  {
-  "click": "#side input[data-a=\"b\"]",
-  "wait": 500
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
  },
  {
   "pick": {
@@ -3721,33 +4028,33 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 130
+   "value": 154.4
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 11
+   "value": 13.8
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"x\"]",
-   "value": 26
+   "value": 23.0
   },
   "wait": 420
  },
  {
   "fill": {
    "at": "#side input[data-it=\"y\"]",
-   "value": 263.5
+   "value": 263.92
   },
   "wait": 550
  },
  {
-  "say": "STEP 간지 완성",
+  "say": "STEP 01 간지 완성",
   "wait": 2000
  },
  {

@@ -116,6 +116,46 @@ def compare(new_ids, state):
     return rows
 
 
+def measure_units(new_ids, state, fix=False):
+    """요소마다 원본과 결과를 같은 색 상자로 재서 차이(mm) — elems.json(make.py 가 씀)이 있을 때.
+    fix: 글의 자리(dx,dy)·자간(dw→dtr) 차이를 보정.json 에 더한다 (편집기 글상자 위 끝 ↔ 원본 글자 상자)."""
+    ep = os.path.join(udir, "elems.json")
+    if not os.path.exists(ep):
+        return
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import pagecmp
+    elems = json.load(open(ep, encoding="utf-8"))
+    fp = os.path.join(udir, "보정.json")
+    corr = json.load(open(fp, encoding="utf-8")) if os.path.exists(fp) else {}
+    allres, bad = {}, 0
+    for k, rp in enumerate(state["pages"]):
+        pdf = os.path.join(out, f"p{rp}_my.pdf")
+        if k >= len(new_ids) or not os.path.exists(pdf):
+            continue
+        res = pagecmp.measure(os.path.join(REPO, state["ref"]), rp, pdf, elems[str(k + 1)])
+        allres[f"p{rp}"] = res
+        for r, e in zip(res, elems[str(k + 1)]):
+            if r["ok"]:
+                continue
+            bad += 1
+            print(f"  ✗ p{rp} {r['id']:9s} " + (f"dx {r['dx']:+.2f} dy {r['dy']:+.2f} dw {r['dw']:+.2f} dh {r['dh']:+.2f}" if r.get("my") and r.get("ref")
+                                                else f"못 찾음 (원본 {r['ref']} · 결과 {r['my']})"))
+            if fix and "text" in e and r.get("my") and r.get("ref"):
+                key = r["id"] if k == 0 else f"p{rp}:{r['id']}"
+                c = corr.setdefault(key, {})
+                c["dx"] = round(c.get("dx", 0) + r["dx"], 2)
+                c["dy"] = round(c.get("dy", 0) + r["dy"], 2)
+                n = len(e["text"])
+                if n > 1:
+                    c["dtr"] = round(c.get("dtr", 0) + r["dw"] / (n - 1) / (e["size"] * 25.4 / 72) * 1000)
+    n_all = sum(len(v) for v in allres.values())
+    print(f"  요소 {n_all - bad}/{n_all} 맞음 (위치·크기 0.3mm 안)")
+    json.dump(allres, open(os.path.join(out, "측정.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    if fix:
+        json.dump(corr, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        print("  보정.json 갱신 — 다시 돌리면 반영")
+
+
 if cmd == "reset":
     shutil.rmtree(os.path.dirname(data), ignore_errors=True)
     shutil.rmtree(out, ignore_errors=True)
@@ -141,6 +181,7 @@ try:
     new_ids = [i for i in page_ids() if i not in before]
     print(f"{unit} {cmd} — {time.time() - t0:.0f}초 · 새 지면 {len(new_ids)}개")
     compare(new_ids, state)
+    measure_units(new_ids, state, fix=ok and os.environ.get("REPLAY_FIX") == "1")      # 대본이 실패한 판은 보정에 안 쓴다
     if cmd == "rec" and ok:
         print("  영상:", os.path.join(out, unit + ".mp4"))
     print("→", out)

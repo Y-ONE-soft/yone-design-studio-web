@@ -32,18 +32,22 @@ def _color(key, v):
             F(f'#side input[type="text"][data-a="{key}"]', v, 750)]
 
 
-def box(x, y, w, h, fill=None, label=None, radius=None):
+def opacity(v):
+    """불투명 % — 100 이면 아무것도 안 한다"""
+    return [F('#side input[data-a="opacity"]', v)] if v is not None and v < 100 else []
+
+
+def box(x, y, w, h, fill=None, label=None, radius=0, alpha=None):
     st = ([S(label)] if label else [])
     st += [{"draw": {"tool": "rect", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + min(w, 60), SPOT["mm"][1] + min(h, 30)]}}, "wait": 750}]
     st += _place(x, y, w, h)
-    if radius is not None:
-        st.append(F('#side input[data-a="radius"]', radius))
+    st.append(F('#side input[data-a="radius"]', radius))                     # 둥글기도 늘 지정 (기본 1mm 가 남지 않게)
     if fill:
         st += _color("fill", fill)
-    return st
+    return st + opacity(alpha)
 
 
-def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None, weight=None):
+def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None, weight=None, alpha=None):
     st = ([S(label)] if label else [])
     tw, th = max(min(w, 60), 24), max(min(h, 24), 9)         # 임시 상자는 글을 치기 쉽게 넉넉히
     st += [{"draw": {"tool": "text", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + tw, SPOT["mm"][1] + th]}}, "wait": 750},
@@ -67,7 +71,7 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
            F('#side input[data-it="x"]', x), F('#side input[data-it="y"]', y, 550)]
     if bind:
         st.append({"pick": {"at": '#side select[data-a="bindsel"]', "value": bind}, "wait": 1000})
-    return st
+    return st + opacity(alpha)
 
 
 def image(x, y, w, h, path, label=None):
@@ -85,20 +89,20 @@ SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7
           "평행사변형": "M0.12 0 L1 0 L1 1 L0 1 Z", "모서리 자른 띠": "M0 0 L1 0 L0.88 1 L0 1 Z"}
 
 
-def shape(x, y, w, h, fill, name="평행사변형", label=None):
-    """도형 — 「도형」 도구로 그린 뒤 오른쪽 「모양」 칸에서 고른다"""
+def shape(x, y, w, h, fill, name="평행사변형", label=None, d=None):
+    """도형 — 「도형」 도구로 그린 뒤 오른쪽 「모양」 칸에서 고른다. d 를 주면 「경로 d」 칸에 원본 꼭짓점 그대로 친다"""
     st = ([S(label)] if label else [])
     st += [{"draw": {"tool": "path", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + min(w, 60), SPOT["mm"][1] + min(h, 30)]}}, "wait": 750},
-           {"pick": {"at": '#side select[data-a="d"]', "value": SHAPES[name]}, "wait": 800}]
+           F('#side input[data-a="d"]', d, 800) if d else {"pick": {"at": '#side select[data-a="d"]', "value": SHAPES[name]}, "wait": 800}]
     st += _place(x, y, w, h)
     st += _color("fill", fill)
     return st
 
 
-def ellipse(x, y, d, fill=None, stroke=None, sw=None):
-    """원 — 채움 없이 테두리만도 된다"""
-    st = [{"draw": {"tool": "ellipse", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + d, SPOT["mm"][1] + d]}}, "wait": 700}]
-    st += _place(x, y, d, d)
+def ellipse(x, y, d, fill=None, stroke=None, sw=None, h=None, alpha=None):
+    """원 — 채움 없이 테두리만도 된다. 테두리를 안 주면 「획 없음」으로 (기본 검은 획이 남지 않게)"""
+    st = [{"draw": {"tool": "ellipse", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + d, SPOT["mm"][1] + (h or d)]}}, "wait": 700}]
+    st += _place(x, y, d, h or d)
     if fill:
         st += _color("fill", fill)
     else:
@@ -107,7 +111,9 @@ def ellipse(x, y, d, fill=None, stroke=None, sw=None):
         st += _color("stroke.color", stroke)
         if sw:
             st.append(F('#side input[data-a="stroke.w"]', sw))
-    return st
+    else:
+        st.append({"pick": {"at": '#side select[data-a="stroke.color"]', "value": ""}, "wait": 550})   # 획 없음
+    return st + opacity(alpha)
 
 
 def open_doc(name=None):
