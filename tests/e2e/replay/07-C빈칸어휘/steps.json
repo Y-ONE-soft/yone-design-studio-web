@@ -2046,6 +2046,34 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"indent\"]",
    "value": 0.5
   },
@@ -2487,6 +2515,34 @@
    "value": "해석"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-dup",
@@ -4651,6 +4707,34 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"indent\"]",
    "value": 0.5
   },
@@ -5110,6 +5194,34 @@
    "value": "해석"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-dup",

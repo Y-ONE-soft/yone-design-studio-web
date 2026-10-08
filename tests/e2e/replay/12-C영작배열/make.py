@@ -252,6 +252,7 @@ def item(pg, pno, k, it):
     st += text(kx, round(ky, 2), kw, max(14, round(len(kor) * K_LEAD * MM + 3, 1)), temp_of(KTEMP, len(kt)), 8.5, "#231f20",
                label="해석 글상자 — 임시 글" if first else None, leading=K_LEAD, align="justify", font=NOTO, track=K_TRACK or None)
     st += slot("해석")
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     # 배열 조각 바탕 — 연보라 둥근 면(원본 경로: 모서리 반지름 = 첫 곡선의 가로 거리)
     bx = it["box"]
     p = REFDOC[pno - 1]
@@ -271,9 +272,7 @@ def item(pg, pno, k, it):
     st += text(cx, round(cy, 2), cw, max(14, round(len(chk) * C_LEAD * MM + 3, 1)), temp_of(CTEMP, len(ct)), 8.5, "#231f20",
                label="배열 글상자 — 임시 글" if first else None, leading=C_LEAD, align="justify", font=NOTO, track=C_TRACK or None, weight=500)
     st += slot("배열")
-    if JC_LETTER_MIN is not None:                                          # 양끝 정렬 — 줄이지 않는다(원본 재기, 위 C_JUST)
-        st.append(F('#side input[data-a="jc.word_min"]', JC_WORD_MIN, 600))
-        st.append(F('#side input[data-a="jc.letter_min"]', JC_LETTER_MIN, 600))
+    st += justify(word_min=JC_WORD_MIN, letter_min=-8 if JC_LETTER_MIN is None else JC_LETTER_MIN)   # 균등 배치 — 원본 잰 값(낱말 최소 100·자간 최소 0) + 늘림 133%·250‰
     # 「»」 + 쓰기 선 두 줄 (고정 디자인)
     a = it["arrow"]
     st += T(pg, f"arr{k}", a["x"], a["base"], a["t"], a["size"], a["color"], MYRIAD, 400, ink_box(a), 0, search=0.6, pad=0.6, h=12)

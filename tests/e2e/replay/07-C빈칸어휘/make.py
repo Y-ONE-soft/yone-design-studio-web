@@ -288,6 +288,7 @@ def body(pg, its, x_num, x_en, right):
             st += text(x_en, y, w_en, round(2 * LEAD_EN * MM + 0.6, 2), TEMP_EN, 8, INK, label="빈칸 문장 자리 — 임시 글",
                        leading=LEAD_EN, align="justify", font=NOTO, track=TRACK)
             st += slot("빈칸문장", label="자리 이름 「빈칸문장」")
+            st += justify()                                              # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
             st += [F('#side input[data-a="indent"]', 0.5), F('#side input[data-a="indent_first"]', -0.5)]   # 둘째 줄부터 0.5mm 안(원본 30.5 / 첫 줄 30.0)
             if abs(WS_EN) > 5:
                 st.append(F('#side input[data-a="word_spacing"]', WS_EN))
@@ -308,6 +309,7 @@ def body(pg, its, x_num, x_en, right):
             st += text(x_kr, y, w_kr, round(2 * LEAD_KR * MM + 0.6, 2), TEMP_KR, 8, KORC, label="해석 자리 — 임시 글",
                        leading=LEAD_KR, align="justify", font=NOTO, track=TRACK, weight=500)   # 원본 해석도 양끝맞춤(두 줄 23번 첫 줄)
             st += slot("해석", label="자리 이름 「해석」")
+            st += justify()                                              # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
             if abs(WS_KR) > 5:
                 st.append(F('#side input[data-a="word_spacing"]', WS_KR))
         else:

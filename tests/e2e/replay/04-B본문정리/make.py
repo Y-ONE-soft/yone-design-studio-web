@@ -204,6 +204,8 @@ def slot_box(pg, name, x, base, w, lines, content, temp, size, color, family, we
     st = text(round(x, 2), round(top_of(base, size, family, weight, leading), 2), round(w, 2), round(h + 0.4, 1), temp, size, color,
               label=label, font=family, weight=weight if weight != 400 else None, track=track or None, leading=leading, align=align)
     st += slot(name, label=f"자리 이름 「{name}」")
+    if align == "justify":
+        st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     return st
 
 

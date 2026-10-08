@@ -1688,6 +1688,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "say": "주제 · 제목 — 딱지 면 · 딱지 글 · 두 줄 자리",
   "wait": 1400
  },
@@ -2863,6 +2891,34 @@
    "value": "문항지문"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "say": "선지 — 다섯 줄(문단 다섯) · 행간 18.0pt",
@@ -4620,6 +4676,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "say": "주제 · 제목 — 딱지 면 · 딱지 글 · 두 줄 자리",
   "wait": 1400
  },
@@ -5795,6 +5879,34 @@
    "value": "문항지문"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "say": "선지 — 다섯 줄(문단 다섯) · 행간 18.0pt",

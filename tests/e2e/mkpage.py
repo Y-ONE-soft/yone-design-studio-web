@@ -154,6 +154,13 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
     return st + opacity(alpha)
 
 
+def justify(word_min=100, word_max=133, letter_min=-8, letter_max=250):
+    """고른 양끝맞춤 글상자의 「균등 배치」 네 칸(낱말 최소·최대 % · 자간 최소·최대 ‰) — 패널 숫자칸을 누르고 친다. None 인 칸은 안 건드린다.
+    기본값 = 이 출판사 책(인디자인 원본 5권 실측): 낱말 100·133%, 자간 최소 −8‰, 자간 늘림 250‰. 편집기 기본은 인디자인 공장 기본(80·133%, 0·0)."""
+    return [F(f'#side input[data-a="jc.{k}"]', v, 600)
+            for k, v in (("word_min", word_min), ("word_max", word_max), ("letter_min", letter_min), ("letter_max", letter_max)) if v is not None]
+
+
 def slot(name, label=None):
     """고른 글상자에 자리 이름 — 「원고 자리」에서 「직접 적기…」 → 이름. 원고가 이 이름으로 글을 보낸다(원고자리_규약.md)"""
     st = ([S(label)] if label else [])

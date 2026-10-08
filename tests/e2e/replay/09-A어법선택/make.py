@@ -229,6 +229,7 @@ def P(pg, id, blk, label):
     st = text(x, round(top_of(b0, 8.5, NOTO, 400, lead), 2), w, round(lines * lead * MM, 1), temp_of(TEMP, len(txt)), 8.5, "#231f20",
               label=label, leading=lead, align="justify", font=NOTO, track=track)
     st += slot("지문", label="자리 이름 「지문」")
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
     st += grep(0, r"\[[^\]]*\]", "#00559f", label="GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑")
     return st
@@ -249,6 +250,7 @@ def Q(pg, id, blk, label, ul_off):
     st = text(x, round(top_of(b0, 8.5, NOTO, 400, lead), 2), w, round(lines * lead * MM, 1), temp_of(QTEMP, len(plain)), 8.5, "#231f20",
               label=label, leading=lead, align="justify", font=NOTO, track=track)
     st += slot("문항지문", label="자리 이름 「문항지문」")
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
     st += grep(0, r"\{(.+?)\}", bold=False, weight=500, underline=True, line=round(UL, 3), line_off=ul_off, hide=True,
                label="GREP — 약속 괄호 { } 는 감추고 안쪽만 Medium + 밑줄")

@@ -45,6 +45,7 @@ def item2(pg, pno, k, it):
                label="해석 글상자 — 임시 글" if first else None, leading=K_LEAD, align="justify", font=NOTO, track=K_TRACK or None)
     st.append({"pick": {"at": '#side select[data-a="lang"]', "value": "ko"}, "wait": 550})   # 글 언어 — 한국어
     st += slot("해석")
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     # 배열 — 글상자 자리 = 원본 바탕 자리. 안쪽 여백 = 원본 바탕 ↔ 글(기준선 공식 · 글 시작 · 양끝 줄 끝)
     bx = it["box"]
     x0, y0, bw = [round(v, 2) for v in bx["mm"][:3]]
@@ -68,9 +69,7 @@ def item2(pg, pno, k, it):
                label="배열 글상자 — 임시 글" if first else None, leading=C_LEAD, align="justify", font=NOTO, track=C_TRACK or None, weight=500)
     st.append({"pick": {"at": '#side select[data-a="lang"]', "value": "ko"}, "wait": 550})
     st += slot("배열")
-    if JC_LETTER_MIN is not None:
-        st.append(F('#side input[data-a="jc.word_min"]', JC_WORD_MIN, 600))
-        st.append(F('#side input[data-a="jc.letter_min"]', JC_LETTER_MIN, 600))
+    st += justify(word_min=JC_WORD_MIN, letter_min=-8 if JC_LETTER_MIN is None else JC_LETTER_MIN)   # 균등 배치 — 원본 잰 값(낱말 최소 100·자간 최소 0) + 늘림 133%·250‰
     st += ([S("상자 칠 · 모서리 · 안쪽 여백 · 자동 크기(높이와 너비) — 바탕이 글을 따라간다", 1800)] if first else [])
     st += _color("frame.fill", "#e4dfed")
     st.append(F('#side input[data-a="frame.radius"]', rad, 600))

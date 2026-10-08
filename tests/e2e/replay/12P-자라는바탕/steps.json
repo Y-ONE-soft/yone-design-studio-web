@@ -1747,6 +1747,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "say": "배열 글상자 — 임시 글",
   "wait": 1700
  },
@@ -1907,8 +1935,22 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"jc.letter_min\"]",
    "value": 0
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
   },
   "wait": 600
  },
@@ -2450,6 +2492,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "draw": {
    "tool": "text",
    "from": {
@@ -2606,8 +2676,22 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"jc.letter_min\"]",
    "value": 0
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
   },
   "wait": 600
  },
@@ -3145,6 +3229,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "draw": {
    "tool": "text",
    "from": {
@@ -3301,8 +3413,22 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"jc.letter_min\"]",
    "value": 0
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
   },
   "wait": 600
  },
@@ -3840,6 +3966,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "draw": {
    "tool": "text",
    "from": {
@@ -3996,8 +4150,22 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"jc.letter_min\"]",
    "value": 0
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
   },
   "wait": 600
  },
@@ -4535,6 +4703,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "draw": {
    "tool": "text",
    "from": {
@@ -4691,8 +4887,22 @@
  },
  {
   "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
    "at": "#side input[data-a=\"jc.letter_min\"]",
    "value": 0
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
   },
   "wait": 600
  },

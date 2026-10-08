@@ -152,6 +152,7 @@ def P(pg, id, x, base, txt, lines, yb, right, label):
               label=label, leading=22, align="justify", font=NOTO, track=TRACK)
     st += slot("지문", label="자리 이름 「지문」")
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     st += grep(0, r"\[[^\]]*\]", "#00559f", label="GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑")
     return st
 

@@ -1691,6 +1691,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "say": "문제 머리 — 번호 | 발문",
   "wait": 1400
  },
@@ -6743,6 +6771,34 @@
    "value": "지문"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "say": "문제 머리 — 번호 | 발문",

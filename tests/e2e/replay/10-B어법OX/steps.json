@@ -4647,6 +4647,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "say": "붙임 공백 뒤 끝 낱말 — 크기 7.92pt · 자간 -120‰ (GREP)",
   "wait": 1700
  },
@@ -4959,6 +4987,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -5265,6 +5321,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -5575,6 +5659,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -5881,6 +5993,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -6191,6 +6331,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -6497,6 +6665,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -6807,6 +7003,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -7113,6 +7337,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -7423,6 +7675,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -7729,6 +8009,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -9548,6 +9856,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "say": "붙임 공백 뒤 끝 낱말 — 크기 7.92pt · 자간 -120‰ (GREP)",
   "wait": 1700
  },
@@ -9860,6 +10196,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -10166,6 +10530,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -10476,6 +10868,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -10782,6 +11202,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -11092,6 +11540,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -11398,6 +11874,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -11708,6 +12212,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -12014,6 +12546,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",
@@ -12324,6 +12884,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -12632,6 +13220,34 @@
   "wait": 800
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
   "click": "#side #s-grep-add",
   "wait": 700
  },
@@ -12938,6 +13554,34 @@
    "value": "진술"
   },
   "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
  },
  {
   "click": "#side #s-grep-add",

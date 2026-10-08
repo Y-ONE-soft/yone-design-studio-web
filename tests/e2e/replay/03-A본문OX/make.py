@@ -209,6 +209,7 @@ def P(pg, id, label):
     st = text(round(x, 2), round(top_of(base, 8.5, NOTO, 400, 15), 2), w, h, temp, 8.5, "#231f20",
               label=label, leading=15, align="justify", font=NOTO, track=track)
     st += slot("지문", label="자리 이름 「지문」")
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     return st
 
 

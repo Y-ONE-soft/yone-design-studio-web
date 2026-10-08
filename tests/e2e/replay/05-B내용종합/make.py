@@ -142,6 +142,7 @@ def passage(pg, pno, sky, label):
     st += text(round(x, 2), round(y, 2), w, round(len(rows) * lead * MM + 0.5, 1), temp_passage(len(txt)), 8.5, INK,
                label="지문 자리 — 임시 글 · 양끝맞춤 · 행간 %dpt" % lead, leading=lead, align="justify", font=NOTO, track=TRACK)
     st += slot("지문", label="자리 이름 「지문」")
+    st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
     # 「양끝 줄 낱말 최소」(word_min)는 쓰지 않는다 — 줄 나눔(Shift+Enter)으로 꺾인 줄에만 먹는 값인데 원고는 줄 나눔 없는 문단이라
     # 줄 끝·낱말 간격은 단락 컴포저(인디자인 양끝 정렬 규칙: 낱말 100~133% 먼저, 남는 폭만 자간)가 정한다.
     return st

@@ -328,7 +328,7 @@ def list_box(pg, pno):
     st += slot("문장", label="자리 이름 「문장」")
     st.append(F('#side input[data-a="space_after"]', SPACE_MM, 600))
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
-    st.append(F('#side input[data-a="jc.letter_min"]', JC_LETTER_MIN, 600))
+    st += justify(letter_min=JC_LETTER_MIN)                              # 균등 배치 — 낱말 100·133%, 자간 0(원본 줄이기 없음)·250‰
     st += grep(0, r"\([A-J]\)", "#00559f", size=9, bshift=BSHIFT, label="GREP 스타일 — 기호 (A)~(J) 만 9pt 굵은 파랑")
     return st
 
@@ -385,7 +385,7 @@ def question(pg, pno):
     st += slot("지문")
     st.append(F('#side input[data-a="space_after"]', P_SPACE, 600))
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
-    st.append(F('#side input[data-a="jc.letter_min"]', JC_LETTER_MIN, 600))
+    st += justify(letter_min=JC_LETTER_MIN)                              # 균등 배치 — 낱말 100·133%, 자간 0(원본 줄이기 없음)·250‰
     return st
 
 

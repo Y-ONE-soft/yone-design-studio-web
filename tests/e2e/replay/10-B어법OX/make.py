@@ -346,6 +346,7 @@ def statements(pg):
         if SWS:
             st.append(F('#side input[data-a="word_spacing"]', SWS))
         st += slot("진술")
+        st += justify()                                                  # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
         st += grep(0, NB_RE, bold=False, size=NB_SIZE, label=None if k else f"붙임 공백 뒤 끝 낱말 — 크기 {NB_SIZE}pt · 자간 {NB_TRACK}‰ (GREP)")
         st.append(F('#side input[data-a="grep.0.track"]', NB_TRACK, 600))
         st += [{"pick": {"at": '#side select[data-a="tail.part"]', "value": TAIL_PART}, "wait": 800},

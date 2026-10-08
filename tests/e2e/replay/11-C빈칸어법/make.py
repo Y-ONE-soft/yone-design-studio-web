@@ -333,6 +333,7 @@ def body(pg, its, right):
                        leading=LEAD_EN, align="justify", font=NOTO, track=TRACK_EN)
             st.append(F('#side input[data-a="h_scale"]', HS))
             st += slot("빈칸문장", label="자리 이름 「빈칸문장」")
+            st += justify()                                              # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
             if abs(WS_EN) > 5:
                 st.append(F('#side input[data-a="word_spacing"]', WS_EN))
             st += grep(0, r"\{([^}]*)\}", bold=False, size=HID, blank=HID_PAD, line=LINE_W, line_off=LINE_OFF, line_color=INK, hide=True,
@@ -352,6 +353,7 @@ def body(pg, its, right):
             st += text(x_kr, y, w_kr, round(2 * LEAD_KR * MM + 0.6, 2), TEMP_KR, 8, KORC, label="해석 자리 — 임시 글",
                        leading=LEAD_KR, align="justify", font=NOTO, track=TRACK_KR, weight=500)
             st += slot("해석", label="자리 이름 「해석」")
+            st += justify()                                              # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
             if abs(WS_KR) > 5:
                 st.append(F('#side input[data-a="word_spacing"]', WS_KR))
         else:
