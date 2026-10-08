@@ -586,7 +586,7 @@ def _text_html(a, html, h, ctx=None):
     paras = (html or "").split("<br/>")
     just = a.get("align") == "justify"
     # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
-    jc = (lambda x: ' data-jc="92,400,0.5,5,85"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
+    jc = (lambda x: ' data-jc="92,400,0.5,5,89.5"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
     inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, a.get("word_min")) or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:

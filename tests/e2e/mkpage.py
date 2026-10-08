@@ -38,11 +38,11 @@ _EXT = {}
 
 def chrome_extent(family, weight, size, s):
     """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값"""
-    import os, subprocess, tempfile, json as _j
+    import os, subprocess, tempfile, json as _j, html as _h
     key = (family, weight, size, s)
     if key not in _EXT:
         doc = (f"<!doctype html><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
-               f"font-size:{size * 10}pt;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{s}</span><pre id=o></pre><script>"
+               f"font-size:{size * 10}pt;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{_h.escape(s)}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const n=document.getElementById('t').firstChild,r=document.createRange();"
                "const at=i=>{r.setStart(n,i);r.setEnd(n,i+1);return r.getBoundingClientRect().left};"
                f"document.getElementById('o').textContent=JSON.stringify(at({len(s) - 1})-at(0));}});</script>")
@@ -65,7 +65,9 @@ def track_from(pdf_page, box, s, family, weight, size):
     t = pdf_page.trimbox
     x, y, w, h = box
     R = pymupdf.Rect(t.x0 + (x - 0.3) / MM, t.y0 + (y - 0.3) / MM, t.x0 + (x + w + 0.3) / MM, t.y0 + (y + h + 0.3) / MM)
-    ch = [c for b in pdf_page.get_text("rawdict", clip=R)["blocks"] for l in b.get("lines", []) for sp in l["spans"] for c in sp["chars"] if c["c"].strip()]
+    y0, y1 = t.y0 + y / MM, t.y0 + (y + h) / MM                               # 글자 가운데가 상자 안인 것만 — 위아래 줄이 가까우면 옆 줄을 집는다
+    ch = [c for b in pdf_page.get_text("rawdict", clip=R)["blocks"] for l in b.get("lines", []) for sp in l["spans"] for c in sp["chars"]
+          if c["c"].strip() and y0 <= (c["bbox"][1] + c["bbox"][3]) / 2 <= y1]
     if len(ch) < 2:
         return 0
     orig = (ch[-1]["origin"][0] - ch[0]["origin"][0]) * MM

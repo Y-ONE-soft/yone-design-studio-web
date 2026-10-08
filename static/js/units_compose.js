@@ -41,8 +41,9 @@
     if (p.dataset.jcDone) return;
     if (p.querySelector(":not(span):not(b):not(i):not(u):not(s):not(sup):not(sub)")) return;   // 글 안 그림·표 등은 건드리지 않는다
     // 낱말 간격 최소 % · 최대 % · 줄이기 비용 배수 · 줄 하나 비용 · 끝 줄 최소 % — 원본 인디자인 지문 4개(줄 끝 32개)에 맞춘 값
-    // (scratch jc_fit.py: 브라우저 그대로 17/32 → 이 값 30/32). 인디자인은 많이 늘리고 조금 줄이며, 끝 줄은 줄여 넣는 것을 마다하지 않는다.
-    const [mn, mx, sw, lp, lastMn] = (p.dataset.jc || "92,400,0.5,5,85").split(",").map(Number);
+    // (scratch jc_fit.py: 브라우저 그대로 17/32 → 이 값 30/32). 인디자인은 많이 늘리고 조금 줄이며, 끝 줄은 89.5% 까지 줄여 넣는다
+    // (단위 02 지문 1 끝 줄 89.9% 는 줄여 넣고, 단위 06 문장 (D) 88% 는 다음 줄로 넘김 — 2026-10-08).
+    const [mn, mx, sw, lp, lastMn] = (p.dataset.jc || "92,400,0.5,5,89.5").split(",").map(Number);
     const save = [p.style.whiteSpace, p.style.textAlign];
     p.style.whiteSpace = "nowrap";
     p.style.textAlign = "left";                                         // 늘이기 전 자연 폭으로 잰다
