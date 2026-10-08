@@ -18,7 +18,7 @@
 자리: "#sel" (그 요소 가운데) · [x, y] (화면 픽셀) · {"mm": [x, y]} (지면 좌표)
 커서는 화면에 점으로 그려 준다 — 헤드리스는 진짜 커서가 안 찍힌다.
 """
-import base64, json, math, os, subprocess, sys, time, urllib.parse, urllib.request
+import base64, json, math, os, shutil, subprocess, sys, time, urllib.parse, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cdp import CDP, CHROME                                             # noqa: E402
@@ -303,10 +303,14 @@ try:
         hold(st.get("wait", 600))
 finally:
     proc.terminate()
+    try:
+        proc.wait(timeout=10)
+    except Exception:
+        proc.kill()
+    shutil.rmtree(PROF, ignore_errors=True)                         # 실패해도 지운다 — 판마다 새 프로필이라 남기면 쌓여 디스크가 찼다(25GB, 2026-10-09)
 
 if n[0] < 2:
     raise SystemExit("프레임이 없다")
-subprocess.run(["rm", "-rf", PROF], capture_output=True)
 subprocess.run([FFMPEG, "-y", "-framerate", str(FPS), "-i", os.path.join(frames, "%05d.jpg"),
                 "-c:v", "libx264", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
                 "-movflags", "+faststart", out], capture_output=True)
