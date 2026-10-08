@@ -3,6 +3,8 @@
 {% block theme %}light{% endblock %}
 {% block content %}
 <style>
+  #side input[type=number]::-webkit-inner-spin-button, #side input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }   /* 좁은 칸 가운데 증감 단추가 잘못 눌려 값이 바뀌고 초점이 풀리던 것 */
+  #side input[type=number] { -moz-appearance: textfield; }
   .cv { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; user-select: none; }
   .cv h3 .gact { position: absolute; right: 0; top: 0; display: none; gap: 1px; }
   .cv h3:hover .gact { display: flex; }
@@ -1047,7 +1049,8 @@ document.addEventListener("keydown", (e) => {
   if (mod && k === "g") { e.preventDefault(); if (e.shiftKey) ungroup(); else groupToPart(); return; }
   if (mod && (e.key === "]" || e.key === "[" || e.key === "}" || e.key === "{")) { e.preventDefault(); const fwd = e.key === "]" || e.key === "}"; if (e.shiftKey) zorder(fwd); else zstep(fwd); return; }
   if (!sels.size) {
-    if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); deletePage(); return; }
+    // 쪽 지우기는 왼쪽 쪽 목록에 초점이 있을 때만 — 고른 게 없을 때 지우기 키로 쪽이 통째로 지워지던 것(입력 칸 초점이 풀린 뒤 등) 막음
+    if ((e.key === "Delete" || e.key === "Backspace") && document.activeElement && document.activeElement.closest && document.activeElement.closest("#rail")) { e.preventDefault(); deletePage(); return; }
     if (e.key === "ArrowLeft" || e.key === "PageUp") { const i = idx(), dp = docPages(); if (i > 0) openPage(dp[i - 1]); e.preventDefault(); }
     if (e.key === "ArrowRight" || e.key === "PageDown") { const i = idx(), dp = docPages(); if (i < dp.length - 1) openPage(dp[i + 1]); e.preventDefault(); }
     return;

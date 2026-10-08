@@ -18,7 +18,7 @@ from xml.sax.saxutils import escape as _x
 from core.units import sample
 
 PT = 25.4 / 72.0
-TEXT_ZOOM = 10                     # 글상자 배치 해상도 — 지면 1mm 를 10px 로 (아래 _atom_svg_raw 의 글)
+TEXT_ZOOM = 100                    # 글상자 배치 해상도 — 지면 1mm 를 100px 로 (아래 _atom_svg_raw 의 글). 10 이면 0.1mm 단위로 반올림돼 빈칸 밑줄 0.176mm 가 0.1mm 로 나왔다
 GAP_BLOCK = 1.5      # mm — 한 세트 안 블록 사이
 GAP_SET = 4.0        # mm — 세트 사이
 CIRC = "①②③④⑤⑥⑦⑧⑨⑩"
@@ -268,7 +268,7 @@ def grep_html(html, rules, ctx=None):
                 lw = float(r.get("line") or 0.2)
                 off = float(r.get("line_off") or 0.4)
                 lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
-                return (f'<span style="display:inline-block;width:{float(r["blank"]):.3f}px;height:0;'
+                return (f'\u2060<span style="display:inline-block;width:{float(r["blank"]):.3f}px;height:0;'   # U+2060 — 앞 글자(빈칸 첫 글자)와 칸 사이에서 줄이 안 바뀌게
                         f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"></span>')
             # 표시 감추기 — 원고의 약속 표시(예: {밑줄 칠 곳})는 지우고 묶음 1 의 글에만 서식
             t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
@@ -1134,7 +1134,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += ";font-style:italic"
         if a.get("tab"):
             style = style.replace("white-space:normal", "white-space:pre-wrap") + f";tab-size:{float(a['tab']):.3f}px"
-        # 글은 10배 해상도로 배치하고 1/10 로 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
+        # 글은 TEXT_ZOOM 배 해상도로 배치하고 그만큼 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
         # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
         z = TEXT_ZOOM
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'

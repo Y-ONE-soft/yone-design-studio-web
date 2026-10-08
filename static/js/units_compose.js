@@ -9,20 +9,31 @@
 (function () {
   "use strict";
 
+  const CJK = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3\u3040-\u30FF\u4E00-\u9FFF]/;
+  const isSp = (c) => c === " " || c === "\u00a0";
+
   function tokens(p) {
-    // 글자 단위로 펴서 낱말(공백 아닌 것의 연속)과 공백 덩어리로 — 낱말이 서식 경계를 넘어도 하나로
+    // 글자 단위로 펴서 낱말(공백 아닌 것의 연속)과 공백 덩어리로 — 낱말이 서식 경계를 넘어도 하나로.
+    // 글자가 아닌 칸(빈칸 밑줄 같은 inline-block)도 낱말의 한 글자로 센다(폭이 있다).
+    // 한글·한자·가나는 글자 사이에서도 꺾을 수 있다(인디자인처럼) — 폭 0 인 끊을 자리를 둔다.
     const chars = [];
-    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
     let n;
-    while ((n = w.nextNode())) for (let i = 0; i < n.data.length; i++) chars.push([n, i, n.data[i]]);
+    while ((n = w.nextNode())) {
+      if (n.nodeType === 3) { for (let i = 0; i < n.data.length; i++) chars.push([n, i, n.data[i]]); }
+      else if (!n.firstChild && getComputedStyle(n).display === "inline-block") chars.push([n, -1, "\ufffc"]);
+    }
     const out = [];
     let i = 0;
     while (i < chars.length) {
-      const sp = chars[i][2] === " " || chars[i][2] === " ";
-      let j = i;
-      while (j < chars.length && ((chars[j][2] === " " || chars[j][2] === " ") === sp)) j++;
+      const sp = isSp(chars[i][2]);
+      let j = i + 1;
+      if (sp) while (j < chars.length && isSp(chars[j][2])) j++;
+      else while (j < chars.length && !isSp(chars[j][2]) && !(CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))) j++;
       const seg = chars.slice(i, j);
-      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: seg.length});
+      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0});
+      if (!sp && j < chars.length && CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))
+        out.push({space: true, zero: true, breakable: true, n: 0, w: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
       i = j;
     }
     while (out.length && out[0].space) out.shift();
@@ -30,10 +41,12 @@
     return out;
   }
 
+  function setA(r, a) { if (a[1] < 0) r.setStartBefore(a[0]); else r.setStart(a[0], a[1]); }
+  function setB(r, b) { if (b[1] < 0) r.setEndAfter(b[0]); else r.setEnd(b[0], b[1] + 1); }
   function rangeOf(t) {
     const r = document.createRange();
-    r.setStart(t.a[0], t.a[1]);
-    r.setEnd(t.b[0], t.b[1] + 1);
+    setA(r, t.a);
+    setB(r, t.b);
     return r;
   }
 
@@ -49,7 +62,7 @@
     p.style.textAlign = "left";                                         // 늘이기 전 자연 폭으로 잰다
     const toks = tokens(p);
     if (toks.length < 3) { p.style.whiteSpace = save[0]; p.style.textAlign = save[1]; return; }
-    for (const t of toks) t.w = rangeOf(t).getBoundingClientRect().width;
+    for (const t of toks) if (!t.zero) t.w = rangeOf(t).getBoundingClientRect().width;
     const rect = p.getBoundingClientRect();
     const k = rect.width / (p.offsetWidth || 1);                         // 화면 px / 이 단락의 px (zoom·확대 포함)
     const cs = getComputedStyle(p);
@@ -106,8 +119,8 @@
     const frag = [];
     lines.forEach((ln, li) => {
       const r = document.createRange();
-      r.setStart(ln.first.a[0], ln.first.a[1]);
-      r.setEnd(ln.last.b[0], ln.last.b[1] + 1);
+      setA(r, ln.first.a);
+      setB(r, ln.last.b);
       frag.push(r.cloneContents());
     });
     const isLast = (li) => li === lines.length - 1;
