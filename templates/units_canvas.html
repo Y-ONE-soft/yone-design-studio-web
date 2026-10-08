@@ -416,6 +416,7 @@ const api = async (url, body, method) => {
 const byId = (k) => Object.fromEntries((LIB[k] || []).map(x => [x.id, x]));
 const clone = (o) => JSON.parse(JSON.stringify(o));
 const snap = (v) => (typeof view !== "undefined" && view && view.snap === false) ? Math.round(v * 10) / 10 : Math.round(v * 2) / 2;   // 자석을 끄면 0.1mm 까지
+const exact = (v) => Math.round(v * 1000) / 1000;                     // 묶기·풀기는 자리를 그대로 — 격자로 반올림하지 않는다(인디자인 그룹, 단위 10 O/X 상자가 0.2~0.34mm 밀렸다)
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const MDEF = {left: 20, right: 20, top: 44, bottom: 20};          // 새 지면 기본 여백
 // 지금 지면의 여백 — 지면에 적힌 값이 먼저다(분해해 온 지면은 그 면에서 잰 값이 들어 있다)
@@ -1347,8 +1348,8 @@ function atomsOfItem(it) {                                    // 요소·그룹 
   const sx = it.w && part.w ? it.w / part.w : 1; const out = [];
   for (const a0 of part.atoms) { const a = clone(a0);
     if (a.t === "line") { const x0 = Math.min(a.x1, a.x2) * sx, y0 = Math.min(a.y1, a.y2); const len = Math.abs(a.x2 - a.x1) * sx, dy = a.y2 - a.y1;
-      out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: snap(len), y2: dy < 0 ? 0 : snap(dy)}), x: snap(it.x + x0), y: snap(it.y + y0)}); }
-    else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = snap(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: snap(x), y: snap(y)}); } }
+      out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: exact(len), y2: dy < 0 ? 0 : exact(dy)}), x: exact(it.x + x0), y: exact(it.y + y0)}); }
+    else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = exact(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: exact(x), y: exact(y)}); } }
   return out;
 }
 async function groupToPart(name) {
@@ -1363,10 +1364,10 @@ async function groupToPart(name) {
   const bb = (it) => { const a = it.atom; const w = a.t === "line" ? Math.abs(a.x2 - a.x1) : a.w, h = a.t === "line" ? Math.abs(a.y2 - a.y1) : a.h; const sx = it.w && w ? it.w / w : 1; return {x: it.x, y: it.y, w: w * sx, h, sx}; };
   const x0 = Math.min(...its.map(it => bb(it).x)), y0 = Math.min(...its.map(it => bb(it).y));
   const atoms = its.map(it => { const a = clone(it.atom), b = bb(it), dx = it.x - x0, dy = it.y - y0;
-    if (a.t === "line") { a.x1 = snap(a.x1 * b.sx + dx); a.x2 = snap(a.x2 * b.sx + dx); a.y1 = snap(a.y1 + dy); a.y2 = snap(a.y2 + dy); }
-    else { a.x = snap(a.x * b.sx + dx); a.y = snap(a.y + dy); if (a.t !== "ellipse") a.w = snap(a.w * b.sx); } return a; });
+    if (a.t === "line") { a.x1 = exact(a.x1 * b.sx + dx); a.x2 = exact(a.x2 * b.sx + dx); a.y1 = exact(a.y1 + dy); a.y2 = exact(a.y2 + dy); }
+    else { a.x = exact(a.x * b.sx + dx); a.y = exact(a.y + dy); if (a.t !== "ellipse") a.w = exact(a.w * b.sx); } return a; });
   const W = Math.max(...its.map(it => bb(it).x + bb(it).w)) - x0, H = Math.max(...its.map(it => bb(it).y + bb(it).h)) - y0;
-  const part = {id: pid, name, w: snap(Math.max(W, 1)), h: snap(Math.max(H, 1)), atoms};
+  const part = {id: pid, name, w: exact(Math.max(W, 1)), h: exact(Math.max(H, 1)), atoms};
   const j = await api("/api/units/parts", part); if (j.error) { $("#st").textContent = j.error; return; }
   hist(); LIB.parts.push(part); page.items = page.items.filter((_, i) => !ids.includes(i)); page.items.push({part: pid, x: x0, y: y0});
   select([page.items.length - 1]); save(); render(); thumbsLoad();
@@ -1384,8 +1385,8 @@ function ungroup() {
     for (const a0 of part.atoms) {
       const a = clone(a0);
       if (a.t === "line") { const x0 = Math.min(a.x1, a.x2) * sx, y0 = Math.min(a.y1, a.y2); const len = Math.abs(a.x2 - a.x1) * sx, dy = a.y2 - a.y1;
-        out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: snap(len), y2: dy < 0 ? 0 : snap(dy)}), x: snap(it.x + x0), y: snap(it.y + y0)}); }
-      else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = snap(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: snap(x), y: snap(y)}); }
+        out.push({atom: Object.assign(a, {x1: 0, y1: dy < 0 ? -dy : 0, x2: exact(len), y2: dy < 0 ? 0 : exact(dy)}), x: exact(it.x + x0), y: exact(it.y + y0)}); }
+      else { const x = it.x + a.x * sx, y = it.y + a.y; if (a.t !== "ellipse") a.w = exact(a.w * sx); a.x = 0; a.y = 0; out.push({atom: a, x: exact(x), y: exact(y)}); }
     }
     hist(); const at = sel; page.items.splice(at, 1, ...out); select(out.map((_, k) => at + k)); save(); render();
   }
