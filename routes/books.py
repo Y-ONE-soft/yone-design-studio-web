@@ -155,7 +155,8 @@ def page_projects():
             for d in t["designs"]:
                 imgs = design_images(t["series"], d)      # 견본 > 페이지 틀 > 기준 PDF 앞 면
                 designs.append({"series": t["series"], "tname": t["name"], "ready": t["ready"], "id": d["id"], "name": d["name"],
-                                "draft": d.get("draft", False), "n": len(imgs), "img": imgs[0]["src"] if imgs else "",
+                                "draft": d.get("draft", False), "n": ((d.get("intake") or {}).get("measured") or {}).get("pages"),   # 기준 PDF 면 수 (견본 장수 아님)
+                                "img": imgs[0]["src"] if imgs else "",
                                 "manuscript": t["manuscript"], "tags": d.get("tags") or {}})
     # 필터 — 디자인 tags(design.json, 예: 학교·년도·교재 유형)의 값을 키마다 모은다. 값이 둘 이상 생기면 쓸모가 있지만 하나여도 보여 준다
     filters = {}
