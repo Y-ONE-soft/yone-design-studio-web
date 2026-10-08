@@ -12,6 +12,7 @@
 import json
 import math
 import re
+import unicodedata
 from html import unescape as _unescape
 from xml.sax.saxutils import escape as _x
 
@@ -354,24 +355,88 @@ def base_word_spacing(a, ctx):
     return float(a.get("word_spacing") or 0)
 
 
-KO_LOCL = " !'(),\\-./:;?\\[\\]{}~ ·‑—‘’‚“”„‼⁇⁈⁉⸺⸻"
-_KO_RUN = re.compile(r"&#?\w+;|[" + KO_LOCL + "]+")
+# 글 언어의 글리프를 쓸 글자 — 공백(Zs)·문장부호(P*)·물결표. 서체와 상관없는 규칙
+LOCL_CHARS = "".join(c for c in map(chr, range(0x10000)) if unicodedata.category(c) in ("Zs", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po")) + "~"
+_LOCL_RUN = re.compile(r"&#?\w+;|[" + re.escape(LOCL_CHARS.replace("&", "")) + "]+")    # & 는 글 HTML 에서 늘 &amp; 같은 이름으로 온다
+_OT_LANG = {"ko": "KOR ", "ja": "JAN ", "zh": "ZHS ", "zh-hans": "ZHS ", "zh-hant": "ZHT "}   # 글 언어 → OpenType 언어 태그
+_LOCL_HIT = {}
 
 
-def ko_glyphs(html, a, ctx):
-    """Noto CJK 글의 공백·문장부호를 한국어 꼴로 — 인디자인(언어 한국어)은 서체의 locl KOR 글리프를 놓는다:
-    공백 0.280em(라틴 0.224em), 따옴표·괄호·빗금·마침표는 조금 위로, 줄표 — 1em, 가운뎃점 좁게 (서체 GSUB latn/KOR, 원본 글리프 번호 실측 — 단위 04·07).
-    글은 lang=en 이라야 라틴 합자가 켜진다 — 이 글자들만 lang=ko 로 감싼다(합자에 끼는 글자가 아니다).
+def text_lang(a):
+    """글 언어(인디자인 문자 패널의 언어) — 없으면 한국어."""
+    return str(a.get("lang") or "ko").strip() or "ko"
+
+
+def locl_chars(family, lang):
+    """서체가 그 언어용 글리프(GSUB locl)를 가진 공백·문장부호 — 이 글자만 감싼다. 감싸면 크롬이 글을 거기서 끊어 그리므로
+    (커닝·문맥 대체 글자가 그 자리에서 끊긴다) 그 언어 글리프가 없는 글자·서체는 건드리지 않는다.
+    서체 파일(fc-match — 브라우저와 같은 서체 목록)·언어 태그를 모르면 "" — 감싸지 않는다(sans-serif 처럼 브라우저가 고르는 서체).
+    Noto Sans CJK KR + ko = 예전 고정 목록(GSUB latn/KOR 실측 — 단위 04·07) + " 와 줄 안 바뀜 공백(예전에도 &quot;·&#160; 로 감싸던 것)."""
+    tag = _OT_LANG.get(lang.lower())
+    key = (family, tag)
+    if key in _LOCL_HIT:
+        return _LOCL_HIT[key]
+    out = ""
+    try:
+        import subprocess
+        from fontTools.ttLib import TTFont
+        for name in [n.strip().strip("'\"") for n in family.split(",")]:   # font_family 의 후보 이름들 — 설치된 첫 이름
+            if not tag or not name or name in ("sans-serif", "serif", "monospace", "sans"):
+                continue
+            fam, ps, path, idx = subprocess.check_output(["fc-match", "-f", "%{family}|%{postscriptname}|%{file}|%{index}", name],
+                                                         text=True, timeout=10).split("|")
+            norm = lambda s: s.lower().replace(" ", "")
+            if norm(name) in [norm(x) for x in fam.split(",") + ps.split(",")]:   # 다른 서체로 대신 잡힌 것은 모른다
+                break
+        else:
+            raise LookupError(family)
+        f = TTFont(path, fontNumber=int(idx or 0), lazy=True)
+        g = f["GSUB"].table if "GSUB" in f else None
+        gl = set()
+        if g and g.ScriptList and g.FeatureList and g.LookupList:
+            fi = {i for sr in g.ScriptList.ScriptRecord for ls in sr.Script.LangSysRecord if ls.LangSysTag == tag for i in ls.LangSys.FeatureIndex}
+            recs = g.FeatureList.FeatureRecord
+            for li in {k for i in fi if recs[i].FeatureTag == "locl" for k in recs[i].Feature.LookupListIndex}:
+                lk = g.LookupList.Lookup[li]
+                for st in lk.SubTable:
+                    t = lk.LookupType
+                    if t == 7:
+                        t, st = st.ExtensionLookupType, st.ExtSubTable
+                    gl.update(getattr(st, {1: "mapping", 3: "alternates", 4: "ligatures"}.get(t, "_"), None) or ())
+        cmap = f.getBestCmap() or {}
+        out = "".join(c for c in LOCL_CHARS if cmap.get(ord(c)) in gl)
+    except Exception:
+        out = ""
+    _LOCL_HIT[key] = out
+    return out
+
+
+def locl_html(html, family, lang):
+    """글 HTML 의 공백·문장부호를 글 언어로 감싼다 — 인디자인(언어 한국어)은 서체의 locl KOR 글리프를 놓는다:
+    Noto CJK 면 공백 0.280em(라틴 0.224em), 따옴표·괄호·빗금·마침표는 조금 위로, 줄표 — 1em, 가운뎃점 좁게 (원본 글리프 번호 실측 — 단위 04·07).
+    글은 lang=en 이라야 라틴 합자가 켜진다 — 이 글자들만 그 언어로 감싼다(합자에 끼는 글자가 아니다). 언어가 en 이면 그대로.
     (공백을 낱말 간격 +56‰ 로 더하던 보정은 크롬이 이미 0.280em 으로 그리는 한글 사이 공백에 두 번 들어갔다.)"""
-    if a.get("lang") or not ctx or "CJK" not in ctx.font(a.get("font")):
+    if not lang or lang.lower().startswith("en"):
         return html
+    only = locl_chars(family, lang)
+    if not only:
+        return html                                                       # 서체에 그 언어 글리프가 없다
+    run = re.compile("[" + re.escape(only) + "]+")
+    span = lambda t: f'<span lang="{esc(lang)}">{t}</span>'
 
     def wrap(m):
         t = m.group(0)
-        if t.startswith("&") and t not in ("&#160;", "&quot;"):
-            return t
-        return f'<span lang="ko">{t}</span>'
-    return "".join(p if p.startswith("<") else _KO_RUN.sub(wrap, p) for p in _TAG.split(html))
+        if t.startswith("&"):                                             # &#160; &quot; &amp; … — 글자 하나로 보고
+            return span(t) if _unescape(t) in only else t
+        return run.sub(lambda k: span(k.group(0)), t)
+    return "".join(p if p.startswith("<") else _LOCL_RUN.sub(wrap, p) for p in _TAG.split(html))
+
+
+def ko_glyphs(html, a, ctx):
+    """글 언어(a.lang, 기본 한국어)의 공백·문장부호 글리프 — locl_html."""
+    if not ctx:
+        return html
+    return locl_html(html, ctx.font(a.get("font")), text_lang(a))
 
 
 JC_DEFAULT = (100, 133, -8, 250, 1, 20, -10)  # 낱말 최소·최대 % · 자간 최소·최대 ‰ · 줄이기 비용 · 줄 비용 · 끝 줄 자간 최소 ‰ (units_compose.js)
@@ -513,6 +578,29 @@ def insets(a):
     if isinstance(v, (list, tuple)) and len(v) == 4:
         return tuple(float(x or 0) for x in v)
     return (float(v),) * 4
+
+
+def auto_size(a):
+    """자동 크기 조정(인디자인 텍스트 프레임 옵션) — "height" 높이만(기본: 글이 길면 아래로) · "both" 높이와 너비 · "off" 끔(false 도 끔)."""
+    v = a.get("auto_size")
+    return "off" if v is False or v == "off" else "both" if v == "both" else "height"
+
+
+def frame_css(fr, ctx=None):
+    """글상자 칠·획·모서리(인디자인 텍스트 프레임의 칠·획) — 상자(안쪽 여백을 가진 div)에 그린다. 획은 가장자리 가운데(인디자인 기본 획 정렬)."""
+    if not fr:
+        return ""
+    col = (lambda c: ctx.color(c) if ctx else c)
+    css = f"background:{col(fr['fill'])};" if fr.get("fill") else ""
+    st = fr.get("stroke") or {}
+    if st.get("color") and float(st.get("w") or 0) > 0:
+        w = float(st["w"]) * PT
+        css += f"outline:{w:.3f}px solid {col(st['color'])};outline-offset:{-w / 2:.3f}px;"
+    r = fr.get("radius")
+    if r:
+        rs = r if isinstance(r, (list, tuple)) else [r] * 4            # [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래] — 네모(rect)의 radius 와 같은 차례
+        css += "border-radius:" + " ".join(f"{float(v or 0):.3f}px" for v in rs) + ";"
+    return css
 
 
 ROMAN_EM = 0.47          # 로마자 한 글자 폭 어림 (기준 책 실측 0.455 — 본문 서체마다 조금 다르다)
@@ -694,6 +782,12 @@ def _text_html(a, html, h, ctx=None):
     it += float(a.get("first_baseline") or 0)                    # 첫 기준선 — 상자 위에서 더 내린다
     cols = int(a.get("columns") or 1)
     box = f"height:{h:.3f}px;box-sizing:border-box;padding:{it:.3f}px {ir:.3f}px {ib:.3f}px {il:.3f}px;"
+    fr, mode = a.get("frame") or {}, auto_size(a)
+    if fr and mode != "off" and not a.get("story"):                   # 글 잇기 상자는 높이를 지킨다(넘친 줄을 다음 상자로)
+        box = box.replace(f"height:{h:.3f}px;", "")                   # 바탕이 있으면 브라우저가 실제로 그린 글 높이 + 여백만큼(인디자인 자동 크기 조정 — 줄기도 한다)
+    if mode == "both":
+        box += "width:fit-content;max-width:100%;"                     # 높이와 너비 — 한 줄 글은 글 폭 + 여백, 길면 상자 폭까지
+    box += frame_css(fr, ctx)
     if a.get("valign") in ("center", "bottom"):
         box += "display:flex;flex-direction:column;justify-content:" + ("center" if a["valign"] == "center" else "flex-end") + ";"
     if cols > 1:
@@ -1088,7 +1182,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         if a.get("story"):                                             # 첫 상자 — 자라지 않는다(넘침은 이어지는 상자가 받는다)
             continue
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
-        if a.get("auto_size") is False:                          # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
+        if auto_size(a) == "off":                        # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
             heights[i] = a["h"]
             if need > a["h"] + 0.01:
                 ctx.issue("warn", f"글이 상자보다 길다 — {plain[:20]}… (자동 크기 조정 꺼짐)")
@@ -1252,7 +1346,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += ";font-style:italic"
         if a.get("tab"):
             style = style.replace("white-space:normal", "white-space:pre-wrap") + f";tab-size:{float(a['tab']):.3f}px"
-        # lang — 언어가 없으면 크롬이 한국어로 그려 Noto CJK 의 라틴 합자(ff·fi)가 꺼진다(인디자인은 쓴다). 서체가 KR 이라 한글 모양은 그대로
+        # lang=en — 언어가 없으면 크롬이 한국어로 그려 Noto CJK 의 라틴 합자(ff·fi)가 꺼진다(인디자인은 쓴다). 글 언어(a.lang)의 공백·문장부호는 ko_glyphs 가 그 언어로 감쌌다
         # 글은 TEXT_ZOOM 배 해상도로 배치하고 그만큼 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
         # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
         z = text_zoom(a, getattr(ctx, "zoom_out", 1))
@@ -1260,7 +1354,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         st = f' data-story="{esc(a["story"])}" data-seq="{story_seq(a)}"' if a.get("story") else ""
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
                 f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}" style="overflow:visible">'
-                f'<div xmlns="http://www.w3.org/1999/xhtml" lang="{esc(a.get("lang") or "en")}"{st} style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
+                f'<div xmlns="http://www.w3.org/1999/xhtml" lang="en"{st} style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
     if t == "line":
         adefs, aattrs = _arrows(ctx, a.get("stroke"))
         return (adefs + f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '

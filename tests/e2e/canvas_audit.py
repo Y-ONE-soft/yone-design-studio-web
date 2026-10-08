@@ -755,7 +755,7 @@ try:
         for k, v in [("bullet", "decimal"), ("tab", "8"), ("rule_above.w", "0.8"), ("rule_below.w", "0.4"),
                      ("first_baseline", "2"), ("baseline", "1"), ("kerning", "none"), ("h_scale", "90"), ("v_scale", "105")]:
             setf(k, v)
-        js("(() => { const el = document.querySelector('#side [data-a=\"auto_size\"]'); el.checked = false; el.dispatchEvent(new Event('change')); })()")
+        js("(() => { const el = document.querySelector('#side [data-a=\"auto_size\"]'); el.value = 'off'; el.dispatchEvent(new Event('change')); })()")
         time.sleep(2.0)
         svg = js("document.querySelector('#svgwrap svg').innerHTML")
         drawn = {"글머리": "list-item" in svg, "단락선": "border-top" in svg, "탭": "tab-size" in svg,

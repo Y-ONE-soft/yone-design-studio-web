@@ -36,19 +36,16 @@ def face(family, weight=400):
 _EXT = {}
 
 
-def chrome_extent(family, weight, size, s):
-    """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값"""
-    import os, re, subprocess, tempfile, json as _j, html as _h
-    key = (family, weight, size, s)
+def chrome_extent(family, weight, size, s, lang="ko"):
+    """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값.
+    lang = 글 언어(편집기 글상자 「언어」, 기본 한국어) — 편집기처럼 공백·문장부호를 그 언어 꼴로(render.locl_html)"""
+    import os, subprocess, tempfile, json as _j, sys
+    key = (family, weight, size, s, lang)
     zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
-        body = _h.escape(s)
-        if "CJK" in family:                                                    # 편집기처럼 공백·문장부호는 한국어 꼴(render.ko_glyphs)
-            import sys
-            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))   # 리포 뿌리 — 대본은 단위 폴더에서 돈다
-            from core.units import render
-            body = re.sub("&#?\\w+;|[" + render.KO_LOCL + "]+", lambda m: m.group(0) if m.group(0).startswith("&") and m.group(0) not in ("&#160;", "&quot;", "&#x27;")
-                          else f'<span lang="ko">{m.group(0)}</span>', body)
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))   # 리포 뿌리 — 대본은 단위 폴더에서 돈다
+        from core.units import render
+        body = render.locl_html(render.esc(s), render.font_family(family), lang)
         doc = (f"<!doctype html><html lang=en><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
                f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{body}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const c=[],w=document.createTreeWalker(document.getElementById('t'),NodeFilter.SHOW_TEXT),r=document.createRange();"

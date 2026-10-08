@@ -10,6 +10,8 @@
   "use strict";
 
   const CJK = /[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3\u3040-\u30FF\u4E00-\u9FFF]/;
+  const ENC = /[\u2460-\u24FF\u2776-\u2793\u3251-\u325F\u32B1-\u32BF]/;   // 원문자 ①②… — 한중일 글자처럼 앞뒤에서 꺾을 수 있다(인디자인: 「③shouting」 을 ③ 뒤에서 꺾음, 단위 14c)
+  const brkOK = (a, b) => (CJK.test(a) && CJK.test(b)) || (ENC.test(a) && !isSp(b)) || (!isSp(a) && ENC.test(b));   // 공백 없이 꺾을 수 있는 글자 사이
   const isSp = (c) => c === " " || c === "\u00a0";
 
   function tokens(p) {
@@ -30,11 +32,11 @@
       const sp = isSp(chars[i][2]);
       let j = i + 1;
       if (sp) while (j < chars.length && isSp(chars[j][2])) j++;
-      else while (j < chars.length && !isSp(chars[j][2]) && !(CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))) j++;
+      else while (j < chars.length && !isSp(chars[j][2]) && !brkOK(chars[j - 1][2], chars[j][2])) j++;
       const seg = chars.slice(i, j);
       out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0, seg: sp ? seg : null,
                 c: seg.length});                                                // 글자 수 — 인디자인 자간은 글자마다 붙는다
-      if (!sp && j < chars.length && CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))
+      if (!sp && j < chars.length && brkOK(chars[j - 1][2], chars[j][2]))
         out.push({space: true, zero: true, breakable: true, n: 0, w: 0, sp0: 0, c: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
       i = j;
     }
@@ -76,6 +78,8 @@
     // (낱말은 133% 에 멈춤 — 4~37쪽 줄 87개 모두 0.33×공백 ±0.6‰). 줄일 땐 낱말은 100% 아래로 안 가고 자간만 준다(-1~-5‰ 관찰). 글리프 비율 100%.
     // 공백 기준 = 서체의 U+0020 폭(Noto CJK KR 224/1000 — 인디자인이 실제로 놓는 locl 공백 280 이 아니다). 줄 끝 맞춤 4·5·8·9·16·17쪽 60/62.
     const [wmn, wmx, lmn, lmx, sw, lp, lastLmn] = (p.dataset.jc || "100,133,-8,250,1,20,-10").split(",").map(Number);
+    const cs1 = getComputedStyle(p), lh1 = parseFloat(cs1.lineHeight);   // 브라우저가 한 줄에 다 넣은 단락 — 끝 줄 하나뿐이라 고를 게 없다.
+    if (lh1 > 0 && p.offsetHeight - parseFloat(cs1.paddingTop) - parseFloat(cs1.paddingBottom) < lh1 * 1.5) return;   // 글 폭에 맞춘 상자(자동 크기 높이와 너비)에서 낱자 폭 합의 반올림으로 두 줄로 꺾이던 것
     const save = [p.style.whiteSpace, p.style.textAlign];
     p.style.whiteSpace = "nowrap";
     p.style.textAlign = "left";                                         // 늘이기 전 자연 폭으로 잰다
@@ -90,15 +94,18 @@
     const em = parseFloat(cs.fontSize) * k;
     const ls = parseFloat(cs.letterSpacing) * k || 0, wsp = parseFloat(cs.wordSpacing) * k || 0;   // 단락 자간 · 낱말 간격(보정) — 공백 글리프 폭을 꺼내려고
     for (const t of toks) if (t.space && !t.zero) t.sp0 = Math.max(0, t.w - t.n * (ls + wsp));       // 공백 글리프 폭 합 = 낱말 간격 % 의 기준
-    // 한국어 꼴로 감싼 공백(렌더러 ko_spaces — 0.280em)도 기준은 서체의 U+0020 폭(0.224em)이다: 인디자인이 그렇게 늘린다
-    if (p.querySelector("span[lang='ko']")) {
+    // 글 언어로 감싼 공백(렌더러 locl_html — Noto CJK 한국어 꼴 0.280em)도 기준은 서체의 U+0020 폭(0.224em)이다: 인디자인이 그렇게 늘린다
+    const notEn = (l) => l && !/^en/i.test(l);
+    if ([...p.querySelectorAll("span[lang]")].some(e => notEn(e.lang))) {
       const m = (lang, s) => { const e = document.createElement("span"); e.lang = lang; e.style.whiteSpace = "pre"; e.textContent = s; p.appendChild(e);
                                const w = e.getBoundingClientRect().width; e.remove(); return w; };
       const g = (lang) => m(lang, "x x") - m(lang, "xx") - ls - wsp;
-      const gk = g("ko"), r = gk > 0 ? g("en") / gk : 1;
+      const ge = g("en"), r = {};
       for (const t of toks) if (t.space && !t.zero && t.a[1] >= 0) {
         const l = t.a[0].parentElement && t.a[0].parentElement.closest("[lang]");
-        if (l && l.lang === "ko") t.sp0 *= r;
+        if (!l || !notEn(l.lang)) continue;
+        if (!(l.lang in r)) { const gl = g(l.lang); r[l.lang] = gl > 0 ? ge / gl : 1; }
+        t.sp0 *= r[l.lang];
       }
     }
     p.style.whiteSpace = save[0];
@@ -189,7 +196,7 @@
       sp.appendChild(frag[li]);
       if (ln.ul && !isLast(li)) {                                         // 줄 끝 공백에 걸린 밑줄 — 인디자인은 그 공백까지 긋는다(단 끝을 넘어). 폭은 0 으로 쳐서 양끝맞춤은 그대로
         const u = document.createElement("span"), v = document.createElement("span");   // 같은 서체의 공백에 같은 밑줄 — 자리가 글 밑줄과 똑같다
-        u.setAttribute("style", `display:inline-block;white-space:pre;width:${(ln.ul.w / k).toFixed(4)}px;margin-right:${(-ln.ul.w / k).toFixed(4)}px`);   // 줄 폭에 0 — 양끝맞춤 그대로
+        u.setAttribute("style", `display:inline-block;white-space:pre;text-indent:0;width:${(ln.ul.w / k).toFixed(4)}px;margin-right:${(-ln.ul.w / k).toFixed(4)}px`);   // 줄 폭에 0 — 양끝맞춤 그대로
         v.setAttribute("style", `word-spacing:0;text-decoration:underline;text-decoration-thickness:${ln.ul.th};text-underline-offset:${ln.ul.off};` +
           `text-decoration-color:${ln.ul.col};text-decoration-skip-ink:none`);
         v.textContent = " ";
