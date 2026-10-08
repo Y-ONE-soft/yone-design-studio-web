@@ -184,6 +184,13 @@ def anchored_html(v, ctx):
     return f'<span style="{box}">{svg}</span>'
 
 
+def text_zoom(a, outer=1):
+    """글상자 배치 배율(TEXT_ZOOM) — 크롬은 글자를 1만 px 보다 크게 못 그린다(300pt 가 283pt 로): 큰 글은 낮춘다.
+    outer = 이 글을 감싼 글의 배율(글 끝에 붙인 부품 속 글) — 배율이 곱해지므로 그만큼 나눈다(안 나누면 1만 px 에 걸려 1/3 크기로, 단위 10 O·X)."""
+    big = max([float(a.get("size") or 9)] + [float(r.get("size") or 0) for r in a.get("grep") or []]) * PT
+    return max(1, min(TEXT_ZOOM, int(9000 / max(big * outer, 0.1))))
+
+
 def tail_html(a, ctx):
     """글 끝에 붙이는 개체(인디자인 인라인 앵커) — atom.tail = {part, gap mm, drop mm, w?, h?}.
     부품을 글줄 안 inline-block 으로 끝에 붙인다: 글자처럼 흘러 자리가 모자라면 마지막 낱말과 함께 다음 줄로 간다.
@@ -196,7 +203,12 @@ def tail_html(a, ctx):
             ctx.warn(f"글 끝에 붙일 부품 없음 {t.get('part')}")
         return None
     w = float(t.get("w") or part.get("w") or 10)
-    frag, ph = part_svg(ctx, part)
+    z0 = getattr(ctx, "zoom_out", 1)
+    ctx.zoom_out = z0 * text_zoom(a, z0)                              # 부품 속 글은 바깥 글의 배율 안에서 그려진다
+    try:
+        frag, ph = part_svg(ctx, part)
+    finally:
+        ctx.zoom_out = z0
     h = float(t.get("h") or part.get("h") or ph or 5)
     gap, drop = float(t.get("gap") or 0), float(t.get("drop") or 0)
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {float(part.get("w") or w):.3f} {float(part.get("h") or h):.3f}" '
@@ -276,7 +288,9 @@ def grep_html(html, rules, ctx=None):
             st += f"position:relative;top:{-float(r['bshift']) * PT:.3f}px;"
         if r.get("weight"):                                                # 굵기 100~900 — 굵게(700)보다 먼저
             st += f"font-weight:{int(r['weight'])};"
-        ul = r.get("u") and not r.get("blank") and (r.get("line") or r.get("line_off") or r.get("line_color"))
+        if r.get("track"):                                                 # 자간 ‰ em
+            st += f"letter-spacing:{float(r['track']) / 1000:.4f}em;"
+        ul = r.get("u") and not r.get("blank") and not r.get("fit") and (r.get("line") or r.get("line_off") or r.get("line_color"))
         if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
             lw = float(r.get("line") or 0.18)
             lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else "currentColor"
@@ -285,6 +299,16 @@ def grep_html(html, rules, ctx=None):
         tags = [k for k in ("u", "i", "b") if r.get(k) and not (k == "u" and ul) and not (k == "b" and r.get("weight"))]
 
         def wrap(m):
+            if r.get("fit"):                                               # 글 폭 칸 — 맞은 글을 감추고 그 폭(크기·자간 포함) + 더할 폭만큼 밑줄 (인디자인: 정답 글 칠 없음 + 밑줄)
+                lw = float(r.get("line") or 0.2)
+                off = float(r.get("line_off") or 0.4)
+                lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
+                t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
+                fs = st.replace(f"color:{col};", "") if col else st
+                # overflow:hidden 인 inline-block 은 아래 끝이 기준선에 선다 — 높이 0 이면 밑줄을 기준선에서 정확히 내린다. 글은 칸 폭만 잡고 안 보인다
+                return (f'<span style="display:inline-block;height:0;overflow:hidden;white-space:nowrap;{fs}padding-right:{float(r.get("blank") or 0):.3f}px;'
+                        f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"><span style="color:transparent">{t}</span></span>'
+                        f'<span style="{fs}">⁠</span>')                    # 감춘 글 크기의 줄 높이는 남긴다(원본: 큰 정답 글이 든 줄은 기준선이 내려간다)
             if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
                 lw = float(r.get("line") or 0.2)
                 off = float(r.get("line_off") or 0.4)
@@ -1206,8 +1230,7 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         # lang — 언어가 없으면 크롬이 한국어로 그려 Noto CJK 의 라틴 합자(ff·fi)가 꺼진다(인디자인은 쓴다). 서체가 KR 이라 한글 모양은 그대로
         # 글은 TEXT_ZOOM 배 해상도로 배치하고 그만큼 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
         # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
-        big = max([float(a.get("size") or 9)] + [float(r.get("size") or 0) for r in a.get("grep") or []]) * PT
-        z = max(1, min(TEXT_ZOOM, int(9000 / max(big, 0.1))))                 # 크롬은 글자를 1만 px 보다 크게 못 그린다(300pt 가 283pt 로) — 큰 글은 해상도를 낮춘다
+        z = text_zoom(a, getattr(ctx, "zoom_out", 1))
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
                 f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}">'
                 f'<div xmlns="http://www.w3.org/1999/xhtml" lang="{esc(a.get("lang") or "en")}" style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
