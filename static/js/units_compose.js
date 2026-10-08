@@ -31,7 +31,7 @@
       if (sp) while (j < chars.length && isSp(chars[j][2])) j++;
       else while (j < chars.length && !isSp(chars[j][2]) && !(CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))) j++;
       const seg = chars.slice(i, j);
-      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0});
+      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0, seg: sp ? seg : null});
       if (!sp && j < chars.length && CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))
         out.push({space: true, zero: true, breakable: true, n: 0, w: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
       i = j;
@@ -79,7 +79,8 @@
     best[0] = 0;
     for (let a = 0; a < brk.length - 1; a++) {
       if (best[a] === Infinity) continue;
-      let L = 0, Y = 0, Z = 0, nsp = 0;
+      const g0 = a > 0 ? toks[brk[a]] : null;                          // 공백 여러 칸에서 꺾이면 첫 칸만 줄 끝 — 나머지는 이 줄 앞에 남는다(인디자인)
+      let L = g0 && g0.n > 1 ? g0.w * (g0.n - 1) / g0.n : 0, Y = 0, Z = 0, nsp = 0;
       const lw = W - (a === 0 ? indent : 0);
       for (let b = a + 1; b < brk.length; b++) {
         // a 다음 ~ b 앞까지 더한다
@@ -112,14 +113,16 @@
     for (const b of cut) {
       const e = brk[b];
       const ws = toks.slice(s, e);
-      lines.push({first: toks[s], last: toks[e - 1], L: ws.reduce((x, t) => x + t.w, 0), nsp: ws.filter(t => t.space).reduce((x, t) => x + t.n, 0),
-                  glue: e < toks.length ? toks[e] : null});
+      const g0 = s > 0 ? toks[s - 1] : null;                             // 앞 줄 끝 공백 덩어리의 둘째 칸부터 — 이 줄 앞에 남긴다
+      const lead = g0 && g0.space && g0.n > 1 && g0.seg ? g0.seg[1] : null;
+      lines.push({first: toks[s], last: toks[e - 1], start: lead, L: ws.reduce((x, t) => x + t.w, 0) + (lead ? g0.w * (g0.n - 1) / g0.n : 0),
+                  nsp: ws.filter(t => t.space).reduce((x, t) => x + t.n, 0) + (lead ? g0.n - 1 : 0), glue: e < toks.length ? toks[e] : null});
       s = e + 1;
     }
     const frag = [];
     lines.forEach((ln, li) => {
       const r = document.createRange();
-      setA(r, ln.first.a);
+      setA(r, ln.start || ln.first.a);
       setB(r, ln.last.b);
       frag.push(r.cloneContents());
     });
