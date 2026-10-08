@@ -146,6 +146,22 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
     return st + opacity(alpha)
 
 
+def slot(name, label=None):
+    """고른 글상자에 자리 이름 — 「원고 자리」에서 「직접 적기…」 → 이름. 원고가 이 이름으로 글을 보낸다(원고자리_규약.md)"""
+    st = ([S(label)] if label else [])
+    return st + [{"pick": {"at": '#side select[data-a="bindsel"]', "value": "__other"}, "wait": 800},
+                 F('#side input[data-a="bind"]', name, 800)]
+
+
+def put_content(obj, label="원고 넣기 — 바깥 시스템이 보내는 꼴(자리 이름 → 글)"):
+    """문서 패널의 「원고 넣기」에 원고 JSON 을 치고 넣는다 — 빈 곳을 눌러 선택을 풀면 문서 패널이 나온다"""
+    import json as _json
+    return [S(label, 1800), {"click": {"mm": [205, 294]}, "wait": 900},
+            F("#side #s-content", _json.dumps(obj, ensure_ascii=False), 900),
+            {"click": "#side #s-content-put", "wait": 2500},
+            {"js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"}]
+
+
 def grep(n, pattern, color=None, bold=True, label=None):
     """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색. n = 이 글상자의 몇 번째 규칙(0부터)"""
     st = ([S(label)] if label else [])
@@ -242,6 +258,7 @@ def tail(pno):
 def done(name, shot):
     """면 끝 — 덜 쓴 글상자가 없는지 스스로 센다"""
     return [S(f"{name} 완성", 2000),
+            {"js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()", "wait": 300},
             {"js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); "
                    "return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + "
                    "'개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"},

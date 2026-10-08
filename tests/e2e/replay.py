@@ -96,11 +96,12 @@ def compare(new_ids, state):
             rows.append((rp, None))
             continue
         pdf = os.path.join(out, f"p{rp}_my.pdf")
-        urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}", pdf)
+        fill = "&fill=auto" if state.get("fill") else ""                                  # 원고 자리 단위 — 넣은 원고로(임시 글 대신)
+        urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}{fill}", pdf)
         try:                                                                              # 재단 여백 포함 — 원본과 같은 216×303
-            urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0",
+            urllib.request.urlretrieve(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0{fill}",
                                        os.path.join(out, f"p{rp}_print.pdf"))
-            warns = json.load(urllib.request.urlopen(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0&json=1"))["warnings"]
+            warns = json.load(urllib.request.urlopen(f"{BASE}/api/units/pdf?page={new_ids[k]}&print=1&marks=0&json=1{fill}"))["warnings"]
             for w in warns:
                 print(f"  ! 편집기 경고 p{rp}: {w}")
         except urllib.error.HTTPError as e:

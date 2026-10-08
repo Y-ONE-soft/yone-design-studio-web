@@ -457,6 +457,8 @@ const SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 
 const plainText = (t) => Array.isArray(t) ? t.map(r => typeof r === "string" ? r : (r.t || "")).join("") : (t || "");
 
 let plan = null, page = null, sel = null, sels = new Set(), scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {}, curSet = "";
+let viewContent = false;                                                  // 원고 보기 — 임시 글 대신 문서에 넣어 둔 원고(core/units/content.py)
+const fillArg = () => (viewContent && plan ? {fill: plan.id} : {});
 // 틀 = 문서. 아래 띠·←/→·＋ 는 전부 이 틀의 지면 순서 위에서 움직인다. 지면 자체는 라이브러리(공유)에 있다.
 function planIds(pl) { const ids = [...(pl.front || [])]; for (const sc of pl.sections || []) { if (sc.divider) ids.push(sc.divider); for (const pg of sc.pages || []) ids.push(pg.page); } ids.push(...(pl.back || [])); return ids; }
 function docPages() { return plan ? planIds(plan).map(id => byId("pages")[id]).filter(Boolean) : []; }
@@ -633,11 +635,18 @@ function setFit(mode) { view.fit = mode; $("#fitsel").value = mode; localStorage
 $("#fitsel").onchange = () => setFit($("#fitsel").value);
 $("#area").addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, {passive: false});
 let rt = null;
+function showFill(r) {                                                  // 원고 넣은 보고 — 찬 자리 · 임시 글로 남은 자리 · 남은 원고 · 틀에 없는 자리
+  const el = $("#s-content-rep"); if (!el) return;
+  const kv = (o) => Object.entries(o || {}).map(([k, n]) => `${k} ${n}`).join(", ");
+  el.textContent = `찬 자리 ${r.filled}` + (Object.keys(r.unfilled || {}).length ? ` · 임시 글로 남음: ${kv(r.unfilled)}` : "")
+    + (Object.keys(r.extra || {}).length ? ` · 남은 원고: ${kv(r.extra)}` : "") + ((r.unknown || []).length ? ` · 틀에 없는 자리: ${r.unknown.join(", ")}` : "");
+}
 function render() {
   if (!page) return;
   clearTimeout(rt);
   rt = setTimeout(async () => {
-    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: setFor(page), board: cols() === 2 ? 0 : BOARD, map: (plan && plan.map) || {}});
+    const j = await api("/api/units/preview", {kind: "pages", item: page, skin: $("#skin").value, skin_item: skin(), mode: "canvas", spec: page.spec, set: setFor(page), board: cols() === 2 ? 0 : BOARD, map: (plan && plan.map) || {}, ...fillArg()});
+    if (j.fill_report) showFill(j.fill_report);
     const w = $("#warn");
     if (j.error) { w.style.display = ""; w.textContent = j.error; return; }
     const svg = (j.svgs[0] || {}).svg || "";
@@ -756,7 +765,7 @@ async function drawRail() {
   $("#cnt").textContent = page ? `${idx() + 1} / ${dp.length}` : `0 / ${dp.length}`;
   for (const p of dp) {
     if (pageSvg[p.id]) continue;
-    const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec, set: setFor(p)});
+    const j = await api("/api/units/preview", {kind: "pages", item: p, skin: $("#skin").value, mode: "canvas", spec: p.spec, set: setFor(p), ...fillArg()});
     pageSvg[p.id] = ((j.svgs || [])[0] || {}).svg || "";
     document.querySelectorAll(`.pg[data-id="${p.id}"] .th`).forEach(th => { th.innerHTML = pageSvg[p.id]; strip(th); });
     document.querySelectorAll(`#pages .pslot[data-id="${p.id}"]:not(.cur)`).forEach(sl => fillPrev(sl, p));
@@ -1835,9 +1844,9 @@ function side() {
           <select data-a="bindsel" title="이 글상자에 원고의 무엇이 들어올지 고른다. 「고정 글」이면 원고와 상관없는 글">
             <option value="">고정 글 (원고 안 들어옴)</option>
             ${allSlots().map(([v, n2]) => `<option value="${v}" ${(a.bind || "").split("+")[0] === v ? "selected" : ""}>${esc(n2)}</option>`).join("")}
-            <option value="__other" ${a.bind && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? "selected" : ""}>직접 적기…</option>
+            <option value="__other" ${a.bind != null && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? "selected" : ""}>직접 적기…</option>
           </select>
-          ${a.bind && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px">` : ""}
+          ${a.bind != null && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px" placeholder="자리 이름" title="새 자리 이름 — 원고가 이 이름으로 글을 보낸다">` : ""}
         </span></div>
         ${a.bind && !a.bind.startsWith("sys.") ? `<div class="f"><span title="한 글상자에 원고 자리를 여럿 — 원고에 나온 순서대로 섞여 흐른다(발문 다음 선지, 문장 다음 해석). 인디자인의 한 스토리 여러 단락 스타일">자리 더하기</span><select data-a="bindadd"><option value="">＋ 같이 흘릴 자리…</option>${allSlots().filter(([v]) => !v.startsWith("sys.") && !a.bind.split("+").includes(v)).map(([v, n2]) => `<option value="${v}">${esc(n2)}</option>`).join("")}</select></div>` : ""}
         ${a.bind && !a.bind.startsWith("sys.") ? a.bind.split("+").map(f => { const d = slotFmt(a, f); return `<div class="f"><span title="자리마다 서식 — 한 흐름 안에서 이 자리 단락만 (인디자인 단락 스타일)">${esc((Object.fromEntries(allSlots()))[f] || f)}</span><span style="display:flex;gap:8px"><label><input type="checkbox" data-a="slotfmt.${f}.b" ${d.b ? "checked" : ""}> 굵게</label><label><input type="checkbox" data-a="slotfmt.${f}.i" ${d.i ? "checked" : ""}> 기울임</label><label title="이 자리 단락을 테두리 상자로 — 잇닿은 단락은 한 상자"><input type="checkbox" data-a="slotfmt.${f}.box" ${d.box ? "checked" : ""}> 상자</label></span></div>
@@ -1848,7 +1857,7 @@ function side() {
           <select data-a="num"><option value="">없음</option>${NUMS.map(v => `<option value="${v}" ${a.num === v ? "selected" : ""}>${v}</option>`).join("")}</select>
           ${a.num ? `<input type="number" data-a="num_start" min="1" step="1" value="${a.num_start || 1}" style="width:56px" title="시작 번호">` : ""}</span></div>
         ${a.num ? `<div class="note">번호는 저절로 매겨진다 — 원고가 번호를 주면 그 번호를 쓰고, 그다음부터 이어 센다</div>` : ""}
-        <div class="f"><span title="${a.bind ? "원고가 아직 없을 때 자리에 보일 글 — 책에는 안 실린다" : "이 상자에 늘 찍힐 글"}">${a.bind ? "견본 글" : "글"}</span><textarea data-a="text" rows="2">${esc(plainText(a.text))}</textarea></div>
+        <div class="f"><span title="${a.bind ? "임시 글 — 스타일을 매길 때 보는 글. 원고를 넣으면 원고 글로 바뀐다" : "이 상자에 늘 찍힐 글"}">${a.bind ? "임시 글" : "글"}</span><textarea data-a="text" rows="2">${esc(plainText(a.text))}</textarea></div>
         ${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
         <h3>글자 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>
         <div class="f"><span title="인디자인 단락 스타일 — 옷(브랜드)에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -1961,6 +1970,10 @@ function side() {
       <div class="f"><span></span><button class="btn sm sub" id="s-brandreg" title="이 문서에 직접 고른 색·서체를 모아 새 브랜드(견본)로 — 문서는 그 견본을 가리키게 바뀐다. 다른 브랜드로 갈아입힐 수 있게 된다">이 모양을 브랜드로 등록</button></div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
+      <h3>원고 넣기 <span class="note" style="display:inline">틀 = 자리·임시 글·스타일 · 원고 = {자리 이름: 글 | [글…]}</span></h3>
+      <div class="f"><span title="임시 글 = 틀 그대로 · 원고 = 넣어 둔 원고가 자리마다 임시 글 대신">보기</span><select id="s-view"><option value="">임시 글</option><option value="content" ${viewContent ? "selected" : ""}>원고</option></select></div>
+      <textarea id="s-content" rows="6" spellcheck="false" style="width:100%;font:11px ui-monospace,monospace" placeholder='{"지문": ["첫 지문", "둘째 지문"], "번호": ["01", "02"]}'>${esc(plan && plan.content ? JSON.stringify(plan.content, null, 1) : "")}</textarea>
+      <div class="f"><span></span><span style="display:flex;gap:6px;align-items:center"><button class="btn sm" id="s-content-put" title="원고를 문서에 넣고 원고 보기로 — 같은 자리가 여러 번이면 쪽 순서 → 위에서 아래 → 왼쪽에서 오른쪽">원고 넣기</button><span id="s-content-rep" class="note" style="display:inline"></span></span></div>
       <h3>책에서 <span class="note" style="display:inline">이 면을 몇 장 찍고, 어느 원고를 받을지</span></h3>
       ${bookRow}
       ${layersHtml()}`;
@@ -2034,7 +2047,7 @@ function side() {
     else if (k === "fill" && !v) delete a.fill;
     else if (k.startsWith("slotfmt.")) { const [, f, prop] = k.split("."); a.slot_fmt = a.slot_fmt || {}; a.slot_fmt[f] = Object.assign({}, a.slot_fmt[f], {[prop]: typeof v === "boolean" ? v : (+v || 0)}); }
     else if (k === "bindadd") { if (v && a.bind) a.bind = a.bind + "+" + v; }
-    else if (k === "bindsel") { if (v === "__other") { a.bind = a.bind || ""; } else if (v) a.bind = v; else delete a.bind;
+    else if (k === "bindsel") { if (v === "__other") { a.bind = (a.bind && !allSlots().some(([x]) => x === a.bind)) ? a.bind : "자리"; }   // 직접 적기 — 빈 이름은 저장이 안 되니 「자리」로 시작 else if (v) a.bind = v; else delete a.bind;
       if (a.bind && a.text === DEFAULT_TEXT) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 자리 이름이 회색으로 보인다
     else if (k === "bind" && !v) delete a.bind;
     else if (k === "style") { if (v) a.style = v; else delete a.style; }
@@ -2106,6 +2119,15 @@ function side() {
   on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
   on("#s-skin", "change", (e) => { $("#skin").value = e.target.value; $("#skin").onchange(); });
+  on("#s-view", "change", (e) => { viewContent = e.target.value === "content"; pageSvg = {}; render(); drawRail(); });
+  on("#s-content-put", "click", async () => {
+    const raw = $("#s-content").value.trim(); let obj = {};
+    if (raw) { try { obj = JSON.parse(raw); } catch (err) { say("원고가 JSON 이 아니다 — " + err.message); return; } }
+    if (typeof obj !== "object" || Array.isArray(obj)) { say("원고는 {자리 이름: 글 | [글…]}"); return; }
+    if (Object.keys(obj).length) plan.content = obj; else delete plan.content;
+    await savePlan(); viewContent = true; pageSvg = {}; render(); drawRail(); side();
+    say("원고 넣음 — 원고 보기");
+  });
   on("#s-brandreg", "click", registerBrand);
   on("#s-format", "change", async (e) => { if (e.target.value) plan.format = e.target.value; else delete plan.format; await savePlan(); side(); });
   on("#s-skin-edit", "click", () => openSheet("skins"));
@@ -2199,7 +2221,9 @@ const say = (msg, ms) => { $("#st").textContent = msg; stHold = Date.now() + (ms
 function save() {
   if (!page) return; if (Date.now() > stHold) $("#st").textContent = "저장 중…";
   clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page);
-    if (j.error) $("#st").textContent = "저장 실패: " + j.error; else if (Date.now() > stHold) $("#st").textContent = "저장됨"; }, 500);
+    const w = $("#warn");
+    if (j.error) { $("#st").textContent = "저장 실패: " + j.error; w.style.display = ""; w.dataset.save = "1"; w.textContent = "저장 안 됨 — " + j.error + " (고칠 때까지 이 쪽의 바뀐 것이 저장되지 않는다)"; }
+    else { if (w.dataset.save) { w.style.display = "none"; delete w.dataset.save; } if (Date.now() > stHold) $("#st").textContent = "저장됨"; } }, 500);
 }
 // 브랜드로 등록 — 먼저 직접 색·서체로 그리고, 다 만든 뒤 여기서 견본으로 (인디자인: 문서에서 쓴 색을 견본에 추가)
 //  문서 면과 그 면이 쓰는 요소(부품)의 직접 값(#색 · 서체 이름)을 모아 c1… · f1… 견본으로, 값은 견본 참조로 바꾼다
