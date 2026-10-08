@@ -248,8 +248,10 @@ def shape_match(ra, ma, color, tol, a, b, dpi=300):
     ca, cb = cover(ra, a), cover(ma, b)
     if not ca.size or not cb.size or ca.sum() < 1:
         return None, None
-    cb = np.asarray(Image.fromarray((cb * 255).astype(np.uint8)).resize((ca.shape[1], ca.shape[0]), Image.BILINEAR)) / 255.0
-    ink = float(cb.sum()) / float(ca.sum())
+    ink = float(cb.sum()) / float(ca.sum())                     # 잉크 양은 각자 상자에서 그대로 — 늘려 맞추면 1mm 남짓 글자는 1화소 차이에 ±20% 흔들렸다
+    H, W = max(ca.shape[0], cb.shape[0]), max(ca.shape[1], cb.shape[1])   # 겹침은 늘리지 않고 왼쪽 위를 맞춰 같은 크기로 채운다
+    ca = np.pad(ca, ((0, H - ca.shape[0]), (0, W - ca.shape[1])))
+    cb = np.pad(cb, ((0, H - cb.shape[0]), (0, W - cb.shape[1])))
     ma_, mb_ = ca > 0.5, cb > 0.5
 
     def grow(m, r=2):                                          # 2화소(0.17mm) 넓힌다 — 0.1mm 어긋남에 겹침이 무너지지 않게
