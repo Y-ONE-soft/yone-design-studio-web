@@ -1701,6 +1701,13 @@
   "wait": 600
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": 0
+  },
+  "wait": 600
+ },
+ {
   "say": "GREP 스타일 — 기호 (A)~(J) 만 9pt 굵은 파랑",
   "wait": 1700
  },
@@ -2713,6 +2720,13 @@
   "fill": {
    "at": "#side input[data-a=\"word_min\"]",
    "value": -60
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": 0
   },
   "wait": 600
  },
@@ -4340,6 +4354,13 @@
   "wait": 600
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": 0
+  },
+  "wait": 600
+ },
+ {
   "say": "GREP 스타일 — 기호 (A)~(J) 만 9pt 굵은 파랑",
   "wait": 1700
  },
@@ -5352,6 +5373,13 @@
   "fill": {
    "at": "#side input[data-a=\"word_min\"]",
    "value": -60
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": 0
   },
   "wait": 600
  },

@@ -967,6 +967,9 @@ $("#selbox [data-rot]").addEventListener("pointerdown", (e) => {
   window.addEventListener("pointermove", mv); window.addEventListener("pointerup", up);
 });
 function selG() { return sel != null ? gOf(sel) : null; }
+$("#selbox").addEventListener("dblclick", (e) => {                  // 손잡이·테두리를 두 번 눌러도 그 개체를 고친다 (작은 글상자는 손잡이가 가운데를 덮는다)
+  if (sel == null || sels.size > 1) return; e.stopPropagation(); const it = page.items[sel]; if (!it) return;
+  if ((it.block || it.part) && !editing) enterEdit(sel); else if (it.atom && it.atom.t === "text") editTextInline(sel); });
 function selbox() {
   const box = $("#selbox"), tools = $("#tools"), g = selG();
   if (!g || !page.items[sel] || drawTool) { box.style.display = "none"; tools.style.display = "none"; return; }
@@ -977,7 +980,8 @@ function selbox() {
   box.classList.toggle("multi", sels.size > 1);
   $("#sellb").textContent = (sels.size > 1 ? `${sels.size}개 · ` : "") + nameOf(it) + (it.lock ? " 🔒" : "") + ` · ${Math.round(r.width / scale * 10) / 10}×${Math.round(r.height / scale * 10) / 10}mm`;
   const isLine = sels.size === 1 && !!it.atom && it.atom.t === "line";
-  box.querySelectorAll(".hd").forEach(h => { const k = h.dataset.h; h.style.display = isLine && k !== "e" && k !== "w" ? "none" : ""; });
+  // 작은 상자는 가운데 손잡이를 감춘다(인디자인처럼) — 가운데를 두 번 눌러 글을 고치려는데 손잡이가 잡히지 않게
+  box.querySelectorAll(".hd").forEach(h => { const k = h.dataset.h; h.style.display = (isLine && k !== "e" && k !== "w") || ((k === "n" || k === "s") && r.width < 24) || ((k === "w" || k === "e") && !isLine && r.height < 24) ? "none" : ""; });
   box.querySelector(".rot").style.display = it.atom ? "" : "none";
   $("#t-lock").textContent = it.lock ? "🔓" : "🔒";
   const ty = r.top - pr.top - 34;                                   // 위에 자리가 없으면 선택 아래로 (지면을 덮지 않게)

@@ -284,6 +284,10 @@ def passage(pno):
 
 
 WORD_MIN = -60       # 양끝 줄 낱말 간격 최소 — 02B 와 같은 틀 값(인디자인이 공백을 줄여 넣은 줄)
+# 양끝 정렬 자간 최소 = 0‰ (줄이지 않음) — 원본 20·21쪽 목록·지문의 양끝 줄은 공백+자간이 모두 0.718mm 이상(안 늘린 줄 0.720)이라
+# 줄인 줄이 하나도 없다. 그리고 21쪽 지문 첫 줄 「dead.」(크롬 자연 폭 161.27mm, 측정 160 → -3.4‰)·20쪽 (D) 「Forest.」처럼
+# 기본 한계 -8‰ 안에서 줄이면 들어갈 낱말을 넣지 않고 다음 줄로 넘겼다. 기본값이면 컴포저가 줄여 넣어 줄 끝이 원본과 달라진다.
+JC_LETTER_MIN = 0
 
 LIST = {pn: sentence_list(pn) for pn in PAGES}
 PASS = {pn: passage(pn) for pn in PAGES}
@@ -324,6 +328,7 @@ def list_box(pg, pno):
     st += slot("문장", label="자리 이름 「문장」")
     st.append(F('#side input[data-a="space_after"]', SPACE_MM, 600))
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
+    st.append(F('#side input[data-a="jc.letter_min"]', JC_LETTER_MIN, 600))
     st += grep(0, r"\([A-J]\)", "#00559f", size=9, bshift=BSHIFT, label="GREP 스타일 — 기호 (A)~(J) 만 9pt 굵은 파랑")
     return st
 
@@ -380,6 +385,7 @@ def question(pg, pno):
     st += slot("지문")
     st.append(F('#side input[data-a="space_after"]', P_SPACE, 600))
     st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
+    st.append(F('#side input[data-a="jc.letter_min"]', JC_LETTER_MIN, 600))
     return st
 
 
