@@ -162,14 +162,23 @@ def put_content(obj, label="원고 넣기 — 바깥 시스템이 보내는 꼴(
             {"js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"}]
 
 
-def grep(n, pattern, color=None, bold=True, label=None):
-    """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색. n = 이 글상자의 몇 번째 규칙(0부터)"""
+def grep(n, pattern, color=None, bold=True, label=None, size=None, bshift=None, underline=False,
+         blank=None, line=None, line_off=None, line_color=None):
+    """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색 · 크기 · 기준선 · 밑줄 · 칸으로 바꾸기.
+    n = 이 글상자의 몇 번째 규칙(0부터). blank = 맞은 글 대신 이 폭(mm)의 밑줄 칸(원고의 ____ 빈칸) — line·line_off·line_color 로 선"""
     st = ([S(label)] if label else [])
     st += [{"click": "#side #s-grep-add", "wait": 700}, F(f'#side input[data-a="grep.{n}.re"]', pattern, 700)]
     if not bold:                                                               # 새 규칙은 굵게가 켜진 채로 생긴다
         st.append({"click": f'#side input[data-a="grep.{n}.b"]', "wait": 500})
     if color:
         st += _color(f"grep.{n}.color", color)
+    for key, v in (("size", size), ("bshift", bshift), ("blank", blank), ("line", line), ("line_off", line_off)):
+        if v is not None:
+            st.append(F(f'#side input[data-a="grep.{n}.{key}"]', v, 600))
+    if underline:
+        st.append({"click": f'#side input[data-a="grep.{n}.u"]', "wait": 500})
+    if line_color:
+        st += _color(f"grep.{n}.line_color", line_color)
     return st
 
 

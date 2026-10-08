@@ -247,9 +247,20 @@ def grep_html(html, rules, ctx=None):
             continue
         if not rx.pattern:
             continue
-        st = f"color:{ctx.color(r['color']) if ctx else r['color']};" if r.get("color") else ""
+        col = (ctx.color(r["color"]) if ctx else r["color"]) if r.get("color") else None
+        st = f"color:{col};" if col else ""
+        if r.get("size"):
+            st += f"font-size:{float(r['size']) * PT:.3f}px;"
+        if r.get("bshift"):                                                # 기준선 이동 pt — 양수면 위로
+            st += f"position:relative;top:{-float(r['bshift']) * PT:.3f}px;"
 
         def wrap(m):
+            if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
+                lw = float(r.get("line") or 0.2)
+                off = float(r.get("line_off") or 0.4)
+                lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
+                return (f'<span style="display:inline-block;width:{float(r["blank"]):.3f}px;height:0;'
+                        f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"></span>')
             t = esc(m.group(0))
             for k in ("u", "i", "b"):
                 if r.get(k):

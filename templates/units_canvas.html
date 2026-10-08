@@ -1873,6 +1873,9 @@ function side() {
         ${(a.grep || []).map((r, k) => `<div class="grep-rule"><div class="f"><span title="정규식 — 예: \\[[^\\]]*\\] = 대괄호 [ ] 와 그 안">패턴</span><input type="text" data-a="grep.${k}.re" value="${esc(r.re || "")}" spellcheck="false" placeholder="\\[[^\\]]*\\]"></div>
         <div class="f"><span>굵게</span><input type="checkbox" data-a="grep.${k}.b" ${r.b ? "checked" : ""}></div><div class="f"><span>기울임</span><input type="checkbox" data-a="grep.${k}.i" ${r.i ? "checked" : ""}></div>
         <div class="f"><span>색</span>${colorSel(`grep.${k}.color`, r.color, true)}</div>
+        <div class="m3"><label title="맞은 글자만 크기 — 비우면 글상자 크기">크기 pt<input type="number" data-a="grep.${k}.size" step="0.5" value="${r.size || ""}"></label><label title="기준선 이동 pt — 양수면 위로, 음수면 아래로">기준선 pt<input type="number" data-a="grep.${k}.bshift" step="0.1" value="${r.bshift || ""}"></label><label>밑줄<input type="checkbox" data-a="grep.${k}.u" ${r.u ? "checked" : ""} style="width:auto"></label></div>
+        <div class="m3"><label title="칸으로 바꾸기 — 맞은 글(예: 원고의 ____ 빈칸) 대신 이 폭의 밑줄 칸. 비우면 글 그대로">칸 폭 mm<input type="number" data-a="grep.${k}.blank" step="0.1" value="${r.blank || ""}"></label><label title="칸 밑줄 굵기">선 mm<input type="number" data-a="grep.${k}.line" step="0.01" value="${r.line || ""}" placeholder="0.2"></label><label title="칸 밑줄을 기준선 아래로">내림 mm<input type="number" data-a="grep.${k}.line_off" step="0.05" value="${r.line_off || ""}" placeholder="0.4"></label></div>
+        ${r.blank ? `<div class="f"><span>칸 선 색</span>${colorSel(`grep.${k}.line_color`, r.line_color, true)}</div>` : ""}
         <button class="btn sm sub grep-x" data-k="${k}">이 규칙 빼기</button></div>`).join("")}
         <button class="btn sm sub" id="s-grep-add">＋ GREP 규칙</button>
         <details class="more" ${view.adv ? "open" : ""}><summary>글자 더 보기 — 정렬 · 행간 · 자간 · 들여쓰기 · 단락 · 탭</summary>

@@ -154,7 +154,11 @@
         "grep": {"type": "array", "description": "GREP 스타일 — 패턴(정규식)에 맞는 글자에 서식(인디자인 단락 스타일의 GREP 스타일). 고정 글·원고 모두에 적용",
                  "items": {"type": "object", "required": ["re"], "properties": {
                    "re": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"},
-                   "color": {"$ref": "#/definitions/token"}}}},
+                   "color": {"$ref": "#/definitions/token"},
+                   "size": {"type": "number", "description": "글자 크기 pt"}, "bshift": {"type": "number", "description": "기준선 이동 pt — 양수면 위로"},
+                   "blank": {"type": "number", "description": "칸으로 바꾸기 — 맞은 글 대신 이 폭(mm)의 밑줄 칸 (원고의 ____ 빈칸)"},
+                   "line": {"type": "number", "description": "칸 밑줄 굵기 mm"}, "line_off": {"type": "number", "description": "칸 밑줄을 기준선 아래로 mm"},
+                   "line_color": {"$ref": "#/definitions/token"}}}},
         "drop_cap": {"type": "object", "description": "드롭캡 — 첫 글자를 몇 줄 높이로(인디자인 단락의 드롭캡)",
                      "properties": {"lines": {"type": "integer", "minimum": 2, "maximum": 8}, "chars": {"type": "integer", "minimum": 1, "maximum": 4}}},
         "column_rule": {"$ref": "#/definitions/rule", "description": "단 사이 괘선(인디자인 단 사이 괘선)"},
