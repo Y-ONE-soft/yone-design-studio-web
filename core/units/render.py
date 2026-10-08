@@ -18,6 +18,7 @@ from xml.sax.saxutils import escape as _x
 from core.units import sample
 
 PT = 25.4 / 72.0
+CJK_SPACE_FIX = 56                 # ‰ em — Noto CJK 한국어 공백(locl KOR 0.280em) − 라틴 기본 공백(0.224em)
 TEXT_ZOOM = 100                    # 글상자 배치 해상도 — 지면 1mm 를 100px 로 (아래 _atom_svg_raw 의 글). 10 이면 0.1mm 단위로 반올림돼 빈칸 밑줄 0.176mm 가 0.1mm 로 나왔다
 GAP_BLOCK = 1.5      # mm — 한 세트 안 블록 사이
 GAP_SET = 4.0        # mm — 세트 사이
@@ -322,6 +323,15 @@ def keep_spaces(html):
     return re.sub(r" ((?:&#160;)*)(?=(?:</[a-z]+>)*(?:<br/>|$))", r"&#160;\1", html)
 
 
+def base_word_spacing(a, ctx):
+    """글상자의 기본 낱말 간격(‰ em) — 「낱말 사이」 + Noto CJK 공백 보정.
+    lang=en 이면 Noto CJK 공백이 라틴 기본(0.224em)이 되는데 인디자인은 한국어 꼴(0.280em)을 쓴다 — 합자(en 에만 있음)와 한국어 공백 폭을 함께 (단위 02·04, 서체 GSUB 실측)."""
+    ws = float(a.get("word_spacing") or 0)
+    if not a.get("lang") and ctx and "CJK" in ctx.font(a.get("font")):
+        ws += CJK_SPACE_FIX
+    return ws
+
+
 def soft_breaks(x, justify=False, word_min=None):
     """줄 나눔(U+2028, Shift+Enter) — 문단은 그대로 두고 그 자리에서 줄만 꺾는다(인디자인 강제 줄바꿈).
     양끝맞춤이면 꺾인 앞줄도 양끝을 맞춘다(인디자인과 같다). 조각마다 열린 태그를 닫았다 다시 연다.
@@ -607,8 +617,8 @@ def _text_html(a, html, h, ctx=None):
     paras = (html or "").split("<br/>")
     just = a.get("align") == "justify"
     # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
-    jc = (lambda x: ' data-jc="92,400,0.5,5,89.5"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
-    inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, a.get("word_min")) or "&#160;"}</p>' for x in paras)
+    jc = (lambda x: ' data-jc="100,133,-8,120,1,5,-10"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
+    inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
         n = int(dc.get("chars") or 1)
@@ -1144,8 +1154,9 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += ";hyphens:auto;-webkit-hyphens:auto"
         if a.get("justify_mode"):
             style += ";text-justify:" + ("inter-character" if a["justify_mode"] == "letter" else "inter-word")
-        if a.get("word_spacing"):
-            style += f";word-spacing:{float(a['word_spacing']) / 1000.0:.4f}em"
+        ws = base_word_spacing(a, ctx)
+        if ws:
+            style += f";word-spacing:{ws / 1000.0:.4f}em"
         dec = _decor_css(a, ctx)
         if dec:
             style += ";" + dec

@@ -32,9 +32,10 @@
       if (sp) while (j < chars.length && isSp(chars[j][2])) j++;
       else while (j < chars.length && !isSp(chars[j][2]) && !(CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))) j++;
       const seg = chars.slice(i, j);
-      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0, seg: sp ? seg : null});
+      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0, seg: sp ? seg : null,
+                c: seg.length});                                                // 글자 수 — 인디자인 자간은 글자마다 붙는다
       if (!sp && j < chars.length && CJK.test(chars[j - 1][2]) && CJK.test(chars[j][2]))
-        out.push({space: true, zero: true, breakable: true, n: 0, w: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
+        out.push({space: true, zero: true, breakable: true, n: 0, w: 0, sp0: 0, c: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
       i = j;
     }
     while (out.length && out[0].space) out.shift();
@@ -55,10 +56,11 @@
     if (p.dataset.jcDone) return;
     const OK = new Set(["span", "b", "i", "u", "s", "sup", "sub"]);        // 글 안 표·떠 있는 그림 등은 건드리지 않는다 — inline-block 개체 속(SVG)은 괜찮다
     if ([...p.querySelectorAll("*")].some(e => !OK.has(e.tagName.toLowerCase()) && !(e.parentElement && e.parentElement.closest("span[style*='inline-block']")))) return;
-    // 낱말 간격 최소 % · 최대 % · 줄이기 비용 배수 · 줄 하나 비용 · 끝 줄 최소 % — 원본 인디자인 지문 4개(줄 끝 32개)에 맞춘 값
-    // (scratch jc_fit.py: 브라우저 그대로 17/32 → 이 값 30/32). 인디자인은 많이 늘리고 조금 줄이며, 끝 줄은 89.5% 까지 줄여 넣는다
-    // (단위 02 지문 1 끝 줄 89.9% 는 줄여 넣고, 단위 06 문장 (D) 88% 는 다음 줄로 넘김 — 2026-10-08).
-    const [mn, mx, sw, lp, lastMn] = (p.dataset.jc || "92,400,0.5,5,89.5").split(",").map(Number);
+    // 인디자인 「양끝 정렬」 설정 — 낱말 간격 최소·최대 %(공백 글리프 폭 기준) · 자간 최소·최대 ‰em · 줄이기 비용 배수 · 줄 하나 비용 · 끝 줄 자간 최소 ‰em.
+    // 원본 d1 PDF 에서 읽은 규칙(2026-10-08 scratch justify-analysis): 낱말 간격은 100%(희망) → 133%(최대)까지 먼저 늘고, 모자라면 자간이 는다
+    // (낱말은 133% 에 멈춤 — 4~37쪽 줄 87개 모두 0.33×공백 ±0.6‰). 줄일 땐 낱말은 100% 아래로 안 가고 자간만 준다(-1~-5‰ 관찰). 글리프 비율 100%.
+    // 공백 기준 = 서체의 U+0020 폭(Noto CJK KR 224/1000 — 인디자인이 실제로 놓는 locl 공백 280 이 아니다). 줄 끝 맞춤 4·5·8·9·16·17쪽 60/62.
+    const [wmn, wmx, lmn, lmx, sw, lp, lastLmn] = (p.dataset.jc || "100,133,-8,120,1,5,-10").split(",").map(Number);
     const save = [p.style.whiteSpace, p.style.textAlign];
     p.style.whiteSpace = "nowrap";
     p.style.textAlign = "left";                                         // 늘이기 전 자연 폭으로 잰다
@@ -70,10 +72,15 @@
     const cs = getComputedStyle(p);
     const W = rect.width - (parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) * k;
     const indent = parseFloat(cs.textIndent) * k || 0;
+    const em = parseFloat(cs.fontSize) * k;
+    const ls = parseFloat(cs.letterSpacing) * k || 0, wsp = parseFloat(cs.wordSpacing) * k || 0;   // 단락 자간 · 낱말 간격(보정) — 공백 글리프 폭을 꺼내려고
+    for (const t of toks) if (t.space && !t.zero) t.sp0 = Math.max(0, t.w - t.n * (ls + wsp));       // 공백 글리프 폭 합 = 낱말 간격 % 의 기준
     p.style.whiteSpace = save[0];
     p.style.textAlign = save[1];
+    const Lmx = lmx / 1000 * em, Lmn = -lmn / 1000 * em, LLmn = -lastLmn / 1000 * em;   // 글자 사이 하나가 늘·줄 수 있는 폭(px)
 
     // 줄 끝 후보 = 끊을 수 있는 공백. 줄 = 후보 a 다음 낱말부터 후보 b 앞 낱말까지.
+    // 늘릴 수 있는 폭 = 공백 기준 × (최대-100)% + 글자 사이 수 × 자간 최대 · 줄일 수 있는 폭 = 공백 기준 × (100-최소)% + 글자 사이 수 × |자간 최소|
     const brk = [-1];
     toks.forEach((t, i) => { if (t.space && t.breakable) brk.push(i); });
     brk.push(toks.length);
@@ -82,21 +89,25 @@
     for (let a = 0; a < brk.length - 1; a++) {
       if (best[a] === Infinity) continue;
       const g0 = a > 0 ? toks[brk[a]] : null;                          // 공백 여러 칸에서 꺾이면 첫 칸만 줄 끝 — 나머지는 이 줄 앞에 남는다(인디자인)
-      let L = g0 && g0.n > 1 ? g0.w * (g0.n - 1) / g0.n : 0, Y = 0, Z = 0, nsp = 0;
+      const f0 = g0 && g0.n > 1 ? (g0.n - 1) / g0.n : 0;
+      let L = f0 ? g0.w * f0 : 0, S0 = f0 ? g0.sp0 * f0 : 0, nc = f0 ? g0.n - 1 : 0;
       const lw = W - (a === 0 ? indent : 0);
       for (let b = a + 1; b < brk.length; b++) {
-        // a 다음 ~ b 앞까지 더한다
         const s = brk[b - 1] + 1, e = brk[b];
         for (let i = (b === a + 1 ? brk[a] + 1 : s - 1); i < e; i++) {
           const t = toks[i];
           L += t.w;
-          if (t.space) { Y += t.w * (mx - 100) / 100; Z += t.w * (100 - mn) / 100; nsp += t.n; }
+          nc += t.c;
+          if (t.space) S0 += t.sp0;
         }
         const last = b === brk.length - 1;
+        const ng = Math.max(0, nc - 1);                                 // 글자 사이 수(공백 포함 — 인디자인 자간은 공백 뒤에도 붙는다)
         let bad;
-        if (L <= lw) bad = last ? 0 : Math.min(10000, 100 * Math.pow(Y > 0 ? (lw - L) / Y : 10, 3));
-        else {
-          const z = last ? Z * (100 - lastMn) / (100 - mn) : Z;          // 끝 줄은 더 줄일 수 있다
+        if (L <= lw) {
+          const Y = S0 * (wmx - 100) / 100 + ng * Lmx;
+          bad = last ? 0 : Math.min(10000, 100 * Math.pow(Y > 0 ? (lw - L) / Y : 10, 3));
+        } else {
+          const z = S0 * (100 - wmn) / 100 + ng * (last ? LLmn : Lmn);  // 끝 줄은 자간을 조금 더 줄여 넣는다
           const r = z > 0 ? (lw - L) / z : -10;
           if (r < -1) break;                                           // 더 붙이면 줄여도 안 들어간다
           bad = last ? 0 : Math.min(10000, sw * 100 * Math.pow(-r, 3));
@@ -110,7 +121,6 @@
     const cut = [];
     for (let b = brk.length - 1; b > 0; b = from[b]) cut.unshift(b);
 
-    // 줄마다 블록으로 — 앞줄은 양끝까지, 줄여야 들어가는 줄은 그만큼 낱말 간격을 줄인다. 마지막 줄은 그대로.
     const lines = [];
     let s = 0;
     for (const b of cut) {
@@ -118,8 +128,11 @@
       const ws = toks.slice(s, e);
       const g0 = s > 0 ? toks[s - 1] : null;                             // 앞 줄 끝 공백 덩어리의 둘째 칸부터 — 이 줄 앞에 남긴다
       const lead = g0 && g0.space && g0.n > 1 && g0.seg ? g0.seg[1] : null;
-      lines.push({first: toks[s], last: toks[e - 1], start: lead, L: ws.reduce((x, t) => x + t.w, 0) + (lead ? g0.w * (g0.n - 1) / g0.n : 0),
-                  nsp: ws.filter(t => t.space).reduce((x, t) => x + t.n, 0) + (lead ? g0.n - 1 : 0), glue: e < toks.length ? toks[e] : null});
+      const f0 = lead ? (g0.n - 1) / g0.n : 0;
+      const sum = (f) => ws.reduce((x, t) => x + f(t), 0);
+      lines.push({first: toks[s], last: toks[e - 1], start: lead, L: sum(t => t.w) + (lead ? g0.w * f0 : 0),
+                  nsp: sum(t => t.space ? t.n : 0) + (lead ? g0.n - 1 : 0), S0: sum(t => t.space ? t.sp0 : 0) + (lead ? g0.sp0 * f0 : 0),
+                  nc: sum(t => t.c) + (lead ? g0.n - 1 : 0)});
       s = e + 1;
     }
     const frag = [];
@@ -135,9 +148,17 @@
     lines.forEach((ln, li) => {
       const sp = document.createElement("span");
       let st = "display:block;" + (li ? "text-indent:0;" : "");
-      if (!isLast(li)) st += "text-align-last:justify;";
-      const over = ln.L - lw0(li);                                     // 줄여야 들어가는 줄 — 끝 줄도(인디자인은 끝 줄을 줄여 넣는다)
-      if (over > 0 && ln.nsp) st += `word-spacing:${(-over / ln.nsp / k).toFixed(4)}px;`;
+      // 줄마다 인디자인 순서로 나눈다: 낱말 간격(최소~최대) 먼저, 남는 것은 자간. 끝 줄은 넘칠 때만(줄여 넣기).
+      const slack = lw0(li) - ln.L, ng = Math.max(1, ln.nc - 1);
+      let xw = 0, dl = 0;
+      if (slack < 0) { xw = Math.max(slack, -ln.S0 * (100 - wmn) / 100); dl = (slack - xw) / ng; }
+      else if (!isLast(li)) { xw = Math.min(slack, ln.S0 * (wmx - 100) / 100); dl = (slack - xw) / ng; }
+      if (!isLast(li) || slack < 0) {
+        st += "text-align-last:justify;";                               // 반올림 찌꺼기만 크롬이 공백에 나눈다
+        if (ln.nsp && xw) st += `word-spacing:${((wsp + xw / ln.nsp) / k).toFixed(4)}px;`;
+        // 자간은 끝 글자 뒤에도 붙으므로(크롬) 그만큼 줄을 넓혀 끝 글자 자리를 지킨다 — 인디자인은 글자 사이(n-1)에만
+        if (Math.abs(dl) > 0.001) st += `letter-spacing:${((ls + dl) / k).toFixed(4)}px;margin-right:${(-dl / k).toFixed(4)}px;`;
+      }
       sp.setAttribute("style", st);
       sp.appendChild(frag[li]);
       p.appendChild(sp);
