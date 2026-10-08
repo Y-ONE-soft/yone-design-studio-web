@@ -3,7 +3,7 @@
 {% block theme %}light{% endblock %}
 
 {% block content %}
-{# 디자인 상세 — 지면 전부 보기. 큰 그림 + 지면 목록(페이지 틀 · 견본 사진). 원고 넣기 · 새 프로젝트에서 열기 · 확인 완료 · 삭제. #}
+{# 디자인 상세 — 지면 전부 보기. 큰 그림 + 구성(기준 PDF 면 묶음). 기준 PDF 가 없으면 큰 그림에 페이지 틀 · 견본 사진. 원고 넣기 · 새 프로젝트에서 열기 · 확인 완료 · 삭제. #}
 <style>
   .top { padding: 26px 40px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
   .top .crumb { width: 100%; font-size: 13px; color: #5f6368; }
@@ -103,18 +103,13 @@
     {% for n in range(1, total + 1) %}<div class="pg" data-n="{{ n }}"><div class="th"><img data-src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div><div class="lb">p{{ n }}</div></div>{% endfor %}
   </div>
   {% endif %}
-
-  <h2>대표 지면 <span class="n">페이지 틀 {{ d.masters|length }} · 견본 {{ d.previews|length }}</span></h2>
-  <div class="pages" id="pages">
-    {% for p in pages %}<div class="pg {{ 'on' if loop.first else '' }}" data-i="{{ loop.index0 }}"><div class="th"><img src="{{ p.src }}" alt="" loading="lazy"></div><div class="lb">{{ p.label }} <small>{{ p.kind }}{% if p.page %} · p{{ p.page }}{% endif %}</small></div></div>{% endfor %}
-  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
   var REP = {{ pages|tojson }}, TOTAL = {{ total }}, S = '{{ t.series }}', D = '{{ d.id }}';
-  // 큰 그림 목록 = 대표 지면 + 기준 PDF 전체 면. 전체 면은 96dpi 로 따로 그린다(목록은 30dpi).
+  // 큰 그림 목록 = (기준 PDF 없을 때만) 페이지 틀 · 견본 + 기준 PDF 전체 면. 전체 면은 96dpi 로 따로 그린다(목록은 30dpi).
   var PAGES = REP.concat(Array.apply(null, Array(TOTAL)).map(function (_, k) {
     return { src: '/catalog/page/' + S + '/' + D + '/' + (k + 1) + '.png?dpi=96', kind: '기준 PDF', label: 'p' + (k + 1), n: k + 1 };
   })), i = 0;
@@ -124,10 +119,8 @@
     document.getElementById('big').src = PAGES[i].src;
     document.getElementById('big-lbl').textContent = PAGES[i].kind + ' · ' + PAGES[i].label;
     document.getElementById('pos').textContent = (i + 1) + ' / ' + PAGES.length;
-    document.querySelectorAll('#pages .pg').forEach(function (p, k) { p.classList.toggle('on', k === i); });
     document.querySelectorAll('#all-pages .pg').forEach(function (p) { p.classList.toggle('on', +p.dataset.n === PAGES[i].n); });
   }
-  document.querySelectorAll('#pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(+p.dataset.i); }); });
   document.querySelectorAll('#layouts .pg, #all-pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(REP.length + (+p.dataset.n) - 1); document.getElementById('stage').scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
   var tg = document.getElementById('tg-all');
   if (tg) tg.addEventListener('click', function () {      // 전체 면은 펼칠 때만 그림을 청한다

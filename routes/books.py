@@ -180,7 +180,7 @@ def page_project_new():
 
 @bp.route("/design/<series>/<design>")
 def page_design(series, design):
-    """디자인 상세 — 지면 전부(페이지 틀 + 견본 사진) 크게 보기. 원고 넣기·새 프로젝트에서 열기·확인 완료·삭제."""
+    """디자인 상세 — 구성(기준 PDF 면 묶음) + 큰 그림. 원고 넣기·새 프로젝트에서 열기·확인 완료·삭제."""
     from routes.catalog import _ID, design_layouts, template_info
     t = template_info(series)
     if not t or not _ID.match(design):
@@ -188,9 +188,11 @@ def page_design(series, design):
     d = next((x for x in t["designs"] if x["id"] == design), None)
     if not d:
         abort(404)
-    pages = [{"src": f"/catalog/master/{series}/{design}/{m['file']}", "label": m["label"], "kind": "페이지 틀", "page": m.get("page")} for m in d["masters"]] \
-          + [{"src": f"/catalog/preview/{series}/{design}/{p}", "label": f"견본 {i + 1}", "kind": "견본 사진"} for i, p in enumerate(d["previews"])]
     lay = design_layouts(series, design)          # 지면 형태(지문만 다른 면은 하나로) + 전체 면수
+    # 페이지 틀 · 견본 사진은 기준 PDF 가 없을 때만 큰 그림에 — 있으면 구성(실제 면)으로 충분하다
+    pages = [] if lay["total"] else \
+            [{"src": f"/catalog/master/{series}/{design}/{m['file']}", "label": m["label"], "kind": "페이지 틀", "page": m.get("page")} for m in d["masters"]] \
+          + [{"src": f"/catalog/preview/{series}/{design}/{p}", "label": f"견본 {i + 1}", "kind": "견본 사진"} for i, p in enumerate(d["previews"])]
     return render_template("design_detail.html", t=t, d=d, pages=pages, total=lay["total"], layouts=lay["layouts"], active_nav="프로젝트")
 
 
