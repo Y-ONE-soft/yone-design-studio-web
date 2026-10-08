@@ -11,7 +11,9 @@
 47쪽 STEP 03 탭 글은 GS6(0.9216) 면을 칠한 뒤 Q 로 상태를 되돌리고 그린다 → 불투명 1.
 Type3(윤곽) 글은 기준선 = 글자 상자 위 + 0.9×크기. 굵기는 잉크 양을 재서 정했다(크롬에서 100~900 을 그려 원본 면적과 비교 —
 STEP 700 · 03·숫자·STEP BY STEP 800 · 단계 라벨 600 · 탭 글 700 · Gmarket 교재명 700 · 단원명 500).
-잉크는 원본이 실제로 보이는 색(shown)으로 잰다. STEP(12pt)은 크롬 면적 600=0.89·700=1.07, 비교 도구 600=0.90·700=1.06 → 700.
+잉크는 원본이 실제로 보이는 색으로 잰다 — 투명 글은 "see": "auto"(pagecmp.shown_color: 원본 그림에서 바탕과 가장 먼 화소 색).
+46·47쪽은 쪽 투명 그룹이 /CS /DeviceCMYK 라 투명이 CMYK 로 섞여 sRGB 계산과 다르다(흰 75% → #ebd7d0, 큰 03 14% → #c68c7e).
+STEP(12pt)은 크롬 면적 600=0.89·700=1.07, 비교 도구 600=0.90·700=1.06 → 700.
 단계 라벨(8.5pt)은 둘 사이(약 650) — 크롬 면적 600=0.90·700=1.07, 비교 도구 600=0.93·700=1.12(2판, 기준 밖) → 600.
 탭 글 700=1.00~1.02, 숫자·STEP BY STEP 800=1.00~1.03 (크롬 인쇄 PDF 를 300dpi 로 그려 덮임 합 / 원본 덮임 합).
 측정 보정은 쓰지 않는다. 이 파일은 steps.json(녹화기 대본)과 elems.json(측정할 요소 목록)을 쓴다.
@@ -38,34 +40,6 @@ def mix(color, alpha, under=BG):
         return color
     c, b = [int(color[i:i + 2], 16) for i in (1, 3, 5)], [int(under[i:i + 2], 16) for i in (1, 3, 5)]
     return "#" + "".join("%02x" % round(bb + (cc - bb) * alpha / 100) for cc, bb in zip(c, b))
-
-
-_REF_PX = {}
-
-
-def shown(pg, box):
-    """투명 글이 원본에서 실제로 보이는 색 — 원본 쪽을 300dpi 로 그려(비교 도구와 같은 그림) 글자 상자 안 가장 짙은 화소 색.
-    46·47쪽은 쪽 투명 그룹이 /CS /DeviceCMYK 라서(PDF 의 /Group 317·337 0 R) 투명은 CMYK 에서 섞인다 —
-    흰 75% 가 벽돌 바탕 위에서 sRGB 섞음 #eedfdb 가 아니라 #ebd7d0 으로, 큰 03(14%)은 #c68c7e 로 보인다.
-    편집기(크롬)는 같은 불투명 값을 sRGB 로 섞는다. 그래서 잴 색(see)을 계산 대신 원본이 보이는 색으로 두면
-    원본 쪽 잉크가 1 로 세어져 굵기 비교가 섞는 색 공간 차이에 흔들리지 않는다(1판: 숫자 1·2 잉크 1.13·1.15, 큰 03 1.21).
-    글의 색·불투명 값은 그대로(PDF 값) — 바뀌는 것은 비교가 찾는 색뿐."""
-    import numpy as np
-    sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
-    import pagecmp
-    if pg not in _REF_PX:
-        _REF_PX[pg] = pagecmp.page_array(os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf"), PAGES[pg - 1], 300).astype(int)
-    a, k = _REF_PX[pg], 300 / 25.4
-    x, y, w, h = box
-    win = a[int(y * k) - 3:int((y + h) * k) + 4, int(x * k) - 3:int((x + w) * k) + 4]
-    rim = np.concatenate([win[0], win[-1], win[:, 0], win[:, -1]])
-    vals, cnt = np.unique(rim, axis=0, return_counts=True)
-    bg = vals[cnt.argmax()]
-    px = win.reshape(-1, 3)
-    dist = np.abs(px - bg).sum(1)
-    far = px[dist >= 0.9 * dist.max()]
-    vals, cnt = np.unique(far, axis=0, return_counts=True)
-    return "#%02x%02x%02x" % tuple(int(v) for v in vals[cnt.argmax()])
 
 
 def t3scale(pdf_page, box):
@@ -98,7 +72,7 @@ def track_v(pdf_page, box, s, family, weight, size):
 
 def T(pg, id, x, y, w, h, s, size, color, weight, font=MS, label=None, search=2, alpha=None, see=None, ctol=24, leading=None, pad=None):
     """Type3 글 하나 — 원본 글자 상자(x,y,w,h) · 크기 pt · 색 · 굵기 · 불투명. 기준선 = 상자 위 + 0.9×크기"""
-    e = {"id": id, "x": x, "y": y, "w": w, "h": h, "color": color, "see": see or (alpha and shown(pg, (x, y, w, h))) or color, "ctol": min(ctol, 16) if alpha else ctol,
+    e = {"id": id, "x": x, "y": y, "w": w, "h": h, "color": color, "see": see or ("auto" if alpha else color), "ctol": min(ctol, 16) if alpha else ctol,
          "search": search, "text": s, "size": size}
     if pad is not None:
         e["pad"] = pad
@@ -117,7 +91,7 @@ def V(pg, id, base_x, y0, s, size, color, weight, box, alpha=None, see=None, lab
     """돌린 글(90°, 위에서 아래로 읽는다) — base_x = 기준선 x, y0 = 첫 글자 시작 y, box = 원본 글자 상자(잴 자리).
     편집기는 상자 가운데를 축으로 돌린다: 왼쪽 맞춤 글의 첫 글자 기준선 점 (bx, by+b) 가
     (cx + cy - by - b, cy + bx - cx) 로 간다 → bx = X - bw/2 - bh/2 + b, by = Y - bh/2 + bw/2 (b = 반 행간 + 서체 윗높이)."""
-    ELEMS[pg].append({"id": id, "x": box[0], "y": box[1], "w": box[2], "h": box[3], "color": color, "see": see or (alpha and shown(pg, box)) or color,
+    ELEMS[pg].append({"id": id, "x": box[0], "y": box[1], "w": box[2], "h": box[3], "color": color, "see": see or ("auto" if alpha else color),
                       "ctol": 16 if alpha else 24, "search": 0.8, "pad": 0.8, "text": s, "size": size})
     size = round(size * t3scale(REF[PAGES[pg - 1] - 1], box), 2)
     track = track_v(REF[PAGES[pg - 1] - 1], box, s, MS, weight, size)

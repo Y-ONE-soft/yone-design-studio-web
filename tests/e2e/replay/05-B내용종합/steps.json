@@ -1687,13 +1687,6 @@
   "wait": 800
  },
  {
-  "fill": {
-   "at": "#side input[data-a=\"word_min\"]",
-   "value": -60
-  },
-  "wait": 600
- },
- {
   "say": "문항 01 — 번호 · 발문 · 선지",
   "wait": 1300
  },
@@ -4509,13 +4502,6 @@
    "value": "지문"
   },
   "wait": 800
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"word_min\"]",
-   "value": -60
-  },
-  "wait": 600
  },
  {
   "say": "문항 01 — 번호 · 발문 · 선지",

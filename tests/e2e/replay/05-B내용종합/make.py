@@ -123,7 +123,6 @@ def temp_passage(n):
 
 
 TRACK = -40          # 지문 자간: 원본 글자 간격 - 서체 폭 (공백 제외 중앙값 — 16·17쪽 8.5pt 글자 1134쌍 모두 -40)
-WORD_MIN = -60       # 양끝 줄 낱말 간격 최소 — 02B 와 같은 지문 스타일
 
 
 def passage(pg, pno, sky, label):
@@ -143,7 +142,8 @@ def passage(pg, pno, sky, label):
     st += text(round(x, 2), round(y, 2), w, round(len(rows) * lead * MM + 0.5, 1), temp_passage(len(txt)), 8.5, INK,
                label="지문 자리 — 임시 글 · 양끝맞춤 · 행간 %dpt" % lead, leading=lead, align="justify", font=NOTO, track=TRACK)
     st += slot("지문", label="자리 이름 「지문」")
-    st.append(F('#side input[data-a="word_min"]', WORD_MIN, 600))
+    # 「양끝 줄 낱말 최소」(word_min)는 쓰지 않는다 — 줄 나눔(Shift+Enter)으로 꺾인 줄에만 먹는 값인데 원고는 줄 나눔 없는 문단이라
+    # 줄 끝·낱말 간격은 단락 컴포저(인디자인 양끝 정렬 규칙: 낱말 100~133% 먼저, 남는 폭만 자간)가 정한다.
     return st
 
 
@@ -191,11 +191,11 @@ def questions(pg, pno):
         CONTENT["발문"].append(q["t"])
         lead = round((opts[1]["base"] - opts[0]["base"]) / MM)              # 선지 기준선 간격 → 행간 pt (15)
         tr = opt_track(pno)
-        # 잴 때 색 허용 80 — 결과 PDF(Chrome, 594.96pt 폭)를 원본 화소 크기(2481)로 늘리며 ①~④ 의 가는 원 테두리가 흐려져
-        # 30 이면 원이 안 잡혀 글 상자가 0.8mm 짧게, 50 이면 아랫부분이 빠져 0.4mm 낮게 재진다(늘리기 전 결과 원은 원본과 0.1mm 안 — 그림 문제 아님)
+        # 색 허용 30 — 예전엔 비교 도구가 결과 PDF 를 원본 화소 크기로 늘려 ①~④ 의 가는 원 테두리가 흐려져 80 을 썼다.
+        # 비교가 늘리지 않게 바뀐 뒤(pagecmp.measure) 다른 글과 같은 30 으로 잰다.
         for j, o in enumerate(opts):
             ELEMS[pg].append({"id": f"q{k + 1}-o{j + 1}", "x": o["x"], "y": round(o["base"] - 0.8 * 8 * MM, 2), "w": round(o["x1"] - o["x"], 2),
-                              "h": round(8 * MM * 1.05, 2), "color": INK, "see": INK, "ctol": 80, "search": 1.0, "pad": 0.6,
+                              "h": round(8 * MM * 1.05, 2), "color": INK, "see": INK, "ctol": 30, "search": 1.0, "pad": 0.6,
                               "text": o["t"], "size": 8})
         st += text(round(opts[0]["x"], 2), round(top_of(opts[0]["base"], 8, NOTO, 400, lead), 2), 150, round(len(opts) * lead * MM + 0.5, 1),
                    OPT_TEMP, 8, INK, label=f"선지 자리 — 문단 넷 · 행간 {lead}pt · 자간 {tr}", leading=lead, font=NOTO, track=tr or None)
