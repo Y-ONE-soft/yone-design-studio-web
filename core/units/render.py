@@ -1136,7 +1136,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style = style.replace("white-space:normal", "white-space:pre-wrap") + f";tab-size:{float(a['tab']):.3f}px"
         # 글은 TEXT_ZOOM 배 해상도로 배치하고 그만큼 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
         # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
-        z = TEXT_ZOOM
+        big = max([float(a.get("size") or 9)] + [float(r.get("size") or 0) for r in a.get("grep") or []]) * PT
+        z = max(1, min(TEXT_ZOOM, int(9000 / max(big, 0.1))))                 # 크롬은 글자를 1만 px 보다 크게 못 그린다(300pt 가 283pt 로) — 큰 글은 해상도를 낮춘다
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
                 f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}">'
                 f'<div xmlns="http://www.w3.org/1999/xhtml" style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
