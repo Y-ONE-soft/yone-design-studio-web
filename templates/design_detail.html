@@ -64,6 +64,7 @@
     <div class="meta"><i class="dot {{ t.ready }}"></i>{{ t.name }} · {{ '기준 PDF ' ~ total ~ '면' if total else '지면 ' ~ pages|length ~ '면' }}{% if d.date %} · {{ d.date }}{% endif %}{% if d.desc %} · {{ d.desc }}{% endif %}</div>
   </div>
   <div class="acts">
+    {% if total %}<a href="/catalog/pdf/{{ t.series }}/{{ d.id }}" target="pdfview">PDF 뷰어로 보기</a>{% endif %}
     {% if t.manuscript %}<a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">원고 넣기 → 조판</a>
     <a href="/project/new?pick={{ t.series }}/{{ d.id }}" target="_blank">새 프로젝트에서 열기</a>{% endif %}
     {% if d.draft %}<button class="ok" id="confirm">확인 완료</button>{% endif %}
@@ -97,7 +98,8 @@
       <div class="two">
         {% for n in (l.show or [l.n]) %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}
       </div>
-      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}면 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}</small></div>
+      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}면 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}
+        · <a href="/catalog/pdf/{{ t.series }}/{{ d.id }}#page={{ (l.show or [l.n])[0] }}" target="pdfview">PDF에서 보기</a></small></div>
     </div>{% endfor %}
   </div>
   <div class="pages all hide" id="all-pages">
