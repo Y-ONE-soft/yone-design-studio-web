@@ -611,6 +611,51 @@ def _running_labels(doc):
     return {l for side in (0, 1) for l, c in cnt[side].items() if n[side] and c >= n[side] * 0.4}
 
 
+def _divider_vec(page):
+    """간지 생김새 — 폭 36px 회색 그림을 밝기 정규화한 값. 색만 다른 간지(STEP 01·02·03)·번호만 다른 간지(UNIT 4·5)는
+    상관이 0.9 넘게, 다른 간지끼리는 0.5 아래로 나온다(2026-10-09 워크북·단어장 실측). 글상자 위치 비교는 번호·글자
+    길이만 달라도 갈라져서 쓰지 않는다."""
+    import fitz
+    z = 36 / page.rect.width
+    v = list(page.get_pixmap(matrix=fitz.Matrix(z, z), colorspace=fitz.csGRAY).samples)
+    m = sum(v) / len(v)
+    sd = (sum((x - m) ** 2 for x in v) / len(v)) ** 0.5
+    return [(x - m) / sd for x in v] if sd > 1 else None          # None = 거의 한 색(빈 면)
+
+
+def _divider_boxes(page):
+    """간지 글상자·그림 배치 — 면을 8×10 칸으로 나눠 덮인 칸. 그림 비교로 안 갈리는 것(세서특필: 같은 그러데이션 위
+    'PART 01' 면 / 소제목 면)을 가른다."""
+    W, H = page.rect.width, page.rect.height
+    return frozenset((gx, gy) for b in page.get_text("blocks") if b[4].strip() or b[6] == 1
+                     for gx in range(int(b[0] / W * 8), min(int(b[2] / W * 8 - 1e-6), 7) + 1)
+                     for gy in range(int(b[1] / H * 10), min(int(b[3] / H * 10 - 1e-6), 9) + 1))
+
+
+def _vec_corr(a, b):
+    if a is None or b is None:
+        return 1.0 if a is None and b is None else 0.0
+    n = min(len(a), len(b))
+    return sum(a[i] * b[i] for i in range(n)) / n
+
+
+def _divider_name(page):
+    """간지 이름 — 가장 큰 글씨가 든 글덩어리('11강' → '마더텅 고1 영어 독해 11강'). 띄어 쓴 로마자는 붙인다."""
+    best = None
+    for b in page.get_text("dict")["blocks"]:
+        for ln in b.get("lines", []):
+            for sp in ln["spans"]:
+                if re.search(r"[A-Za-z가-힣]", sp["text"]) and (best is None or sp["size"] > best[0]):
+                    best = (sp["size"], b)
+    if not best:
+        return ""
+    t = re.sub(r"\s+", " ", " ".join(sp["text"] for ln in best[1]["lines"] for sp in ln["spans"])).strip()
+    w = t.split()
+    if len(w) >= 3 and sum(len(x) == 1 for x in w) >= len(w) * 0.6:     # 한 글자씩 띄운 제목('어 휘 끝') → 붙인다
+        t = "".join(w)
+    return re.sub(r"(?<=[A-Z]) (?=[A-Z])", "", t)[:24]
+
+
 def _page_tokens(series, doc):
     """면마다 모양 표 (간지/본문, 구성 이름, 맨 위 제목 유무, 삽화 같은 갈래). 내용(지문 글)은 안 본다."""
     skip = _running_labels(doc)
@@ -631,7 +676,29 @@ def _page_tokens(series, doc):
         var = "".join(f" · {v}" for pat, v in VARIANT_RULES.get(series, []) if re.search(pat, txt))
         # 제목 표시 — 1: 맨 위 짧은 한글 제목, 2: 큰 제목 글씨. 0 이면 이어지는 면. 시험지 머리는 홀짝 면 문구라 안 본다
         title = 0 if series == "mockexam" else int(_head_title(page)) + 2 * int(_big_heading(page))
-        out.append(("본문", section, title, var))
+        out.append(("본문", section or ("표지" if page.number == 0 else ""), title, var))
+    # 간지는 생김새끼리 나눈다 — 표지 · STEP 간지 · 단원 간지 · 빈 면은 다른 구성(2026-10-09).
+    # 첫 면은 표지, 마지막 면은 뒤표지로 따로(표지가 간지와 색 배치가 비슷해도 역할이 다르다).
+    reps = []                                             # [((그림, 배치), 이름)]
+    same = lambda x, y: _vec_corr(x[0], y[0]) >= 0.85 and (
+        not x[1] or not y[1] or len(x[1] & y[1]) / len(x[1] | y[1]) >= 0.3)
+    for i, t in enumerate(out):
+        if t[0] != "간지":
+            continue
+        if i == 0 or i == len(out) - 1:
+            out[i] = ("간지", "표지" if i == 0 else "뒤표지", 0, "")
+            continue
+        v = (_divider_vec(doc[i]), _divider_boxes(doc[i]))
+        nm = next((n for r, n in reps if same(v, r)), None)      # 이미 묶인 면 어느 하나와 같으면 그 묶음
+        if nm is not None:
+            reps.append((v, nm))
+        if nm is None:                                    # 새 생김새 — 이름이 겹쳐도 다른 구성이다(이름 뒤에 번호)
+            base = "빈 면" if v[0] is None else ("간지 · " + _divider_name(doc[i])) if _divider_name(doc[i]) else "간지"
+            nm, k = base, 2
+            while any(n == nm for _, n in reps):
+                nm, k = f"{base} ({k})", k + 1
+            reps.append((v, nm))
+        out[i] = ("간지", nm, 0, "")
     return out
 
 
@@ -683,7 +750,7 @@ def _unit_name(unit):
     for kind, sec, _, var in unit:
         if kind == "MEMO" and has_body:
             continue
-        nm = (sec or "표지") + var if kind == "본문" else kind
+        nm = (sec or "이름 없는 면") + var if kind == "본문" else (sec or "간지") if kind == "간지" else kind
         if nm not in names:
             names.append(nm)
     return " + ".join(names)
@@ -695,14 +762,14 @@ def design_layouts(series, design):
     면마다 모양 표(_page_tokens: 구성 이름 · 맨 위 제목 유무 · 삽화 갈래 · 간지)를 만들고, 같은 모양 묶음이
     되풀이되는 구간을 찾는다(_repeat_runs). 묶음은 1면일 수도(블랙북 문항), 펼침면 2면일 수도(워크북
     '제목 면 + 이어지는 면', 포켓북 '지문 분석 + 요약노트'), 그 이상일 수도 있다. 이름이 같은 묶음은 한 구성.
-    show = 그 구성을 가장 많이 덮은 묶음의 첫 회. 결과는 `_pages/layouts9_<stamp>.json` 에 둔다.
+    show = 그 구성을 가장 많이 덮은 묶음의 첫 회. 결과는 `_pages/layouts10_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts9_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts10_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
@@ -734,7 +801,7 @@ def design_layouts(series, design):
     out = {"total": doc.page_count,
            "layouts": [{"n": groups[nm]["pages"][0], "pages": groups[nm]["pages"], "count": len(groups[nm]["pages"]),
                         "kind": groups[nm]["kind"], "section": nm, "show": groups[nm]["show"], "unit": len(groups[nm]["show"]),
-                        "label": "간지 · 표지" if nm == "간지" else nm}
+                        "label": nm}
                        for nm in order]}
     doc.close()
     json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
