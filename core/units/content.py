@@ -80,7 +80,7 @@ def schema(pages, width_of=None):
 
 def story_value(bind, records, slot_fmt=None):
     """여러 자리를 한 줄기 글로(인디자인 한 스토리 여러 단락 스타일) — bind = "번호+발문+지문+선지",
-    records = [{자리: 글, …}, …] 문항 순서. 자리마다 문단(글 안 줄바꿈 = 문단 여럿)이 되고 문단 첫머리에 그 자리 표시(ps)가 붙어
+    records = [{자리: 글, …} 또는 [[자리, 글], …], …] 문항 순서(목록이면 그 문항 안 차례 그대로). 자리마다 문단(글 안 줄바꿈 = 문단 여럿)이 되고 문단 첫머리에 그 자리 표시(ps)가 붙어
     그리기(render._text_html)가 그 자리의 단락 스타일을 입힌다. slot_fmt[자리].inline 이면 따로 문단을 만들지 않고
     다음 문단 첫머리에 붙는다(문항 번호 — 발문 첫 줄 앞)."""
     fmt = slot_fmt or {}
@@ -97,8 +97,11 @@ def story_value(bind, records, slot_fmt=None):
         if line:
             out.append(line)
     for rec in records:
-        for s in parts:
-            v = rec.get(s) if isinstance(rec, dict) else None
+        if isinstance(rec, dict):                                       # {자리: 글} — 자리 차례는 bind 순서
+            pairs = [(s, rec.get(s)) for s in parts]
+        else:                                                           # [[자리, 글], …] — 문항마다 차례가 다를 때(보기가 지문 앞·뒤)
+            pairs = [(x[0], x[1]) for x in rec if isinstance(x, (list, tuple)) and len(x) == 2]
+        for s, v in pairs:
             if v in (None, ""):
                 continue
             if (fmt.get(s) or {}).get("inline"):
@@ -120,7 +123,7 @@ def fill(pages, content, width_of=None):
     for pi, i, name, _ in slots(pages, width_of):
         known.add(name)
         q = queue.get(name)
-        if q and "+" in name and isinstance(q[0], dict):              # 여러 자리 한 줄기 — 문항 목록 전부가 이 글(잇기 상자들로 흘러간다)
+        if q and "+" in name and isinstance(q[0], (dict, list)):              # 여러 자리 한 줄기 — 문항 목록 전부가 이 글(잇기 상자들로 흘러간다)
             atom = pages[pi]["items"][i].get("atom") or {}
             pages[pi]["items"][i]["fields"] = {name: story_value(name, q, atom.get("slot_fmt"))}
             filled += len(q)

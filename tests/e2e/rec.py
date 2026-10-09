@@ -13,6 +13,7 @@
   {"write": {"at": {"mm": [30, 20]}, "value": "A1"}}  지면의 글상자를 두 번 눌러 글 치기
   {"pick": {"at": 자리, "value": "wb216"}}  select 을 눌러 키보드로 고르기
   {"clickif": {"at": "#tg-side", "when": "!view.side"}}   조건이 맞을 때만 누르기
+  {"answer": "이름"}                     다음에 뜨는 묻는 창에 칠 글 — 창을 여는 누르기는 그다음 단계에서
   {"wait": ms} · {"shot": "이름.png"} · {"js": "…"}(마지막 수단)
 
 자리: "#sel" (그 요소 가운데) · [x, y] (화면 픽셀) · {"mm": [x, y]} (지면 좌표)
@@ -73,6 +74,7 @@ try:
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}/json/new?{urllib.parse.quote(url, safe='')}", method="PUT")
     tab = json.load(urllib.request.urlopen(req, timeout=30))
     c = CDP(tab["webSocketDebuggerUrl"])
+    c.call("Page.enable")                                    # 묻는 창(prompt)을 받아 답을 친다 — {"answer": "…"} (cdp.CDP.call)
     time.sleep(3.0)
     c.js(CHROME_SETUP)
 
@@ -252,6 +254,8 @@ try:
                     if c.js("page.items.length") > n0:
                         break
                     print(f"  ! {d['tool']} 안 그려짐 — 다시", flush=True)
+            if "answer" in st:                                 # 다음 누르기가 여는 묻는 창에 칠 글(새 단락 스타일 이름 등)
+                c.answer = str(st["answer"])
             if "type" in st:
                 typetext(st["type"])
             if "fill" in st:

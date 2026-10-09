@@ -792,26 +792,37 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
     """한 줄기 글의 문단 하나 — 그 자리의 단락 스타일(서체·간격·들여쓰기·바탕·「다음 문단과 함께」「쪼개지 않기」)을 입힌 <p>.
     같은 자리의 잇닿은 문단에 바탕(shade)이 있으면 한 상자로 잇는다(인디자인 단락 음영·테두리 병합 — 조건·보기 상자)."""
     st = slot_style(a, slot, ctx) if slot else {}
-    css = "margin:0;" + ps + _font_css(st, ctx)
+    css = "margin:0;" + re.sub(r"margin-(top|bottom):[^;]*;", "", ps) + _font_css(st, ctx)   # 문단 간격은 자리 스타일로만(아래)
     if st.get("align"):
         css += f"text-align:{st['align']};"
     pad = float(st.get("pad") or 0)
     shade = st.get("shade")
-    first = not (k and slots[k - 1] == slot)
-    last = not (k + 1 < len(slots) and slots[k + 1] == slot)
+    grp = lambda j: ((lambda s: (s.get("shade"), s.get("border"), s.get("border_color")) if s.get("shade") else None)(slot_style(a, slots[j], ctx))
+                     if 0 <= j < len(slots) and slots[j] else None)
+    g0 = grp(k)                                                       # 같은 바탕(색·테두리)이 잇닿으면 한 상자 — [조건] 머리줄과 조건 글
+    first = not (g0 and grp(k - 1) == g0) if shade else not (k and slots[k - 1] == slot)
+    last = not (g0 and grp(k + 1) == g0) if shade else not (k + 1 < len(slots) and slots[k + 1] == slot)
     if st.get("indent") is not None or pad:
         css += f"padding-left:{float(st.get('indent') or 0) + pad:.3f}px;"
     if st.get("indent_right") is not None or pad:
         css += f"padding-right:{float(st.get('indent_right') or 0) + pad:.3f}px;"
     if st.get("indent_first") is not None:
         css += f"text-indent:{float(st['indent_first']):.3f}px;"
-    if st.get("space_before") is not None:
-        css += f"margin-top:{float(st['space_before']) if (first or not shade) else 0:.3f}px;"
-    if st.get("space_after") is not None:
-        css += f"margin-bottom:{float(st['space_after']) if (last or not shade) else 0:.3f}px;"
+    # 문단 사이 = 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」(인디자인은 더한다 — CSS 여백은 겹쳐 큰 것만 남아 위 끝에 margin-top 하나로)
+    # 같은 자리끼리는 「같은 스타일 사이 간격」(space_same, 인디자인 「동일한 스타일 단락 사이 간격」)이 있으면 그것. 바탕 상자 안 문단 사이는 0
+    prev = slot_style(a, slots[k - 1], ctx) if k and slots[k - 1] else {}
+    if k and slots[k - 1] == slot and st.get("space_same") is not None:
+        gap = float(st["space_same"])
+    elif k and slots[k - 1] == slot and shade:
+        gap = 0.0                                                     # 바탕 상자 안 같은 자리 문단 사이
+    else:
+        gap = float(st.get("space_before") or 0) + float(prev.get("space_after") or 0)
+    if k and gap:
+        css += f"margin-top:{gap:.3f}px;"
     if shade:
         css += f"background-color:{ctx.color(shade) if ctx else shade};"
-        css += f"padding-top:{pad if first else 0:.3f}px;padding-bottom:{pad if last else 0:.3f}px;"
+        css += (f"padding-top:{float(st.get('pad_top', pad)) if first else 0:.3f}px;"
+                f"padding-bottom:{float(st.get('pad_bottom', pad)) if last else 0:.3f}px;")
         if st.get("border"):
             b = f"{float(st['border']) * PT:.3f}px solid {ctx.color(st.get('border_color') or '$ink') if ctx else st.get('border_color') or '#231f20'}"
             css += f"border-left:{b};border-right:{b};" + (f"border-top:{b};" if first else "") + (f"border-bottom:{b};" if last else "")
@@ -820,10 +831,14 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
         attrs += ' data-keep-next="1"'                                # 다음 문단과 함께 — 단·쪽 끝에 혼자 남지 않는다(units_compose.js thread)
     if st.get("keep_together"):
         attrs += ' data-keep="1"'                                     # 쪼개지 않기 — 문단 전체가 한 상자에
+    if st.get("keep_first"):
+        attrs += f' data-keep-first="{int(st["keep_first"])}"'       # 행 유지 — 상자 끝에 처음 N줄 이상
+    if st.get("keep_last"):
+        attrs += f' data-keep-last="{int(st["keep_last"])}"'         # 행 유지 — 다음 상자에 마지막 N줄 이상
     if st.get("tsume"):
         attrs += f' data-tsume="{float(st["tsume"]):g}"'
     just = (st.get("align") or a.get("align")) == "justify"
-    if just and a.get("compose") is not False and " " not in x:
+    if just and a.get("compose") is not False and "\u2028" not in x:          # 손으로 친 줄 나눔이 있으면 컴포저 대신 브라우저
         attrs += f' data-jc="{jc_spec(dict(a, jc=st["jc"]) if st.get("jc") else a)}"'
     x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="{_inline_css(slot_style(a, m.group(1), ctx), ctx)}">', x)
     return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None) or "&#160;"}</p>'
@@ -834,6 +849,8 @@ def _inline_css(st, ctx):
     css = "text-indent:0;line-height:0;" + re.sub(r"line-height:[^;]*;", "", _font_css(st, ctx))   # 큰 번호가 줄 높이를 늘리지 않게(줄 높이는 문단 것)
     if st.get("inline_w"):
         css += f"display:inline-block;width:{float(st['inline_w']):.3f}px;"
+    if st.get("drop"):                                                 # 기준선 내리기 mm — 원본 번호는 발문 기준선보다 0.55mm 아래
+        css += f"position:relative;top:{float(st['drop']):.3f}px;"
     return css
 
 
@@ -2211,16 +2228,19 @@ def story_spares(ctx, pages, spec_of):
         if need <= cap * 0.9:
             continue
         last = pages[last_pi]
+        has = lambda t: any((it.get("atom") or {}).get("story") == name for it in t.get("items") or [])
         tpl = ctx.pages.get(last.get("cont")) or last
-        mine = [it for it in tpl.get("items") or [] if (it.get("atom") or {}).get("story") == name]
-        if not mine:                                                   # 이어 갈 면에 이 이야기 상자가 없다 — 지금 쪽의 이야기 상자 자리로
-            tpl, mine = last, [it for _, it in chain if _ == last_pi]
-        per = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for it in mine) or 1
+        if not has(tpl):                                               # 이어 갈 면에 이 이야기 상자가 없다 — 지금 쪽 모양으로
+            tpl = last
+        per = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for it in tpl.get("items") or []
+                  if (it.get("atom") or {}).get("story") == name) or 1
         n = min(40, int(math.ceil((need - cap) / per)) + 1)
         seq = max(story_seq(it["atom"]) for _, it in chain)
         spares = []
         for k in range(n):
             pg = json.loads(json.dumps(tpl))
+            nxt = ctx.pages.get(tpl.get("cont"))                       # 다음 덧쪽은 이 면의 「이어 갈 면」 — 왼쪽·오른쪽 면이 번갈아(인디자인 마스터 A·B)
+            tpl = nxt if nxt and has(nxt) else tpl
             items = []
             for it in pg.get("items") or []:
                 at = it.get("atom") or {}

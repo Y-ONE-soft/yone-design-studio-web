@@ -47,11 +47,19 @@ class CDP:
     def __init__(self, url):
         self.s = ws_connect(url); self.i = 0
 
+    answer = None                                    # 다음에 뜨는 묻는 창(prompt)에 칠 글 — 녹화 단계 {"answer": "…"}
+
     def call(self, method, **params):
-        self.i += 1; ws_send(self.s, json.dumps({"id": self.i, "method": method, "params": params}))
+        self.i += 1; me = self.i; ws_send(self.s, json.dumps({"id": me, "method": method, "params": params}))
         while True:
             m = json.loads(ws_recv(self.s))
-            if m.get("id") == self.i:
+            if m.get("method") == "Page.javascriptDialogOpening":       # 묻는 창·확인 창 — 답을 치고 확인(Page.enable 뒤에만 온다)
+                self.i += 1
+                ws_send(self.s, json.dumps({"id": self.i, "method": "Page.handleJavaScriptDialog",
+                                            "params": {"accept": True, "promptText": self.answer or ""}}))
+                self.answer = None
+                continue
+            if m.get("id") == me:
                 return m.get("result", m)
 
     def js(self, expr):

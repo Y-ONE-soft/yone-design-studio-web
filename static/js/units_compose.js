@@ -345,7 +345,12 @@
     let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
     if (whole) { /* 자르지 않는다 */ }
     else if (p.dataset.jcDone) {                                       // 컴포저 단락 — 줄마다 span
-      const k = [...p.children].findIndex(s => s.getBoundingClientRect().bottom > L);
+      const lines = [...p.children];
+      let k = lines.findIndex(s => s.getBoundingClientRect().bottom > L);
+      // 행 유지(인디자인 「처음 N행 · 마지막 N행」) — 상자 끝에 처음 몇 줄만, 다음 상자에 마지막 몇 줄만 남지 않게
+      const kf = +p.dataset.keepFirst || 0, kl = +p.dataset.keepLast || 0;
+      if (k > 0 && kl && lines.length - k < kl) k = lines.length - kl;   // 넘어갈 줄이 모자라면 더 넘긴다
+      if (k > 0 && kf && k < kf && i > 0) k = 0;                       // 남을 줄이 모자라면 통째로
       if (k === 0) whole = true;
       else if (k > 0) { p2 = p.cloneNode(false); [...p.children].slice(k).forEach(s => p2.appendChild(s)); }
     } else {                                                           // 브라우저가 꺾은 단락 — 넘는 줄의 첫 글자에서 자른다
@@ -366,7 +371,11 @@
     }
     if (whole) {                                                       // 다음 문단과 함께 — 그 앞 문단(번호·발문)이 상자 끝에 혼자 남지 않게 같이 넘긴다
       let s = i;
-      while (s > 0 && ps[s - 1].dataset.keepNext) s--;
+      for (;;) {                                                       // 쪼개지 않기는 같은 자리 묶음 전체(선지 ①~⑤) · 다음 문단과 함께(번호·발문)
+        if (s > 0 && ps[s].dataset.keep && ps[s - 1].dataset.keep && ps[s - 1].dataset.slot === ps[s].dataset.slot) { s--; continue; }
+        if (s > 0 && ps[s - 1].dataset.keepNext) { s--; continue; }
+        break;
+      }
       return ps.slice(s > 0 ? s : i);                                  // 상자가 통째로 비게 되면 그대로(무한히 넘기지 않게)
     }
     if (p2) {
@@ -564,6 +573,11 @@
   }
 
   window.unitsCompose = composeAll;
+  try {                                                                // 잇는 상자 맨 위 문단은 「앞 간격」을 버린다(인디자인 — 프레임 맨 위)
+    const css = document.createElement("style");
+    css.textContent = "[data-story] p[data-slot]:first-child{margin-top:0!important}";
+    (document.head || document.documentElement).appendChild(css);
+  } catch (e) { /* 그대로 */ }
   if (document.readyState !== "loading" && document.querySelector("[data-jc],[data-tsume]") && document.fonts) {
     document.fonts.ready.then(() => composeAll(document));
   } else if (document.fonts) {
