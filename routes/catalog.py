@@ -522,8 +522,26 @@ def _head_text(page):
     return re.sub(r"\s+", " ", t).strip()
 
 
+def _mock_section(page):
+    """동형모의고사 시험지 면 — 학교마다 머리글이 달라(강동: 홀짝 면 문구, 한영: 매 면 같은 표) 머리 대신 면 전체 글로 나눈다.
+    첫 면(시험 제목·문항 정보) / 끝 면(문항 수·점수 표) / 선택형 문항 / 선택형→서답형 넘어가는 면 / 서답형."""
+    t = page.get_text()
+    if page.number == 0:
+        return "첫 면 · 시험 제목"
+    if page.number == page.parent.page_count - 1 and re.search(r"확인\s*사항|문항\s*수", t):
+        return "끝 면 · 문항 수·점수 표"
+    m = re.search(r"(?m)【\s*서[답술]형\s*\d|^\s*\[?서[답술]형\s*\d", t)
+    if not m:
+        return "선택형 문항"
+    if re.search(r"(?m)^\s*(\d{1,2}\.\s|※\s*\[선택형)", t[:m.start()]):
+        return "선택형 → 서답형 넘어가는 면"
+    return "서답형 문항"
+
+
 def _section_of(series, page, prev):
     """이 면의 구성 이름. 규칙(틀별) → 중등부 PART 머리 → 러닝 헤드 라벨(워크북) 순. 못 찾으면 직전 것."""
+    if series == "mockexam":
+        return _mock_section(page)
     head = _head_text(page)
     if series in SECTION_RULES:
         for pat, name in SECTION_RULES[series]:
@@ -562,14 +580,14 @@ def design_layouts(series, design):
 
     섹션 = 틀별 규칙(SECTION_RULES) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
     라벨 없는 면은 직전 섹션이 이어진 것. 본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다.
-    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 결과는 `_pages/layouts5_<stamp>.json` 에 둔다.
+    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 결과는 `_pages/layouts6_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts5_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts6_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
