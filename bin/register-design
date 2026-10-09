@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+"""완성본 PDF 를 관리의 한 폴더에 디자인으로 등록한다 — 반복되는 면은 구성 하나로 묶인다.
+
+사용: bin/register-design <PDF> <폴더> [이름]
+  폴더  관리 폴더 이름이나 틀 이름·키 (예: 포켓북, 워크북, pocketbook)
+  이름  화면에 보일 디자인 이름. 없으면 PDF 파일 이름.
+
+디자인 폴더 이름은 무작위라 여러 세션이 동시에 등록해도 안 겹친다. 등록만 하고 커밋·배포는 하지 않는다.
+"""
+import datetime
+import json
+import os
+import sys
+import tempfile
+import unicodedata
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:                                                     # 프로필 안 읽은 셸(시스템 파이썬)이면 pyenv 파이썬으로 다시
+    import fitz  # noqa: F401
+except ImportError:
+    py = os.path.expanduser("~/.pyenv/shims/python3")
+    if os.path.exists(py) and os.path.realpath(sys.executable) != os.path.realpath(py) and not os.environ.get("_REG_REEXEC"):
+        os.environ["_REG_REEXEC"] = "1"
+        os.environ["PATH"] = "/opt/homebrew/bin:" + os.environ.get("PATH", "")
+        os.execv(py, [py, os.path.abspath(__file__)] + sys.argv[1:])
+    raise
+sys.path.insert(0, ROOT)
+CWD = os.getcwd()                                        # PDF 상대 경로는 부른 곳 기준
+os.chdir(ROOT)
+
+
+def nfc(s):
+    return unicodedata.normalize("NFC", s).strip()
+
+
+def series_of(folder):
+    from routes.catalog import directories
+    f = nfc(folder).lower()
+    dirs = directories()
+    for d in dirs:                                       # 틀 키·이름이 바로 맞으면 그 틀
+        for t in d["templates"]:
+            if f in (t["series"].lower(), nfc(t["name"]).lower()):
+                return t["series"]
+    for d in dirs:                                       # 관리 폴더 — 안에 틀이 하나면 그 틀
+        if f in (d["id"].lower(), nfc(d["name"]).lower()):
+            ts = d["templates"]
+            if len(ts) == 1:
+                return ts[0]["series"]
+            names = ", ".join(t["name"] for t in ts) or "없음"
+            sys.exit(f"✗ 「{d['name']}」 폴더에 틀이 {len(ts)}개다 — 틀 이름으로 다시: {names}")
+    sys.exit(f"✗ 모르는 폴더: {folder} — 관리 폴더: " + ", ".join(d["name"] for d in dirs))
+
+
+def main():
+    if len(sys.argv) < 3:
+        sys.exit(__doc__)
+    pdf = os.path.join(CWD, os.path.expanduser(sys.argv[1]))
+    if not os.path.isfile(pdf):
+        sys.exit(f"✗ PDF 가 없다: {pdf}")
+    series = series_of(sys.argv[2])
+    pdf_name = nfc(os.path.basename(pdf))
+    name = nfc(sys.argv[3]) if len(sys.argv) > 3 else os.path.splitext(pdf_name)[0]
+
+    from routes.catalog import _ddir, design_layouts
+    from routes.intake import measure, register_draft, render_pages
+    m = measure(pdf)
+    with tempfile.TemporaryDirectory() as tmp:
+        pages = render_pages(pdf, tmp, dpi=80)
+        verdict = {"verdict": "design", "series": series, "confidence": 1.0, "knobs": {},
+                   "design_name": name, "reasons": [f"bin/register-design — {pdf_name}"]}
+        did, _, _ = register_draft(series, verdict, m, pdf, pages, pdf_name)
+    d = _ddir(series, did)
+    dj = json.load(open(os.path.join(d, "design.json"), encoding="utf-8"))
+    dj.update(name=name, desc=f"{pdf_name} · {m['pages']}면", draft=False)
+    json.dump(dj, open(os.path.join(d, "design.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    cfg = json.load(open(os.path.join(d, "config.json"), encoding="utf-8"))
+    cfg["book"] = {"title": name}
+    cfg["_디자인"] = f"{pdf_name} ({datetime.date.today().isoformat()})"
+    json.dump(cfg, open(os.path.join(d, "config.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+
+    r = design_layouts(series, did)
+    print(f"✓ 등록: {name}  ({series}/{did}, {m['trim_mm'][0]:g}×{m['trim_mm'][1]:g}mm, {r['total']}면)")
+    print(f"  구성 {len(r['layouts'])}개")
+    for k, l in enumerate(r["layouts"], 1):
+        print(f"   {k}. {l['label']} — {l['count']}면")
+    print(f"  화면: /design/{series}/{did}")
+    print(f"  폴더: catalog/{series}/designs/{did}/")
+
+
+if __name__ == "__main__":
+    main()

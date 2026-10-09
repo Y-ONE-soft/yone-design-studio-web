@@ -333,10 +333,10 @@ def _vet_knobs(series, design_id, knobs):
 
 def register_draft(series, verdict, measured, pdf_path, pages, pdf_name):
     """그 틀의 첫 디자인 config 를 바탕으로 손잡이 값을 덮어쓴 초안 디자인을 만든다."""
-    from routes.catalog import _ddir, _designs, _next_id
+    from routes.catalog import _ddir, _designs, _new_id
     from core.render_vivlio import knobs as kn
     ds = _designs(series)
-    did = _next_id(series)
+    did = _new_id(series)
     d = _ddir(series, did)
     os.makedirs(d, exist_ok=True)
     if ds:
@@ -714,9 +714,9 @@ def _forge_protocol(jid, state, name, did, dir_name):
 - 판정 근거(가장 가까운 기존 틀 `{v.get('series')}`): {' / '.join((v.get('reasons') or [])[:4])}
 
 ## 이 저장소의 새 계열 절차
-1. 먼저 읽는다: CLAUDE.md, docs/인계_20260914/02_계열별_현황.md §14 와 가장 가까운 계열 절, docs/참고자료/교재_블록_지도/README.md, docs/인계_20260914/07_틀별_디자인·원고_자료.md.
+1. 먼저 읽는다: CLAUDE.md, docs/인계_20260914/02_계열별_현황.md §14 와 가장 가까운 계열 절, docs/인계_20260914/07_틀별_디자인·원고_자료.md.
 2. 코드는 워크트리에서(EnterWorktree, 이름 new-series-<영문키>). 메인 체크아웃은 편집이 막혀 있다. 라운드가 바뀌어도 같은 워크트리를 쓴다.
-3. 실측: PyMuPDF 로 판형·도련·여백·서체(name 테이블)·크기·색·자간. 면 구성을 블록 11종(B1~B11)으로.
+3. 실측: PyMuPDF 로 판형·도련·여백·서체(name 테이블)·크기·색·자간. 면 구성(어떤 면이 몇 종인가)을 적는다.
 4. 계열 코드: `core/render_vivlio/series/<영문키>/`(`__init__.py`·`data.py`·`render.py`·`verify.py`) + `themes/<영문키>.css` + `series/__init__.py` register. 파서는 구조 판정(라벨 화이트리스트 금지).
 5. 등록: `catalog/catalog.json` 에 `"<영문키>": {{"name": "{name}", "desc": …, "root": …, "ready": "auto", "dir": "{did}"}}` (Read 후 Edit, 기존 항목 삭제 금지) + `catalog/<영문키>/designs/d1/` 에 config.json·design.json·참고/reference.pdf·preview_1..5.png.
 6. 시험 조판은 `bin/viv` 또는 `python -m core.render_vivlio.book`. 게이트 결과와 쪽수를 summary 에.
@@ -894,7 +894,7 @@ def _chat_protocol(tid, files):
     return f"""너는 Y.ONE 스튜디오(영어 교재 코드 조판, Vivliostyle)의 조판 개발자이자 도우미다. 이 스레드는 한 사람과의 대화다. 사람이 말하는 대로 한다. 한국어, 짧고 구체적으로.
 
 ## 할 수 있는 것 (이 저장소 안에서)
-- 카탈로그 보기·설명: 폴더(`catalog/dirs.json`) → 틀(`catalog/catalog.json`, `core/render_vivlio/series/*`) → 디자인(`catalog/<틀>/designs/*`). 블록 지도 `docs/참고자료/교재_블록_지도/README.md`.
+- 카탈로그 보기·설명: 폴더(`catalog/dirs.json`) → 틀(`catalog/catalog.json`, `core/render_vivlio/series/*`) → 디자인(`catalog/<틀>/designs/*`).
 - 첨부(완성본 PDF·지면 이미지) 판정 — 어느 틀의 디자인인가 / 새 틀인가: `python3 -c "from routes.intake import measure, render_pages, judge, _template_cards; …"` (판정 결과와 근거를 사람에게).
 - 기존 틀에 디자인 등록: `routes.intake.register_draft(series, verdict, measured, pdf_path, pages, pdf_name)` 또는 사람에게 새 프로젝트의 `/ 틀 등록하기` 를 안내.
 - 책 만들기·다시 조판: `bin/viv "<책 폴더>" all`, `python -m core.render_vivlio.book`. 디자인 손보기: 디자인 config·overrides.css 손잡이(`bin/viv <책> knobs`).

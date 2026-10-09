@@ -39,7 +39,7 @@
   .pages.all .pg .th { border-radius: 6px; }
   .pages.all .pg .lb { font-size: 11px; color: #8b8fa3; text-align: center; }
   .secs { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px 16px; }
-  .sec .two { display: flex; gap: 4px; background: #eceef3; border-radius: 10px; padding: 6px; }
+  .sec .two { display: flex; justify-content: center; gap: 4px; background: #eceef3; border-radius: 10px; padding: 6px; }
   .sec .two .pg { flex: 1; min-width: 0; }
   .sec .two .pg:only-child { flex: 0 0 calc(50% - 2px); }
   .sec .two .pg .th { border-radius: 6px; border-color: transparent; }
@@ -93,10 +93,9 @@
   <h2>구성 <span class="n">{{ layouts|length }}개 — 지문만 다르고 형태가 같은 면은 하나로 (기준 PDF {{ total }}면)</span>
     <button class="tg" id="tg-all">전체 {{ total }}면 펼치기</button></h2>
   <div class="secs" id="layouts">
-    {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}">
+    {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}"{% if (l.show or [])|length > 2 %} style="grid-column: span {{ [((l.show|length) + 1) // 2, 3]|min }}"{% endif %}>
       <div class="two">
-        <div class="pg" data-n="{{ l.n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ l.n }}.png?dpi=30" alt="" loading="lazy"></div></div>
-        {% if l.count > 1 %}<div class="pg" data-n="{{ l.pages[1] }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ l.pages[1] }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endif %}
+        {% for n in (l.show or [l.n]) %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}
       </div>
       <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}면 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}</small></div>
     </div>{% endfor %}
