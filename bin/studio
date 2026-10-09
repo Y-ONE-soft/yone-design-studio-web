@@ -7,5 +7,6 @@
 # (이 파일은 리포 밖·본인 홈에만 둔다. 키를 리포나 채팅에 적지 말 것.)
 [ -f "$HOME/.config/yone/env" ] && . "$HOME/.config/yone/env"
 cd "$(dirname "$0")/.." || exit 1
+export PATH="$HOME/.pyenv/shims:/opt/homebrew/bin:/usr/local/bin:$PATH"   # 프로필 안 읽은 셸에서도 pyenv 파이썬(.python-version)으로
 bin/catalog-backup >/dev/null 2>&1 &          # 카탈로그 스냅숏 (사고 나면 bin/catalog-backup restore)
 exec python3 -u studio_server.py "$@"
