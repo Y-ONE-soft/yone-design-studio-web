@@ -523,19 +523,14 @@ def _head_text(page):
 
 
 def _mock_section(page):
-    """동형모의고사 시험지 면 — 학교마다 머리글이 달라(강동: 홀짝 면 문구, 한영: 매 면 같은 표) 머리 대신 면 전체 글로 나눈다.
-    첫 면(시험 제목·문항 정보) / 끝 면(문항 수·점수 표) / 선택형 문항 / 선택형→서답형 넘어가는 면 / 서답형."""
+    """동형모의고사 시험지 면 — 형태가 다른 면만 나눈다: 첫 면(시험 제목·머리표) / 문항 면 / 끝 면(문항 수·점수 표).
+    선택형·서답형은 같은 2단 시험지 면이라 하나로 둔다(2026-10-09 사용자: 문항 종류로 나눈 건 의미 없음)."""
     t = page.get_text()
     if page.number == 0:
         return "첫 면 · 시험 제목"
     if page.number == page.parent.page_count - 1 and re.search(r"확인\s*사항|문항\s*수", t):
-        return "끝 면 · 문항 수·점수 표"
-    m = re.search(r"(?m)【\s*서[답술]형\s*\d|^\s*\[?서[답술]형\s*\d", t)
-    if not m:
-        return "선택형 문항"
-    if re.search(r"(?m)^\s*(\d{1,2}\.\s|※\s*\[선택형)", t[:m.start()]):
-        return "선택형 → 서답형 넘어가는 면"
-    return "서답형 문항"
+        return "끝 면 · 점수 표"
+    return "문항 면"
 
 
 def _section_of(series, page, prev):
@@ -575,19 +570,71 @@ def design_images(series, d, limit=6):
     return [{"src": f"/catalog/page/{series}/{d['id']}/{k}.png?dpi=40", "label": f"p{k}"} for k in range(1, n + 1)]
 
 
+def _folio_side(page):
+    """맨 아래 띠의 쪽번호가 왼쪽(L)·가운데(C)·오른쪽(R) 어디에 있나. 없으면 None."""
+    W, H = page.rect.width, page.rect.height
+    for b in page.get_text("blocks"):
+        if b[1] > H * 0.9 and re.search(r"\d", b[4]) and len(b[4].strip()) < 40:
+            cx = (b[0] + b[2]) / 2 / W
+            return "L" if cx < 0.4 else "R" if cx > 0.6 else "C"
+    return None
+
+
+def _is_facing(doc):
+    """펼침면 책인가 — 짝수 면 쪽번호는 왼쪽, 홀수 면은 오른쪽. 낱장 시험지는 늘 같은 자리다."""
+    ev, od = [], []
+    for p in doc:
+        s = _folio_side(p)
+        if s:
+            (ev if (p.number + 1) % 2 == 0 else od).append(s)
+    return bool(ev and od) and ev.count("L") > len(ev) * .6 and od.count("R") > len(od) * .6
+
+
+def _layout_sig(page):
+    """면의 배치 — 글상자·그림이 덮는 칸(본문 영역을 8×10 으로). 좌우 여백 차이는 본문 왼쪽 끝 기준이라 무시된다."""
+    W, H = page.rect.width, page.rect.height
+    bs = [b for b in page.get_text("blocks") if H * 0.08 <= b[1] <= H * 0.92]
+    if not bs:
+        return frozenset()
+    x0, x1 = min(b[0] for b in bs), max(b[2] for b in bs)
+    y0, y1 = min(b[1] for b in bs), max(b[3] for b in bs)
+    w, h = max(x1 - x0, 1), max(y1 - y0, 1)
+    return frozenset((gx, gy, b[6]) for b in bs
+                     for gx in range(int((b[0] - x0) / w * 8), int((b[2] - x0) / w * 8 - 1e-6) + 1)
+                     for gy in range(int((b[1] - y0) / h * 10), int((b[3] - y0) / h * 10 - 1e-6) + 1))
+
+
+def _repeat_unit(doc, pages):
+    """이 구성이 몇 쪽 단위로 반복되나 → 보여 줄 면들. 펼침면(왼 짝수 + 다음 홀수)이 구성 대부분을 덮고,
+    왼쪽·오른쪽 배치가 서로 다르면(지문 시작 + 이어짐 처럼) 2쪽, 좌우만 바뀐 같은 모양이면 1쪽."""
+    from itertools import combinations
+    ps = set(pages)
+    spreads = [(p, p + 1) for p in pages if p % 2 == 0 and p + 1 in ps]
+    if not spreads or len(spreads) * 2 < len(pages) * 0.6:
+        return [pages[0]]
+    sp = spreads[:6]
+    S = {n: _layout_sig(doc[n - 1]) for pr in sp for n in pr}
+    jac = lambda a, b: len(S[a] & S[b]) / max(len(S[a] | S[b]), 1)
+    same = [jac(a, b) for side in (0, 1) for a, b in combinations([pr[side] for pr in sp], 2)]
+    cross = sum(jac(a, b) for a, b in sp) / len(sp)
+    two = cross < 0.5 if not same else cross < sum(same) / len(same) - 0.15
+    return list(sp[0]) if two else [pages[0]]
+
+
 def design_layouts(series, design):
     """기준 PDF 의 면을 **구성 단위(섹션)** 로 묶는다 — 지문만 다르고 형태가 같은 면은 하나로.
 
     섹션 = 틀별 규칙(SECTION_RULES) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
     라벨 없는 면은 직전 섹션이 이어진 것. 본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다.
-    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 결과는 `_pages/layouts6_<stamp>.json` 에 둔다.
+    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 보여 줄 면(show)은 반복 단위만큼 — 1쪽 또는 펼침면 2쪽(_repeat_unit, 낱장·간지는 1쪽).
+    결과는 `_pages/layouts7_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts6_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts7_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
@@ -605,8 +652,10 @@ def design_layouts(series, design):
         seen.setdefault(key, []).append(page.number + 1)
         if len(seen[key]) == 1:
             order.append(key)
-    out = {"total": doc.page_count,
+    facing = _is_facing(doc)
+    out = {"total": doc.page_count, "facing": facing,
            "layouts": [{"n": seen[k][0], "pages": seen[k], "count": len(seen[k]), "kind": k[0], "section": k[1],
+                        "show": _repeat_unit(doc, seen[k]) if facing and k[0] == "본문" else [seen[k][0]],
                         "label": (k[1] or "표지 · 간지") if k[0] == "본문" else ("간지" + (f" ({k[1]} 뒤)" if k[1] else " · 표지"))}
                        for k in order]}
     doc.close()
