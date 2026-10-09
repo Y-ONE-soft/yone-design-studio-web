@@ -14,6 +14,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **완성본 PDF → 관리 등록(2026-10-09)**: 사용자가 PDF 와 폴더(예: 포켓북·워크북)를 주면 `bin/register-design <PDF> <폴더> [이름]` 한 줄.
+> 반복되는 면은 구성 하나로 묶여 출력된다. 디자인 폴더 이름은 무작위(`x…`)라 병렬 세션끼리 안 겹친다 — d번호를 세지 않는다.
+> 그다음은 위 배포 규칙대로(워크트리 커밋 → main 머지 → push → `deploy/fly-deploy.sh`).
+
 > **참고자료(모든 세션 공용)**: `docs/참고자료/` — 외부에서 받은 자료를 원본 + 마크다운 README + JSON 으로 둔다(2026-10-09 교재 블록 지도는 지웠다 — 구성 이름·카드에 B1~B11 을 쓰지 않는다).
 
 > 이 디렉터리(`조판_자동화/`)는 `통합웹사이트/` 심볼릭 링크와 동일합니다. launchd가 `통합웹사이트/app.py` 경로로 Flask를 spawn하므로 두 경로 어느 쪽으로 작업해도 같은 파일을 수정하는 것입니다.
