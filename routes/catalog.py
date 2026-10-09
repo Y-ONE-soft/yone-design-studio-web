@@ -2,7 +2,7 @@
 """카탈로그 — **디렉토리 → 틀 → 디자인 → 원고.**
 
     디렉토리(dir)  교재 갈래. 두 묶음(`group`) — OJT 라인업 8종(분석본·워크북·포켓북·학교별 변형문제·동형모의고사·직전보충·리테·클리닉)
-                   · 교재 폴더 계열(프리미엄북·특강교재·단어장·중등부) + 기타. `catalog/dirs.json` 으로 늘어난다. `blocks` = 블록 조합(블록 지도 2층).
+                   · 교재 폴더 계열(프리미엄북·특강교재·단어장·중등부) + 기타. `catalog/dirs.json` 으로 늘어난다.
                    틀은 디렉토리 하나에 속하고(`catalog.json` 의 `dir`), 화면에서 옮길 수 있다.
     틀(series)     계열 코드 하나 = 면 구성(레이아웃). 12개. 코드로만 늘어난다.
     디자인(design) 그 틀의 한 모습 = config(색·치수·서체) + overrides.css + 페이지 틀 이미지.
@@ -100,7 +100,7 @@ DEFAULT_DIR = "etc"                      # 어느 갈래도 아닌 틀은 "기�
 _META_LOCK = threading.Lock()
 
 
-DIR_GROUPS = ("ojt", "folder")            # 묶음: OJT 라인업 8종 · 교재 폴더 계열 (docs/참고자료/교재_블록_지도 2층)
+DIR_GROUPS = ("ojt", "folder")            # 묶음: OJT 라인업 8종 · 교재 폴더 계열
 DIR_COLORS = ("#3b7ddd", "#2fa47a", "#7b6cf6", "#f0863b", "#e0567b", "#2bb3c0", "#c9a227", "#8b91a5")
 
 
@@ -483,28 +483,28 @@ def _page_labels(page):
 
 
 # 틀별 구성 규칙 — 면 머리(위 22%) 글에서 이 순서로 처음 맞는 것이 그 면의 구성. 없으면 직전 구성이 이어진다.
-# 이름은 블록 지도(docs/참고자료/교재_블록_지도) 2층의 블록 조합에 맞췄다. 워크북은 러닝 헤드에 STEP 이름이 있어 규칙 없이 된다.
+# 워크북은 러닝 헤드에 STEP 이름이 있어 규칙 없이 된다.
 SECTION_RULES = {
-    "blackbook": [(r"Exercise", "문항 (Exercise · B6)"), (r"정답\s*및\s*해설", "정답 및 해설 (B9)"),
-                  (r"Unit\s*\d+|\d+과\s*본문", "원문 지문 · 연관어휘 (B1 + B5)")],
-    "whitebook": [(r"DAY\s*\d+\s*EXERCISE", "DAY 실전문제 (EXERCISE · B6)"), (r"^정답", "정답 (B9)")],
-    "pocketbook": [(r"FLOW\s*NOTE", "요약노트 FLOW NOTE (B3)"), (r"암기\s*TEST", "암기 TEST (B8)"), (r"^정답", "정답 (B9)"),
-                   (r"어휘\s*고교기본|Unit\s*\d+", "어휘 목록 (B5)"), (r"본문\s*\d|모의고사\s*\d+|\d강\s*(\d+|분석)", "지문 분석 (B2 + B5 동반의어)")],
-    "final": [(r"문장\s*삽입", "문장 삽입 / 순서 배열 (B7)"), (r"문장\s*배열", "문장 배열 (B7)"),
-              (r"중요\s*어휘", "중요 어휘 / 요약문 (B8 + B3)"), (r"내용\s*요약", "내용 요약 (B3)")],
-    "special": [(r"WEEK\s*VOCABULARY", "WEEK 어휘 (B5)"), (r"APPENDIX|부록", "부록 어근·접두사·접미사 (B5)"),
-                (r"구문\s*연습문제", "구문 연습문제 (B6)"), (r"어법\s*연습문제", "어법 연습문제 (B6)"),
-                (r"LESSON", "구문·어법 LESSON 개념 (B4)"), (r"WEEK\s*READING|EXAMPLE", "WEEK 독해 예제 (B4 + B6)"),
-                (r"배경지식\s*노트", "배경지식 노트 (B4)"), (r"ANSWERS|정답\s*및", "정답 (B9)")],
-    "hankkeut": [(r"빠른\s*정답", "빠른 정답 (B9)"), (r"문항별\s*정답|정답\s*및\s*풀이", "문항별 정답 및 풀이 (B9)"),
-                 (r"PART\s*0?1|서답형\s*\d+제", "서답형 문항 (B6)")],
-    "seseo": [(r"중요문장|PICK", "PART 1 중요문장 분석 (B2)"), (r"대표유형", "PART 2 대표유형 풀이 전략 (B4)"),
-              (r"§P\d|연습\s*\d", "PART 2 연습 (B6)"), (r"실전문제|§B\d|§Q\d", "PART 2 실전문제 세트 (B6)"),
-              (r"정답\s*및\s*해설", "정답 및 해설 (B9)")],
-    "vocaunit": [(r"어휘끝", "PART 1 어휘끝 UNIT 어휘 (B5)"), (r"올림포스", "PART 2 올림포스 지문 어휘 (B5)"),
-                 (r"교과서", "PART 3 교과서 지문 어휘 (B5)"), (r"모의고사", "PART 4 모의고사 지문 어휘 (B5)")],
-    "vocabook": [(r"표제어", "DAY 표제어 (B5)"), (r"파생어", "DAY 파생어 & 연관어휘 (B5)"), (r"VOCA\s*vs", "VOCA vs. VOCA (B4)"),
-                 (r"워크북|주어진 단어에 해당하는|우리말 해석을 참고", "워크북 빈칸 드릴 (B8)"), (r"^정답|정 답", "정답 (B9)")],
+    "blackbook": [(r"Exercise", "문항 (Exercise)"), (r"정답\s*및\s*해설", "정답 및 해설"),
+                  (r"Unit\s*\d+|\d+과\s*본문", "원문 지문 · 연관어휘")],
+    "whitebook": [(r"DAY\s*\d+\s*EXERCISE", "DAY 실전문제 (EXERCISE)"), (r"^정답", "정답")],
+    "pocketbook": [(r"FLOW\s*NOTE", "요약노트 FLOW NOTE"), (r"암기\s*TEST", "암기 TEST"), (r"^정답", "정답"),
+                   (r"어휘\s*고교기본|Unit\s*\d+", "어휘 목록"), (r"본문\s*\d|모의고사\s*\d+|\d강\s*(\d+|분석)", "지문 분석")],
+    "final": [(r"문장\s*삽입", "문장 삽입 / 순서 배열"), (r"문장\s*배열", "문장 배열"),
+              (r"중요\s*어휘", "중요 어휘 / 요약문"), (r"내용\s*요약", "내용 요약")],
+    "special": [(r"WEEK\s*VOCABULARY", "WEEK 어휘"), (r"APPENDIX|부록", "부록 어근·접두사·접미사"),
+                (r"구문\s*연습문제", "구문 연습문제"), (r"어법\s*연습문제", "어법 연습문제"),
+                (r"LESSON", "구문·어법 LESSON 개념"), (r"WEEK\s*READING|EXAMPLE", "WEEK 독해 예제"),
+                (r"배경지식\s*노트", "배경지식 노트"), (r"ANSWERS|정답\s*및", "정답")],
+    "hankkeut": [(r"빠른\s*정답", "빠른 정답"), (r"문항별\s*정답|정답\s*및\s*풀이", "문항별 정답 및 풀이"),
+                 (r"PART\s*0?1|서답형\s*\d+제", "서답형 문항")],
+    "seseo": [(r"중요문장|PICK", "PART 1 중요문장 분석"), (r"대표유형", "PART 2 대표유형 풀이 전략"),
+              (r"§P\d|연습\s*\d", "PART 2 연습"), (r"실전문제|§B\d|§Q\d", "PART 2 실전문제 세트"),
+              (r"정답\s*및\s*해설", "정답 및 해설")],
+    "vocaunit": [(r"어휘끝", "PART 1 어휘끝 UNIT 어휘"), (r"올림포스", "PART 2 올림포스 지문 어휘"),
+                 (r"교과서", "PART 3 교과서 지문 어휘"), (r"모의고사", "PART 4 모의고사 지문 어휘")],
+    "vocabook": [(r"표제어", "DAY 표제어"), (r"파생어", "DAY 파생어 & 연관어휘"), (r"VOCA\s*vs", "VOCA vs. VOCA"),
+                 (r"워크북|주어진 단어에 해당하는|우리말 해석을 참고", "워크북 빈칸 드릴"), (r"^정답|정 답", "정답")],
 }
 
 
@@ -559,16 +559,16 @@ def design_images(series, d, limit=6):
 def design_layouts(series, design):
     """기준 PDF 의 면을 **구성 단위(섹션)** 로 묶는다 — 지문만 다르고 형태가 같은 면은 하나로.
 
-    섹션 = 틀별 규칙(SECTION_RULES, 블록 지도 기준) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
+    섹션 = 틀별 규칙(SECTION_RULES) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
     라벨 없는 면은 직전 섹션이 이어진 것. 본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다.
-    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 결과는 `_pages/layouts4_<stamp>.json` 에 둔다.
+    좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 결과는 `_pages/layouts5_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts4_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts5_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
