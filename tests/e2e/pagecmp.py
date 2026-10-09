@@ -245,9 +245,12 @@ def shape_match(ra, ma, color, tol, a, b, dpi=300):
         t = ((arr[y0:y1, x0:x1].astype(float) - bg) * d).sum(axis=2) / (d * d).sum()
         near = np.abs(arr[y0:y1, x0:x1].astype(int) - c).max(axis=2) <= max(tol, 90)   # 다른 색 글(옆 요소)은 빼고
         t = t * near
-        solid = t[t > 0.6]                                              # 꽉 칠한 화소의 진하기 — 그림마다 실제 글자색으로 맞춘다.
-        if solid.size >= 8:                                             # 원본(인디자인) 검정은 CMYK K100 이라 화면 변환에서 #231f20 보다 옅다(회색 41 대 32) —
-            t = t / max(float(np.percentile(solid, 90)), 0.5)           # 굵기·모양이 같아도 잉크가 4% 적게 잡혀 ±12% 경계에서 떨어졌다(14c 「시오.」 덮은 면적 2.71 대 2.73mm²)
+        # 검정 계열 글은 그림마다 실제 글자색(꽉 칠한 화소의 진하기)으로 맞춘다 — 원본(인디자인) 검정은 CMYK K100 이라 화면 변환에서
+        # #231f20 보다 옅어(회색 41 대 32) 굵기·모양이 같아도 잉크가 4% 적게 잡혀 ±12% 경계에서 떨어졌다(14c 「시오.」 덮은 면적 2.71 대 2.73mm²).
+        # 흰 글·색 글은 지정 색 그대로(맞추면 01·08 흰 제목이 0.85 로 떨어진다).
+        solid = t[t > 0.6]
+        if c.max() <= 80 and solid.size >= 8:
+            t = t / max(float(np.percentile(solid, 90)), 0.5)
         return np.clip(t, 0, 1)
     ca, cb = cover(ra, a), cover(ma, b)
     if not ca.size or not cb.size or ca.sum() < 1:
