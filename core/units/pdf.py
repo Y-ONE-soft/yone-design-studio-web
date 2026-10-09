@@ -8,6 +8,8 @@ import shutil
 import subprocess
 import tempfile
 
+from core.units import fonts
+
 PT = 72 / 25.4
 _MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
@@ -36,7 +38,7 @@ def html_of(svgs, w_mm, h_mm, title="지면", keep=None):
             f'@page{{size:{w_mm}mm {h_mm}mm;margin:0}} html,body{{margin:0;padding:0}} '
             f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:hidden;page-break-after:always;break-after:page}} '
             f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm}} .p svg .zone{{display:none}} '
-            f'.story-hint,.story-over{{display:none}}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
+            f'.story-hint,.story-over{{display:none}}{fonts.fix_css()}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
             f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}</body></html>')
 
 

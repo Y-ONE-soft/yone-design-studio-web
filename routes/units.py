@@ -26,7 +26,7 @@ import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
 
-from core.units import content, decompose, manuscript, render, store
+from core.units import content, decompose, fonts, manuscript, render, store
 
 bp = Blueprint("units", __name__)
 _RE_ID = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
@@ -50,14 +50,14 @@ def canvas():
     from core.units import formats
     lib = store.library()
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
-    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기")
+    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기", font_css=fonts.fix_css())
 
 
 @bp.route("/units/library")
 def page():
     """라이브러리·분해·JSON — 데이터를 들여다보는 화면."""
     lib = store.library()
-    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기")
+    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기", font_css=fonts.fix_css())
 
 
 @bp.route("/api/units/thumbs")

@@ -2,6 +2,7 @@
 {% block title %}문서 만들기{% endblock %}
 {% block theme %}light{% endblock %}
 {% block content %}
+<style>{{ font_css|safe }}</style>   {# 서체 굵기 바로잡기 — core/units/fonts.py #}
 <style>
   #side input[type=number]::-webkit-inner-spin-button, #side input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }   /* 좁은 칸 가운데 증감 단추가 잘못 눌려 값이 바뀌고 초점이 풀리던 것 */
   #side input[type=number] { -moz-appearance: textfield; }
