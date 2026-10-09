@@ -808,6 +808,19 @@ def design_layouts(series, design):
     return out
 
 
+def warm_layouts():
+    """모든 디자인의 구성을 계산해 캐시에 둔다(서버 기동 때 뒤에서). 실패한 디자인은 건너뛴다."""
+    n = 0
+    for t in templates():
+        for d in t["designs"]:
+            try:
+                if design_layouts(t["series"], d["id"])["total"]:
+                    n += 1
+            except Exception as e:
+                print(f"■ 구성 미리 계산 실패 {t['series']}/{d['id']}: {e}", flush=True)
+    print(f"■ 구성 미리 계산 끝 — 디자인 {n}개", flush=True)
+
+
 @bp.route("/catalog/pdf/<series>/<design>")
 def design_pdf_view(series, design):
     """기준 PDF 원본 — 브라우저 PDF 뷰어로 연다(내려받기 아님). 구성과 나란히 대조용, 주소 뒤 #page=N 으로 그 면부터."""

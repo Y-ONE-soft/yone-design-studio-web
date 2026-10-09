@@ -113,6 +113,11 @@ def create_app():
             resp.headers["Cache-Control"] = "no-store"
         return resp
 
+    # 디자인마다 '구성'(기준 PDF 면 묶음)을 미리 계산해 둔다 — 첫 방문이 5~20초 걸리던 것(배포·규칙 바뀐 뒤)을 없앤다.
+    # 이미 계산해 둔 것은 캐시라 바로 넘어간다. 서버 기동을 막지 않게 뒤에서.
+    import threading
+    from routes.catalog import warm_layouts
+    threading.Thread(target=warm_layouts, daemon=True, name="warm-layouts").start()
     return app
 
 
