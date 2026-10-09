@@ -15,7 +15,17 @@ import tempfile
 import unicodedata
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+try:                                                     # 프로필 안 읽은 셸(시스템 파이썬)이면 pyenv 파이썬으로 다시
+    import fitz  # noqa: F401
+except ImportError:
+    py = os.path.expanduser("~/.pyenv/shims/python3")
+    if os.path.exists(py) and os.path.realpath(sys.executable) != os.path.realpath(py) and not os.environ.get("_REG_REEXEC"):
+        os.environ["_REG_REEXEC"] = "1"
+        os.environ["PATH"] = "/opt/homebrew/bin:" + os.environ.get("PATH", "")
+        os.execv(py, [py, os.path.abspath(__file__)] + sys.argv[1:])
+    raise
 sys.path.insert(0, ROOT)
+CWD = os.getcwd()                                        # PDF 상대 경로는 부른 곳 기준
 os.chdir(ROOT)
 
 
@@ -44,7 +54,7 @@ def series_of(folder):
 def main():
     if len(sys.argv) < 3:
         sys.exit(__doc__)
-    pdf = os.path.abspath(os.path.expanduser(sys.argv[1]))
+    pdf = os.path.join(CWD, os.path.expanduser(sys.argv[1]))
     if not os.path.isfile(pdf):
         sys.exit(f"✗ PDF 가 없다: {pdf}")
     series = series_of(sys.argv[2])

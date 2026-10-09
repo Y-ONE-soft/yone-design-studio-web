@@ -16,7 +16,11 @@ cd "$(dirname "$0")/.."
 APP=${FLY_APP:-yos-studio}
 REGION=${FLY_REGION:-nrt}
 
-fly auth whoami >/dev/null 2>&1 || { echo "✗ 먼저 fly auth login"; exit 2; }
+# 세션 셸이 프로필을 안 읽어 PATH 에 brew·pyenv 가 없을 때도 돈다 (2026-10-09: fly 를 못 찾고 "로그인하라" 로 멈췄다)
+export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.fly/bin:$HOME/.pyenv/shims:$PATH"
+command -v fly >/dev/null 2>&1 || { echo "✗ fly 명령이 없다 — brew install flyctl"; exit 2; }
+# FLY_API_TOKEN(~/.config/yone/env 에 둘 수 있다)이 있으면 fly 가 그걸 쓴다 — 브라우저 로그인 없이
+fly auth whoami >/dev/null 2>&1 || { echo "✗ fly 로그인이 안 돼 있다 — 터미널에서 fly auth login (또는 ~/.config/yone/env 에 FLY_API_TOKEN)"; exit 2; }
 
 if [ "$1" = "fonts" ]; then
   [ -f fonts.tgz ] || deploy/fonts-pack.sh
