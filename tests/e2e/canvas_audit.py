@@ -498,7 +498,7 @@ try:
         js("document.querySelector('#set-paste').click()"); time.sleep(0.5)          # 창 안 단추는 눌러서(좌표는 목록 길이에 흔들린다)
         js("document.querySelector('#ms-text').value = '# 77\\nThis is a long enough English passage for the audit of the manuscript parser feature set.\\n윗글의 주제는?\\n① a ② b ③ c\\n답: ②'")
         js("document.querySelector('#ms-go').click()"); ok = wait("LIB.sets.some(s => s.id === '77') && curSet === '77'", 10)
-        ok2 = wait("document.querySelector('#svgwrap svg').innerHTML.includes('audit of the manuscript')", 8)
+        ok2 = wait("document.querySelector('#svgwrap svg').textContent.includes('audit of the manuscript')", 8)
         if visible(".sheet-bg.on"): click(*center("#sheet-x")); time.sleep(0.3)
         return (ok and ok2, f"set={ok} shown={ok2}")
     step("L2 원고 붙여넣기 → 세트 → 캔버스에 그 원고", l2)
@@ -755,7 +755,7 @@ try:
         for k, v in [("bullet", "decimal"), ("tab", "8"), ("rule_above.w", "0.8"), ("rule_below.w", "0.4"),
                      ("first_baseline", "2"), ("baseline", "1"), ("kerning", "none"), ("h_scale", "90"), ("v_scale", "105")]:
             setf(k, v)
-        js("(() => { const el = document.querySelector('#side [data-a=\"auto_size\"]'); el.checked = false; el.dispatchEvent(new Event('change')); })()")
+        js("(() => { const el = document.querySelector('#side [data-a=\"auto_size\"]'); el.value = 'off'; el.dispatchEvent(new Event('change')); })()")
         time.sleep(2.0)
         svg = js("document.querySelector('#svgwrap svg').innerHTML")
         drawn = {"글머리": "list-item" in svg, "단락선": "border-top" in svg, "탭": "tab-size" in svg,

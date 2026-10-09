@@ -26,7 +26,7 @@ import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
 
-from core.units import decompose, manuscript, render, store
+from core.units import content, decompose, fonts, manuscript, render, store
 
 bp = Blueprint("units", __name__)
 _RE_ID = re.compile(r"^[a-z][a-z0-9_]{0,39}$")
@@ -50,14 +50,14 @@ def canvas():
     from core.units import formats
     lib = store.library()
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
-    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기")
+    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기", font_css=fonts.fix_css())
 
 
 @bp.route("/units/library")
 def page():
     """라이브러리·분해·JSON — 데이터를 들여다보는 화면."""
     lib = store.library()
-    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기")
+    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기", font_css=fonts.fix_css())
 
 
 @bp.route("/api/units/thumbs")
@@ -216,6 +216,14 @@ def api_preview():
                 ctx.warnings.extend(w for w in c2.warnings if w not in ctx.warnings)
         elif kind == "pages":
             spec = store.by_id(lib["specs"]).get(body.get("spec") or item.get("spec") or "a4") or render.DEFAULT_SPEC
+            if body.get("mode") == "canvas" and body.get("fill"):     # 원고 보기 — 문서의 원고를 자리에 넣어(이 쪽은 지금 고치는 그대로)
+                pl = store.by_id(lib["plans"]).get(body["fill"])
+                if pl:
+                    pgs = [item if p.get("id") == item.get("id") else p for p in _plan_pages(lib, pl)]
+                    filled, rep = content.fill(pgs, pl.get("content") or {})
+                    item = next((p for p in filled if p.get("id") == item.get("id")), item)
+                    ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))
+                    return jsonify({"svgs": render.page_canvas_svgs(ctx, item, spec), "warnings": ctx.warnings, "fill_report": rep})
             if body.get("mode") == "canvas":            # 자유 배치 요소를 견본(또는 고른 세트) 값으로
                 ss = store.get("sets", body["set"]) if body.get("set") else None
                 if body.get("set") == "answers" and not ss:          # 정답지 면 — 모든 원고의 정답을 모은 한 흐름으로 보인다
@@ -410,6 +418,58 @@ def api_make():
     return jsonify({"ok": True, "block": block, "part": part, "note": dec.get("note", "")})
 
 
+# ── 원고 넣기 — 틀(자리·임시 글·스타일)에 원고(자리 이름 → 글)를 넣는다. 규약: docs/편집기_재현/원고자리_규약.md ──
+
+def _plan_pages(lib, plan):
+    pages = store.by_id(lib["pages"])
+    return [pages[i] for i in content.plan_page_ids(plan) if i in pages]
+
+
+@bp.route("/api/units/schema")
+def api_schema():
+    """?plan=<문서> — 자리 표: 자리 이름마다 몇 번 나오는지와 임시 글. 바깥 시스템이 무엇을 보낼지 안다."""
+    lib = store.library()
+    plan = store.by_id(lib["plans"]).get(request.args.get("plan") or "")
+    if not plan:
+        return jsonify({"error": "plan 없음"}), 404
+    return jsonify({"plan": plan["id"], "name": plan.get("name"), "slots": content.schema(_plan_pages(lib, plan)),
+                    "rule": "원고 = {자리 이름: 글 | [글…]} — 같은 자리가 여러 번이면 쪽 순서 → 위에서 아래 → 왼쪽에서 오른쪽"})
+
+
+@bp.route("/api/units/fill", methods=["POST"])
+def api_fill():
+    """원고를 넣은 결과 — JSON {plan, content, skin?, as?: "pdf"(기본)|"svg"}. 틀의 임시 글 대신 원고 글이 나온다.
+    content 를 안 주면 문서에 저장된 원고(plan.content). 넣은 보고는 X-Fill-Report 머리(pdf) 또는 report(svg)."""
+    from core.units import pdf as _pdf
+    body = request.get_json(silent=True) or {}
+    lib = store.library()
+    plan = store.by_id(lib["plans"]).get(body.get("plan") or "")
+    if not plan:
+        return jsonify({"error": "plan 없음"}), 404
+    data = body.get("content") if body.get("content") is not None else plan.get("content") or {}
+    if not isinstance(data, dict):
+        return jsonify({"error": "content 는 {자리 이름: 글 | [글…]}"}), 400
+    pages, report = content.fill(_plan_pages(lib, plan), data)
+    ctx = _ctx(lib, body.get("skin"))
+    spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
+    svgs = []
+    for pg in pages:
+        sp = store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
+        svgs.extend(render.page_canvas_svgs(ctx, pg, sp)[:1])                  # 쪽 하나 = 면 하나 (캔버스와 같게)
+    if body.get("as") == "svg":
+        return jsonify({"svgs": svgs, "report": report, "warnings": ctx.warnings})
+    out = os.path.join(store.udir(), "_pdf")
+    os.makedirs(out, exist_ok=True)
+    path = os.path.join(out, re.sub(r"[^a-z0-9_]", "_", plan["id"].lower()) + "_fill.pdf")
+    try:
+        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=plan.get("name") or plan["id"])
+    except Exception as e:
+        return jsonify({"error": f"{type(e).__name__}: {e}", "report": report}), 500
+    r = send_file(path, mimetype="application/pdf", max_age=0)
+    r.headers["X-Fill-Report"] = json.dumps(report, ensure_ascii=True)
+    return r
+
+
 @bp.route("/api/units/pdf")
 def api_pdf():
     """PDF 저장 — ?plan=<틀> (세트 전부) 또는 ?page=<지면> (견본 값·?set=). ?skin= 옷. 크로미움 인쇄."""
@@ -423,6 +483,7 @@ def api_pdf():
         pg0 = store.by_id(lib["pages"]).get(page_id or "") or {}
         sp0 = store.by_id(lib["specs"]).get(pl.get("spec") or pg0.get("spec") or "a4") or render.DEFAULT_SPEC
         ctx.print = {"bleed": float(sp0.get("bleed") or 3.0), "marks": request.args.get("marks") != "0"}
+    keep = None
     if plan_id:
         plan = store.by_id(lib["plans"]).get(plan_id)
         if not plan:
@@ -436,7 +497,20 @@ def api_pdf():
             abort(404)
         spec = store.by_id(lib["specs"]).get(pg.get("spec") or "a4") or render.DEFAULT_SPEC
         ss = store.get("sets", request.args["set"]) if request.args.get("set") else None
-        svgs = render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        fid = request.args.get("fill")                                         # 원고 보기 — ?fill=<문서> 또는 auto(이 쪽이 든 문서)
+        before = []
+        if fid:
+            pl = next((p for p in lib["plans"] if (p["id"] == fid or fid == "auto") and page_id in content.plan_page_ids(p)), None)
+            if pl:
+                filled, _rep = content.fill(_plan_pages(lib, pl), pl.get("content") or {})
+                k = next((i for i, p in enumerate(filled) if p.get("id") == page_id), None)
+                if k is not None:
+                    pg, before = filled[k], filled[:k]                         # 앞 쪽들도 함께 그린다 — 글 잇기가 앞 쪽 이야기를 이 쪽으로 흘린다
+                ss = None
+        pre = [s for p in before for s in render.page_canvas_svgs(ctx, p, spec)] if any(
+            (it.get("atom") or {}).get("story") for p in before + [pg] for it in p.get("items") or []) else []
+        svgs = pre + render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        keep = set(range(len(pre), len(svgs))) if pre else None
         title = pg.get("name") or page_id
     else:
         return jsonify({"error": "plan 또는 page"}), 400
@@ -452,7 +526,7 @@ def api_pdf():
             if request.args.get("json") == "1":
                 return jsonify({"pages": r["pages"], "cmyk": r["cmyk"], "note": r["note"], "warnings": ctx.warnings})
         else:
-            _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title)
+            _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), path, title=title, keep=keep)
     except Exception as e:
         return jsonify({"error": f"{type(e).__name__}: {e}", "warnings": ctx.warnings}), 500
     return send_file(path, mimetype="application/pdf", as_attachment=request.args.get("dl") == "1",
@@ -505,6 +579,11 @@ def api_image_put():
 def api_image(sid, key):
     skin = store.get("skins", sid) or {}
     p = (skin.get("images") or {}).get(key)
+    if not p:                                                   # 다른 옷에 등록돼 있어도 찾는다
+        for sk in store.load("skins"):
+            p = (sk.get("images") or {}).get(key)
+            if p:
+                break
     if not p:
         abort(404)
     if not os.path.isabs(p):

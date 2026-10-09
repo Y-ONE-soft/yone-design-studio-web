@@ -18,7 +18,7 @@
 자리: "#sel" (그 요소 가운데) · [x, y] (화면 픽셀) · {"mm": [x, y]} (지면 좌표)
 커서는 화면에 점으로 그려 준다 — 헤드리스는 진짜 커서가 안 찍힌다.
 """
-import base64, json, math, os, subprocess, sys, time, urllib.parse, urllib.request
+import base64, json, math, os, shutil, subprocess, sys, time, urllib.parse, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cdp import CDP, CHROME                                             # noqa: E402
@@ -31,6 +31,8 @@ url, steps_path, out = sys.argv[1], sys.argv[2], sys.argv[3]
 W = int(sys.argv[4]) if len(sys.argv) > 4 else 1600
 H = int(sys.argv[5]) if len(sys.argv) > 5 else 1000
 FPS = int(sys.argv[6]) if len(sys.argv) > 6 else 8
+FAST = os.environ.get("REC_FAST") == "1"        # 빠른 모드 — 기다리지 않고 프레임도 안 찍는다 (대본 검사용)
+SPEED = float(os.environ.get("REC_SPEED", "2"))  # 녹화 배율 — 2 면 기다림·타이핑이 절반 (영상도 절반 길이)
 frames = os.path.join(SP, "frames_" + os.path.basename(out).split(".")[0])
 subprocess.run(["rm", "-rf", frames], capture_output=True)
 os.makedirs(frames, exist_ok=True)
@@ -44,7 +46,7 @@ CHROME_SETUP = """(() => {
     #narr { position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); z-index: 99998;
       background: rgba(20,18,30,.92); color: #fff; font: 600 20px/1.5 -apple-system, "Apple SD Gothic Neo", sans-serif;
       padding: 12px 22px; border-radius: 12px; max-width: 78%; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,.28);
-      opacity: 0; transition: opacity .25s; }
+      opacity: 0; transition: opacity .25s; pointer-events: none; }   /* 자막이 아래 쪽 줄(＋ 쪽 단추)을 가려 눌리지 않던 것 — 쪽 8개부터 */
     #narr.on { opacity: 1; }`;
   document.head.appendChild(st);
   const c = document.createElement('div'); c.id = 'cur'; c.style.left = '-50px'; c.style.top = '-50px'; document.body.appendChild(c);
@@ -67,22 +69,33 @@ try:
             urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json/version", timeout=1)
             break
         except Exception:
-            time.sleep(0.25)
+            time.sleep(0.25 / SPEED)
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}/json/new?{urllib.parse.quote(url, safe='')}", method="PUT")
     tab = json.load(urllib.request.urlopen(req, timeout=30))
     c = CDP(tab["webSocketDebuggerUrl"])
     time.sleep(3.0)
     c.js(CHROME_SETUP)
 
-    def frame():
+    fc = [0]
+
+    def frame(force=False):
+        if FAST:
+            return
+        fc[0] += 1
+        if not force and SPEED > 1 and fc[0] % int(round(SPEED)) != 0:
+            return                                  # 배속 — 동작 프레임을 솎는다
         d = c.call("Page.captureScreenshot", format="jpeg", quality=72)
         n[0] += 1
         open(os.path.join(frames, f"{n[0]:05d}.jpg"), "wb").write(base64.b64decode(d["data"]))
 
     def hold(ms):
+        ms = ms / SPEED
+        if FAST:
+            time.sleep(min(ms, 300) / 1000.0)      # 화면이 따라올 최소한만
+            return
         t0 = time.time()
         while (time.time() - t0) * 1000 < ms:
-            frame()
+            frame(True)
             left = ms / 1000 - (time.time() - t0)
             time.sleep(max(0, min(1 / FPS, left)))
 
@@ -152,23 +165,28 @@ try:
         pos[0], pos[1] = x1, y1
 
     def typetext(t, per=0.035):
+        per = per / SPEED
         for ch in t:
+            if ch == " ":                                # 줄 나눔 — Shift+Enter 를 진짜로 누른다
+                key("Enter", shift=True)
+                continue
             c.call("Input.insertText", text=ch)
             if len(t) < 40 or ord(ch) % 3 == 0:
                 frame()
             time.sleep(per)
         frame()
 
-    def key(name):
+    def key(name, shift=False):
         codes = {"Enter": (13, "Enter"), "Escape": (27, "Escape"), "Tab": (9, "Tab"),
                  "ArrowDown": (40, "ArrowDown"), "ArrowUp": (38, "ArrowUp")}
         code, k = codes.get(name, (0, name))
-        c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=code, key=k, code=k)
-        c.call("Input.dispatchKeyEvent", type="keyUp", windowsVirtualKeyCode=code, key=k, code=k)
+        mod = 8 if shift else 0
+        c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=code, key=k, code=k, modifiers=mod)
+        c.call("Input.dispatchKeyEvent", type="keyUp", windowsVirtualKeyCode=code, key=k, code=k, modifiers=mod)
         frame()
 
     def wipe(times=14):
-        """칸 안의 글을 지운다 — 백스페이스·딜리트를 사람처럼 눌러서."""
+        """칸 안의 글을 지운다 — 백스페이스·딜리트를 사람처럼 눌러서. 횟수는 속도와 무관(덜 지우면 글이 섞인다)."""
         for _ in range(times):
             for t in ("rawKeyDown", "keyUp"):
                 c.call("Input.dispatchKeyEvent", type=t, windowsVirtualKeyCode=8, key="Backspace", code="Backspace")
@@ -180,10 +198,11 @@ try:
         """칸을 눌러 고르고, 다 지우고, 쳐 넣고, 확정 — 사람이 하는 그대로."""
         for tryn in range(2):
             click(spot, 2)
-            wipe()
+            n = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value).length : 0; })()") if isinstance(spot, str) else 0
+            wipe(max(14, (n or 0) + 2))
             typetext(str(value))
             key("Enter")                                 # 칸은 Enter 로 확정된다
-            time.sleep(0.25)
+            time.sleep(0.25 / SPEED)
             frame()
             got = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value) : null; })()")
             same = str(got).strip() == str(value).strip()
@@ -227,9 +246,9 @@ try:
                 for tryn in range(2):
                     n0 = c.js("page.items.length")
                     click(f'[data-tool="{d["tool"]}"]')
-                    time.sleep(0.25)
+                    time.sleep(0.25 / SPEED)
                     drag(d["from"], d["to"])
-                    time.sleep(0.4)
+                    time.sleep(0.4 / SPEED)
                     if c.js("page.items.length") > n0:
                         break
                     print(f"  ! {d['tool']} 안 그려짐 — 다시", flush=True)
@@ -241,7 +260,7 @@ try:
                 want = st["write"]["value"]
                 for tryn in range(3):
                     click(st["write"]["at"], 2)
-                    time.sleep(0.4)
+                    time.sleep(0.4 / SPEED)
                     if not c.js("!!(document.querySelector('#tedit') && document.querySelector('#tedit').offsetParent)"):
                         print("  ! 글 편집칸이 안 열렸다 — 다시", flush=True)
                         continue
@@ -261,18 +280,37 @@ try:
                 v = c.js(st["js"])
                 if v not in (None, True):
                     print("  js →", str(v)[:140], flush=True)
+            if "upload" in st:                                 # 파일 고르기 — 사람이 창에서 고르는 것과 같다
+                u = st["upload"]
+                doc = c.call("DOM.getDocument")
+                node = c.call("DOM.querySelector", nodeId=doc["root"]["nodeId"], selector=u["at"])
+                if not node.get("nodeId"):
+                    raise RuntimeError(f"파일 칸 없음 {u['at']}")
+                c.call("DOM.setFileInputFiles", files=[u["path"]], nodeId=node["nodeId"])
+                frame()
             if "shot" in st:
                 d = c.call("Page.captureScreenshot", format="png")
                 open(os.path.join(SP, st["shot"]), "wb").write(base64.b64decode(d["data"]))
         except Exception as e:
             print("  ERR", json.dumps(st, ensure_ascii=False)[:70], "→", str(e)[:160], flush=True)
+            shot1 = os.path.join(SP, "_첫오류.png")                  # 처음 실패한 순간의 화면 — 원인 찾기용
+            if not os.path.exists(shot1):
+                try:
+                    open(shot1, "wb").write(base64.b64decode(c.call("Page.captureScreenshot", format="png")["data"]))
+                    print("  첫 오류 화면:", shot1, flush=True)
+                except Exception:
+                    pass
         hold(st.get("wait", 600))
 finally:
     proc.terminate()
+    try:
+        proc.wait(timeout=10)
+    except Exception:
+        proc.kill()
+    shutil.rmtree(PROF, ignore_errors=True)                         # 실패해도 지운다 — 판마다 새 프로필이라 남기면 쌓여 디스크가 찼다(25GB, 2026-10-09)
 
 if n[0] < 2:
     raise SystemExit("프레임이 없다")
-subprocess.run(["rm", "-rf", PROF], capture_output=True)
 subprocess.run([FFMPEG, "-y", "-framerate", str(FPS), "-i", os.path.join(frames, "%05d.jpg"),
                 "-c:v", "libx264", "-pix_fmt", "yuv420p", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
                 "-movflags", "+faststart", out], capture_output=True)

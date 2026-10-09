@@ -12,11 +12,14 @@
 import json
 import math
 import re
+import unicodedata
+from html import unescape as _unescape
 from xml.sax.saxutils import escape as _x
 
 from core.units import sample
 
 PT = 25.4 / 72.0
+TEXT_ZOOM = 100                    # 글상자 배치 해상도 — 지면 1mm 를 100px 로 (아래 _atom_svg_raw 의 글). 10 이면 0.1mm 단위로 반올림돼 빈칸 밑줄 0.176mm 가 0.1mm 로 나왔다
 GAP_BLOCK = 1.5      # mm — 한 세트 안 블록 사이
 GAP_SET = 4.0        # mm — 세트 사이
 CIRC = "①②③④⑤⑥⑦⑧⑨⑩"
@@ -31,7 +34,7 @@ def _by_id(items):
     return {x.get("id"): x for x in (items or []) if isinstance(x, dict) and x.get("id")}
 
 
-STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
+STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "tsume", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
 
 
 # 꾸밈없는 기본 견본 — 브랜드가 하나도 없어도 그린다(인디자인 기본 견본: 검정·종이·회색 · 기본 서체).
@@ -44,6 +47,7 @@ DEFAULT_SKIN = {"id": "", "name": "기본", "tokens": {
 class Ctx(object):
     def __init__(self, skin, lib, sys=None):
         self.skin = skin or DEFAULT_SKIN
+        self.skins = list(lib.get("skins") or [])          # 그림은 어느 옷에 등록돼 있든 찾는다
         self.parts = _by_id(lib.get("parts"))
         self.blocks = _by_id(lib.get("blocks"))
         self.pages = _by_id(lib.get("pages"))                 # 넘치면 이어 갈 면(page.cont) 찾기 — 인디자인의 다른 마스터 프레임으로 잇기
@@ -97,8 +101,17 @@ class Ctx(object):
         return font_family(self._tok(ref, "font", "sans-serif"))
 
     def image(self, src):
-        p = ((self.skin.get("images") or {}).get(src)) if src else None
-        return p
+        """그림 찾기 — 이 옷에 없으면 다른 옷에서도 찾는다 (그림은 옷을 갈아입어도 그대로여야 한다)."""
+        if not src:
+            return None
+        p = (self.skin.get("images") or {}).get(src)
+        if p:
+            return p
+        for sk in getattr(self, "skins", []):
+            p = (sk.get("images") or {}).get(src)
+            if p:
+                return p
+        return None
 
     def image_href(self, src):
         """그림을 SVG 안에 **박아 넣는다** — PDF 는 파일로 열리므로 서버 주소를 못 읽는다."""
@@ -168,8 +181,41 @@ def anchored_html(v, ctx):
     if al in ("left", "right"):
         box += f"float:{al};margin:{0.5}px {1.0}px;"
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {part.get("w", w):.3f} {ph:.3f}" '
-           f'width="{w:.3f}" height="{ph:.3f}" style="display:block">{frag}</svg>')
+           f'width="{w:.3f}" height="{ph:.3f}" style="display:block;width:{w:.3f}px;height:{ph:.3f}px">{frag}</svg>')
     return f'<span style="{box}">{svg}</span>'
+
+
+def text_zoom(a, outer=1):
+    """글상자 배치 배율(TEXT_ZOOM) — 크롬은 글자를 1만 px 보다 크게 못 그린다(300pt 가 283pt 로): 큰 글은 낮춘다.
+    outer = 이 글을 감싼 글의 배율(글 끝에 붙인 부품 속 글) — 배율이 곱해지므로 그만큼 나눈다(안 나누면 1만 px 에 걸려 1/3 크기로, 단위 10 O·X)."""
+    big = max([float(a.get("size") or 9)] + [float(r.get("size") or 0) for r in a.get("grep") or []]) * PT
+    return max(1, min(TEXT_ZOOM, int(9000 / max(big * outer, 0.1))))
+
+
+def tail_html(a, ctx):
+    """글 끝에 붙이는 개체(인디자인 인라인 앵커) — atom.tail = {part, gap mm, drop mm, w?, h?}.
+    부품을 글줄 안 inline-block 으로 끝에 붙인다: 글자처럼 흘러 자리가 모자라면 마지막 낱말과 함께 다음 줄로 간다.
+    U+2060 으로 마지막 낱말과 붙인다(원본의 붙임 공백). drop = 기준선에서 개체 아래 끝까지 아래로(mm, 음수면 위로).
+    → (html, 폭 mm) 또는 None"""
+    t = a.get("tail") or {}
+    part = (ctx.parts or {}).get(t.get("part")) if (ctx and t.get("part")) else None
+    if not part:
+        if t.get("part") and ctx:
+            ctx.warn(f"글 끝에 붙일 부품 없음 {t.get('part')}")
+        return None
+    w = float(t.get("w") or part.get("w") or 10)
+    z0 = getattr(ctx, "zoom_out", 1)
+    ctx.zoom_out = z0 * text_zoom(a, z0)                              # 부품 속 글은 바깥 글의 배율 안에서 그려진다
+    try:
+        frag, ph = part_svg(ctx, part)
+    finally:
+        ctx.zoom_out = z0
+    h = float(t.get("h") or part.get("h") or ph or 5)
+    gap, drop = float(t.get("gap") or 0), float(t.get("drop") or 0)
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {float(part.get("w") or w):.3f} {float(part.get("h") or h):.3f}" '
+           f'width="{w:.3f}" height="{h:.3f}" style="display:block;overflow:visible;width:{w:.3f}px;height:{h:.3f}px">{frag}</svg>')   # 크기를 스타일로도 — 바깥 .p svg 규칙(쪽 크기)이 안 걸리게
+    return (f'\u2060<span style="display:inline-block;width:{w:.3f}px;height:{h:.3f}px;margin-left:{gap:.3f}px;'
+            f'vertical-align:{-drop:.3f}px;letter-spacing:0;text-indent:0">{svg}</span>', w + gap)
 
 
 def rich_html(v, ctx=None):
@@ -220,6 +266,229 @@ def rich_html(v, ctx=None):
             t = f'<span style="{st}">' + t + "</span>"
         return t
     return esc(v)
+
+
+_TAG = re.compile(r"(<[^>]+>)")
+
+
+def grep_html(html, rules, ctx=None):
+    """GREP 스타일 — 글 HTML 의 글자 부분(태그 밖)에서 패턴에 맞는 곳을 굵게·기울임·밑줄·색으로 감싼다.
+    태그를 걸쳐 맞는 곳은 건드리지 않는다. 패턴이 틀리면 그 규칙만 건너뛴다."""
+    for r in rules or []:
+        try:
+            rx = re.compile(r.get("re") or "")
+        except re.error:
+            continue
+        if not rx.pattern:
+            continue
+        col = (ctx.color(r["color"]) if ctx else r["color"]) if r.get("color") else None
+        st = f"color:{col};" if col else ""
+        if r.get("size"):
+            st += f"font-size:{float(r['size']) * PT:.3f}px;"
+        if r.get("bshift"):                                                # 기준선 이동 pt — 양수면 위로
+            st += f"position:relative;top:{-float(r['bshift']) * PT:.3f}px;"
+        if r.get("weight"):                                                # 굵기 100~900 — 굵게(700)보다 먼저
+            st += f"font-weight:{int(r['weight'])};"
+        if r.get("track"):                                                 # 자간 ‰ em
+            st += f"letter-spacing:{float(r['track']) / 1000:.4f}em;"
+        ul = r.get("u") and not r.get("blank") and not r.get("fit") and (r.get("line") or r.get("line_off") or r.get("line_color"))
+        if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
+            lw = float(r.get("line") or 0.18)
+            lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else "currentColor"
+            st += (f"text-decoration:underline;text-decoration-thickness:{lw:.3f}px;text-decoration-color:{lc};"
+                   f"text-underline-offset:{float(r.get('line_off') or 0.4) - lw / 2:.3f}px;text-decoration-skip-ink:none;")
+        tags = [k for k in ("u", "i", "b") if r.get(k) and not (k == "u" and ul) and not (k == "b" and r.get("weight"))]
+
+        def wrap(m):
+            if r.get("fit"):                                               # 글 폭 칸 — 맞은 글을 감추고 그 폭(크기·자간 포함) + 더할 폭만큼 밑줄 (인디자인: 정답 글 칠 없음 + 밑줄)
+                lw = float(r.get("line") or 0.2)
+                off = float(r.get("line_off") or 0.4)
+                lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
+                t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
+                fs = st.replace(f"color:{col};", "") if col else st
+                # overflow:hidden 인 inline-block 은 아래 끝이 기준선에 선다 — 높이 0 이면 밑줄을 기준선에서 정확히 내린다. 글은 칸 폭만 잡고 안 보인다
+                # 폭은 낱자 폭 합(합자·커닝 없이) — 원본 칸 71개가 그 식에 맞는다(「off」 의 ff 합자가 자간 한 칸을 먹던 것, 단위 11)
+                return (f'<span style="display:inline-block;height:0;overflow:hidden;white-space:nowrap;font-feature-settings:\'liga\' 0,\'calt\' 0;font-kerning:none;{fs}padding-right:{float(r.get("blank") or 0):.3f}px;'
+                        f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"><span style="color:transparent">{t}</span></span>'
+                        f'<span style="{fs}">⁠</span>')                    # 감춘 글 크기의 줄 높이는 남긴다(원본: 큰 정답 글이 든 줄은 기준선이 내려간다)
+            if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
+                lw = float(r.get("line") or 0.2)
+                off = float(r.get("line_off") or 0.4)
+                lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
+                return (f'\u2060<span style="display:inline-block;width:{float(r["blank"]):.3f}px;height:0;'   # U+2060 — 앞 글자(빈칸 첫 글자)와 칸 사이에서 줄이 안 바뀌게
+                        f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"></span>')
+            # 표시 감추기 — 원고의 약속 표시(예: {밑줄 칠 곳})는 지우고 묶음 1 의 글에만 서식
+            t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
+            for k in tags:
+                t = f"<{k}>{t}</{k}>"
+            return f'<span style="{st}">{t}</span>' if st else t
+        out = []
+        for p in _TAG.split(html):
+            raw = _unescape(p) if not p.startswith("<") else ""
+            if not raw or not rx.search(raw):
+                out.append(p)
+                continue
+            k = 0
+            for m in rx.finditer(raw):
+                if m.end() == m.start():
+                    continue
+                out.append(esc(raw[k:m.start()]) + wrap(m))
+                k = m.end()
+            out.append(esc(raw[k:]))
+        html = "".join(out)
+    return html
+
+
+def keep_spaces(html):
+    """연속 공백을 지킨다 — HTML 은 공백 여럿을 하나로 줄이지만 인디자인은 친 만큼 띄운다.
+    두 번째 공백부터 줄 안 바뀜 공백(&#160;)으로 — 첫 공백에서는 그대로 줄이 바뀔 수 있다.
+    글(단락) 끝 공백도 지킨다 — 브라우저는 버리지만 인디자인은 남기고, 그 공백을 보고 끝 글자의 문맥 대체 글자를 고른다(영도체 숫자 「01 」).
+    글(단락) 첫 공백도 — 인디자인은 친 자리만큼 띄우고 시작한다(배열 조각 「 on / was found」, 단위 12)."""
+    html = "".join(p if p.startswith("<") else re.sub(r" {2,}", lambda m: " " + "&#160;" * (len(m.group(0)) - 1), p)
+                   for p in _TAG.split(html))
+    html = re.sub(r"(^|<br/>)((?:<[^/>][^>]*>)*) ", r"\1\2&#160;", html)
+    return re.sub(r" ((?:&#160;)*)(?=(?:</[a-z]+>)*(?:<br/>|$))", r"&#160;\1", html)
+
+
+def base_word_spacing(a, ctx):
+    """글상자의 기본 낱말 간격(‰ em) — 「낱말 사이」."""
+    return float(a.get("word_spacing") or 0)
+
+
+# 글 언어의 글리프를 쓸 글자 — 공백(Zs)·문장부호(P*)·물결표. 서체와 상관없는 규칙
+LOCL_CHARS = "".join(c for c in map(chr, range(0x10000)) if unicodedata.category(c) in ("Zs", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po")) + "~"
+_LOCL_RUN = re.compile(r"&#?\w+;|[" + re.escape(LOCL_CHARS.replace("&", "")) + "]+")    # & 는 글 HTML 에서 늘 &amp; 같은 이름으로 온다
+_OT_LANG = {"ko": "KOR ", "ja": "JAN ", "zh": "ZHS ", "zh-hans": "ZHS ", "zh-hant": "ZHT "}   # 글 언어 → OpenType 언어 태그
+_LOCL_HIT = {}
+
+
+def text_lang(a):
+    """글 언어(인디자인 문자 패널의 언어) — 없으면 한국어."""
+    return str(a.get("lang") or "ko").strip() or "ko"
+
+
+def locl_chars(family, lang):
+    """서체가 그 언어용 글리프(GSUB locl)를 가진 공백·문장부호 — 이 글자만 감싼다. 감싸면 크롬이 글을 거기서 끊어 그리므로
+    (커닝·문맥 대체 글자가 그 자리에서 끊긴다) 그 언어 글리프가 없는 글자·서체는 건드리지 않는다.
+    서체 파일(fc-match — 브라우저와 같은 서체 목록)·언어 태그를 모르면 "" — 감싸지 않는다(sans-serif 처럼 브라우저가 고르는 서체).
+    Noto Sans CJK KR + ko = 예전 고정 목록(GSUB latn/KOR 실측 — 단위 04·07) + " 와 줄 안 바뀜 공백(예전에도 &quot;·&#160; 로 감싸던 것)."""
+    tag = _OT_LANG.get(lang.lower())
+    key = (family, tag)
+    if key in _LOCL_HIT:
+        return _LOCL_HIT[key]
+    out = ""
+    try:
+        import subprocess
+        from fontTools.ttLib import TTFont
+        for name in [n.strip().strip("'\"") for n in family.split(",")]:   # font_family 의 후보 이름들 — 설치된 첫 이름
+            if not tag or not name or name in ("sans-serif", "serif", "monospace", "sans"):
+                continue
+            fam, ps, path, idx = subprocess.check_output(["fc-match", "-f", "%{family}|%{postscriptname}|%{file}|%{index}", name],
+                                                         text=True, timeout=10).split("|")
+            norm = lambda s: s.lower().replace(" ", "")
+            if norm(name) in [norm(x) for x in fam.split(",") + ps.split(",")]:   # 다른 서체로 대신 잡힌 것은 모른다
+                break
+        else:
+            raise LookupError(family)
+        f = TTFont(path, fontNumber=int(idx or 0), lazy=True)
+        g = f["GSUB"].table if "GSUB" in f else None
+        gl = set()
+        if g and g.ScriptList and g.FeatureList and g.LookupList:
+            fi = {i for sr in g.ScriptList.ScriptRecord for ls in sr.Script.LangSysRecord if ls.LangSysTag == tag for i in ls.LangSys.FeatureIndex}
+            recs = g.FeatureList.FeatureRecord
+            for li in {k for i in fi if recs[i].FeatureTag == "locl" for k in recs[i].Feature.LookupListIndex}:
+                lk = g.LookupList.Lookup[li]
+                for st in lk.SubTable:
+                    t = lk.LookupType
+                    if t == 7:
+                        t, st = st.ExtensionLookupType, st.ExtSubTable
+                    gl.update(getattr(st, {1: "mapping", 3: "alternates", 4: "ligatures"}.get(t, "_"), None) or ())
+        cmap = f.getBestCmap() or {}
+        out = "".join(c for c in LOCL_CHARS if cmap.get(ord(c)) in gl)
+    except Exception:
+        out = ""
+    _LOCL_HIT[key] = out
+    return out
+
+
+def locl_html(html, family, lang):
+    """글 HTML 의 공백·문장부호를 글 언어로 감싼다 — 인디자인(언어 한국어)은 서체의 locl KOR 글리프를 놓는다:
+    Noto CJK 면 공백 0.280em(라틴 0.224em), 따옴표·괄호·빗금·마침표는 조금 위로, 줄표 — 1em, 가운뎃점 좁게 (원본 글리프 번호 실측 — 단위 04·07).
+    글은 lang=en 이라야 라틴 합자가 켜진다 — 이 글자들만 그 언어로 감싼다(합자에 끼는 글자가 아니다). 언어가 en 이면 그대로.
+    (공백을 낱말 간격 +56‰ 로 더하던 보정은 크롬이 이미 0.280em 으로 그리는 한글 사이 공백에 두 번 들어갔다.)"""
+    if not lang or lang.lower().startswith("en"):
+        return html
+    only = locl_chars(family, lang)
+    if not only:
+        return html                                                       # 서체에 그 언어 글리프가 없다
+    run = re.compile("[" + re.escape(only) + "]+")
+    span = lambda t: f'<span lang="{esc(lang)}">{t}</span>'
+
+    def wrap(m):
+        t = m.group(0)
+        if t.startswith("&"):                                             # &#160; &quot; &amp; … — 글자 하나로 보고
+            return span(t) if _unescape(t) in only else t
+        return run.sub(lambda k: span(k.group(0)), t)
+    return "".join(p if p.startswith("<") else _LOCL_RUN.sub(wrap, p) for p in _TAG.split(html))
+
+
+def ko_glyphs(html, a, ctx):
+    """글 언어(a.lang, 기본 한국어)의 공백·문장부호 글리프 — locl_html."""
+    if not ctx:
+        return html
+    return locl_html(html, ctx.font(a.get("font")), text_lang(a))
+
+
+JC_DEFAULT = (80, 133, 0, 0, 1, 20, 0)  # 낱말 최소·최대 % · 자간 최소·최대 ‰ · 줄이기 비용 · 줄 비용 · 끝 줄 자간 최소 ‰ (units_compose.js)
+# 기본 = 인디자인 공장 기본 「균등 배치」(낱말 80·100·133%, 자간 0·0·0). 책마다 다른 범위는 글상자 jc(word_min·word_max·letter_min·letter_max)로.
+# 비용식(줄이기 비용 1 · 줄 비용 20 · 늘림 제곱)은 공통 — 인디자인 원본 5권(d1·d2·화이트북·세서특필·분석)으로 확인(scratch justify-analysis/beval2.py).
+# 이 출판사 책 5권은 모두 같은 범위: 낱말 100·133%, 자간 최소 약 −5‰, 자간 늘림 큼 → jc 「100,133,-8,250」.
+
+
+def jc_spec(a):
+    """양끝 정렬 설정(인디자인 「균등 배치」) → 컴포저 data-jc. 글상자 atom.jc 가 있으면 그 값, 없으면 기본.
+    끝 줄도 자간 최소까지만 줄인다(인디자인처럼 — 끝 줄만 더 줄이던 것은 원본 끝 줄 41개가 모두 최소 안이라 뺐다, 단위 14b·14c 「studio.」)."""
+    j = a.get("jc") or {}
+    v = list(JC_DEFAULT)
+    for i, k in ((0, "word_min"), (1, "word_max"), (2, "letter_min"), (3, "letter_max")):
+        if j.get(k) is not None:
+            v[i] = j[k]
+    v[6] = v[2]
+    return ",".join(f"{x:g}" for x in v)
+
+
+def soft_breaks(x, justify=False, word_min=None):
+    """줄 나눔(U+2028, Shift+Enter) — 문단은 그대로 두고 그 자리에서 줄만 꺾는다(인디자인 강제 줄바꿈).
+    양끝맞춤이면 꺾인 앞줄도 양끝을 맞춘다(인디자인과 같다). 조각마다 열린 태그를 닫았다 다시 연다.
+    word_min(‰ em, 음수) — 양끝을 맞추는 줄의 낱말 간격 최소(인디자인 양끝맞춤 「낱말 간격 최소」): 그만큼 좁혀 놓고 양끝까지 늘린다.
+    브라우저는 공백을 늘리기만 하므로, 인디자인이 공백을 줄여 한 줄에 넣은 글이 넘치지 않게."""
+    if " " not in (x or ""):
+        return x
+    segs, stack, cur = [], [], ""
+    for tok in _TAG.split(x):
+        if tok.startswith("<"):
+            if tok.startswith("</"):
+                if stack:
+                    stack.pop()
+            elif not tok.endswith("/>"):
+                stack.append(tok)
+            cur += tok
+            continue
+        for i, part in enumerate(tok.split(" ")):
+            if i:
+                cur += "".join("</" + re.match(r"<(\w+)", t).group(1) + ">" for t in reversed(stack))
+                segs.append(cur)
+                cur = "".join(stack)
+            cur += part
+    segs.append(cur)
+    last = len(segs) - 1
+    if last and not _unescape(_TAG.sub("", segs[-1])).strip():            # 끝에 친 줄 나눔 — 빈 줄은 안 그리고 마지막 줄도 양끝을 맞춘다
+        tail = segs.pop()
+        segs[-1] += tail
+        last = len(segs)
+    ws =f"word-spacing:{float(word_min) / 1000.0:.4f}em;" if justify and word_min else ""
+    return "".join(f'<span style="display:block;{"text-align-last:justify;" + ws if justify and i < last else ""}{"text-indent:0;" if i else ""}">'
+                   f'{s or "&#160;"}</span>' for i, s in enumerate(segs))
 
 
 def rich_plain(v):
@@ -312,6 +581,29 @@ def insets(a):
     return (float(v),) * 4
 
 
+def auto_size(a):
+    """자동 크기 조정(인디자인 텍스트 프레임 옵션) — "height" 높이만(기본: 글이 길면 아래로) · "both" 높이와 너비 · "off" 끔(false 도 끔)."""
+    v = a.get("auto_size")
+    return "off" if v is False or v == "off" else "both" if v == "both" else "height"
+
+
+def frame_css(fr, ctx=None):
+    """글상자 칠·획·모서리(인디자인 텍스트 프레임의 칠·획) — 상자(안쪽 여백을 가진 div)에 그린다. 획은 가장자리 가운데(인디자인 기본 획 정렬)."""
+    if not fr:
+        return ""
+    col = (lambda c: ctx.color(c) if ctx else c)
+    css = f"background:{col(fr['fill'])};" if fr.get("fill") else ""
+    st = fr.get("stroke") or {}
+    if st.get("color") and float(st.get("w") or 0) > 0:
+        w = float(st["w"]) * PT
+        css += f"outline:{w:.3f}px solid {col(st['color'])};outline-offset:{-w / 2:.3f}px;"
+    r = fr.get("radius")
+    if r:
+        rs = r if isinstance(r, (list, tuple)) else [r] * 4            # [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래] — 네모(rect)의 radius 와 같은 차례
+        css += "border-radius:" + " ".join(f"{float(v or 0):.3f}px" for v in rs) + ";"
+    return css
+
+
 ROMAN_EM = 0.47          # 로마자 한 글자 폭 어림 (기준 책 실측 0.455 — 본문 서체마다 조금 다르다)
 
 
@@ -325,10 +617,12 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     gutter = float(a.get("gutter") or 0) if cols > 1 else 0.0
     col_w = (w_mm - il - ir - gutter * (cols - 1)) / cols - float(a.get("indent") or 0) - float(a.get("indent_right") or 0)
     track = em * float(a.get("tracking") or 0) / 1000.0
+    tsume = em * float(a.get("tsume") or 0) / 100.0 * 0.13             # 자간 축소 — 글자 양옆 빈 곳 어림 0.13em(Noto CJK 한글 0.10~0.16)
     lines = 0
-    paras = (plain or "").split("\n")
+    paras = (plain or "").replace(" ", "\n").split("\n")             # 줄 나눔도 줄 하나
+    first = float(a.get("indent_first") or 0)                          # 첫 줄 들여쓰기(음수 = 내어쓰기 — 첫 줄이 그만큼 넓다, 단위 14c 한 줄 발문이 두 줄로 어림됐다)
     for para in paras:
-        width = sum(em * (1.0 if ord(c) > 0x2E7F else ROMAN_EM) + track for c in para)
+        width = first + sum(em * (1.0 if ord(c) > 0x2E7F else 0.28 if c == " " else ROMAN_EM) + track - (tsume if c != " " else 0) for c in para)   # 공백 0.28em(Noto CJK 한국어 꼴)
         lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
     gaps = (len(paras) - 1) * (float(a.get("space_before") or 0) + float(a.get("space_after") or 0))
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
@@ -471,7 +765,10 @@ def _text_html(a, html, h, ctx=None):
     if bul:
         ps += f"display:list-item;list-style-type:{bul};list-style-position:inside;"
     paras = (html or "").split("<br/>")
-    inner = "".join(f'<p style="margin:0;{ps}">{_tab_html(a, x, ctx) or x or "&#160;"}</p>' for x in paras)
+    just = a.get("align") == "justify"
+    # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
+    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
+    inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
         n = int(dc.get("chars") or 1)
@@ -487,6 +784,12 @@ def _text_html(a, html, h, ctx=None):
     it += float(a.get("first_baseline") or 0)                    # 첫 기준선 — 상자 위에서 더 내린다
     cols = int(a.get("columns") or 1)
     box = f"height:{h:.3f}px;box-sizing:border-box;padding:{it:.3f}px {ir:.3f}px {ib:.3f}px {il:.3f}px;"
+    fr, mode = a.get("frame") or {}, auto_size(a)
+    if fr and mode != "off" and not a.get("story"):                   # 글 잇기 상자는 높이를 지킨다(넘친 줄을 다음 상자로)
+        box = box.replace(f"height:{h:.3f}px;", "")                   # 바탕이 있으면 브라우저가 실제로 그린 글 높이 + 여백만큼(인디자인 자동 크기 조정 — 줄기도 한다)
+    if mode == "both":
+        box += "width:fit-content;max-width:100%;"                     # 높이와 너비 — 한 줄 글은 글 폭 + 여백, 길면 상자 폭까지
+    box += frame_css(fr, ctx)
     if a.get("valign") in ("center", "bottom"):
         box += "display:flex;flex-direction:column;justify-content:" + ("center" if a["valign"] == "center" else "flex-end") + ";"
     if cols > 1:
@@ -774,6 +1077,20 @@ def _wrap_atom(a, svg, cx, cy, ctx=None):
     return f"{fdefs}<g{attrs}>{svg}</g>"
 
 
+def story_seq(a):
+    """글 잇기 순서 — story_seq(없거나 잘못되면 1)."""
+    try:
+        return max(1, int(a.get("story_seq") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
+def story_cont(a):
+    """글 잇기(인디자인 텍스트 스레드)의 이어지는 상자인가 — story 가 있고 story_seq 가 2 이상.
+    story_seq 1(또는 없음) = 첫 상자: 글·자리(bind)·스타일을 가진다. 이어지는 상자는 빈 그릇이고 넘친 줄을 받는다."""
+    return bool(a.get("story")) and story_seq(a) > 1
+
+
 def _text_content(ctx, a, values, types):
     """글 원자의 (html, plain). bind → 값 → 없으면 sys → 없으면 견본 글 → 없으면 {bind} 회색.
 
@@ -850,11 +1167,24 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     for i, a in enumerate(atoms):
         if a.get("t") != "text":
             continue
+        if a.get("story"):                                             # 글 잇기 — 상자 크기는 그대로, 넘친 줄은 다음 상자로(units_compose.js)
+            heights[i] = a["h"]
+            if story_cont(a):                                          # 이어지는 상자 = 빈 그릇. 글·자리·스타일은 첫 상자 것
+                content[i] = '<span class="story-hint" style="color:#b0b0b0">‹앞 상자에서 이어짐›</span>'
+                plains[i] = ""
+                continue
         html, plain = _text_content(ctx, a, values, types)
+        html = ko_glyphs(keep_spaces(grep_html(html, a.get("grep"), ctx)), a, ctx)
+        tail = tail_html(a, ctx)                                       # 글 끝에 붙는 개체 — 글자처럼 흘러 줄 나눔·컴포저에 낀다
+        if tail:
+            html += tail[0]
+            plain += "M" * int(tail[1] / max(a["size"] * PT * 0.6, 0.1) + 1)   # 높이 어림에 개체 폭만큼
         content[i] = html
         plains[i] = plain
+        if a.get("story"):                                             # 첫 상자 — 자라지 않는다(넘침은 이어지는 상자가 받는다)
+            continue
         need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
-        if a.get("auto_size") is False:                          # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
+        if auto_size(a) == "off":                        # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
             heights[i] = a["h"]
             if need > a["h"] + 0.01:
                 ctx.issue("warn", f"글이 상자보다 길다 — {plain[:20]}… (자동 크기 조정 꺼짐)")
@@ -991,30 +1321,44 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                 a = dict(a, first_baseline=max(0.0, first - top))     # 첫 줄을 격자 줄에 세운다
         style = (f"margin:0;font-family:{esc(ctx.font(a.get('font')))};font-size:{a['size'] * PT:.3f}px;"
                  f"line-height:{lead:.3f}px;color:{ctx.color(a.get('color'))};text-align:{a.get('align', 'left')};"
-                 f"overflow:hidden;word-break:break-word;white-space:normal")
+                 f"overflow-x:visible;overflow-y:clip;word-break:break-word;white-space:normal")   # 옆으로는 상자 밖까지(줄 끝 공백 밑줄이 단 끝을 넘는다 — 인디자인), 아래로는 자른다
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
+            # 브라우저는 자간이 있으면 합자·문맥 대체 글자를 끈다 — 인디자인은 자간을 줘도 그대로 쓴다(fi 합자·영도체 이어지는 숫자)
+            style += ";font-feature-settings:'liga' 1,'calt' 1"
         if a.get("kerning") == "none":
             style += ";font-kerning:none"
         if a.get("hyphenate"):
             style += ";hyphens:auto;-webkit-hyphens:auto"
         if a.get("justify_mode"):
             style += ";text-justify:" + ("inter-character" if a["justify_mode"] == "letter" else "inter-word")
-        if a.get("word_spacing"):
-            style += f";word-spacing:{float(a['word_spacing']) / 1000.0:.4f}em"
+        ws = base_word_spacing(a, ctx)
+        if ws:
+            style += f";word-spacing:{ws / 1000.0:.4f}em"
         dec = _decor_css(a, ctx)
         if dec:
             style += ";" + dec
         if a.get("baseline"):
             style += f";position:relative;top:{-float(a['baseline']) * PT:.3f}px"
-        if a.get("b"):
+        if a.get("weight"):                                                    # 굵기(100~900)가 굵게보다 먼저
+            style += f";font-weight:{int(a['weight'])}"
+        elif a.get("b"):
             style += ";font-weight:700"
         if a.get("i"):
             style += ";font-style:italic"
         if a.get("tab"):
             style = style.replace("white-space:normal", "white-space:pre-wrap") + f";tab-size:{float(a['tab']):.3f}px"
-        return (f'<foreignObject x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}">'
-                f'<div xmlns="http://www.w3.org/1999/xhtml" style="{style}">{_text_html(a, html, h, ctx)}</div></foreignObject>')
+        # lang=en — 언어가 없으면 크롬이 한국어로 그려 Noto CJK 의 라틴 합자(ff·fi)가 꺼진다(인디자인은 쓴다). 글 언어(a.lang)의 공백·문장부호는 ko_glyphs 가 그 언어로 감쌌다
+        # 글은 TEXT_ZOOM 배 해상도로 배치하고 그만큼 줄여 그린다 — 지면 1mm = CSS 1px 이라 브라우저가 줄 위치·글자 높이를
+        # px 단위로 반올림하면 줄마다 최대 0.5mm 씩 어긋난다(행간 7.76mm 가 8·8·7·8mm 로). zoom 으로 반올림을 0.1mm 로.
+        z = text_zoom(a, getattr(ctx, "zoom_out", 1))
+        # 글 잇기 — 같은 이야기의 상자끼리 넘친 줄을 차례로 넘긴다(units_compose.js 의 thread)
+        st = f' data-story="{esc(a["story"])}" data-seq="{story_seq(a)}"' if a.get("story") else ""
+        if a.get("tsume"):                                                     # 자간 축소 — 글자 잉크 상자는 크롬 안에서 잰다(units_compose.js 의 tsume)
+            st += f' data-tsume="{float(a["tsume"]):g}"'
+        return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
+                f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}" style="overflow:visible">'
+                f'<div xmlns="http://www.w3.org/1999/xhtml" lang="en"{st} style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')
     if t == "line":
         adefs, aattrs = _arrows(ctx, a.get("stroke"))
         return (adefs + f'<line x1="{a["x1"]}" y1="{a["y1"] + dy:.3f}" x2="{a["x2"]}" y2="{a["y2"] + dy:.3f}" '
@@ -1162,10 +1506,10 @@ def _join_paras(a, b):
 
 
 def _atom_slot(it):
-    """원고 자리가 붙은 낱개 글상자인가 (책이 채우는 sys.* 는 아니다)."""
+    """원고 자리가 붙은 낱개 글상자인가 (책이 채우는 sys.* 는 아니다). 글 잇기의 이어지는 상자는 자리가 아니다(이야기 하나 = 자리 하나)."""
     a = it.get("atom") or {}
     b = a.get("bind")
-    return a.get("t") == "text" and bool(b) and not str(b).startswith("sys.") and not it.get("hide")
+    return a.get("t") == "text" and bool(b) and not str(b).startswith("sys.") and not it.get("hide") and not story_cont(a)
 
 
 def _fill_by_slots(pg, sample_set, ctx, canvas, pending, filled, sid):
@@ -1534,7 +1878,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
     # system 블록과 부품은 언제나 그린다.
     for pl in place_items(ctx, page, W, H, mirror):
         it = pl["it"]
-        if pl["y"] + pl["h"] > H + 0.01:
+        if pl["y"] + pl["h"] > H + 0.01 and not bleeds(pl, H, (ctx.print or {}).get("bleed")):
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
         x = W - it["x"] - pl["w"] if mirror else it["x"]
         tf = f"translate({x:.3f},{pl['y']:.3f})" + (f" scale({pl['s']:.4f})" if abs(pl["s"] - 1) > 1e-6 else "")
@@ -1715,6 +2059,13 @@ def mirror_part(part):
 
 
 DEFAULT_SPEC = {"id": "a4", "w": 210.0, "h": 297.0, "bleed": 3.0}
+
+
+def bleeds(pl, H, bleed=None):
+    """재단 여백까지 칠한 요소(바탕·막대)인가 — 넘침이 아니다. 제자리(밀리지 않은) 원자이고 끝이 도련 안."""
+    it = pl["it"]
+    b = float(bleed if bleed is not None else DEFAULT_SPEC["bleed"])
+    return pl.get("dy", 0) < 0.01 and not it.get("block") and not _atom_slot(it) and pl["y"] + pl["h"] <= H + b + 0.01
 
 
 def page_canvas_svgs(ctx, page, spec, sample_set=None):

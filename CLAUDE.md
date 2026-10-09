@@ -12,6 +12,8 @@
 > **디자인 단위(2026-09-21)**: 원자(인디자인 오브젝트) → 부품 → 블록 → 지면 → 구간 → 틀 · 옷 · 세트. 스키마 `core/schema/units.schema.json`, 설명 `docs/디자인_단위_스키마.md`,
 > 코드 `core/units/`(store·render·decompose·sample), 화면 `/units` = 왼쪽 레일의 **「만들기」**(캔버스 — 지면·칸·블록 끌어 놓기) · `/units/library`(라이브러리·분해·JSON) (`routes/units.py`), 시드 `catalog/_units/`. 기존 계열 렌더러(`core/render_vivlio/series/*`)와 독립 — 납품 중인 책은 안 건드린다.
 
+> **편집기 재현(기준 결과물을 「만들기」로 똑같이 만들며 녹화·비교·기능 수정)**: 절차 정본 `docs/편집기_재현/절차.md` — 작업 전에 처음부터 읽는다. 명령 `tests/e2e/replay.py`, 단위 폴더 `tests/e2e/replay/<단위>/`.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 > **완성본 PDF → 관리 등록(2026-10-09)**: 사용자가 PDF 와 폴더(예: 포켓북·워크북)를 주면 `bin/register-design <PDF> <폴더> [이름]` 한 줄.

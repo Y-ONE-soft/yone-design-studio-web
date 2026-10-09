@@ -2,6 +2,7 @@
 {% block title %}만들기 · 라이브러리{% endblock %}
 {% block theme %}light{% endblock %}
 {% block content %}
+<style>{{ font_css|safe }}</style>   {# 서체 굵기 바로잡기 — core/units/fonts.py #}
 <style>
   .un { display: flex; height: 100vh; background: #ecebf3; color: #1f2330; font-size: 13px; }
   .un h3 { font-size: 11.5px; color: var(--mute); margin: 12px 0 6px; font-weight: 600; letter-spacing: .04em; }
