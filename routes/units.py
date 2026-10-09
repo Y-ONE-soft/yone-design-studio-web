@@ -220,7 +220,7 @@ def api_preview():
                 pl = store.by_id(lib["plans"]).get(body["fill"])
                 if pl:
                     pgs = [item if p.get("id") == item.get("id") else p for p in _plan_pages(lib, pl)]
-                    filled, rep = content.fill(pgs, pl.get("content") or {})
+                    filled, rep = content.fill(pgs, pl.get("content") or {}, _width_of(lib, pl))
                     item = next((p for p in filled if p.get("id") == item.get("id")), item)
                     ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))
                     return jsonify({"svgs": render.page_canvas_svgs(ctx, item, spec), "warnings": ctx.warnings, "fill_report": rep})
@@ -425,6 +425,12 @@ def _plan_pages(lib, plan):
     return [pages[i] for i in content.plan_page_ids(plan) if i in pages]
 
 
+def _width_of(lib, plan):
+    """쪽 폭 mm — 원고 읽는 순서의 단 나누기에(content.slots)"""
+    specs = store.by_id(lib["specs"])
+    return lambda pg: float((specs.get(pg.get("spec") or (plan or {}).get("spec") or "a4") or render.DEFAULT_SPEC)["w"])
+
+
 @bp.route("/api/units/schema")
 def api_schema():
     """?plan=<문서> — 자리 표: 자리 이름마다 몇 번 나오는지와 임시 글. 바깥 시스템이 무엇을 보낼지 안다."""
@@ -432,8 +438,8 @@ def api_schema():
     plan = store.by_id(lib["plans"]).get(request.args.get("plan") or "")
     if not plan:
         return jsonify({"error": "plan 없음"}), 404
-    return jsonify({"plan": plan["id"], "name": plan.get("name"), "slots": content.schema(_plan_pages(lib, plan)),
-                    "rule": "원고 = {자리 이름: 글 | [글…]} — 같은 자리가 여러 번이면 쪽 순서 → 위에서 아래 → 왼쪽에서 오른쪽"})
+    return jsonify({"plan": plan["id"], "name": plan.get("name"), "slots": content.schema(_plan_pages(lib, plan), _width_of(lib, plan)),
+                    "rule": "원고 = {자리 이름: 글 | [글…]} — 같은 자리가 여러 번이면 쪽 순서 → 쪽 안 위에서 아래(같은 높이면 왼쪽부터). 단이 있는 쪽은 왼쪽 단 위→아래, 다음 단(여러 단에 걸친 상자는 그 높이에서 먼저)"})
 
 
 @bp.route("/api/units/fill", methods=["POST"])
@@ -449,7 +455,7 @@ def api_fill():
     data = body.get("content") if body.get("content") is not None else plan.get("content") or {}
     if not isinstance(data, dict):
         return jsonify({"error": "content 는 {자리 이름: 글 | [글…]}"}), 400
-    pages, report = content.fill(_plan_pages(lib, plan), data)
+    pages, report = content.fill(_plan_pages(lib, plan), data, _width_of(lib, plan))
     ctx = _ctx(lib, body.get("skin"))
     spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
     svgs = []
@@ -502,7 +508,7 @@ def api_pdf():
         if fid:
             pl = next((p for p in lib["plans"] if (p["id"] == fid or fid == "auto") and page_id in content.plan_page_ids(p)), None)
             if pl:
-                filled, _rep = content.fill(_plan_pages(lib, pl), pl.get("content") or {})
+                filled, _rep = content.fill(_plan_pages(lib, pl), pl.get("content") or {}, _width_of(lib, pl))
                 k = next((i for i, p in enumerate(filled) if p.get("id") == page_id), None)
                 if k is not None:
                     pg, before = filled[k], filled[:k]                         # 앞 쪽들도 함께 그린다 — 글 잇기가 앞 쪽 이야기를 이 쪽으로 흘린다

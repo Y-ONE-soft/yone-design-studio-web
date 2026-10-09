@@ -1191,7 +1191,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
             continue
         heights[i] = max(a["h"], need)
         if need > a["h"] + 0.01:
-            grown.append((i, a["y"], a["y"] + a["h"], a["x"], a["x"] + a["w"], need - a["h"]))
+            grown.append((i, a["y"], a["y"] + a["h"] - below_tol(a), a["x"], a["x"] + a["w"], need - a["h"]))
     # 1b) 문장 끝에 붙는 개체 (인디자인 앵커 개체) — anchor.after 로 자리 이름을 가리킨다
     bybind = {a.get("bind"): (i, a) for i, a in enumerate(atoms) if a.get("bind")}
     pw_now = float(width or part.get("w") or 0)
@@ -1217,6 +1217,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
     #    (옆에 나란히 선 원 O/X 는 세로 범위가 같아도 감싸는 게 아니다 — 실측: 원이 타원이 됐다)
     out = []
     bottom = part.get("h", 0)
+    tag = any(a.get("t") == "text" and auto_size(a) != "off" and not a.get("story") for a in atoms)
     for i, a in enumerate(atoms):
         y, h = _bounds(a)
         dy = 0.0
@@ -1232,7 +1233,14 @@ def part_svg(ctx, part, values=None, types=None, width=None):
                 dh += d                                           # 감싸는 상자 → 늘인다
         if a.get("t") == "text":
             h = heights.get(i, h)
-        out.append(_atom_svg(ctx, a, dy, h + dh, content.get(i)))
+        svg = _atom_svg(ctx, a, dy, h + dh, content.get(i))
+        if tag:                                                   # 설계 자리(y·높이) · 서버가 민 만큼 · 지금 높이 — 브라우저가 실제 글 높이로 바로잡을 때 쓴다
+            x0 = min(a["x1"], a["x2"]) if a.get("t") == "line" else float(a.get("x") or 0)
+            w0 = abs(a["x2"] - a["x1"]) if a.get("t") == "line" else float(a.get("w") or 0)
+            y0, h0 = _bounds(a)
+            svg = (f'<g data-ai="{i}" data-at="{a.get("t")}" data-ax="{x0:.3f}" data-aw="{w0:.3f}" data-ay="{y0:.3f}" '
+                   f'data-ah0="{h0:.3f}" data-ady="{dy:.3f}" data-ah="{h + dh:.3f}">{svg}</g>')
+        out.append(svg)
         bottom = max(bottom, y + dy + h + dh)
     return "".join(out), bottom
 
@@ -1354,6 +1362,10 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         z = text_zoom(a, getattr(ctx, "zoom_out", 1))
         # 글 잇기 — 같은 이야기의 상자끼리 넘친 줄을 차례로 넘긴다(units_compose.js 의 thread)
         st = f' data-story="{esc(a["story"])}" data-seq="{story_seq(a)}"' if a.get("story") else ""
+        if auto_size(a) != "off" and not a.get("story"):                       # 자동 크기 — 브라우저가 실제로 그린 글 높이로 상자를 다시 맞춘다(units_compose.js grow)
+            st += f' data-grow="1" data-h0="{float(a["h"]):.3f}" data-hcur="{h:.3f}" data-tol="{below_tol(a):.3f}"'
+            if a.get("bind") and not str(a["bind"]).startswith("sys."):          # 원고 자리 — 글 길이가 바뀌는 상자(틀 검사가 본다)
+                st += f' data-slot="{esc(a["bind"])}"'
         if a.get("tsume"):                                                     # 자간 축소 — 글자 잉크 상자는 크롬 안에서 잰다(units_compose.js 의 tsume)
             st += f' data-tsume="{float(a["tsume"]):g}"'
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
@@ -1882,7 +1894,9 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
             ctx.warn(f"{page['id']}: 요소 {it.get('block') or it.get('part') or '원자'} 이 면 아래로 넘친다 ({pl['y'] + pl['h']:.0f}mm > {H:.0f}mm)" + ("" if page.get("_flowed") else " — 책에선 다음 면으로 이어진다"))
         x = W - it["x"] - pl["w"] if mirror else it["x"]
         tf = f"translate({x:.3f},{pl['y']:.3f})" + (f" scale({pl['s']:.4f})" if abs(pl["s"] - 1) > 1e-6 else "")
-        chrome.append(f'<g transform="{tf}" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}>{pl["frag"]}</g>')
+        chrome.append(f'<g transform="{tf}" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}'
+                      f' data-x="{x:.3f}" data-w="{pl["w"]:.3f}" data-y0="{float(it["y"]):.3f}" data-h0="{pl["h0"]:.3f}" data-hc="{pl["h"]:.3f}"'
+                      f' data-s="{pl["s"]:.4f}"{" data-fixed=\"1\"" if pl["fixed"] else ""}>{pl["frag"]}</g>')
     ctx.sys = old
     guides = "" if not zones or page.get("_noguides") else "".join(
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
@@ -1947,6 +1961,14 @@ def can_grow(it, part):
     return any(x.get("bind") for x in (part.get("atoms") or []))
 
 
+def below_tol(a):
+    """「아래에 선 것」의 너그러움(mm) — 글상자 아래 끝에서 줄 높이의 30% 안에서 시작하는 것도 아래 것으로 본다(밀린다).
+    다음 줄 글상자는 앞 상자의 줄 간격 여백(반 행간)과 조금 겹쳐 시작한다(11 해석: 문장 상자 끝보다 0.8~0.9mm 위). 글상자가 아니면 0."""
+    if a.get("t") != "text":
+        return 0.0
+    return 0.3 * float(a.get("leading") or float(a.get("size") or 9) * 1.45) * PT
+
+
 def place_items(ctx, page, W, H, mirror=False):
     """자유 배치 요소를 놓는다 → [{fi, it, frag, w, h, h0, y, dy, fixed}] (그리는 순서).
 
@@ -1969,7 +1991,7 @@ def place_items(ctx, page, W, H, mirror=False):
         sc = float(it.get("s") or 1)                                   # 균일 배율 — 자리 계산은 배율 곱한 크기로
         placed.append({"fi": fi, "it": it, "frag": frag, "w": w * sc, "h": h * sc, "h0": float(part.get("h") or h) * sc, "s": sc,
                        "fixed": is_fixed(ctx, it, page, H), "grow": can_grow(it, part)})
-    grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"], p["h"] - p["h0"])
+    grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"] - p["s"] * below_tol((p["it"].get("atom") or {})), p["h"] - p["h0"])
              for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
     for p in placed:
         it = p["it"]

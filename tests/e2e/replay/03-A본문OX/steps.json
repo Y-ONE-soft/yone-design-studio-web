@@ -27,6 +27,448 @@
   "wait": 1500
  },
  {
+  "say": "O/X 상자 부품 — 상자 · 막대 · O · X 를 그려 묶는다",
+  "wait": 1500
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     140.88400000000001,
+     254.494
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 20.884
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.494
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 262.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0.767
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+   "value": "#b5ac9c"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"stroke.w\"]",
+   "value": 0.749
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     120.529,
+     252.643
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 0.529
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 2.643
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 30.178
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 262.925
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b5ac9c"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "O",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 9
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"leading\"]",
+   "value": 9
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "__raw"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#8aabc9"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.6
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 23.72
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 262.84
+  },
+  "wait": 550
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "X",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 9
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"leading\"]",
+   "value": 9
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "__raw"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "800"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#bd7d70"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.6
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 34.58
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 262.84
+  },
+  "wait": 550
+ },
+ {
+  "say": "자석 끄기 — 켜 두면 묶을 때 원자 자리가 0.5mm 격자로 반올림된다",
+  "wait": 1300
+ },
+ {
+  "clickif": {
+   "at": "#tg-snap",
+   "when": "view.snap"
+  },
+  "wait": 600
+ },
+ {
+  "say": "범위로 넷을 골라 그룹 → 부품",
+  "wait": 1300
+ },
+ {
+  "drag": {
+   "from": {
+    "mm": [
+     18.0,
+     260.0
+    ]
+   },
+   "to": {
+    "mm": [
+     42.88373819986979,
+     268.49404093424477
+    ]
+   }
+  },
+  "wait": 900
+ },
+ {
+  "js": "(() => '고른 것 ' + sels.size)()"
+ },
+ {
+  "click": "#side #s-group",
+  "wait": 1500
+ },
+ {
+  "js": "(() => { const p = LIB.parts.find(p => p.id === 'p_1'); if (!p) throw new Error('부품 p_1 없음'); return '부품 ' + p.id + ' ' + p.w + '×' + p.h + ' 원자 ' + p.atoms.length; })()"
+ },
+ {
+  "say": "지면의 그룹은 지운다 — 부품은 라이브러리에 남는다",
+  "wait": 1100
+ },
+ {
+  "key": "Delete",
+  "wait": 900
+ },
+ {
+  "clickif": {
+   "at": "#tg-snap",
+   "when": "!view.snap"
+  },
+  "wait": 600
+ },
+ {
   "say": "머리 — 크림 띠 · 선 · 파란 막대",
   "wait": 1500
  },
@@ -2299,7 +2741,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 110.7
+   "value": 141.0
   },
   "wait": 420
  },
@@ -2339,371 +2781,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 106.04
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 93.846
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 116.217
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 94.771
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 109.76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 93.97
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 120.62
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 93.97
-  },
-  "wait": 550
  },
  {
   "say": "진술 02 — 번호 · 글 · O/X 상자",
@@ -2910,7 +3006,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 117.5
+   "value": 141.0
   },
   "wait": 420
  },
@@ -2950,371 +3046,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 111.308
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 105.902
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 121.486
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 106.827
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 115.03
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 106.03
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 125.89
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 106.03
-  },
-  "wait": 550
  },
  {
   "say": "진술 03 — 번호 · 글 · O/X 상자",
@@ -3521,7 +3271,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 99.3
+   "value": 141.0
   },
   "wait": 420
  },
@@ -3561,371 +3311,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 97.273
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 117.957
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 107.45
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 118.883
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 100.99
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 118.09
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 111.85
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 118.09
-  },
-  "wait": 550
  },
  {
   "say": "진술 04 — 번호 · 글 · O/X 상자",
@@ -4132,7 +3536,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 139.7
+   "value": 141.0
   },
   "wait": 420
  },
@@ -4172,371 +3576,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 128.363
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 130.013
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 138.54
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 130.938
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 132.08
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 130.14
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 142.94
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 130.14
-  },
-  "wait": 550
  },
  {
   "say": "진술 05 — 번호 · 글 · O/X 상자",
@@ -4743,7 +3801,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 117.4
+   "value": 141.0
   },
   "wait": 420
  },
@@ -4783,371 +3841,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 111.184
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 142.068
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 121.362
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 142.994
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 114.9
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 142.2
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 125.76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 142.2
-  },
-  "wait": 550
  },
  {
   "say": "꼬리 — 쪽번호",
@@ -7381,7 +6093,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 144.1
+   "value": 139.0
   },
   "wait": 420
  },
@@ -7421,371 +6133,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 133.775
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 99.138
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 143.952
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 100.063
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 137.49
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 99.27
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 148.36
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 99.27
-  },
-  "wait": 550
  },
  {
   "say": "진술 02 — 번호 · 글 · O/X 상자",
@@ -7992,7 +6358,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 120.8
+   "value": 139.0
   },
   "wait": 420
  },
@@ -8032,371 +6398,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 115.875
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 111.193
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 126.053
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 112.119
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 119.59
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 111.32
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 130.46
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 111.32
-  },
-  "wait": 550
  },
  {
   "say": "진술 03 — 번호 · 글 · O/X 상자",
@@ -8603,7 +6623,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 150.2
+   "value": 139.0
   },
   "wait": 420
  },
@@ -8643,371 +6663,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 145.903
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 123.249
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 156.081
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 124.174
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 149.62
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 123.38
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 160.48
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 123.38
-  },
-  "wait": 550
  },
  {
   "say": "진술 04 — 번호 · 글 · O/X 상자",
@@ -9214,7 +6888,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 123.9
+   "value": 139.0
   },
   "wait": 420
  },
@@ -9254,371 +6928,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 118.238
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 135.304
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 128.415
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 136.23
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 121.96
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 135.43
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 132.82
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 135.43
-  },
-  "wait": 550
  },
  {
   "say": "진술 05 — 번호 · 글 · O/X 상자",
@@ -9825,7 +7153,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 108.0
+   "value": 139.0
   },
   "wait": 420
  },
@@ -9865,371 +7193,25 @@
   "wait": 800
  },
  {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     140.88400000000001,
-     254.494
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 20.884
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 4.494
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 105.955
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 147.36
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0.767
-  },
-  "wait": 420
- },
- {
   "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
+   "at": "#side select[data-a=\"tail.part\"]",
+   "value": "p_1"
   },
-  "wait": 650
+  "wait": 800
  },
  {
   "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#ffffff"
-  },
-  "wait": 750
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"stroke.color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"stroke.w\"]",
-   "value": 0.749
-  },
-  "wait": 420
- },
- {
-  "draw": {
-   "tool": "rect",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     120.529,
-     252.643
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"w\"]",
-   "value": 0.529
+   "at": "#side input[data-a=\"tail.gap\"]",
+   "value": 1.003
   },
   "wait": 420
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 2.643
+   "at": "#side input[data-a=\"tail.drop\"]",
+   "value": 0.94
   },
   "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 116.133
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 148.285
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"radius\"]",
-   "value": 0
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"fill\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
-   "value": "#b5ac9c"
-  },
-  "wait": 750
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "O",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#8aabc9"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 8.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 109.67
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 147.49
-  },
-  "wait": 550
- },
- {
-  "draw": {
-   "tool": "text",
-   "from": {
-    "mm": [
-     120,
-     250
-    ]
-   },
-   "to": {
-    "mm": [
-     144,
-     259
-    ]
-   }
-  },
-  "wait": 750
- },
- {
-  "write": {
-   "at": {
-    "mm": [
-     132.0,
-     254.5
-    ]
-   },
-   "value": "X",
-   "away": {
-    "mm": [
-     205,
-     294
-    ]
-   }
-  },
-  "wait": 700
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"size\"]",
-   "value": 9
-  },
-  "wait": 420
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"font\"]",
-   "value": "__raw"
-  },
-  "wait": 600
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"font\"]",
-   "value": "Montserrat"
-  },
-  "wait": 600
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"weight\"]",
-   "value": "800"
-  },
-  "wait": 550
- },
- {
-  "pick": {
-   "at": "#side select[data-a=\"color\"]",
-   "value": "__raw"
-  },
-  "wait": 650
- },
- {
-  "fill": {
-   "at": "#side input[type=\"text\"][data-a=\"color\"]",
-   "value": "#bd7d70"
-  },
-  "wait": 750
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 7.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"h\"]",
-   "value": 5.0
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"x\"]",
-   "value": 120.54
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"y\"]",
-   "value": 147.49
-  },
-  "wait": 550
  },
  {
   "say": "꼬리 — 쪽번호",

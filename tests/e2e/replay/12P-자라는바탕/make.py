@@ -41,7 +41,7 @@ def item2(pg, pno, k, it):
                           "ctol": 40, "pad": 0.6, "search": 0.6, "text": s["t"], "size": 8.5})
     kw = round(right - kx + K_TRACK / 1000 * 8.5 * MM, 2)
     ky = top_of(kor[0]["base"], 8.5, NOTO, 400, K_LEAD)
-    st += text(kx, round(ky, 2), kw, max(14, round(len(kor) * K_LEAD * MM + 3, 1)), temp_of(KTEMP, len(kt)), 8.5, "#231f20",
+    st += text(kx, round(ky, 2), kw, round(len(kor) * K_LEAD * MM + 0.6, 1), temp_of(KTEMP, len(kt)), 8.5, "#231f20",     # 상자 높이 = 글 줄 수만큼(아래 배열 상자와 영역이 안 겹치게 — 길어지면 아래를 민다)
                label="해석 글상자 — 임시 글" if first else None, leading=K_LEAD, align="justify", font=NOTO, track=K_TRACK or None)
     st.append({"pick": {"at": '#side select[data-a="lang"]', "value": "ko"}, "wait": 550})   # 글 언어 — 한국어
     st += slot("해석")
@@ -65,7 +65,7 @@ def item2(pg, pno, k, it):
            round(x0 + MAXW - (cx + cw), 2),                                # 오른쪽 = 최대 폭 바탕 오른쪽 - 양끝 줄 끝
            0, round(cx - x0, 2)]                                           # 왼쪽 = 글 시작 - 바탕 왼쪽
     ins[2] = round(bx["mm"][3] - ins[0] - len(chk) * C_LEAD * MM, 2)       # 아래 = 바탕 높이 - 위 - 줄 수 × 행간
-    st += text(x0, y0, MAXW, 14, temp_of(CTEMP, len(ct)), 8.5, "#231f20",
+    st += text(x0, y0, MAXW, round(bx["mm"][3], 2), temp_of(CTEMP, len(ct)), 8.5, "#231f20",                       # 상자 높이 = 바탕 높이(원고가 길어 줄이 늘면 아래 » · 쓰기 선을 민다)
                label="배열 글상자 — 임시 글" if first else None, leading=C_LEAD, align="justify", font=NOTO, track=C_TRACK or None, weight=500)
     st.append({"pick": {"at": '#side select[data-a="lang"]', "value": "ko"}, "wait": 550})
     st += slot("배열")
