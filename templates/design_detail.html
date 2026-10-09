@@ -93,7 +93,7 @@
   <h2>구성 <span class="n">{{ layouts|length }}개 — 지문만 다르고 형태가 같은 면은 하나로 (기준 PDF {{ total }}면)</span>
     <button class="tg" id="tg-all">전체 {{ total }}면 펼치기</button></h2>
   <div class="secs" id="layouts">
-    {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}">
+    {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}"{% if (l.show or [])|length > 2 %} style="grid-column: span {{ [((l.show|length) + 1) // 2, 3]|min }}"{% endif %}>
       <div class="two">
         {% for n in (l.show or [l.n]) %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}
       </div>
