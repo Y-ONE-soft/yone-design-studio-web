@@ -604,15 +604,25 @@ def _layout_sig(page):
                      for gy in range(int((b[1] - y0) / h * 10), int((b[3] - y0) / h * 10 - 1e-6) + 1))
 
 
+def _head_title(page):
+    """면 머리(위 10%)에 한글 제목이 있나 — 워크북 'A1 어휘 선택 1' 처럼 항목 첫 면에만 붙는 제목."""
+    H = page.rect.height
+    return any(b[3] < H * 0.10 and re.search(r"[가-힣]{2,}", b[4]) for b in page.get_text("blocks"))
+
+
 def _repeat_unit(doc, pages):
     """이 구성이 몇 쪽 단위로 반복되나 → 보여 줄 면들. 펼침면(왼 짝수 + 다음 홀수)이 구성 대부분을 덮고,
-    왼쪽·오른쪽 배치가 서로 다르면(지문 시작 + 이어짐 처럼) 2쪽, 좌우만 바뀐 같은 모양이면 1쪽."""
+    (가) 한글 제목이 펼침면 한쪽에만 있거나(워크북: 왼쪽 'A1 어휘 선택' + 오른쪽 이어짐)
+    (나) 왼쪽·오른쪽 배치가 서로 다르면 2쪽, 좌우만 바뀐 같은 모양이면 1쪽."""
     from itertools import combinations
     ps = set(pages)
     spreads = [(p, p + 1) for p in pages if p % 2 == 0 and p + 1 in ps]
     if not spreads or len(spreads) * 2 < len(pages) * 0.6:
         return [pages[0]]
     sp = spreads[:6]
+    one_side = sum(_head_title(doc[a - 1]) != _head_title(doc[b - 1]) for a, b in sp)
+    if one_side >= len(sp) * 0.7:
+        return list(sp[0])
     S = {n: _layout_sig(doc[n - 1]) for pr in sp for n in pr}
     jac = lambda a, b: len(S[a] & S[b]) / max(len(S[a] | S[b]), 1)
     same = [jac(a, b) for side in (0, 1) for a, b in combinations([pr[side] for pr in sp], 2)]
@@ -627,14 +637,14 @@ def design_layouts(series, design):
     섹션 = 틀별 규칙(SECTION_RULES) 또는 러닝 헤드의 한글 라벨(STEP 이름 등).
     라벨 없는 면은 직전 섹션이 이어진 것. 본문 글이 없는 면(표지·간지·MEMO)은 그 자리의 '간지' 로 따로 묶는다.
     좌/우·단 수는 구분하지 않는다. 틀별 VARIANT_RULES 에 맞는 면(예: 삽화 칸)은 같은 섹션이어도 따로. 보여 줄 면(show)은 반복 단위만큼 — 1쪽 또는 펼침면 2쪽(_repeat_unit, 낱장·간지는 1쪽).
-    결과는 `_pages/layouts7_<stamp>.json` 에 둔다.
+    결과는 `_pages/layouts8_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts7_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts8_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
