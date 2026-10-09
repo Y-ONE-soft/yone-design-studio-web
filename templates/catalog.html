@@ -3,7 +3,7 @@
 
 {% block theme %}light{% endblock %}
 {% block content %}
-{# 화면 1 — 디렉토리를 두 묶음으로: OJT 라인업 8종(group=ojt) · 교재 폴더 계열(group=folder) + 기타. 묶음·블록 조합은 docs/참고자료/교재_블록_지도 2층.
+{# 화면 1 — 디렉토리를 두 묶음으로: OJT 라인업 8종(group=ojt) · 교재 폴더 계열(group=folder) + 기타.
    카드 = 그림 · 이름 · 설명 · 블록 조합 · 틀 수. 누르면 그 디렉토리의 틀들(/catalog/dir/<id>)로.
    PDF 판정(결정 대기·새 틀 요청)은 /catalog/intake 로 뺐다. #}
 <style>
@@ -24,7 +24,6 @@
   .dir p { color: #5f6368; font-size: 12px; line-height: 1.55; margin: 8px 0 12px;
            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .dir .no { position: absolute; top: 14px; left: 60px; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--c); }
-  .dir .blocks { font-size: 10.5px; line-height: 1.5; color: #8b8fa3; margin: 0 0 10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .grp { margin: 0 0 28px; }
   .grp h1 { font-size: 13px; letter-spacing: .12em; color: #3b1a80; margin: 0 0 4px; font-weight: 700; }
   .grp .sub { font-size: 12px; color: #8b8fa3; margin: 0 0 12px; }
@@ -57,7 +56,6 @@
       <h2>{{ d.name }}</h2>
       <span class="en">{{ d.en }}</span>
       <p>{{ d.desc }}</p>
-      {% if d.blocks %}<div class="blocks" title="{{ d.blocks }}">{{ d.blocks }}</div>{% endif %}
       <div class="foot">
         {% if d.templates %}<span class="cnt"><b>틀 {{ d.templates|length }}개</b><span class="dots">{% for t in d.templates %}<i class="dot {{ t.ready }}" title="{{ t.name }}"></i>{% endfor %}</span></span>
         {% else %}<span class="cnt">틀 없음</span>{% endif %}
@@ -70,7 +68,6 @@
 <div class="pick">
   <section class="grp">
     <h1>OJT 라인업 8종</h1>
-    <div class="sub">블록 지도 2층 — 인쇄본 순서 · 판형(3층) · 블록 조합(B1~B11)</div>
     <div class="dirs">
     {% for d in dirs if d.group == 'ojt' %}{{ card(d, loop.index) }}{% endfor %}
     </div>

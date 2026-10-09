@@ -168,7 +168,7 @@
         <details {% if t.renderable %}open{% endif %}><summary><span class="arr">▶</span>{{ t.name }}<small>{{ t.blocks|length }}{% if t.renderable %} · 조판{% endif %}</small></summary>
           {% for p in t.blocks %}
           <div class="card {% if p.renderable %}rd{% endif %}" data-id="{{ p.id }}">
-            <img src="{{ p.thumb }}" alt="" loading="lazy"><div class="t"><div class="nm">{{ p.label }}</div><div class="ds">{% for c in p.codes %}<span class="cd">{{ c }}</span>{% endfor %}{{ p.desc or '' }}{% if p.pages and p.pages > 1 %} · 기준 {{ p.pages }}면{% endif %}</div></div><span style="color:var(--pp);font-weight:700;padding:0 4px">＋</span>
+            <img src="{{ p.thumb }}" alt="" loading="lazy"><div class="t"><div class="nm">{{ p.label }}</div><div class="ds">{{ p.desc or '' }}{% if p.pages and p.pages > 1 %} · 기준 {{ p.pages }}면{% endif %}</div></div><span style="color:var(--pp);font-weight:700;padding:0 4px">＋</span>
           </div>
           {% endfor %}
         </details>

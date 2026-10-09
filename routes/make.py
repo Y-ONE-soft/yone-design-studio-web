@@ -55,13 +55,10 @@ def _parts():
         return []
 
 
-_RE_CODES = re.compile(r"\b(B1[01]|B[1-9])\b")
-
-
 def _library():
     """모든 틀의 블록 — 프로젝트 > 틀의 '지면 형태'(기준 PDF 를 구성 단위로 묶은 것) 그대로.
 
-    틀마다 [{id, series, design, label, kind(표지·간지/본문), codes(B1~B11), thumb, pages, key?}].
+    틀마다 [{id, series, design, label, kind(표지·간지/본문), thumb, pages, key?}].
     워크북은 본문 블록 대신 **조판되는 부품**(스텝 키, `key`)을 쓰고, 표지·간지만 기준 PDF 에서 가져온다.
     다른 틀의 블록은 아직 기준 PDF 그림(참고)이다 — 담을 수는 있고, 조판은 그 틀이 select 를 받게 되면 붙는다.
     """
@@ -87,7 +84,7 @@ def _library():
                 continue                      # 워크북 본문은 아래 조판 부품으로
             blocks.append({
                 "id": f"{t['series']}:{d['id']}:{lay['n']}", "series": t["series"], "design": d["id"],
-                "label": label, "kind": kind, "codes": _RE_CODES.findall(label),
+                "label": label, "kind": kind,
                 "thumb": f"/catalog/page/{t['series']}/{d['id']}/{lay['n']}.png?dpi=40",
                 "page": lay["n"], "pages": lay.get("count", 1), "renderable": False,
                 "page_list": (lay.get("pages") or [])[:400],       # 지면 매치: 기준 PDF 면 → 이 블록
@@ -97,7 +94,7 @@ def _library():
                 blocks.append({
                     "id": f"{SERIES}:{p['key']}", "series": SERIES, "design": d["id"], "key": p["key"],
                     "label": f"{p.get('logo') or ''} {p['name']}".strip(), "desc": p.get("desc", ""),
-                    "kind": "본문", "codes": _WB_CODES.get(p["key"], []),
+                    "kind": "본문",
                     "thumb": f"/make/parts/{p['thumb']}", "step": p.get("step"), "renderable": True,
                 })
         out.append({"series": t["series"], "name": t["name"], "dir": t.get("dir_name") or "",
@@ -123,7 +120,7 @@ def _by_item(library):
 
 
 # ── 책과 무관한 공통 항목 — 라이브러리의 「블록별 보기」 ─────────────
-# 블록 지도(B1~B11)를 바탕으로 하되 사람이 고르기 쉬운 갈래로 다시 나눴다. 항목 하나에
+# 사람이 고르기 쉬운 갈래. 항목 하나에
 # 틀마다 다른 '옷'(variant = 그 틀의 지면 형태)이 여럿 달린다. 구성엔 항목 + 옷을 담는다.
 TAXONOMY = [
     ("구조", "책 뼈대 — 원고 없음", [
@@ -188,8 +185,8 @@ _LABEL_ITEM = [
     (r"서답형|T\s*/\s*F", "q_short"),
     (r"STEP\s*\d\s*(확인|응용)", "q_set"),                   # 중등 'PART 1 어휘 · STEP1 확인' 은 문항
     (r"원문", "passage_raw"),                              # 블랙북 '원문 지문 · 연관어휘' — 지문이 주인공
-    (r"분석|직독직해|스크립트", "passage_analysis"),          # 포켓북 '지문 분석 (B2 + B5)' 도 여기
-    (r"중요\s*어휘", "drill_blank"),                        # 파이널 중요어휘 = 빈칸 드릴(블록 지도 B8)
+    (r"분석|직독직해|스크립트", "passage_analysis"),          # 포켓북 '지문 분석' 도 여기
+    (r"중요\s*어휘", "drill_blank"),                        # 파이널 중요어휘 = 빈칸 드릴
     (r"VOCA\s*vs|개념|전략|배경지식", "concept"),
     (r"지문 어휘|암기\s*TEST|빈칸 드릴", None),               # 아래 두 줄에서 가른다
     (r"암기\s*TEST|빈칸 드릴", "vocab_drill"),
@@ -217,14 +214,6 @@ def _classify(block):
     if block.get("kind") != "본문":
         return "divider"
     return "misc"
-
-
-# 워크북 부품 → 블록 지도 코드 (docs/참고자료/교재_블록_지도)
-_WB_CODES = {
-    "step1_a1": ["B7"], "step1_a1_2": ["B7"], "step1_a2": ["B7"], "step1_b1": ["B3", "B6"],
-    "step1_b2": ["B6"], "step1_c1": ["B7"], "step1_c2": ["B8"], "step2_a1": ["B7", "B6"],
-    "step2_b1": ["B8"], "step2_c1": ["B8"], "step2_c2": ["B8"], "step3": ["B6"], "step3_short": ["B6"],
-}
 
 
 def _read_json(path):
