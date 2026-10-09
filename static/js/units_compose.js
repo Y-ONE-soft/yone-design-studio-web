@@ -94,7 +94,7 @@
     return v;
   }
   function tsume(root) {
-    root.querySelectorAll("[data-tsume]").forEach(box => {
+    [...root.querySelectorAll("[data-tsume]")].reverse().forEach(box => {   // 안쪽(문단마다 다른 값)부터 — 바깥 상자는 이미 나눈 글자를 다시 안 나눈다
       if (box.dataset.tsumeDone) return;
       box.dataset.tsumeDone = "1";
       const t = (+box.dataset.tsume || 0) / 100;
@@ -103,7 +103,7 @@
       const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: (n) =>   // 칸·개체(inline-block) 속은 그대로
         n.nodeType === 1 && getComputedStyle(n).display === "inline-block" ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
       let n;
-      while ((n = w.nextNode())) if (n.nodeType === 3 && !noInk(n.data)) nodes.push(n);
+      while ((n = w.nextNode())) if (n.nodeType === 3 && !noInk(n.data) && !(n.parentElement && n.parentElement.dataset.ts)) nodes.push(n);
       for (const tn of nodes) {
         const cs = getComputedStyle(tn.parentElement), px = parseFloat(cs.fontSize);
         if (!(px > 0)) continue;
@@ -342,8 +342,9 @@
     const i = ps.findIndex(p => p.getBoundingClientRect().bottom > L);
     if (i < 0) return null;
     const p = ps[i], rest = ps.slice(i + 1);
-    let p2 = null, whole = false;
-    if (p.dataset.jcDone) {                                            // 컴포저 단락 — 줄마다 span
+    let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
+    if (whole) { /* 자르지 않는다 */ }
+    else if (p.dataset.jcDone) {                                       // 컴포저 단락 — 줄마다 span
       const k = [...p.children].findIndex(s => s.getBoundingClientRect().bottom > L);
       if (k === 0) whole = true;
       else if (k > 0) { p2 = p.cloneNode(false); [...p.children].slice(k).forEach(s => p2.appendChild(s)); }
@@ -363,7 +364,11 @@
         }
       }
     }
-    if (whole) return [p, ...rest];
+    if (whole) {                                                       // 다음 문단과 함께 — 그 앞 문단(번호·발문)이 상자 끝에 혼자 남지 않게 같이 넘긴다
+      let s = i;
+      while (s > 0 && ps[s - 1].dataset.keepNext) s--;
+      return ps.slice(s > 0 ? s : i);                                  // 상자가 통째로 비게 되면 그대로(무한히 넘기지 않게)
+    }
     if (p2) {
       p2.style.textIndent = "0";                                       // 단락 가운데서 이어진다 — 첫 줄 들여쓰기·앞 간격·위 경계선·글머리 없이
       p2.style.marginTop = "0";
@@ -542,10 +547,19 @@
     });
   }
 
+  function dropSpares(root) {                                          // 덧쪽(render.story_spares) 중 글이 안 흘러온 쪽은 지운다
+    (root || document).querySelectorAll("svg[data-spare]").forEach(svg => {
+      const bx = [...svg.querySelectorAll("[data-story]")].filter(o => o.dataset.story === svg.dataset.spare);
+      if (bx.some(o => o.dataset.storyFilled)) return;
+      (svg.closest(".p") || svg).remove();
+    });
+  }
+
   function composeAll(root) {
     try { tsume(root || document); } catch (e) { /* 못 하면 자간 축소 없이 */ }
     (root || document).querySelectorAll("[data-jc]").forEach(p => { try { compose(p); } catch (e) { /* 못 하면 브라우저 줄바꿈 */ } });
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
+    try { dropSpares(root || document); } catch (e) { /* 못 하면 빈 덧쪽이 남는다 */ }
     try { grow(root || document); } catch (e) { /* 못 하면 서버 어림 높이 그대로 */ }
   }
 

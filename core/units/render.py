@@ -229,6 +229,10 @@ def rich_html(v, ctx=None):
         return "".join(rich_html(x, ctx) for k, x in enumerate(v)
                        if not (x == "\n" and ((k and isp(v[k - 1])) or (k + 1 < len(v) and isp(v[k + 1])))))
     if isinstance(v, dict):
+        if "ps" in v:                                                      # 한 줄기 글의 자리 표시(content.story_value) — 문단 첫머리 · 붙는 자리(번호)
+            if v.get("inline"):
+                return f'<span data-psi="{esc(v["ps"])}">{esc(v.get("t", ""))}</span>'
+            return f'<span data-ps="{esc(v["ps"])}"></span>' + esc(v.get("t", ""))
         if "para" in v:                                                    # 단락 묶음 — 테두리 상자·들여쓰기 (자리마다 서식)
             return f'<div style="{para_css(v["para"], ctx)}">{rich_html(v.get("c"), ctx)}</div>'
         if v.get("anc"):
@@ -745,6 +749,94 @@ def _tab_html(a, para, ctx=None):
     return out
 
 
+_PS_RE = re.compile(r'<span data-ps="([^"]*)"></span>')
+_PSI_RE = re.compile(r'<span data-psi="([^"]*)">')
+
+
+def slot_style(a, slot, ctx=None):
+    """한 줄기 글 안 그 자리의 단락 스타일 — 글상자의 slot_fmt[자리](style = 옷의 단락 스타일 이름을 밑에 깔고 그 위에 덮는 값)."""
+    fm = dict(((a.get("slot_fmt") or {}).get(slot) or {}))
+    st = {}
+    if fm.get("style") and ctx is not None:
+        base = (ctx.skin.get("styles") or {}).get(fm["style"])
+        if base is None:
+            ctx.warn(f"단락 스타일 없음 {fm['style']} — 자리 {slot}")
+        st.update(base or {})
+    st.update({k: v for k, v in fm.items() if k != "style" and v not in (None, "")})
+    return st
+
+
+def _font_css(st, ctx):
+    """서체·크기·행간·색·굵기·기울임·자간 — 단락 스타일 값 중 글자에 드는 것"""
+    css = ""
+    if st.get("font"):
+        css += f"font-family:{esc(ctx.font(st['font']) if ctx else st['font'])};"
+    if st.get("size"):
+        css += f"font-size:{float(st['size']) * PT:.3f}px;"
+    if st.get("leading") or st.get("size"):
+        css += f"line-height:{float(st.get('leading') or float(st['size']) * 1.45) * PT:.3f}px;"
+    if st.get("color"):
+        css += f"color:{ctx.color(st['color']) if ctx else st['color']};"
+    if st.get("weight"):
+        css += f"font-weight:{int(st['weight'])};"
+    elif st.get("b"):
+        css += "font-weight:700;"
+    if st.get("i"):
+        css += "font-style:italic;"
+    if st.get("tracking"):
+        css += f"letter-spacing:{float(st['tracking']) / 1000.0:.4f}em;font-feature-settings:'liga' 1,'calt' 1;"
+    return css
+
+
+def _slot_para(a, x, slot, slots, k, ps, ctx):
+    """한 줄기 글의 문단 하나 — 그 자리의 단락 스타일(서체·간격·들여쓰기·바탕·「다음 문단과 함께」「쪼개지 않기」)을 입힌 <p>.
+    같은 자리의 잇닿은 문단에 바탕(shade)이 있으면 한 상자로 잇는다(인디자인 단락 음영·테두리 병합 — 조건·보기 상자)."""
+    st = slot_style(a, slot, ctx) if slot else {}
+    css = "margin:0;" + ps + _font_css(st, ctx)
+    if st.get("align"):
+        css += f"text-align:{st['align']};"
+    pad = float(st.get("pad") or 0)
+    shade = st.get("shade")
+    first = not (k and slots[k - 1] == slot)
+    last = not (k + 1 < len(slots) and slots[k + 1] == slot)
+    if st.get("indent") is not None or pad:
+        css += f"padding-left:{float(st.get('indent') or 0) + pad:.3f}px;"
+    if st.get("indent_right") is not None or pad:
+        css += f"padding-right:{float(st.get('indent_right') or 0) + pad:.3f}px;"
+    if st.get("indent_first") is not None:
+        css += f"text-indent:{float(st['indent_first']):.3f}px;"
+    if st.get("space_before") is not None:
+        css += f"margin-top:{float(st['space_before']) if (first or not shade) else 0:.3f}px;"
+    if st.get("space_after") is not None:
+        css += f"margin-bottom:{float(st['space_after']) if (last or not shade) else 0:.3f}px;"
+    if shade:
+        css += f"background-color:{ctx.color(shade) if ctx else shade};"
+        css += f"padding-top:{pad if first else 0:.3f}px;padding-bottom:{pad if last else 0:.3f}px;"
+        if st.get("border"):
+            b = f"{float(st['border']) * PT:.3f}px solid {ctx.color(st.get('border_color') or '$ink') if ctx else st.get('border_color') or '#231f20'}"
+            css += f"border-left:{b};border-right:{b};" + (f"border-top:{b};" if first else "") + (f"border-bottom:{b};" if last else "")
+    attrs = f' data-slot="{esc(slot)}"' if slot else ""
+    if st.get("keep_next"):
+        attrs += ' data-keep-next="1"'                                # 다음 문단과 함께 — 단·쪽 끝에 혼자 남지 않는다(units_compose.js thread)
+    if st.get("keep_together"):
+        attrs += ' data-keep="1"'                                     # 쪼개지 않기 — 문단 전체가 한 상자에
+    if st.get("tsume"):
+        attrs += f' data-tsume="{float(st["tsume"]):g}"'
+    just = (st.get("align") or a.get("align")) == "justify"
+    if just and a.get("compose") is not False and " " not in x:
+        attrs += f' data-jc="{jc_spec(dict(a, jc=st["jc"]) if st.get("jc") else a)}"'
+    x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="{_inline_css(slot_style(a, m.group(1), ctx), ctx)}">', x)
+    return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None) or "&#160;"}</p>'
+
+
+def _inline_css(st, ctx):
+    """문단 첫머리에 붙는 자리(문항 번호) — 글자 모양 + 정한 폭(번호 칸)"""
+    css = "text-indent:0;line-height:0;" + re.sub(r"line-height:[^;]*;", "", _font_css(st, ctx))   # 큰 번호가 줄 높이를 늘리지 않게(줄 높이는 문단 것)
+    if st.get("inline_w"):
+        css += f"display:inline-block;width:{float(st['inline_w']):.3f}px;"
+    return css
+
+
 def _text_html(a, html, h, ctx=None):
     """글상자 안 HTML — 단락(<p>)마다 들여쓰기·앞뒤 간격·경계선·음영·글머리, 상자엔 여백·세로 정렬·다단·첫 기준선·장평."""
     ps = ""
@@ -768,7 +860,11 @@ def _text_html(a, html, h, ctx=None):
     just = a.get("align") == "justify"
     # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
     jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
-    inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>' for x in paras)
+    slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
+    if any(slots):
+        inner = "".join(_slot_para(a, x, s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
+    else:
+        inner = "".join(f'<p style="margin:0;{ps}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>' for x in paras)
     dc = a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
         n = int(dc.get("chars") or 1)
@@ -1902,7 +1998,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"'
+    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "")   # 덧쪽 — 빈 채면 크롬이 지운다
     if ctx.print:
         # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
         b = float(ctx.print.get("bleed") or 0)
@@ -2088,6 +2184,60 @@ def bleeds(pl, H, bleed=None):
     it = pl["it"]
     b = float(bleed if bleed is not None else DEFAULT_SPEC["bleed"])
     return pl.get("dy", 0) < 0.01 and not it.get("block") and not _atom_slot(it) and pl["y"] + pl["h"] <= H + b + 0.01
+
+
+def story_spares(ctx, pages, spec_of):
+    """넘치면 쪽 더하기(인디자인 스마트 텍스트 리플로우) — 원고가 든 이야기(글 잇기)가 틀의 상자들보다 길 듯하면, 그 이야기가 끝나는 쪽 뒤에
+    「넘치면 이어 갈 면」(page.cont, 없으면 그 쪽)을 여유 있게 덧붙인다. 덧붙인 쪽에는 그 이야기 상자(차례 번호를 이어서)와 장식만 남긴다.
+    크롬이 글을 흘린 뒤 빈 채로 남은 덧쪽은 지운다(units_compose.js dropSpares). → {쪽 번호: [덧쪽 지면…]}"""
+    out = {}
+    heads, boxes = {}, {}
+    for pi, pg in enumerate(pages):
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            if a.get("t") != "text" or not a.get("story"):
+                continue
+            boxes.setdefault(a["story"], []).append((pi, it))
+            if story_seq(a) <= 1 and (it.get("fields") or {}).get(a.get("bind")) not in (None, ""):
+                heads[a["story"]] = (pi, it)
+    for name, (hpi, head) in heads.items():
+        a = head["atom"]
+        chain = boxes[name]
+        last_pi = max(pi for pi, _ in chain)
+        cap = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for _, it in chain)
+        w = float(head.get("w") or a.get("w") or 80)
+        plain = rich_plain(head["fields"][a["bind"]])
+        need = text_h(plain, w, float(a.get("size") or 9), a.get("leading"), a) * 1.25        # 문단 간격·큰 번호 몫으로 넉넉히
+        if need <= cap * 0.9:
+            continue
+        last = pages[last_pi]
+        tpl = ctx.pages.get(last.get("cont")) or last
+        mine = [it for it in tpl.get("items") or [] if (it.get("atom") or {}).get("story") == name]
+        if not mine:                                                   # 이어 갈 면에 이 이야기 상자가 없다 — 지금 쪽의 이야기 상자 자리로
+            tpl, mine = last, [it for _, it in chain if _ == last_pi]
+        per = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for it in mine) or 1
+        n = min(40, int(math.ceil((need - cap) / per)) + 1)
+        seq = max(story_seq(it["atom"]) for _, it in chain)
+        spares = []
+        for k in range(n):
+            pg = json.loads(json.dumps(tpl))
+            items = []
+            for it in pg.get("items") or []:
+                at = it.get("atom") or {}
+                if at.get("story") == name:
+                    seq += 1
+                    at = dict(at, story_seq=seq)
+                    at.pop("bind", None)
+                    it = dict(it, atom=at)
+                    it.pop("fields", None)
+                elif _atom_slot(it) or (it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"):
+                    continue                                           # 다른 원고 자리는 덧쪽에 안 둔다
+                items.append(it)
+            pg["items"] = items
+            pg["_spare"] = name
+            spares.append(pg)
+        out.setdefault(last_pi, []).extend(spares)
+    return out
 
 
 def page_canvas_svgs(ctx, page, spec, sample_set=None):
