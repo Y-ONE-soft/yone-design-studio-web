@@ -19,8 +19,22 @@ REGION=${FLY_REGION:-nrt}
 # 세션 셸이 프로필을 안 읽어 PATH 에 brew·pyenv 가 없을 때도 돈다 (2026-10-09: fly 를 못 찾고 "로그인하라" 로 멈췄다)
 export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.fly/bin:$HOME/.pyenv/shims:$PATH"
 command -v fly >/dev/null 2>&1 || { echo "✗ fly 명령이 없다 — brew install flyctl"; exit 2; }
+
+# fly 읽기 명령 — 네트워크가 잠깐 끊기면(2026-10-09: 'lookup api.machines.dev: i/o timeout' 이 됐다 안 됐다) 15초씩
+# 최대 20번 다시. 그래도 안 되면 실패를 돌려준다. 실패를 "없다" 로 읽지 않는다(앱을 새로 만들거나 비밀값을 덮어쓰지 않게).
+flyq() {
+  n=0
+  until out=$(fly "$@" 2>&1); do
+    case "$out" in *"i/o timeout"*|*"no such host"*|*"connection refused"*|*"connection reset"*|*"TLS handshake"*|*"EOF"*) ;;
+      *) printf '%s\n' "$out" >&2; return 1 ;; esac
+    n=$((n + 1)); [ $n -ge 20 ] && { printf '%s\n' "$out" >&2; return 1; }
+    echo "  … fly 연결 재시도 $n/20 (네트워크)" >&2; sleep 15
+  done
+  printf '%s' "$out"
+}
+
 # FLY_API_TOKEN(~/.config/yone/env 에 둘 수 있다)이 있으면 fly 가 그걸 쓴다 — 브라우저 로그인 없이
-fly auth whoami >/dev/null 2>&1 || { echo "✗ fly 로그인이 안 돼 있다 — 터미널에서 fly auth login (또는 ~/.config/yone/env 에 FLY_API_TOKEN)"; exit 2; }
+flyq auth whoami >/dev/null || { echo "✗ fly 로그인 확인 실패 — 위 메시지가 로그인 문제면 터미널에서 fly auth login (또는 ~/.config/yone/env 에 FLY_API_TOKEN)"; exit 2; }
 
 if [ "$1" = "fonts" ]; then
   [ -f fonts.tgz ] || deploy/fonts-pack.sh
@@ -57,17 +71,21 @@ if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
 fi
 
 # ── 앱 · 볼륨 ──
-if ! fly apps list --json 2>/dev/null | grep -q "\"$APP\""; then
+apps=$(flyq apps list --json) || { echo "✗ fly 앱 목록을 못 읽었다 — 네트워크를 확인하고 다시"; exit 4; }
+if ! printf '%s' "$apps" | grep -q "\"$APP\""; then
   echo "■ 앱 만들기: $APP ($REGION)"
   fly apps create "$APP" --org "${FLY_ORG:-personal}"
 fi
-if ! fly volumes list -a "$APP" --json 2>/dev/null | grep -q '"studio_data"'; then
+vols=$(flyq volumes list -a "$APP" --json) || { echo "✗ fly 볼륨 목록을 못 읽었다 — 네트워크를 확인하고 다시"; exit 4; }
+if ! printf '%s' "$vols" | grep -q '"studio_data"'; then
   echo "■ 볼륨 만들기: studio_data 10GB"
   fly volumes create studio_data -a "$APP" --region "$REGION" --size 10 --yes
 fi
 
-# ── 비밀값 (없는 것만) ──
-have=" $(fly secrets list -a "$APP" --json | python3 -c 'import json,sys; print(" ".join(x.get("name") or x["Name"] for x in json.load(sys.stdin)))') "
+# ── 비밀값 (없는 것만) — 목록을 못 읽으면 멈춘다: 빈 목록으로 읽으면 있는 값(SERVICE_TOKEN 등)을 새로 만들어 덮어쓴다 ──
+sj=$(flyq secrets list -a "$APP" --json) || { echo "✗ fly 비밀값 목록을 못 읽었다 — 덮어쓰지 않으려고 멈춘다"; exit 4; }
+have=" $(printf '%s' "$sj" | python3 -c 'import json,sys; print(" ".join(x.get("name") or x["Name"] for x in json.load(sys.stdin)))') " \
+  || { echo "✗ fly 비밀값 목록을 해석 못 했다 — 덮어쓰지 않으려고 멈춘다"; exit 4; }
 staged=0
 set_if_missing() {
   case "$have" in *" $1 "*) return 0 ;; esac
@@ -98,9 +116,16 @@ git archive HEAD | tar -x -C "$src"
 echo "■ fly deploy  $(git rev-parse --short HEAD)  $(git log -1 --format=%s | cut -c1-60)"
 # --depot=false: Depot 빌더는 158MB 컨텍스트 업로드("transferring context")에서 두 번 멈췄다(2026-10-07).
 # fly 자체 원격 빌더는 같은 날 끝까지 올라갔다.
-fly deploy "$src" -a "$APP" --ha=false --depot=false &
-child=$!
-wait "$child"; child=""
+# 네트워크가 끊겨 실패하면(빌드 끝나고 머신 교체에서 'failed to list VMs' 등) 1분 쉬고 최대 3번까지 다시.
+try=1
+while :; do
+  fly deploy "$src" -a "$APP" --ha=false --depot=false &
+  child=$!
+  if wait "$child"; then child=""; break; fi
+  child=""
+  [ $try -ge 3 ] && { echo "✗ 배포 3번 실패 — 위 메시지 확인"; exit 5; }
+  try=$((try + 1)); echo "■ 배포 실패 — 1분 뒤 다시 ($try/3)"; sleep 60
+done
 fly scale count 1 -a "$APP" --yes >/dev/null 2>&1 || true
 echo "■ 헬스:"
 curl -fsS "https://$APP.fly.dev/api/v1/health" && echo
