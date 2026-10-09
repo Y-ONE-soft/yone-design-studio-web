@@ -37,6 +37,11 @@ def fresh_data():
         if n != "_units":
             os.symlink(os.path.join(src, n), os.path.join(data, n))
     shutil.copy(os.path.join(src, "_units", "specs.json"), os.path.join(data, "_units", "specs.json"))
+    if cmd == "audit":                                                       # 감사는 시드 데이터로 — 문서 목록·브랜드 색·세트·미리보기를 시드에 기대어 본다(빈 데이터면 5개가 떨어진다)
+        for n in os.listdir(os.path.join(src, "_units")):
+            p = os.path.join(src, "_units", n)
+            (shutil.copytree if os.path.isdir(p) else shutil.copy)(p, os.path.join(data, "_units", n))
+        return
     base = {"id": "base", "name": "기본 (브랜드 없음)",
             "tokens": {"color": {"ink": "#231f20", "white": "#ffffff", "rule": "#b8b8b8", "gray": "#e6e6e6"},
                        "font": {"body": "Noto Sans CJK KR"}}, "styles": {}}

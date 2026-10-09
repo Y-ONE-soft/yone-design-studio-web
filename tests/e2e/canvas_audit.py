@@ -498,7 +498,7 @@ try:
         js("document.querySelector('#set-paste').click()"); time.sleep(0.5)          # 창 안 단추는 눌러서(좌표는 목록 길이에 흔들린다)
         js("document.querySelector('#ms-text').value = '# 77\\nThis is a long enough English passage for the audit of the manuscript parser feature set.\\n윗글의 주제는?\\n① a ② b ③ c\\n답: ②'")
         js("document.querySelector('#ms-go').click()"); ok = wait("LIB.sets.some(s => s.id === '77') && curSet === '77'", 10)
-        ok2 = wait("document.querySelector('#svgwrap svg').innerHTML.includes('audit of the manuscript')", 8)
+        ok2 = wait("document.querySelector('#svgwrap svg').textContent.includes('audit of the manuscript')", 8)
         if visible(".sheet-bg.on"): click(*center("#sheet-x")); time.sleep(0.3)
         return (ok and ok2, f"set={ok} shown={ok2}")
     step("L2 원고 붙여넣기 → 세트 → 캔버스에 그 원고", l2)
