@@ -83,8 +83,9 @@ def main():
     print(f"  구성 {len(r['layouts'])}개")
     for k, l in enumerate(r["layouts"], 1):
         print(f"   {k}. {l['label']} — {l['count']}면")
-    print(f"  화면: /design/{series}/{did}")
-    print(f"  폴더: catalog/{series}/designs/{did}/")
+    print(f"  화면: http://127.0.0.1:5099/design/{series}/{did}  (배포 뒤 https://yos-studio.fly.dev/design/{series}/{did})")
+    print(f"  원본 대조: http://127.0.0.1:5099/catalog/pdf/{series}/{did}")
+    print(f"  폴더: catalog/{series}/designs/{did}/  — 커밋·머지·배포는 CLAUDE.md 절차대로")
 
 
 if __name__ == "__main__":

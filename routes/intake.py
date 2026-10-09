@@ -306,6 +306,8 @@ def judge(measured, pages, cards, hint=""):
 # ── 3. 초안 등록 ────────────────────────────────────────────────
 def _vet_knobs(series, design_id, knobs):
     """모델이 준 손잡이 값을 그 틀의 선언과 대조해 통과한 것만."""
+    if not knobs:                      # 손잡이가 없으면 대조할 것도 없다 — 조판 코드가 없는 틀(표지 등)도 등록되게
+        return {}, []
     from routes.catalog import _ddir
     from core.render_vivlio import book as bookmod, knobs as kn
     bc = bookmod.load(_ddir(series, design_id))
