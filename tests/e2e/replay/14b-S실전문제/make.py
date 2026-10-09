@@ -509,10 +509,6 @@ def build_page(pg, pno):
             elif k == "prompt":
                 first = next(c for c in ls[0]["chars"] if c["c"].strip())
                 tr = TR_Q
-                if len(ls) == 1:                                     # 한 줄 발문 — 자간을 그 줄 원본 글자 자리에서(시각적 자간이라 발문마다 다르다)
-                    ink_ = [c for c in ls[0]["chars"] if c["c"].strip()]
-                    line = "".join(c["c"] for c in ls[0]["chars"] if c["c"] != "\t").strip()
-                    tr = track_from(REFDOC[pno - 1], (ink_[0]["x"], b0 - 3.0, ink_[-1]["x1"] - ink_[0]["x"], 3.6), line, NOTO, 400, 8)
                 col.append({"kind": k, "x": L, "y": top_of(b0, 8, NOTO, 400, LEAD_Q), "value": gtext(g), "n": len(ls), "lead": LEAD_Q,
                             "ind": round(first["x"] - L, 2), "tr": tr})
                 measure_text(pg, "q" + tag, g, L - 0.5, L + COL_W + 0.5)
@@ -646,7 +642,7 @@ def body(pg, pno, specs):
         if i == 0:
             st += [S("발문 — 임시 글 · 자리 · 스타일(첫 줄 들여 · 양끝맞춤) · GREP 둘(밑줄 · Medium 밑줄)", 1700)]
             st += text(round(sp["x"], 2), round(sp["y"], 2), wbox(sp["tr"]), sp["h"], TEMP_Q, 8, INK, label="발문 자리 — 임시 글", leading=LEAD_Q,
-                       align="justify", font=NOTO, track=sp["tr"])
+                       align="justify", font=NOTO, track=sp["tr"], tsume=Q_TSUME)
             st += slot("발문", label="자리 이름 「발문」")
             st += jc4(JC_PAS)
             st.append(F('#side input[data-a="indent_first"]', sp["ind"]))
@@ -722,7 +718,7 @@ def opts_metrics():
 
 
 LEAD_Q = 14.6        # 발문 행간 — 둘째 줄 기준선 간격 5.15mm (58·59·60쪽 발문 넷)
-TR_Q = track_med("prompt", short_only=False)        # 발문 자간 — 원본은 글자마다 폭이 다르다(시각적 자간) · 평균에 맞춘다
+TR_Q, Q_TSUME = -40, 40   # 발문 — 원본 글자 쌍마다 간격 = 자간 −40‰ − 0.4 × (앞 글자 오른쪽 + 뒤 글자 왼쪽 빈 곳): 인디자인 「자간 축소」 40% (2026-10-09, 2,384쌍 3‰ 안)
 TR_A = track_med("answer")
 OPT_GAP, OPT_IND = opts_metrics()
 CHAINS = story_chains()

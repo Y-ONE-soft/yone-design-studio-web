@@ -1674,7 +1674,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -1751,7 +1751,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -1772,7 +1779,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -4553,7 +4560,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -4630,7 +4637,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -4651,7 +4665,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -7659,7 +7673,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -7736,7 +7750,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -7757,7 +7778,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -10443,7 +10464,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -10520,7 +10541,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -10541,7 +10569,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -13558,7 +13586,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -13635,7 +13663,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -13656,7 +13691,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -16528,7 +16563,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -16605,7 +16640,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -16626,7 +16668,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -19660,7 +19702,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -19737,7 +19779,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -19758,7 +19807,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -22157,7 +22206,7 @@
   "wait": 1600
  },
  {
-  "say": "발문 자리 — 임시 글 · 자간 -79",
+  "say": "발문 자리 — 임시 글 · 자간 -40 · 자간 축소 40%",
   "wait": 1700
  },
  {
@@ -22234,7 +22283,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -22255,7 +22311,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },

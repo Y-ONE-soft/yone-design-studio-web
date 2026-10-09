@@ -34,7 +34,7 @@ def _by_id(items):
     return {x.get("id"): x for x in (items or []) if isinstance(x, dict) and x.get("id")}
 
 
-STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
+STYLE_KEYS = ("font", "size", "leading", "color", "align", "tracking", "tsume", "indent", "indent_first", "indent_right", "space_before", "space_after", "b", "i")
 
 
 # 꾸밈없는 기본 견본 — 브랜드가 하나도 없어도 그린다(인디자인 기본 견본: 검정·종이·회색 · 기본 서체).
@@ -617,11 +617,12 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     gutter = float(a.get("gutter") or 0) if cols > 1 else 0.0
     col_w = (w_mm - il - ir - gutter * (cols - 1)) / cols - float(a.get("indent") or 0) - float(a.get("indent_right") or 0)
     track = em * float(a.get("tracking") or 0) / 1000.0
+    tsume = em * float(a.get("tsume") or 0) / 100.0 * 0.13             # 자간 축소 — 글자 양옆 빈 곳 어림 0.13em(Noto CJK 한글 0.10~0.16)
     lines = 0
     paras = (plain or "").replace(" ", "\n").split("\n")             # 줄 나눔도 줄 하나
     first = float(a.get("indent_first") or 0)                          # 첫 줄 들여쓰기(음수 = 내어쓰기 — 첫 줄이 그만큼 넓다, 단위 14c 한 줄 발문이 두 줄로 어림됐다)
     for para in paras:
-        width = first + sum(em * (1.0 if ord(c) > 0x2E7F else 0.28 if c == " " else ROMAN_EM) + track for c in para)   # 공백 0.28em(Noto CJK 한국어 꼴)
+        width = first + sum(em * (1.0 if ord(c) > 0x2E7F else 0.28 if c == " " else ROMAN_EM) + track - (tsume if c != " " else 0) for c in para)   # 공백 0.28em(Noto CJK 한국어 꼴)
         lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
     gaps = (len(paras) - 1) * (float(a.get("space_before") or 0) + float(a.get("space_after") or 0))
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
@@ -1353,6 +1354,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         z = text_zoom(a, getattr(ctx, "zoom_out", 1))
         # 글 잇기 — 같은 이야기의 상자끼리 넘친 줄을 차례로 넘긴다(units_compose.js 의 thread)
         st = f' data-story="{esc(a["story"])}" data-seq="{story_seq(a)}"' if a.get("story") else ""
+        if a.get("tsume"):                                                     # 자간 축소 — 글자 잉크 상자는 크롬 안에서 잰다(units_compose.js 의 tsume)
+            st += f' data-tsume="{float(a["tsume"]):g}"'
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
                 f'<foreignObject x="0" y="0" width="{float(a["w"]) * z:.2f}" height="{h * z:.2f}" style="overflow:visible">'
                 f'<div xmlns="http://www.w3.org/1999/xhtml" lang="en"{st} style="zoom:{z};{style}">{_text_html(a, html, h, ctx)}</div></foreignObject></g>')

@@ -157,6 +157,7 @@
         "v_scale": {"type": "number", "minimum": 1, "description": "장평 세로 % (인디자인 수직 비율). 없으면 100"},
         "baseline": {"$ref": "#/definitions/pt", "description": "기준선 이동 pt — 양수면 위로"},
         "kerning": {"enum": ["metrics", "none"], "description": "커닝 — metrics(기본) 또는 끄기"},
+        "tsume": {"type": "number", "minimum": 0, "maximum": 100, "description": "자간 축소 % (인디자인 문자 패널 「자간 축소」, Tsume) — 글자마다 양옆 빈 곳(글리프 폭 안, 잉크 밖)을 이만큼 줄인다. 공백은 그대로, 커닝·자간은 그 위에 더한다. 없으면 0"},
         "tail": {"type": "object", "required": ["part"], "description": "글 끝에 붙이는 개체(인디자인 인라인 앵커) — 부품을 글자처럼 끝에. gap = 마지막 글자와 사이(mm), drop = 기준선에서 개체 아래 끝까지 아래로(mm)",
                  "properties": {"part": {"$ref": "#/definitions/id"}, "gap": {"type": "number"}, "drop": {"type": "number"}, "w": {"type": "number"}, "h": {"type": "number"}}},
         "story": {"type": "string", "minLength": 1, "maxLength": 40, "description": "글 잇기(인디자인 텍스트 스레드) — 이야기 이름. 같은 이야기의 글상자들은 글 하나를 story_seq 차례로 흘린다(단·쪽을 넘어도). 글·자리(bind)·스타일은 첫 상자 것, 넘친 줄은 다음 상자 맨 위로"},
@@ -460,7 +461,7 @@
           "additionalProperties": {"type": "object", "properties": {
             "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}, "leading": {"$ref": "#/definitions/pt"},
             "color": {"$ref": "#/definitions/token"}, "align": {"enum": ["left", "center", "right", "justify"]},
-            "tracking": {"type": "number"}, "indent": {"$ref": "#/definitions/mm"}, "indent_first": {"type": "number"}, "indent_right": {"$ref": "#/definitions/mm"},
+            "tracking": {"type": "number"}, "tsume": {"type": "number", "minimum": 0, "maximum": 100}, "indent": {"$ref": "#/definitions/mm"}, "indent_first": {"type": "number"}, "indent_right": {"$ref": "#/definitions/mm"},
             "space_before": {"$ref": "#/definitions/mm"}, "space_after": {"$ref": "#/definitions/mm"},
             "b": {"type": "boolean"}, "i": {"type": "boolean"}
           }}}

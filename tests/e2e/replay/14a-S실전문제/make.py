@@ -379,6 +379,9 @@ def marked(chars):
     return out
 
 
+OPTL = ("opts", "stmt")                                                       # 선지 · 진술 — 같은 모양(내어쓰기·단락 뒤 간격), 균등 배치만 다르다
+
+
 def groups(pno):
     """단마다 요소 묶음 — [{kind, lines, left, rect?}] 읽는 순서. kind: num · prompt · bogi · passage · opts · condlabel · cond · answer"""
     cols, rects, uls = read_page(pno)
@@ -414,12 +417,13 @@ def groups(pno):
             elif cur and cur["kind"] == "prompt" and len(cur["lines"]) < 2 and 5.05 < gap < 5.6:            # 발문 둘째 줄 (기준선 간격 5.15 — 지문 줄은 4.94)
                 cur["lines"].append(ln)
             elif dx < 0.3 and (t[:1] in CIRC or re.match(r"\d\)\s", t)) and not (cur and cur["kind"] == "passage" and gap < 6):
-                if not (cur and cur["kind"] == "opts" and gap < 7):
-                    cur = {"kind": "opts", "lines": [], "left": left}
+                kd = "opts" if t[:1] in CIRC else "stmt"                    # 진술 「1) … (T/F)」 은 선지와 다른 단락 스타일(원본: 진술 줄은 자간을 3‰ 줄이고 선지는 1‰ 넘게 안 줄인다)
+                if not (cur and cur["kind"] == kd and gap < 7):
+                    cur = {"kind": kd, "lines": [], "left": left}
                     gs.append(cur)
                 cur["lines"].append(ln)
                 ln["para"] = True
-            elif 2.5 < dx < 4.5 and cur and cur["kind"] == "opts":
+            elif 2.5 < dx < 4.5 and cur and cur["kind"] in OPTL:
                 cur["lines"].append(ln)
             else:
                 if not (cur and cur["kind"] == "passage" and gap < 6):
@@ -451,7 +455,7 @@ def gtext(g):
         if k == 0:
             out = t
             continue
-        brk = ln.get("para") if g["kind"] == "opts" else ls[k - 1]["x1"] < ls[k - 1].get("right", right) - 3
+        brk = ln.get("para") if g["kind"] in OPTL else ls[k - 1]["x1"] < ls[k - 1].get("right", right) - 3
         if brk:
             out += "\n" + t
             continue
@@ -524,15 +528,16 @@ def chrome_track(kind, n=8):
     return round(statistics.median(v))
 
 
-TR = {"passage": chrome_track("passage"), "opts": chrome_track("opts"), "bogi": chrome_track("bogi"),
-      "cond": gaps_track(ALL["cond"]), "answer": gaps_track(ALL["answer"]), "prompt": chrome_track("prompt", 12)}
-LEAD = {"passage": lead_of(ALL["passage"], 14), "opts": lead_of(ALL["opts"], 12), "bogi": lead_of(ALL["bogi"], 14),
+TR = {"passage": chrome_track("passage"), "opts": chrome_track("opts"), "stmt": chrome_track("opts"), "bogi": chrome_track("bogi"),
+      "cond": gaps_track(ALL["cond"]), "answer": gaps_track(ALL["answer"]), "prompt": -40}
+Q_TSUME = 40   # 발문 — 원본 글자 쌍마다 간격 = 자간 −40‰ − 0.4 × (앞 글자 오른쪽 + 뒤 글자 왼쪽 빈 곳): 인디자인 「자간 축소」 40% (2026-10-09, 2,384쌍 3‰ 안)
+LEAD = {"passage": lead_of(ALL["passage"], 14), "opts": lead_of(ALL["opts"], 12), "stmt": lead_of(ALL["opts"], 12), "bogi": lead_of(ALL["bogi"], 14),
         "cond": lead_of(ALL["cond"], 12), "prompt": lead_of(ALL["prompt"], 14.6)}
 _opara = [b["base"] - a["base"] for g in ALL["opts"] for a, b in zip(g["lines"], g["lines"][1:]) if b.get("para")]
 OPT_SPACE = round(statistics.median(_opara) - LEAD["opts"] * MM, 2)         # 선지 사이 단락 뒤 간격 mm
 _hang = [ln["x0"] - g["left"] for g in ALL["opts"] for ln in g["lines"] if not ln.get("para")]
 HANG = round(statistics.median(_hang), 2)                                    # 선지 둘째 줄 내어쓰기
-_full = [ln["x1"] - g["left"] for k in ("passage", "opts", "prompt") for g in ALL[k] for ln in g["lines"][:-1] if ln["x1"] > g["left"] + 80]
+_full = [ln["x1"] - g["left"] for k in ("passage", "opts", "stmt", "prompt") for g in ALL.get(k, []) for ln in g["lines"][:-1] if ln["x1"] > g["left"] + 80]
 RIGHT = round(statistics.median(_full), 2)                                   # 꽉 찬 줄 끝(끝 글자 끝) — 단 왼쪽에서
 _ul = [g for g in draws(1) if False]
 UL_W, UL_OFF = round(0.5 * MM, 3), 0.71                                      # 밑줄 0.5pt · 기준선 아래 0.71mm(선 가운데) — read_page 와 같은 값
@@ -549,7 +554,7 @@ for _pno in PAGES + [PAGES[-1] + 1]:
     GROUPS[_pno] = _gs
     for _ci in (0, 1):
         for _j, _g in enumerate(_gs[_ci]):
-            if _j == 0 and _prev is not None and _g["kind"] in ("passage", "opts") and _prev["kind"] == _g["kind"]:
+            if _j == 0 and _prev is not None and _g["kind"] in ("passage", "opts", "stmt") and _prev["kind"] == _g["kind"]:
                 _g["cont_of"] = _prev
                 _prev["story_next"] = _g
             _prev = _g
@@ -580,10 +585,11 @@ TEMP = {"num": "00",
         "passage": ("(A) Temporary passage text for styling. The real passage arrives later from outside, and this paragraph only keeps "
                     "the shape of the content with {marked words} so that the style can be set while it is still empty."),
         "opts": "① Temporary choice one\n② Temporary choice two that is a little longer than the others to wrap\n③ Temporary choice three\n④ Temporary choice four\n⑤ Temporary choice five",
+        "stmt": "1) Temporary statement one. (T/F)\n2) Temporary statement two that is a little longer than the others so that it wraps. (T/F)",
         "bogi": "Temporary given text with (A)__________ and (B)__________ blanks for the style.",
         "cond": "1) 임시 조건 하나\n2) 임시 조건 둘\nword / word / word / word",
         "answer": "주제문: ______________________."}
-SLOT = {"num": "문항번호", "prompt": "발문", "passage": "지문", "opts": "선지", "bogi": "보기", "cond": "조건", "answer": "답칸"}
+SLOT = {"num": "문항번호", "prompt": "발문", "passage": "지문", "opts": "선지", "stmt": "진술", "bogi": "보기", "cond": "조건", "answer": "답칸"}
 CONT = []                                                                    # (자리, 쪽, y, x, 글) — 끝에 편집기 자리 순서(쪽 → 위 → 왼쪽)로
 
 
@@ -612,7 +618,7 @@ def body(pg):
         else:
             st += frame(pg, f"cond{k}", x, y, w, h, CONDS, sw, fill=CONDF, label="조건 상자 — 하늘색 면 + 테두리")
     # 2) 종류마다 — 첫 상자를 그려 스타일·자리, 나머지는 복제
-    for kind in ("num", "prompt", "passage", "opts", "bogi", "condlabel", "cond", "answer"):
+    for kind in ("num", "prompt", "passage", "opts", "stmt", "bogi", "condlabel", "cond", "answer"):
         gk = [g for g in items if g["kind"] == kind]
         inherited = False                                                    # 복제한 앞 상자에 이야기가 있었나(복제는 이야기도 옮긴다)
         for k, g in enumerate(gk):
@@ -653,7 +659,7 @@ def box_of(pg, kind, g, k):
             return ([S("문항 번호 — 첫 번호를 그리고 복제", 1300)] +
                     tx(left, y, 9, 6.6, TEMP["num"], 12, NUMC, label="문항 번호 자리", font=EL, weight=700, track=tr or None) + slot("문항번호"))
         return dup(left, y)
-    if kind in ("prompt", "passage", "opts", "bogi", "cond", "answer"):
+    if kind in ("prompt", "passage", "opts", "stmt", "bogi", "cond", "answer"):
         x = g["rect"][1] + BOX_IN if kind in ("bogi", "cond") else left
         x1 = g["rect"][1] + g["rect"][3] - BOX_IN if kind in ("bogi", "cond") else left + COL_W
         lead = LEAD.get(kind, 14)
@@ -667,17 +673,17 @@ def box_of(pg, kind, g, k):
             txt = gtext(g)
         w = body_w(kind, tr) if kind != "answer" else round(x1 - x, 2)
         c0 = next(c for c in ls[0]["chars"] if c["c"].strip())
-        first = round(c0["x"] - left, 2) if kind == "prompt" else (-HANG if kind == "opts" else 0)      # 발문 첫 줄 들여쓰기 · 선지 내어쓰기
-        am = {"tracking": tr, "indent": HANG if kind == "opts" else 0, "indent_first": first,     # 글상자에 친 값 그대로 — 서버 높이 어림(text_h)과 같게
-              "space_after": OPT_SPACE if kind == "opts" else 0}
-        h = round(max(n_lines * lead * MM + (OPT_SPACE * n_lines if kind == "opts" else 0),
+        first = round(c0["x"] - left, 2) if kind == "prompt" else (-HANG if kind in OPTL else 0)      # 발문 첫 줄 들여쓰기 · 선지 내어쓰기
+        am = {"tracking": tr, "indent": HANG if kind in OPTL else 0, "indent_first": first,     # 글상자에 친 값 그대로 — 서버 높이 어림(text_h)과 같게
+              "space_after": OPT_SPACE if kind in OPTL else 0}
+        h = round(max(n_lines * lead * MM + (OPT_SPACE * n_lines if kind in OPTL else 0),
                       text_h(re.sub(r"_?\{([^}]*)\}", r"\1", txt), w, 8, lead, am), text_h(TEMP[kind], w, 8, lead, am)) + 0.6, 1)
         if g.get("story_next"):                                              # 첫 상자는 자라지 않는다 — 원본 줄 수만큼만 담고 나머지는 다음 상자로
             h = round(n_lines * lead * MM + 0.3, 2)
         if not g.get("cont_of"):                                             # 이어지는 상자는 자리가 아니다(이야기 하나 = 자리 하나)
             CONT.append((SLOT[kind], pg, y, round(x, 2), txt))
         # 잴 요소
-        if kind == "opts":
+        if kind in OPTL:
             paras, cur = [], []
             for ln in ls:
                 if ln.get("para") and cur:
@@ -694,9 +700,9 @@ def box_of(pg, kind, g, k):
         name = SLOT[kind]
         st = [S(f"{name} — 첫 글상자를 그려 스타일, 나머지는 복제", 1500)]
         st += tx(round(x, 2), y, w, h, TEMP[kind], 8, INK, label=f"{name} 자리 — 임시 글", leading=lead if kind != "answer" else None,
-                   align="justify" if kind != "answer" else None, font=NOTO, track=tr or None)
+                   align="justify" if kind != "answer" else None, font=NOTO, track=tr or None, tsume=Q_TSUME if kind == "prompt" else None)
         if kind != "answer":                                                 # 양끝 정렬 균등 배치 — 낱말 100~133% · 자간 -5~250‰ (편집기 기본은 인디자인 공장값 80·133·0·0)
-            lmin = -1 if kind == "opts" else -5                              # 선지는 자간을 거의 줄이지 않는다 — 아래 선지 칸 설명
+            lmin = -1 if kind == "opts" else -5                              # 진술은 지문처럼 -5(원본 50쪽 「forest. (T/」 줄이 -3‰) · 선지는 자간을 거의 안 줄인다(아래)
             st += [F('#side input[data-a="jc.word_min"]', 100), F('#side input[data-a="jc.word_max"]', 133),
                    F('#side input[data-a="jc.letter_min"]', lmin), F('#side input[data-a="jc.letter_max"]', 250)]
         if kind == "prompt":                                                 # 번호 다음 칸부터 — 둘째 줄은 단 왼쪽으로
@@ -709,7 +715,7 @@ def box_of(pg, kind, g, k):
             st += grep(0, r"\{([^}]*)\}", bold=False, weight=500, underline=True, line=UL_W, line_off=UL_OFF, line_color=INK, hide=True,
                        label="GREP — 원고의 {…} 는 Medium + 밑줄")
             st += grep(1, r"\([A-C]\)", bold=False, weight=500, label="GREP — 문단 머리 (A)(B)(C) 는 Medium")
-        if kind == "opts":
+        if kind in OPTL:
             st += [F('#side input[data-a="indent"]', HANG), F('#side input[data-a="indent_first"]', -HANG),
                    F('#side input[data-a="space_after"]', OPT_SPACE)]
             # (위 균등 배치에서) 선지 자간 최소 -1‰ — 원본 선지는 자간을 거의 줄이지 않는다(꽉 찬 선지 줄은 모두 기본 -50‰ 이상, 48·51·52·55쪽).

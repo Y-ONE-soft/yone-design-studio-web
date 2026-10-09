@@ -72,6 +72,82 @@
     return null;
   }
 
+  // ── 자간 축소 (인디자인 문자 패널 「자간 축소」, Tsume) ──
+  // 글자마다 양옆 빈 곳(글리프 폭 안 · 잉크 밖)을 t% 줄인다 — 줄 첫 글자의 왼쪽도. 공백은 그대로.
+  // 원본 d1 발문(48~74쪽) 글자 쌍 2,384개: 자간 −40‰ + 축소 40% 로 2,380쌍이 3‰ 안(나머지 4쌍은 PDF 의 fi 합자 표기).
+  // 렌더러가 data-tsume(%)을 붙인 글상자에서, 글자를 하나씩 span 으로 나눠 margin 으로 줄인다. 잉크 상자는 캔버스로 잰다.
+  // span 으로 나누면 크롬 커닝이 끊기므로 캔버스로 잰 쌍 커닝(쌍 폭 − 낱자 폭 합)을 오른쪽 여백에 되돌린다. 합자(fi·ff…)는 한 덩어리.
+  const LIG = /^(?:ffi|ffl|ff|fi|fl)/;
+  const noInk = (c) => /^[\s ⁠​]+$/.test(c);
+  const _ink = new Map();
+  let _cv = null;
+  function inkOf(font, s) {                                            // 100px 글자의 [왼쪽 빈 곳, 오른쪽 빈 곳, 폭] px
+    const key = font + "\u0000" + s;
+    let v = _ink.get(key);
+    if (!v) {
+      _cv = _cv || document.createElement("canvas").getContext("2d");
+      _cv.font = font;
+      const m = _cv.measureText(s);
+      v = [-m.actualBoundingBoxLeft, m.width - m.actualBoundingBoxRight, m.width];
+      _ink.set(key, v);
+    }
+    return v;
+  }
+  function tsume(root) {
+    root.querySelectorAll("[data-tsume]").forEach(box => {
+      if (box.dataset.tsumeDone) return;
+      box.dataset.tsumeDone = "1";
+      const t = (+box.dataset.tsume || 0) / 100;
+      if (!(t > 0)) return;
+      const nodes = [];
+      const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: (n) =>   // 칸·개체(inline-block) 속은 그대로
+        n.nodeType === 1 && getComputedStyle(n).display === "inline-block" ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+      let n;
+      while ((n = w.nextNode())) if (n.nodeType === 3 && !noInk(n.data)) nodes.push(n);
+      for (const tn of nodes) {
+        const cs = getComputedStyle(tn.parentElement), px = parseFloat(cs.fontSize);
+        if (!(px > 0)) continue;
+        const font = `${cs.fontStyle} ${cs.fontWeight} 100px ${cs.fontFamily}`, k = px / 100, kern = cs.fontKerning !== "none";
+        const g = [], s = tn.data;                                         // 글자(합자는 한 덩어리)
+        for (let i = 0; i < s.length;) {
+          const m = s.slice(i).match(LIG), c = m ? m[0] : String.fromCodePoint(s.codePointAt(i));
+          g.push(c);
+          i += c.length;
+        }
+        const frag = document.createDocumentFragment();
+        let plain = "";
+        g.forEach((c, i) => {
+          if (noInk(c)) { plain += c; return; }
+          if (plain) { frag.appendChild(document.createTextNode(plain)); plain = ""; }
+          const [l, r] = inkOf(font, c), nx = g[i + 1];
+          let mr = -t * r;
+          if (kern && nx && !noInk(nx)) mr += inkOf(font, c + nx)[2] - inkOf(font, c)[2] - inkOf(font, nx)[2];
+          const sp = document.createElement("span");
+          sp.dataset.ts = "1";
+          sp.textContent = c;
+          sp.style.marginLeft = (-t * l * k).toFixed(4) + "px";
+          sp.style.marginRight = (mr * k).toFixed(4) + "px";
+          frag.appendChild(sp);
+        });
+        if (plain) frag.appendChild(document.createTextNode(plain));
+        tn.replaceWith(frag);
+      }
+    });
+  }
+  // 자간 축소 글자의 펜 자리(화면 px) — 글자 범위는 span 여백을 빼고 잡히므로 여백을 되돌린다. k = 화면 px / CSS px
+  function tsMargin(c, side) {
+    if (c[1] < 0) return 0;
+    const e = c[0].parentElement;
+    if (!e || !e.dataset.ts || (side === "L" ? c[1] !== 0 : c[1] !== c[0].data.length - 1)) return 0;
+    return parseFloat(side === "L" ? e.style.marginLeft : e.style.marginRight) || 0;
+  }
+  function penX(c, k, side) {
+    const r = document.createRange();
+    if (c[1] < 0) r.selectNode(c[0]); else { r.setStart(c[0], c[1]); r.setEnd(c[0], c[1] + 1); }
+    const b = r.getBoundingClientRect();
+    return side === "L" ? b.left - tsMargin(c, "L") * k : b.right + tsMargin(c, "R") * k;
+  }
+
   function compose(p) {
     if (p.dataset.jcDone) return;
     const OK = new Set(["span", "b", "i", "u", "s", "sup", "sub"]);        // 글 안 표·떠 있는 그림 등은 건드리지 않는다 — inline-block 개체 속(SVG)은 괜찮다
@@ -91,6 +167,10 @@
     for (const t of toks) if (!t.zero) t.w = rangeOf(t).getBoundingClientRect().width;
     const rect = p.getBoundingClientRect();
     const k = rect.width / (p.offsetWidth || 1);                         // 화면 px / 이 단락의 px (zoom·확대 포함)
+    if (p.closest("[data-tsume]")) {                                     // 자간 축소 — 낱말 폭 = 펜 자리에서 다음 낱말 펜 자리까지(낱말 끝 글자 여백이 범위 밖이다)
+      const real = toks.filter(t => !t.zero);
+      real.forEach((t, i) => { t.w = (i + 1 < real.length ? penX(real[i + 1].a, k, "L") : penX(t.b, k, "R")) - penX(t.a, k, "L"); });
+    }
     const cs = getComputedStyle(p);
     const W = rect.width - (parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)) * k;
     const indent = parseFloat(cs.textIndent) * k || 0;
@@ -374,12 +454,13 @@
   }
 
   function composeAll(root) {
+    try { tsume(root || document); } catch (e) { /* 못 하면 자간 축소 없이 */ }
     (root || document).querySelectorAll("[data-jc]").forEach(p => { try { compose(p); } catch (e) { /* 못 하면 브라우저 줄바꿈 */ } });
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
   }
 
   window.unitsCompose = composeAll;
-  if (document.readyState !== "loading" && document.querySelector("[data-jc]") && document.fonts) {
+  if (document.readyState !== "loading" && document.querySelector("[data-jc],[data-tsume]") && document.fonts) {
     document.fonts.ready.then(() => composeAll(document));
   } else if (document.fonts) {
     document.addEventListener("DOMContentLoaded", () => document.fonts.ready.then(() => composeAll(document)));

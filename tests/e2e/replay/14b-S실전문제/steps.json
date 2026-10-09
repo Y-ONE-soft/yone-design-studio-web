@@ -1290,7 +1290,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -81
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -1311,7 +1318,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
+   "value": 81.89
   },
   "wait": 420
  },
@@ -1495,20 +1502,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -82
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 108.0
   },
@@ -1529,20 +1522,6 @@
   "fill": {
    "at": "#side input[data-a=\"h\"]",
    "value": 10.8
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
   },
   "wait": 420
  },
@@ -4564,7 +4543,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -85
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -4585,7 +4571,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.76
+   "value": 81.89
   },
   "wait": 420
  },
@@ -4776,20 +4762,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 20.0
   },
@@ -4817,20 +4789,6 @@
   "fill": {
    "at": "#side input[data-a=\"indent_first\"]",
    "value": 8.58
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -75
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
   },
   "wait": 420
  },
@@ -4868,20 +4826,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 106.0
   },
@@ -4902,20 +4846,6 @@
   "fill": {
    "at": "#side input[data-a=\"h\"]",
    "value": 6.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -80
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
   },
   "wait": 420
  },
@@ -7387,7 +7317,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -78
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -7408,7 +7345,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -7624,20 +7561,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -85
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.76
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 21.5
   },
@@ -7697,20 +7620,6 @@
   "fill": {
    "at": "#side input[data-a=\"indent_first\"]",
    "value": 8.62
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -82
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
   },
   "wait": 420
  },
@@ -10664,7 +10573,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -85
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -10685,7 +10601,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.76
+   "value": 81.89
   },
   "wait": 420
  },
@@ -10876,20 +10792,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -81
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 20.0
   },
@@ -10915,20 +10817,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -82
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 20.0
   },
@@ -10949,20 +10837,6 @@
   "fill": {
    "at": "#side input[data-a=\"h\"]",
    "value": 10.8
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -79
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
   },
   "wait": 420
  },
@@ -11000,20 +10874,6 @@
  },
  {
   "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -85
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.76
-  },
-  "wait": 420
- },
- {
-  "fill": {
    "at": "#side input[data-it=\"x\"]",
    "value": 106.0
   },
@@ -11041,20 +10901,6 @@
   "fill": {
    "at": "#side input[data-a=\"indent_first\"]",
    "value": 8.57
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
   },
   "wait": 420
  },
@@ -14096,7 +13942,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -14117,7 +13970,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
+   "value": 81.89
   },
   "wait": 420
  },
@@ -14353,20 +14206,6 @@
   "fill": {
    "at": "#side input[data-a=\"indent_first\"]",
    "value": 8.58
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -75
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
   },
   "wait": 420
  },
@@ -17004,7 +16843,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -75
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -17025,7 +16871,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
+   "value": 81.89
   },
   "wait": 420
  },
@@ -17261,20 +17107,6 @@
   "fill": {
    "at": "#side input[data-a=\"indent_first\"]",
    "value": 8.57
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
   },
   "wait": 420
  },
@@ -19512,7 +19344,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -19533,7 +19372,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
+   "value": 81.89
   },
   "wait": 420
  },
@@ -19737,20 +19576,6 @@
   "fill": {
    "at": "#side input[data-a=\"h\"]",
    "value": 6.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -80
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
   },
   "wait": 420
  },
@@ -22286,7 +22111,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -80
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -22307,7 +22139,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.77
+   "value": 81.89
   },
   "wait": 420
  },
@@ -22536,20 +22368,6 @@
   "fill": {
    "at": "#side input[data-a=\"h\"]",
    "value": 6.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -78
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
   },
   "wait": 420
  },
@@ -24805,7 +24623,14 @@
  {
   "fill": {
    "at": "#side input[data-a=\"tracking\"]",
-   "value": -78
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tsume\"]",
+   "value": 40
   },
   "wait": 420
  },
@@ -24826,7 +24651,7 @@
  {
   "fill": {
    "at": "#side input[data-it=\"w\"]",
-   "value": 81.78
+   "value": 81.89
   },
   "wait": 420
  },
@@ -25055,20 +24880,6 @@
   "fill": {
    "at": "#side input[data-a=\"h\"]",
    "value": 6.1
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-a=\"tracking\"]",
-   "value": -76
-  },
-  "wait": 420
- },
- {
-  "fill": {
-   "at": "#side input[data-it=\"w\"]",
-   "value": 81.79
   },
   "wait": 420
  },

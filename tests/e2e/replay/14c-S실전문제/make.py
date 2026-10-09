@@ -463,27 +463,7 @@ def title_track(t, w):
     return base, pats
 
 
-def q_track():
-    """발문 자간 — 원본 발문 끝 줄(양끝으로 안 늘린 줄)마다 (첫~끝 글자 원점 거리 - 크롬 글 폭) / 사이 수 의 중앙값.
-    원본 발문은 한글 글자 간격이 글자마다 다르다(-40~-117‰, 조건 줄은 모두 -40): 인디자인 「시각적」 커닝으로 보인다(서체 kern·palt 로는 안 맞음 — scratch kern.py).
-    크롬에는 시각적 커닝이 없어 한 값으로 맞춘다(끝 줄 전체 거리 차 / 전체 글자 사이 수)."""
-    vals = []
-    for pno in PAGES[:-1]:
-        for it in items(pno):
-            r = it["q"][-1]
-            ch = [c for s in r["spans"] for c in s["chars"]]
-            while ch and not ch[0][0].strip():
-                ch = ch[1:]
-            while ch and not ch[-1][0].strip():
-                ch = ch[:-1]
-            t = "".join(c[0] for c in ch)
-            if r["x1"] > (21.5 if pno % 2 else 20) + (86 if it["col"] else 0) + 82 - 3 or len(r["spans"]) > 1 or len(t) < 4:
-                continue
-            vals.append(((ch[-1][1] - ch[0][1]) - chrome_extent(NOTO, 400, 8, t), len(t) - 1))
-    return round(sum(d for d, _ in vals) / sum(n for _, n in vals) / (8 * MM) * 1000)      # 모든 끝 줄을 한꺼번에 — 글자 사이 하나당 평균
-
-
-Q_TRACK = q_track()
+Q_TRACK, Q_TSUME = -40, 40   # 발문 — 원본 글자 쌍마다 간격 = 자간 −40‰ − 0.4 × (앞 글자 오른쪽 + 뒤 글자 왼쪽 빈 곳): 인디자인 「자간 축소」 40% (2026-10-09, 2,384쌍 3‰ 안)
 
 
 def qpage(pg, pno, colx):
@@ -547,7 +527,7 @@ def qpage(pg, pno, colx):
         if k == 0:
             first_ind = ind
             st += text(cx, y, round(82 + Q_TRACK / 1000 * 8 * MM, 2), h, TEMP["발문"], 8, INK,
-                       label=f"발문 자리 — 임시 글 · 자간 {Q_TRACK}", leading=LEAD_Q, align="justify", font=NOTO, track=Q_TRACK)
+                       label=f"발문 자리 — 임시 글 · 자간 {Q_TRACK} · 자간 축소 {Q_TSUME}%", leading=LEAD_Q, align="justify", font=NOTO, track=Q_TRACK, tsume=Q_TSUME)
             st += slot("발문", label="자리 이름 「발문」")
             st += jc4()
             st.append(F('#side input[data-a="indent_first"]', ind))
