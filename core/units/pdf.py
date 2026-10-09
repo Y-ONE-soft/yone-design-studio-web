@@ -27,17 +27,17 @@ def browser():
     return None
 
 
-def html_of(svgs, w_mm, h_mm, title="지면", keep=None):
-    """면마다 한 장. @page 크기 = 판형, 여백 0. SVG 는 width/height 가 mm 로 박혀 있다.
+def html_of(svgs, w_mm, h_mm, title="지면", keep=None, pad=0):
+    """면마다 한 장. @page 크기 = 판형(+ pad mm), 여백 0. SVG 는 width/height 가 mm 로 박혀 있다.
     keep — 낼 면 번호들(없으면 전부). 나머지 면은 함께 그려 글 잇기를 흘린 뒤 인쇄 전에 뺀다(쪽 하나 PDF 에 앞 쪽 이야기가 흘러오게)."""
     pages = "".join(f'<div class="p{"" if keep is None or i in keep else " drop"}">{s["svg"] if isinstance(s, dict) else s}</div>'
                     for i, s in enumerate(svgs))
     drop = ("<script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => "
             "document.querySelectorAll('.p.drop').forEach(e => e.remove()), 0));</script>") if keep is not None else ""
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>'
-            f'@page{{size:{w_mm}mm {h_mm}mm;margin:0}} html,body{{margin:0;padding:0}} '
-            f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:hidden;page-break-after:always;break-after:page}} '
-            f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm}} .p svg .zone{{display:none}} '
+            f'@page{{size:{w_mm + pad}mm {h_mm + pad}mm;margin:0}} html,body{{margin:0;padding:0}} '
+            f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:visible;page-break-after:always;break-after:page}} '
+            f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm;overflow:visible}} .p svg .zone{{display:none}} '
             f'.story-hint,.story-over{{display:none}}{fonts.fix_css()}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
             f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}</body></html>')
 
@@ -60,7 +60,7 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None):
     d = tempfile.mkdtemp(prefix="units_pdf_")
     html = os.path.join(d, "index.html")
     with open(html, "w", encoding="utf-8") as f:
-        f.write(html_of(svgs, w_mm, h_mm, title, keep))
+        f.write(html_of(svgs, w_mm, h_mm, title, keep, pad=1))
     # ⚠ --user-data-dir 를 주면 이 맥의 크롬이 멎는다(첫 실행 프로필 준비에서) — 실측. 플래그는 최소로.
     cmd = [b, "--headless=new", "--disable-gpu", "--no-sandbox", "--no-pdf-header-footer",
            "--virtual-time-budget=3000", f"--print-to-pdf={out_path}", "file://" + html]
@@ -68,7 +68,25 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None):
     if not os.path.exists(out_path) or os.path.getsize(out_path) < 100:
         raise RuntimeError("PDF 가 안 나왔다: " + (r.stderr or r.stdout or "")[-400:])
     shutil.rmtree(d, ignore_errors=True)
+    exact_pages(out_path, w_mm, h_mm)
     return out_path
+
+
+def exact_pages(path, w_mm, h_mm):
+    """쪽 크기를 판형 그대로 — 크롬은 @page 크기를 1/300 인치로 내린다(A4 210mm → 594.96pt, 0.11mm 좁다).
+    판형보다 1mm 크게 그려 두고(html_of pad) 쪽마다 MediaBox·CropBox 를 왼쪽 위에서 판형 크기로 자른다."""
+    import fitz
+    doc = fitz.open(path)
+    w, h = float(w_mm) * PT, float(h_mm) * PT
+    for pg in doc:
+        mb = pg.mediabox                                                  # PDF 좌표(아래가 0) — 글은 위에서부터 놓였다
+        r = fitz.Rect(mb.x0, mb.y1 - h, mb.x0 + w, mb.y1)
+        pg.set_cropbox(r)                                                 # 자른 상자가 매체 안이어야 해서 매체를 먼저 줄이지 않는다
+        pg.set_mediabox(r)
+    tmp = path + ".exact"
+    doc.save(tmp, garbage=3, deflate=True)
+    doc.close()
+    os.replace(tmp, path)
 
 
 # ── 인쇄용 ──────────────────────────────────────────────────────────────
