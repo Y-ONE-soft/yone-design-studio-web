@@ -99,14 +99,14 @@
 
 <div class="wrap">
   <div class="tools">
-    {% if folder or q %}<button id="sort" title="정렬: 최근 편집 순 ↔ 이름 순">⇅</button>
+    {% if q %}<button id="sort" title="정렬: 최근 편집 순 ↔ 이름 순">⇅</button>
     <button id="view" title="목록으로 보기">☰</button>{% endif %}
     <button class="new" data-new-menu title="새 항목 추가">+</button>
   </div>
 
   {% if folder %}
   <section id="designs">
-    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개 — 골라서 새 책</span></h2>
+    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개</span></h2>
     {# 틀 관리 · PDF 판정 · 디자인 없는 틀(등록 단추)은 지금 작업 범위 밖이라 뺐다 — 주소로는 그대로 열린다 #}
     {% if filters %}<div class="flt" id="flt">
       {% for k, vs in filters.items() %}<div class="fg" data-k="{{ k }}"><span class="fk">{{ k }}</span><button class="on" data-v="">전체</button>{% for v in vs %}<button data-v="{{ v }}">{{ v }}</button>{% endfor %}</div>{% endfor %}
@@ -125,19 +125,19 @@
   </section>
   {% endif %}
 
-  {% if folder or q %}
+  {% if q %}
   <section id="all">
-    <h2>{{ '책' if folder else '검색 결과' }} <span class="n">{{ books|length }}권</span></h2>
+    <h2>검색 결과 <span class="n">{{ books|length }}권</span></h2>
     {% if books %}<div class="cards" id="all-cards">{% for b in books %}{% include "_book_card.html" %}{% endfor %}</div>
-    {% else %}<div class="empty"><div class="big">🔍</div><b>{{ '이 라인업에 아직 책이 없어요' if folder else '맞는 책이 없어요' }}</b>{{ ('위 틀 · 디자인에서 「원고 넣기」로 만들 수 있어요.' if designs|selectattr('manuscript')|list else '') if folder else '다른 말로 찾아 보세요.' }}</div>{% endif %}
+    {% else %}<div class="empty"><div class="big">🔍</div><b>맞는 책이 없어요</b>다른 말로 찾아 보세요.</div>{% endif %}
   </section>
-  {% else %}
+  {% elif not folder %}
   <section id="folders">
     <h2><span class="tg" data-for="folder-list">▾</span>라인업</h2>
     <div class="folders" id="folder-list">
       {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
          data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
-        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '책 ' ~ f.n ~ '권' if f.n else ('책 없음' if f.t else '비어 있음') }}{% if f.t %} · 틀 {{ f.t }}개{% endif %}</span></span>
+        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '틀 ' ~ f.t ~ '개' if f.t else '비어 있음' }}</span></span>
         <span class="acts"><button class="edit" title="수정">✎</button>{% if f.id != 'etc' %}<button class="del" title="삭제">×</button>{% endif %}</span>
       </a>{% endfor %}
     </div>
