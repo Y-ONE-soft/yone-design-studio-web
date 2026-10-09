@@ -665,35 +665,61 @@ def _page_tokens(series, doc):
         H = page.rect.height
         blocks = page.get_text("blocks")
         body = sum(1 for b in blocks if H * 0.10 <= b[1] <= H * 0.93 and len(b[4].strip()) > 20)
-        folio = any(b[1] > H * 0.9 and re.search(r"\d", b[4]) and len(b[4].strip()) < 40 for b in blocks)
         txt = page.get_text()
         if re.search(r"M\s*E\s*M\s*O", txt) and body < 2:                  # 단원 끝 MEMO 면 — 반복 묶음의 일부
             out.append(("MEMO", section, 0, ""))
             continue
-        if body < 2 and not (folio and out and out[-1][0] == "본문"):     # 쪽번호 있는 짧은 끝 면은 간지가 아니다
+        # 글이 적은 면이라도 바로 앞 본문 면들(최대 3면)과 생김새가 아주 닮으면(0.6+) 그 구성의 짧은 끝 면이다
+        # (단어장 단원 끝 단어 하나 면 0.62~0.73, 본문 옆 간지는 0.52 이하 — 2026-10-09 실측)
+        # 글이 적은 면 = 본문 글상자가 2개 미만이면서 글자도 150자 미만(표 하나에 글이 꽉 찬 면은 글상자 1개라도 본문)
+        low = body < 2 and len(txt.strip()) < 150
+        short_end = False
+        if low and out and out[-1][0] == "본문" and txt.strip():
+            v = _divider_vec(page)
+            back = [j for j in range(page.number - 1, max(-1, page.number - 4), -1) if out[j][0] == "본문"]
+            short_end = any(_vec_corr(v, _divider_vec(doc[j])) >= 0.6 for j in back)
+        if low and not short_end:
             out.append(("간지", section, 0, ""))
             continue
         var = "".join(f" · {v}" for pat, v in VARIANT_RULES.get(series, []) if re.search(pat, txt))
         # 제목 표시 — 1: 맨 위 짧은 한글 제목, 2: 큰 제목 글씨. 0 이면 이어지는 면. 시험지 머리는 홀짝 면 문구라 안 본다
         title = 0 if series == "mockexam" else int(_head_title(page)) + 2 * int(_big_heading(page))
-        out.append(("본문", section or ("표지" if page.number == 0 else ""), title, var))
-    # 간지는 생김새끼리 나눈다 — 표지 · STEP 간지 · 단원 간지 · 빈 면은 다른 구성(2026-10-09).
-    # 첫 면은 표지, 마지막 면은 뒤표지로 따로(표지가 간지와 색 배치가 비슷해도 역할이 다르다).
+        out.append(("본문", section, title, var))
+    # 이름표가 없어 앞 구성을 이어받은 본문 면은, 같은 구성의 가까운 면들(앞뒤로 최대 8면, 2면 이상 있을 때) 중 가장
+    # 닮은 면과의 생김새 상관이 0.25 미만이면 그 구성이 아니다(포켓북·워크북 마지막 면, 특강 PART 간지처럼 글이 있는 면).
+    # 23개 디자인 실측: 진짜 이어지는 면은 0.29 이상, 아닌 면은 0.22 이하(2026-10-09).
+    if series != "mockexam":
+        vec, members = {}, {}
+        V = lambda i: vec.setdefault(i, _divider_vec(doc[i]))
+        for i, t in enumerate(out):
+            if t[0] == "본문":
+                members.setdefault(t[1], []).append(i)
+        for i, t in enumerate(out):
+            if t[0] != "본문":
+                continue
+            # 이름표가 있는 면은 더 엄하게(0.1) — 같은 유형 제목 면도 문항 수에 따라 생김새가 0.15 까지 떨어진다(워크북 C2).
+            # 이름표를 단 채 모양이 아주 다른 면(한끝 'PART 01 서답형 40제' 간지 0.03)만 뗀다.
+            cut = 0.1 if _section_of(series, doc[i], "", skip) else 0.25
+            near = sorted((j for j in members[t[1]] if j != i), key=lambda j: abs(j - i))[:8]
+            if len(near) >= 2 and max(_vec_corr(V(i), V(j)) for j in near) < cut:
+                out[i] = ("간지", t[1], 0, "")
+    # 글이 적은 면·위에서 떨어져 나온 면은 생김새끼리 나눈다 — STEP 간지 · 단원 간지 · 빈 면 · 마지막 면 … 은 다른 구성.
+    # 첫 면·마지막 면이라고 표지로 정하지 않는다(내지만 있는 PDF 도 있다).
     reps = []                                             # [((그림, 배치), 이름)]
+    # 같은 생김새 = 그림 상관 0.85+ 이고, 글상자 배치가 30% 넘게 겹치고, 글자 수가 2.1배 넘게 차이 나지 않을 것
+    # (포켓북 마지막 면은 첫 면과 그림·배치가 비슷해도 만든 사람 목록 때문에 글자가 189 대 70 — 다른 면이다)
     same = lambda x, y: _vec_corr(x[0], y[0]) >= 0.85 and (
-        not x[1] or not y[1] or len(x[1] & y[1]) / len(x[1] | y[1]) >= 0.3)
+        not x[1] or not y[1] or len(x[1] & y[1]) / len(x[1] | y[1]) >= 0.3) and \
+        max(x[2] + 20, y[2] + 20) / min(x[2] + 20, y[2] + 20) < 2.1
     for i, t in enumerate(out):
         if t[0] != "간지":
             continue
-        if i == 0 or i == len(out) - 1:
-            out[i] = ("간지", "표지" if i == 0 else "뒤표지", 0, "")
-            continue
-        v = (_divider_vec(doc[i]), _divider_boxes(doc[i]))
+        v = (_divider_vec(doc[i]), _divider_boxes(doc[i]), len(doc[i].get_text().strip()))
         nm = next((n for r, n in reps if same(v, r)), None)      # 이미 묶인 면 어느 하나와 같으면 그 묶음
         if nm is not None:
             reps.append((v, nm))
         if nm is None:                                    # 새 생김새 — 이름이 겹쳐도 다른 구성이다(이름 뒤에 번호)
-            base = "빈 면" if v[0] is None else ("간지 · " + _divider_name(doc[i])) if _divider_name(doc[i]) else "간지"
+            base = "빈 면" if v[0] is None else _divider_name(doc[i]) or "이름 없는 면"
             nm, k = base, 2
             while any(n == nm for _, n in reps):
                 nm, k = f"{base} ({k})", k + 1
@@ -762,14 +788,14 @@ def design_layouts(series, design):
     면마다 모양 표(_page_tokens: 구성 이름 · 맨 위 제목 유무 · 삽화 갈래 · 간지)를 만들고, 같은 모양 묶음이
     되풀이되는 구간을 찾는다(_repeat_runs). 묶음은 1면일 수도(블랙북 문항), 펼침면 2면일 수도(워크북
     '제목 면 + 이어지는 면', 포켓북 '지문 분석 + 요약노트'), 그 이상일 수도 있다. 이름이 같은 묶음은 한 구성.
-    show = 그 구성을 가장 많이 덮은 묶음의 첫 회. 결과는 `_pages/layouts10_<stamp>.json` 에 둔다.
+    show = 그 구성을 가장 많이 덮은 묶음의 첫 회. 결과는 `_pages/layouts11_<stamp>.json` 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts10_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts11_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     import fitz
@@ -781,7 +807,8 @@ def design_layouts(series, design):
         nm = _unit_name(unit)
         g = groups.get(nm)
         if not g:
-            g = groups[nm] = {"pages": [], "best": 0, "show": [], "kind": "본문" if any(t[0] == "본문" for t in unit) else "간지"}
+            g = groups[nm] = {"pages": [], "best": 0, "show": [],
+                              "kind": "본문" if any(t[0] == "본문" for t in unit) else "간지"}
             order.append(nm)
         g["pages"] += range(i + 1, i + cov + 1)
         if cov > g["best"]:
