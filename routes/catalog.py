@@ -741,6 +741,17 @@ def design_layouts(series, design):
     return out
 
 
+@bp.route("/catalog/pdf/<series>/<design>")
+def design_pdf_view(series, design):
+    """기준 PDF 원본 — 브라우저 PDF 뷰어로 연다(내려받기 아님). 구성과 나란히 대조용, 주소 뒤 #page=N 으로 그 면부터."""
+    if series not in _meta() or not _ID.match(design):
+        abort(404)
+    pdf = _design_pdf(series, design)
+    if not pdf:
+        abort(404)
+    return send_from_directory(os.path.dirname(pdf), os.path.basename(pdf), mimetype="application/pdf")
+
+
 @bp.route("/catalog/page/<series>/<design>/<int:n>.png")
 def design_page_img(series, design, n):
     """기준 PDF 의 n 면 그림(1부터). `_pages/` 에 두고 다시 안 그린다. ?dpi= 24~120."""
