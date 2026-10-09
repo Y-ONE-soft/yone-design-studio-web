@@ -1918,7 +1918,7 @@
    "to": {
     "mm": [
      180,
-     263.65
+     259
     ]
    }
   },
@@ -1929,7 +1929,7 @@
    "at": {
     "mm": [
      150.0,
-     256.825
+     254.5
     ]
    },
    "value": "A w_____ sentence for s_____ the style.",
@@ -2008,7 +2008,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 13.65
+   "value": 7.13
   },
   "wait": 420
  },
@@ -2202,6 +2202,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 13.65
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2218,6 +2225,13 @@
    "value": 69.14
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2238,6 +2252,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2254,6 +2275,13 @@
    "value": 98.81
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2274,6 +2302,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2290,6 +2325,13 @@
    "value": 128.88
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2310,6 +2352,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 13.65
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2326,6 +2375,13 @@
    "value": 165.46
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 13.65
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2346,6 +2402,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2362,6 +2425,13 @@
    "value": 202.03
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "say": "해석 — 임시 글 · 자리 · 스타일, 나머지는 복제",
@@ -2383,7 +2453,7 @@
    "to": {
     "mm": [
      180,
-     259.07
+     259
     ]
    }
   },
@@ -2394,7 +2464,7 @@
    "at": {
     "mm": [
      150.0,
-     254.535
+     254.5
     ]
    },
    "value": "임시 해석 문장입니다.",
@@ -2480,7 +2550,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 9.07
+   "value": 4.83
   },
   "wait": 420
  },
@@ -2563,6 +2633,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2579,6 +2656,13 @@
    "value": 76.96
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2599,6 +2683,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2615,6 +2706,13 @@
    "value": 106.83
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2635,6 +2733,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2651,6 +2756,13 @@
    "value": 136.7
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2671,6 +2783,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2687,6 +2806,13 @@
    "value": 179.98
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -2707,6 +2833,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -2723,6 +2856,13 @@
    "value": 209.85
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "say": "꼬리 — 쪽번호",
@@ -4579,7 +4719,7 @@
    "to": {
     "mm": [
      180,
-     263.65
+     259
     ]
    }
   },
@@ -4590,7 +4730,7 @@
    "at": {
     "mm": [
      150.0,
-     256.825
+     254.5
     ]
    },
    "value": "A w_____ sentence for s_____ the style.",
@@ -4669,7 +4809,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 13.65
+   "value": 7.13
   },
   "wait": 420
  },
@@ -4863,6 +5003,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -4879,6 +5026,13 @@
    "value": 62.44
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -4899,6 +5053,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -4915,6 +5076,13 @@
    "value": 92.31
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -4935,6 +5103,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -4951,6 +5126,13 @@
    "value": 122.18
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -4971,6 +5153,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -4987,6 +5176,13 @@
    "value": 152.05
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 13.65
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -5007,6 +5203,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5025,6 +5228,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 7.13
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5041,6 +5251,13 @@
    "value": 203.56
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 13.65
+  },
+  "wait": 420
  },
  {
   "say": "해석 — 임시 글 · 자리 · 스타일, 나머지는 복제",
@@ -5062,7 +5279,7 @@
    "to": {
     "mm": [
      180,
-     259.07
+     259
     ]
    }
   },
@@ -5073,7 +5290,7 @@
    "at": {
     "mm": [
      150.0,
-     254.535
+     254.5
     ]
    },
    "value": "임시 해석 문장입니다.",
@@ -5159,7 +5376,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 9.07
+   "value": 4.83
   },
   "wait": 420
  },
@@ -5242,6 +5459,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5258,6 +5482,13 @@
    "value": 70.26
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -5278,6 +5509,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5294,6 +5532,13 @@
    "value": 100.13
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -5314,6 +5559,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5330,6 +5582,13 @@
    "value": 130.0
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -5350,6 +5609,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5366,6 +5632,13 @@
    "value": 166.58
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
  },
  {
   "click": "#side #s-dup",
@@ -5386,6 +5659,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5404,6 +5684,13 @@
   "wait": 550
  },
  {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.83
+  },
+  "wait": 420
+ },
+ {
   "click": "#side #s-dup",
   "wait": 700
  },
@@ -5420,6 +5707,13 @@
    "value": 218.09
   },
   "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 9.07
+  },
+  "wait": 420
  },
  {
   "say": "꼬리 — 쪽번호",

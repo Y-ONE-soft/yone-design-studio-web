@@ -249,7 +249,7 @@ def item(pg, pno, k, it):
     # 걸려 글 편집칸이 안 열린다(판 1·2: 42쪽 문항 05 배열 상자 — elementFromPoint = SPAN.hd). 글은 위에서부터 놓이므로 모양은 같다.
     kw = round(right - kx + K_TRACK / 1000 * 8.5 * MM, 2)           # 상자 오른쪽 = 원본 줄 끝 + 끝 글자 뒤 자간(음수) — 양끝 줄 끝 글자 폭 끝이 원본 줄 끝에 온다
     ky = top_of(kor[0]["base"], 8.5, NOTO, 400, K_LEAD)
-    st += text(kx, round(ky, 2), kw, max(14, round(len(kor) * K_LEAD * MM + 3, 1)), temp_of(KTEMP, len(kt)), 8.5, "#231f20",
+    st += text(kx, round(ky, 2), kw, round(len(kor) * K_LEAD * MM + 0.6, 1), temp_of(KTEMP, len(kt)), 8.5, "#231f20",
                label="해석 글상자 — 임시 글" if first else None, leading=K_LEAD, align="justify", font=NOTO, track=K_TRACK or None)
     st += slot("해석")
     st += justify()                                                      # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
@@ -269,7 +269,7 @@ def item(pg, pno, k, it):
                           "ctol": 40, "pad": 0.6, "search": 0.6, "text": s["t"], "size": 8.5})
     cw = round(right - cx + C_TRACK / 1000 * 8.5 * MM, 2)
     cy = top_of(chk[0]["base"], 8.5, NOTO, 500, C_LEAD)
-    st += text(cx, round(cy, 2), cw, max(14, round(len(chk) * C_LEAD * MM + 3, 1)), temp_of(CTEMP, len(ct)), 8.5, "#231f20",
+    st += text(cx, round(cy, 2), cw, round(len(chk) * C_LEAD * MM + 0.6, 1), temp_of(CTEMP, len(ct)), 8.5, "#231f20",
                label="배열 글상자 — 임시 글" if first else None, leading=C_LEAD, align="justify", font=NOTO, track=C_TRACK or None, weight=500)
     st += slot("배열")
     st += justify(word_min=JC_WORD_MIN, letter_min=-8 if JC_LETTER_MIN is None else JC_LETTER_MIN)   # 균등 배치 — 원본 잰 값(낱말 최소 100·자간 최소 0) + 늘림 133%·250‰

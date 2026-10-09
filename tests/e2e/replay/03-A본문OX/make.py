@@ -7,7 +7,8 @@
 돌린 글(오른쪽 탭)은 회전 축(상자 가운데)에서 거꾸로 풀어 상자 자리를 정한다 — rot_text 설명.
 O·X 는 원본이 Type3(윤곽)이라 서체 이름이 없다 — 후보 서체로 같은 크기 글을 그려 잉크 양·글자 상자를 맞대 Montserrat 800 으로 정했다
 (원본 O 잉크 3.37mm² · 2.50×2.33 / Montserrat ExtraBold 3.32 · 2.48×2.31, X 2.81 / 2.77).
-O/X 상자는 원본에서 진술 끝에 붙어 흐르는 개체지만, 편집기 앵커 개체는 글 끝을 어림(text_end)으로 잡아 0.3mm 안에 못 세운다 — 원본 자리에 고정해 그린다.
+O/X 상자는 원본에서 진술 끝에 붙어 흐르는 개체 — 상자·막대·O·X 를 그려 묶은 부품을 진술 글상자마다 「글 끝에 붙이기」로 단다(단위 10 과 같은 방식).
+다른 원고(길이가 다른 진술)를 넣어도 상자가 글 끝을 따라간다(2026-10-09 — 고정 자리로 그렸던 판은 다른 원고에서 상자가 글을 덮었다: swap_check).
 """
 import json, os, statistics, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -194,6 +195,16 @@ def temp_of(base, n):
 
 CONTENT = {"지문번호": [], "지문": [], "문제번호": [], "발문": [], "진술번호": [], "진술": []}
 
+_ROWS = [r for pg in (1, 2) for r in rows_of(pg)]
+_STR = statistics.median(track_from(ref_page(pg), (t["x"], win(t["base"], 9.5)[0], t["x1"] - t["x"], win(t["base"], 9.5)[1]), t["t"].strip(), NOTO, 400, 9.5)
+                         for pg in (1, 2) for _, t, *_ in rows_of(pg))
+TAIL_PART = "p_1"
+TAIL_GAP = round(statistics.median(bx[0] - t["x1"] for _, t, _, _, bx, _ in _ROWS) - 1.5 * _STR / 1000 * 9.5 * MM, 3)
+#   상자 경로 왼쪽 - 끝 글자 오른쪽 - 크롬이 끝 글자·붙임 문자 뒤에 두는 자간(1~2칸 → 1.5칸, 단위 10 과 같은 셈)
+TAIL_DROP = round(statistics.median(bx[1] + bx[3] - t["base"] for _, t, _, _, bx, _ in _ROWS), 3)
+#   기준선 → 상자 경로 아래 끝
+S_RIGHT = round(max(bx[0] + bx[2] for *_, bx, _ in _ROWS) + 2, 1)                 # 진술 글상자 오른쪽 = 가장 먼 O/X 상자 끝 + 여유(길어지면 줄이 바뀐다)
+
 
 def P(pg, id, label):
     """지문 — 연파랑 바탕 위 글상자 하나. 양끝맞춤 · 행간 15pt · 자간(원본 글자 간격 중앙값). 줄 끝은 단락 컴포저가.
@@ -250,14 +261,47 @@ def body(pg, no, label_no):
         st += slot("진술번호")
         CONTENT["진술번호"].append(num)
         s = t["t"].strip()
-        st += T(pg, f"s{k + 1}", t["x"], t["base"], s, 9.5, "#231f20", NOTO, 400, t["x1"], w=round(min(180 - t["x"], (t["x1"] - t["x"]) * 1.3 + 10), 1),
+        st += T(pg, f"s{k + 1}", t["x"], t["base"], s, 9.5, "#231f20", NOTO, 400, t["x1"], w=round(S_RIGHT - t["x"], 1),
                 temp=temp_of(TEMP_S, len(s)))
         st += slot("진술")
         CONTENT["진술"].append(s)
-        st += ox_box(pg, f"s{k + 1}-box", *bx)
-        st += B(pg, f"s{k + 1}-bar", round(br[0], 3), round(br[1], 3), round(br[2], 3), round(br[3], 3), LINK, pad=0.15)
-        st += T(pg, f"s{k + 1}-o", o["x"], o["base"], "O", 9, "#8aabc9", MS, 800, o["x1"], search=0.6)
-        st += T(pg, f"s{k + 1}-x", x["x"], x["base"], "X", 9, "#bd7d70", MS, 800, x["x1"], search=0.6)
+        st += [{"pick": {"at": '#side select[data-a="tail.part"]', "value": TAIL_PART}, "wait": 800},     # 글 끝에 O/X 상자(부품)
+               F('#side input[data-a="tail.gap"]', TAIL_GAP), F('#side input[data-a="tail.drop"]', TAIL_DROP)]
+        o_ = bx[5] * MM / 2                                                          # 잴 것: 원본 자리의 상자·막대·O·X (글 끝에 붙어 흘러온 결과)
+        ELEMS[pg].append({"id": f"s{k + 1}-box", "x": round(bx[0] - o_, 2), "y": round(bx[1] - o_, 2), "w": round(bx[2] + 2 * o_, 2),
+                          "h": round(bx[3] + 2 * o_, 2), "color": LINK, "see": LINK, "pad": 0.3, "ctol": 30})
+        ELEMS[pg].append({"id": f"s{k + 1}-bar", "x": round(br[0], 3), "y": round(br[1], 3), "w": round(br[2], 3), "h": round(br[3], 3),
+                          "color": LINK, "see": LINK, "pad": 0.15, "ctol": 30})
+        for g, col, nm in ((o, "#8aabc9", "o"), (x, "#bd7d70", "x")):
+            gy, gh = win(g["base"], 9)
+            ELEMS[pg].append({"id": f"s{k + 1}-{nm}", "x": round(g["x"], 2), "y": round(gy, 2), "w": round(g["x1"] - g["x"], 2), "h": round(gh, 2),
+                              "color": col, "see": col, "ctol": 30, "pad": 0.5, "search": 0.6, "text": g["t"], "size": 9})
+    return st
+
+
+def ox_part(pg, X0=20.0, Y0=262.0):
+    """O/X 부품 — 원본 첫 진술의 상자 하나를 빈 자리(X0, Y0)로 옮겨 그리고, 범위로 골라 그룹(부품)으로 묶은 뒤 지면에서는 지운다(단위 10 과 같다)"""
+    _n0, _t0, _o0, _x0, _b0, _r0 = rows_of(pg)[0]
+    dx, dy = X0 - _b0[0], Y0 - _b0[1]
+    x, y, w, h, r, sw = _b0
+    st = [S("O/X 상자 부품 — 상자 · 막대 · O · X 를 그려 묶는다", 1500)]
+    st += box(round(x + dx, 3), round(y + dy, 3), round(w, 3), round(h, 3), "#ffffff", radius=round(r, 3))
+    st += _color("stroke.color", LINK)
+    st.append(F('#side input[data-a="stroke.w"]', round(sw, 3)))
+    st += box(round(_r0[0] + dx, 3), round(_r0[1] + dy, 3), round(_r0[2], 3), round(_r0[3], 3), LINK)
+    for g, col in ((_o0, "#8aabc9"), (_x0, "#bd7d70")):                              # 글상자는 상자 안에 들도록 행간 9pt · 폭 3mm
+        y0 = top_of(g["base"], 9, MS, 800, 9)
+        st += text(round(g["x"] + dx, 2), round(y0 + dy, 2), 3, round(9 * MM + 0.4, 1), g["t"], 9, col, font=MS, weight=800, leading=9)
+    st += [S("자석 끄기 — 켜 두면 묶을 때 원자 자리가 0.5mm 격자로 반올림된다", 1300),
+           {"clickif": {"at": "#tg-snap", "when": "view.snap"}, "wait": 600},
+           S("범위로 넷을 골라 그룹 → 부품", 1300),
+           {"drag": {"from": {"mm": [X0 - 2, Y0 - 2]}, "to": {"mm": [X0 + w + 2, Y0 + h + 2]}}, "wait": 900},
+           {"js": "(() => '고른 것 ' + sels.size)()"},
+           {"click": "#side #s-group", "wait": 1500},
+           {"js": "(() => { const p = LIB.parts.find(p => p.id === '" + TAIL_PART + "'); if (!p) throw new Error('부품 " + TAIL_PART + " 없음'); "
+                  "return '부품 ' + p.id + ' ' + p.w + '×' + p.h + ' 원자 ' + p.atoms.length; })()"},
+           S("지면의 그룹은 지운다 — 부품은 라이브러리에 남는다", 1100), {"key": "Delete", "wait": 900},
+           {"clickif": {"at": "#tg-snap", "when": "!view.snap"}, "wait": 600}]
     return st
 
 
@@ -302,6 +346,7 @@ def footer(pg):
 st = open_doc("스텝바이스텝 워크북 A2 (A4)")
 st += expect_pages(1)
 st += [S("① 8쪽 — A2 본문 O/X", 1500)]
+st += ox_part(1)
 st += header_left(1, "A2", "본문 O/X")
 st += body(1, "01", "01")
 st += footer(1)

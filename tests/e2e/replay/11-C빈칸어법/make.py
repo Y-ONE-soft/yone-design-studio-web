@@ -297,9 +297,10 @@ def measure_en(pg, no, en, x_en, right):
                               "color": INK, "see": INK, "ctol": 40, "pad": 0.1, "search": 0.1})
 
 
-def dup(x, y):
-    """고른 글상자 「⧉ 복제」 → 자리만 새로"""
-    return [{"click": "#side #s-dup", "wait": 700}, F('#side input[data-it="x"]', x), F('#side input[data-it="y"]', y, 550)]
+def dup(x, y, h=None):
+    """고른 글상자 「⧉ 복제」 → 자리(와 높이)만 새로"""
+    return ([{"click": "#side #s-dup", "wait": 700}, F('#side input[data-it="x"]', x), F('#side input[data-it="y"]', y, 550)]
+            + ([F('#side input[data-a="h"]', h)] if h is not None else []))
 
 
 def body(pg, its, right):
@@ -329,7 +330,7 @@ def body(pg, its, right):
         y = round(top_of(b0, 8, NOTO, 400, LEAD_EN), 2)
         measure_en(pg, no, en, x_en, right)
         if k == 0:
-            st += text(x_en, y, w_en, round(2 * LEAD_EN * MM + 0.6, 2), TEMP_EN, 8, INK, label="빈칸 문장 자리 — 임시 글",
+            st += text(x_en, y, w_en, round(len(en) * LEAD_EN * MM + 0.6, 2), TEMP_EN, 8, INK, label="빈칸 문장 자리 — 임시 글",   # 상자 높이 = 그 글의 줄 수(아래 해석·다음 문항이 상자 영역 안에 들지 않게 — 원고가 길어지면 아래를 민다)
                        leading=LEAD_EN, align="justify", font=NOTO, track=TRACK_EN)
             st.append(F('#side input[data-a="h_scale"]', HS))
             st += slot("빈칸문장", label="자리 이름 「빈칸문장」")
@@ -340,7 +341,7 @@ def body(pg, its, right):
                        label=f"GREP — 약속 괄호 {{정답}}: 정답은 감추고 그 글 폭({HID}pt · 자간 {HID_TRACK}‰) + {HID_PAD}mm 만큼 밑줄(선 {LINE_W}mm · 기준선 아래 {LINE_OFF}mm)")
             st += [F('#side input[data-a="grep.0.track"]', HID_TRACK, 600), {"click": '#side input[data-a="grep.0.fit"]', "wait": 600}]
         else:
-            st += dup(x_en, y)
+            st += dup(x_en, y, round(len(en) * LEAD_EN * MM + 0.6, 2))
     st += [S("해석 — 임시 글 · 자리 · 스타일, 나머지는 복제", 1500)]
     for k, (nb, nx, no, en, ko, ans, sent) in enumerate(its):
         CONTENT["해석"].append("".join(s for _, s in ko).strip())
@@ -350,14 +351,14 @@ def body(pg, its, right):
         ELEMS[pg].append({"id": f"k{no}", "x": k_ink[0], "y": k_ink[1], "w": k_ink[2], "h": k_ink[3], "color": KORC, "see": KORC, "ctol": 40,
                           "pad": 0.6, "search": 1.0, "text": CONTENT["해석"][-1][:30], "size": 8})
         if k == 0:
-            st += text(x_kr, y, w_kr, round(2 * LEAD_KR * MM + 0.6, 2), TEMP_KR, 8, KORC, label="해석 자리 — 임시 글",
+            st += text(x_kr, y, w_kr, round(len(ko) * LEAD_KR * MM + 0.6, 2), TEMP_KR, 8, KORC, label="해석 자리 — 임시 글",
                        leading=LEAD_KR, align="justify", font=NOTO, track=TRACK_KR, weight=500)
             st += slot("해석", label="자리 이름 「해석」")
             st += justify()                                              # 균등 배치 — 이 출판사 책: 낱말 100·133%, 자간 −8·250‰ (인디자인 원본 실측)
             if abs(WS_KR) > 5:
                 st.append(F('#side input[data-a="word_spacing"]', WS_KR))
         else:
-            st += dup(x_kr, y)
+            st += dup(x_kr, y, round(len(ko) * LEAD_KR * MM + 0.6, 2))
     return st
 
 

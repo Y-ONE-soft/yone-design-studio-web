@@ -264,6 +264,7 @@
   .paper.grid .svgwrap { background-image: linear-gradient(to right, rgba(125,42,232,.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(125,42,232,.12) 1px, transparent 1px); }
   .margins { position: absolute; border: 1px dashed #f0a441; pointer-events: none; display: none; }
   .paper.mg .margins { display: block; }
+  .margins .colg { position: absolute; top: 0; bottom: 0; border-left: 1px dashed #a78bdc; }   /* 단 안내선 — 인디자인 보라 */
   .area.pan { cursor: grab; } .area.pan:active { cursor: grabbing; }
   .paper .svgwrap svg g[data-lock] { pointer-events: none; }
   .paper .svgwrap svg g[data-lock].sel2, .paper .svgwrap svg g.lk-sel { outline: 2px dashed #f0a441; }
@@ -1186,6 +1187,9 @@ function drawRulers() {
   const mg = marg(page), anymg = mg.top || mg.bottom || mg.left || mg.right;      // 여백 0(표지·간지)이면 안내선을 안 그린다
   Object.assign($("#mg").style, {display: anymg ? "" : "none", left: (mg.left * scale) + "px", top: (mg.top * scale) + "px",
                                  width: ((sp.w - mg.left - mg.right) * scale) + "px", height: ((sp.h - mg.top - mg.bottom) * scale) + "px"});
+  const cl = page.columns || {}, cn = +cl.n || 1, cg = cl.gutter != null ? +cl.gutter : 5, cw = (sp.w - mg.left - mg.right - cg * (cn - 1)) / cn;   // 단 안내선(보라)
+  $("#mg").innerHTML = cn > 1 ? Array.from({length: cn - 1}, (_, k) => [(cw * (k + 1) + cg * k), (cw * (k + 1) + cg * (k + 1))]).flat()
+    .map(x => `<i class="colg" style="left:${x * scale - 1}px"></i>`).join("") : "";
   drawGuides();
 }
 function drawGuides() {
@@ -2019,6 +2023,7 @@ function side() {
       ${facing() ? `<div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label title="제본쪽 — 풀칠에 글이 안 먹히게 보통 더 준다">안쪽<input type="number" id="s-mg-inside" step="1" value="${(page.margins || {}).inside ?? marg(page).left}"></label><label>바깥쪽<input type="number" id="s-mg-outside" step="1" value="${(page.margins || {}).outside ?? marg(page).right}"></label></div>
       <div class="note">이 면은 펼쳤을 때 <b>${rightHand(page) ? "오른쪽" : "왼쪽"}</b> — 안쪽이 ${rightHand(page) ? "왼" : "오른"}쪽에 온다</div>`
       : `<div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label>왼쪽<input type="number" id="s-mg-left" step="1" value="${marg(page).left}"></label><label>오른쪽<input type="number" id="s-mg-right" step="1" value="${marg(page).right}"></label></div>`}
+      <div class="m3"><label title="인디자인 여백 및 단 — 판면을 이만큼 단으로 나눈 보라 안내선. 원고는 단 순서로 들어간다(왼쪽 단 위→아래, 다음 단)">단 수<input type="number" id="s-col-n" min="1" max="6" step="1" value="${(page.columns || {}).n || 1}"></label><label title="단 사이 간격">단 간격 mm<input type="number" id="s-col-g" step="0.5" min="0" value="${(page.columns || {}).gutter ?? 5}"></label><label></label></div>
       <div class="row"><button class="btn sm sub" id="s-mg-fit" title="이 지면에 놓인 것들이 실제로 차지한 자리를 재서 여백을 맞춘다">개체에 맞추기</button>${page.margins ? `<button class="btn sm sub" id="s-mg-clr">기본값으로</button>` : ""}</div>
       <div class="m3"><label>기준선 격자 시작 mm<input type="number" id="s-grid-start" step="0.5" value="${(page.baseline_grid || {}).start ?? ""}" placeholder="없음"></label><label>줄 간격 mm<input type="number" id="s-grid-step" step="0.5" value="${(page.baseline_grid || {}).step ?? ""}"></label><label></label></div>
       <h3>레이어 <span class="note" style="display:inline">개체를 층으로 — 숨기기·잠금·비인쇄</span></h3>
@@ -2046,7 +2051,7 @@ function side() {
   box.innerHTML = h;
   ctrlBar();
   const on = (q, ev, fn) => { const el = box.querySelector(q); if (el) el.addEventListener(ev, fn); };
-  document.querySelectorAll("[data-it], #side [data-a]").forEach(i => { if (i.tagName === "INPUT" || i.tagName === "TEXTAREA") i.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); i.blur(); } }; });   // Enter = 확정
+  document.querySelectorAll("[data-it], #side [data-a], #side input[type=number]").forEach(i => { if (i.tagName === "INPUT" || i.tagName === "TEXTAREA") i.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); i.blur(); } }; });   // Enter = 확정
   document.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { hist(); const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else if (k === "s") { const v = Math.max(10, +i.value) / 100; if (Math.abs(v - 1) < 0.002) delete it.s; else it.s = v; } else it[k] = +i.value; save(); render(); side(); });     // 위 컨트롤 바·오른쪽 패널 둘 다 같은 값을 보이게
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
@@ -2173,6 +2178,10 @@ function side() {
     save(); applyView(); side(); say(`여백을 개체에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
   });
   on("#s-mg-clr", "click", () => { hist(); delete page.margins; save(); applyView(); side(); });
+  ["n", "g"].forEach(k => on("#s-col-" + k, "change", () => {       // 단 — 원고 읽는 순서(content.slots)와 안내선
+    hist(); const n = Math.max(1, Math.min(6, Math.round(+$("#s-col-n").value || 1))), g = Math.max(0, +$("#s-col-g").value || 0);
+    if (n > 1) page.columns = {n, gutter: g}; else delete page.columns;
+    save(); applyView(); side(); }));
   on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
     q.repeat = v === "once" || v === "none" ? v : "each_set"; if (v === "each_set_2") q.per = 2; else delete q.per;     // 지문 2개씩 = 그 면에 지문 자리를 두 벌 그려 둔다
     await savePlan(); drawRail(); side(); });

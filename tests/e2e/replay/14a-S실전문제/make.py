@@ -590,7 +590,7 @@ TEMP = {"num": "00",
         "cond": "1) 임시 조건 하나\n2) 임시 조건 둘\nword / word / word / word",
         "answer": "주제문: ______________________."}
 SLOT = {"num": "문항번호", "prompt": "발문", "passage": "지문", "opts": "선지", "stmt": "진술", "bogi": "보기", "cond": "조건", "answer": "답칸"}
-CONT = []                                                                    # (자리, 쪽, y, x, 글) — 끝에 편집기 자리 순서(쪽 → 위 → 왼쪽)로
+CONT = []                                                                    # (자리, 쪽, y, x, 글) — 끝에 문항 순서(쪽 → 단 → 위)로
 
 
 def text_elem(pg, id, lines, x0, x1, multi_iou=0.80, color=INK, size=8):
@@ -751,9 +751,10 @@ for pg, pno in enumerate(PAGES, 1):
     st += header_left(pg) if pno % 2 == 0 else header_right(pg)
     st += body(pg)
     st += footer(pg)
+    st += columns(2, 4)                                                       # 두 단 — 원고는 문항 순서(왼쪽 단 → 오른쪽 단)로 들어간다
     st += done(f"{pno}쪽", f"p{pg}.png")
 
-CONT.sort(key=lambda c: (c[1], round(c[2], 1), c[3]))                      # 편집기 자리 순서 = 쪽 → 위(y) → 왼쪽(x)
+CONT.sort(key=lambda c: (c[1], 0 if c[3] < 104.5 else 1, round(c[2], 1), c[3]))   # 바깥 시스템이 보내는 순서 = 문항 순서(쪽 → 왼쪽 단 → 오른쪽 단, 위 → 아래)
 CONTENT = {}
 for name, *_, t in CONT:
     CONTENT.setdefault(name, []).append(t)

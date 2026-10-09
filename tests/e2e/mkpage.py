@@ -181,6 +181,13 @@ def put_content(obj, label="원고 넣기 — 바깥 시스템이 보내는 꼴(
             {"js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"}]
 
 
+def columns(n, gutter, label=None):
+    """지면 「여백 및 단」의 단 — Esc 로 선택을 풀고 쪽 패널의 단 수·단 간격을 친다. 원고는 단 순서로 들어간다(content.slots)"""
+    return [S(label or f"여백 및 단 — {n}단 · 간격 {gutter}mm (원고는 왼쪽 단 → 오른쪽 단)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+            F("#side #s-col-n", n, 800), F("#side #s-col-g", gutter, 900),
+            {"js": f"(() => {{ const c = page.columns || {{}}; if (c.n !== {n} || c.gutter !== {gutter}) throw new Error('단 지정 실패 ' + JSON.stringify(c)); return '단 ' + c.n + ' · ' + c.gutter + 'mm'; }})()"}]
+
+
 def grep(n, pattern, color=None, bold=True, label=None, size=None, bshift=None, underline=False,
          blank=None, line=None, line_off=None, line_color=None, weight=None, hide=False):
     """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색 · 크기 · 기준선 · 밑줄 · 칸으로 바꾸기.

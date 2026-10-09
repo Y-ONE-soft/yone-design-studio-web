@@ -453,10 +453,100 @@
     }
   }
 
+  // ── 자동 크기 바로잡기 (인디자인 텍스트 프레임 「자동 크기 조정 — 높이만」) ──
+  // 서버는 글 높이를 어림해(render.text_h) 상자를 키우고 아래 것을 민다. 원고가 바뀌면 어림이 실제와 어긋나 글이 잘리거나 겹친다
+  // (02B 다른 원고: 지문이 6.1mm 잘림). 여기서 크롬이 실제로 그린 높이로 상자를 다시 맞추고 아래 것을 민다 — 서버와 같은 규칙:
+  //   상자(그린 높이 = 최소 높이) 아래 끝보다 아래에 선 것을, 글이 그린 높이를 넘은 만큼.
+  //   부품 안은 원자끼리(가로 위치는 안 본다, 감싸는 면은 늘인다), 지면은 개체끼리(가로로 겹치는 것만, 고정 개체는 그대로).
+  // 상자 영역 안에 놓인 것은 밀지 않는다 — 상자를 글보다 크게 그려 그 안에 다른 것을 두면 원고가 길어질 때 덮인다(틀 검사: swap_check 「영역 안」).
+  // 렌더러(render.py)가 붙인 표시: 글 div[data-grow](data-h0 설계 · data-hcur 서버 높이) · 원자 g[data-ai] · 개체 g[data-fi].
+  const num = (e, k) => parseFloat(e.getAttribute(k)) || 0;
+  function shiftY(g, d) {                                              // 그 묶음을 d mm 아래로 — transform 앞에 붙인다
+    const t = g.getAttribute("transform") || "";
+    const m = /^translate\(0 ([-\d.]+)\) /.exec(t);
+    g.setAttribute("transform", m ? `translate(0 ${(+m[1] + d).toFixed(3)}) ${t.slice(m[0].length)}` : `translate(0 ${d.toFixed(3)}) ${t}`);
+  }
+  function pushOf(r, y) {                                              // 자란 글 r 때문에 위 끝이 y 인 것을 더 밀 양(서버가 어림으로 민 만큼은 뺀다)
+    return y >= r.y0 + r.h0 - (r.tol || 0) - 0.01 ? Math.max(0, r.need - r.h0) - (r.hc - r.h0) : 0;   // tol = 줄 높이 30%(render.below_tol)
+  }
+  function grow(root) {
+    const recs = [];
+    root.querySelectorAll("div[data-grow]").forEach(div => {
+      if (div.dataset.grown) return;
+      div.dataset.grown = "1";
+      const box = div.firstElementChild, fo = div.parentElement;
+      if (!box || !fo || fo.tagName.toLowerCase() !== "foreignobject") return;
+      const h0 = +div.dataset.h0, hc = +div.dataset.hcur;
+      if (!(hc > 0)) return;
+      const fixed = !!box.style.height;                                // 바탕(칠·획)이 있는 상자는 높이를 안 박는다 — 글 크기를 따라 그려진다
+      const k = (fixed ? box.getBoundingClientRect().height : fo.getBoundingClientRect().height) / hc;    // 화면 px / mm
+      if (!(k > 0)) return;
+      const natural = (el) => { const s = el.style.height; el.style.height = "auto"; const v = el.getBoundingClientRect().height / k; el.style.height = s; return v; };
+      const need = natural(box);                                       // 글이 실제로 차지하는 높이(여백 포함)
+      const shown = fixed ? Math.max(h0, need) : need;                 // 보이는 높이 — 바탕 상자는 글 크기 그대로
+      const z = num(fo, "height") / hc;                                // 글 배치 배율(TEXT_ZOOM)
+      if (Math.abs(Math.max(shown, h0) - hc) > 0.05) fo.setAttribute("height", (Math.max(shown, h0) * z).toFixed(2));
+      if (fixed && Math.abs(shown - hc) > 0.05) box.style.height = shown.toFixed(3) + "px";
+      div.dataset.hcur = Math.max(h0, need).toFixed(3);
+      const ag = div.closest("g[data-ai]");
+      if (ag) recs.push({ag, need, h0, hc, tol: +div.dataset.tol || 0, y0: num(ag, "data-ay"), x0: num(ag, "data-ax"), x1: num(ag, "data-ax") + num(ag, "data-aw")});
+    });
+    const byPart = new Map();
+    for (const r of recs) { const pg = r.ag.parentElement; if (!byPart.has(pg)) byPart.set(pg, []); byPart.get(pg).push(r); }
+    const pageRecs = new Map();                                        // 지면(svg) → 자란 개체들
+    byPart.forEach((gr, pg) => {
+      const atoms = [...pg.children].filter(e => e.matches && e.matches("g[data-ai]"));
+      const bot = (e) => num(e, "data-ay") + num(e, "data-ady") + num(e, "data-ah");
+      const before = Math.max(...atoms.map(bot));
+      for (const e of atoms) {
+        const y = num(e, "data-ay"), h0 = num(e, "data-ah0"), x0 = num(e, "data-ax"), x1 = x0 + num(e, "data-aw");
+        let dy = 0, dh = 0;
+        for (const r of gr) {
+          if (r.ag === e) { dh += Math.max(r.h0, r.need) - num(e, "data-ah"); continue; }
+          const d = pushOf(r, y);
+          if (d) { dy += d; continue; }
+          if (e.dataset.at === "rect" && y <= r.y0 + 0.01 && y + h0 >= r.y0 + r.h0 - 0.01 && x0 <= r.x0 + 0.01 && x1 >= r.x1 - 0.01) {
+            const g = Math.max(0, r.need - r.h0) - (r.hc - r.h0), rc = e.querySelector("rect");   // 감싸는 면 → 늘인다(모서리 둥근 면·경로는 그대로)
+            if (rc && Math.abs(g) > 0.01) { rc.setAttribute("height", (num(rc, "height") + g).toFixed(3)); dh += g; }
+          }
+        }
+        if (Math.abs(dy) > 0.01) { shiftY(e, dy); e.setAttribute("data-ady", (num(e, "data-ady") + dy).toFixed(3)); }
+        if (Math.abs(dh) > 0.01) e.setAttribute("data-ah", (num(e, "data-ah") + dh).toFixed(3));
+      }
+      const it = pg.closest("g[data-fi]");
+      if (!it) return;
+      const svg = it.closest("svg"), s = num(it, "data-s") || 1, iy = num(it, "data-y0");
+      if (!pageRecs.has(svg)) pageRecs.set(svg, []);
+      if (atoms.length === 1 && gr.length === 1) {                     // 글상자 하나 = 개체 하나 — 같은 규칙을 지면 자리로
+        const r = gr[0];
+        pageRecs.get(svg).push({it, r: {need: r.need * s, h0: r.h0 * s, hc: r.hc * s, tol: r.tol * s, y0: iy + r.y0 * s}});
+      } else {
+        const after = Math.max(...atoms.map(bot));                     // 여러 원자 부품 — 부품 아래 끝이 늘어난 만큼
+        if (Math.abs(after - before) > 0.01) pageRecs.get(svg).push({it, d: (after - before) * s, b0: iy + num(it, "data-h0")});
+      }
+    });
+    pageRecs.forEach((gr, svg) => {
+      const all = [...svg.querySelectorAll("g[data-fi]")].filter(g => g.hasAttribute("data-y0"));
+      for (const e of all) {
+        if (e.hasAttribute("data-fixed")) continue;
+        const y = num(e, "data-y0"), x0 = num(e, "data-x"), x1 = x0 + num(e, "data-w");
+        let dy = 0;
+        for (const g of gr) {
+          if (g.it === e) continue;
+          const gx0 = num(g.it, "data-x"), gx1 = gx0 + num(g.it, "data-w");
+          if (!(x0 < gx1 - 0.01 && x1 > gx0 + 0.01)) continue;        // 가로로 겹치는 것만
+          dy += g.r ? pushOf(g.r, y) : (y >= g.b0 - 0.01 ? g.d : 0);
+        }
+        if (Math.abs(dy) > 0.01) { shiftY(e, dy); e.setAttribute("data-dy", (num(e, "data-dy") + dy).toFixed(2)); }
+      }
+    });
+  }
+
   function composeAll(root) {
     try { tsume(root || document); } catch (e) { /* 못 하면 자간 축소 없이 */ }
     (root || document).querySelectorAll("[data-jc]").forEach(p => { try { compose(p); } catch (e) { /* 못 하면 브라우저 줄바꿈 */ } });
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
+    try { grow(root || document); } catch (e) { /* 못 하면 서버 어림 높이 그대로 */ }
   }
 
   window.unitsCompose = composeAll;

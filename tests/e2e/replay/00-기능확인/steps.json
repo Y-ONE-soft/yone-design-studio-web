@@ -794,8 +794,45 @@
   "wait": 550
  },
  {
+  "say": "③ 여백 및 단 — 단 수 · 단 간격을 차례로 쳐서 둘 다 들어가는지(Enter 로 확정)",
+  "wait": 1500
+ },
+ {
+  "say": "여백 및 단 — 2단 · 간격 4mm (원고는 왼쪽 단 → 오른쪽 단)",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-col-n",
+   "value": 2
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-col-g",
+   "value": 4
+  },
+  "wait": 900
+ },
+ {
+  "js": "(() => { const c = page.columns || {}; if (c.n !== 2 || c.gutter !== 4) throw new Error('단 지정 실패 ' + JSON.stringify(c)); return '단 ' + c.n + ' · ' + c.gutter + 'mm'; })()"
+ },
+ {
   "say": "기능 확인 완성",
   "wait": 2000
+ },
+ {
+  "js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+  "wait": 300
  },
  {
   "js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"

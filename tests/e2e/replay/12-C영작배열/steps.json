@@ -1617,7 +1617,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -1628,7 +1628,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로 넘어가며 스타일을 보여 줍니다. 임시 해석 글입니다 — 우리말 문장",
@@ -1707,7 +1707,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -1854,7 +1854,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259.8
     ]
    }
   },
@@ -1865,7 +1865,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.9
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside / word / a phrase /",
@@ -1951,7 +1951,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 9.8
   },
   "wait": 420
  },
@@ -2380,7 +2380,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -2391,7 +2391,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음",
@@ -2470,7 +2470,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -2609,7 +2609,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -2620,7 +2620,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks /",
@@ -2706,7 +2706,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.2
   },
   "wait": 420
  },
@@ -3135,7 +3135,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -3146,7 +3146,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로 넘어가며",
@@ -3225,7 +3225,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -3364,7 +3364,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -3375,7 +3375,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside /",
@@ -3461,7 +3461,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.2
   },
   "wait": 420
  },
@@ -3890,7 +3890,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -3901,7 +3901,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로 넘어가며 스타일을 보여",
@@ -3980,7 +3980,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -4119,7 +4119,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259.8
     ]
    }
   },
@@ -4130,7 +4130,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.9
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside / word / a phrase /",
@@ -4216,7 +4216,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 9.8
   },
   "wait": 420
  },
@@ -4645,7 +4645,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -4656,7 +4656,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로 넘어가며 스타일을 보여 줍니다. 임시 해석 글입니다",
@@ -4735,7 +4735,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -4874,7 +4874,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -4885,7 +4885,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside / word / a phrase /",
@@ -4971,7 +4971,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.2
   },
   "wait": 420
  },
@@ -6810,7 +6810,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -6821,7 +6821,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로",
@@ -6900,7 +6900,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -7039,7 +7039,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -7050,7 +7050,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside /",
@@ -7136,7 +7136,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.2
   },
   "wait": 420
  },
@@ -7565,7 +7565,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -7576,7 +7576,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로 넘어가며 스타일을 보여",
@@ -7655,7 +7655,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.3
   },
   "wait": 420
  },
@@ -7794,7 +7794,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259
     ]
    }
   },
@@ -7805,7 +7805,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.5
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside",
@@ -7891,7 +7891,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 5.2
   },
   "wait": 420
  },
@@ -8320,7 +8320,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259.9
     ]
    }
   },
@@ -8331,7 +8331,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.95
     ]
    },
    "value": "임시 해석 글입니다 — 우리말 문장 한 줄이 여기에 오고, 길면 다음 줄로 넘어가며 스타일을 보여 줍니다. 임시 해석 글입니다 — 우리말 문장",
@@ -8410,7 +8410,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 9.9
   },
   "wait": 420
  },
@@ -8549,7 +8549,7 @@
    "to": {
     "mm": [
      180,
-     264
+     259.8
     ]
    }
   },
@@ -8560,7 +8560,7 @@
    "at": {
     "mm": [
      150.0,
-     257.0
+     254.9
     ]
    },
    "value": "word / a phrase / temporary / chunk text / for styling / the real chunks / arrive / later / from outside / word / a phrase / temporary / chunk text / for styling /",
@@ -8646,7 +8646,7 @@
  {
   "fill": {
    "at": "#side input[data-a=\"h\"]",
-   "value": 14
+   "value": 9.8
   },
   "wait": 420
  },

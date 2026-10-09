@@ -404,7 +404,7 @@ def footer(pg, pno):
 # ── 문항 ────────────────────────────────────────────────────
 W_BODY = round(82 + TRACK / 1000 * 8 * MM, 2)        # 단 폭 82mm — 크롬은 줄 끝 글자 뒤에도 자간을 둔다
 W_BOX = round(76 + TRACK / 1000 * 8 * MM, 2)         # 상자 안 글 — 상자 82mm 에서 양쪽 3mm
-SLOTS = []                                           # (쪽, 위 끝, 왼쪽, 자리, 원고) — 원고 넣는 순서(쪽 → 위 → 왼쪽)
+SLOTS = []                                           # (쪽, 위 끝, 왼쪽, 자리, 원고) — 문항 순서(쪽 → 왼쪽 단 → 오른쪽 단, 위 → 아래)
 TEMP = {
     "문항번호": "00",
     "발문": "다음 글의 {임시 밑줄} 발문 자리입니다. 적절하지 않은 것은?",
@@ -805,10 +805,11 @@ for k, pno in enumerate(PAGES):
         st += header_left(pg, pno) if pno % 2 == 0 else header_right(pg, pno)
         st += qpage(pg, pno, (20.0, 106.0) if pno % 2 == 0 else (21.5, 108.0))
         st += footer(pg, pno)
+        st += columns(2, 4)                                                 # 두 단 — 원고는 문항 순서(왼쪽 단 → 오른쪽 단)로 들어간다
     st += done(f"{pno}쪽", f"p{pg}.png")
 
 CONTENT = {}
-for p_, y_, x_, name, txt in sorted(SLOTS, key=lambda t: (t[0], round(t[1], 1), t[2])):
+for p_, y_, x_, name, txt in sorted(SLOTS, key=lambda t: (t[0], 0 if (t[2] < 104.5 or PAGES[t[0] - 1] == 74) else 1, round(t[1], 1), t[2])):   # 문항 순서(쪽 → 단 → 위) · 판권 면은 한 단
     CONTENT.setdefault(name, []).append(txt)
 st += put_content(CONTENT)                                                  # 바깥 시스템이 보내는 꼴 — 임시 글이 원고 글로 바뀐다
 st += [{"shot": "p_content.png", "wait": 800}]

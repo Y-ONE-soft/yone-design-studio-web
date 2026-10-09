@@ -369,7 +369,7 @@ JC_OPT = 0           # 선지 양끝맞춤 자간 최소 — 원본 선지 끝 �
 TR_COND = -40        # 조건 글 자간 — 원본 조건 끝 줄 글자 간격(한글·로마자 모두) −40
 LEAD_P, LEAD_O, LEAD_C = 14, 12, 12      # 행간 pt — 지문·보기 4.94mm · 선지 4.23mm · 조건 4.23mm (원본 기준선 간격)
 UL_W, UL_OFF = round(0.5 * MM, 3), 0.71  # 밑줄 선 0.5pt · 기준선 → 선 가운데 0.71mm (원본 밑줄 선 모두)
-SLOTS = []                               # (쪽, y, x, 자리, 원고) — 편집기가 원고를 나눠 넣는 순서(쪽 → 위 → 왼쪽)대로 줄 세운다
+SLOTS = []                               # (쪽, y, x, 자리, 원고) — 문항 순서(쪽 → 왼쪽 단 → 오른쪽 단, 위 → 아래)로 줄 세운다
 TEMP_P = ("Temporary passage text for styling. The real passage comes later from outside, ①{marked words} keep the "
           "underline style, and this paragraph only keeps the shape of the content while the frame is still empty. ")
 TEMP_Q = "다음 글을 읽고, 물음에 가장 {알맞은} 것을 고르시오."
@@ -738,9 +738,10 @@ if __name__ == "__main__":
         st += body(pg, pno, specs)
         st += story_steps(specs)
         st += footer(pg, pno)
+        st += columns(2, 4)                                              # 두 단 — 원고는 문항 순서(왼쪽 단 → 오른쪽 단)로 들어간다
         st += done(f"{pno}쪽", f"p{pg}.png")
     CONTENT = {}
-    for pg, y, x, name, val in sorted(SLOTS, key=lambda t: (t[0], round(t[1], 1), t[2])):
+    for pg, y, x, name, val in sorted(SLOTS, key=lambda t: (t[0], 0 if t[2] < 104.5 else 1, round(t[1], 1), t[2])):   # 문항 순서(쪽 → 단 → 위)
         CONTENT.setdefault(name, []).append(val)
     small_draw(st)
     st += put_content(CONTENT)                                           # 바깥 시스템이 보내는 꼴 — 임시 글이 원고 글로 바뀐다
