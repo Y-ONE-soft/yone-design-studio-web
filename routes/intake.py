@@ -333,10 +333,10 @@ def _vet_knobs(series, design_id, knobs):
 
 def register_draft(series, verdict, measured, pdf_path, pages, pdf_name):
     """그 틀의 첫 디자인 config 를 바탕으로 손잡이 값을 덮어쓴 초안 디자인을 만든다."""
-    from routes.catalog import _ddir, _designs, _next_id
+    from routes.catalog import _ddir, _designs, _new_id
     from core.render_vivlio import knobs as kn
     ds = _designs(series)
-    did = _next_id(series)
+    did = _new_id(series)
     d = _ddir(series, did)
     os.makedirs(d, exist_ok=True)
     if ds:

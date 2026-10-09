@@ -169,6 +169,7 @@ def _designs(series):
         info["masters"] = _masters(series, d)
         info["previews"] = _previews(series, d)
         out.append(info)
+    out.sort(key=lambda i: i.get("date") or "")          # 등록한 날 순(같은 날은 위 순서) — 폴더 이름은 번호가 아니다
     return out
 
 
@@ -651,11 +652,14 @@ def _strip_book_specific(cfg):
     return cfg
 
 
-def _next_id(series):
-    root = os.path.join(CATALOG, series, "designs")
-    ns = [int(m.group(1)) for d in (os.listdir(root) if os.path.isdir(root) else [])
-          if (m := re.match(r"^d(\d+)$", d))]
-    return f"d{(max(ns) + 1) if ns else 1}"
+def _new_id(series):
+    """새 디자인 폴더 이름 — 번호를 세지 않는 무작위 이름이라 여러 세션이 동시에 등록해도 안 겹친다.
+    화면에는 이름(design.json name)만 보인다. 예전 d1·d2… 는 그대로 둔다."""
+    import secrets
+    while True:
+        did = "x" + secrets.token_hex(4)
+        if not os.path.exists(_ddir(series, did)):
+            return did
 
 
 def register_design(series, name, book_dir, key=None, desc=""):
@@ -668,7 +672,7 @@ def register_design(series, name, book_dir, key=None, desc=""):
     cfg = json.load(open(cfg_p, encoding="utf-8"))
     if cfg.get("series") != series:
         raise ValueError(f"그 책은 {cfg.get('series')} 틀이다 — {series} 에 넣을 수 없다")
-    did = _next_id(series)
+    did = _new_id(series)
     d = _ddir(series, did)
     os.makedirs(d, exist_ok=True)
     cfg = _strip_book_specific(cfg)
