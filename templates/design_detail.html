@@ -3,7 +3,7 @@
 {% block theme %}light{% endblock %}
 
 {% block content %}
-{# 디자인 상세 — 지면 전부 보기. 큰 그림 + 구성(기준 PDF 면 묶음). 기준 PDF 가 없으면 큰 그림에 페이지 틀 · 견본 사진. 원고 넣기 · 새 프로젝트에서 열기 · 확인 완료 · 삭제. #}
+{# 디자인 상세 — 지면 전부 보기. 큰 그림 + 구성(기준 PDF 면 묶음). 기준 PDF 가 없으면 큰 그림에 페이지 틀 · 견본 사진. 원고 넣기 · 확인 완료 · 삭제. #}
 <style>
   .top { padding: 26px 40px 18px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
   .top .crumb { width: 100%; font-size: 13px; color: #5f6368; }
@@ -65,8 +65,7 @@
   </div>
   <div class="acts">
     {% if total %}<a href="/catalog/pdf/{{ t.series }}/{{ d.id }}" target="pdfview">PDF 뷰어로 보기</a>{% endif %}
-    {% if t.manuscript %}<a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">원고 넣기 → 조판</a>
-    <a href="/project/new?pick={{ t.series }}/{{ d.id }}" target="_blank">새 프로젝트에서 열기</a>{% endif %}
+    {% if t.manuscript %}<a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">원고 넣기 → 조판</a>{% endif %}
     {% if d.draft %}<button class="ok" id="confirm">확인 완료</button>{% endif %}
     <button class="del" id="del">삭제</button>
   </div>

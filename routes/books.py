@@ -189,7 +189,7 @@ def page_project_new():
 
 @bp.route("/design/<series>/<design>")
 def page_design(series, design):
-    """디자인 상세 — 구성(기준 PDF 면 묶음) + 큰 그림. 원고 넣기·새 프로젝트에서 열기·확인 완료·삭제."""
+    """디자인 상세 — 구성(기준 PDF 면 묶음) + 큰 그림. 원고 넣기·확인 완료·삭제."""
     from routes.catalog import _ID, design_layouts, template_info
     t = template_info(series)
     if not t or not _ID.match(design):
