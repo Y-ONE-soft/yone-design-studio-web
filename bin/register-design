@@ -71,7 +71,8 @@ def main():
         did, _, _ = register_draft(series, verdict, m, pdf, pages, pdf_name)
     d = _ddir(series, did)
     dj = json.load(open(os.path.join(d, "design.json"), encoding="utf-8"))
-    dj.update(name=name, desc=f"{pdf_name} · {m['pages']}면", draft=False)
+    # 틀별 구성 규칙(SECTION_RULES)은 그 틀의 원래 책용이라 새 책에는 안 쓴다 — 면에 인쇄된 라벨·생김새로만 구성
+    dj.update(name=name, desc=f"{pdf_name} · {m['pages']}면", draft=False, layout_rules=False)
     json.dump(dj, open(os.path.join(d, "design.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     cfg = json.load(open(os.path.join(d, "config.json"), encoding="utf-8"))
     cfg["book"] = {"title": name}
