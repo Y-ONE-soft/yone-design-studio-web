@@ -21,6 +21,10 @@ st = [S("관리 카드 「원고 넣기」 — 편집기에서 연다", 1500), {
       {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000},
       {"js": "(() => '열린 문서 쪽 ' + docPages().length + ' · 카드 ' + JSON.stringify(plan.catalog))()"}]
 st += join.name_steps(counts)
+SKIN = os.environ.get("RENAME_SKIN", "base")                              # 문서 브랜드 — 비어 있으면 그 편집기의 첫 브랜드로 그린다(배포서버에서 스타일이 빠졌다 2026-10-11)
+st += [S(f"문서 패널 — 브랜드 「{SKIN}」", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+       {"pick": {"at": "#side #s-skin", "value": SKIN}, "wait": 1500},
+       {"js": f"(() => {{ if (plan.skin !== {json.dumps(SKIN)}) throw new Error('브랜드 안 들어감 ' + plan.skin); return '브랜드 ' + plan.skin; }})()"}]
 st += [S("관리에 등록 — 같은 카드를 다시 그린다", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
        {"pick": {"at": "#side #s-reg-series", "value": series}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
 st += [{"until": "/등록됨/.test(document.querySelector('#s-reg-st').textContent)", "wait": 300}] * 30

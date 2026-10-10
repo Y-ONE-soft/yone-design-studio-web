@@ -178,6 +178,8 @@ def load(pkg, into=None, name=None):
     src = pkg.get("plan") or {}
     ids = [pmap[i] for i in content.plan_page_ids(src) if i in pmap]
     if target:
+        if skin.get("id") and not target.get("skin"):                # 브랜드를 안 정한 문서는 같이 들여온 브랜드로 — 안 그러면 그 편집기의 첫 브랜드로 그린다
+            target["skin"] = skin["id"]
         sec = (target.get("sections") or [{"id": "s1", "name": "본문", "pages": []}])
         target["sections"] = sec
         rep = {e["page"] if isinstance(e, dict) else e: e for s in src.get("sections") or [] for e in s.get("pages") or []}
@@ -191,6 +193,8 @@ def load(pkg, into=None, name=None):
         plan["id"] = _new_id("plan", taken)
         if name:
             plan["name"] = name
+        if skin.get("id") and not plan.get("skin"):                  # 같이 들여온 브랜드로 그린다(정본 2026-10-11: 비어 있어 배포서버 첫 브랜드로 그려져 스타일이 빠졌다)
+            plan["skin"] = skin["id"]
 
         def remap_ids(lst):
             return [pmap[i] for i in lst or [] if i in pmap]
