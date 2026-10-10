@@ -76,7 +76,9 @@ def need_font(fname):
     if fname in DOC_FONTS:
         return []
     DOC_FONTS.add(fname)
-    return register_font(os.path.join(FONTS, fname))
+    st = text(20.0, 3.0, 24.0, 9.0, "서체", 9, "#231f20", label=f"서체 등록 — 글상자 하나를 그려 고른 채 「＋ 서체」({fname}) → 등록되면 그 글상자는 지운다")
+    st += register_font(os.path.join(FONTS, fname))                     # 「＋ 서체」는 글상자 패널에 있다 — 쪽 설정(Esc) 바로 뒤처럼 아무것도 안 고른 때도 되게
+    return st + [{"click": "#side #s-x", "wait": 900}]
 
 
 def E(e):
