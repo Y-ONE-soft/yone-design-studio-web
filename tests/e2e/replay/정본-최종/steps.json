@@ -5291,6 +5291,4087 @@
   "wait": 500
  },
  {
+  "say": "④ A어휘선택 — 원본 4쪽 (펼침면 왼쪽)",
+  "wait": 1700
+ },
+ {
+  "clickif": {
+   "at": "#tg-strip",
+   "when": "!view.strip"
+  },
+  "wait": 1100
+ },
+ {
+  "click": "#rail .addpg",
+  "wait": 900
+ },
+ {
+  "click": "#rail .addpg .menu [data-new=\"blank\"]",
+  "wait": 2800
+ },
+ {
+  "js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"
+ },
+ {
+  "say": "④ A어휘선택 — 원본 4쪽 (펼침면 왼쪽)",
+  "wait": 1300
+ },
+ {
+  "say": "머리 — 크림 띠 · 선 · 파란 막대",
+  "wait": 1500
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     279.0
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 213.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 29.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": -3.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": -5.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#f9f7ed"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     250.21
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 216.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.21
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": -3.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 23.395
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     122.2,
+     278.1
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 2.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 28.1
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 11.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": -4.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#77a1c4"
+  },
+  "wait": 750
+ },
+ {
+  "say": "STEP 01 — 숫자만 굵게(GREP 스타일)",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "STEP 01",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": 6
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#77a1c4"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 16.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 5.7
+  },
+  "wait": 550
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.re\"]",
+   "value": "\\d+"
+  },
+  "wait": 700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "FRAME",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": 10
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 14.8
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 32.35
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 5.7
+  },
+  "wait": 550
+ },
+ {
+  "say": "코드 A1 — TTMamablock",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     263.2
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     256.6
+    ]
+   },
+   "value": "A1",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 25.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "NUXZQS+TTMamablockB"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -5
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#77a1c4"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 18.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 13.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 10.87
+  },
+  "wait": 550
+ },
+ {
+  "say": "제목 — 원고 자리 「제목」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     151.0,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     135.5,
+     254.5
+    ]
+   },
+   "value": "유형 이름 0",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 13.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Gmarket Sans"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -75
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 31.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 6.8
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 30.39
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 12.88
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "제목"
+  },
+  "wait": 800
+ },
+ {
+  "say": "단계 점 셋 — 원 · 선 · 숫자",
+  "wait": 1400
+ },
+ {
+  "draw": {
+   "tool": "ellipse",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     125.4,
+     255.4
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 5.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 5.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 55.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 13.06
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#77a1c4"
+  },
+  "wait": 750
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": ""
+  },
+  "wait": 550
+ },
+ {
+  "draw": {
+   "tool": "ellipse",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     125.4,
+     255.4
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 5.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 5.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 66.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 13.06
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": ""
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"stroke.w\"]",
+   "value": 0.79
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "ellipse",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     125.4,
+     255.4
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 5.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 5.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 77.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 13.06
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": ""
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"stroke.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"stroke.w\"]",
+   "value": 0.79
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     124.2,
+     250.21
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 4.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.21
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 61.6
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 15.655
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     124.2,
+     250.21
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 4.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.21
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 72.6
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 15.655
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "1",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 3.1
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 57.79
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 14.21
+  },
+  "wait": 550
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "2",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 3.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 68.58
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 14.21
+  },
+  "wait": 550
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "3",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 3.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 79.57
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 14.21
+  },
+  "wait": 550
+ },
+ {
+  "say": "지문 번호 — 원고 자리 「지문번호」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "00",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 12.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Yeongdo OTF"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#af9d81"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 6.6
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 6.3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 29.77
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문번호"
+  },
+  "wait": 800
+ },
+ {
+  "say": "지문 — 원고 자리 「지문」 (임시 글로 스타일)",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     274
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     150.0,
+     262.0
+    ]
+   },
+   "value": "Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ.",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"leading\"]",
+   "value": 22
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"align\"]",
+   "value": "justify"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 167.91
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 114.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 32.79
+  },
+  "wait": 550
+ },
+ {
+  "say": "자리 이름 「지문」",
+  "wait": 1700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
+  "say": "GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑",
+  "wait": 1700
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.re\"]",
+   "value": "\\[[^\\]]*\\]"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.0.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"grep.0.color\"]",
+   "value": "#00559f"
+  },
+  "wait": 750
+ },
+ {
+  "say": "지문 번호 — 원고 자리 「지문번호」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "00",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 12.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Yeongdo OTF"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#af9d81"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 7.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 6.3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 153.27
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문번호"
+  },
+  "wait": 800
+ },
+ {
+  "say": "지문 — 원고 자리 「지문」 (임시 글로 스타일)",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     274
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     150.0,
+     262.0
+    ]
+   },
+   "value": "Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in.",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"leading\"]",
+   "value": 22
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"align\"]",
+   "value": "justify"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 167.88
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 124.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 156.29
+  },
+  "wait": 550
+ },
+ {
+  "say": "자리 이름 「지문」",
+  "wait": 1700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
+  "say": "GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑",
+  "wait": 1700
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.re\"]",
+   "value": "\\[[^\\]]*\\]"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.0.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"grep.0.color\"]",
+   "value": "#00559f"
+  },
+  "wait": 750
+ },
+ {
+  "say": "꼬리 — 쪽 번호(책이 채움) · STEP BY STEP",
+  "wait": 1200
+ },
+ {
+  "say": "쪽 번호 — 시스템 자리 「쪽 번호」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "4",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Elice DX Neolli OTF"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#3b4247"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 4.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 15.23
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 283.47
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "sys.page_no"
+  },
+  "wait": 1000
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144.2,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.1,
+     254.5
+    ]
+   },
+   "value": "STEP BY STEP",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Elice DX Neolli OTF"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": 50
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 24.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.9
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 283.47
+  },
+  "wait": 550
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "A어휘선택"
+  },
+  "wait": 800
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 1200
+ },
+ {
+  "say": "④ A어휘선택 왼쪽 완성",
+  "wait": 2000
+ },
+ {
+  "js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+  "wait": 300
+ },
+ {
+  "js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"
+ },
+ {
+  "shot": "p4.png",
+  "wait": 700
+ },
+ {
+  "hide": true,
+  "wait": 500
+ },
+ {
+  "say": "④ A어휘선택 — 원본 5쪽 (펼침면 오른쪽)",
+  "wait": 1700
+ },
+ {
+  "clickif": {
+   "at": "#tg-strip",
+   "when": "!view.strip"
+  },
+  "wait": 1100
+ },
+ {
+  "click": "#rail .addpg",
+  "wait": 900
+ },
+ {
+  "click": "#rail .addpg .menu [data-new=\"blank\"]",
+  "wait": 2800
+ },
+ {
+  "js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"
+ },
+ {
+  "say": "④ A어휘선택 — 원본 5쪽 (펼침면 오른쪽)",
+  "wait": 1300
+ },
+ {
+  "say": "머리 — 크림 띠 · 선 · 꼬리표 · 큰 코드",
+  "wait": 1500
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     276.5
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 213.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 26.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 0.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": -3.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#f9f7ed"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     250.21
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 216.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 0.21
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": -213.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 23.395
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#b4aa9a"
+  },
+  "wait": 750
+ },
+ {
+  "say": "꼬리표 — 원본 꼭짓점 그대로",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "path",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     156.5,
+     254.79
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"d\"]",
+   "value": "M0.0000 1.0000 L1.0000 1.0000 L1.0000 0.0000 L0.1513 0.0000 Z"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 36.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 4.79
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 176.6
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 18.6
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#bdafa2"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "STEP BY STEP",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 21.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 187.05
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 19.55
+  },
+  "wait": 550
+ },
+ {
+  "say": "큰 코드 A1",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     149.4,
+     269.0
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     134.7,
+     259.5
+    ]
+   },
+   "value": "A1",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 36.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "500"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#77a1c4"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 29.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 19.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 188.04
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 2.23
+  },
+  "wait": 550
+ },
+ {
+  "say": "오른쪽 STEP 탭 셋 — 면 · 세로 글(아래→위)",
+  "wait": 1300
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     131.5,
+     276.0
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 11.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 26.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 201.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 60.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#77a1c4"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     131.5,
+     276.0
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 11.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 26.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 201.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 90.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#f9efda"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "rect",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     131.5,
+     276.0
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"w\"]",
+   "value": 11.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 26.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 201.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 120.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"radius\"]",
+   "value": 0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"fill\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"fill\"]",
+   "value": "#f8e1da"
+  },
+  "wait": 750
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "STEP 01",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.5
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -75
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#ffffff"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 12.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 200.02
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 69.17
+  },
+  "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"rotate\"]",
+   "value": -90
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "02",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.5
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -75
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#cba56f"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 5.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 203.37
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 99.81
+  },
+  "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"rotate\"]",
+   "value": -90
+  },
+  "wait": 420
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "03",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.5
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Montserrat"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -75
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#bc736c"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 5.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.4
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 203.37
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 129.81
+  },
+  "wait": 550
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"rotate\"]",
+   "value": -90
+  },
+  "wait": 420
+ },
+ {
+  "say": "지문 번호 — 원고 자리 「지문번호」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "00",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 12.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Yeongdo OTF"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#af9d81"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 6.9
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 6.3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 22.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 29.77
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문번호"
+  },
+  "wait": 800
+ },
+ {
+  "say": "지문 — 원고 자리 「지문」 (임시 글로 스타일)",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     274
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     150.0,
+     262.0
+    ]
+   },
+   "value": "Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until.",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"leading\"]",
+   "value": 22
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"align\"]",
+   "value": "justify"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 167.88
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 112.1
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 22.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 34.91
+  },
+  "wait": 550
+ },
+ {
+  "say": "자리 이름 「지문」",
+  "wait": 1700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
+  "say": "GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑",
+  "wait": 1700
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.re\"]",
+   "value": "\\[[^\\]]*\\]"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.0.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"grep.0.color\"]",
+   "value": "#00559f"
+  },
+  "wait": 750
+ },
+ {
+  "say": "지문 번호 — 원고 자리 「지문번호」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "00",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 12.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Yeongdo OTF"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "400"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#af9d81"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 7.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 6.3
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 22.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 153.27
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문번호"
+  },
+  "wait": 800
+ },
+ {
+  "say": "지문 — 원고 자리 「지문」 (임시 글로 스타일)",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     180,
+     274
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     150.0,
+     262.0
+    ]
+   },
+   "value": "Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ moving ] until the real content arrives from outside. Temporary text for styling. A [ ⓐ word / ⓑ phrase ] sits in the line, and the passage keeps [ ⓐ going / ⓑ.",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"leading\"]",
+   "value": 22
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"align\"]",
+   "value": "justify"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": -40
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 167.94
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 124.7
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 22.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 156.29
+  },
+  "wait": 550
+ },
+ {
+  "say": "자리 이름 「지문」",
+  "wait": 1700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "지문"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_min\"]",
+   "value": -8
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 600
+ },
+ {
+  "say": "GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑",
+  "wait": 1700
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.re\"]",
+   "value": "\\[[^\\]]*\\]"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.0.color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"grep.0.color\"]",
+   "value": "#00559f"
+  },
+  "wait": 750
+ },
+ {
+  "say": "꼬리 — STEP01 · 쪽 번호(책이 채움, 오른쪽 맞춤)",
+  "wait": 1200
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "STEP01",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Elice DX Neolli OTF"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"tracking\"]",
+   "value": 50
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 14.1
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 179.16
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 283.47
+  },
+  "wait": 550
+ },
+ {
+  "say": "쪽 번호 — 시스템 자리 「쪽 번호」",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     120,
+     250
+    ]
+   },
+   "to": {
+    "mm": [
+     144,
+     259
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     132.0,
+     254.5
+    ]
+   },
+   "value": "5",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 6.0
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"align\"]",
+   "value": "right"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "Elice DX Neolli OTF"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"weight\"]",
+   "value": "700"
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#3b4247"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 4.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 3.2
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 191.02
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 283.47
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "sys.page_no"
+  },
+  "wait": 1000
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 1200
+ },
+ {
+  "say": "④ A어휘선택 오른쪽 완성",
+  "wait": 2000
+ },
+ {
+  "js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+  "wait": 300
+ },
+ {
+  "js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"
+ },
+ {
+  "shot": "p5.png",
+  "wait": 700
+ },
+ {
+  "hide": true,
+  "wait": 500
+ },
+ {
   "say": "원고 넣기 — 바깥 시스템이 보내는 꼴(자리 이름 → 글)",
   "wait": 1800
  },
@@ -5305,7 +9386,7 @@
  {
   "fill": {
    "at": "#side #s-content",
-   "value": "{\"교재명\": [\"마더텅 고1 영어 독해\"], \"단원명\": [\"11강\"]}"
+   "value": "{\"교재명\": [\"마더텅 고1 영어 독해\"], \"단원명\": [\"11강\"], \"A어휘선택\": [{\"제목\": \"어휘 선택 1\", \"지문번호\": [\"2\", \"4\", \"6\", \"8\"], \"지문\": [\"Anthropologist Gregory Bateson suggests that we tend to understand the world by focusing in on particular features within it. Take platypuses. We might zoom in so closely to their fur that each hair appears [ ⓐ same / ⓑ different ]. We might also zoom out to the extent where it appears as a single, [ ⓐ uniform / ⓑ varied ] object. We might take the platypus as an [ ⓐ individual / ⓑ group ], or we might treat it as part of a larger unit such as a species or an ecosystem. It's possible to move between many of these perspectives, although we may need some additional tools and skills to zoom in on individual pieces of hair or zoom out to entire ecosystems. Crucially, however, we can only take up one perspective at a time. We can pay attention to the [ ⓐ monotonous / ⓑ varied ] behavior of individual animals, look at what unites them into a single species, or look at them as part of bigger ecological patterns. Every possible perspective involves emphasizing certain aspects and ignoring others.\", \"Not only does memory underlie our ability to think at all, it [ ⓐ obscures   / ⓑ defines ] the content of our experiences and how we preserve them for years to come. Memory makes us who we are. If I were to suffer from heart failure and depend upon an artificial heart, I would be no less myself. If I lost an arm in an accident and had it replaced with an artificial arm, I would still be essentially me. As long as my mind and memories [ ⓐ deteriorate   / ⓑ remain ] intact, I will continue to be the same person, no matter which part of my body (other than the brain) is replaced. On the other hand, when someone suffers from advanced Alzheimer's disease and his memories [ ⓐ intensify   / ⓑ fade ], people often say that he \\\"is not himself anymore,\\\" or that it is as if the person \\\"is no longer there,\\\" though his body [ ⓐ alters   / ⓑ remains ] unchanged.\", \"There's a lot of scientific evidence demonstrating that [ ⓐ focused  / ⓑ distracted ] attention leads to the reshaping of the brain. In animals rewarded for noticing sound (to hunt or to avoid being hunted for example), we find much [ ⓐ smaller   / ⓑ larger ] auditory centers in the brain. In animals rewarded for sharp eyesight, the visual areas are [ ⓐ larger  / ⓑ smaller ]. Brain scans of violinists provide more evidence, showing [ ⓐ insignificant   / ⓑ dramatic ] growth and expansion in regions of the cortex that represent the left hand, which has to finger the strings precisely, often at very [ ⓐ low   / ⓑ high ] speed. Other studies have shown that the hippocampus, which is [ ⓐ unnecessary   / ⓑ vital ] for spatial memory, is [ ⓐ reduced   / ⓑ enlarged ] in taxi drivers. The point is that the physical architecture of the brain changes according to where we direct our attention and what we practice doing.\", \"The law of [ ⓐ demand  / ⓑ supply ] is that the [ ⓐ demand  / ⓑ supply ] for goods and services [ ⓐ increases  / ⓑ diminishes ] as prices [ ⓐ fall  / ⓑ rise ], and the [ ⓐ demand  / ⓑ supply ] [ ⓐ falls  / ⓑ rises ] as prices [ ⓐ increase  / ⓑ decrease ]. Giffen goods are [ ⓐ special  / ⓑ ordinary ] types of products for which the traditional law of [ ⓐ supply   / ⓑ demand ] does not apply. Instead of switching to [ ⓐ cheaper  / ⓑ costlier ] replacements, consumers [ ⓐ reject   / ⓑ demand ] more of giffen goods when the price [ ⓐ increases  / ⓑ decreases ] and less of them when the price [ ⓐ decreases  / ⓑ increases ]. Taking an example, rice in China is a giffen good because people tend to purchase less of it when the price [ ⓐ rises   / ⓑ falls ]. The reason for this is, when the price of rice [ ⓐ rises   / ⓑ falls ], people have more money to spend on other types of products such as meat and dairy and, therefore, change their spending pattern. On the other hand, as rice prices [ ⓐ decrease   / ⓑ increase ], people [ ⓐ consume  / ⓑ abstain ] more rice.\"]}, {\"제목\": \"어휘 선택 1\", \"지문번호\": [\"10\", \"12\", \"14\", \"16\"], \"지문\": [\"If you want the [ ⓐ doubt   / ⓑ confidence ] that comes from achieving what you set out to do each day, then it's important to understand how long things are going to take. Over-[ ⓐ pessimism   / ⓑ optimism ] about what can be achieved within a certain time frame is a problem. So work on it. Make a practice of estimating the amount of time needed alongside items on your 'things to do' list, and learn by experience when tasks take a [ ⓐ greater  / ⓑ lesser ] or [ ⓐ greater   / ⓑ lesser ] time than expected. Give attention also to fitting the task to the available time. There are some tasks that you can only set about if you have a [ ⓐ negligible   / ⓑ significant ] amount of time available. There is no point in trying to gear up for such a task when you only have a [ ⓐ short  / ⓑ long ] period available. So schedule the time you need for the [ ⓐ shorter   / ⓑ longer ] tasks and put the [ ⓐ long / ⓑ short ] tasks into the spare moments in between.\", \"Restricting the number of items customers can buy [ ⓐ diminishes   / ⓑ boosts ] sales. Brian Wansink, Professor of Marketing at Cornell University, investigated the [ ⓐ effectiveness  / ⓑ ineffectiveness ] of this tactic in 1998. He persuaded three supermarkets in Sioux City, Iowa, to offer Campbell's soup at a small discount: 79 cents rather than 89 cents. The discounted soup was sold in one of three conditions: a control, where there was no limit on the [ ⓐ volume  / ⓑ scarcity ] of purchases, or two tests, where customers were limited to either four or twelve cans. In the [ ⓐ restricted   / ⓑ unlimited ] condition shoppers bought 3.3 cans on average, whereas in the [ ⓐ scarce  / ⓑ abundant ] condition, when there was a limit, they bought 5.3 on average. This suggests [ ⓐ scarcity  / ⓑ abundance ] encourages sales. The findings are particularly [ ⓐ strong  / ⓑ weak ] because the test took place in a supermarket with [ ⓐ genuine  / ⓑ counterfeit ] shoppers. It didn't rely on claimed data, nor was it held in a laboratory where consumers might behave [ ⓐ similarly   / ⓑ differently ].\", \"A [ ⓐ key  / ⓑ triviality ] to engagement and achievement is providing students with [ ⓐ relevant  / ⓑ irrelevant ] texts they will be [ ⓐ interested  / ⓑ disinterested ] in. My scholarly work and my teaching have been deeply [ ⓐ influenced  / ⓑ unaffected ] by the work of Rosalie Fink. She interviewed twelve adults who were highly [ ⓐ unsuccessful   / ⓑ successful ] in their work, including a physicist, a biochemist, and a company CEO. All of them had dyslexia and had had [ ⓐ insignificant   / ⓑ significant ] problems with reading throughout their school years. While she expected to find that they had [ ⓐ embraced   / ⓑ avoided ] reading and discovered ways to bypass it or compensate with other strategies for learning, she found the opposite. \\\"To my surprise, I found that these dyslexics were [ ⓐ enthusiastic  / ⓑ apathetic ] readers... they rarely [ ⓐ avoided  / ⓑ pursued ] reading. On the contrary, they [ ⓐ ignored   / ⓑ sought ] out books.\\\" The pattern Fink discovered was that all of her subjects had been [ ⓐ passionate  / ⓑ indifferent ] in some personal interest. The areas of interest included religion, math, business, science, history, and biography. What mattered was that they read [ ⓐ sparingly   / ⓑ voraciously ] to find out more.\", \"One of the most [ ⓐ unremarkable   / ⓑ striking ] characteristics of a sleeping animal or person is that they do not respond [ ⓐ normally  / ⓑ abnormally ] to environmental stimuli. If you open the eyelids of a sleeping mammal the eyes will not see [ ⓐ normally  / ⓑ abnormally ]—they are functionally blind. Some visual information apparently gets in, but it is not [ ⓐ normally / ⓑ abnormally ] processed as it is [ ⓐ extended   / ⓑ shortened ] or [ ⓐ strengthened   / ⓑ weakened ]; same with the other sensing systems. Stimuli are registered but not processed [ ⓐ abnormally   / ⓑ normally ] and they fail to wake the individual. Perceptual disengagement probably serves the function of [ ⓐ endangering   / ⓑ protecting ] sleep, so some authors do not count it as part of the definition of sleep itself. But as sleep would be [ ⓐ possible   / ⓑ impossible ] without it, it seems [ ⓐ essential  / ⓑ unnecessary ] to its definition. Nevertheless, many animals (including humans) use the intermediate state of [ ⓐ alertness   / ⓑ drowsiness ] to derive some benefits of sleep without total perceptual disengagement.\"]}, {\"제목\": \"어휘 선택 1\", \"지문번호\": [\"18\", \"20\", \"22\", \"24\"], \"지문\": [\"The costs of interruptions are well-documented. Martin Luther King Jr. lamented them when he described \\\"that lovely poem that didn't get written because someone knocked on the door.\\\" Perhaps the most famous literary example happened in 1797 when Samuel Taylor Coleridge started writing his poem Kubla Khan from a dream he had but then was visited by an [ ⓐ unexpected / ⓑ anticipated ] guest. For Coleridge, by coincidence, the [ ⓐ untimely  / ⓑ opportune ] visitor came at a particularly [ ⓐ bad  / ⓑ favorable ] time. He forgot his inspiration and left the work [ ⓐ completed   / ⓑ unfinished ]. While there are many documented cases of sudden [ ⓐ disruptions  / ⓑ continuities ] that have had significant consequences for professionals in [ ⓐ critical  / ⓑ trivial ] roles such as doctors, nurses, control room operators, stock traders, and pilots, they also impact most of us in our everyday lives, slowing down work [ ⓐ inefficiency   / ⓑ productivity ] and generally [ ⓐ decreasing   / ⓑ increasing ] stress levels.\", \"People are [ ⓐ repelled / ⓑ attracted ] to individuals and things they cannot [ ⓐ reluctantly / ⓑ readily ] obtain. In the case with things, people are more attracted to a [ ⓐ unwanted / ⓑ desired ] object because it is out of their reach. When the object of desire is finally gained, the attraction for the object rapidly decreases. Christmas presents provide a good example of this [ ⓐ phantom / ⓑ phenomenon ]. Toys children wanted all year long are [ ⓐ thrown away / ⓑ retained ] several days after they are taken from gift boxes under the tree. The phenomenon also holds true for human [ ⓐ interruption / ⓑ interaction ], particularly in the [ ⓐ late / ⓑ early ] stages of a [ ⓐ declining / ⓑ developing ] relationship. The common dating rule has [ ⓐ unscientific / ⓑ scientific ] merit. An individual should not always make himself or herself readily available to the person they are targeting for a longer-term relationship. A certain level of [ ⓐ unavailability / ⓑ availability ] will make you more of a [ ⓐ mastery / ⓑ mystery ] and a challenge.\", \"The [ ⓐ prevailing  / ⓑ obscure ] view among developmental scientists is that people are [ ⓐ active  / ⓑ passive ] contributors to their own development. People are influenced by the [ ⓐ physical  / ⓑ abstract ] and [ ⓐ solitary   / ⓑ social ] contexts in which they live, but they also play a role in influencing their development by interacting with, and changing, those contexts. Even infants influence the world around them and [ ⓐ construct  / ⓑ dismantle ] their own development through their interactions. Consider an infant who [ ⓐ frowns   / ⓑ smiles ] at each adult he sees; he influences his world because adults are likely to smile, use \\\"baby talk,\\\" and play with him in response. The infant brings adults into [ ⓐ close  / ⓑ distant ] contact, making [ ⓐ one-on-one  / ⓑ group ] interactions and creating opportunities for learning. By engaging the world around them, thinking, being [ ⓐ curious  / ⓑ indifferent ], and interacting with people, objects, and the world around them, individuals of all ages are \\\"manufacturers of their own development.\\\"\", \"Plato's realism [ ⓐ abandons / ⓑ includes ] all aspects of experience but is most easily explained by considering the nature of mathematical and geometrical objects such as circles. He asked the question, what is a circle? You might indicate a particular example carved into stone or drawn in the sand. However, Plato would point out that, if you looked closely enough, you would see that neither it, nor indeed any physical circle, was [ ⓐ perfect / ⓑ imperfect ]. They all possessed [ ⓐ flaws / ⓑ perfections ], and all were subject to [ ⓐ remain / ⓑ change ] and [ ⓐ decayed / ⓑ rejuvenated ] with time. So how can we talk about [ ⓐ flawed / ⓑ perfect ] circles if we cannot actually see or touch them? Plato's extraordinary answer was that the world we see is a poor reflection of a deeper unseen reality of Forms, or universals, where perfect cats [ ⓐ leave / ⓑ chase ] perfect mice in perfect circles around perfect rocks. Plato believed that the Forms or universals are the true reality that exists in an invisible but [ ⓐ perfect / ⓑ weird ] world beyond our senses.\"]}, {\"제목\": \"어휘 선택 1\", \"지문번호\": [\"26\", \"28\", \"30\", \"32\"], \"지문\": [\"Individuals who perform at a [ ⓐ low   / ⓑ high ] level in their profession often have [ ⓐ instant  / ⓑ delayed ] credibility with others. People [ ⓐ disdain   / ⓑ admire ] them, they want to be like them, and they feel [ ⓐ connected  / ⓑ detached ] to them. When they speak, others [ ⓐ listen  / ⓑ ignore ] ― even if the area of their skill has [ ⓐ nothing  / ⓑ everything ] to do with the advice they give. Think about a world-famous basketball player. He has made [ ⓐ more  / ⓑ less ] money from endorsements than he ever did playing basketball. Is it because of his [ ⓐ ignorance   / ⓑ knowledge ] of the products he endorses? No. It's because of what he can do with a basketball. The same can be said of an Olympic medalist swimmer. People listen to him because of what he can do in the [ ⓐ pool  / ⓑ desert ]. And when an actor tells us we should drive a [ ⓐ certain  / ⓑ random ] car, we don't listen because of his expertise on [ ⓐ toys   / ⓑ engines ]. We listen because we admire his [ ⓐ talent / ⓑ ineptitude ]. Excellence connects. If you possess a [ ⓐ high  / ⓑ low ] level of ability in an area, others may [ ⓐ refuse   / ⓑ desire ] to connect with you because of it.\", \"Every time a new medium comes along — whether it's the [ ⓐ invention  / ⓑ destruction ] of the printed book, or TV, or SNS — and you start to use it, it's like you are putting on a new kind of goggles, with their own special [ ⓐ monochromes   / ⓑ colors ] and lenses. Each set of goggles you put on makes you see things [ ⓐ similarly   / ⓑ differently ]. So when you start to watch television, before you absorb the message of any [ ⓐ random   / ⓑ particular ] TV show — whether it's Wheel of Fortune or The Wire — you start to see the world as being [ ⓐ shaped  / ⓑ disorganized ] like television itself. That's why Marshall McLuhan said that every time a new medium comes along — a new way for humans to [ ⓐ silence   / ⓑ communicate ] — it has buried in it a message. It is gently [ ⓐ guiding  / ⓑ misleading ] us to see the world according to a new set of codes. The way information gets to you, McLuhan argued, is more [ ⓐ trivial   / ⓑ important ] than the information itself. TV teaches you that the world is [ ⓐ fast / ⓑ slow ]; that it's about [ ⓐ surfaces  / ⓑ depths ] and [ ⓐ appearances  / ⓑ realities ].\", \"The mind is essentially a [ ⓐ survival / ⓑ death ] machine. Attack and defense against other minds, [ ⓐ gathering / ⓑ scattering ], storing, and [ ⓐ analyzing / ⓑ ignoring ] information ― this is what it is good at, but it is not at all [ ⓐ uncreative / ⓑ creative ]. All true artists create from a place of no-mind, from [ ⓐ outer / ⓑ inner ] stillness. Even great scientists have reported that their creative [ ⓐ breakdowns / ⓑ breakthroughs ] came at a time of mental [ ⓐ agitation / ⓑ quietude ]. The [ ⓐ predictable / ⓑ surprising ] result of a nationwide [ ⓐ injury / ⓑ inquiry ] among America's most famous mathematicians, including Einstein, to find out their working methods, was that thinking \\\"plays only a [ ⓐ dominant / ⓑ subordinate ] part in the brief, [ ⓐ decisive / ⓑ indecisive ] phase of the creative act itself.\\\" So I would say that the simple reason why the majority of scientists are not creative is not because they don't know how to think, but because they don't know how to [ ⓐ stop / ⓑ start ] thinking!\", \"In a study at Princeton University in 1992, research scientists looked at two [ ⓐ identical   / ⓑ different ] groups of mice. One group was made intellectually [ ⓐ superior  / ⓑ inferior ] by modifying the gene for the glutamate receptor. Glutamate is a brain chemical that is necessary in learning. The other group was genetically manipulated to be intellectually [ ⓐ inferior  / ⓑ superior ], also done by modifying the gene for the glutamate receptor. The smart mice were then raised in [ ⓐ unconventional   / ⓑ standard ] cages, while the inferior mice were raised in [ ⓐ large  / ⓑ small ] cages with toys and exercise wheels and with lots of social interaction. At the end of the study, although the intellectually inferior mice were genetically handicapped, they were able to perform just as well as their genetic [ ⓐ subordinates   / ⓑ superiors ]. This was a real [ ⓐ failure   / ⓑ triumph ] for nurture over nature. Genes are turned on or off based on what is [ ⓐ around  / ⓑ within ] you.\"]}, {\"제목\": \"어휘 선택 1\", \"지문번호\": [\"34\", \"36\", \"38\", \"40\"], \"지문\": [\"Participants in a study were asked to answer questions like “Why does the moon have phases?” Half the participants were told to search for the answers on the internet, while the other half weren't allowed to do so. Then, in the second part of the study, all of the participants were presented with a [ ⓐ new / ⓑ same ] set of questions, such as \\\"Why does Swiss cheese have holes?\\\" These questions were [ ⓐ related / ⓑ unrelated ] to the ones asked during the first part of the study, so participants who used the internet had absolutely no [ ⓐ advantage / ⓑ disadvantage ] over those who hadn't. You would think that both sets of participants would be equally sure or unsure about how [ ⓐ poorly / ⓑ well ] they could answer the new questions. But those who used the internet in the first part of the study rated themselves as more [ ⓐ knowledgeable / ⓑ ignorant ] than those who hadn't, even about questions they hadn't searched online for. The study suggests that having access to [ ⓐ unrelated / ⓑ related ] information was enough to [ ⓐ pump up / ⓑ reduce ] their intellectual [ ⓐ doubt / ⓑ confidence ].\", \"Think of the brain as a city. If you were to look out over a city and ask \\\"where is the [ ⓐ poverty   / ⓑ economy ] located?\\\" you'd see there's no [ ⓐ good  / ⓑ bad ] answer to the question. Instead, the economy [ ⓐ emerges  / ⓑ disappears ] from the interaction of all the elements ― from the stores and the banks to the merchants and the customers. And so it is with the brain's operation: it doesn't happen in one spot. Just as in a city, no neighborhood of the brain operates in [ ⓐ conjunction   / ⓑ isolation ]. In brains and in cities, everything emerges from the interaction between residents, at all [ ⓐ details   / ⓑ scales ], locally and [ ⓐ closely   / ⓑ distantly ]. Just as trains bring materials and textiles into a city, which become [ ⓐ neglected   / ⓑ processed ] into the economy, so the raw electrochemical signals from sensory organs are transported along [ ⓐ superhighways / ⓑ footpaths ] of neurons. There the signals undergo [ ⓐ stagnation   / ⓑ processing ] and [ ⓐ transformation  / ⓑ preservation ] into our [ ⓐ unconscious   / ⓑ conscious ] reality.\", \"Over time, babies construct expectations about what sounds they will hear when. They hold in memory the sound patterns that occur on a [ ⓐ regular  / ⓑ sporadic ] basis. They make hypotheses like, \\\"If I hear this sound first, it probably will be followed by that sound.\\\" Scientists conclude that much of babies' skill in learning language is due to their ability to calculate [ ⓐ anecdotes   / ⓑ statistics ]. For babies, this means that they appear to pay close attention to the patterns that [ ⓐ repeat  / ⓑ vary ] in language. They remember, in a [ ⓐ systematic  / ⓑ haphazard ] way, how often sounds occur, in what order, with what intervals, and with what changes of pitch. This memory store allows them to track, within the neural circuits of their brains, the [ ⓐ rarity   / ⓑ frequency ] of sound patterns and to use this knowledge to make [ ⓐ predictions  / ⓑ guesses ] about the meaning in patterns of sounds.\", \"Research has [ ⓐ confirmed / ⓑ denied ] that athletes are less likely to participate in unacceptable behavior than are non-athletes. However, moral reasoning and good sporting behavior seem to [ ⓐ improve / ⓑ decline ] as athletes progress to higher competitive levels, in part because of the [ ⓐ reduced / ⓑ increased ] emphasis on winning. Thus winning can be a [ ⓐ double-edged / ⓑ harmless ] sword in teaching character development. Some athletes may want to win so much that they lie, [ ⓐ cheat / ⓑ cherish ], and break team rules. They may develop undesirable character traits that can enhance their [ ⓐ ability / ⓑ inability ] to win in the short term. However, when athletes [ ⓐ embrace / ⓑ resist ] the temptation to win in a dishonest way, they can develop positive character traits that last a lifetime. Character is a [ ⓐ leased / ⓑ learned ] behavior, and a sense of [ ⓐ foul play / ⓑ fair play ] develops only if coaches plan to teach those lessons [ ⓐ systematically / ⓑ randomly ].\"]}, {\"제목\": \"어휘 선택 2\", \"지문번호\": [\"2\", \"4\", \"6\", \"8\"], \"지문\": [\"Anthropologist Gregory Bateson suggests that we tend to [ ⓐ know  / ⓑ misunderstand ] the world by focusing in on [ ⓐ general   / ⓑ specific ] features within it. Take platypuses. We might [ ⓐ examine  / ⓑ ignore ] in so closely to their fur that each hair appears different. We might also [ ⓐ advance   / ⓑ pull back ] to the extent where it appears as a single, [ ⓐ alike  / ⓑ different ] object. We might take the platypus as an [ ⓐ alone  / ⓑ together ], or we might treat it as part of a larger [ ⓐ group / ⓑ individual ] such as a species or an ecosystem. It's possible to move between many of these perspectives, although we may need some additional tools and skills to examine in on individual pieces of hair or pull back to entire ecosystems. Crucially, however, we can only take up one perspective at a time. We can pay attention to the varied behavior of individual animals, look at what unites them into a single species, or look at them as part of bigger ecological patterns. Every possible perspective involves [ ⓐ highlighting  / ⓑ hiding ] certain aspects and [ ⓐ overlooking  / ⓑ noticing ] others.\", \"Not only does [ ⓐ recollection  / ⓑ oblivion ] underlie our ability to think at all, it defines the content of our experiences and how we [ ⓐ neglect   / ⓑ conserve ] them for years to come. Memory makes us who we are. If I were to suffer from heart failure and depend upon an artificial heart, I would be no less myself. If I lost an arm in an accident and had it replaced with an artificial arm, I would still be essentially me. As long as my mind and memories [ ⓐ vanish   / ⓑ persist ] intact, I will continue to be the same person, no matter which part of my body (other than the brain) is replaced. On the other hand, when someone suffers from advanced Alzheimer's disease and his memories [ ⓐ intensify   / ⓑ diminish ], people often say that he \\\"is not himself anymore,\\\" or that it is as if the person \\\"is no longer there,\\\" though his body remains unchanged.\", \"There's a lot of scientific evidence demonstrating that [ ⓐ dispersed  / ⓑ concentrated ] attention leads to the [ ⓐ transformation / ⓑ stasis ] of the brain. In animals [ ⓐ compensated / ⓑ penalized ] for noticing sound (to hunt or to avoid being hunted for example), we find much larger auditory centers in the brain. In animals rewarded for [ ⓐ keen / ⓑ dull ] eyesight, the visual areas are larger. Brain scans of violinists provide more evidence, showing dramatic growth and [ ⓐ contraction  / ⓑ enlargement ] in regions of the cortex that represent the left hand, which has to finger the strings precisely, often at very high speed. Other studies have shown that the hippocampus, which is vital for spatial memory, is [ ⓐ expanded / ⓑ contracted ] in taxi drivers. The point is that the physical architecture of the brain changes according to where we direct our attention and what we [ ⓐ execute / ⓑ neglect ] doing.\", \"The law of [ ⓐ supply  / ⓑ requisition ] is that the [ ⓐ consumption / ⓑ provision ] for goods and services [ ⓐ surges / ⓑ plummets ] as prices [ ⓐ soar  / ⓑ decline ], and the [ ⓐ surplus  / ⓑ requirement ] [ ⓐ rises  / ⓑ diminishes ] as prices [ ⓐ plunge  / ⓑ escalate ]. Giffen goods are special types of products for which the traditional law of [ ⓐ supply  / ⓑ procurement ] does not apply. Instead of switching to cheaper replacements, consumers [ ⓐ reject  / ⓑ seek ] more of giffen goods when the price [ ⓐ drops  / ⓑ rises ] and less of them when the price [ ⓐ soars  / ⓑ plunges ]. Taking an example, rice in China is a giffen good because people tend to purchase less of it when the price [ ⓐ decreases / ⓑ climbs ]. The reason for this is, when the price of rice [ ⓐ declines / ⓑ surges ], people have more money to spend on other types of products such as meat and dairy and, therefore, change their spending pattern. On the other hand, as rice prices [ ⓐ surge / ⓑ drop ], people consume more rice.\"]}, {\"제목\": \"어휘 선택 2\", \"지문번호\": [\"10\", \"12\", \"14\", \"16\"], \"지문\": [\"If you want the [ ⓐ doubt   / ⓑ assurance ] that comes from achieving what you set out to do each day, then it's important to understand how long things are going to take. Over-[ ⓐ apathy   / ⓑ enthusiasm ] about what can be achieved within a certain time frame is a problem. So work on it. Make a practice of estimating the amount of time needed alongside items on your 'things to do' list, and learn by experience when tasks take a [ ⓐ shorter   / ⓑ longer ] or [ ⓐ shorter  / ⓑ longer ] time than expected. Give attention also to fitting the task to the available time. There are some tasks that you can only set about if you have a significant amount of time available. There is no point in trying to gear up for such a task when you only have a [ ⓐ brief  / ⓑ lengthy ] period available. So schedule the time you need for the [ ⓐ extended  / ⓑ brief ] tasks and put the [ ⓐ brief  / ⓑ extended ] tasks into the spare moments in between.\", \"Restricting the number of items customers can buy [ ⓐ augments / ⓑ diminishes ] sales. Brian Wansink, Professor of Marketing at Cornell University, [ ⓐ disregarded  / ⓑ examined ] the effectiveness of this tactic in 1998. He [ ⓐ convinced / ⓑ dissuaded ] three supermarkets in Sioux City, Iowa, to offer Campbell's soup at a small [ ⓐ increase  / ⓑ reduction ]: 79 cents rather than 89 cents. The discounted soup was [ ⓐ vended / ⓑ withheld ] in one of three conditions: a control, where there was no [ ⓐ abundance  / ⓑ restriction ] on the volume of purchases, or two tests, where customers were [ ⓐ liberated  / ⓑ constrained ] to either four or twelve cans. In the unlimited condition shoppers [ ⓐ rejected  / ⓑ purchased ] 3.3 cans on average, whereas in the [ ⓐ abundant  / ⓑ limited ] condition, when there was a limit, they bought 5.3 on average. This suggests scarcity [ ⓐ discourages  / ⓑ stimulates ] sales. The [ ⓐ results / ⓑ assumptions ] are particularly [ ⓐ robust / ⓑ feeble ] because the test took place in a supermarket with [ ⓐ authentic / ⓑ counterfeit ] shoppers. It didn't rely on claimed data, nor was it held in a laboratory where consumers might [ ⓐ malfunction  / ⓑ conduct ] differently.\", \"A key to [ ⓐ involvement  / ⓑ disinterest ] and [ ⓐ failure   / ⓑ accomplishment ] is providing students with [ ⓐ pertinent  / ⓑ irrelevant ] texts they will be [ ⓐ bored   / ⓑ captivated ] by. My scholarly work and my teaching have been deeply influenced by the work of Rosalie Fink. She interviewed twelve adults who were highly successful in their work, including a physicist, a biochemist, and a company CEO. All of them had dyslexia and had had significant problems with reading throughout their school years. While she expected to find that they had [ ⓐ shunned  / ⓑ embraced ] reading and discovered ways to [ ⓐ confront   / ⓑ circumvent ] it or [ ⓐ neglect   / ⓑ offset ] with other strategies for learning, she found the opposite. \\\"To my surprise, I found that these dyslexics were [ ⓐ apathetic   / ⓑ fervent ] readers... they rarely [ ⓐ evaded  / ⓑ pursued ] reading. On the contrary, they [ ⓐ relinquished   / ⓑ procured ] books.\\\" The pattern Fink discovered was that all of her subjects had been [ ⓐ ardent  / ⓑ indifferent ] in some personal interest. The areas of interest included religion, math, business, science, history, and biography. What mattered was that they read [ ⓐ avidly  / ⓑ sparingly ] to find out more.\", \"One of the most striking characteristics of a sleeping animal or person is that they do not [ ⓐ react  / ⓑ initiate ] normally to environmental stimuli. If you open the eyelids of a sleeping mammal the eyes will not [ ⓐ perceive  / ⓑ ignore ] normally—they are functionally blind. Some visual information apparently gets in, but it is not normally [ ⓐ mishandled   / ⓑ handled ] as it is [ ⓐ amplified   / ⓑ diminished ] or weakened; same with the other sensing systems. Stimuli are registered but not processed normally and they fail to [ ⓐ sedate   / ⓑ arouse ] the individual. [ ⓐ Sensory detachment  / ⓑ Sensory attachment ] probably serves the function of protecting sleep, so some authors do not count it as part of the definition of sleep itself. But as sleep would be [ ⓐ unattainable  / ⓑ achievable ] without it, it seems [ ⓐ unnecessary   / ⓑ crucial ] to its definition. Nevertheless, many animals (including humans) use the intermediate state of [ ⓐ lethargy  / ⓑ alertness ] to derive some benefits of sleep without total sensory detachment.\"]}, {\"제목\": \"어휘 선택 2\", \"지문번호\": [\"18\", \"20\", \"22\", \"24\"], \"지문\": [\"The costs of [ ⓐ disruptions / ⓑ continuities ] are well-documented. Martin Luther King Jr. lamented them when he described \\\"that lovely poem that didn't get written because someone knocked on the door.\\\" Perhaps the most [ ⓐ renowned / ⓑ obscure ] literary example happened in 1797 when Samuel Taylor Coleridge started writing his poem Kubla Khan from a dream he had but then was visited by an [ ⓐ unforeseen / ⓑ expected ] guest. For Coleridge, by [ ⓐ design  / ⓑ chance ], the untimely visitor came at a particularly [ ⓐ favorable  / ⓑ adverse ] time. He [ ⓐ misplaced / ⓑ retained ] his inspiration and left the work [ ⓐ incomplete / ⓑ complete ]. While there are many documented cases of sudden [ ⓐ continuations  / ⓑ interruptions ] that have had [ ⓐ substantial / ⓑ negligible ] consequences for professionals in critical roles such as doctors, nurses, control room operators, stock traders, and pilots, they also impact most of us in our everyday lives, [ ⓐ accelerating  / ⓑ decelerating ] work productivity and generally [ ⓐ augmenting / ⓑ reducing ] stress levels.\", \"People are [ ⓐ repelled / ⓑ drawn ] to individuals and things they cannot [ ⓐ already / ⓑ easily ] obtain. In the case with things, people are more attracted to a [ ⓐ discarded / ⓑ wanted ] object because it is out of their [ ⓐ reason / ⓑ grasp ]. When the object of desire is finally [ ⓐ lost / ⓑ obtained ], the attraction for the object [ ⓐ quickly / ⓑ slowly ] [ ⓐ diminishes / ⓑ increases ]. Christmas presents provide a good example of this [ ⓐ occurrence / ⓑ absence ]. Toys children wanted all year long are thrown away several days after they are taken from gift boxes under the tree. The phenomenon also holds true for human interaction, particularly in the early stages of a [ ⓐ declining / ⓑ growing ] relationship. The common dating rule has scientific [ ⓐ demerit / ⓑ validity ]. An individual should not always make himself or herself readily [ ⓐ accessible / ⓑ avoidable ] to the person they are targeting for a longer-term relationship. A certain level of unavailability will make you more of a [ ⓐ certainty / ⓑ enigma ] and a challenge.\", \"The prevailing [ ⓐ perspective / ⓑ ignorance ] among developmental scientists is that people are active contributors to their own [ ⓐ growth / ⓑ stagnation ]. People are influenced by the physical and social [ ⓐ vacuums  / ⓑ environments ] in which they live, but they also play a role in influencing their development by interacting with, and changing, those environments. Even infants [ ⓐ disregard  / ⓑ affect ] the world around them and construct their own development through their interactions. Consider an infant who smiles at each adult he sees; he influences his world because adults are likely to smile, use \\\"baby talk,\\\" and play with him in response. The infant brings adults into close [ ⓐ proximity / ⓑ remoteness ], making one-on-one interactions and creating opportunities for [ ⓐ ignorance  / ⓑ acquisition ]. By engaging the world around them, [ ⓐ contemplating / ⓑ disregarding ], being [ ⓐ inquisitive / ⓑ apathetic ], and interacting with people, objects, and the world around them, individuals of all ages are \\\"manufacturers of their own development.\\\"\", \"Plato's [ ⓐ idealism / ⓑ pragmatism ] includes all aspects of experience but is most easily [ ⓐ obscured  / ⓑ elucidated ] by considering the nature of mathematical and geometrical objects such as circles. He asked the question, what is a circle? You might [ ⓐ disregard  / ⓑ designate ] a particular example [ ⓐ erased  / ⓑ etched ] into stone or drawn in the sand. However, Plato would point out that, if you looked closely enough, you would see that neither it, nor indeed any physical circle, was [ ⓐ defective  / ⓑ flawless ]. They all possessed [ ⓐ imperfections / ⓑ virtues ], and all were subject to [ ⓐ transformation / ⓑ stasis ] and [ ⓐ deteriorated / ⓑ flourished ] with time. So how can we talk about perfect circles if we cannot actually [ ⓐ observe / ⓑ overlook ] or  touch  them? Plato's [ ⓐ mundane  / ⓑ remarkable ] answer was that the world we see is a [ ⓐ opulent  / ⓑ meager ] reflection of a deeper unseen reality of Forms, or universals, where perfect cats chase perfect mice in perfect circles around perfect rocks. Plato [ ⓐ doubted  / ⓑ maintained ] that the Forms or universals are the true reality that [ ⓐ vanishes  / ⓑ subsists ] in an invisible but perfect world beyond our senses.\"]}, {\"제목\": \"어휘 선택 2\", \"지문번호\": [\"26\", \"28\", \"30\", \"32\"], \"지문\": [\"Individuals who [ ⓐ excel / ⓑ falter ] at a high level in their profession often have instant [ ⓐ disrepute  / ⓑ prestige ] with others. People [ ⓐ revere / ⓑ disdain ] them, they want to be like them, and they feel [ ⓐ estranged  / ⓑ affiliated ] to them. When they speak, others [ ⓐ disregard  / ⓑ heed ] ― even if the area of their [ ⓐ ineptitude  / ⓑ proficiency ] has nothing to do with the [ ⓐ misguidance  / ⓑ counsel ] they give. Think about a world-famous basketball player. He has [ ⓐ amassed / ⓑ squandered ] more money from endorsements than he ever did playing basketball. Is it because of his [ ⓐ ignorance  / ⓑ expertise ] of the products he endorses? No. It's because of what he can do with a basketball. The same can be said of an Olympic medalist swimmer. People listen to him because of what he can do in the pool. And when an actor tells us we should [ ⓐ operate / ⓑ abandon ] a certain car, we don't listen because of his [ ⓐ incompetence  / ⓑ proficiency ] on engines. We listen because we [ ⓐ venerate / ⓑ despise ] his [ ⓐ aptitude / ⓑ ineptitude ]. Excellence connects. If you [ ⓐ wield / ⓑ lack ] a high level of ability in an area, others may [ ⓐ shun  / ⓑ crave ] to connect with you because of it.\", \"Every time a new [ ⓐ platform / ⓑ obstruction ] comes along — whether it's the invention of the printed book, or TV, or SNS — and you start to [ ⓐ utilize / ⓑ neglect ] it, it's like you are putting on a new kind of goggles, with their own special colors and [ ⓐ blindfolds  / ⓑ optics ]. Each set of goggles you put on makes you [ ⓐ perceive / ⓑ overlook ] things differently. So when you start to watch television, before you [ ⓐ reject  / ⓑ assimilate ] the message of any particular TV show — whether it's Wheel of Fortune or The Wire — you start to see the world as being [ ⓐ disintegrated  / ⓑ molded ] like television itself. That's why Marshall McLuhan said that every time a new medium comes along — a new way for humans to [ ⓐ isolate  / ⓑ interact ] — it has [ ⓐ embedded / ⓑ exposed ] in it a message. It is gently [ ⓐ obstructing  / ⓑ steering ] us to see the world according to a new set of [ ⓐ protocols / ⓑ chaos ]. The way information [ ⓐ reaches / ⓑ evades ] you, McLuhan argued, is more [ ⓐ trivial  / ⓑ significant ] than the information itself. TV [ ⓐ instructs / ⓑ confuses ] you that the world is [ ⓐ rapid / ⓑ stagnant ]; that it's about [ ⓐ exteriors / ⓑ depths ] and appearances.\", \"The mind is essentially a [ ⓐ preservation / ⓑ destruction ] machine. Attack and defense against other minds, gathering, storing, and analyzing information ― this is what it is good at, but it is not at all creative. All true artists create from a place of no-mind, from inner [ ⓐ calmness / ⓑ turmoil ]. Even great scientists have reported that their creative [ ⓐ discoveries / ⓑ failures ] came at a time of mental [ ⓐ tranquility / ⓑ turbulence ]. The surprising [ ⓐ outset / ⓑ outcome ] of a nationwide [ ⓐ survey / ⓑ injury ] among America's most famous mathematicians, including Einstein, to find out their working [ ⓐ goals / ⓑ techniques ], was that thinking \\\"plays only a subordinate part in the brief, decisive phase of the creative act itself.\\\" So I would say that the simple [ ⓐ season / ⓑ cause ] why the majority of scientists are not creative is not because they don't know how to think, but because they don't know how to stop thinking!\", \"In a study at Princeton University in 1992, research scientists looked at two different groups of mice. One group was made intellectually [ ⓐ subordinate  / ⓑ preeminent ] by modifying the gene for the glutamate receptor. Glutamate is a brain chemical that is necessary in [ ⓐ ignorance  / ⓑ comprehension ]. The other group was genetically manipulated to be intellectually [ ⓐ exceptional  / ⓑ deficient ], also done by modifying the gene for the glutamate receptor. The smart mice were then raised in standard cages, while the inferior mice were raised in large cages with toys and exercise wheels and with lots of social [ ⓐ engagement / ⓑ isolation ]. At the end of the study, although the intellectually inferior mice were genetically [ ⓐ impaired / ⓑ advantaged ], they were able to perform just as well as their genetic superiors. This was a real [ ⓐ victory / ⓑ defeat ] for nurture over nature. Genes are turned on or off based on what is [ ⓐ absent  / ⓑ surrounding ] you.\"]}, {\"제목\": \"어휘 선택 2\", \"지문번호\": [\"34\", \"36\", \"38\", \"40\"], \"지문\": [\"Participants in a study were asked to answer questions like “Why does the moon have phases?” Half the [ ⓐ members  / ⓑ outsiders ] were told to search for the answers on the internet, while the other half weren't allowed to do so. Then, in the second part of the study, all of the participants were presented with a new set of questions, such as \\\"Why does Swiss cheese have holes?\\\" These questions were unrelated to the ones asked during the first part of the study, so participants who used the internet had absolutely no [ ⓐ drawback   / ⓑ benefit ] over those who hadn't. You would think that both sets of participants would be equally [ ⓐ doubtful   / ⓑ confident ] or unsure about how well they could answer the new questions. But those who used the internet in the first part of the study rated themselves as more [ ⓐ smart  / ⓑ dumb ] than those who hadn't, even about questions they hadn't searched online for. The study suggests that having access to unrelated information was enough to [ ⓐ decrease   / ⓑ boost ] their intellectual confidence.\", \"Think of the brain as a city. If you were to look out over a city and ask \\\"where is the economy [ ⓐ displaced  / ⓑ situated ]?\\\" you'd see there's no good answer to the question. Instead, the economy [ ⓐ disappears  / ⓑ arises ] from the [ ⓐ isolation  / ⓑ interplay ] of all the elements ― from the stores and the banks to the merchants and the customers. And so it is with the brain's [ ⓐ functioning / ⓑ stagnation ]: it doesn't happen in one spot. Just as in a city, no [ ⓐ district / ⓑ entirety ] of the brain operates in [ ⓐ seclusion / ⓑ connection ]. In brains and in cities, everything emerges from the interaction between [ ⓐ visitors / ⓑ inhabitants ], at all scales, locally and distantly. Just as trains bring materials and textiles into a city, which become [ ⓐ integrated / ⓑ excluded ] into the economy, so the [ ⓐ unrefined / ⓑ polished ] electrochemical signals from sensory organs are [ ⓐ conveyed / ⓑ impeded ] along superhighways of neurons. There the signals undergo processing and [ ⓐ stagnation  / ⓑ metamorphosis ] into our [ ⓐ oblivious  / ⓑ cognizant ] reality.\", \"Over time, babies construct expectations about what sounds they will hear when. They hold in memory the sound patterns that occur on a [ ⓐ frequent  / ⓑ rare ] basis. They make hypotheses like, \\\"If I hear this sound first, it probably will be followed by that sound.\\\" Scientists conclude that much of babies' skill in learning language is due to their ability to [ ⓐ guess   / ⓑ compute ] statistics. For babies, this means that they appear to pay close attention to the patterns that [ ⓐ recur  / ⓑ cease ] in language. They remember, in a systematic way, how often sounds occur, in what order, with what intervals, and with what changes of pitch. This memory store allows them to track, within the neural circuits of their brains, the [ ⓐ anomaly   / ⓑ regularity ] of sound patterns and to use this knowledge to make predictions about the meaning in patterns of sounds.\", \"Research has [ ⓐ verified / ⓑ conformed ] that athletes are less likely to participate in [ ⓐ improper / ⓑ acceptable ] behavior than are non-athletes. However, moral reasoning and good sporting behavior seem to [ ⓐ improve / ⓑ diminish ] as athletes progress to higher competitive levels, in part because of the increased [ ⓐ stress / ⓑ empathy ] on winning. Thus winning can be a double-edged sword in teaching character development. Some athletes may want to win so much that they lie, cheat, and break team rules. They may develop [ ⓐ unfavorable / ⓑ desirable ] character traits that can [ ⓐ boost / ⓑ diminish ] their ability to win in the short term. However, when athletes [ ⓐ withstand / ⓑ persist ] the [ ⓐ temperament / ⓑ allure ] to win in a [ ⓐ deceitful / ⓑ honest ] way, they can develop [ ⓐ admirable / ⓑ negative ] character traits that last a lifetime. Character is a learned behavior, and a sense of fair play develops only if coaches plan to teach those [ ⓐ lesions / ⓑ principles ] [ ⓐ methodically / ⓑ randomly ].\"]}]}"
   },
   "wait": 900
  },

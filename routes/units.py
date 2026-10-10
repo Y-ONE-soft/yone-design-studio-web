@@ -246,9 +246,10 @@ def api_preview():
                 if pl:
                     pgs = [dict(item, **({"_rec": p["_rec"]} if "_rec" in p else {})) if p.get("id") == item.get("id") else p for p in _plan_pages(lib, pl)]
                     filled, rep = content.fill(pgs, pl.get("content") or {}, _width_of(lib, pl))
-                    item = next((p for p in filled if p.get("id") == item.get("id")), item)
+                    k = next((i for i, p in enumerate(filled) if p.get("id") == item.get("id")), None)
+                    item = filled[k] if k is not None else item
                     ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))
-                    return jsonify({"svgs": render.page_canvas_svgs(ctx, item, spec), "warnings": ctx.warnings, "fill_report": rep})
+                    return jsonify({"svgs": render.page_canvas_svgs(ctx, item, spec, pno=(k or 0) + _pstart(pl)), "warnings": ctx.warnings, "fill_report": rep})
             if body.get("mode") == "canvas":            # 자유 배치 요소를 견본(또는 고른 세트) 값으로
                 ss = store.get("sets", body["set"]) if body.get("set") else None
                 if body.get("set") == "answers" and not ss:          # 정답지 면 — 모든 원고의 정답을 모은 한 흐름으로 보인다
@@ -257,7 +258,7 @@ def api_preview():
                     ss = {"kind": "answers", "id": "answers", "blocks": [b for s in rows for b in s["blocks"]]} if rows else None
                 ctx.board =max(0.0, min(float(body.get("board") or 0), 200.0))     # 대지(지면 둘레)
                 ctx.map = body.get("map") or {}                                     # 문서의 원고 연결표
-                out.extend(render.page_canvas_svgs(ctx, item, spec, sample_set=ss))
+                out.extend(render.page_canvas_svgs(ctx, item, spec, sample_set=ss, pno=_pno_of(lib, item.get("id"))))
             else:
                 out.extend(render.page_svgs(ctx, item, sets, spec, 1, item.get("name", "")))
         elif kind == "plans":
@@ -450,6 +451,22 @@ def _plan_pages(lib, plan, data=None):
     return content.plan_pages(plan, store.by_id(lib["pages"]), plan.get("content") if data is None else data)
 
 
+def _pno_of(lib, page_id):
+    """쪽이 든 문서에서 몇째 쪽인가(1부터) — 쪽 번호 자리(sys.page_no). 「원고마다」 되풀이는 넣어 둔 원고 목록만큼 센다. 문서에 없으면 1"""
+    for pl in lib.get("plans") or []:
+        if page_id in content.plan_page_ids(pl):
+            return next((i for i, p in enumerate(_plan_pages(lib, pl)) if p.get("id") == page_id), 0) + _pstart(pl)
+    return 1
+
+
+def _pstart(plan):
+    """문서 첫 쪽의 쪽 번호 — 문서 설정 「쪽 번호 시작」(인디자인 페이지 번호 시작). 없으면 1"""
+    try:
+        return max(1, int((plan or {}).get("page_start") or 1))
+    except (TypeError, ValueError):
+        return 1
+
+
 def _width_of(lib, plan):
     """쪽 폭 mm — 원고 읽는 순서의 단 나누기에(content.slots)"""
     specs = store.by_id(lib["specs"])
@@ -619,7 +636,7 @@ def fill_svgs(lib, plan, data, ctx):
     svgs = []
     for pi, pg in enumerate(pages):
         for p2 in [pg] + spares.get(pi, []):
-            svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게)
+            svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2), pno=len(svgs) + _pstart(plan))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게) · 쪽 번호 = 몇째 면
     return svgs, report, spec
 
 
@@ -680,18 +697,19 @@ def api_pdf():
         spec = store.by_id(lib["specs"]).get(pg.get("spec") or "a4") or render.DEFAULT_SPEC
         ss = store.get("sets", request.args["set"]) if request.args.get("set") else None
         fid = request.args.get("fill")                                         # 원고 보기 — ?fill=<문서> 또는 auto(이 쪽이 든 문서)
-        before = []
+        before, pno_here = [], _pno_of(lib, page_id)                          # 쪽 번호 자리 — 문서에서 몇째 쪽인가
         if fid:
             pl = next((p for p in lib["plans"] if (p["id"] == fid or fid == "auto") and page_id in content.plan_page_ids(p)), None)
             if pl:
                 filled, _rep = content.fill(_plan_pages(lib, pl), pl.get("content") or {}, _width_of(lib, pl))
                 k = next((i for i, p in enumerate(filled) if p.get("id") == page_id), None)
                 if k is not None:
-                    pg, before = filled[k], filled[:k]                         # 앞 쪽들도 함께 그린다 — 글 잇기가 앞 쪽 이야기를 이 쪽으로 흘린다
+                    pg, before, pno_here = filled[k], filled[:k], k + _pstart(pl)  # 앞 쪽들도 함께 그린다 — 글 잇기가 앞 쪽 이야기를 이 쪽으로 흘린다
                 ss = None
-        pre = [s for p in before for s in render.page_canvas_svgs(ctx, p, spec)] if any(
+        pst = _pstart(pl) if fid and pl else 1
+        pre = [s for i, p in enumerate(before) for s in render.page_canvas_svgs(ctx, p, spec, pno=i + pst)] if any(
             (it.get("atom") or {}).get("story") for p in before + [pg] for it in p.get("items") or []) else []
-        svgs = pre + render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        svgs = pre + render.page_canvas_svgs(ctx, pg, spec, sample_set=ss, pno=pno_here)
         if fid and before is not None:                                         # 이 쪽에서 이야기가 끝나고 넘치면 덧쪽까지
             for p2 in render.story_spares(ctx, before + [pg], lambda _p: spec).get(len(before), []):
                 svgs.extend(render.page_canvas_svgs(ctx, p2, spec)[:1])

@@ -907,7 +907,8 @@ try:
         got = ">01<" in svg and ">02<" in svg
         at = js(f"JSON.stringify(page.items[{n0}].atom)")
         js(f"(() => {{ page.items.length = {n0}; select([]); save(); render(); }})()"); time.sleep(1.0)
-        return (got, f"01·02 매겨짐={got} · 원자 {at[:80]}")
+        bound = '"bind":"no"' in (at or "")                           # 목록에서 고른 자리가 실제로 들어갔나(2026-10-10 주석에 먹혀 안 들어가던 버그)
+        return (got and bound, f"01·02 매겨짐={got} · 자리 들어감={bound} · 원자 {at[:80]}")
     step("R1 번호 매기기 — 자리 순서대로 01 · 02", r1)
 
     def r2():

@@ -175,7 +175,7 @@ def fill(pages, content, width_of=None):
     pages = copy.deepcopy(pages)
     runs = {pg.get("name") for pg in pages if pg.get("_rec") is not None}           # 「원고마다」 묶음 원고(plan_pages 가 레코드로 나눠 줬다)
     queue = {k: (list(v) if isinstance(v, list) else [v]) for k, v in (content or {}).items() if k not in runs}
-    recq = {}                                                                     # 쪽마다 제 레코드에서 꺼낼 값 (같은 자리가 여러 번이면 차례로)
+    recq = {}                                                                     # 레코드마다 꺼낼 값 — 목록은 그 레코드의 쪽들(펼침면)을 이어 차례로, 글 하나는 그 레코드의 같은 자리 모두에
     known, filled, unfilled = set(runs), 0, {}
     for pi, i, name, _ in slots(pages, width_of):
         known.add(name)
@@ -186,7 +186,14 @@ def fill(pages, content, width_of=None):
                 pages[pi]["items"][i]["fields"] = {name: story_value(name, v, (pages[pi]["items"][i].get("atom") or {}).get("slot_fmt"))}
                 filled += len(v)
                 continue
-            rq = recq.setdefault((pi, name), list(rec[name]) if isinstance(rec[name], list) else [rec[name]])
+            if not isinstance(v, list):                                            # 글 하나 = 레코드 전체의 값(두 쪽 머리의 제목 등)
+                pages[pi]["items"][i]["fields"] = {name: v}
+                filled += 1
+                continue
+            if not v:                                                              # 빈 목록 = 이 레코드엔 이 자리가 없다 — 접는다
+                pages[pi]["items"][i]["fields"] = {name: ""}
+                continue
+            rq = recq.setdefault((id(rec), name), list(v))                         # 같은 레코드의 쪽들은 한 줄로 이어 꺼낸다 — 왼쪽 면 지문 둘, 오른쪽 면 다음 둘
             if rq:
                 pages[pi]["items"][i]["fields"] = {name: rq.pop(0)}
                 filled += 1
@@ -204,6 +211,24 @@ def fill(pages, content, width_of=None):
             filled += 1
         else:
             unfilled[name] = unfilled.get(name, 0) + 1
+    for pg in pages:                                                              # 빈 원고(""·[]) — 그 글상자는 접힌다(render.place_items: 접기 묶음째, 아래 것을 당긴다)
+        for it in pg.get("items") or []:
+            f = it.get("fields")
+            if f and all(blank(v) for v in f.values()):
+                it["_empty"] = True
     extra = {k: len(v) for k, v in queue.items() if v and k in known}
     unknown = sorted(k for k in queue if k not in known)
     return pages, {"filled": filled, "unfilled": unfilled, "extra": extra, "unknown": unknown}
+
+
+def blank(v):
+    """원고가 일부러 비운 값 — 빈 글 · 빈 목록 · 빈 문항 줄기(인디자인 데이터 병합 「빈 필드 줄 제거」)"""
+    if v is None:
+        return False
+    if isinstance(v, str):
+        return not v.strip()
+    if isinstance(v, list):
+        return all(blank(x) or x == "\n" for x in v) if v else True
+    if isinstance(v, dict):
+        return "ps" in v and not str(v.get("t") or "").strip()
+    return False

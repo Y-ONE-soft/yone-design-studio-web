@@ -16,6 +16,8 @@
              pages = 원본 쪽. 대본이 새로 만든 지면과 차례대로 맞댄다.
 단위마다 데이터 폴더를 따로 써서(YONE_CATALOG_DIR) 지우기·병렬이 그 단위에만 미친다.
 병렬: REPLAY_PORT(서버, 기본 5101) · REC_PORT(크롬, 기본 9466) 를 세션마다 다르게.
+구성 하나만: <단위>@<구성 번호>(예: 정본-최종@4) — 그 대본(make.py)이 그 구성만 빈 문서에서 처음부터 만든다(GUSEONG).
+  데이터·결과·만든 대본은 그 이름의 폴더에 따로 — 여러 구성을 동시에 돌려도 안 섞인다. 판정은 책 전체와 같다.
 """
 import json, os, shutil, subprocess, sys, time, urllib.request
 
@@ -26,9 +28,11 @@ BASE = f"http://127.0.0.1:{PORT}"
 DPI = 110
 
 unit, cmd = sys.argv[1], sys.argv[2]
-udir = os.path.join(REPO, "tests", "e2e", "replay", unit)
+base_unit, _, only = unit.partition("@")
+udir = os.path.join(REPO, "tests", "e2e", "replay", base_unit)
 data = os.path.expanduser(f"~/.cache/yone-replay/{unit}/catalog")
 out = os.path.expanduser(f"~/Downloads/편집기재현/{unit}")
+wdir = os.path.join(os.path.dirname(data), "work") if only else udir     # make.py 가 쓰는 대본·요소 목록·상태
 
 
 def fresh_data():
@@ -79,10 +83,12 @@ def page_ids():
 
 
 def run_steps(fast, video):
-    subprocess.run([PY, os.path.join(udir, "make.py")], check=True)          # → steps.json
+    os.makedirs(wdir, exist_ok=True)
+    subprocess.run([PY, os.path.join(udir, "make.py")], check=True,          # → steps.json · elems.json · 상태.json (wdir)
+                   env=dict(os.environ, REPLAY_WORK=wdir, GUSEONG=only))
     env = dict(os.environ, REC_FAST="1" if fast else "0")
     env.setdefault("REC_SPEED", "8")                                         # 녹화는 확인용 — 빠르게 (2026-10-08 사용자: 8배)
-    r = subprocess.run([PY, "tests/e2e/rec.py", BASE + "/units", os.path.join(udir, "steps.json"),
+    r = subprocess.run([PY, "tests/e2e/rec.py", BASE + "/units", os.path.join(wdir, "steps.json"),
                         video, "1600", "1000", "8"], cwd=REPO, env=env, capture_output=True, text=True)
     open(os.path.join(out, "rec.log"), "w").write(r.stdout + r.stderr)
     bad = [ln for ln in (r.stdout + r.stderr).splitlines() if "ERR" in ln or "Traceback" in ln or ln.strip().startswith("!")]
@@ -137,7 +143,7 @@ def compare(new_ids, state):
 def measure_units(new_ids, state, fix=False):
     """요소마다 원본과 결과를 같은 색 상자로 재서 차이(mm) — elems.json(make.py 가 씀)이 있을 때.
     fix: 글의 자리(dx,dy)·자간(dw→dtr) 차이를 보정.json 에 더한다 (편집기 글상자 위 끝 ↔ 원본 글자 상자)."""
-    ep = os.path.join(udir, "elems.json")
+    ep = os.path.join(wdir, "elems.json")
     if not os.path.exists(ep):
         return
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -232,7 +238,7 @@ def verdict(state, new_ids, ok_steps):
         why.append(f"만든 지면 {len(new_ids)} < 원본 쪽 {len(state['pages'])}")
     allow = state.get("허용") or {}
     res = getattr(measure_units, "last", None)
-    if not os.path.exists(os.path.join(udir, "elems.json")) or res is None:
+    if not os.path.exists(os.path.join(wdir, "elems.json")) or res is None:
         why.append("맞댈 요소 목록 없음 — make.py 가 elems.json 을 써야 한다")
         res = {}
     for pk, rs in res.items():
@@ -291,6 +297,7 @@ try:
     before = set(page_ids())
     t0 = time.time()
     ok = run_steps(cmd != "rec", os.path.join(out, unit + ".mp4") if cmd == "rec" else os.path.join(out, "_fast.mp4"))
+    state = json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8"))  # 대본이 방금 쓴 상태(원본 쪽 목록) — 미리 읽은 것은 지난 판 것
     new_ids = [i for i in page_ids() if i not in before]
     print(f"{unit} {cmd} — {time.time() - t0:.0f}초 · 새 지면 {len(new_ids)}개")
     compare(new_ids, state)

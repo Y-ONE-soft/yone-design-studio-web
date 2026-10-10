@@ -214,7 +214,8 @@ def tail_html(a, ctx):
     gap, drop = float(t.get("gap") or 0), float(t.get("drop") or 0)
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {float(part.get("w") or w):.3f} {float(part.get("h") or h):.3f}" '
            f'width="{w:.3f}" height="{h:.3f}" style="display:block;overflow:visible;width:{w:.3f}px;height:{h:.3f}px">{frag}</svg>')   # 크기를 스타일로도 — 바깥 .p svg 규칙(쪽 크기)이 안 걸리게
-    return (f'\u2060<span style="display:inline-block;width:{w:.3f}px;height:{h:.3f}px;margin-left:{gap:.3f}px;'
+    lead = " " if t.get("space") else "\u2060"                         # 띄어 붙이기 — 줄 끝이면 띄어쓰기에서 꺾여 개체만 다음 줄로(인디자인: 글 끝 공백 + 인라인 개체)
+    return (f'{lead}<span style="display:inline-block;width:{w:.3f}px;height:{h:.3f}px;margin-left:{gap:.3f}px;'
             f'vertical-align:{-drop:.3f}px;letter-spacing:0;text-indent:0">{svg}</span>', w + gap)
 
 
@@ -2093,8 +2094,9 @@ def place_items(ctx, page, W, H, mirror=False):
     canvas = bool(page.get("_canvas"))
     ctx.nums = {}                        # 번호 매기기는 면마다 다시 1부터 (시작 번호는 원자의 num_start)
     placed = []
+    folded, bands = fold_bands(page)     # 접기 묶음 — 원고가 비운 자리의 묶음은 안 그리고(번호도 안 센다) 그 띠만큼 아래 것을 당긴다
     for fi, it in enumerate(page.get("items") or []):
-        if it.get("hide"):
+        if it.get("hide") or fi in folded:
             continue
         blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
         if not canvas and blk is not None and blk.get("source") == "content":
@@ -2108,12 +2110,39 @@ def place_items(ctx, page, W, H, mirror=False):
                        "fixed": is_fixed(ctx, it, page, H), "grow": can_grow(it, part)})
     grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"] - p["s"] * below_tol((p["it"].get("atom") or {})), p["h"] - p["h0"])
              for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
+    grown += bands
     for p in placed:
         it = p["it"]
         p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
                                           if gi != p["fi"] and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)
         p["y"] = it["y"] + p["dy"]
     return placed
+
+
+def fold_bands(page):
+    """접기 묶음(원자 fold = 묶음 이름) — 묶음 안 원고 자리 중 하나라도 원고가 비웠으면(_empty, content.fill) 묶음째 접는다.
+    → (접힌 요소 번호 set, 당기기 [(-1, x0, x1, 띠 아래 끝, -당길 양)]). 당길 양 = 띠 위 끝 → 띠 아래 가로로 겹치는 첫 요소 위 끝
+    (그 요소가 접힌 묶음 자리로 올라온다 — 인디자인 데이터 병합 「빈 필드 줄 제거」를 묶음 단위로)."""
+    items = page.get("items") or []
+    groups = {}
+    for fi, it in enumerate(items):
+        g = (it.get("atom") or {}).get("fold")
+        if g:
+            groups.setdefault(g, []).append(fi)
+    folded, bands = set(), []
+    box = lambda it: (float(it.get("x") or 0), float(it.get("y") or 0), float((it.get("atom") or {}).get("w") or it.get("w") or 0),
+                      float((it.get("atom") or {}).get("h") or it.get("h") or 0))
+    for g, fis in groups.items():
+        if not any(items[fi].get("_empty") for fi in fis):
+            continue
+        folded.update(fis)
+        bx = [box(items[fi]) for fi in fis]
+        x0, x1 = min(b[0] for b in bx), max(b[0] + b[2] for b in bx)
+        top, bot = min(b[1] for b in bx), max(b[1] + b[3] for b in bx)
+        below = [box(it)[1] for fi, it in enumerate(items) if fi not in folded and not it.get("hide") and box(it)[1] >= bot - 0.01
+                 and box(it)[0] < x1 - 0.01 and box(it)[0] + box(it)[2] > x0 + 0.01]
+        bands.append((-1, x0, x1, bot, -((min(below) if below else bot) - top)))
+    return folded, bands
 
 
 def atom_part(atom):
@@ -2262,8 +2291,9 @@ def story_spares(ctx, pages, spec_of):
     return out
 
 
-def page_canvas_svgs(ctx, page, spec, sample_set=None):
+def page_canvas_svgs(ctx, page, spec, sample_set=None, pno=1):
     """캔버스 미리보기 — 자유 배치 요소(items)를 그린다. 콘텐츠 블록 자리는 견본 값으로.
+    pno = 이 쪽이 문서에서 몇째 쪽인가(쪽 번호 자리 sys.page_no 가 이 값). 모르면 1.
 
     sample_set(세트)을 주면 같은 블록의 값을 순서대로 끼운다 — 어법 O/X 줄 셋이면 세트의 1·2·3번 문장.
     (옛 형식: 칸 흐름 배치 page.blocks 도 아직 그린다.) 넘치면 여러 면이 되므로 캔버스는 첫 장만 보인다.
@@ -2272,6 +2302,7 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
     pg = json.loads(json.dumps(page))
     pg["_noguides"] = True                     # 캔버스는 자유 배치 — 칸 안내선은 안 보인다
     pg["_canvas"] = True                       # 콘텐츠 블록 자리(items)도 견본으로 그린다
+    pg["mirror"] = False                       # 캔버스는 그린 그대로 — 쪽 번호(pno)가 짝수여도 뒤집지 않는다(예전엔 늘 1쪽으로 그려 안 뒤집혔다)
     if sample_set:
         _fill_items(pg, sample_set, ctx=ctx, canvas=True)          # 캔버스 미리보기 — 검수 항목은 안 쌓되 유형 이름 짝짓기는 한다
     sets = []
@@ -2282,7 +2313,7 @@ def page_canvas_svgs(ctx, page, spec, sample_set=None):
         if blocks:
             sets.append({"kind": kind, "id": z["id"], "blocks": blocks})
     ctx.sys.setdefault("section", "STEP 2")
-    return page_svgs(ctx, pg, sets, spec, 1, pg.get("name", ""))
+    return page_svgs(ctx, pg, sets, spec, pno, pg.get("name", ""))
 
 
 def _per(pg):
