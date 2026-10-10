@@ -29,6 +29,15 @@ if not os.path.isdir(data):
     sys.exit(f"데이터 없음 — 먼저 python3 tests/e2e/replay.py {unit} check")
 
 
+def each(f, v):
+    """글 하나 · 문항 하나(흐름 틀: [[자리, 글], …] 또는 {자리: 글}) 안의 글마다 f"""
+    if isinstance(v, list):
+        return [[x[0], f(x[1])] if isinstance(x, list) else x for x in v]
+    if isinstance(v, dict):
+        return {k: f(x) if isinstance(x, str) else x for k, x in v.items()}
+    return f(v)
+
+
 def vary(content):
     out = {}
     for k, v in content.items():
@@ -39,9 +48,9 @@ def vary(content):
             def longer(t):
                 m = re.match(r"(.+?[.?!。])(\s|$)", t)
                 return t + " " + m.group(1) if m and len(t) > 40 else t
-            vs = [longer(t) for t in vs]
+            vs = [each(longer, t) for t in vs]
         elif mode == "short":
-            vs = [t[: max(1, len(t) // 2)] if len(t) > 40 else t for t in vs]
+            vs = [each(lambda t: t[: max(1, len(t) // 2)] if len(t) > 40 else t, t) for t in vs]
         out[k] = vs
     return out
 
