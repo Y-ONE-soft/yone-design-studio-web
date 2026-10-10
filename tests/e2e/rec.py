@@ -201,8 +201,17 @@ try:
         for tryn in range(2):
             click(spot, 2)
             n = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value).length : 0; })()") if isinstance(spot, str) else 0
-            wipe(max(14, (n or 0) + 2))
-            typetext(str(value))
+            if (n or 0) > 200:                           # 긴 글이 든 칸 — 전체 선택(Ctrl/⌘+A) 뒤 지우기
+                c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=65, key="a", code="KeyA", modifiers=4 if sys.platform == "darwin" else 2, commands=["selectAll"])
+                c.call("Input.dispatchKeyEvent", type="keyUp", windowsVirtualKeyCode=65, key="a", code="KeyA", modifiers=4 if sys.platform == "darwin" else 2)
+                wipe(1)
+            else:
+                wipe(max(14, (n or 0) + 2))
+            if len(str(value)) > 2000:                   # 긴 원고(JSON)는 붙여넣기 한 번 — 사람도 치지 않고 붙인다(9만 자를 한 자씩 치면 15분)
+                c.call("Input.insertText", text=str(value))
+                frame()
+            else:
+                typetext(str(value))
             key("Enter")                                 # 칸은 Enter 로 확정된다
             time.sleep(0.25 / SPEED)
             frame()
@@ -282,6 +291,10 @@ try:
                 key(st["key"])
             if "pick" in st:
                 pick(st["pick"]["at"], st["pick"].get("value"), st["pick"].get("text"))
+            if "until" in st:                                  # 화면이 그 상태가 될 때까지 기다린다(최대 60초) — 서버가 바쁠 때 새 문서 열기 등
+                t_end = time.time() + 60
+                while not c.js("(() => { try { return !!(" + st["until"] + "); } catch (e) { return false; } })()") and time.time() < t_end:
+                    time.sleep(0.25)
             if "js" in st:
                 v = c.js(st["js"])
                 if v not in (None, True):

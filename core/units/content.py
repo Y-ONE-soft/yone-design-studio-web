@@ -23,6 +23,61 @@ def plan_page_ids(plan):
     return ids
 
 
+def plan_pages(plan, pages_by_id, content=None):
+    """문서의 쪽 차례(쪽 사본 목록) — 「원고마다」(repeat each_set) 쪽이 이어진 묶음은 원고가 준 목록만큼 되풀이한다(인디자인 데이터 병합의 레코드).
+    묶음의 원고 = content[묶음 첫 쪽 이름] = [{자리: 글 | [글…]}, …] — 한 벌이 레코드 하나. 둘째 벌부터 쪽 id 는 「id~2」….
+    잇닿은 「원고마다」 쪽 중 원고를 받는 이름의 쪽에서 새 묶음이 시작된다(제목 면 + 이어지는 면 = 한 묶음, 다음 유형 제목 면 = 새 묶음).
+    목록이 없으면 한 번(전처럼). 되풀이한 쪽은 _rec 에 제 레코드를 갖고 fill 이 그 자리부터 채운다."""
+    content = content or {}
+    out = []
+
+    def put(pid, rec=None, k=0):
+        pg = pages_by_id.get(pid)
+        if not pg:
+            return
+        if rec is not None:
+            pg = copy.deepcopy(pg)
+            pg["_rec"] = rec
+            if k:
+                pg["id"] = f"{pid}~{k + 1}"
+        out.append(pg)
+
+    def recs_of(pid):
+        r = content.get((pages_by_id.get(pid) or {}).get("name") or "")
+        return r if isinstance(r, list) and r and all(isinstance(x, dict) for x in r) else None
+
+    def flush(run):
+        recs = recs_of(run[0]) if run else None
+        if recs:
+            for k, rec in enumerate(recs):
+                for pid in run:
+                    put(pid, rec, k)
+        else:
+            for pid in run:
+                put(pid)
+    for pid in plan.get("front") or []:
+        put(pid)
+    for sc in plan.get("sections") or []:
+        if sc.get("divider"):
+            put(sc["divider"])
+        run = []
+        for e in sc.get("pages") or []:
+            pid = e["page"] if isinstance(e, dict) else e
+            if isinstance(e, dict) and e.get("repeat") == "each_set":
+                if run and recs_of(pid):                                 # 원고를 받는 이름의 쪽 = 새 묶음 (A1 묶음 바로 뒤 A2 묶음)
+                    flush(run)
+                    run = []
+                run.append(pid)
+                continue
+            flush(run)
+            run = []
+            put(pid)
+        flush(run)
+    for pid in plan.get("back") or []:
+        put(pid)
+    return out
+
+
 def _slot(it):
     """글상자의 자리 이름. 글 잇기의 이어지는 상자(story_seq ≥ 2)는 자리가 아니다 — 이야기 하나 = 자리 하나, 원고는 첫 상자에만."""
     from core.units.render import story_cont
@@ -118,10 +173,26 @@ def fill(pages, content, width_of=None):
     """원고를 자리에 나눠 넣은 쪽 사본과 보고. 쪽 원본은 건드리지 않는다.
     보고 = {"filled": n, "unfilled": {자리: 남은 자리 수}, "extra": {자리: 남은 원고 수}, "unknown": [틀에 없는 자리 이름]}."""
     pages = copy.deepcopy(pages)
-    queue = {k: (list(v) if isinstance(v, list) else [v]) for k, v in (content or {}).items()}
-    known, filled, unfilled = set(), 0, {}
+    runs = {pg.get("name") for pg in pages if pg.get("_rec") is not None}           # 「원고마다」 묶음 원고(plan_pages 가 레코드로 나눠 줬다)
+    queue = {k: (list(v) if isinstance(v, list) else [v]) for k, v in (content or {}).items() if k not in runs}
+    recq = {}                                                                     # 쪽마다 제 레코드에서 꺼낼 값 (같은 자리가 여러 번이면 차례로)
+    known, filled, unfilled = set(runs), 0, {}
     for pi, i, name, _ in slots(pages, width_of):
         known.add(name)
+        rec = pages[pi].get("_rec")
+        if rec is not None and name in rec:
+            v = rec[name]
+            if "+" in name and isinstance(v, list) and v and isinstance(v[0], (dict, list)):   # 흐름 자리 — 이 벌의 문항 목록 전부
+                pages[pi]["items"][i]["fields"] = {name: story_value(name, v, (pages[pi]["items"][i].get("atom") or {}).get("slot_fmt"))}
+                filled += len(v)
+                continue
+            rq = recq.setdefault((pi, name), list(rec[name]) if isinstance(rec[name], list) else [rec[name]])
+            if rq:
+                pages[pi]["items"][i]["fields"] = {name: rq.pop(0)}
+                filled += 1
+            else:
+                unfilled[name] = unfilled.get(name, 0) + 1
+            continue
         q = queue.get(name)
         if q and "+" in name and isinstance(q[0], (dict, list)):              # 여러 자리 한 줄기 — 문항 목록 전부가 이 글(잇기 상자들로 흘러간다)
             atom = pages[pi]["items"][i].get("atom") or {}

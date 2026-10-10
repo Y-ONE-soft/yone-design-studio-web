@@ -12,6 +12,10 @@
   "wait": 5000
  },
  {
+  "until": "docPages().length > 0 && page",
+  "wait": 500
+ },
+ {
   "clickif": {
    "at": "#tg-side",
    "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"

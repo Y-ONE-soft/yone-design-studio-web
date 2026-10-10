@@ -92,8 +92,26 @@
   </main>
   <div class="newmenu" id="newmenu">
     <div class="h">새 항목 추가</div>
-    <button id="new-units"><span class="ic">✎</span>새 문서 — 편집기에서 직접 디자인</button>
+    <button id="new-units"><span class="ic">✎</span>편집기 제작 — 편집기에서 직접 디자인</button>
+    <button id="new-easy"><span class="ic">⚡</span>간편 제작 — 블록을 골라 붙이기</button>
+    <button id="new-pdf"><span class="ic">📄</span>PDF 등록 — 완성본 PDF 를 디자인으로</button>
     <button id="new-folder"><span class="ic">📁</span>새 라인업 폴더</button>
+  </div>
+  <div class="panel" id="pdf-panel">
+    <div class="sheet">
+      <h2>PDF 등록</h2>
+      <div class="hint">완성본 PDF 를 이 폴더의 디자인으로 — 반복되는 면은 구성 하나로 묶입니다. 카드에는 「PDF 등록」 라벨이 붙습니다.</div>
+      <form id="pdf-form">
+        <label>PDF *</label><input type="file" name="pdf" accept=".pdf,application/pdf">
+        <label>틀(폴더) *</label><select name="series"></select>
+        <label>이름</label><input type="text" name="name" placeholder="비우면 파일 이름" autocomplete="off">
+        <div class="err" id="pdf-err"></div>
+        <div class="btns">
+          <button type="button" class="btn" id="pdf-close">닫기</button>
+          <button type="submit" class="btn go" id="pdf-submit">등록</button>
+        </div>
+      </form>
+    </div>
   </div>
   <div class="panel" id="dir-panel">
     <div class="sheet">
@@ -175,7 +193,45 @@
       });
       document.addEventListener('click', function (e) { if (!m.contains(e.target)) m.classList.remove('on'); });
       document.getElementById('new-folder').addEventListener('click', function () { m.classList.remove('on'); dirSheet.open(null); });
-      document.getElementById('new-units').addEventListener('click', function () { m.classList.remove('on'); location.href = '/units'; });   // 지면을 직접 디자인
+      // 폴더 화면의 ＋ 는 그 폴더의 틀을 data-series 로 준다 — 하나면 그 틀로 바로, 여럿이면 등록할 때 고른다
+      var cur = [];
+      document.querySelectorAll('[data-new-menu]').forEach(function (b) { b.addEventListener('click', function () { try { cur = JSON.parse(b.dataset.series || '[]'); } catch (e) { cur = []; } }); });
+      var one = function () { return cur.length === 1 ? cur[0].series : ''; };
+      document.getElementById('new-units').addEventListener('click', function () { m.classList.remove('on'); location.href = '/units?new=1' + (one() ? '&series=' + encodeURIComponent(one()) : ''); });   // 지면을 직접 디자인 → 관리에 등록
+      document.getElementById('new-easy').addEventListener('click', function () { m.classList.remove('on'); location.href = '/easy' + (one() ? '?series=' + encodeURIComponent(one()) : ''); });
+      // PDF 등록 — 올리면 잡으로 돌고(재기·면 그림·구성 묶기) 끝나면 이 화면을 다시 읽어 카드가 보인다
+      var pp = document.getElementById('pdf-panel'), pf = document.getElementById('pdf-form'), perr = document.getElementById('pdf-err');
+      function pclose() { pp.classList.remove('on'); }
+      document.getElementById('pdf-close').addEventListener('click', pclose);
+      pp.addEventListener('click', function (e) { if (e.target === pp) pclose(); });
+      document.getElementById('new-pdf').addEventListener('click', function () {
+        m.classList.remove('on'); perr.textContent = ''; pf.reset();
+        fetch('/api/catalog/dirs').then(function (r) { return r.json(); }).then(function (ds) {
+          var sel = pf.series, want = cur.map(function (c) { return c.series; }); sel.innerHTML = '';
+          ds.forEach(function (d) { d.templates.forEach(function (t) {
+            if (want.length && want.indexOf(t.series) < 0) return;            // 폴더 안에서 열었으면 그 폴더의 틀만
+            var o = document.createElement('option'); o.value = t.series; o.textContent = d.name + ' · ' + t.name; sel.appendChild(o);
+          }); });
+        });
+        pp.classList.add('on');
+      });
+      pf.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!pf.pdf.files[0]) { perr.textContent = 'PDF 를 고르세요'; return; }
+        var fd = new FormData(pf), btn = document.getElementById('pdf-submit');
+        btn.disabled = true; perr.textContent = '올리는 중…';
+        fetch('/api/catalog/register-pdf', { method: 'POST', body: fd }).then(function (r) { return r.json(); }).then(function (j) {
+          if (j.error) { perr.textContent = j.error; btn.disabled = false; return; }
+          (function poll() {
+            fetch('/api/units/job/' + j.job).then(function (r) { return r.json(); }).then(function (s) {
+              if (s.status === 'running' || s.status === 'queued') { perr.textContent = '등록 중 — ' + ((s.log || []).slice(-1)[0] || '') + ' (' + s.elapsed + '초)'; setTimeout(poll, 1500); return; }
+              btn.disabled = false;
+              if (s.status === 'failed') { perr.textContent = '등록 실패 — ' + (s.error || ''); return; }
+              location.reload();
+            });
+          })();
+        });
+      });
     })();
   </script>
   {% block scripts %}{% endblock %}
