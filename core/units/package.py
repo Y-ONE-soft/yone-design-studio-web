@@ -137,15 +137,37 @@ def load(pkg, into=None, name=None):
             raise ValueError(f"쪽 {p['id']}: {err}")
     # 브랜드 — 없으면 그대로, 있으면 빈 칸만 채운다
     skin, added = pkg.get("skin") or {}, []
+    imap = {}                                                           # 그림 이름 바꿈 — 같은 이름에 다른 그림이 이미 있으면(배포서버의 예전 logo.svg) 새 이름으로
     if skin.get("id"):
         have = store.by_id(lib["skins"]).get(skin["id"])
         img_dir = os.path.join(store.udir(), "_img")
+        have_imgs = (have or {}).get("images") or {}
         for key, im in (pkg.get("images") or {}).items():
             os.makedirs(img_dir, exist_ok=True)
-            path = os.path.join(img_dir, os.path.basename(im.get("name") or key))
+            data = base64.b64decode(im.get("b64") or "")
+            name = os.path.basename(im.get("name") or key)
+            stem, ext = os.path.splitext(name)
+            nk, n = key, 1
+            same = lambda nm: open(os.path.join(img_dir, nm), "rb").read() == data
+            while os.path.exists(os.path.join(img_dir, name)) and not same(name) or (nk in have_imgs and have_imgs[nk] != f"_img/{name}"):
+                n += 1
+                name, nk = f"{stem}_{n}{ext}", f"{key}_{n}"
+            path = os.path.join(img_dir, name)
             if not os.path.exists(path):
                 with open(path, "wb") as fh:
-                    fh.write(base64.b64decode(im.get("b64") or ""))
+                    fh.write(data)
+            if nk != key:                                               # 문서의 그림이 새 이름을 가리키게
+                imap[key] = nk
+                imgs = skin.setdefault("images", {})
+                imgs.pop(key, None)
+                imgs[nk] = f"_img/{name}"
+        if imap:
+            def fix_img(d, k, v):
+                if k == "src" and v in imap and d.get("t") == "image":
+                    d[k] = imap[v]
+            for kind in ("pages", "parts", "blocks"):
+                for x in pkg.get(kind) or []:
+                    _walk(x, fix_img)
         if not have:
             store.put("skins", skin)
         else:
