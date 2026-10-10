@@ -66,7 +66,7 @@
   .folder .fn { font-size: 14.5px; font-weight: 600; }
   .folder .fc { font-size: 12px; color: #8b91a5; }
   .dsg { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 22px 18px; }
-  .dsg .d { position: relative; }
+  .dsg .d { position: relative; cursor: pointer; }   /* 카드를 누르면 지면 보기(편집기 제작 카드는 거기서 「편집기에서 편집」) */
   .dsg .d .th { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; background: #eceef3; border: 1px solid #e3e1ec; overflow: hidden; display: grid; place-items: center; }
   .dsg .d .th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .dsg .d .th .ph { font-size: 30px; color: #8b8fa3; }
@@ -121,7 +121,7 @@
         <div class="tt">{{ d.name }}</div>
         <div class="mt"><i class="dot {{ d.ready }}"></i>{{ d.tname }}{% if d.n %} · {{ d.n }}면{% endif %}{% if d.made %}<span class="mk {{ d.made }}">{{ "편집기 제작" if d.made == "editor" else "PDF 등록" }}</span>{% endif %}</div>
         {% if d.tags %}<div class="tags">{% for k, v in d.tags.items() %}<span>{{ v }}</span>{% endfor %}</div>{% endif %}
-        <div class="acts">{% if d.made == "editor" %}<a class="go" href="/units?design={{ d.series }}/{{ d.id }}" title="편집기에서 이 문서를 열어 원고를 넣는다">원고 넣기</a>{% elif d.manuscript %}<a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">원고 넣기</a>{% endif %}<a href="/design/{{ d.series }}/{{ d.id }}">지면 보기</a></div>
+        {% if d.made != "editor" %}<div class="acts">{% if d.manuscript %}<a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">원고 넣기</a>{% endif %}<a href="/design/{{ d.series }}/{{ d.id }}">지면 보기</a></div>{% endif %}
       </div>{% endfor %}
     </div>
     {% else %}<div class="empty" style="padding:24px 0"><b>이 라인업에 아직 디자인이 없어요</b></div>{% endif %}
@@ -164,6 +164,12 @@
       e.preventDefault(); e.stopPropagation();
       var a = b.closest('.folder').dataset;
       dirSheet.remove(a.id, a.name, parseInt(a.t, 10) || 0);
+    });
+  });
+  document.querySelectorAll('.dsg .d').forEach(function (d) {          // 카드 = 지면 보기 — 단추·링크를 누른 때는 그쪽
+    d.addEventListener('click', function (e) {
+      if (e.target.closest('button, a')) return;
+      location.href = '/design/' + d.dataset.series + '/' + d.dataset.id;
     });
   });
   document.querySelectorAll('.dsg .d .x').forEach(function (b) {

@@ -2,6 +2,7 @@
 이름 없는 「한 번만」 면에 구성 이름을 붙인 뒤 「관리에 등록」으로 같은 카드를 다시 그린다. 그다음 등록 PDF 맞대기(join.judge).
 
     python3 tests/e2e/replay/정본-최종/rename.py workbook/xe3a03cd7
+    RENAME_BASE=https://yos-studio.fly.dev python3 …/rename.py workbook/xe3a03cd7     배포서버의 카드(배포는 새 카드만 옮긴다 — 있던 카드 고침은 그 서버에서 다시 등록)
 """
 import json, os, subprocess, sys, urllib.error, urllib.request
 
@@ -25,8 +26,13 @@ st += [S("관리에 등록 — 같은 카드를 다시 그린다", 1500), {"key"
 st += [{"until": "/등록됨/.test(document.querySelector('#s-reg-st').textContent)", "wait": 300}] * 30
 st += [{"js": "(() => { const t = document.querySelector('#s-reg-st').textContent; if (!/등록됨/.test(t)) throw new Error('관리 등록 안 됨 — ' + t); "
               "return '등록 ' + JSON.stringify(plan.catalog) + ' · ' + t; })()"}]
-join.fresh_data()
-srv = join.server()
+REMOTE = os.environ.get("RENAME_BASE")
+if REMOTE:
+    join.BASE = REMOTE.rstrip("/")
+    srv = None
+else:
+    join.fresh_data()
+    srv = join.server()
 try:
     sf = os.path.join(join.OUT, "rename_steps.json")
     json.dump(st, open(sf, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
@@ -47,8 +53,14 @@ try:
     if any("ERR" in ln or "Traceback" in ln for ln in log.splitlines()):
         sys.exit("면 이름·등록 실패 — " + os.path.join(join.OUT, "rename.log"))
 finally:
-    srv.kill()
-ddir = os.path.join(join.DATA, series, "designs", did)
-dj = json.load(open(os.path.join(ddir, "design.json"), encoding="utf-8"))
-print("design.json", {k: dj.get(k) for k in ("name", "pages", "updated")})
-print("판정: 통과" if join.judge(os.path.join(ddir, "참고", "reference.pdf")) else "판정: 실패")
+    if srv:
+        srv.kill()
+if REMOTE:                                                               # 배포서버 — 등록된 PDF 를 내려받아 맞댄다
+    ref = os.path.join(join.OUT, "remote_reference.pdf")
+    urllib.request.urlretrieve(f"{join.BASE}/catalog/pdf/{series}/{did}", ref)
+else:
+    ddir = os.path.join(join.DATA, series, "designs", did)
+    dj = json.load(open(os.path.join(ddir, "design.json"), encoding="utf-8"))
+    print("design.json", {k: dj.get(k) for k in ("name", "pages", "updated")})
+    ref = os.path.join(ddir, "참고", "reference.pdf")
+print("판정: 통과" if join.judge(ref) else "판정: 실패")
