@@ -48,7 +48,31 @@ def _lib_json(lib):
 def canvas():
     """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
     from core.units import formats
+    dsg = request.args.get("design") or ""                  # 관리 카드(편집기 제작)에서 — ?design=<틀>/<디자인> 의 문서를 연다
+    if dsg:
+        from flask import redirect
+        from routes.catalog import _ID, _ddir, _meta
+        series, _, did = dsg.partition("/")
+        p = os.path.join(_ddir(series, did), "design.json") if series in _meta() and _ID.match(did or "") else ""
+        if not p or not os.path.exists(p):
+            abort(404)
+        info = json.load(open(p, encoding="utf-8"))
+        pid = info.get("plan")
+        mine = store.by_id(store.load("plans")).get(pid) or {}
+        if (mine.get("catalog") or {}).get("design") != did:     # 이 편집기에 그 문서가 없다(다른 곳에서 등록 · 배포서버 · id 만 같은 다른 문서) — 디자인 폴더의 문서 묶음을 들여온다
+            from core.units import package
+            up = os.path.join(_ddir(series, did), info.get("units") or "units.json")
+            if not os.path.exists(up):
+                abort(404)
+            pid, _rep = package.load(json.load(open(up, encoding="utf-8")))
+            info["plan"] = pid
+            json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        return redirect(f"/units?plan={pid}")
     lib = store.library()
+    from routes.catalog import _dir_of, _dirs, _meta
+    dirs = {d["id"]: d["name"] for d in _dirs()}
+    lib["catalog"] = [{"series": k, "name": v.get("name", k), "dir": _dir_of(v, set(dirs)), "dir_name": dirs.get(_dir_of(v, set(dirs)), "")}
+                      for k, v in _meta().items()]            # 「관리에 등록」 — 어느 폴더(틀)로 보낼지
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
     return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기", font_css=fonts.fix_css())
 
@@ -219,7 +243,7 @@ def api_preview():
             if body.get("mode") == "canvas" and body.get("fill"):     # 원고 보기 — 문서의 원고를 자리에 넣어(이 쪽은 지금 고치는 그대로)
                 pl = store.by_id(lib["plans"]).get(body["fill"])
                 if pl:
-                    pgs = [item if p.get("id") == item.get("id") else p for p in _plan_pages(lib, pl)]
+                    pgs = [dict(item, **({"_rec": p["_rec"]} if "_rec" in p else {})) if p.get("id") == item.get("id") else p for p in _plan_pages(lib, pl)]
                     filled, rep = content.fill(pgs, pl.get("content") or {}, _width_of(lib, pl))
                     item = next((p for p in filled if p.get("id") == item.get("id")), item)
                     ctx.board = max(0.0, min(float(body.get("board") or 0), 200.0))
@@ -420,9 +444,9 @@ def api_make():
 
 # ── 원고 넣기 — 틀(자리·임시 글·스타일)에 원고(자리 이름 → 글)를 넣는다. 규약: docs/편집기_재현/원고자리_규약.md ──
 
-def _plan_pages(lib, plan):
-    pages = store.by_id(lib["pages"])
-    return [pages[i] for i in content.plan_page_ids(plan) if i in pages]
+def _plan_pages(lib, plan, data=None):
+    """문서 쪽 차례 — 「원고마다」 묶음은 원고(data, 없으면 문서에 넣어 둔 원고) 목록만큼 되풀이 (content.plan_pages)"""
+    return content.plan_pages(plan, store.by_id(lib["pages"]), plan.get("content") if data is None else data)
 
 
 def _width_of(lib, plan):
@@ -442,6 +466,133 @@ def api_schema():
                     "rule": "원고 = {자리 이름: 글 | [글…]} — 같은 자리가 여러 번이면 쪽 순서 → 쪽 안 위에서 아래(같은 높이면 왼쪽부터). 단이 있는 쪽은 왼쪽 단 위→아래, 다음 단(여러 단에 걸친 상자는 그 높이에서 먼저)"})
 
 
+@bp.route("/api/units/package")
+def api_package_get():
+    """?plan=<문서> — 문서 묶음 파일(쪽·부품·블록·브랜드·그림 전부) 내려받기 (core/units/package.py)"""
+    from core.units import package
+    try:
+        pkg = package.export(store.library(), request.args.get("plan") or "")
+    except KeyError:
+        return jsonify({"error": "plan 없음"}), 404
+    r = jsonify(pkg)
+    fname = re.sub(r'[\\/:*?"<>|]', "_", pkg["plan"].get("name") or pkg["plan"]["id"]) + ".json"
+    from urllib.parse import quote
+    r.headers["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(fname)}"
+    return r
+
+
+@bp.route("/api/units/package", methods=["POST"])
+def api_package_put():
+    """문서 묶음 가져오기 — 파일(file) 또는 JSON {pkg}. into=<문서> 면 그 문서 끝에 쪽을 붙이고, 없으면 새 문서. → {plan, report}"""
+    from core.units import package
+    body = request.get_json(silent=True) or {}
+    f = request.files.get("file")
+    try:
+        pkg = json.load(f.stream) if f else body.get("pkg")
+    except ValueError as e:
+        return jsonify({"error": f"JSON 이 아니다 — {e}"}), 400
+    into = request.form.get("into") or body.get("into") or None
+    try:
+        pid, rep = package.load(pkg, into=into, name=request.form.get("name") or body.get("name"))
+    except KeyError:
+        return jsonify({"error": f"문서 {into} 없음"}), 404
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"ok": True, "plan": pid, "report": rep})
+
+
+@bp.route("/api/units/register", methods=["POST"])
+def api_register():
+    """편집기 문서 → 관리(카탈로그) 디자인 — JSON {plan, series, name?}. 잡으로 돈다(쪽 전부 그리기). → {job}
+    디자인 폴더 catalog/<틀>/designs/x…/ = units.json(문서 묶음) + 참고/reference.pdf(문서를 그린 결과) + preview_N.png + design.json(made: editor)
+    + config.json(그 틀의 첫 디자인 것 — 카드·조판 목록이 디자인으로 알아보게). 같은 문서를 다시 등록하면 그 폴더를 새로 그린다."""
+    from core import jobs
+    from routes.catalog import _meta
+    body = request.get_json(silent=True) or {}
+    plan_id, series = body.get("plan") or "", body.get("series") or ""
+    if plan_id not in store.by_id(store.load("plans")):
+        return jsonify({"error": "plan 없음"}), 404
+    if series not in _meta():
+        return jsonify({"error": f"틀 {series} 없음"}), 404
+    job = jobs.start("units-register", lambda job, log: register_design(plan_id, series, body.get("name"), log),
+                     meta={"plan": plan_id, "series": series})
+    return jsonify({"ok": True, "job": job.id})
+
+
+@bp.route("/api/units/job/<jid>")
+def api_job(jid):
+    from core import jobs
+    j = jobs.get(jid)
+    if not j:
+        abort(404)
+    return jsonify(j.to_dict(since=int(request.args.get("since", 0))))
+
+
+def register_design(plan_id, series, name, log=print):
+    import datetime
+    import shutil
+    import pymupdf
+    from core.units import package, pdf as _pdf
+    from routes.catalog import _ddir, _designs, _new_id
+    lib = store.library()
+    plan = store.by_id(lib["plans"])[plan_id]
+    name = (name or plan.get("name") or plan_id).strip()
+    cat = plan.get("catalog") or {}                                           # 문서가 기억하는 제 카드 — 문서 id 는 편집기마다 겹칠 수 있어 id 로 찾지 않는다
+    did = cat.get("design") if cat.get("series") == series and cat.get("design") in {d["id"] for d in _designs(series)} else None
+    base = next((d["id"] for d in _designs(series) if d["id"] != did), None)
+    new = did is None
+    did = did or _new_id(series)
+    plan["catalog"] = {"series": series, "design": did}
+    store.put("plans", plan)
+    d = _ddir(series, did)
+    os.makedirs(os.path.join(d, "참고"), exist_ok=True)
+    log(f"디자인 폴더 {series}/{did}" + (" (새로)" if new else " (다시 그림)"))
+    ctx = _ctx(lib, plan.get("skin"))
+    svgs, rep, spec = fill_svgs(lib, plan, plan.get("content") or {}, ctx)
+    log(f"면 {len(svgs)} 그림 · 원고 {rep.get('filled')}자리")
+    ref = os.path.join(d, "참고", "reference.pdf")
+    _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), ref, title=name)
+    doc = pymupdf.open(ref)
+    n = doc.page_count
+    for f in os.listdir(d):
+        if re.match(r"preview_\d+\.png$", f):
+            os.remove(os.path.join(d, f))
+    for k in range(min(5, n)):
+        doc[k].get_pixmap(dpi=60).save(os.path.join(d, f"preview_{k + 1}.png"))
+    log(f"견본 그림 {min(5, n)}장")
+    json.dump(package.export(lib, plan_id), open(os.path.join(d, "units.json"), "w", encoding="utf-8"), ensure_ascii=False)
+    if new or not os.path.exists(os.path.join(d, "config.json")):
+        cfg = json.load(open(os.path.join(_ddir(series, base), "config.json"), encoding="utf-8")) if base else \
+            {"series": series, "page": {"width": float(spec["w"]), "height": float(spec["h"]), "bleed": float(spec.get("bleed") or 3)}, "output": {"dir": "."}}
+        cfg.setdefault("book", {})["title"] = name
+        cfg["_디자인"] = f"편집기 제작 — {name} ({datetime.date.today().isoformat()}). 모양은 편집기 문서(units.json)가 정본"
+        json.dump(cfg, open(os.path.join(d, "config.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+        if base:
+            src = os.path.join(_ddir(series, base), "overrides.css")
+            if os.path.isfile(src):
+                shutil.copy2(src, os.path.join(d, "overrides.css"))
+    p = os.path.join(d, "design.json")
+    info = json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {"date": datetime.date.today().isoformat()}
+    info.update({"name": name, "desc": f"편집기 제작 · {n}면", "source": f"편집기: {plan.get('name') or plan_id}", "made": "editor",
+                 "plan": plan_id, "units": "units.json", "pages": n, "draft": False, "updated": datetime.date.today().isoformat()})
+    json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    log("등록 끝")
+    return {"series": series, "design": did, "pages": n, "url": f"/design/{series}/{did}"}
+
+
+def fill_svgs(lib, plan, data, ctx):
+    """문서에 원고를 넣어 면 SVG 목록 — 「원고마다」 되풀이 · 넘치면 덧쪽까지. → (svgs, 넣은 보고, 문서 판형)"""
+    pages, report = content.fill(_plan_pages(lib, plan, data), data, _width_of(lib, plan))
+    spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
+    spec_of = lambda pg: store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
+    spares = render.story_spares(ctx, pages, spec_of)                         # 넘치면 쪽 더하기 — 이야기가 끝나는 쪽 뒤에 덧쪽(빈 채면 크롬이 지운다)
+    svgs = []
+    for pi, pg in enumerate(pages):
+        for p2 in [pg] + spares.get(pi, []):
+            svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게)
+    return svgs, report, spec
+
+
 @bp.route("/api/units/fill", methods=["POST"])
 def api_fill():
     """원고를 넣은 결과 — JSON {plan, content, skin?, as?: "pdf"(기본)|"svg"}. 틀의 임시 글 대신 원고 글이 나온다.
@@ -455,15 +606,8 @@ def api_fill():
     data = body.get("content") if body.get("content") is not None else plan.get("content") or {}
     if not isinstance(data, dict):
         return jsonify({"error": "content 는 {자리 이름: 글 | [글…]}"}), 400
-    pages, report = content.fill(_plan_pages(lib, plan), data, _width_of(lib, plan))
     ctx = _ctx(lib, body.get("skin"))
-    spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
-    svgs = []
-    spec_of = lambda pg: store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
-    spares = render.story_spares(ctx, pages, spec_of)                         # 넘치면 쪽 더하기 — 이야기가 끝나는 쪽 뒤에 덧쪽(빈 채면 크롬이 지운다)
-    for pi, pg in enumerate(pages):
-        for p2 in [pg] + spares.get(pi, []):
-            svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게)
+    svgs, report, spec = fill_svgs(lib, plan, data, ctx)
     if body.get("as") == "svg":
         return jsonify({"svgs": svgs, "report": report, "warnings": ctx.warnings})
     out = os.path.join(store.udir(), "_pdf")

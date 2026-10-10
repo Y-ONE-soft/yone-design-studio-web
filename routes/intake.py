@@ -393,6 +393,63 @@ def register_draft(series, verdict, measured, pdf_path, pages, pdf_name):
     return did, changes, bad
 
 
+def register_pdf(pdf, series, name=None, log=print):
+    """완성본 PDF 를 그 틀의 디자인으로 등록 — 판정(클로드) 없이 바로. bin/register-design · 관리 ＋ 「PDF 등록」이 같이 쓴다.
+    → (디자인 id, 잰 값, 구성). 반복되는 면은 구성 하나로 묶인다(design_layouts)."""
+    import tempfile
+    import unicodedata
+    from routes.catalog import _ddir, design_layouts
+    pdf_name = unicodedata.normalize("NFC", os.path.basename(pdf)).strip()
+    name = unicodedata.normalize("NFC", name or os.path.splitext(pdf_name)[0]).strip()
+    m = measure(pdf)
+    log(f"PDF {m['pages']}면 · {m['trim_mm'][0]:g}×{m['trim_mm'][1]:g}mm")
+    with tempfile.TemporaryDirectory() as tmp:
+        pages = render_pages(pdf, tmp, dpi=80)
+        verdict = {"verdict": "design", "series": series, "confidence": 1.0, "knobs": {},
+                   "design_name": name, "reasons": [f"PDF 등록 — {pdf_name}"]}
+        did, _, _ = register_draft(series, verdict, m, pdf, pages, pdf_name)
+    d = _ddir(series, did)
+    dj = json.load(open(os.path.join(d, "design.json"), encoding="utf-8"))
+    # 틀별 구성 규칙(SECTION_RULES)은 그 틀의 원래 책용이라 새 책에는 안 쓴다 — 면에 인쇄된 라벨·생김새로만 구성
+    dj.update(name=name, desc=f"{pdf_name} · {m['pages']}면", draft=False, layout_rules=False, made="pdf")
+    json.dump(dj, open(os.path.join(d, "design.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    cfg = json.load(open(os.path.join(d, "config.json"), encoding="utf-8"))
+    cfg["book"] = {"title": name}
+    cfg["_디자인"] = f"{pdf_name} ({datetime.date.today().isoformat()})"
+    json.dump(cfg, open(os.path.join(d, "config.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+    log("구성 묶는 중…")
+    r = design_layouts(series, did)
+    log(f"등록 끝 — 구성 {len(r['layouts'])}개")
+    return did, m, r
+
+
+@bp.route("/api/catalog/register-pdf", methods=["POST"])
+def api_register_pdf():
+    """관리 ＋ 「PDF 등록」 — 폼 pdf(파일) · series(틀) · name(이름, 없으면 파일 이름). 잡으로 돈다 → {job}. 상태는 /api/units/job/<id>"""
+    from core import jobs
+    from routes.catalog import _meta
+    f = request.files.get("pdf")
+    series = (request.form.get("series") or "").strip()
+    if not f or not f.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "PDF 파일을 고르세요"}), 400
+    if series not in _meta():
+        return jsonify({"error": f"틀 {series} 없음"}), 404
+    tmp = os.path.join(INTAKE, "_upload_" + uuid.uuid4().hex[:8])
+    os.makedirs(tmp, exist_ok=True)
+    path = os.path.join(tmp, os.path.basename(f.filename.replace("\\", "/")) or "upload.pdf")
+    f.save(path)
+    name = (request.form.get("name") or "").strip() or None
+
+    def go(job, log):
+        try:
+            did, m, r = register_pdf(path, series, name, log)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        return {"series": series, "design": did, "pages": m["pages"], "layouts": len(r["layouts"]), "url": f"/design/{series}/{did}"}
+    job = jobs.start("pdf-register", go, meta={"series": series, "pdf": f.filename})
+    return jsonify({"ok": True, "job": job.id})
+
+
 _EXTERNAL = re.compile(r"^(\$\{STUDIO\}|~|/)")
 
 

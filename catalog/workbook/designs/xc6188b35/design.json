@@ -1,0 +1,12 @@
+{
+ "date": "2026-10-10",
+ "name": "스텝바이스텝 워크북 정본 (편집기 제작)",
+ "desc": "편집기 제작 · 37면",
+ "source": "편집기: 스텝바이스텝 워크북 정본 (편집기 제작)",
+ "made": "editor",
+ "plan": "plan_a6ede986",
+ "units": "units.json",
+ "pages": 37,
+ "draft": false,
+ "updated": "2026-10-10"
+}

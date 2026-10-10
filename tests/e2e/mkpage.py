@@ -259,6 +259,7 @@ def open_doc(name=None):
     if name:
         return [{"js": f"window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; window.__p={name!r}; true", "wait": 300},
                 S("＋ 새 문서", 1300), {"click": "#pcards .pcard.new", "wait": 5000},
+                {"until": "docPages().length > 0 && page", "wait": 500},             # 서버가 바쁘면(기동 직후 구성 계산) 5초로 모자라다
                 {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000}]
     return [{"js": "window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; true", "wait": 300},
             {"click": "#pcards .pcard:not(.new)", "wait": 4800},

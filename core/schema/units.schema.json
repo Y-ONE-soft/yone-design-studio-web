@@ -431,14 +431,16 @@
       "type": "object", "required": ["id", "name", "spec", "sections"],
       "properties": {
         "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
-        "content": {"type": "object", "description": "넣어 둔 원고 — {자리 이름: 글 | [글…]}. 틀(자리·임시 글·스타일)에 넣으면 임시 글 대신 나온다 (core/units/content.py). 흐름 자리(「번호+발문+…」)는 [문항…] — 문항 = [[자리, 글], …] (문항 안 차례) 또는 {자리: 글}",
+        "content": {"type": "object", "description": "넣어 둔 원고 — {자리 이름: 글 | [글…]}. 틀(자리·임시 글·스타일)에 넣으면 임시 글 대신 나온다 (core/units/content.py). 흐름 자리(「번호+발문+…」)는 [문항…] — 문항 = [[자리, 글], …] (문항 안 차례) 또는 {자리: 글}. 「원고마다」 묶음의 첫 쪽 이름은 [레코드…] — 레코드 = {자리: 글 | [글…] | [문항…]} 하나가 묶음 한 벌 (content.plan_pages)",
                     "additionalProperties": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"oneOf": [
                       {"type": "string"},
                       {"type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "string"}}},
-                      {"type": "object", "additionalProperties": {"type": "string"}}]}}]}},
+                      {"type": "object", "additionalProperties": {"type": ["string", "array"]}}]}}]}},
         "map": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"},
                 "description": "원고 연결표 — {원고 유형 이름 또는 원고 쪽 블록 id: 이 문서에서 쓸 블록 id}. 코드에 박아 두던 매칭표를 문서에 둔다",
                 "propertyNames": {"maxLength": 60}},
+        "catalog": {"type": "object", "description": "관리에 등록한 곳 — {series: 틀, design: 디자인 폴더}. 다시 등록하면 같은 카드를 새로 그린다 (routes/units.register_design)",
+                    "properties": {"series": {"type": "string"}, "design": {"type": "string"}}},
         "skin": {"$ref": "#/definitions/id", "description": "이 문서의 브랜드(옷) — 열 때 이 옷으로 그린다. 없으면 화면에서 고른 옷"},
         "facing": {"type": "boolean", "description": "페이지 마주보기 — 켜면 2·3쪽이 한 장(펼침면)으로 보이고 1쪽은 오른쪽. 안 적으면 켠 것으로 본다"}, "spec": {"$ref": "#/definitions/id"},
         "order": {"enum": ["by_page", "by_set"], "description": "묶는 순서 — by_page(기본·유형별) = 「지문마다」 면 하나를 원고 수만큼 몰아 찍는다. by_set(지문별) = 잇닿은 「지문마다」 면들을 한 벌로 묶어 원고마다 한 벌씩"},

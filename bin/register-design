@@ -61,25 +61,8 @@ def main():
     pdf_name = nfc(os.path.basename(pdf))
     name = nfc(sys.argv[3]) if len(sys.argv) > 3 else os.path.splitext(pdf_name)[0]
 
-    from routes.catalog import _ddir, design_layouts
-    from routes.intake import measure, register_draft, render_pages
-    m = measure(pdf)
-    with tempfile.TemporaryDirectory() as tmp:
-        pages = render_pages(pdf, tmp, dpi=80)
-        verdict = {"verdict": "design", "series": series, "confidence": 1.0, "knobs": {},
-                   "design_name": name, "reasons": [f"bin/register-design — {pdf_name}"]}
-        did, _, _ = register_draft(series, verdict, m, pdf, pages, pdf_name)
-    d = _ddir(series, did)
-    dj = json.load(open(os.path.join(d, "design.json"), encoding="utf-8"))
-    # 틀별 구성 규칙(SECTION_RULES)은 그 틀의 원래 책용이라 새 책에는 안 쓴다 — 면에 인쇄된 라벨·생김새로만 구성
-    dj.update(name=name, desc=f"{pdf_name} · {m['pages']}면", draft=False, layout_rules=False)
-    json.dump(dj, open(os.path.join(d, "design.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    cfg = json.load(open(os.path.join(d, "config.json"), encoding="utf-8"))
-    cfg["book"] = {"title": name}
-    cfg["_디자인"] = f"{pdf_name} ({datetime.date.today().isoformat()})"
-    json.dump(cfg, open(os.path.join(d, "config.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=2)
-
-    r = design_layouts(series, did)
+    from routes.intake import register_pdf
+    did, m, r = register_pdf(pdf, series, name)
     print(f"✓ 등록: {name}  ({series}/{did}, {m['trim_mm'][0]:g}×{m['trim_mm'][1]:g}mm, {r['total']}면)")
     print(f"  구성 {len(r['layouts'])}개")
     for k, l in enumerate(r["layouts"], 1):

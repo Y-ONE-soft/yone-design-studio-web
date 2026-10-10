@@ -4,6 +4,13 @@
     python3 tests/e2e/replay.py <단위> rec       같은 대본으로 녹화(기본 4배속) + 비교
     python3 tests/e2e/replay.py <단위> reset     그 단위의 데이터·그림·영상 지우기 (make.py 는 남김)
     python3 tests/e2e/replay.py _audit audit     기능을 고친 뒤 편집기 전체 감사 (빈 데이터로)
+    python3 tests/e2e/replay.py <단위> make      제작 — 녹화·화면 없이 검사를 통과한 기능(서버 주소)을 바로 불러 결과물을 만든다 (build.py)
+
+검사와 제작은 나눈다 (2026-10-10):
+  검사  check·rec — make.py 대본을 마우스·키보드로 재생해 화면 기능이 진짜 되는지 본다. 기능을 새로 만들거나 고쳤을 때.
+  제작  make — 단위 폴더의 build.py 가 화면 버튼이 부르는 서버 주소를 같은 차례로 바로 부른다. 결과물이 필요할 때마다(몇 초~몇 분).
+        제작 데이터는 ~/.cache/yone-make/<단위>/catalog (편집기 저장분만 따로, 틀·디자인 폴더는 리포를 가리켜 등록한 디자인은 리포에 남는다).
+        다른 서버에 바로: python3 tests/e2e/replay/<단위>/build.py <서버 주소>
 
 단위 폴더 tests/e2e/replay/<단위>/ 에
   make.py   대본 생성기 — 실행하면 같은 폴더에 steps.json 을 쓴다
@@ -178,6 +185,23 @@ if cmd == "reset":
             os.remove(os.path.join(udir, n))
     print("지움:", unit, "(make.py · 상태.json 은 남김)")
     sys.exit()
+
+if cmd == "make":                                                           # 제작 — 녹화 없이 서버 기능으로 (build.py)
+    bpy = os.path.join(udir, "build.py")
+    if not os.path.exists(bpy):
+        sys.exit(f"제작 대본 없음 — {udir}/build.py (검사 대본 make.py 와 같은 일을 화면이 부르는 서버 주소로)")
+    data = os.path.expanduser(f"~/.cache/yone-make/{unit}/catalog")
+    out = os.path.expanduser(f"~/Downloads/편집기제작/{unit}")
+    os.makedirs(out, exist_ok=True)
+    fresh_data()
+    srv = server()
+    try:
+        t0 = time.time()
+        r = subprocess.run([PY, bpy, BASE], cwd=REPO)
+        print(f"{unit} make — {time.time() - t0:.0f}초" + ("" if r.returncode == 0 else " · 실패"))
+        sys.exit(r.returncode)
+    finally:
+        srv.kill()
 
 state = json.load(open(os.path.join(udir, "상태.json"), encoding="utf-8"))
 os.makedirs(out, exist_ok=True)

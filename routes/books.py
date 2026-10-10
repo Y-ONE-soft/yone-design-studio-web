@@ -147,19 +147,21 @@ def page_projects():
     did = _nfc(request.args.get("dir", "")).strip()
     q = _nfc(request.args.get("q", "")).strip().lower()
     folder = next((f for f in folders if f["id"] == did), None) if did else None
-    designs, bare = [], []
+    designs, bare, fseries = [], [], []
     if folder:
         bs = [b for b in bs if b["dir"] == did]
         from routes.catalog import design_images     # 이 폴더의 틀·디자인 — 여기서 바로 만들 수 있게
         for t in templates():
             if t["dir"] != did:
                 continue
+            fseries.append({"series": t["series"], "name": t["name"]})     # ＋ 메뉴(편집기 제작·PDF 등록)가 이 폴더의 틀로
             if not t["designs"]:                             # 틀은 있는데 디자인이 아직 없는 것 — 카드로 보여야 등록하러 간다
                 bare.append(t)
             for d in t["designs"]:
                 imgs = design_images(t["series"], d)      # 견본 > 페이지 틀 > 기준 PDF 앞 면
                 designs.append({"series": t["series"], "tname": t["name"], "ready": t["ready"], "id": d["id"], "name": d["name"],
-                                "draft": d.get("draft", False), "n": ((d.get("intake") or {}).get("measured") or {}).get("pages"),   # 기준 PDF 면 수 (견본 장수 아님)
+                                "draft": d.get("draft", False), "n": ((d.get("intake") or {}).get("measured") or {}).get("pages") or d.get("pages"),   # 기준 PDF 면 수 (견본 장수 아님)
+                                "made": d.get("made") or ("pdf" if str(d.get("source", "")).startswith("PDF:") or (d.get("intake") or {}).get("measured") else ""),   # 라벨 — PDF 등록 · 편집기 제작
                                 "img": imgs[0]["src"] if imgs else "",
                                 "manuscript": t["manuscript"], "tags": d.get("tags") or {}})
     # 필터 — 디자인 tags(design.json, 예: 학교·년도·교재 유형)의 값을 키마다 모은다. 값이 둘 이상 생기면 쓸모가 있지만 하나여도 보여 준다
@@ -171,7 +173,7 @@ def page_projects():
     filters = {k: sorted(v) for k, v in filters.items()}
     if q:
         bs = [b for b in bs if q in " ".join((b["title"], b["key"], b["series_name"] or "", b["design"])).lower()]
-    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs, bare=bare, filters=filters,
+    return render_template("projects.html", books=bs, folders=folders, folder=folder, q=q, designs=designs, bare=bare, filters=filters, fseries=fseries,
                            total=sum(counts.values()), active_nav="프로젝트")
 
 

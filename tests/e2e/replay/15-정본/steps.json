@@ -1,0 +1,1185 @@
+[
+ {
+  "js": "window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; window.__p='스텝바이스텝 워크북 정본 (편집기 제작)'; true",
+  "wait": 300
+ },
+ {
+  "say": "＋ 새 문서",
+  "wait": 1300
+ },
+ {
+  "click": "#pcards .pcard.new",
+  "wait": 5000
+ },
+ {
+  "until": "docPages().length > 0 && page",
+  "wait": 500
+ },
+ {
+  "clickif": {
+   "at": "#tg-side",
+   "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"
+  },
+  "wait": 1000
+ },
+ {
+  "js": "(() => { const k = docPages().length; if (k !== 1) throw new Error('시작 쪽 수가 1 이 아니라 ' + k); return '시작 쪽 1 확인'; })()",
+  "wait": 500
+ },
+ {
+  "clickif": {
+   "at": "#tg-strip",
+   "when": "!view.strip"
+  },
+  "wait": 1000
+ },
+ {
+  "say": "① 단위 문서들을 이 문서 끝에 가져온다 — 문서 패널 「문서 파일 → 가져오기」",
+  "wait": 1800
+ },
+ {
+  "say": "가져오기 — 01-간지표지 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/01-간지표지.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 01C-차례 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/01C-차례.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 02B-원고자리 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/02B-원고자리.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 03-A본문OX (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/03-A본문OX.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 04-B본문정리 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/04-B본문정리.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 05-B내용종합 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/05-B내용종합.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 06-C문장배열 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/06-C문장배열.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 07-C빈칸어휘 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/07-C빈칸어휘.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 08-간지 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/08-간지.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 09-A어법선택 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/09-A어법선택.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 10-B어법OX (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/10-B어법OX.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 11-C빈칸어법 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/11-C빈칸어법.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 12-C영작배열 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/12-C영작배열.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 13-간지 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/13-간지.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 14F-흐름실전 (2쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/14F-흐름실전.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "say": "가져오기 — 14c-S실전문제 (9쪽)",
+  "wait": 900
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side #s-pkg-mode",
+   "value": "append"
+  },
+  "wait": 500
+ },
+ {
+  "upload": {
+   "at": "#side #s-pkg-file",
+   "path": "/Users/juwoongkim/Downloads/편집기재현/15-정본/문서파일/14c-S실전문제.json"
+  },
+  "wait": 3500
+ },
+ {
+  "js": "(() => { const k = docPages().length; return '쪽 ' + k; })()"
+ },
+ {
+  "js": "(() => { const k = docPages().length; if (k !== 40) throw new Error('가져온 뒤 쪽 수 40 이 아니라 ' + k); return '가져온 쪽 40 확인'; })()"
+ },
+ {
+  "say": "② 쓰지 않는 쪽 10개 지우기 — 새 문서의 빈 쪽 · 겹치는 간지 · 14c 의 고정 실전 문제(뒤표지만 남긴다)",
+  "wait": 1800
+ },
+ {
+  "move": "#rail .pg[data-i=\"38\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"38\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"37\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"37\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"36\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"36\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"35\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"35\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"34\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"34\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"33\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"33\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"32\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"32\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"31\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"31\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"2\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"2\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "move": "#rail .pg[data-i=\"0\"]",
+  "wait": 400
+ },
+ {
+  "click": "#rail .pg[data-i=\"0\"] [data-pg-del]",
+  "wait": 1200
+ },
+ {
+  "js": "(() => { const k = docPages().length; if (k !== 30) throw new Error('쪽 수 30 이 아니라 ' + k); return '남은 쪽 30 확인'; })()"
+ },
+ {
+  "say": "③ 구성마다 이름 · 「원고마다 — 지문마다 한 장」 (원고 목록이 구성 이름으로 들어온다)",
+  "wait": 1800
+ },
+ {
+  "click": "#rail .pg[data-i=\"3\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 A1 어휘 선택"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"4\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 A1 어휘 선택 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"5\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 A2 본문 O/X"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"6\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 A2 본문 O/X — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"7\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 B1 본문 정리"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"8\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 B1 본문 정리 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"9\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 B2 내용 종합"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"10\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 B2 내용 종합 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"11\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 C1 문장 배열"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"12\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 C1 문장 배열 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"13\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 C2 빈칸 어휘"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"14\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 01 C2 빈칸 어휘 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"17\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 A1 어법 선택"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"18\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 A1 어법 선택 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"19\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 B1 어법 O/X"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"20\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 B1 어법 O/X — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"21\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 C1 빈칸 어법"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"22\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 C1 빈칸 어법 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"23\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 C2 영작 배열"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#rail .pg[data-i=\"24\"]",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "STEP 02 C2 영작 배열 — 이어지는 면"
+  },
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-rep",
+   "value": "each_set"
+  },
+  "wait": 900
+ },
+ {
+  "say": "④ 견본 원고 넣기 — 구성마다 한 벌(이름 → [레코드]) · 간지 교재명·단원명 · S 문항 목록",
+  "wait": 1800
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "#side #s-content",
+   "value": "{\"교재명\": [\"공통영어2 능률(민)\", \"공통영어2 능률(민)\", \"공통영어2 능률(민)\", \"스텝바이스텝 워크북\"], \"단원명\": [\"Unit.1\", \"Unit.1\", \"Unit.1\"], \"STEP 01 A1 어휘 선택\": [{\"지문번호\": [\"01\", \"02\", \"03\", \"04\"], \"지문\": [\"<BREAKING NEWS: An Unusual Rescue Effort> A [ ⓐ missing  / ⓑ present ] hiker named Rene Compean was found [ ⓐ safe  / ⓑ endangered ] on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a [ ⓐ key  / ⓑ trivial ] role in saving his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm standing here at the [ ⓐ exit   / ⓑ entrance ] of Angeles National Forest. As you just heard, Rene Compean was recently [ ⓐ abandoned   / ⓑ rescued ] from this forest. Compean, an [ ⓐ experienced  / ⓑ novice ] hiker who knew the area [ ⓐ well  / ⓑ poorly ], went on a hike [ ⓐ alone  / ⓑ accompanied ] on April 12. However, a recent forest fire had [ ⓐ constructed   / ⓑ destroyed ] some signs, which caused him to take a [ ⓐ wrong  / ⓑ correct ] turn and get [ ⓐ found   / ⓑ lost ]. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but [ ⓐ dawn   / ⓑ night ] was coming. It started getting very windy and the temperature was [ ⓐ dropping  / ⓑ rising ] [ ⓐ gradually   / ⓑ quickly ].\", \"Compean was [ ⓐ shallow   / ⓑ deep ] in the forest, so his cell phone couldn't get a signal. To make matters [ ⓐ worse  / ⓑ better ], its battery was nearly [ ⓐ dead  / ⓑ alive ]. He climbed up to a [ ⓐ higher  / ⓑ lower ] spot and found a [ ⓐ strong   / ⓑ weak ] signal. He used the [ ⓐ last  / ⓑ first ] of his battery to send a text message to his friend. In the message, he said that he was [ ⓐ found   / ⓑ lost ] and needed help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the [ ⓐ distant   / ⓑ local ] police. When the local police were informed of the [ ⓐ missing  / ⓑ present ] hiker, they immediately sent a rescue team. Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in [ ⓐ white   / ⓑ black ] ash from the [ ⓐ ancient   / ⓑ recent ] forest fires. However, the picture didn't help the police much because the quality was [ ⓐ excellent   / ⓑ poor ] due to the weak signal, and his location settings were turned [ ⓐ off  / ⓑ on ].\", \"As Compean had already spent one night in [ ⓐ difficult  / ⓑ effortless ] conditions, the police worried about his spending a [ ⓐ second  / ⓑ first ] night. So they decided to use social media to find out if anyone could find clues in the picture. They [ ⓐ concealed   / ⓑ posted ] the picture and asked if anyone [ ⓐ recognized  / ⓑ ignored ] the scenery. The picture [ ⓐ shared  / ⓑ withheld ] by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of [ ⓐ obsolete   / ⓑ potential ] dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was [ ⓐ gradually   / ⓑ immediately ] interested. When Kuo saw the [ ⓐ white   / ⓑ black ] ash on Compean's legs, it reminded him of a [ ⓐ ancient   / ⓑ recent ] forest fire. This helped him to infer Compean's [ ⓐ approximate  / ⓑ precise ] location. Kuo was very [ ⓐ unfamiliar   / ⓑ familiar ] with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean's picture, Kuo guessed that it must be the [ ⓐ south  / ⓑ north ] side of the mountain. The north side does not have any [ ⓐ barren   / ⓑ green ] valleys like those in the picture.\", \"As a final step, Kuo compared the view in Compean's picture with more satellite images. Finally, he found a match and provided the police with Compean's [ ⓐ definite   / ⓑ probable ] location. The police sent a rescue helicopter to the location and found Compean [ ⓐ less  / ⓑ more ] than a mile away from the area indicated by Kuo. Thanks to Kuo's [ ⓐ conventional   / ⓑ unusual ] skills, Compean was rescued [ ⓐ injured   / ⓑ unharmed ]. He later thanked Kuo on a video call. The [ ⓐ distant   / ⓑ local ] police are now reminding hikers who hike [ ⓐ together   / ⓑ alone ] to inform others of their [ ⓐ spontaneous   / ⓑ planned ] route and to always bring a [ ⓐ digital   / ⓑ paper ] map. This is Marissa Reynolds from LA. Now [ ⓐ back  / ⓑ forward ] to the studio.\"]}], \"STEP 01 A2 본문 O/X\": [{\"지문번호\": [\"01 \", \"02 \"], \"지문\": [\"BREAKING NEWS: An Unusual Rescue Effort A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\", \"Compean was deep in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], \"문제번호\": [\"01\", \"02\"], \"발문\": [\"다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오.\", \"다음 글의 내용과 일치하면 O, 일치하지 않으면 X를 고르시오.\"], \"진술번호\": [\"01\", \"02\", \"03\", \"04\", \"05\", \"01\", \"02\", \"03\", \"04\", \"05\"], \"진술\": [\"Rene Compean was found in Angeles National Forest.\", \"Compean went hiking with a group of friends on April 12.\", \"A recent forest fire made some signs disappear.\", \"Compean wrote SOS on the ground hoping a helicopter would see it.\", \"The weather was hot and sunny when Compean got lost.\", \"Compean's phone battery was almost empty when he tried to get help.\", \"He called his friend to explain that he was lost in the forest.\", \"The police began searching for Compean as soon as they heard he was missing.\", \"The picture Compean sent clearly showed his exact location.\", \"His legs were dirty from black ash left by forest fires.\"]}], \"STEP 01 B1 본문 정리\": [{\"지문번호\": [\"01\", \"02\"], \"지문\": [\"<BREAKING NEWS: An Unusual Rescue Effort> A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\", \"Compean was deep in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], \"주제\": [\"The Importance of Preparedness and Technology in Outdoor Survival\\nThe Role of Community and Rescue Teams in Saving Lives\", \"The challenges of rescuing lost hikers in remote areas\\nThe importance and limitations of technology in emergency situations\"], \"제목\": [\"Lost but Found: How a Photo Led to a Hiker’s Rescue\\nSurviving the Wilderness: The Story of Rene Compean’s Ordeal\", \"Lost in the Wilderness: A Struggle for Survival\\nWhen Technology Fails: The Search for a Missing Hiker\"], \"발문\": [\"다음 글의 주제로 가장 적절한 것은?\", \"다음 글의 주제로 가장 적절한 것은?\"], \"문항지문\": [\"<BREAKING NEWS: An Unusual Rescue Effort> A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\", \"Compean was deep in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], \"선지\": [\"① the use of technology in modern search and rescue operations\\n② the dangers of hiking alone in unfamiliar areas\\n③ the impact of forest fires on local wildlife\\n④ the rescue of a lost hiker in Angeles National Forest\\n⑤ the weather conditions in Angeles National Forest during spring\", \"① the role of friends in sharing emergency messages\\n② the effects of recent forest fires on local wildlife\\n③ the importance of keeping location settings on for hikers\\n④ difficulties in rescuing a lost hiker due to limited technology\\n⑤ the process of sending a text message in a weak signal area\"]}], \"STEP 01 B2 내용 종합\": [{\"지문번호\": [\"01 \", \"02 \"], \"지문\": [\"BREAKING NEWS: An Unusual Rescue Effort A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\", \"Compean was deep in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], \"문항번호\": [\"01 |\", \"02 |\", \"03 |\", \"01 |\", \"02 |\", \"03 |\"], \"발문\": [\"What caused Rene Compean to get lost during his hike?\", \"What actions did Compean take to try to get help while he was lost?\", \"What weather conditions made Compean's situation more dangerous as night approached?\", \"What was the main reason Compean's cell phone couldn't get a signal initially?\", \"What information did Compean include in his text message to his friend?\", \"Why wasn't the picture Compean sent very helpful to the police rescue team?\"], \"선지\": [\"① He was an inexperienced hiker who didn't know the area\\n② A recent forest fire had destroyed some trail signs\\n③ Bad weather conditions made visibility poor\\n④ He deliberately chose an unfamiliar hiking route\", \"① He used his cell phone to call for rescue services\\n② He built a fire to create smoke signals\\n③ He shouted for help and wrote SOS on the ground\\n④ He climbed to higher ground to get better reception\", \"① Heavy rain and flooding\\n② Strong winds and dropping temperatures\\n③ Dense fog and poor visibility\\n④ Snow and freezing conditions\", \"① The battery was nearly dead\\n② He was deep in the forest\\n③ His location settings were turned off\\n④ The recent forest fires interfered with reception\", \"① Only that he was lost and needed help\\n② His exact GPS coordinates\\n③ That he was lost, needed help, and included a picture of his surroundings\\n④ A detailed description of his hiking route\", \"① The picture only showed his legs hanging over a canyon edge\\n② The picture quality was poor due to weak signal and his location settings were off\\n③ The black ash on his legs obscured important details\\n④ The rescue team couldn't access the picture file\"]}], \"STEP 01 C1 문장 배열\": [{\"문항번호\": [\"01\", \"02\"], \"문장\": [\"(A) Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest.\\n(B) However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost.\\n(C) He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by.\\n(D) A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest.\\n(E) As you just heard, Rene Compean was recently rescued from this forest.\\n(F) <BREAKING NEWS: An Unusual Rescue Effort>\\n(G) Compean, an experienced hiker who knew the area well, went on a hike alone on April 12.\\n(H) It turns out that a photo played a key role in saving his life.\\n(I) He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\\n(J) Let's go over to Marissa Reynolds for more details on this story.\", \"(A) Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees.\\n(B) When the local police were informed of the missing hiker, they immediately sent a rescue team.\\n(C) Compean was deep in the forest, so his cell phone couldn't get a signal.\\n(D) He used the last of his battery to send a text message to his friend.\\n(E) In the message, he said that he was lost and needed help.\\n(F) He climbed up to a higher spot and found a weak signal.\\n(G) To make matters worse, its battery was nearly dead.\\n(H) Compean's friend shared the message and the picture with the local police.\\n(I) He also sent a picture to show his surroundings.\\n(J) His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], \"발문\": [\"아래 주어진 문장 다음에 이어질 문장들의 적절한 순서를 쓰시오.\", \"아래 주어진 문장이 들어갈 위치로 알맞은 곳을 고르시오.\"], \"주어진문장\": [\"<BREAKING NEWS: An Unusual Rescue Effort>\", \"In the message, he said that he was lost and needed help.\"], \"지문\": [\"(A) However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\\n(B) Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12.\\n(C) A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let's go over to Marissa Reynolds for more details on this story.\", \"Compean was deep in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. (①) He used the last of his battery to send a text message to his friend. (②) He also sent a picture to show his surroundings. (③) Compean's friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. (④) Despite searching through the night, they still didn't have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. (⑤) His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"]}], \"STEP 01 C2 빈칸 어휘\": [{\"지문번호\": [\"01 \", \"02 \"], \"문항번호\": [\"01.\", \"02.\", \"03.\", \"04.\", \"05.\", \"06.\", \"07.\", \"08.\", \"09.\", \"10.\", \"11.\", \"12.\", \"13.\", \"14.\", \"15.\", \"16.\", \"17.\", \"18.\", \"19.\", \"20.\", \"21.\", \"22.\", \"23.\"], \"빈칸문장\": [\"<BREAKING NEWS: An Unusual Rescue Effort>\", \"A m_____ hiker named Rene Compean was f_____ s_____ on Tuesday by a rescue team in Angeles National Forest.\", \"It turns out that a photo played a k_____ role in s_____ his life.\", \"Let's go over to Marissa Reynolds for m_____ details on this story.\", \"Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest.\", \"As you just heard, Rene Compean was recently r_____ from this forest.\", \"Compean, an e_____ hiker who knew the area w_____, went on a hike a_____ on April 12.\", \"However, a recent forest fire had d_____ some signs, which c_____ him to take a w_____  t_____ and g_____ l_____.\", \"He tried s_____ for h_____ and even w_____ SOS on the ground in case a plane or helicopter passed by.\", \"He had planned to hike for only about two hours, but night was c_____.\", \"It s_____ getting very w_____ and the temperature was d_____ q_____.\", \"Compean was d_____ in the forest, so his cell phone c_____ g_____ a signal.\", \"T_____ m_____ m_____ w_____, its battery was nearly d_____.\", \"He climbed up to a h_____ spot and found a w_____ signal.\", \"He used the l_____ of his battery to send a text message to his friend.\", \"In the message, he said that he was l_____ and n_____ h_____.\", \"He also sent a picture to s_____ his s_____.\", \"Compean's friend s_____ the message and the picture with the local police.\", \"When the local police were i_____ of the m_____ hiker, they immediately sent a rescue team.\", \"Despite s_____ through the night, they still d_____ h_____ a_____ i_____ where Compean was.\", \"In the picture, his legs were hanging over the edge of a canyon with rocks and green trees.\", \"His legs were c_____ in black ash from the recent forest fires.\", \"However, the picture didn't help the police m_____ because the quality was p_____ due to the w_____ signal, and his location settings were t_____ o_____.\"], \"해석\": [\"<뉴스 속보: 이례적인 구조 노력>\", \"Rene Compean이라는 실종된 등산객이 화요일 Angeles National Forest(앤젤레스 국유림)에서 안전한 상태로 발견되었습니다.\", \"그의 생명을 구하는 데 한 사진이 중요한 역할을 한 것으로 드러났습니다.\", \"이 사건에 대한 더욱 자세한 내용을 위해 Marissa Reynolds를 연결해 보겠습니다.\", \"고마워요, Thomas. 저는 여기 Angeles National Forest 입구에 서 있습니다.\", \"여러분이 방금 들으셨듯이, Rene Compean은 최근 이 숲에서 구조되었습니다.\", \"Compean은 이 지역을 잘 알던 숙련된 등산객으로, 4월 12일 홀로 등산에 나섰습니다.\", \"그러나, 최근의 산불이 몇몇 표지판을 망가뜨렸고, 그것이 그가 길을 잘못 들어 길을 잃게 했습니다.\", \"그는 도움을 청하기 위해 소리를 지르기도 하고 심지어 비행기나 헬리콥터가 지나갈 경우를 대비하여 땅에 SOS를 쓰기도 했습니다.\", \"그는 약 2시간 정도만 등산할 계획이었으나, 밤이 찾아오고 있었습니다.\", \"강한 바람이 불기 시작했고 기온은 급격히 떨어지고 있었습니다.\", \"Compean은 숲속 깊은 곳에 있었고, 그래서 그의 휴대폰은 신호를 받지 못했습니다.\", \"설상가상으로, 그것의 배터리는 거의 방전되었습니다.\", \"그는 더 높은 곳으로 올라갔고 약한 신호를 찾았습니다.\", \"그는 그의 마지막 (남은) 배터리를 그의 친구에게 문자 메시지를 보내기 위해 사용했습니다.\", \"메시지에, 그는 그가 길을 잃었으며 도움이 필요하다고 말했습니다.\", \"그는 또한 그의 주변 환경을 보여 주기 위해 사진 한 장을 보냈습니다.\", \"Compean의 친구는 그 메시지와 사진을 지역 경찰에게 공유했습니다.\", \"지역 경찰이 실종된 등산객에 대해 보고받았을 때, 그들은 즉시 구조팀을 보냈습니다.\", \"밤샘 수색에도 불구하고, 그들은 여전히 Compean이 어디에 있는지 어떤 짐작도 하지 못했습니다.\", \"사진에서, 그의 다리는 바위와 푸른 나무들이 있는 협곡의 가장자리에 걸쳐 있었습니다.\", \"그의 다리는 최근의 산불로 생긴 검은 재로 덮여 있었습니다.\", \"그러나, 그 사진은 경찰에게 크게 도움이 되지 못했는데 왜냐하면 약한 신호로 인해 화질이 나빴고, 그의 위치 설정도 꺼져 있었기 때문이었습니다.\"]}], \"STEP 02 A1 어법 선택\": [{\"지문번호\": [\"01\", \"02\"], \"지문\": [\"<BREAKING NEWS: An Unusual Rescue Effort> A [missed / missing] hiker [named / naming] Rene Compean [was found / found] [safely / safe] on Tuesday by a rescue team in Angeles National Forest. It turns out [what / that] a photo played a key role in [saving / save] his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm [standing / stood] here at the entrance of Angeles National Forest. As you just heard, Rene Compean [recently / was recently] rescued from this forest. Compean, an [experienced / experiencing] hiker [whom / who] knew the area [good / well], [went / going] on a hike alone on April 12. However, a recent forest fire [has / had] destroyed some signs, [it / which] caused him [taking / to take] a wrong turn and [get / getting] [lost / lose]. He tried [shouting / to shout] for help and even [wrote / writing] SOS on the ground in case a plane or helicopter [passing / passed] by. He [has / had] planned [hiking / to hike] for only about two hours, but night was [coming / come]. It started getting very windy and the temperature was dropping [quick / quickly].\", \"Compean was [deeply / deep] in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was [nearly / near] dead. He climbed up to a higher spot and [found / finding] a weak signal. He used the last of his battery [to send / sending] a text message to his friend. In the message, he said [that / what] he [was lost / lost] and [was needed / needed] help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the local police. When the local police [were informed / informed] of the [missing / missed] hiker, they [immediate / immediately] sent a rescue team. [Despite of / Despite] [searching / being searched] through the night, they still didn't have any idea where [was Compean / Compean was]. In the picture, his legs were [hung / hanging] over the edge of a canyon with rocks and green trees. His legs [covered / were covered] in black ash from the recent forest fires. However, the picture didn't help the police [much / many] [because of / because] the quality was [poor / poorly] [due to / because] the weak signal, and his location settings [turned / were turned] off.\"], \"발문\": [\"다음 밑줄 친 부분 중 어법상 {틀린} 것은?\", \"다음 밑줄 친 부분 중 어법상 {틀린} 것은?\"], \"문항지문\": [\"<BREAKING NEWS: An Unusual Rescue Effort> A missing hiker named Rene Compean was found ①{safely} on Tuesday by a rescue team in Angeles National Forest. It turns out ②{that} a photo played a key role in saving his life. Let's go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I'm standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, ③{went} on a hike alone on April 12. However, a recent forest fire had destroyed some signs, ④{which} caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground ⑤{in case} a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\", \"Compean was deep in the forest, so his cell phone couldn't get a signal. To make matters worse, its battery was ①{nearly} dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery ②{to send} a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean's friend shared the message and the picture with the local police. When the local police ③{informed} of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn't have any idea ④{where} Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn't help the police much because the quality was poor due to the weak signal, and his location settings ⑤{were turned off}.\"]}], \"STEP 02 B1 어법 O/X\": [{\"지문번호\": [\"01 \", \"02 \"], \"발문\": [\"각 문장에서 어법상 틀린 곳이 있다면 표시한 후 바르게 수정하세요\"], \"진술번호\": [\"01.\", \"02.\", \"03.\", \"04.\", \"05.\", \"06.\", \"07.\", \"08.\", \"09.\", \"10.\", \"11.\", \"12.\", \"13.\", \"14.\", \"15.\", \"16.\", \"17.\", \"18.\", \"19.\", \"20.\", \"21.\", \"22.\", \"23.\"], \"진술\": [\"<BREAKING NEWS: An Unusual Rescue Effort>\", \"A missed hiker naming Rene Compean found safely on Tuesday by a rescue team in Angeles National Forest.\", \"It turns out what a photo played a key role in save his life.\", \"Let's go over to Marissa Reynolds for more details on this story.\", \"Thank you, Thomas. I'm stood here at the entrance of Angeles National Forest.\", \"As you just heard, Rene Compean recently rescued from this forest.\", \"Compean, an experiencing hiker whom knew the area good, going on a hike alone on April 12.\", \"However, a recent forest fire has destroyed some signs, it caused him taking a wrong turn and getting lose.\", \"He tried to shout for help and even writing SOS on the ground in case a plane or helicopter passing by.\", \"He has planned hiking for only about two hours, but night was come.\", \"It started getting very windy and the temperature was dropping quick.\", \"Compean was deeply in the forest, so his cell phone couldn't get a signal.\", \"To make matters worse, its battery was near dead.\", \"He climbed up to a higher spot and finding a weak signal.\", \"He used the last of his battery sending a text message to his friend.\", \"In the message, he said what he lost and was needed help.\", \"He also sent a picture to show his surroundings.\", \"Compean's friend shared the message and the picture with the local police.\", \"When the local police informed of the missed hiker, they immediate sent a rescue team.\", \"Despite of being searched through the night, they still didn't have any idea where was Compean.\", \"In the picture, his legs were hung over the edge of a canyon with rocks and green trees.\", \"His legs covered in black ash from the recent forest fires.\", \"However, the picture didn't help the police many because of the quality was poorly because the weak signal, and his location settings turned off.\"]}], \"STEP 02 C1 빈칸 어법\": [{\"지문번호\": [\"01 \", \"02\"], \"문항번호\": [\"1.\", \"2.\", \"3.\", \"4.\", \"5.\", \"6.\", \"7.\", \"8.\", \"9.\", \"10.\", \"11.\", \"12.\", \"13.\", \"14.\", \"15.\", \"16.\", \"17.\", \"18.\", \"19.\", \"20.\", \"21.\", \"22.\", \"23.\"], \"빈칸문장\": [\"<BREAKING NEWS: An Unusual Rescue Effort>\", \"A {missing} hiker {named} Rene Compean {was} {found} {safe} on Tuesday by a rescue team in Angeles National Forest.\", \"{It} turns out {that} a photo played a key role in {saving} his life.\", \"Let's go over to Marissa Reynolds for more details on this story.\", \"Thank you, Thomas. I'm {standing} here at the entrance of Angeles National Forest.\", \"As you just {heard}, Rene Compean {was} {recently} {rescued} from this forest.\", \"Compean, an {experienced} hiker {who} {knew} the area {well}, {went} {on} a hike alone on April 12.\", \"However, a recent forest fire {had} {destroyed} some signs, {which} {caused} him {to} {take} a wrong turn and {get} {lost}.\", \"He {tried} {shouting} for help and even {wrote} SOS on the ground {in} {case} a plane or helicopter {passed} {by}.\", \"He {had} {planned} {to} {hike} for only about two hours, but night was {coming}.\", \"It started getting very windy and the temperature was dropping {quickly}.\", \"Compean was {deep} in the forest, so his cell phone couldn't get a signal.\", \"To make matters worse, its battery was {nearly} dead.\", \"He climbed up to a higher spot and {found} a weak signal.\", \"He used the last of his battery {to} {send} a text message to his friend.\", \"In the message, he said {that} he {was} {lost} and {needed} help.\", \"He also sent a picture to show his surroundings.\", \"Compean's friend shared the message and the picture with the local police.\", \"When the local police {were} {informed} {of} the {missing} hiker, they {immediately} sent a rescue team.\", \"{Despite} {searching} through the night, they still didn't have any idea {where} {Compean} {was}.\", \"In the picture, his legs {were} {hanging} {over} the edge of a canyon with rocks and green trees.\", \"His legs {were} {covered} in black ash from the recent forest fires.\", \"However, the picture didn't help the police {much} {because} the quality was poor {due} {to} the weak signal, and his location settings {were} {turned} {off}.\"], \"해석\": [\"<뉴스 속보: 이례적인 구조 노력>\", \"Rene Compean이라는 실종된 등산객이 화요일 Angeles National Forest(앤젤레스 국유림)에서 안전한 상태로 발견되었습니다.\", \"그의 생명을 구하는 데 한 사진이 중요한 역할을 한 것으로 드러났습니다.\", \"이 사건에 대한 더욱 자세한 내용을 위해 Marissa Reynolds를 연결해 보겠습니다.\", \"고마워요, Thomas. 저는 여기 Angeles National Forest 입구에 서 있습니다.\", \"여러분이 방금 들으셨듯이, Rene Compean은 최근 이 숲에서 구조되었습니다.\", \"Compean은 이 지역을 잘 알던 숙련된 등산객으로, 4월 12일 홀로 등산에 나섰습니다.\", \"그러나, 최근의 산불이 몇몇 표지판을 망가뜨렸고, 그것이 그가 길을 잘못 들어 길을 잃게 했습니다.\", \"그는 도움을 청하기 위해 소리를 지르기도 하고 심지어 비행기나 헬리콥터가 지나갈 경우를 대비하여 땅에 SOS를 쓰기도 했습니다.\", \"그는 약 2시간 정도만 등산할 계획이었으나, 밤이 찾아오고 있었습니다.\", \"강한 바람이 불기 시작했고 기온은 급격히 떨어지고 있었습니다.\", \"Compean은 숲속 깊은 곳에 있었고, 그래서 그의 휴대폰은 신호를 받지 못했습니다.\", \"설상가상으로, 그것의 배터리는 거의 방전되었습니다.\", \"그는 더 높은 곳으로 올라갔고 약한 신호를 찾았습니다.\", \"그는 그의 마지막 (남은) 배터리를 그의 친구에게 문자 메시지를 보내기 위해 사용했습니다.\", \"메시지에, 그는 그가 길을 잃었으며 도움이 필요하다고 말했습니다.\", \"그는 또한 그의 주변 환경을 보여 주기 위해 사진 한 장을 보냈습니다.\", \"Compean의 친구는 그 메시지와 사진을 지역 경찰에게 공유했습니다.\", \"지역 경찰이 실종된 등산객에 대해 보고받았을 때, 그들은 즉시 구조팀을 보냈습니다.\", \"밤샘 수색에도 불구하고, 그들은 여전히 Compean이 어디에 있는지 어떤 짐작도 하지 못했습니다.\", \"사진에서, 그의 다리는 바위와 푸른 나무들이 있는 협곡의 가장자리에 걸쳐 있었습니다.\", \"그의 다리는 최근의 산불로 생긴 검은 재로 덮여 있었습니다.\", \"그러나, 그 사진은 경찰에게 크게 도움이 되지 못했는데 왜냐하면 약한 신호로 인해 화질이 나빴고, 그의 위치 설정도 꺼져 있었기 때문이었습니다.\"]}], \"STEP 02 C2 영작 배열\": [{\"지문이름\": [\"본문1\", \"본문2\"], \"문장번호\": [\"01.\", \"02.\", \"03.\", \"04.\", \"05.\", \"06.\", \"07.\", \"08.\"], \"해석\": [\"Rene Compean이라는 실종된 등산객이 화요일 Angeles National Forest(앤젤레스 국유림)에서 안전한 상태로 발견되었습니다.\", \"그의 생명을 구하는 데 한 사진이 중요한 역할을 한 것으로 드러났습니다.\", \"Compean은 이 지역을 잘 알던 숙련된 등산객으로, 4월 12일 홀로 등산에 나섰습니다.\", \"그러나, 최근의 산불이 몇몇 표지판을 망가뜨렸고, 그것이 그가 길을 잘못 들어 길을 잃게 했습니다.\", \"그는 도움을 청하기 위해 소리를 지르기도 하고 심지어 비행기나 헬리콥터가 지나갈 경우를 대비하여 땅에 SOS를 쓰기도 했습니다.\", \"지역 경찰이 실종된 등산객에 대해 보고받았을 때, 그들은 즉시 구조팀을 보냈습니다.\", \"밤샘 수색에도 불구하고, 그들은 여전히 Compean이 어디에 있는지 어떤 짐작도 하지 못했습니다.\", \"그러나, 그 사진은 경찰에게 크게 도움이 되지 못했는데 왜냐하면 약한 신호로 인해 화질이 나빴고, 그의 위치 설정도 꺼져 있었기 때문이었습니다.\"], \"배열\": [\" on / was found / Rene Compean / a missing hiker / Tuesday / safe / named   in / a rescue team / Angeles National Forest / by \", \" played / saving / that / it / a key role / in / turns out / his life / a photo \", \" knew / Compean / who / well / the area / an experienced hiker ,  on / alone / April 12 / went / a hike / on \", \"However,  some signs / had destroyed / a recent forest fire ,  a wrong turn / him / to / which / and / caused / lost / take / get \", \" tried / help / he / for / shouting  and  on / even wrote / the ground / SOS   passed / case / a plane or helicopter / by / in \", \" of / the local police / the missing hiker / were informed / when ,  a rescue team / immediately sent / they \", \" through / despite / the night / searching ,  where / still didn’t have / was / they / Compean / any idea \", \"However,  the police / the picture / much / didn’t help   the weak signal / was / the quality / were turned off / due / because / to / poor / his location settings \"]}], \"번호+발문+지문+선지+진술+보기+요약문+조건머리+조건+답칸\": [[[\"번호\", \"01\"], [\"발문\", \"다음 글의 주제로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① Importance of safety measures in hiking\\n② Effects of weather on hiking trips\\n③ Role of technology in finding lost people\\n④ Reasons for learning about forest fires\\n⑤ Challenges of hiking in forest areas\"]], [[\"번호\", \"02\"], [\"발문\", \"다음 글의 제목으로 가장 알맞은 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① The Role of Photos in Forest Rescues\\n② Surviving Overnight in the Wilderness\\n③ The Dangers of Hiking Alone\\n④ The Story of a Lost Hiker's Courage\\n⑤ How to Stay Safe in National Parks\"]], [[\"번호\", \"03\"], [\"발문\", \"다음 중 이 글에 대한 요지로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① Rene Compean was saved because he shouted loudly for help.\\n② A photo was crucial in locating a lost hiker in the forest.\\n③ Destroyed signs after a forest fire made navigation impossible.\\n④ The dropping temperature posed a serious threat to Compean.\\n⑤ Experienced hikers often face unexpected challenges during hikes.\"]], [[\"번호\", \"04\"], [\"발문\", \"다음 글의 내용과 일치하는 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① A photo was crucial in the rescue of Rene Compean.\\n② Rene Compean went hiking with a group on April 12.\\n③ Signs in the forest were destroyed by a recent flood.\\n④ Rene unexpectedly spent several days on the hike.\\n⑤ The temperature was warm and sunny when Rene got lost.\"]], [[\"번호\", \"05\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and __________. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① wander off\\n② run back\\n③ walk faster\\n④ stay hidden\\n⑤ climb higher\"]], [[\"번호\", \"06\"], [\"발문\", \"다음 중 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. __________, it started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① It was fortunate as he stayed calm and prepared for cold weather.\\n② He took shelter and waited for the night to pass.\\n③ Due to the lack of warm clothes, he encountered serious risk.\\n④ He wisely decided to stop and wait for help.\\n⑤ Night was approaching as the conditions became harsher.\"]], [[\"번호\", \"07\"], [\"발문\", \"밑줄 친 _{a photo played a key role in saving his life}가 다음 글에서 의미하는 바로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that {a photo played a key role in saving his life}. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① The hiker had a map that guided him back to the right path.\\n② He drew a picture of the area to help rescuers find him.\\n③ A photograph he had taken helped rescuers identify his location.\\n④ He sent a live video call to show where he was.\\n⑤ A satellite image was used by the rescue team to track him.\"]], [[\"번호\", \"08\"], [\"발문\", \"다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"요약문\", \"Rene Compean's (A)__________ in Angeles National Forest was resolved thanks to a (B)__________ that aided his rescue.\"], [\"선지\", \"① hike ┈ message\\n② journey ┈ map\\n③ exploration ┈ call\\n④ adventure ┈ signal\\n⑤ disappearance ┈ photo\"]], [[\"번호\", \"09\"], [\"발문\", \"주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\"], [\"보기\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life.\"], [\"지문\", \"(A) He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\\n(B) As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost.\\n(C) Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest.\"], [\"선지\", \"① (A)-(C)-(B)\\n② (B)-(A)-(C)\\n③ (B)-(C)-(A)\\n④ (C)-(A)-(B)\\n⑤ (C)-(B)-(A)\"]], [[\"번호\", \"10\"], [\"발문\", \"Choose True or False (T/F) based on the content of the following text.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"진술\", \"1) Rene Compean was found by a rescue team in Angeles National Forest. (T/F)\\n2) A photo was not significant in the rescue of Rene Compean. (T/F)\\n3) Compean was an inexperienced hiker who got lost in the forest. (T/F)\\n4) A recent forest fire destroyed some signs, leading Compean to take a wrong turn. (T/F)\\n5) Compean had planned to hike overnight in the forest. (T/F)\"]], [[\"번호\", \"11\"], [\"발문\", \"다음 글을 읽고, 주제문을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 10단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nin / Rene Compean, / rescued / forest / was / trekker, / a lost / Angeles\"], [\"답칸\", \"주제문: __________________________________________.\"]], [[\"번호\", \"12\"], [\"발문\", \"다음 글을 읽고, 빈칸을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. _______________________ in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 10단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nturns / a photo / role / out / It / a key / played / that\"]], [[\"번호\", \"13\"], [\"발문\", \"다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 {않은} 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was ①{found} safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo ②{ignored} a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had ③{destroyed} some signs, which caused him to take a wrong turn and get lost. He tried ④{calling} for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was ⑤{lowering} quickly.\"]], [[\"번호\", \"14\"], [\"발문\", \"글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.\"], [\"보기\", \"Let’s go over to Marissa Reynolds for more details on this story.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. ①{It} turns out that a photo played a key role in saving his life. ②{Thank} you, Thomas. ③{I}’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. ④{Compean}, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. ⑤{He} tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"]], [[\"번호\", \"15\"], [\"발문\", \"다음 글의 주제로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① The challenges of finding a lost person in nature\\n② The effects of forest fires on hiking trails\\n③ The importance of sending photos when lost\\n④ The role of friends in emergency situations\\n⑤ The limitations of using poor-quality images for rescue operations\"]], [[\"번호\", \"16\"], [\"발문\", \"다음 글의 제목으로 가장 알맞은 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① The Difficulties of Rescuing Lost Hikers in Remote Areas\\n② The Impact of Technology on Emergency Situations\\n③ Communicating Emergency Messages with a Dying Phone\\n④ Sending Messages in Weak Signal Areas\\n⑤ Overcoming Obstacles: A Rescue Story\"]], [[\"번호\", \"17\"], [\"발문\", \"다음 중 이 글에 대한 요지로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① A hiker lost in the forest often finds it tough to contact rescuers quickly.\\n② Poor signal and low battery can create dangerous situations for those in remote areas.\\n③ People should always keep their mobile devices charged during travel.\\n④ Sharing location details enhances the effectiveness of rescue operations.\\n⑤ Pictures taken in nature can frequently be unclear and not useful for help.\"]], [[\"번호\", \"18\"], [\"발문\", \"다음 글의 내용과 일치하는 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① Compean had a strong phone signal when he sent the picture.\\n② His friend was able to find him thanks to the picture he sent.\\n③ The rescue team used GPS to locate Compean quickly.\\n④ Compean's message included details about the forest fire location.\\n⑤ The picture Compean sent was of poor quality due to a weak signal.\"]], [[\"번호\", \"19\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to __________. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① identify his surroundings\\n② highlight his footsteps\\n③ confirm his identity\\n④ track his phone\\n⑤ signal for an SOS\"]], [[\"번호\", \"20\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. __________ the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① Thus,\\n② Initially,\\n③ However,\\n④ Likewise,\\n⑤ Surprisingly,\"]], [[\"번호\", \"21\"], [\"발문\", \"밑줄 친 _{his legs were hanging over the edge of a canyon with rocks and green trees}가 다음 글에서 의미하는 바로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, {his legs were hanging over the edge of a canyon with rocks and green trees}. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① He was dangerously close to the edge, highlighting the urgency of his situation.\\n② He was climbing up the canyon wall to get a better signal.\\n③ He was standing safely away from the canyon, observing the view.\\n④ He was positioned on a ledge to capture the surrounding scenery.\\n⑤ He was walking along a safe path with no immediate danger.\"]], [[\"번호\", \"22\"], [\"발문\", \"다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"요약문\", \"Compean's attempt to send a (A)__________ for help was hindered by poor (B)__________ quality and lack of location data.\"], [\"선지\", \"① call ┈ battery\\n② message ┈ image\\n③ text ┈ network\\n④ request ┈ location\\n⑤ signal ┈ photo\"]], [[\"번호\", \"23\"], [\"발문\", \"주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\"], [\"보기\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal.\"], [\"지문\", \"(A) Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was.\\n(B) In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\\n(C) He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings.\"], [\"선지\", \"① (A)-(C)-(B)\\n② (B)-(A)-(C)\\n③ (B)-(C)-(A)\\n④ (C)-(A)-(B)\\n⑤ (C)-(B)-(A)\"]], [[\"번호\", \"24\"], [\"발문\", \"Choose True or False (T/F) based on the content of the following text.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"진술\", \"1) Compean was able to send a clear and high-quality picture to his friend. (T/F)\\n2) Compean's friend directly informed the rescue team about his situation. (T/F)\\n3) The picture Compean sent showed his legs hanging over the edge of a canyon. (T/F)\\n4) The rescue team found Compean quickly after receiving the message and picture. (T/F)\\n5) Compean's phone had a strong signal in the forest. (T/F)\"]], [[\"번호\", \"25\"], [\"발문\", \"다음 글을 읽고, 주제문을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 8단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nin / texted / Compean / for / the woods, / assistance / lost\"], [\"답칸\", \"주제문: __________________________________________.\"]], [[\"번호\", \"26\"], [\"발문\", \"다음 글을 읽고, 빈칸을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, _______________________. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 9단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nwas / Compean / idea / have / still / where / any / they / didn’t\"]], [[\"번호\", \"27\"], [\"발문\", \"다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 {않은} 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He ①{climbed} up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was ②{lost} and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were ③{notified} of the missing hiker, they immediately sent a rescue team. Despite ④{ignoring} through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were ⑤{covered} in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"]], [[\"번호\", \"28\"], [\"발문\", \"글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.\"], [\"보기\", \"He also sent a picture to show his surroundings.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. ① In the message, he said that he was lost and needed help. ② Compean’s friend shared the message and the picture with the local police. ③ When the local police were informed of the missing hiker, they immediately sent a rescue team. ④ Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. ⑤ However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"]], [[\"번호\", \"29\"], [\"발문\", \"다음 글의 주제로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① The role of hobbies in finding lost people\\n② How social media enabled the rescue of a missing person\\n③ The use of satellites to help rescue efforts\\n④ The significance of recognizing landscape features\\n⑤ The dangers of spending a night outdoors\"]], [[\"번호\", \"30\"], [\"발문\", \"다음 글의 제목으로 가장 알맞은 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Finding Lost People with Online Communities\\n② The Role of Police in Search Operations\\n③ An Unlikely Hero of the Wild\\n④ How to Survive in the Wilderness\\n⑤ Identifying Locations from Pictures\"]], [[\"번호\", \"31\"], [\"발문\", \"다음 중 이 글에 대한 요지로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Police used the internet to ask for help in finding a missing person.\\n② Kuo's hobby of using satellite images helped locate Compean.\\n③ Finding pictures on social media is key to discovering filming locations.\\n④ Kuo's knowledge of plants and trees identified the exact location.\\n⑤ Police rely heavily on local knowledge to solve disappearance cases.\"]], [[\"번호\", \"32\"], [\"발문\", \"다음 글의 내용과 일치하는 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Kuo used social media to help the police find Compean.\\n② The police discovered Compean's exact location through the picture alone.\\n③ Kuo deduced Compean's location by recognizing signs of a forest fire.\\n④ The police did not care about Compean's situation as he was only lost for one night.\\n⑤ Satellite images were not useful to Kuo in identifying the location.\"]], [[\"번호\", \"33\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer ___________. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① his general whereabouts\\n② the weather conditions\\n③ the time of the fire\\n④ the direction of the wind\\n⑤ the height of the mountain\"]], [[\"번호\", \"34\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. __________. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① His familiarity with the landscape made him confident in his findings\\n② The dark residue on the man's legs was linked to recent fire activity\\n③ He was able to distinguish the specific film location at once\\n④ The image reminded him of a film scene he had recently encountered\\n⑤ His calculations adjusted due to the incorrect details in the photo\"]], [[\"번호\", \"35\"], [\"발문\", \"밑줄 친 _{determining where pictures were taken and where movies were filmed}가 다음 글에서 의미하는 바로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys {determining where pictures were taken and where movies were filmed}. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Identifying locations based on visual clues in images\\n② Taking professional photographs and film productions\\n③ Analyzing weather patterns for photography locations\\n④ Creating maps for movie and photo shoots\\n⑤ Traveling to places where famous films were made\"]], [[\"번호\", \"36\"], [\"발문\", \"다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"요약문\", \"The use of social media and Ben Kuo's expertise in (A)__________ and (B)__________ helped locate Compean.\"], [\"선지\", \"① fire ┈ geography\\n② tracking ┈ recognition\\n③ visual clues ┈  reasoning\\n④ mapping ┈ analysis\\n⑤ satellite imagery ┈ photo analysis\"]], [[\"번호\", \"37\"], [\"발문\", \"주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\"], [\"보기\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery.\"], [\"지문\", \"(A) Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\\n(B) When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location.\\n(C) The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed.\"], [\"선지\", \"① (A)-(C)-(B)\\n② (B)-(A)-(C)\\n③ (B)-(C)-(A)\\n④ (C)-(A)-(B)\\n⑤ (C)-(B)-(A)\"]], [[\"번호\", \"38\"], [\"발문\", \"Choose True or False (T/F) based on the content of the following text.\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"]]], \"집필\": [\"노윤기\\n신현규\\n이재훈\\n윤지수\\n안재희\\n김지윤\"], \"검토\": [\"함태환\\n송아영\\n박세희\\n표슬미\\n김태림\\n이우솔\\n정다니엘\\n최아인\"], \"보조\": [\"박소원\\n전민정\\n정우주\"], \"디자인\": [\"노혜진\"], \"제작\": [\"서동일\\n김완중\"]}"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#side #s-content-put",
+  "wait": 2500
+ },
+ {
+  "js": "(() => { const t = document.querySelector('#st').textContent; if (/저장 실패/.test(t)) throw new Error('원고 저장 실패 — ' + t); return '원고 저장 확인'; })()"
+ },
+ {
+  "js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"
+ },
+ {
+  "shot": "doc_content.png",
+  "wait": 1500
+ },
+ {
+  "say": "⑤ 관리에 등록 — 워크북 폴더",
+  "wait": 1800
+ },
+ {
+  "key": "Escape",
+  "wait": 400
+ },
+ {
+  "key": "Escape",
+  "wait": 700
+ },
+ {
+  "pick": {
+   "at": "#side #s-reg-series",
+   "value": "workbook"
+  },
+  "wait": 600
+ },
+ {
+  "click": "#side #s-reg",
+  "wait": 3000
+ },
+ {
+  "until": "/등록됨|등록 실패/.test((document.querySelector('#s-reg-st') || {}).textContent || '')",
+  "wait": 500
+ },
+ {
+  "js": "(() => { const t = document.querySelector('#s-reg-st').textContent; if (!/등록됨/.test(t)) throw new Error(t); return t; })()"
+ },
+ {
+  "shot": "registered.png",
+  "wait": 800
+ }
+]

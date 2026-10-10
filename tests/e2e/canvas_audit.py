@@ -87,7 +87,8 @@ try:
         time.sleep(0.3)
     def rect(sel):
         return js(f"(() => {{ const el = document.querySelector({json.dumps(sel)}); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }})()")
-    def center(sel):
+    def center(sel):                                   # 누를 단추가 패널 아래로 밀려 있으면 사람처럼 보이게 굴린 뒤 (패널 줄이 늘면 좌표가 화면 밖)
+        js(f"(() => {{ const el = document.querySelector({json.dumps(sel)}); if (el && el.closest('#side')) el.scrollIntoView({{block: 'nearest'}}); }})()")
         r = rect(sel); return (r[0] + r[2] / 2, r[1] + r[3] / 2) if r else None
     def visible(sel):
         return js(f"(() => {{ const el = document.querySelector({json.dumps(sel)}); if (!el) return false; const cs = getComputedStyle(el); const r = el.getBoundingClientRect(); return cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0; }})()")

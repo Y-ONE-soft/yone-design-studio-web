@@ -479,6 +479,7 @@ function setFor(p) {
   const hit = LIB.sets.find(s => kinds.includes(s.kind) && String(s.group || s.id) === g) || LIB.sets.find(s => kinds.includes(s.kind));
   return hit ? hit.id : curSet;
 }
+const regSeries = () => (plan && plan.catalog && plan.catalog.series) || new URLSearchParams(location.search).get("series") || "";   // 관리에 등록할 폴더(틀) — 한 번 등록했으면 그곳, ＋ 메뉴에서 왔으면 그 폴더
 function planPg(pid) { for (const sc of ((plan || {}).sections) || []) for (const pg of sc.pages || []) if (pg.page === pid) return pg; return null; }   // 그 지면의 틀 항목 (앞·뒤붙이엔 없다)
 function setPlanIds(ids) { const s0 = (plan.sections || [])[0] || {id: "s1", name: "본문"}; const old = {}; for (const sc of plan.sections || []) for (const pg of sc.pages || []) old[pg.page] = pg;
   plan.front = []; plan.back = []; plan.sections = [{id: s0.id, name: s0.name, pages: ids.map(id => Object.assign({}, old[id], {page: id, repeat: (old[id] || {}).repeat || "once"}))}]; }   // 순서가 바뀌어도 「원고마다」 설정은 남긴다
@@ -2049,6 +2050,9 @@ function side() {
       <div class="f"><span title="원고를 어떤 형식으로 읽나 — 원고 자리·받는 원고 목록이 이 형식 것으로 바뀐다. 안 고르면 파일 이름으로 알아본다">원고 형식</span><select id="s-format"><option value="">자동 (파일 이름으로)</option>${(LIB.formats || []).map(fm => `<option value="${esc(fm.id)}" ${plan.format === fm.id ? "selected" : ""}>${esc(fm.name)}</option>`).join("")}</select></div>
       <div class="f"><span>브랜드</span><span style="display:flex;gap:4px"><select id="s-skin">${LIB.skins.map(k2 => `<option value="${k2.id}" ${k2.id === skin().id ? "selected" : ""}>${esc(k2.name)}</option>`).join("")}</select><button class="btn sm sub" id="s-skin-edit" title="색·서체 고치기 · 새 브랜드">…</button></span></div>
       <div class="f"><span></span><button class="btn sm sub" id="s-brandreg" title="이 문서에 직접 고른 색·서체를 모아 새 브랜드(견본)로 — 문서는 그 견본을 가리키게 바뀐다. 다른 브랜드로 갈아입힐 수 있게 된다">이 모양을 브랜드로 등록</button></div>
+      <div class="f"><span title="문서를 파일 하나로(쪽·부품·블록·브랜드·그림) — 다른 편집기로 옮기거나, 다른 문서의 쪽을 이 문서 끝에 붙인다(인디자인 패키지·페이지 가져오기)">문서 파일</span><span style="display:flex;gap:4px;align-items:center"><a class="btn sm sub" id="s-pkg-out" href="/api/units/package?plan=${encodeURIComponent(plan.id)}" download>내보내기</a><select id="s-pkg-mode" title="가져온 문서를"><option value="append">이 문서 끝에</option><option value="new">새 문서로</option></select><button class="btn sm sub" id="s-pkg-in">가져오기…</button><input type="file" id="s-pkg-file" accept=".json,application/json" hidden></span></div>
+      <div class="f"><span title="이 문서를 관리(라인업 폴더)의 디자인 카드로 — 문서를 그린 PDF·견본 그림·문서 묶음이 디자인 폴더에 들어간다. 다시 누르면 같은 카드를 새로 그린다">관리에 등록</span><span style="display:flex;gap:4px;align-items:center"><select id="s-reg-series" style="max-width:170px"><option value="">폴더(틀) 고르기</option>${(LIB.catalog || []).map(c => `<option value="${esc(c.series)}" ${c.series === regSeries() ? "selected" : ""}>${esc((c.dir_name ? c.dir_name + " · " : "") + c.name)}</option>`).join("")}</select><button class="btn sm" id="s-reg">등록</button></span></div>
+      <div class="note" id="s-reg-st" style="margin:-2px 0 6px">${plan.catalog && plan.catalog.design ? `등록됨 — <a href="/design/${esc(plan.catalog.series)}/${esc(plan.catalog.design)}" target="_blank">관리에서 보기</a>` : ""}</div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">견본 글</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
       <h3>원고 넣기 <span class="note" style="display:inline">틀 = 자리·임시 글·스타일 · 원고 = {자리 이름: 글 | [글…]}</span></h3>
@@ -2235,6 +2239,36 @@ function side() {
     say("원고 넣음 — 원고 보기");
   });
   on("#s-brandreg", "click", registerBrand);
+  on("#s-reg", "click", async () => {                                    // 관리에 등록 — 잡으로 돌고(쪽 전부 그리기) 끝나면 카드 주소
+    const series = $("#s-reg-series").value, st = $("#s-reg-st");
+    if (!series) { say("등록할 폴더(틀)를 고르세요"); return; }
+    $("#s-reg").disabled = true; st.textContent = "등록 중 — 쪽을 그리는 중…";
+    const j = await api("/api/units/register", {plan: plan.id, series});
+    if (j.error) { st.textContent = "등록 실패 — " + j.error; $("#s-reg").disabled = false; return; }
+    for (;;) {
+      await new Promise(r => setTimeout(r, 1500));
+      const s = await (await fetch("/api/units/job/" + j.job)).json();
+      if (s.status === "running" || s.status === "queued") { st.textContent = "등록 중 — " + ((s.log || []).slice(-1)[0] || "") + ` (${s.elapsed}초)`; continue; }
+      $("#s-reg").disabled = false;
+      if (s.status === "failed") { st.textContent = "등록 실패 — " + (s.error || ""); return; }
+      plan.catalog = {series: s.result.series, design: s.result.design}; await savePlan();
+      st.innerHTML = `등록됨 — ${s.result.pages}면 · <a href="${esc(s.result.url)}" target="_blank">관리에서 보기</a>`;
+      say("관리에 등록 — " + s.result.pages + "면");
+      return;
+    }
+  });
+  on("#s-pkg-in", "click", () => $("#s-pkg-file").click());
+  on("#s-pkg-file", "change", async (e) => {                              // 문서 파일 가져오기 — 이 문서 끝에 붙이거나 새 문서로
+    const f = e.target.files[0]; if (!f) return;
+    const fd = new FormData(); fd.append("file", f);
+    if ($("#s-pkg-mode").value === "append") fd.append("into", plan.id);
+    const j = await (await fetch("/api/units/package", {method: "POST", body: fd})).json();
+    if (j.error) { say("가져오기 실패 — " + j.error); return; }
+    const lj = await (await fetch("/api/units/library")).json(); for (const k of Object.keys(lj)) LIB[k] = lj[k];
+    const r = j.report || {};
+    openPlan(byId("plans")[j.plan]); pageSvg = {}; render(); drawRail();
+    say(`가져옴 — 쪽 ${r.pages}` + (Object.keys(r.stories_renamed || {}).length ? ` · 이야기 이름 바꿈 ${Object.entries(r.stories_renamed).map(([a, b]) => a + "→" + b).join(", ")}` : "") + ((r.skin_added || []).length ? ` · 브랜드에 보탬 ${r.skin_added.length}` : ""));
+  });
   on("#s-format", "change", async (e) => { if (e.target.value) plan.format = e.target.value; else delete plan.format; await savePlan(); side(); });
   on("#s-skin-edit", "click", () => openSheet("skins"));
   on("#s-set", "change", (e) => { curSet = e.target.value; pageSvg = {}; render(); drawRail(); });
@@ -2379,7 +2413,8 @@ thumbsLoad();
   applyWidths(); applyPanels();                                    // 접어 둔 패널·폭·넓게를 그대로 (localStorage)
   $("#fitsel").value = view.fit || "page";
   const q = new URLSearchParams(location.search); const pl = byId("plans")[q.get("plan") || ""];
-  if (pl) openPlan(pl); else showStart();
+  if (pl) openPlan(pl); else if (q.get("new")) { showStart(); newPlan().then(() => { if (plan && q.get("series")) { plan.catalog = {series: q.get("series")}; savePlan(); side(); } }); }   // 관리 ＋ 「편집기 제작」 — 그 폴더로 등록할 새 문서
+  else showStart();
   if (view.zoom && view.zoom !== 1) setZoom(view.zoom);            // 확대도 그대로
 })();
 </script>
