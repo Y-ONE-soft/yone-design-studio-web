@@ -2282,7 +2282,7 @@ def story_spares(ctx, pages, spec_of):
             tpl = last
         per = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for it in tpl.get("items") or []
                   if (it.get("atom") or {}).get("story") == name) or 1
-        n = min(40, int(math.ceil((need - cap) / per)) + 1)
+        n = min(120, int(math.ceil((need - cap) / per)) + 1)                 # 덧쪽 한도 — 실전 문제 한 구간 75쪽(정본 198~272)
         seq = max(story_seq(it["atom"]) for _, it in chain)
         spares = []
         for k in range(n):

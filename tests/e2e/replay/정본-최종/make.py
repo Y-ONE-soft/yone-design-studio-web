@@ -1889,7 +1889,8 @@ def _wo_body(pno):
         grow.append((bx["y"] + bx["h"], g))
         for d in it["deco"]:                                             # 답 쓰는 곳 — 화살표 둘(원본 꼭짓점) · 가는 줄 둘
             y = d["y"] - shift(d["y"])
-            E({"id": f"d{len(ELEMS[len(PAGES)])}", **{q: round(d[q], 2) for q in ("x", "y", "w", "h")}, "color": d["fill"], "see": d["fill"], "pad": 0.2, "ctol": 20})
+            E({"id": f"d{len(ELEMS[len(PAGES)])}", **{q: round(d[q], 2) for q in ("x", "y", "w", "h")}, "color": d["fill"], "see": d["fill"], "pad": 0.2, "ctol": 20,
+               "원고": True})                                               # 위 낱말 상자를 따라 움직인다 — 원고 쪽 판정
             if d["n"] == 3:
                 st += shape(round(d["x"], 2), round(y, 2), round(d["w"], 2), round(d["h"], 2), d["fill"], d=poly_d(pno, {"x": d["x"], "y": d["y"]}))
             else:
@@ -2182,6 +2183,13 @@ if want(16):
 # ── 원고 넣기 — 바깥 시스템이 보내는 꼴(자리 이름 → 글, 같은 자리가 여러 번이면 쪽 차례대로) ──
 if CONTENT:
     st += put_content(CONTENT)
+
+# ── 관리에 등록 — 책 전체 판에서만(문서 패널 「관리에 등록」: 폴더(틀) 고르고 등록 → 쪽 전부 그려 카드) ──
+if not ONLY:
+    st += [S("관리에 등록 — 폴더 「워크북」 고르고 등록", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+           {"pick": {"at": "#side #s-reg-series", "value": "workbook"}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
+    st += [{"until": "plan.catalog && plan.catalog.design && /등록됨/.test(document.querySelector('#s-reg-st').textContent)", "wait": 300}] * 30   # 쪽 전부 그리기 — 한 번에 최대 60초씩
+    st += [{"js": "(() => { const t = document.querySelector('#s-reg-st').textContent; if (!/등록됨/.test(t)) throw new Error('관리 등록 안 됨 — ' + t); return t; })()"}]
 
 STATE["pages"] = PAGES
 json.dump(STATE, open(os.path.join(WORK, "상태.json"), "w", encoding="utf-8"), ensure_ascii=False)
