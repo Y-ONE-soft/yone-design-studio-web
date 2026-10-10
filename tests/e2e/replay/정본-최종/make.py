@@ -636,10 +636,6 @@ def passage_pair(pno):
     return st
 
 
-if want(4):
-    st += body_pages(4, "A1", "어휘 선택 1", "A어휘선택", "④ A어휘선택")
-    CONTENT["A어휘선택"] = [spread_record(l, l + 1) for l in range(4, 24, 2)]          # 펼침면 10벌 = 레코드 10
-
 # ── 구성 5 「A본문OX」 (원본 24~43쪽 = 펼침면 10벌 · 원고마다) — 견본 = 24·25쪽 ──
 # 틀 하나로 통일(2026-10-10 사용자 결정): 원본은 쪽마다 문제 수·서체·크기가 섞여 있다 — 견본 쪽 모양 하나로, 문제가 하나뿐인 원고는 「접기 묶음」으로 문제 1을 접는다.
 # 세로: 지문·선지·진술 글상자는 최소 높이로 그리고(원고만큼 자란다) 그 아래 것은 견본 원고가 자랄 만큼 위에 그린다(shift) — 견본 원고를 넣으면 원본 자리.
@@ -918,6 +914,10 @@ def ox_record(lp, rp):
             rec["진술"].append(" ".join(o["t"].strip() for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1))
     return rec
 
+
+if want(4):                                                             # 구성 5 의 글 읽기 함수(spans_of 등)를 머리 STEP 번호 읽기가 쓴다 — 그 정의 뒤에서 돈다(책 차례는 그대로 4 → 5)
+    st += body_pages(4, "A1", "어휘 선택 1", "A어휘선택", "④ A어휘선택")
+    CONTENT["A어휘선택"] = [spread_record(l, l + 1) for l in range(4, 24, 2)]          # 펼침면 10벌 = 레코드 10
 
 if want(5):
     st += body_pages(24, "A2", "본문 O/X", "A본문OX", "⑤ A본문OX", body=ox_body)
