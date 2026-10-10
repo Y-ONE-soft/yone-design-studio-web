@@ -1505,9 +1505,9 @@ if want(9):
     st += body_pages(104, "C2", "빈칸 어휘", "C빈칸어휘", "⑨ C빈칸어휘", body=c2_body)
     CONTENT["C빈칸어휘"] = [c2_record(l, l + 1) for l in range(104, 124, 2)]
 
-if want(2):
+if want("2.2"):                                                         # STEP 02 간지·차례 — 구성 2·3 의 두 번째 회차(따로 돌릴 때 「2.2,3.2」)
     st += divider(124, "02")
-if want(3):
+if want("3.2"):
     st += toc(125, "02")
 
 # ── 구성 10 「A어법선택」 (원본 126~145쪽 = 펼침면 10벌 · 원고마다) — 견본 = 126·127쪽 ──
@@ -1932,9 +1932,9 @@ if want(13):
     st += body_pages(186, "C2", "영작 배열", "C영작배열", "⑬ C영작배열", body=wo_body)
     CONTENT["C영작배열"] = [wo_record(l, l + 1) for l in range(186, 196, 2)]
 
-if want(2):
+if want("2.3"):                                                         # STEP 03 간지·차례 — 구성 2·3 의 세 번째 회차
     st += divider(196, "03")
-if want(3):
+if want("3.3"):
     st += toc(197, "03")
 
 # ── 구성 14 「S실전문제」 (원본 198~272쪽 — 흐르는 쪽) ── 견본 = 198·199쪽 두 면, 나머지는 넘친 글이 덧쪽을 만든다(왼쪽·오른쪽 번갈아)
@@ -2015,11 +2015,11 @@ def s_style():
     return L, sb
 
 
-def s_recs():
+def s_recs(pages=None):
     """원고 — 문항 목록 [[자리, 글], …] (문항 안 차례 그대로). 지문 번호(영도 12pt)는 그 지문 첫머리. 「*낱말: 뜻」 줄은 주석"""
     G_ = s_reader()
     recs, cur = [], None
-    for pno in G_["PAGES"]:
+    for pno in pages or G_["PAGES"]:
         for ci in (0, 1):
             for g in G_["GROUPS"][pno][ci]:
                 k = g["kind"]
@@ -2115,13 +2115,12 @@ def _s_body(pno):
     w = round(G_["COL_W"], 2)
     firsts = [min(l["base"] for g in G_["GROUPS"][pg][ci] for l in g["lines"]) for pg in G_["PAGES"] for ci in (0, 1) if G_["GROUPS"][pg][ci]]
     lasts = [max(l["base"] for g in G_["GROUPS"][pg][ci] for l in g["lines"]) for pg in G_["PAGES"] for ci in (0, 1) if G_["GROUPS"][pg][ci]]
-    top = round(top_of(min(firsts), 12, YD, 400) - 0.3, 2)                 # 단 위 끝 = 가장 위 첫 줄(지문 번호 12pt)의 줄 상자 위
+    p0 = G_["PAGES"][0]                                                    # 단 위 끝 = 견본 첫 쪽 왼쪽 단 첫 줄(지문 번호 12pt)의 줄 상자 위
+    top = round(top_of(min(l["base"] for g in G_["GROUPS"][p0][0] for l in g["lines"]), 12, YD, 400) - 0.3, 2)
     bot = round(max(lasts) + 1.5, 2)                                       # 단 아래 끝 = 가장 아래 끝 줄 기준선 + 내림
-    for ci, x in ((0, L), (1, Rr)):
-        ls = [l for g in G_["GROUPS"][pno][ci] for l in g["lines"]]
-        if ls:
-            y0, y1 = min(l["base"] for l in ls), max(l["base"] for l in ls)
-            E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(x, 2), "y": round(y0 - 3, 2), "w": w, "h": round(y1 - y0 + 4, 2),
+    for ci, x in ((0, L), (1, Rr)):                                        # 원고 판정 창 = 단 글상자 전체(원고가 흘러 줄 자리가 쪽마다 다르다)
+        if G_["GROUPS"][pno][ci]:
+            E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(x, 2), "y": top, "w": w, "h": round(bot - top, 2),
                "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
     st += [S("본문 — 두 단 글상자(글 잇기로 한 줄기)", 1200)]
     st += s_story(L, top, bot, SR.get("head_done") is None, w)
@@ -2188,6 +2187,12 @@ if want(16):
     st += done("뒤표지", "p274.png")
 
 # ── 원고 넣기 — 바깥 시스템이 보내는 꼴(자리 이름 → 글, 같은 자리가 여러 번이면 쪽 차례대로) ──
+if not ONLY:                                                            # 전체 한 판(관리 등록) — 견본 원고만: 구성마다 견본 쪽에 드는 첫 원고 하나(2026-10-10 사용자: 관리 디자인은 구성 견본 한 벌씩, 274쪽 전부 아님)
+    for k, v in list(CONTENT.items()):
+        if isinstance(v, list) and v and isinstance(v[0], dict):
+            CONTENT[k] = v[:1]
+    if S_BIND in CONTENT:
+        CONTENT[S_BIND] = s_recs((198, 199))
 if CONTENT:
     st += put_content(CONTENT)
 

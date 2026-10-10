@@ -325,6 +325,7 @@ try:
                 raise RuntimeError(f"{text or value} 목록에 없음")
             if c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + chk + " : false; })()"):
                 return                                   # 이미 그 값 — 고를 것 없다
+            prev = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.value : null; })()")
             click(spot)
             if not c.js("!!document.querySelector('.selmenu')"):
                 continue
@@ -344,6 +345,9 @@ try:
                 frame()
                 return
             got = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.value : null; })()")
+            if not text and str(value).startswith("__") and got not in (None, prev) and not str(got).startswith("__"):
+                frame()                                  # 「새 …」처럼 만드는 항목 — 고르면 만든 것(새 이야기 「이야기1」)으로 값이 바뀐다. 다시 고르면 또 만든다
+                return
             print(f"  ~ {text or value} 대신 {got} — 다시 고른다", flush=True)
         raise RuntimeError(f"{text or value} 안 골라짐 — 지금 {got}")
 
