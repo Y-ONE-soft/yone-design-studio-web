@@ -2149,7 +2149,7 @@ if want(15):
         st += B(e)
     for e in [e for e in el if e["k"] == "line"]:
         st += rule(e)
-    st += T([e for e in el if e["k"] == "text" and e["text"] == "MEMO"][0], MS, 700, label="MEMO — Montserrat Bold(자간 넓게)")
+    st += T([e for e in el if e["k"] == "text" and e["text"] == "MEMO"][0], MS, 800, label="MEMO — Montserrat ExtraBold(자간 넓게 — Bold 는 잉크 87%)")
     st += done("MEMO", "p273.png")
 
 # ── 구성 16 「뒤표지」 (원본 274쪽) ── 꼬리표 · 큰 제목 · 한글 제목 · 만든 사람(역할 · 이름) · 색 띠 셋 · 로고(logo_back.svg) · 저작권
