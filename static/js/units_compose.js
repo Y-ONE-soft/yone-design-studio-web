@@ -541,6 +541,7 @@
     });
     pageRecs.forEach((gr, svg) => {
       const all = [...svg.querySelectorAll("g[data-fi]")].filter(g => g.hasAttribute("data-y0"));
+      const row = svg.getAttribute("data-push") === "row" || !!(svg.closest("[data-push]") && svg.closest("[data-push]").getAttribute("data-push") === "row");
       for (const e of all) {
         if (e.hasAttribute("data-fixed")) continue;
         const y = num(e, "data-y0"), x0 = num(e, "data-x"), x1 = x0 + num(e, "data-w");
@@ -548,7 +549,7 @@
         for (const g of gr) {
           if (g.it === e) continue;
           const gx0 = num(g.it, "data-x"), gx1 = gx0 + num(g.it, "data-w");
-          if (!(x0 < gx1 - 0.01 && x1 > gx0 + 0.01)) continue;        // 가로로 겹치는 것만
+          if (!row && !(x0 < gx1 - 0.01 && x1 > gx0 + 0.01)) continue;        // 가로로 겹치는 것만 — 쪽 설정 「모두 밀기」(data-push=row)면 아래 것 전부
           dy += g.r ? pushOf(g.r, y) : (y >= g.b0 - 0.01 ? g.d : 0);
         }
         if (Math.abs(dy) > 0.01) { shiftY(e, dy); e.setAttribute("data-dy", (num(e, "data-dy") + dy).toFixed(2)); }

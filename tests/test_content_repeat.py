@@ -81,3 +81,18 @@ def test_fold_group_when_slot_blank():
     assert len(bands) == 1 and abs(bands[0][4] + 35) < 1e-6            # 띠 위(60) → 아래 첫 요소(95): 35mm 끌어올림
     ok, _ = content.fill([page], {"지문": "글", "선지": "① 하나", "발문": "물음", "진술": "문장"})
     assert render.fold_bands(ok[0]) == (set(), [])                     # 원고가 있으면 그대로
+
+
+def test_fold_attached_keeps_gap_below():
+    """위 상자에 붙은 묶음(주석)이 접히면 제 높이만 걷힌다 — 아래 틈은 남는다"""
+    from core.units import render
+
+    def it(name, y, h, fold=None):
+        a = {"t": "text", "w": 150, "h": h, "text": "임시", "bind": name}
+        if fold:
+            a["fold"] = fold
+        return {"x": 20, "y": y, "atom": a}
+    page = {"id": "P", "items": [it("지문", 30, 20), it("주석", 50, 8, "주석"), it("선지", 64, 20)]}
+    filled, _ = content.fill([page], {"지문": "글", "주석": "", "선지": "①"})
+    folded, bands = render.fold_bands(filled[0])
+    assert folded == {1} and abs(bands[0][4] + 8) < 1e-6              # 주석 높이 8 만 — 선지 위 틈 6 은 그대로

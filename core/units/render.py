@@ -2018,7 +2018,8 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "")   # 덧쪽 — 빈 채면 크롬이 지운다
+    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "") \
+        + (' data-push="row"' if page.get("push") == "row" else "")              # 자라면 아래 것 모두 밀기(가로 상관없이) — 크롬 쪽 밀기(units_compose.grow)도 같게   # 덧쪽 — 빈 채면 크롬이 지운다
     if ctx.print:
         # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
         b = float(ctx.print.get("bleed") or 0)
@@ -2111,18 +2112,20 @@ def place_items(ctx, page, W, H, mirror=False):
     grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"] - p["s"] * below_tol((p["it"].get("atom") or {})), p["h"] - p["h0"])
              for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
     grown += bands
+    row = page.get("push") == "row"                                    # 쪽 설정 「자라면 아래 것 모두 밀기」 — 가로로 안 겹쳐도(옆 꼬리표·번호) 아래면 민다
     for p in placed:
         it = p["it"]
         p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
-                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)
+                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and (row or (it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)))
         p["y"] = it["y"] + p["dy"]
     return placed
 
 
 def fold_bands(page):
     """접기 묶음(원자 fold = 묶음 이름) — 묶음 안 원고 자리 중 하나라도 원고가 비웠으면(_empty, content.fill) 묶음째 접는다.
-    → (접힌 요소 번호 set, 당기기 [(-1, x0, x1, 띠 아래 끝, -당길 양)]). 당길 양 = 띠 위 끝 → 띠 아래 가로로 겹치는 첫 요소 위 끝
-    (그 요소가 접힌 묶음 자리로 올라온다 — 인디자인 데이터 병합 「빈 필드 줄 제거」를 묶음 단위로)."""
+    → (접힌 요소 번호 set, 당기기 [(-1, x0, x1, 띠 아래 끝, -당길 양)]). 당길 양 = 묶음 높이 + (위 것과 떨어진 묶음이면 아래 틈까지)
+    — 떨어진 묶음(문제 하나)은 그 자리로 다음 것이 올라오고, 위 것에 붙은 묶음(지문 상자 밑 주석)은 제 높이만 걷혀 아래 틈이 남는다
+    (인디자인 데이터 병합 「빈 필드 줄 제거」를 묶음 단위로)."""
     items = page.get("items") or []
     groups = {}
     for fi, it in enumerate(items):
@@ -2139,9 +2142,13 @@ def fold_bands(page):
         bx = [box(items[fi]) for fi in fis]
         x0, x1 = min(b[0] for b in bx), max(b[0] + b[2] for b in bx)
         top, bot = min(b[1] for b in bx), max(b[1] + b[3] for b in bx)
-        below = [box(it)[1] for fi, it in enumerate(items) if fi not in folded and not it.get("hide") and box(it)[1] >= bot - 0.01
-                 and box(it)[0] < x1 - 0.01 and box(it)[0] + box(it)[2] > x0 + 0.01]
-        bands.append((-1, x0, x1, bot, -((min(below) if below else bot) - top)))
+        over = lambda b: b[0] < x1 - 0.01 and b[0] + b[2] > x0 + 0.01
+        below = [box(it)[1] for fi, it in enumerate(items) if fi not in folded and not it.get("hide") and box(it)[1] >= bot - 0.01 and over(box(it))]
+        above = [box(it)[1] + box(it)[3] for fi, it in enumerate(items) if fi not in folded and not it.get("hide")
+                 and box(it)[1] + box(it)[3] <= top + 0.01 and over(box(it))]
+        gap_below = (min(below) - bot) if below else 0.0
+        attached = bool(above) and top - max(above) < 0.5               # 위 것에 붙은 묶음(지문 상자 밑 주석) — 제 높이만. 떨어진 묶음(문제 하나) — 아래 틈까지
+        bands.append((-1, x0, x1, bot, -((bot - top) + (0.0 if attached else gap_below))))
     return folded, bands
 
 

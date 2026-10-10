@@ -2057,6 +2057,7 @@ function side() {
       <div class="note">지문마다 면 ${eachN} · 원고 ${nSet} → ${nSheets}장 · ${plan.order === "by_set" ? `지문1(면1~${eachN}) → 지문2(면1~${eachN}) …` : `면1(원고 ${perPg}개) → 면2(원고 ${perPg}개) …`}</div>` : ""}
       <div class="note">지금 이 면은 <b>${pe.repeat === "each_set" ? (pe.per > 1 ? `원고 ${pe.per}개마다 1장` : "원고 1개마다 1장") : "1장"}</b> · 받는 원고 <b>${curK ? esc(curK) : "모두"}</b></div>`;
     h += `<div class="f"><span>판형</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}<option value="__new">＋ 새 판형…</option></select></div>
+      <div class="f"><span title="글상자가 원고만큼 자라면 그 아래 것을 민다 — 켜면 가로 위치와 상관없이 아래 것 모두(한 단짜리 문제 쪽: 옆에 선 꼬리표·번호도 같이). 끄면 가로로 겹치는 것만">자라면 아래 모두 밀기</span><input id="s-pushrow" type="checkbox" ${page.push === "row" ? "checked" : ""} style="width:auto"></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 면은 머리말·쪽번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
       <div class="f"><span title="이 면에서 넘친 원고가 어느 면 모양으로 이어지나 — 첫 면(제목 있음) → 둘째 면(머리만) 처럼. 인디자인에서 다른 마스터의 프레임으로 잇기">넘치면 이어 갈 면</span><select id="s-cont"><option value="">같은 면</option>${docPages().filter(p2 => p2.id !== page.id).map(p2 => `<option value="${esc(p2.id)}" ${page.cont === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></div>
@@ -2327,6 +2328,7 @@ function side() {
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-cont", "change", (e) => { hist(); if (e.target.value) page.cont = e.target.value; else delete page.cont; save(); side(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
+  on("#s-pushrow", "change", (e) => { if (e.target.checked) page.push = "row"; else delete page.push; save(); pageSvg = {}; render(); });
   // 레이어 — 만들고 숨기고 잠그고 지운다(요소는 안 지운다)
   on("#s-lay-new", "click", () => {
     const nm = prompt("레이어 이름", "레이어 " + ((page.layers || []).length + 1)); if (nm == null || !nm.trim()) return;

@@ -386,6 +386,7 @@
         "layers": {"type": "array", "items": {"$ref": "#/definitions/layer"}, "description": "레이어 — 뒤에서 앞 순서"},
         "baseline_grid": {"$ref": "#/definitions/baseline_grid"},
         "mirror": {"type": "boolean", "description": "오른쪽 면에서 좌우 반전"},
+        "push": {"enum": ["row"], "description": "자라면 아래 것 모두 밀기 — 글상자가 원고만큼 자라면 가로 위치와 상관없이 그 아래 것 전부를 민다(없으면 가로로 겹치는 것만)"},
         "background": {"$ref": "#/definitions/token"},
         "spec": {"$ref": "#/definitions/id", "description": "이 지면을 그린 규격(캔버스용). 틀에 들어가면 틀의 규격을 따른다"},
         "layout": {"enum": ["one", "pair", "two", "none"], "description": "캔버스 레이아웃 — 1단 · 상하 · 2단 · 없음(간지·표지). 칸(zones)은 이것과 여백으로 만든다"},

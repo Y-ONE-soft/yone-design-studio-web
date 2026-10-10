@@ -126,7 +126,7 @@ try:
                 time.sleep(0.1)
                 continue
             same = same + 1 if cur == last else 0
-            if same >= 3:
+            if same >= 8:                                # 0.8초 그대로 — 값을 넣으면 편집기가 0.5초쯤 뒤에 패널을 다시 그린다(그 사이 연 목록은 닫힌다)
                 return
             last = cur
             time.sleep(0.1)
@@ -308,26 +308,44 @@ try:
         print(f"  ! {spot} 에 {value} 대신 {got}", flush=True)
 
     def pick(spot, value, text=None):
-        """목록(select) 고르기 — 사람처럼 목록을 눌러 펼치고(편집기 화면 안 목록) 그 항목을 누른다. 항목이 아래에 있으면 휠로 굴린다.
+        """목록(select) 고르기 — 사람처럼 목록을 눌러 펼치고(편집기 화면 안 목록) 그 항목을 마우스로 누른다(안 보이면 목록 위에서 휠로 굴린다).
+        고른 뒤 패널이 다 바뀌면 골라진 값을 본다 — 틀렸으면(펼친 사이 패널이 다시 그려져 목록이 바뀐 때) 사람처럼 다시 펼쳐 고른다(3번까지).
         text 를 주면 보이는 글자로 찾는다(값이 그때그때 만들어지는 id 일 때 — 쪽 「이어 갈 면」)."""
         sel = json.dumps(spot)
         find = ("[...e.options].findIndex(o => o.textContent.trim() === " + json.dumps(text) + ")") if text else \
                ("[...e.options].findIndex(o => o.value === " + json.dumps(value) + ")")
-        want = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + find + " : null; })()")
-        if want is None or want < 0:
-            raise RuntimeError(f"{text or value} 목록에 없음")
-        quiet()
-        click(spot)
-        if not c.js("!!document.querySelector('.selmenu')"):
-            raise RuntimeError("목록이 안 펼쳐졌다")
-        cur = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.selectedIndex : 0; })()")
-        for _ in range(abs(want - cur)):                 # 펼친 목록에서 화살표로 옮기고 Enter — 사람이 키보드로 고르듯
-            key("ArrowDown" if want > cur else "ArrowUp")
-        key("Enter")
-        got = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.selectedIndex : null; })()")
-        if got != want:
-            raise RuntimeError(f"{text or value} 안 골라짐 — 지금 {got}")
-        frame()
+        chk = ("(e.options[e.selectedIndex] || {}).textContent.trim() === " + json.dumps(text)) if text else ("e.value === " + json.dumps(value))
+        fm = ("[...m.children].find(d => d.textContent.trim() === " + json.dumps(text) + ")") if text else \
+             ("[...m.children].find(d => d.dataset.value === " + json.dumps(value) + ")")
+        got = None
+        for attempt in range(3):
+            quiet()
+            want = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + find + " : null; })()")
+            if want is None or want < 0:
+                raise RuntimeError(f"{text or value} 목록에 없음")
+            if c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + chk + " : false; })()"):
+                return                                   # 이미 그 값 — 고를 것 없다
+            click(spot)
+            if not c.js("!!document.querySelector('.selmenu')"):
+                continue
+            i = c.js("(() => { const m = document.querySelector('.selmenu'); const d = m && " + fm + "; return d ? +d.dataset.i : -1; })()")
+            if i is None or i < 0:
+                raise RuntimeError(f"{text or value} 펼친 목록에 없음")
+            if not c.js("!!document.querySelector('.selmenu .opt[data-i=\"" + str(i) + "\"]')"):
+                print(f"  ~ {text or value} — 목록이 닫혔다, 다시 펼친다", flush=True)
+                continue
+            try:
+                click(f'.selmenu .opt[data-i="{i}"]')    # 펼친 목록에서 그 항목을 눌러 고른다
+            except RuntimeError:                         # 누르러 가는 사이 목록이 닫혔다 — 다시 펼친다
+                print(f"  ~ {text or value} — 목록이 닫혔다, 다시 펼친다", flush=True)
+                continue
+            quiet()
+            if c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + chk + " : null; })()"):
+                frame()
+                return
+            got = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.value : null; })()")
+            print(f"  ~ {text or value} 대신 {got} — 다시 고른다", flush=True)
+        raise RuntimeError(f"{text or value} 안 골라짐 — 지금 {got}")
 
     for st in json.load(open(steps_path, encoding="utf-8")):
         try:
