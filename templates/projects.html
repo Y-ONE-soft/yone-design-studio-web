@@ -137,7 +137,7 @@
     <div class="folders" id="folder-list">
       {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
          data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
-        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '틀 ' ~ f.t ~ '개' if f.t else '비어 있음' }}</span></span>
+        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '디자인 ' ~ f.dn ~ '개' if f.dn else ('틀 ' ~ f.t ~ '개 · 디자인 없음' if f.t else '비어 있음') }}</span></span>
         <span class="acts"><button class="edit" title="수정">✎</button>{% if f.id != 'etc' %}<button class="del" title="삭제">×</button>{% endif %}</span>
       </a>{% endfor %}
     </div>
