@@ -63,8 +63,17 @@ def export(lib, plan_id):
                 images[key] = {"name": os.path.basename(rel), "b64": base64.b64encode(fh.read()).decode()}
         except OSError:
             pass
+    from core.units import fonts as _fonts                              # 이 편집기에 올려 등록한 서체 중 문서가 쓰는 것 — 다른 편집기(서버)에도 같이 간다
+    used = set()
+    _walk([pages, list(parts.values()), skin], lambda d, k, v: used.add(v) if k == "font" and isinstance(v, str) and not v.startswith("$") else None)
+    used |= {v for v in ((skin.get("tokens") or {}).get("font") or {}).values() if isinstance(v, str)}
+    fonts_b64 = {}
+    for f in _fonts.system_fonts():
+        if f["src"] == "upload" and f["family"] in used:
+            with open(f["path"], "rb") as fh:
+                fonts_b64[f["file"]] = base64.b64encode(fh.read()).decode()
     return {"kind": KIND, "v": 1, "plan": plan, "pages": pages, "parts": list(parts.values()), "blocks": blocks,
-            "skin": skin, "specs": [specs_by[s] for s in spec_ids if s in specs_by], "images": images}
+            "skin": skin, "specs": [specs_by[s] for s in spec_ids if s in specs_by], "images": images, "fonts": fonts_b64}
 
 
 def _new_id(prefix, taken):
@@ -153,6 +162,12 @@ def load(pkg, into=None, name=None):
                         added.append(f"tokens.{grp}.{k}")
             if added:
                 store.put("skins", merged)
+    if pkg.get("fonts"):                                                # 문서가 쓰는 올린 서체 — 이 편집기에 없으면 등록
+        from core.units import fonts as _fonts
+        have = {f["file"] for f in _fonts.system_fonts()}
+        for fn, b64 in pkg["fonts"].items():
+            if fn not in have:
+                _fonts.register(fn, base64.b64decode(b64))
     specs_by = store.by_id(lib["specs"])
     for sp in pkg.get("specs") or []:
         if sp.get("id") and sp["id"] not in specs_by:

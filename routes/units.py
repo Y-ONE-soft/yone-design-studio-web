@@ -74,14 +74,15 @@ def canvas():
     lib["catalog"] = [{"series": k, "name": v.get("name", k), "dir": _dir_of(v, set(dirs)), "dir_name": dirs.get(_dir_of(v, set(dirs)), "")}
                       for k, v in _meta().items()]            # 「관리에 등록」 — 어느 폴더(틀)로 보낼지
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
-    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기", font_css=fonts.fix_css())
+    lib["fonts"] = fonts.families()                   # 시스템 서체 — 서체 칸은 이 목록에서만 고른다
+    return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기", font_css=fonts.fix_css() + fonts.face_css("url"))
 
 
 @bp.route("/units/library")
 def page():
     """라이브러리·분해·JSON — 데이터를 들여다보는 화면."""
     lib = store.library()
-    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기", font_css=fonts.fix_css())
+    return render_template("units.html", library_json=_lib_json(lib), kinds=store.KINDS, active_nav="만들기", font_css=fonts.fix_css() + fonts.face_css("url"))
 
 
 @bp.route("/api/units/thumbs")
@@ -464,6 +465,35 @@ def api_schema():
         return jsonify({"error": "plan 없음"}), 404
     return jsonify({"plan": plan["id"], "name": plan.get("name"), "slots": content.schema(_plan_pages(lib, plan), _width_of(lib, plan)),
                     "rule": "원고 = {자리 이름: 글 | [글…]} — 같은 자리가 여러 번이면 쪽 순서 → 쪽 안 위에서 아래(같은 높이면 왼쪽부터). 단이 있는 쪽은 왼쪽 단 위→아래, 다음 단(여러 단에 걸친 상자는 그 높이에서 먼저)"})
+
+
+@bp.route("/api/units/fonts")
+def api_fonts():
+    """시스템 서체 — {families: {집: [굵기…]}, files: [...], missing: 못 찾은 묶음 서체}"""
+    return jsonify({"families": fonts.families(), "missing": fonts.missing_pack(),
+                    "files": [{k: f[k] for k in ("file", "family", "weight", "italic", "src")} for f in fonts.system_fonts()]})
+
+
+@bp.route("/api/units/fonts", methods=["POST"])
+def api_fonts_add():
+    """서체 올려 등록 — 파일(file) .otf·.ttf → catalog/_fonts/. 등록하면 서체 칸 목록에 든다"""
+    f = request.files.get("file")
+    if not f or not f.filename:
+        return jsonify({"error": "서체 파일 없음"}), 400
+    try:
+        ent = fonts.register(f.filename, f.read())
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify({"ok": True, "font": ent, "families": fonts.families()})
+
+
+@bp.route("/api/units/fontfile/<path:name>")
+def api_fontfile(name):
+    """등록된 서체 파일만 내준다(편집기 @font-face)"""
+    p = fonts.font_file(name)
+    if not p:
+        abort(404)
+    return send_file(p, max_age=86400)
 
 
 @bp.route("/api/units/package")

@@ -1,5 +1,5 @@
 #!/bin/sh
-# 카탈로그 디자인이 쓰는 서체만 ~/Library/Fonts 에서 골라 fonts.tgz 로 묶는다 (2026-09 기준 37개 · 137MB).
+# 시스템 서체(core/units/fonts.system_fonts — 디자인 config·계열 코드 서체 + 편집기에서 올려 등록한 catalog/_fonts)를 fonts.tgz 로 묶는다.
 # 상용 서체는 리포·이미지에 넣지 않고 Fly 볼륨(/data/fonts)에만 올린다:
 #   deploy/fonts-pack.sh
 #   fly ssh sftp put fonts.tgz /data/fonts.tgz
@@ -11,29 +11,15 @@
 set -e
 cd "$(dirname "$0")/.."
 python3 - <<'PY'
-import glob, json, os, re, tarfile
-want = {}
-for p in glob.glob("catalog/**/config.json", recursive=True) + glob.glob("docs/인계_20260914/책별_설정/**/config.json", recursive=True):
-    try: c = json.load(open(p, encoding="utf-8"))
-    except Exception: continue
-    for f in c.get("fonts") or []:
-        fn = f.get("file") if isinstance(f, dict) else f
-        if fn: want[fn] = True
-for p in glob.glob("core/render_vivlio/series/*/render.py") + glob.glob("core/render_vivlio/series/*/__init__.py"):
-    for fn in re.findall(r'"([^"/]+\.(?:otf|ttf|OTF|TTF))"', open(p, encoding="utf-8").read()):
-        want[fn] = True
-dirs = [os.path.expanduser("~/Library/Fonts"), "/Library/Fonts", "/System/Library/Fonts",
-        "/System/Library/Fonts/Supplemental"]          # stage.FONT_DIRS 와 같은 순서 + 맥 보조 서체
-found = {}
-for f in want:
-    for d in dirs:
-        if os.path.exists(os.path.join(d, f)):
-            found[f] = os.path.join(d, f); break
-have, miss = list(found), [f for f in want if f not in found]
+import os, sys, tarfile
+sys.path.insert(0, ".")
+from core.units.fonts import system_fonts, missing_pack       # 시스템 서체 — 편집기·PDF·검사와 같은 목록 (묶음 서체 + 올려 등록한 서체)
+fs = system_fonts()
 with tarfile.open("fonts.tgz", "w:gz") as t:
-    for f in sorted(have):
-        t.add(found[f], arcname=f)
-print(f"fonts.tgz: {len(have)}개, {os.path.getsize('fonts.tgz')/1e6:.0f} MB")
+    for f in sorted(fs, key=lambda f: f["file"]):
+        t.add(f["path"], arcname=f["file"])
+print(f"fonts.tgz: {len(fs)}개, {os.path.getsize('fonts.tgz')/1e6:.0f} MB")
+miss = missing_pack()
 if miss:
-    print("⚠ ~/Library/Fonts 에 없어 못 넣은 서체:", ", ".join(miss))
+    print("⚠ 서체 폴더에 없어 못 넣은 서체:", ", ".join(miss))
 PY

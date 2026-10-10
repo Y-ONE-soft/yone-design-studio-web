@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > `units.json`(문서 묶음) + `참고/reference.pdf`(문서를 그린 결과) + 견본 그림 + `design.json`(`made: "editor"`). 다시 누르면 같은 카드를 새로 그린다.
 > 카드 라벨 「PDF 등록」/「편집기 제작」(임시 구분). 편집기 카드의 「원고 넣기」 = `/units?design=<틀>/<id>`(그 편집기에 문서가 없으면 묶음을 들여옴).
 > 문서 묶음(문서 파일 내보내기·가져오기) `core/units/package.py` · 「원고마다」 되풀이(구성 첫 쪽 이름 → 레코드 목록) `core/units/content.plan_pages`.
-> ＋ → 간편 제작은 아직 자리만(`/easy`). PDF 를 보고 편집기로 만드는 일은 아래 편집기 재현 절차의 「작업 순서 — 확정」대로만(손으로 짠 대본 · 녹화 없는 검사 · 짜깁기 금지).
+> ＋ → 간편 제작은 아직 자리만(`/easy`). **PDF 를 주거나 등록된 원본 PDF 를 지정하면** 편집기 재현 절차의 「작업 순서 — 확정」을 처음부터 그대로 돈다 — 구성 나누기(`routes.catalog.pdf_layouts`, 등록 없이) → 구성마다 손으로 짠 대본 · 녹화 없는 검사 → 원고(연동 고려) → 관리에 등록 → 배포. 짜깁기 금지.
 
 > **참고자료(모든 세션 공용)**: `docs/참고자료/` — 외부에서 받은 자료를 원본 + 마크다운 README + JSON 으로 둔다(2026-10-09 교재 블록 지도는 지웠다 — 구성 이름·카드에 B1~B11 을 쓰지 않는다).
 

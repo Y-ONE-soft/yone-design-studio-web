@@ -179,6 +179,42 @@ def measure_units(new_ids, state, fix=False):
         print("  보정.json 갱신 — 다시 돌리면 반영")
 
 
+def font_problems():
+    """문서가 쓴 서체가 시스템 서체(core.units.fonts — 등록된 서체)인가. 컴퓨터에 깔린 서체로 그려지면 서버에선 다르게 나온다."""
+    sys.path.insert(0, REPO)
+    os.environ["YONE_CATALOG_DIR"] = data
+    from core.units import fonts as F
+    import routes.catalog as rc
+    rc.CATALOG = data                                                       # 이 단위 데이터(올려 등록한 서체 포함)
+    fams = F.families()
+    load = lambda k: json.load(open(os.path.join(data, "_units", k + ".json"), encoding="utf-8")) if os.path.exists(os.path.join(data, "_units", k + ".json")) else []
+    bad = set()
+
+    def chk(font, weight, where):
+        if not font or str(font).startswith("$"):
+            return
+        w = int(weight or 400)
+        if font not in fams:
+            bad.add(f"등록 안 된 서체 {font} ({where})")
+        elif w not in fams[font]:
+            bad.add(f"서체 {font} 에 굵기 {w} 없음 ({where})")
+    for pg in load("pages"):
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            if a.get("t") == "text":
+                chk(a.get("font"), a.get("weight"), pg.get("name") or pg["id"])
+                for r in a.get("grep") or []:
+                    if r.get("font"):
+                        chk(r["font"], r.get("weight") or a.get("weight"), (pg.get("name") or pg["id"]) + " GREP")
+    for sk in load("skins"):
+        for k, v in ((sk.get("tokens") or {}).get("font") or {}).items():
+            if v and v not in fams:
+                bad.add(f"등록 안 된 서체 {v} (브랜드 {sk.get('name')} 견본 {k})")
+        for n, st in (sk.get("styles") or {}).items():
+            chk(st.get("font"), st.get("weight"), f"단락 스타일 {n}")
+    return sorted(bad)
+
+
 def verdict(state, new_ids, ok_steps):
     """판정 — 도구가 정한다(사람·클로드가 줄이지 못한다). 하나라도 걸리면 실패:
       ① 대본 오류  ② 원본 쪽마다 만든 지면이 있어야  ③ 맞댈 요소 목록(elems.json)이 있어야
@@ -189,6 +225,7 @@ def verdict(state, new_ids, ok_steps):
     why = []
     if not ok_steps:
         why.append("대본 오류")
+    why += font_problems()
     if not state.get("pages"):
         return (not why), why
     if len(new_ids) < len(state["pages"]):

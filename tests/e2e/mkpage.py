@@ -137,9 +137,8 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
         st.append(F('#side input[data-a="leading"]', leading))
     if align:
         st.append({"pick": {"at": '#side select[data-a="align"]', "value": align}, "wait": 550})
-    if font:                                                                   # 글꼴 — 「직접 입력…」 뒤 이름을 친다
-        st.append({"pick": {"at": '#side select[data-a="font"]', "value": "__raw"}, "wait": 600})
-        st.append(F('#side input[type="text"][data-a="font"]', font, 600))
+    if font:                                                                   # 글꼴 — 시스템 서체 목록에서 고른다(없으면 register_font 로 먼저 등록)
+        st.append({"pick": {"at": '#side select[data-a="font"]', "value": font}, "wait": 600})
     if track:
         st.append(F('#side input[data-a="tracking"]', track))
     if tsume:                                                                  # 자간 축소 % (인디자인 문자 패널)
@@ -154,6 +153,11 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
     if bind:
         st.append({"pick": {"at": '#side select[data-a="bindsel"]', "value": bind}, "wait": 1000})
     return st + opacity(alpha)
+
+
+def register_font(path, label=None):
+    """서체 등록 — 글상자를 고른 채 「＋ 서체」를 눌러 뜬 파일 창에서 서체 파일을 고른다. 시스템 서체 목록에 든다"""
+    return ([S(label)] if label else []) + [{"upload": {"at": "#side #font-file", "path": path}, "wait": 2500}]
 
 
 def justify(word_min=100, word_max=133, letter_min=-8, letter_max=250):
@@ -257,12 +261,11 @@ def ellipse(x, y, d, fill=None, stroke=None, sw=None, h=None, alpha=None):
 def open_doc(name=None):
     """문서 열기 — 없으면 새로 만든다"""
     if name:
-        return [{"js": f"window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; window.__p={name!r}; true", "wait": 300},
-                S("＋ 새 문서", 1300), {"click": "#pcards .pcard.new", "wait": 5000},
+        return [S("＋ 새 문서", 1300), {"answer": name},                       # 뜨는 묻는 창(문서 이름)에 칠 글 — 창이 뜨면 거기에 친다(rec.py · cdp.py)
+                {"click": "#pcards .pcard.new", "wait": 5000},
                 {"until": "docPages().length > 0 && page", "wait": 500},             # 서버가 바쁘면(기동 직후 구성 계산) 5초로 모자라다
                 {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000}]
-    return [{"js": "window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; true", "wait": 300},
-            {"click": "#pcards .pcard:not(.new)", "wait": 4800},
+    return [{"click": "#pcards .pcard:not(.new)", "wait": 4800},
             {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000}]
 
 

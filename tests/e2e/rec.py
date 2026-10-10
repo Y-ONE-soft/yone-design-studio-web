@@ -75,6 +75,11 @@ try:
     tab = json.load(urllib.request.urlopen(req, timeout=30))
     c = CDP(tab["webSocketDebuggerUrl"])
     c.call("Page.enable")                                    # 묻는 창(prompt)을 받아 답을 친다 — {"answer": "…"} (cdp.CDP.call)
+    c.call("Page.setInterceptFileChooserDialog", enabled=True)   # 파일 고르기 창 — 단추를 누르면 뜬 창을 받아 파일을 고른다(upload)
+    try:                                                     # 붙여넣기 — 클립보드에 글을 올리고 ⌘V 를 누른다
+        c.call("Browser.grantPermissions", permissions=["clipboardReadWrite", "clipboardSanitizedWrite"], origin=url.split("/units")[0])
+    except Exception:
+        pass
     time.sleep(3.0)
     c.js(CHROME_SETUP)
 
@@ -101,19 +106,64 @@ try:
             left = ms / 1000 - (time.time() - t0)
             time.sleep(max(0, min(1 / FPS, left)))
 
+    def settle(limit=10):
+        """화면이 다 그려질 때까지 — 지면 그림의 요소 수가 실제 요소 수와 같아질 때까지 기다린다(사람은 보이고 나서 누른다).
+        새 문서의 첫 그리기는 서버에서 그림을 받아 오느라 늦다 — 안 기다리고 누르면 바탕 종이가 눌린다."""
+        t_end = time.time() + limit
+        while time.time() < t_end:
+            if c.js("(() => { try { return !page || document.querySelectorAll('#svgwrap g[data-fi]').length >= page.items.length; } catch (e) { return true; } })()"):
+                return
+            time.sleep(0.1)
+
+    def quiet(limit=8):
+        """오른쪽 패널이 다시 그려지는 중이면 멈출 때까지 — 사람은 패널이 바뀌는 걸 보고 기다렸다 누른다
+        (값을 고르면 패널을 조금 뒤에 다시 그린다 — 그 사이 펼친 목록은 닫힌다)."""
+        last, same, t_end = None, 0, time.time() + limit
+        while time.time() < t_end:
+            cur = c.js("(() => { const s = document.querySelector('#side'); return (window.__busy || 0) + '|' + (s ? s.innerHTML.length + ':' + s.scrollTop : ''); })()")
+            if not str(cur).startswith("0|"):                # 서버와 주고받는 중 — 그림·패널이 아직 바뀐다
+                same = 0
+                time.sleep(0.1)
+                continue
+            same = same + 1 if cur == last else 0
+            if same >= 3:
+                return
+            last = cur
+            time.sleep(0.1)
+
     def at(spot):
         """자리 → 화면 픽셀."""
         if isinstance(spot, (list, tuple)):
             return float(spot[0]), float(spot[1])
         if isinstance(spot, dict) and "mm" in spot:
+            settle()
             r = c.js("(() => { const p = document.querySelector('#paper'); const b = p.getBoundingClientRect(); return [b.left, b.top, scale]; })()")
             return r[0] + spot["mm"][0] * r[2], r[1] + spot["mm"][1] * r[2]
-        r = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; "
-                  "let d = e.closest('details'); while (d) { d.open = true; d = d.parentElement && d.parentElement.closest('details'); } "   # 접힌 칸은 펴고 쓴다
-                  "e.scrollIntoView({block:'center'}); const b = e.getBoundingClientRect(); return [b.left + b.width/2, b.top + b.height/2]; })()")
-        if not r:
-            raise RuntimeError(f"못 찾음 {spot}")
-        return float(r[0]), float(r[1])
+        for _ in range(4):                                   # 접힌 칸(details) — 사람처럼 머리(summary)를 눌러 편다
+            sm = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; "
+                      "const ds = []; let d = e.closest('details'); while (d) { if (!d.open) ds.push(d); d = d.parentElement && d.parentElement.closest('details'); } "
+                      "const top = ds.pop(); if (!top) return null; const s = top.querySelector(':scope > summary'); s.scrollIntoView({block:'nearest'}); "
+                      "const b = s.getBoundingClientRect(); return [b.left + Math.min(b.width/2, 60), b.top + b.height/2]; })()")
+            if not sm:
+                break
+            move(sm[0], sm[1]); press(sm[0], sm[1]); release(sm[0], sm[1])
+        for _ in range(60):                                  # 화면 밖이면 휠로 굴린다(그 요소를 품은 스크롤 영역 위에서)
+            r = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; const b = e.getBoundingClientRect(); "
+                     "let p = e.parentElement; while (p && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; "
+                     "const v = p ? p.getBoundingClientRect() : {top: 0, bottom: innerHeight, left: 0, right: innerWidth}; "
+                     "const top = Math.max(v.top, 0), bot = Math.min(v.bottom, innerHeight); const cx = b.left + b.width/2, cy = b.top + b.height/2; "
+                     "const dy = cy < top + 8 ? -1 : (cy > bot - 8 ? 1 : 0); "
+                     "return [cx, cy, dy, (v.left + v.right) / 2, (top + bot) / 2, Math.abs(cy - (top + bot) / 2)]; })()")
+            if not r:
+                raise RuntimeError(f"못 찾음 {spot}")
+            if not r[2]:
+                return float(r[0]), float(r[1])
+            wx, wy = r[3], r[4]
+            move(wx, wy, steps=4, shoot=False)
+            c.call("Input.dispatchMouseEvent", type="mouseWheel", x=wx, y=wy, deltaX=0, deltaY=r[2] * min(240, max(60, r[5])))
+            time.sleep(0.05)
+            frame()
+        raise RuntimeError(f"굴려도 안 보임 {spot}")
 
     def cursor(x, y, down=False):
         c.js(f"__cur({x:.0f},{y:.0f},{'true' if down else 'false'})")
@@ -166,16 +216,49 @@ try:
         release(x1, y1)
         pos[0], pos[1] = x1, y1
 
+    CHO = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ"
+
+    def hangul_states(ch):
+        """한 음절을 입력기로 칠 때 보이는 조합 단계 — 스 → (ㅅ, 스), 텝 → (ㅌ, 테, 텝)"""
+        o = ord(ch) - 0xAC00
+        cho, jung, jong = o // 588, (o % 588) // 28, o % 28
+        st = [CHO[cho], chr(0xAC00 + cho * 588 + jung * 28)]
+        if jong:
+            st.append(ch)
+        return st
+
     def typetext(t, per=0.035):
+        """사람처럼 친다 — 영문·숫자·기호는 키를 하나씩 누르고 떼고, 한글은 입력기 조합(자모 → 음절)으로, 줄 나눔은 키로."""
         per = per / SPEED
         for ch in t:
-            if ch == " ":                                # 줄 나눔 — Shift+Enter 를 진짜로 누른다
+            if ch == "\u2028":                          # 줄 나눔 — Shift+Enter
                 key("Enter", shift=True)
                 continue
-            c.call("Input.insertText", text=ch)
+            if ch == "\n":                              # 새 문단 — Enter
+                key("Enter")
+                continue
+            if "\uac00" <= ch <= "\ud7a3":            # 한글 음절 — 입력기가 조합하듯 단계를 보여 주고 확정
+                for stg in hangul_states(ch):
+                    c.call("Input.imeSetComposition", text=stg, selectionStart=len(stg), selectionEnd=len(stg))
+                c.call("Input.insertText", text=ch)
+            elif ch.isascii() and ch.isprintable():      # 키 하나 — 누르고(글자) 떼고
+                kc = ord(ch.upper()) if ch.isalnum() else 0
+                c.call("Input.dispatchKeyEvent", type="keyDown", key=ch, text=ch, unmodifiedText=ch, windowsVirtualKeyCode=kc)
+                c.call("Input.dispatchKeyEvent", type="keyUp", key=ch, windowsVirtualKeyCode=kc)
+            else:                                        # 기호(ⓐ · ⁅ …) — 입력기 기호표에서 고르듯 그 글자를 넣는다
+                c.call("Input.imeSetComposition", text=ch, selectionStart=1, selectionEnd=1)
+                c.call("Input.insertText", text=ch)
             if len(t) < 40 or ord(ch) % 3 == 0:
                 frame()
             time.sleep(per)
+        frame()
+
+    def paste(t):
+        """붙여넣기 — 클립보드에 올리고 ⌘V(또는 Ctrl+V)를 누른다. 긴 원고는 사람도 치지 않고 붙인다"""
+        c.js("navigator.clipboard.writeText(" + json.dumps(t) + ").then(() => true)")
+        mod = 4 if sys.platform == "darwin" else 2
+        c.call("Input.dispatchKeyEvent", type="rawKeyDown", key="v", code="KeyV", windowsVirtualKeyCode=86, modifiers=mod, commands=["paste"])
+        c.call("Input.dispatchKeyEvent", type="keyUp", key="v", code="KeyV", windowsVirtualKeyCode=86, modifiers=mod)
         frame()
 
     def key(name, shift=False):
@@ -207,9 +290,8 @@ try:
                 wipe(1)
             else:
                 wipe(max(14, (n or 0) + 2))
-            if len(str(value)) > 2000:                   # 긴 원고(JSON)는 붙여넣기 한 번 — 사람도 치지 않고 붙인다(9만 자를 한 자씩 치면 15분)
-                c.call("Input.insertText", text=str(value))
-                frame()
+            if len(str(value)) > 2000:                   # 긴 원고(JSON)는 붙여넣기 — 사람도 치지 않고 붙인다(9만 자를 한 자씩 치면 15분)
+                paste(str(value))
             else:
                 typetext(str(value))
             key("Enter")                                 # 칸은 Enter 로 확정된다
@@ -226,15 +308,25 @@ try:
         print(f"  ! {spot} 에 {value} 대신 {got}", flush=True)
 
     def pick(spot, value, text=None):
-        """select 을 눌러 고른다 — 헤드리스는 목록이 안 그려지므로 누른 뒤 값을 넣는다(누르는 건 진짜).
-        text 를 주면 보이는 글자로 고른다(값이 그때그때 만들어지는 id 일 때 — 쪽 「이어 갈 면」)."""
+        """목록(select) 고르기 — 사람처럼 목록을 눌러 펼치고(편집기 화면 안 목록) 그 항목을 누른다. 항목이 아래에 있으면 휠로 굴린다.
+        text 를 주면 보이는 글자로 찾는다(값이 그때그때 만들어지는 id 일 때 — 쪽 「이어 갈 면」)."""
+        sel = json.dumps(spot)
+        find = ("[...e.options].findIndex(o => o.textContent.trim() === " + json.dumps(text) + ")") if text else \
+               ("[...e.options].findIndex(o => o.value === " + json.dumps(value) + ")")
+        want = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + find + " : null; })()")
+        if want is None or want < 0:
+            raise RuntimeError(f"{text or value} 목록에 없음")
+        quiet()
         click(spot)
-        sel = spot if isinstance(spot, str) else None
-        pickv = ("[...e.options].find(o => o.textContent.trim() === " + json.dumps(text) + ")?.value ?? '__없음'") if text else json.dumps(value)
-        ok = c.js("(() => { const e = document.querySelector(" + json.dumps(sel) + "); if (!e) return false; const v = " + pickv + "; "
-                  "e.value = v; e.dispatchEvent(new Event('change', {bubbles: true})); return e.value === v; })()")
-        if not ok:
-            raise RuntimeError(f"{value} 안 골라짐")
+        if not c.js("!!document.querySelector('.selmenu')"):
+            raise RuntimeError("목록이 안 펼쳐졌다")
+        cur = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.selectedIndex : 0; })()")
+        for _ in range(abs(want - cur)):                 # 펼친 목록에서 화살표로 옮기고 Enter — 사람이 키보드로 고르듯
+            key("ArrowDown" if want > cur else "ArrowUp")
+        key("Enter")
+        got = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? e.selectedIndex : null; })()")
+        if got != want:
+            raise RuntimeError(f"{text or value} 안 골라짐 — 지금 {got}")
         frame()
 
     for st in json.load(open(steps_path, encoding="utf-8")):
@@ -280,9 +372,8 @@ try:
                         print("  ! 글 편집칸이 안 열렸다 — 다시", flush=True)
                         continue
                     wipe(40)
-                    if len(want) > 300:                        # 긴 글은 붙여넣기 한 번(사람도 긴 글은 붙인다)
-                        c.call("Input.insertText", text=want)
-                        frame()
+                    if len(want) > 300:                        # 긴 글은 붙여넣기(사람도 긴 글은 붙인다)
+                        paste(want)
                     else:
                         typetext(want)
                     click(st.get("away") or [W - 60, H - 120])     # 칸 밖을 눌러 확정 (Esc 는 취소다)
@@ -303,13 +394,22 @@ try:
                 v = c.js(st["js"])
                 if v not in (None, True):
                     print("  js →", str(v)[:140], flush=True)
-            if "upload" in st:                                 # 파일 고르기 — 사람이 창에서 고르는 것과 같다
+            if "upload" in st:                                 # 파일 올리기 — 단추(또는 칸을 품은 라벨)를 진짜로 누르고, 뜬 파일 창에서 고른다
                 u = st["upload"]
-                doc = c.call("DOM.getDocument")
-                node = c.call("DOM.querySelector", nodeId=doc["root"]["nodeId"], selector=u["at"])
-                if not node.get("nodeId"):
-                    raise RuntimeError(f"파일 칸 없음 {u['at']}")
-                c.call("DOM.setFileInputFiles", files=[u["path"]], nodeId=node["nodeId"])
+                inp = u["at"].split()[-1]
+                btn = u.get("click") or (f"label:has({inp})" if c.js(f"!!document.querySelector('label:has({inp})')") else None)
+                if not btn:
+                    raise RuntimeError(f"파일 단추 없음 {u['at']} — 「click」 으로 여는 단추를 적을 것")
+                c.events = []
+                click(btn)
+                t_end = time.time() + 5
+                while not c.events and time.time() < t_end:
+                    c.js("1")
+                    time.sleep(0.1)
+                if not c.events:
+                    raise RuntimeError(f"파일 창이 안 떴다 — {btn}")
+                ev = c.events.pop(0)["params"]
+                c.call("DOM.setFileInputFiles", files=[u["path"]], backendNodeId=ev["backendNodeId"])
                 frame()
             if "shot" in st:
                 d = c.call("Page.captureScreenshot", format="png")

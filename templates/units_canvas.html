@@ -224,6 +224,13 @@
   .pg .no { position: absolute; left: 5px; bottom: 4px; font-size: 10.5px; color: #3c4043; background: rgba(255,255,255,.85); padding: 0 4px; border-radius: 4px; }
   .pg .rep { position: absolute; right: 4px; bottom: 4px; font-size: 9.5px; color: #fff; background: var(--pp); padding: 0 4px; border-radius: 4px; }
   .pg .pgact { position: absolute; right: 3px; top: 3px; display: none; gap: 2px; }
+  /* 화면 안 목록 — 운영체제 목록 창 대신 (맥·윈도우·서버 같은 모양, 사람·시험 도구가 같은 방식으로 고른다) */
+  .selmenu { position: fixed; z-index: 9999; max-height: 320px; overflow: auto; overscroll-behavior: contain; background: #fff; border: 1px solid #d6d3e0; border-radius: 8px;
+             box-shadow: 0 8px 24px rgba(30, 20, 60, .16); padding: 4px; font-size: 12px; color: #1f2330; }
+  .selmenu .opt { padding: 5px 10px; border-radius: 5px; white-space: nowrap; cursor: pointer; }
+  .selmenu .opt.hi, .selmenu .opt:hover { background: #ede9fe; }
+  .selmenu .opt.on { font-weight: 600; }
+  .selmenu .opt.dis { color: #aaa; cursor: default; }
   .pg:hover .pgact { display: flex; }
   .pg .pgact button { border: 0; background: rgba(31,35,48,.85); color: #fff; font-size: 11px; width: 20px; height: 20px; border-radius: 5px; cursor: pointer; }
   .pg .pgact button:hover { background: #c0263a; }
@@ -409,11 +416,15 @@
 <script>
 const LIB = {{ library_json | safe }};
 const $ = (s) => document.querySelector(s);
+window.__busy = 0;                                                    // 서버와 주고받는 중인 요청 수 — 0 이면 화면이 다 바뀐 것(자동 시험이 기다리는 신호)
 const api = async (url, body, method) => {
-  const r = await fetch(url, {method: method || (body ? "POST" : "GET"), headers: {"Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
-  const j = await r.json().catch(() => ({error: r.status + " " + r.statusText}));
-  if (!r.ok && !j.error) j.error = r.status + " " + r.statusText;
-  return j;
+  window.__busy++;
+  try {
+    const r = await fetch(url, {method: method || (body ? "POST" : "GET"), headers: {"Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
+    const j = await r.json().catch(() => ({error: r.status + " " + r.statusText}));
+    if (!r.ok && !j.error) j.error = r.status + " " + r.statusText;
+    return j;
+  } finally { setTimeout(() => window.__busy--, 50); }                // 받은 뒤 화면을 고치는 시간까지
 };
 const byId = (k) => Object.fromEntries((LIB[k] || []).map(x => [x.id, x]));
 const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -1555,6 +1566,22 @@ function strokeMore(a, arrows) {
     ${arrows ? `<div class="m3"><label>시작 촉<select data-a="stroke.start">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.start || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>끝 촉<select data-a="stroke.end">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.end || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>마이터<input type="number" data-a="stroke.miter" step="1" min="1" value="${st.miter || 4}"></label></div>
     <div class="m3"><label title="인디자인 획 — 끝모양 (열린 경로의 양 끝)">끝모양<select data-a="stroke.cap">${[["butt", "자름"], ["round", "둥글게"], ["square", "네모"]].map(([v, n]) => `<option value="${v}" ${(st.cap || "butt") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label></label><label></label></div>` : ""}`;
 }
+function fontSel(attr, key, cur, toks, blank) {                  // 서체 고르기 — 옷 견본($…) + 시스템 서체(LIB.fonts). 「직접 입력」 없음 — 없는 서체는 「＋ 서체」로 등록
+  const fams = Object.keys(LIB.fonts || {});
+  const tokOpts = Object.entries(toks || {}).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("");
+  const famOpts = fams.map(f => `<option value="${esc(f)}" ${cur === f ? "selected" : ""}>${esc(f)}</option>`).join("");
+  const stray = cur && !String(cur).startsWith("$") && !fams.includes(cur) ? `<option value="${esc(cur)}" selected>⚠ 등록 안 된 서체: ${esc(cur)}</option>` : "";
+  return `<select ${attr}="${key}">${blank ? `<option value="">${blank}</option>` : ""}${tokOpts}${famOpts ? `<optgroup label="시스템 서체">${famOpts}</optgroup>` : ""}${stray}</select>`;
+}
+async function uploadFont(file) {                                  // 서체 등록 — 올리면 시스템 서체 목록에 든다
+  const fd = new FormData(); fd.append("file", file);
+  const j = await (await fetch("/api/units/fonts", {method: "POST", body: fd})).json();
+  if (j.error) { say("서체 등록 실패 — " + j.error); return null; }
+  LIB.fonts = j.families;
+  try { const ff = new FontFace(j.font.family, `url(/api/units/fontfile/${encodeURIComponent(j.font.file)})`, {weight: String(j.font.weight), style: j.font.italic ? "italic" : "normal"});
+        document.fonts.add(await ff.load()); } catch (err) {}             // 이 화면에서 바로 쓴다(새로 열면 @font-face 로)
+  say(`서체 등록 — ${j.font.family} ${j.font.weight}`); return j.font;
+}
 function colorSel2(k, cur, none) {                            // strokeMore 는 side() 밖이라 옷 토큰을 여기서 읽는다
   const sk2 = skin() || {tokens: {}};
   return `<select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries((sk2.tokens || {}).color || {}).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}</select>`;
@@ -1756,14 +1783,14 @@ function panelSkins(hd, body) {
       d.onclick = () => { $("#skin").value = s2.id; $("#skin").onchange(); }; body.appendChild(d); }
     body.insertAdjacentHTML("beforeend", `<div class="row"><button class="btn sm sub" id="sk-dup">⧉ 이 브랜드 복제해 새 브랜드</button></div>
       <h3>색상 견본 — ${esc(sk.name)}</h3><div class="colors">${Object.entries((sk.tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
-      <h3>글꼴</h3>${Object.entries((sk.tokens || {}).font || {}).map(([k, v]) => `<div class="f"><span>${k}</span><input type="text" data-font="${k}" value="${esc(v)}"></div>`).join("")}
+      <h3>글꼴</h3>${Object.entries((sk.tokens || {}).font || {}).map(([k, v]) => `<div class="f"><span>${k}</span>${fontSel("data-font", k, v, null, "")}</div>`).join("")}
       <h3>단락 스타일 <span class="note" style="display:inline">글상자의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 자리도 맞춰진다</span></h3>
       ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
-        <div class="m3"><label>서체<select data-st="${n}:font"><option value="">-</option>${Object.keys(sk.tokens.font || {}).map(f => `<option value="$${f}" ${st.font === "$" + f ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
+        <div class="m3"><label>서체${fontSel("data-st", `${n}:font`, st.font, Object.fromEntries(Object.keys(sk.tokens.font || {}).map(f => [f, (sk.tokens.font || {})[f]])), "-")}</label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
         <datalist id="tok-col">${Object.keys(sk.tokens.color || {}).map(c => `<option value="$${c}">`).join("")}</datalist>
         <div class="m3"><label title="견본 이름($ink) 또는 #색번호">색<input type="text" list="tok-col" data-st="${n}:color" value="${esc(st.color || "")}" placeholder="$ink"></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
         <div class="m3"><label>첫 줄 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div>
-        <div class="m3"><label title="서체 이름을 바로 — 비우면 위 「서체」">서체 직접<input type="text" data-st="${n}:font" value="${st.font && !String(st.font).startsWith("$") ? esc(st.font) : ""}" placeholder="예: Noto Sans CJK KR"></label><label>굵기<select data-st="${n}:weight"><option value="">-</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option ${+st.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label>단락 뒤<input type="number" step="0.5" data-st="${n}:space_after" value="${st.space_after ?? ""}"></label></div>
+        <div class="m3"><label>굵기<select data-st="${n}:weight"><option value="">-</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option ${+st.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label>단락 뒤<input type="number" step="0.5" data-st="${n}:space_after" value="${st.space_after ?? ""}"></label></div>
         <div class="m3"><label>들여쓰기 mm<input type="number" step="0.5" data-st="${n}:indent" value="${st.indent ?? ""}"></label><label title="인디자인 자간 축소 — 글자 양옆 빈 곳을 % 줄인다">자간 축소 %<input type="number" step="5" min="0" max="100" data-st="${n}:tsume" value="${st.tsume ?? ""}"></label><label title="단·쪽 끝에 혼자 남지 않게 다음 문단과 같이 넘긴다(번호·발문)">다음과 함께<input type="checkbox" data-st="${n}:keep_next" ${st.keep_next ? "checked" : ""} style="width:auto"></label></div>
         <div class="m4"><label title="단락 바탕(인디자인 단락 음영) — 견본 이름 또는 #색번호. 같은 바탕이 잇닿은 문단은 한 상자">바탕<input type="text" list="tok-col" data-st="${n}:shade" value="${esc(st.shade || "")}" placeholder="없음"></label><label title="바탕 둘레 선 굵기 pt">테두리 pt<input type="number" step="0.1" min="0" data-st="${n}:border" value="${st.border ?? ""}"></label><label title="바탕 안쪽 여백 mm">여백 mm<input type="number" step="0.5" min="0" data-st="${n}:pad" value="${st.pad ?? ""}"></label><label title="문단을 단·쪽에서 쪼개지 않는다(선지 묶음)">쪼개지 않기<input type="checkbox" data-st="${n}:keep_together" ${st.keep_together ? "checked" : ""} style="width:auto"></label></div>
         <div class="m4"><label title="바탕 위 여백 mm(비우면 「여백」)">바탕 위<input type="number" step="0.1" data-st="${n}:pad_top" value="${st.pad_top ?? ""}"></label><label title="바탕 아래 여백 mm">바탕 아래<input type="number" step="0.1" data-st="${n}:pad_bottom" value="${st.pad_bottom ?? ""}"></label><label title="테두리 색 — 견본 이름 또는 #색번호">테두리 색<input type="text" list="tok-col" data-st="${n}:border_color" value="${esc(st.border_color || "")}"></label><label title="글자 기준선을 이만큼 내린다 mm(앞에 붙인 번호 — 발문보다 조금 아래)">기준선 내림<input type="number" step="0.05" data-st="${n}:drop" value="${st.drop ?? ""}"></label></div>
@@ -1928,7 +1955,7 @@ function side() {
         <h3>글자 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>`) + `
         <div class="f"><span title="인디자인 단락 스타일 — 옷(브랜드)에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
-        <div class="f"><span title="인디자인 글꼴">글꼴</span><span style="display:flex;gap:4px"><select data-a="font">${Object.entries(Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {})).map(([n, v]) => `<option value="$${n}" ${a.font === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("")}<option value="__raw" ${a.font && !a.font.startsWith("$") ? "selected" : ""}>직접 입력…</option></select>${a.font && !a.font.startsWith("$") ? `<input type="text" data-a="font" value="${esc(a.font)}" title="서체 이름 (예: Montserrat)" style="width:110px">` : ""}</span></div>
+        <div class="f"><span title="인디자인 글꼴 — 시스템 서체에서 고른다. 없으면 「＋ 서체」로 등록">글꼴</span><span style="display:flex;gap:4px;align-items:center">${fontSel("data-a", "font", a.font, Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {}))}<label class="btn sm sub" title="서체 파일(OTF·TTF)을 올려 시스템 서체로 등록">＋ 서체<input type="file" id="font-file" accept=".otf,.ttf" style="display:none"></label></span></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div>
         <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${[[100, "Thin"], [200, "ExtraLight"], [300, "Light"], [400, "Regular"], [500, "Medium"], [600, "SemiBold"], [700, "Bold"], [800, "ExtraBold"], [900, "Black"]].map(([v, n]) => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${n}</option>`).join("")}</select></div>
@@ -1945,7 +1972,7 @@ function side() {
         <div class="f"><span>색</span>${colorSel(`grep.${k}.color`, r.color, true)}</div>
         <div class="m3"><label title="맞은 글자만 크기 — 비우면 글상자 크기">크기 pt<input type="number" data-a="grep.${k}.size" step="0.5" value="${r.size || ""}"></label><label title="기준선 이동 pt — 양수면 위로, 음수면 아래로">기준선 pt<input type="number" data-a="grep.${k}.bshift" step="0.1" value="${r.bshift || ""}"></label><label>밑줄<input type="checkbox" data-a="grep.${k}.u" ${r.u ? "checked" : ""} style="width:auto"></label></div>
         <div class="m3"><label title="칸으로 바꾸기 — 맞은 글(예: 원고의 ____ 빈칸) 대신 이 폭의 밑줄 칸. 비우면 글 그대로">칸 폭 mm<input type="number" data-a="grep.${k}.blank" step="0.1" value="${r.blank || ""}"></label><label title="칸 밑줄 굵기">선 mm<input type="number" data-a="grep.${k}.line" step="0.01" value="${r.line || ""}" placeholder="0.2"></label><label title="칸 밑줄을 기준선 아래로">내림 mm<input type="number" data-a="grep.${k}.line_off" step="0.05" value="${r.line_off || ""}" placeholder="0.4"></label></div>
-        <div class="f"><span title="맞은 글자만 서체 — 비우면 글상자 서체 (인디자인 GREP 스타일의 문자 스타일 서체)">서체</span><input type="text" data-a="grep.${k}.font" value="${esc(r.font || "")}" placeholder="글상자 서체" spellcheck="false"></div>
+        <div class="f"><span title="맞은 글자만 서체 — 비우면 글상자 서체 (인디자인 GREP 스타일의 문자 스타일 서체)">서체</span>${fontSel("data-a", `grep.${k}.font`, r.font, null, "글상자 서체")}</div>
         <div class="m3"><label title="맞은 글자만 자간 — em 의 1/1000">자간 ‰<input type="number" data-a="grep.${k}.track" step="1" value="${r.track || ""}"></label><label title="글 폭 칸 — 맞은 글(표시 감추기면 묶음 1)을 감추고 그 글 폭만큼 밑줄 칸(인디자인: 정답 글 칠 없음 + 밑줄). 크기·자간이 폭에 들어가고, 칸 폭 mm 는 더할 폭">글 폭 칸<input type="checkbox" data-a="grep.${k}.fit" ${r.fit ? "checked" : ""} style="width:auto"></label><label></label></div>
         ${(r.blank || r.fit || r.u) ? `<div class="f"><span title="칸 밑줄 · 밑줄 색 — 없으면 글자색">선 색</span>${colorSel(`grep.${k}.line_color`, r.line_color, true)}</div>` : ""}
         <div class="m3"><label title="맞은 글자만 굵기 — 굵게(700)보다 먼저">굵기<select data-a="grep.${k}.weight"><option value="">기본</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}" ${+r.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label title="표시 감추기 — 패턴의 ( ) 묶음 1 의 글만 보이고 나머지(원고의 약속 표시, 예: {밑줄 칠 곳})는 지운다">표시 감추기<input type="checkbox" data-a="grep.${k}.hide" ${r.hide ? "checked" : ""} style="width:auto"></label></div>
@@ -2071,7 +2098,7 @@ function side() {
   document.querySelectorAll("[data-it]").forEach(i => i.onchange = () => { hist(); const it = page.items[sel]; const k = i.dataset.it; if (k === "w" && !i.value) delete it.w; else if (k === "s") { const v = Math.max(10, +i.value) / 100; if (Math.abs(v - 1) < 0.002) delete it.s; else it.s = v; } else it[k] = +i.value; save(); render(); side(); });     // 위 컨트롤 바·오른쪽 패널 둘 다 같은 값을 보이게
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
-    if (v === "__raw") v = k === "font" ? "Noto Sans CJK KR" : "#231f20";          // 직접 고르기 — 옆에 색 고르기·서체 이름 칸이 뜬다
+    if (v === "__raw") v = "#231f20";                                        // 색 직접 고르기 — 옆에 색 고르기 칸이 뜬다 (서체는 시스템 서체 목록에서만)
     if (k.startsWith("tail.")) { const kk = k.slice(5);                         // 글 끝에 붙이기
       if (kk === "part") { if (v) a.tail = Object.assign({}, a.tail, {part: v}); else delete a.tail; }
       else if (a.tail) { if (v === "" || v === 0) delete a.tail[kk]; else a.tail[kk] = +v; } }
@@ -2201,6 +2228,10 @@ function side() {
   on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
     q.repeat = v === "once" || v === "none" ? v : "each_set"; if (v === "each_set_2") q.per = 2; else delete q.per;     // 지문 2개씩 = 그 면에 지문 자리를 두 벌 그려 둔다
     await savePlan(); drawRail(); side(); });
+  on("#font-file", "change", async (e) => {                                // 서체 등록 — 올리면 서체 칸 목록에 든다
+    const f = e.target.files[0]; if (!f) return;
+    if (await uploadFont(f)) { pageSvg = {}; side(); render(); }
+  });
   on("#img-file", "change", async (e) => {                                 // 그림 넣기 — 올려서 브랜드 그림 목록에 등록
     const f = e.target.files && e.target.files[0]; if (!f) return;
     const fd = new FormData(); fd.append("file", f); fd.append("skin", skin().id); fd.append("key", f.name.replace(/\.[^.]+$/, ""));
@@ -2407,8 +2438,63 @@ $("#skin").onchange = async () => {
   if (plan && plan.skin !== $("#skin").value) { plan.skin = $("#skin").value; await savePlan(); }   // 문서에 기억시킨다
 };
 
+// ── 목록(select) 고르기 — 운영체제 창 대신 화면 안 목록 ──
+// 맥 크롬의 기본 목록은 운영체제 창이라 화면 안에서 다룰 수 없다(화면 없는 크롬·자동 시험에서 사람처럼 고를 수 없었다 2026-10-10).
+// 누르면 화면 안 목록을 띄우고, 고르면 select 값을 바꾸고 input·change 를 낸다 — 목록을 쓰는 코드는 그대로.
+(() => {
+  let menu = null, cur = null, hi = -1;
+  const close = () => { if (menu) { menu.remove(); menu = null; cur = null; } };
+  const mark = () => {
+    if (!menu) return;
+    [...menu.children].forEach((d, i) => d.classList.toggle("hi", i === hi));
+    const h = menu.children[hi]; if (h) h.scrollIntoView({block: "nearest"});
+  };
+  const choose = (i) => {
+    const sel = cur; close();
+    if (!sel || i < 0 || !sel.options[i] || sel.options[i].disabled) return;
+    if (sel.selectedIndex !== i) { sel.selectedIndex = i; sel.dispatchEvent(new Event("input", {bubbles: true})); sel.dispatchEvent(new Event("change", {bubbles: true})); }
+    if (document.body.contains(sel)) sel.focus();
+  };
+  const open = (sel) => {
+    close(); cur = sel;
+    menu = document.createElement("div"); menu.className = "selmenu"; menu.setAttribute("role", "listbox");
+    [...sel.options].forEach((o, i) => {
+      const d = document.createElement("div");
+      d.className = "opt" + (i === sel.selectedIndex ? " on" : "") + (o.disabled ? " dis" : "");
+      d.textContent = o.textContent; d.dataset.i = i; d.dataset.value = o.value; d.setAttribute("role", "option");
+      d.addEventListener("mousedown", (e) => e.preventDefault());
+      d.addEventListener("click", (e) => { e.preventDefault(); choose(i); });
+      menu.appendChild(d);
+    });
+    document.body.appendChild(menu);
+    const r = sel.getBoundingClientRect(), H = Math.min(menu.scrollHeight, 320);
+    let top = r.bottom + 2; if (top + H > innerHeight - 8) top = Math.max(8, r.top - 2 - H);
+    Object.assign(menu.style, {left: Math.min(r.left, innerWidth - 220) + "px", top: top + "px", minWidth: r.width + "px"});
+    hi = sel.selectedIndex; mark();
+  };
+  document.addEventListener("mousedown", (e) => {
+    const sel = e.target.closest && e.target.closest("select");
+    if (sel && !sel.disabled && !sel.multiple) { e.preventDefault(); sel.focus(); if (cur === sel) close(); else open(sel); return; }
+    if (menu && !menu.contains(e.target)) close();
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    const sel = document.activeElement && document.activeElement.tagName === "SELECT" ? document.activeElement : null;
+    if (!menu) { if (sel && ["ArrowDown", "ArrowUp", " ", "Enter"].includes(e.key)) { e.preventDefault(); open(sel); } return; }
+    if (e.key === "ArrowDown") { e.preventDefault(); hi = Math.min(cur.options.length - 1, hi + 1); mark(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); hi = Math.max(0, hi - 1); mark(); }
+    else if (e.key === "Enter") { e.preventDefault(); choose(hi); }
+    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); close(); }
+  }, true);
+  window.addEventListener("scroll", (e) => {                         // 목록을 품은 영역이 굴러갈 때만 닫는다 — 지면이 다시 그려지며 움직이는 스크롤엔 안 닫는다
+    if (!menu || menu.contains(e.target)) return;
+    const t = e.target === document ? document.documentElement : e.target;
+    if (cur && t.contains && t.contains(cur)) close();
+  }, true);
+  window.addEventListener("resize", close);
+})();
+
 // ── 시작 ──
-$("#skin").innerHTML = LIB.skins.length ? LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("") : `<option value="">${esc(DEFAULT_SKIN.name)}</option>`;
+$("#skin").innerHTML =LIB.skins.length ? LIB.skins.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("") : `<option value="">${esc(DEFAULT_SKIN.name)}</option>`;
 thumbsLoad();
 (() => {
   applyWidths(); applyPanels();                                    // 접어 둔 패널·폭·넓게를 그대로 (localStorage)

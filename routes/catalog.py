@@ -806,14 +806,22 @@ def design_layouts(series, design):
     cache = os.path.join(tdir, f"layouts14_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
-    import fitz
-    doc = fitz.open(pdf)
     # 틀별 구성 규칙은 그 틀의 원래 책용 — bin/register-design 으로 새로 등록한 책(design.json layout_rules: false)은 안 쓴다
     try:
         dj = json.load(open(os.path.join(_ddir(series, design), "design.json"), encoding="utf-8"))
     except (OSError, ValueError):
         dj = {}
-    tok = _page_tokens(series, doc, dj.get("layout_rules", True))
+    out = pdf_layouts(pdf, series, dj.get("layout_rules", True))
+    json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
+    return out
+
+
+def pdf_layouts(pdf, series=None, rules=False):
+    """PDF 파일 하나 → 구성 목록. design_layouts 와 같은 판정을 등록 없이 부르는 입구(편집기로 만들기 1단계 — 구성 나누기).
+    rules = 그 틀의 구성 규칙(SECTION_RULES)을 쓸지 — 새 PDF 는 False(면에 인쇄된 이름표·생김새로만, PDF 등록과 같다)."""
+    import fitz
+    doc = fitz.open(pdf)
+    tok = _page_tokens(series, doc, rules)
     groups, order = {}, []
     names = {}                                            # 이름 → 모양 종류(간지/본문). 이름이 같아도 종류가 다르면 다른 구성
     for i, k, cov in _repeat_runs(tok):
@@ -848,7 +856,6 @@ def design_layouts(series, design):
                         "label": nm}
                        for nm in order]}
     doc.close()
-    json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
     return out
 
 

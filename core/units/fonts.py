@@ -89,3 +89,150 @@ def fix_css():
             src = ",".join(f'local("{n}")' for n in (ps, full) if n)
             css.append(f'@font-face{{font-family:"{fam}";font-weight:{w};font-style:{"italic" if it else "normal"};src:{src}}}')
     return "".join(css)
+
+
+# ── 시스템 서체 (2026-10-10) ──────────────────────────────────────────────
+# 편집기·PDF 는 **시스템 서체만** 쓴다 — 컴퓨터에 깔린 서체에 기대면 이 맥에서만 맞고 서버에선 다르게 나온다.
+# 시스템 서체 = ① 시스템이 함께 싣는 서체(디자인 config 의 fonts + 계열 코드의 FONTS — 서버 서체 묶음 deploy/fonts-pack.sh 와 같은 목록)
+#              ② 편집기에서 올려 등록한 서체(catalog/_fonts/ — 서버는 /data/catalog/_fonts)
+# 그리기는 이 파일들을 @font-face 로 직접 부른다(face_css). 편집기 서체 칸은 이 목록에서만 고른다. 검사는 목록 밖 서체를 실패로.
+FONT_EXT = (".otf", ".ttf")
+
+
+def store_dir():
+    from routes.catalog import CATALOG
+    return os.path.join(CATALOG, "_fonts")
+
+
+def pack_files():
+    """시스템이 함께 싣는 서체 파일 이름 — 디자인 config fonts + 계열 코드 FONTS (deploy/fonts-pack.sh 와 같은 출처)"""
+    import glob
+    import json
+    import re
+    from routes.catalog import CATALOG
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    want = set()
+    for p in glob.glob(os.path.join(CATALOG, "**", "config.json"), recursive=True):
+        try:
+            c = json.load(open(p, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for f in c.get("fonts") or []:
+            fn = f.get("file") if isinstance(f, dict) else f
+            if isinstance(fn, str) and fn.lower().endswith(FONT_EXT):
+                want.add(os.path.basename(fn))
+    for p in glob.glob(os.path.join(repo, "core", "render_vivlio", "series", "*", "*.py")):
+        want.update(re.findall(r'"([^"/]+\.(?:otf|ttf|OTF|TTF))"', open(p, encoding="utf-8").read()))
+    return sorted(want)
+
+
+def _meta(path):
+    """서체 파일 → (집 이름, 굵기, 기울임) — 이름표(ID16·ID1, ID17·ID2)에서. 굵기는 스타일 이름으로(인디자인처럼)"""
+    from fontTools.ttLib import TTFont
+    try:
+        f = TTFont(path, lazy=True, fontNumber=0)
+        nm = f["name"]
+    except Exception:
+        return None
+
+    def name(*ids):
+        for i in ids:
+            for r in nm.names:
+                if r.nameID == i:
+                    try:
+                        s = r.toUnicode().strip()
+                    except Exception:
+                        continue
+                    if s and s.isascii():
+                        return s
+        for i in ids:                                                   # 한글 이름만 있는 서체 — 그 이름 그대로
+            for r in nm.names:
+                if r.nameID == i:
+                    try:
+                        s = r.toUnicode().strip()
+                    except Exception:
+                        continue
+                    if s:
+                        return s
+        return ""
+    fam, sty = name(16, 1), name(17, 2) or "Regular"
+    w = _style_weight(sty)
+    if w is None:
+        try:
+            w = int(f["OS/2"].usWeightClass)
+        except Exception:
+            w = 400
+    return fam, w, "italic" in sty.lower() or "oblique" in sty.lower()
+
+
+_SYS = {}
+
+
+def system_fonts():
+    """→ [{file, path, family, weight, italic, src: "pack"|"upload"}] — 못 찾은 묶음 서체는 빠진다(missing_pack)"""
+    from core.render_vivlio.stage import find_font
+    sd = store_dir()
+    up = sorted(n for n in (os.listdir(sd) if os.path.isdir(sd) else []) if n.lower().endswith(FONT_EXT))
+    key = (tuple(pack_files()), tuple((n, os.path.getmtime(os.path.join(sd, n))) for n in up))
+    if _SYS.get("key") == key:
+        return _SYS["fonts"]
+    out = []
+    for n in key[0]:
+        p = find_font(n)
+        m = _meta(p) if p else None
+        if m:
+            out.append({"file": n, "path": p, "family": m[0], "weight": m[1], "italic": m[2], "src": "pack"})
+    for n in up:
+        p = os.path.join(sd, n)
+        m = _meta(p)
+        if m:
+            out.append({"file": n, "path": p, "family": m[0], "weight": m[1], "italic": m[2], "src": "upload"})
+    _SYS.update(key=key, fonts=out)
+    return out
+
+
+def missing_pack():
+    from core.render_vivlio.stage import find_font
+    return [n for n in pack_files() if not find_font(n)]
+
+
+def families():
+    """→ {집 이름: [굵기…]} — 편집기 서체 칸 목록"""
+    fams = {}
+    for f in system_fonts():
+        fams.setdefault(f["family"], set()).add(f["weight"])
+    return {k: sorted(v) for k, v in sorted(fams.items())}
+
+
+def face_css(mode="url"):
+    """시스템 서체 @font-face — 컴퓨터에 깔린 서체 대신 이 파일을 쓴다. mode url = 편집기(서버 주소) · file = PDF(파일 주소)"""
+    css = []
+    for f in system_fonts():
+        src = f"url('/api/units/fontfile/{f['file']}')" if mode == "url" else f"url('file://{f['path']}')"
+        fmt = "opentype" if f["file"].lower().endswith(".otf") else "truetype"
+        css.append(f'@font-face{{font-family:"{f["family"]}";font-weight:{f["weight"]};font-style:{"italic" if f["italic"] else "normal"};'
+                   f'src:{src} format("{fmt}");font-display:block}}')
+    return "".join(css)
+
+
+def font_file(name):
+    """등록된 서체 파일의 경로 — 목록에 없는 이름은 None (아무 파일이나 내주지 않는다)"""
+    return next((f["path"] for f in system_fonts() if f["file"] == name), None)
+
+
+def register(filename, data):
+    """서체 올려 등록 — catalog/_fonts/ 에 두고 목록에 든다. → 등록된 항목(같은 파일 이름이면 덮어씀)"""
+    base = os.path.basename(filename or "").strip()
+    if not base.lower().endswith(FONT_EXT) or base.startswith("."):
+        raise ValueError("OTF·TTF 서체 파일만")
+    sd = store_dir()
+    os.makedirs(sd, exist_ok=True)
+    path = os.path.join(sd, base)
+    with open(path, "wb") as fh:
+        fh.write(data)
+    m = _meta(path)
+    if not m:
+        os.remove(path)
+        raise ValueError("서체 파일을 읽지 못했다")
+    _SYS.clear()
+    return {"file": base, "family": m[0], "weight": m[1], "italic": m[2]}
