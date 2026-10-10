@@ -95,7 +95,7 @@ CHECK = r"""
       const bx = boxes.find(b => b.fi === t.dataset.fi);
       if (!bx || !bx.rs.length) continue;
       const tb = Math.max(...bx.rs.map(x => x.bottom)), tl = Math.min(...bx.rs.map(x => x.left)), tr = Math.max(...bx.rs.map(x => x.right));
-      const ty = num(t, 'data-y0'), th = num(t, 'data-h0'), top = pr.top + ty * kk, dbot = top + th * kk;
+      const ty = num(t, 'data-y0') + num(t, 'data-dy'), th = num(t, 'data-h0'), top = pr.top + ty * kk, dbot = top + th * kk;   // 밀린 뒤 자리(data-dy — 서버·크롬이 민 양)
       for (const o of its) {
         if (o === t) continue;
         const r2 = o.getBoundingClientRect();

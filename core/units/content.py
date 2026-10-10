@@ -182,8 +182,15 @@ def fill(pages, content, width_of=None):
         rec = pages[pi].get("_rec")
         if rec is not None and name in rec:
             v = rec[name]
-            if "+" in name and isinstance(v, list) and v and isinstance(v[0], (dict, list)):   # 흐름 자리 — 이 벌의 문항 목록 전부
-                pages[pi]["items"][i]["fields"] = {name: story_value(name, v, (pages[pi]["items"][i].get("atom") or {}).get("slot_fmt"))}
+            if "+" in name and isinstance(v, list) and v and isinstance(v[0], (dict, list)):   # 흐름 자리
+                atom = pages[pi]["items"][i].get("atom") or {}
+                if per_occurrence(v) and not atom.get("story"):            # 쪽마다 제 몫 — [[왼쪽 쪽 문항들], [오른쪽 쪽 문항들]] (글 잇기 안 한 상자는 한 몫씩)
+                    rq = recq.setdefault((id(rec), name), list(v))
+                    items = rq.pop(0) if rq else []
+                    pages[pi]["items"][i]["fields"] = {name: story_value(name, items, atom.get("slot_fmt")) if items else ""}
+                    filled += len(items)
+                    continue
+                pages[pi]["items"][i]["fields"] = {name: story_value(name, v, atom.get("slot_fmt"))}   # 이 벌의 문항 목록 전부(글 잇기 상자들로 흐른다)
                 filled += len(v)
                 continue
             if not isinstance(v, list):                                            # 글 하나 = 레코드 전체의 값(두 쪽 머리의 제목 등)
@@ -219,6 +226,18 @@ def fill(pages, content, width_of=None):
     extra = {k: len(v) for k, v in queue.items() if v and k in known}
     unknown = sorted(k for k in queue if k not in known)
     return pages, {"filled": filled, "unfilled": unfilled, "extra": extra, "unknown": unknown}
+
+
+def per_occurrence(v):
+    """흐름 자리 원고가 「쪽마다 제 몫」 꼴인가 — [[문항, …], [문항, …]] (문항 = {자리: 글} 또는 [[자리, 글], …]).
+    문항 하나가 [[자리, 글], …] 인 꼴([[["번호", "01"], …], …])과 가른다: 몫의 첫 원소가 문항(사전 또는 [자리, 글] 목록)이면 몫."""
+    if not (isinstance(v, list) and v and isinstance(v[0], list)):
+        return False
+    f = v[0]
+    if not f:
+        return True
+    x = f[0]
+    return isinstance(x, dict) or (isinstance(x, list) and bool(x) and isinstance(x[0], list))
 
 
 def blank(v):

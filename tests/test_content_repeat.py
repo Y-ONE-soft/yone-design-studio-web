@@ -1,3 +1,4 @@
+import json
 """「원고마다」 묶음 되풀이 — core.units.content.plan_pages + fill (인디자인 데이터 병합의 레코드처럼)."""
 from core.units import content
 
@@ -96,3 +97,17 @@ def test_fold_attached_keeps_gap_below():
     filled, _ = content.fill([page], {"지문": "글", "주석": "", "선지": "①"})
     folded, bands = render.fold_bands(filled[0])
     assert folded == {1} and abs(bands[0][4] + 8) < 1e-6              # 주석 높이 8 만 — 선지 위 틈 6 은 그대로
+
+
+def test_flow_per_page_share():
+    """흐르는 글상자(글 잇기 안 함)가 펼침면 쪽마다 제 몫의 문항 목록을 받는다"""
+    flow = lambda: {"x": 20, "y": 30, "atom": {"t": "text", "bind": "번호+문장", "w": 150, "text": "임시"}}
+    pages = {"L": {"id": "L", "name": "C2", "items": [flow()]}, "R": {"id": "R", "name": "C2 오른쪽", "items": [flow()]}}
+    plan = {"sections": [{"id": "s1", "pages": [{"page": p, "repeat": "each_set"} for p in ("L", "R")]}]}
+    rec = {"번호+문장": [[{"번호": "01", "문장": "가"}, {"번호": "02", "문장": "나"}], [{"번호": "03", "문장": "다"}]]}
+    filled, rep = content.fill(content.plan_pages(plan, pages, {"C2": [rec]}), {"C2": [rec]})
+    flat = lambda pg: json.dumps(pg["items"][0]["fields"], ensure_ascii=False)
+    assert "가" in flat(filled[0]) and "나" in flat(filled[0]) and "다" not in flat(filled[0])
+    assert "다" in flat(filled[1]) and "가" not in flat(filled[1])
+    assert rep["filled"] == 3
+    assert not content.per_occurrence([[["번호", "01"], ["문장", "가"]]])          # 문항 하나가 [자리, 글] 목록인 꼴은 몫이 아니다

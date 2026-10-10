@@ -2019,7 +2019,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
     extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "") \
-        + (' data-push="row"' if page.get("push") == "row" else "")              # 자라면 아래 것 모두 밀기(가로 상관없이) — 크롬 쪽 밀기(units_compose.grow)도 같게   # 덧쪽 — 빈 채면 크롬이 지운다
+        + ((' data-push="row" data-tx="%.3f %.3f"' % text_area(page, W)) if page.get("push") == "row" else "")   # 본문 영역 — 크롬 쪽 밀기도 같게
     if ctx.print:
         # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
         b = float(ctx.print.get("bleed") or 0)
@@ -2113,12 +2113,20 @@ def place_items(ctx, page, W, H, mirror=False):
              for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
     grown += bands
     row = page.get("push") == "row"                                    # 쪽 설정 「자라면 아래 것 모두 밀기」 — 가로로 안 겹쳐도(옆 꼬리표·번호) 아래면 민다
+    tx0, tx1 = text_area(page, W)                                      # 단 본문 영역(좌우 여백 안)에 걸친 것만 — 여백 밖 장식(옆 탭)은 그대로
     for p in placed:
         it = p["it"]
+        inside = it["x"] < tx1 - 0.01 and it["x"] + p["w"] > tx0 + 0.01
         p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
-                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and (row or (it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)))
+                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and ((row and inside) or (it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)))
         p["y"] = it["y"] + p["dy"]
     return placed
+
+
+def text_area(page, W):
+    """본문 영역 가로(좌우 여백 안) — 쪽 「여백 및 단」, 없으면 20mm"""
+    m = page.get("margins") or {}
+    return float(m.get("left") or 20), float(W) - float(m.get("right") or 20)
 
 
 def fold_bands(page):
