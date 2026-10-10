@@ -36,7 +36,7 @@ def html_of(svgs, w_mm, h_mm, title="지면", keep=None, pad=0):
             "document.querySelectorAll('.p.drop').forEach(e => e.remove()), 0));</script>") if keep is not None else ""
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>'
             f'@page{{size:{w_mm + pad}mm {h_mm + pad}mm;margin:0}} html,body{{margin:0;padding:0}} '
-            f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:visible;page-break-after:always;break-after:page}} '
+            f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:visible;page-break-after:always;break-after:page;clip-path:inset(0 -{pad}mm -{pad}mm 0)}} '   # 면 위·왼쪽 밖(재단 여백까지 그린 머리 띠)이 앞 면 아래로 비치지 않게
             f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm;overflow:visible}} .p svg .zone{{display:none}} '
             f'.story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("file")}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
             f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}</body></html>')
