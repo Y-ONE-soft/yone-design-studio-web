@@ -94,7 +94,7 @@
     return v;
   }
   function tsume(root) {
-    root.querySelectorAll("[data-tsume]").forEach(box => {
+    [...root.querySelectorAll("[data-tsume]")].reverse().forEach(box => {   // 안쪽(문단마다 다른 값)부터 — 바깥 상자는 이미 나눈 글자를 다시 안 나눈다
       if (box.dataset.tsumeDone) return;
       box.dataset.tsumeDone = "1";
       const t = (+box.dataset.tsume || 0) / 100;
@@ -103,7 +103,7 @@
       const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: (n) =>   // 칸·개체(inline-block) 속은 그대로
         n.nodeType === 1 && getComputedStyle(n).display === "inline-block" ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
       let n;
-      while ((n = w.nextNode())) if (n.nodeType === 3 && !noInk(n.data)) nodes.push(n);
+      while ((n = w.nextNode())) if (n.nodeType === 3 && !noInk(n.data) && !(n.parentElement && n.parentElement.dataset.ts)) nodes.push(n);
       for (const tn of nodes) {
         const cs = getComputedStyle(tn.parentElement), px = parseFloat(cs.fontSize);
         if (!(px > 0)) continue;
@@ -342,9 +342,15 @@
     const i = ps.findIndex(p => p.getBoundingClientRect().bottom > L);
     if (i < 0) return null;
     const p = ps[i], rest = ps.slice(i + 1);
-    let p2 = null, whole = false;
-    if (p.dataset.jcDone) {                                            // 컴포저 단락 — 줄마다 span
-      const k = [...p.children].findIndex(s => s.getBoundingClientRect().bottom > L);
+    let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
+    if (whole) { /* 자르지 않는다 */ }
+    else if (p.dataset.jcDone) {                                       // 컴포저 단락 — 줄마다 span
+      const lines = [...p.children];
+      let k = lines.findIndex(s => s.getBoundingClientRect().bottom > L);
+      // 행 유지(인디자인 「처음 N행 · 마지막 N행」) — 상자 끝에 처음 몇 줄만, 다음 상자에 마지막 몇 줄만 남지 않게
+      const kf = +p.dataset.keepFirst || 0, kl = +p.dataset.keepLast || 0;
+      if (k > 0 && kl && lines.length - k < kl) k = lines.length - kl;   // 넘어갈 줄이 모자라면 더 넘긴다
+      if (k > 0 && kf && k < kf && i > 0) k = 0;                       // 남을 줄이 모자라면 통째로
       if (k === 0) whole = true;
       else if (k > 0) { p2 = p.cloneNode(false); [...p.children].slice(k).forEach(s => p2.appendChild(s)); }
     } else {                                                           // 브라우저가 꺾은 단락 — 넘는 줄의 첫 글자에서 자른다
@@ -363,7 +369,15 @@
         }
       }
     }
-    if (whole) return [p, ...rest];
+    if (whole) {                                                       // 다음 문단과 함께 — 그 앞 문단(번호·발문)이 상자 끝에 혼자 남지 않게 같이 넘긴다
+      let s = i;
+      for (;;) {                                                       // 쪼개지 않기는 같은 자리 묶음 전체(선지 ①~⑤) · 다음 문단과 함께(번호·발문)
+        if (s > 0 && ps[s].dataset.keep && ps[s - 1].dataset.keep && ps[s - 1].dataset.slot === ps[s].dataset.slot) { s--; continue; }
+        if (s > 0 && ps[s - 1].dataset.keepNext) { s--; continue; }
+        break;
+      }
+      return ps.slice(s > 0 ? s : i);                                  // 상자가 통째로 비게 되면 그대로(무한히 넘기지 않게)
+    }
     if (p2) {
       p2.style.textIndent = "0";                                       // 단락 가운데서 이어진다 — 첫 줄 들여쓰기·앞 간격·위 경계선·글머리 없이
       p2.style.marginTop = "0";
@@ -542,14 +556,28 @@
     });
   }
 
+  function dropSpares(root) {                                          // 덧쪽(render.story_spares) 중 글이 안 흘러온 쪽은 지운다
+    (root || document).querySelectorAll("svg[data-spare]").forEach(svg => {
+      const bx = [...svg.querySelectorAll("[data-story]")].filter(o => o.dataset.story === svg.dataset.spare);
+      if (bx.some(o => o.dataset.storyFilled)) return;
+      (svg.closest(".p") || svg).remove();
+    });
+  }
+
   function composeAll(root) {
     try { tsume(root || document); } catch (e) { /* 못 하면 자간 축소 없이 */ }
     (root || document).querySelectorAll("[data-jc]").forEach(p => { try { compose(p); } catch (e) { /* 못 하면 브라우저 줄바꿈 */ } });
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
+    try { dropSpares(root || document); } catch (e) { /* 못 하면 빈 덧쪽이 남는다 */ }
     try { grow(root || document); } catch (e) { /* 못 하면 서버 어림 높이 그대로 */ }
   }
 
   window.unitsCompose = composeAll;
+  try {                                                                // 잇는 상자 맨 위 문단은 「앞 간격」을 버린다(인디자인 — 프레임 맨 위)
+    const css = document.createElement("style");
+    css.textContent = "[data-story] p[data-slot]:first-child{margin-top:0!important}";
+    (document.head || document.documentElement).appendChild(css);
+  } catch (e) { /* 그대로 */ }
   if (document.readyState !== "loading" && document.querySelector("[data-jc],[data-tsume]") && document.fonts) {
     document.fonts.ready.then(() => composeAll(document));
   } else if (document.fonts) {

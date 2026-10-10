@@ -482,7 +482,7 @@ function setFor(p) {
 function planPg(pid) { for (const sc of ((plan || {}).sections) || []) for (const pg of sc.pages || []) if (pg.page === pid) return pg; return null; }   // 그 지면의 틀 항목 (앞·뒤붙이엔 없다)
 function setPlanIds(ids) { const s0 = (plan.sections || [])[0] || {id: "s1", name: "본문"}; const old = {}; for (const sc of plan.sections || []) for (const pg of sc.pages || []) old[pg.page] = pg;
   plan.front = []; plan.back = []; plan.sections = [{id: s0.id, name: s0.name, pages: ids.map(id => Object.assign({}, old[id], {page: id, repeat: (old[id] || {}).repeat || "once"}))}]; }   // 순서가 바뀌어도 「원고마다」 설정은 남긴다
-async function savePlan() { if (!plan) return; const j = await api("/api/units/plans", plan); if (j.error) $("#st").textContent = "틀 저장 실패: " + j.error; }
+async function savePlan() { if (!plan) return; const j = await api("/api/units/plans", plan); if (j.error) $("#st").textContent = "틀 저장 실패: " + j.error; return !j.error; }
 function usedElsewhere(pid) { return LIB.plans.some(pl => pl !== plan && planIds(pl).includes(pid)); }
 let tab = new URLSearchParams(location.search).get("tab") || "blocks";      // ?tab=atoms 로 바로 열기
 const specOf = (p) => byId("specs")[(p || page || {}).spec] || byId("specs").a4 || {w: 210, h: 297};
@@ -1759,17 +1759,27 @@ function panelSkins(hd, body) {
       <h3>단락 스타일 <span class="note" style="display:inline">글상자의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 자리도 맞춰진다</span></h3>
       ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
         <div class="m3"><label>서체<select data-st="${n}:font"><option value="">-</option>${Object.keys(sk.tokens.font || {}).map(f => `<option value="$${f}" ${st.font === "$" + f ? "selected" : ""}>${f}</option>`).join("")}</select></label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
-        <div class="m3"><label>색<select data-st="${n}:color"><option value="">-</option>${Object.entries(sk.tokens.color || {}).map(([c, v]) => `<option value="$${c}" ${st.color === "$" + c ? "selected" : ""}>${c}</option>`).join("")}</select></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
-        <div class="m3"><label>첫 줄 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div></div>`).join("")}
+        <datalist id="tok-col">${Object.keys(sk.tokens.color || {}).map(c => `<option value="$${c}">`).join("")}</datalist>
+        <div class="m3"><label title="견본 이름($ink) 또는 #색번호">색<input type="text" list="tok-col" data-st="${n}:color" value="${esc(st.color || "")}" placeholder="$ink"></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
+        <div class="m3"><label>첫 줄 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div>
+        <div class="m3"><label title="서체 이름을 바로 — 비우면 위 「서체」">서체 직접<input type="text" data-st="${n}:font" value="${st.font && !String(st.font).startsWith("$") ? esc(st.font) : ""}" placeholder="예: Noto Sans CJK KR"></label><label>굵기<select data-st="${n}:weight"><option value="">-</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option ${+st.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label>단락 뒤<input type="number" step="0.5" data-st="${n}:space_after" value="${st.space_after ?? ""}"></label></div>
+        <div class="m3"><label>들여쓰기 mm<input type="number" step="0.5" data-st="${n}:indent" value="${st.indent ?? ""}"></label><label title="인디자인 자간 축소 — 글자 양옆 빈 곳을 % 줄인다">자간 축소 %<input type="number" step="5" min="0" max="100" data-st="${n}:tsume" value="${st.tsume ?? ""}"></label><label title="단·쪽 끝에 혼자 남지 않게 다음 문단과 같이 넘긴다(번호·발문)">다음과 함께<input type="checkbox" data-st="${n}:keep_next" ${st.keep_next ? "checked" : ""} style="width:auto"></label></div>
+        <div class="m4"><label title="단락 바탕(인디자인 단락 음영) — 견본 이름 또는 #색번호. 같은 바탕이 잇닿은 문단은 한 상자">바탕<input type="text" list="tok-col" data-st="${n}:shade" value="${esc(st.shade || "")}" placeholder="없음"></label><label title="바탕 둘레 선 굵기 pt">테두리 pt<input type="number" step="0.1" min="0" data-st="${n}:border" value="${st.border ?? ""}"></label><label title="바탕 안쪽 여백 mm">여백 mm<input type="number" step="0.5" min="0" data-st="${n}:pad" value="${st.pad ?? ""}"></label><label title="문단을 단·쪽에서 쪼개지 않는다(선지 묶음)">쪼개지 않기<input type="checkbox" data-st="${n}:keep_together" ${st.keep_together ? "checked" : ""} style="width:auto"></label></div>
+        <div class="m4"><label title="바탕 위 여백 mm(비우면 「여백」)">바탕 위<input type="number" step="0.1" data-st="${n}:pad_top" value="${st.pad_top ?? ""}"></label><label title="바탕 아래 여백 mm">바탕 아래<input type="number" step="0.1" data-st="${n}:pad_bottom" value="${st.pad_bottom ?? ""}"></label><label title="테두리 색 — 견본 이름 또는 #색번호">테두리 색<input type="text" list="tok-col" data-st="${n}:border_color" value="${esc(st.border_color || "")}"></label><label title="글자 기준선을 이만큼 내린다 mm(앞에 붙인 번호 — 발문보다 조금 아래)">기준선 내림<input type="number" step="0.05" data-st="${n}:drop" value="${st.drop ?? ""}"></label></div>
+        <div class="m4" title="양끝 정렬 균등 배치 — 낱말 최소·최대 % · 자간 최소·최대 ‰ (인디자인 균등 배치). 비우면 글상자 것"><label>낱말 최소<input type="number" step="5" data-st="${n}:jc.word_min" value="${(st.jc || {}).word_min ?? ""}"></label><label>낱말 최대<input type="number" step="5" data-st="${n}:jc.word_max" value="${(st.jc || {}).word_max ?? ""}"></label><label>자간 최소<input type="number" step="1" data-st="${n}:jc.letter_min" value="${(st.jc || {}).letter_min ?? ""}"></label><label>자간 최대<input type="number" step="5" data-st="${n}:jc.letter_max" value="${(st.jc || {}).letter_max ?? ""}"></label></div>
+        <div class="m3"><label title="인디자인 행 유지 — 단·쪽 끝에 이 문단이 처음 몇 줄 이상 남을 때만 나눈다">처음 N행<input type="number" step="1" min="0" data-st="${n}:keep_first" value="${st.keep_first ?? ""}"></label><label title="다음 단·쪽으로 마지막 몇 줄 이상 넘길 때만 나눈다">마지막 N행<input type="number" step="1" min="0" data-st="${n}:keep_last" value="${st.keep_last ?? ""}"></label><label title="같은 스타일 문단 사이 간격 mm(인디자인 「동일한 스타일 단락 사이 간격」) — 선지끼리">같은 스타일 사이<input type="number" step="0.5" data-st="${n}:space_same" value="${st.space_same ?? ""}"></label></div></div>`).join("")}
       <div class="row"><button class="btn sm sub" id="st-new">＋ 단락 스타일</button></div>
       ${LIB.blocks.filter(b => (b.variants || []).length > 1).length ? `<h3>블록 모양 고르기</h3>${LIB.blocks.filter(b => (b.variants || []).length > 1).map(b => `<div class="f"><span>${esc(b.name)}</span><select data-var="${b.id}">${b.variants.map(v => `<option value="${v.id}" ${((sk.variants || {})[b.id] || b.variants[0].id) === v.id ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>`).join("")}` : ""}`);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-font]").forEach(i => i.onchange = () => { sk.tokens.font[i.dataset.font] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-var]").forEach(i => i.onchange = () => { sk.variants = sk.variants || {}; sk.variants[i.dataset.var] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = i.dataset.st.split(":"); const st = sk.styles[n]; const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
-      if (v === "" || v == null || v === false) delete st[k]; else st[k] = v; saveSkin(); pageSvg = {}; render(); });
+      if (k === "font" && i.type === "text" && v === "" && String(st[k] || "").startsWith("$")) return;     // 「서체 직접」을 비워도 토큰 서체는 그대로
+      if (k.startsWith("jc.")) { const kk = k.slice(3); st.jc = Object.assign({}, st.jc); if (v === "" || v == null) delete st.jc[kk]; else st.jc[kk] = v; if (!Object.keys(st.jc).length) delete st.jc; }
+      else if (v === "" || v == null || v === false) delete st[k]; else st[k] = (k === "weight" ? +v : v);
+      saveSkin(); pageSvg = {}; render(); });
     body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 지울까요? 이 스타일을 쓰는 글상자는 자기 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
-    $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (영문 소문자·숫자·_ · 원고 docx 스타일 이름과 맞추려면 자리 이름과 같게)", ""); if (!n || !/^[a-z][a-z0-9_]*$/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
+    $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (한글 가능 · 원고 docx 스타일 이름과 맞추려면 자리 이름과 같게)", ""); if (!n || !n.trim() || /["<>]/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
     $("#sk-dup").onclick = async () => { const name = prompt("새 브랜드 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
       const c = clone(sk); c.id = "skin_" + n; c.name = name; const j = await api("/api/units/skins", c); if (j.error) { $("#st").textContent = j.error; return; }
       LIB.skins.push(c); $("#skin").innerHTML = LIB.skins.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(""); $("#skin").value = c.id; $("#skin").onchange(); };
@@ -1904,6 +1914,7 @@ function side() {
         </span></div>
         ${a.bind && !a.bind.startsWith("sys.") ? `<div class="f"><span title="한 글상자에 원고 자리를 여럿 — 원고에 나온 순서대로 섞여 흐른다(발문 다음 선지, 문장 다음 해석). 인디자인의 한 스토리 여러 단락 스타일">자리 더하기</span><select data-a="bindadd"><option value="">＋ 같이 흘릴 자리…</option>${allSlots().filter(([v]) => !v.startsWith("sys.") && !a.bind.split("+").includes(v)).map(([v, n2]) => `<option value="${v}">${esc(n2)}</option>`).join("")}</select></div>` : ""}
         ${a.bind && !a.bind.startsWith("sys.") ? a.bind.split("+").map(f => { const d = slotFmt(a, f); return `<div class="f"><span title="자리마다 서식 — 한 흐름 안에서 이 자리 단락만 (인디자인 단락 스타일)">${esc((Object.fromEntries(allSlots()))[f] || f)}</span><span style="display:flex;gap:8px"><label><input type="checkbox" data-a="slotfmt.${f}.b" ${d.b ? "checked" : ""}> 굵게</label><label><input type="checkbox" data-a="slotfmt.${f}.i" ${d.i ? "checked" : ""}> 기울임</label><label title="이 자리 단락을 테두리 상자로 — 잇닿은 단락은 한 상자"><input type="checkbox" data-a="slotfmt.${f}.box" ${d.box ? "checked" : ""}> 상자</label></span></div>
+          <div class="f"><span></span><span style="display:flex;gap:6px"><label title="이 자리 문단에 입힐 단락 스타일(브랜드 탭) — 서체·크기·간격·바탕·「다음 문단과 함께」「쪼개지 않기」까지">스타일 <select data-a="slotfmt.${f}.style"><option value="">(글상자 것)</option>${Object.keys(sk.styles || {}).map(n => `<option value="${esc(n)}" ${d.style === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label title="따로 문단을 만들지 않고 다음 문단 첫머리에 붙인다 — 문항 번호를 발문 첫 줄 앞에"><input type="checkbox" data-a="slotfmt.${f}.inline" ${d.inline ? "checked" : ""}> 앞에 붙이기</label>${d.inline ? `<label title="붙인 글이 차지하는 폭 mm(번호 칸) — 비우면 글 폭만큼">폭 <input type="number" step="0.5" min="0" style="width:44px" data-a="slotfmt.${f}.inline_w" value="${d.inline_w || ""}"></label>` : ""}</span></div>
           <div class="f"><span></span><span style="display:flex;gap:6px"><label title="들여쓰기 mm">들여 <input type="number" step="0.5" min="0" style="width:48px" data-a="slotfmt.${f}.indent" value="${d.indent || ""}"></label><label title="단락 앞 간격 mm">앞 <input type="number" step="0.5" min="0" style="width:48px" data-a="slotfmt.${f}.space" value="${d.space || ""}"></label></span></div>`; }).join("") : ""}
         ${a.bind ? `<div class="note">이 상자 = 원고의 <b>${esc(a.bind.split("+").map(b => (Object.fromEntries(allSlots()))[b] || b).join(" + "))}</b> — ${a.bind.includes("+") ? "원고에 나온 순서대로 섞여 흐른다" : "같은 자리 상자가 여럿이면 위에서부터 1번째·2번째 … 값, 하나뿐이면 전부 흘러 들어간다"}</div>`
                  : `<div class="note">원고와 상관없이 늘 같은 글이면 <b>고정 글</b> 그대로 둔다</div>`}
@@ -2129,7 +2140,7 @@ function side() {
     else if (k === "inset4") { const r = String(v).split(/[,\s]+/).filter(Boolean).map(Number);              // 안쪽 여백 위 오른쪽 아래 왼쪽
       if (r.length === 4 && r.every(x => x >= 0)) a.inset = r.every(x => x === r[0]) ? r[0] : r; else if (r.length === 1 && r[0] > 0) a.inset = r[0]; else if (!r.length) delete a.inset; }
     else if (k === "fill" && !v) delete a.fill;
-    else if (k.startsWith("slotfmt.")) { const [, f, prop] = k.split("."); a.slot_fmt = a.slot_fmt || {}; a.slot_fmt[f] = Object.assign({}, a.slot_fmt[f], {[prop]: typeof v === "boolean" ? v : (+v || 0)}); }
+    else if (k.startsWith("slotfmt.")) { const [, f, prop] = k.split("."); a.slot_fmt = a.slot_fmt || {}; a.slot_fmt[f] = Object.assign({}, a.slot_fmt[f], {[prop]: typeof v === "boolean" ? v : (prop === "style" ? String(i.value || "") : (+v || 0))}); }
     else if (k === "bindadd") { if (v && a.bind) a.bind = a.bind + "+" + v; }
     else if (k === "bindsel") { if (v === "__other") { a.bind = (a.bind && !allSlots().some(([x]) => x === a.bind)) ? a.bind : "자리"; }   // 직접 적기 — 빈 이름은 저장이 안 되니 「자리」로 시작 else if (v) a.bind = v; else delete a.bind;
       if (a.bind && a.text === DEFAULT_TEXT) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 자리 이름이 회색으로 보인다
@@ -2219,7 +2230,8 @@ function side() {
     if (raw) { try { obj = JSON.parse(raw); } catch (err) { say("원고가 JSON 이 아니다 — " + err.message); return; } }
     if (typeof obj !== "object" || Array.isArray(obj)) { say("원고는 {자리 이름: 글 | [글…]}"); return; }
     if (Object.keys(obj).length) plan.content = obj; else delete plan.content;
-    await savePlan(); viewContent = true; pageSvg = {}; render(); drawRail(); side();
+    if (!(await savePlan())) { say($("#st").textContent); return; }            // 저장 실패를 「넣음」으로 덮지 않는다
+    viewContent = true; pageSvg = {}; render(); drawRail(); side();
     say("원고 넣음 — 원고 보기");
   });
   on("#s-brandreg", "click", registerBrand);
@@ -2312,9 +2324,12 @@ function ctrlBar() {
 // 상태줄 — 알려 줄 말은 잠깐 붙잡는다(자동 저장이 바로 덮어 쓰지 않게)
 let stHold = 0;
 const say = (msg, ms) => { $("#st").textContent = msg; stHold = Date.now() + (ms || 6000); };
+const unsaved = new Set();                                              // 저장 기다리는 쪽 — 0.5초 안에 다른 쪽으로 넘어가도 앞 쪽 변경을 잃지 않게
 function save() {
   if (!page) return; if (Date.now() > stHold) $("#st").textContent = "저장 중…";
-  clearTimeout(st); st = setTimeout(async () => { const j = await api("/api/units/pages", page);
+  unsaved.add(page);
+  clearTimeout(st); st = setTimeout(async () => { const ps = [...unsaved]; unsaved.clear(); let j = {};
+    for (const p of ps) { const r = await api("/api/units/pages", p); if (r.error) j = r; }
     const w = $("#warn");
     if (j.error) { $("#st").textContent = "저장 실패: " + j.error; w.style.display = ""; w.dataset.save = "1"; w.textContent = "저장 안 됨 — " + j.error + " (고칠 때까지 이 쪽의 바뀐 것이 저장되지 않는다)"; }
     else { if (w.dataset.save) { w.style.display = "none"; delete w.dataset.save; } if (Date.now() > stHold) $("#st").textContent = "저장됨"; } }, 500);

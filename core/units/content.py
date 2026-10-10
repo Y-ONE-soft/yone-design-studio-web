@@ -78,6 +78,42 @@ def schema(pages, width_of=None):
     return sch
 
 
+def story_value(bind, records, slot_fmt=None):
+    """여러 자리를 한 줄기 글로(인디자인 한 스토리 여러 단락 스타일) — bind = "번호+발문+지문+선지",
+    records = [{자리: 글, …} 또는 [[자리, 글], …], …] 문항 순서(목록이면 그 문항 안 차례 그대로). 자리마다 문단(글 안 줄바꿈 = 문단 여럿)이 되고 문단 첫머리에 그 자리 표시(ps)가 붙어
+    그리기(render._text_html)가 그 자리의 단락 스타일을 입힌다. slot_fmt[자리].inline 이면 따로 문단을 만들지 않고
+    다음 문단 첫머리에 붙는다(문항 번호 — 발문 첫 줄 앞)."""
+    fmt = slot_fmt or {}
+    parts = [p for p in bind.split("+") if p]
+    out, carry = [], []
+
+    def para(slot, line):
+        nonlocal carry
+        if out:
+            out.append("\n")
+        out.append({"ps": slot, "t": ""})
+        out.extend(carry)
+        carry = []
+        if line:
+            out.append(line)
+    for rec in records:
+        if isinstance(rec, dict):                                       # {자리: 글} — 자리 차례는 bind 순서
+            pairs = [(s, rec.get(s)) for s in parts]
+        else:                                                           # [[자리, 글], …] — 문항마다 차례가 다를 때(보기가 지문 앞·뒤)
+            pairs = [(x[0], x[1]) for x in rec if isinstance(x, (list, tuple)) and len(x) == 2]
+        for s, v in pairs:
+            if v in (None, ""):
+                continue
+            if (fmt.get(s) or {}).get("inline"):
+                carry.append({"ps": s, "inline": True, "t": str(v)})
+                continue
+            for line in str(v).split("\n"):
+                para(s, line)
+    if carry:                                                           # 붙을 문단이 없으면 제 문단으로
+        para(carry[0]["ps"], "")
+    return out
+
+
 def fill(pages, content, width_of=None):
     """원고를 자리에 나눠 넣은 쪽 사본과 보고. 쪽 원본은 건드리지 않는다.
     보고 = {"filled": n, "unfilled": {자리: 남은 자리 수}, "extra": {자리: 남은 원고 수}, "unknown": [틀에 없는 자리 이름]}."""
@@ -87,7 +123,12 @@ def fill(pages, content, width_of=None):
     for pi, i, name, _ in slots(pages, width_of):
         known.add(name)
         q = queue.get(name)
-        if q:
+        if q and "+" in name and isinstance(q[0], (dict, list)):              # 여러 자리 한 줄기 — 문항 목록 전부가 이 글(잇기 상자들로 흘러간다)
+            atom = pages[pi]["items"][i].get("atom") or {}
+            pages[pi]["items"][i]["fields"] = {name: story_value(name, q, atom.get("slot_fmt"))}
+            filled += len(q)
+            q.clear()
+        elif q:
             pages[pi]["items"][i]["fields"] = {name: q.pop(0)}     # 그리기는 글상자의 fields 를 자리 값으로 쓴다
             filled += 1
         else:

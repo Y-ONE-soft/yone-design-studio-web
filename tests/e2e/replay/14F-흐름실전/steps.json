@@ -1,0 +1,1907 @@
+[
+ {
+  "js": "window.prompt=(m,d)=>window.__p||d; window.confirm=()=>true; window.__p='스텝바이스텝 S 실전문제 — 흐름 틀 (A4)'; true",
+  "wait": 300
+ },
+ {
+  "say": "＋ 새 문서",
+  "wait": 1300
+ },
+ {
+  "click": "#pcards .pcard.new",
+  "wait": 5000
+ },
+ {
+  "clickif": {
+   "at": "#tg-side",
+   "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"
+  },
+  "wait": 1000
+ },
+ {
+  "js": "(() => { const k = docPages().length; if (k !== 1) throw new Error('시작 쪽 수가 1 이 아니라 ' + k); return '시작 쪽 1 확인'; })()",
+  "wait": 500
+ },
+ {
+  "say": "속성 패널 넓히기",
+  "wait": 900
+ },
+ {
+  "drag": {
+   "from": "[data-rsz=\"r\"]",
+   "to": [
+    1200,
+    500
+   ]
+  },
+  "wait": 800
+ },
+ {
+  "say": "① 단락 스타일 — 브랜드 창에서 자리마다 하나씩",
+  "wait": 1600
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "click": "#side #s-skin-edit",
+  "wait": 1200
+ },
+ {
+  "say": "단락 스타일 「번호」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\ubc88\\ud638\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"번호:font\"]",
+   "value": "Elice DX Neolli OTF"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"번호:size\"]",
+   "value": 12
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"번호:color\"]",
+   "value": "#00559f"
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"번호:weight\"]",
+   "value": "700"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"번호:drop\"]",
+   "value": 0.55
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「발문」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\ubc1c\\ubb38\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"발문:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:tracking\"]",
+   "value": -40
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:leading\"]",
+   "value": 14.6
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:tsume\"]",
+   "value": 40
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:space_before\"]",
+   "value": 2.975
+  },
+  "wait": 450
+ },
+ {
+  "click": "input[data-st=\"발문:keep_next\"]",
+  "wait": 450
+ },
+ {
+  "click": "input[data-st=\"발문:keep_together\"]",
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:jc.letter_min\"]",
+   "value": -5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"발문:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「지문」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\uc9c0\\ubb38\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"지문:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:tracking\"]",
+   "value": -50
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:leading\"]",
+   "value": 14
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:space_before\"]",
+   "value": 1.105
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:space_same\"]",
+   "value": 0
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:keep_first\"]",
+   "value": 3
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:keep_last\"]",
+   "value": 2
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:jc.letter_min\"]",
+   "value": -5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"지문:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「선지」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\uc120\\uc9c0\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"선지:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:tracking\"]",
+   "value": -50
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:leading\"]",
+   "value": 12
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:indent\"]",
+   "value": 3.5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:indent_first\"]",
+   "value": -3.5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:space_before\"]",
+   "value": 4.354
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:space_after\"]",
+   "value": 2.653
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:space_same\"]",
+   "value": 1.0
+  },
+  "wait": 450
+ },
+ {
+  "click": "input[data-st=\"선지:keep_together\"]",
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:jc.letter_min\"]",
+   "value": -1
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"선지:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「진술」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\uc9c4\\uc220\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"진술:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:tracking\"]",
+   "value": -50
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:leading\"]",
+   "value": 12
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:indent\"]",
+   "value": 3.5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:indent_first\"]",
+   "value": -3.5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:space_before\"]",
+   "value": 4.354
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:space_after\"]",
+   "value": 2.653
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:space_same\"]",
+   "value": 1.0
+  },
+  "wait": 450
+ },
+ {
+  "click": "input[data-st=\"진술:keep_together\"]",
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:jc.letter_min\"]",
+   "value": -5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"진술:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「보기」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\ubcf4\\uae30\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"보기:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:tracking\"]",
+   "value": -49
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:leading\"]",
+   "value": 14
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:shade\"]",
+   "value": "#f9fcf3"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:pad\"]",
+   "value": 3
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:pad_top\"]",
+   "value": 0.78
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:pad_bottom\"]",
+   "value": 1.1
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:space_before\"]",
+   "value": 2.325
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:space_after\"]",
+   "value": 0.796
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:jc.letter_min\"]",
+   "value": -5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"보기:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「요약문」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\uc694\\uc57d\\ubb38\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"요약문:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:tracking\"]",
+   "value": -49
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:leading\"]",
+   "value": 14
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:shade\"]",
+   "value": "#f9fcf3"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:pad\"]",
+   "value": 3
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:pad_top\"]",
+   "value": 0.78
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:pad_bottom\"]",
+   "value": 1.1
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:space_before\"]",
+   "value": 4.22
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:space_after\"]",
+   "value": -1.1
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:jc.letter_min\"]",
+   "value": -5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"요약문:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「조건머리」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\uc870\\uac74\\uba38\\ub9ac\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:size\"]",
+   "value": 9.5
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"조건머리:weight\"]",
+   "value": "500"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:leading\"]",
+   "value": 12
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:shade\"]",
+   "value": "#dbecf2"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:border\"]",
+   "value": 0.5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:border_color\"]",
+   "value": "#6ab3c7"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:pad\"]",
+   "value": 3
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:pad_top\"]",
+   "value": 1.372
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건머리:space_before\"]",
+   "value": 4.21
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「조건」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\uc870\\uac74\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"조건:align\"]",
+   "value": "justify"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:tracking\"]",
+   "value": -40
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:leading\"]",
+   "value": 12
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:shade\"]",
+   "value": "#dbecf2"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:border\"]",
+   "value": 0.5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:border_color\"]",
+   "value": "#6ab3c7"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:pad\"]",
+   "value": 3
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:pad_bottom\"]",
+   "value": 2.454
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:space_before\"]",
+   "value": 0.83
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:space_same\"]",
+   "value": 0
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:jc.word_min\"]",
+   "value": 100
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:jc.word_max\"]",
+   "value": 133
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:jc.letter_min\"]",
+   "value": -5
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"조건:jc.letter_max\"]",
+   "value": 250
+  },
+  "wait": 450
+ },
+ {
+  "say": "단락 스타일 「답칸」",
+  "wait": 1200
+ },
+ {
+  "js": "window.__p = \"\\ub2f5\\uce78\"; true",
+  "wait": 200
+ },
+ {
+  "click": "#st-new",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"답칸:font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"답칸:size\"]",
+   "value": 8
+  },
+  "wait": 450
+ },
+ {
+  "pick": {
+   "at": "select[data-st=\"답칸:align\"]",
+   "value": "left"
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"답칸:tracking\"]",
+   "value": -43
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"답칸:leading\"]",
+   "value": 14
+  },
+  "wait": 450
+ },
+ {
+  "fill": {
+   "at": "input[data-st=\"답칸:space_before\"]",
+   "value": 2.19
+  },
+  "wait": 450
+ },
+ {
+  "click": "#sheet-x",
+  "wait": 900
+ },
+ {
+  "say": "② 왼쪽 면 — 두 단 글상자를 잇는다",
+  "wait": 1600
+ },
+ {
+  "say": "문항 글상자 — 한 줄기 글(자리 여럿)",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     50,
+     287.5
+    ]
+   },
+   "to": {
+    "mm": [
+     110,
+     311.5
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     80.0,
+     299.5
+    ]
+   },
+   "value": "임시 문항 — 번호·발문·지문·선지가 이 글상자 하나에 흘러 들어온다. 길면 오른쪽 단, 다음 쪽으로 넘어간다.",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "__raw"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 81.87
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 251.13
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 20.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 26.87
+  },
+  "wait": 550
+ },
+ {
+  "say": "자리 — 번호+발문+…+답칸 (원고에 나온 차례대로 한 줄기)",
+  "wait": 1700
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"bindsel\"]",
+   "value": "__other"
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"bind\"]",
+   "value": "번호+발문+지문+선지+진술+보기+요약문+조건머리+조건+답칸"
+  },
+  "wait": 800
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.번호.style\"]",
+   "value": "번호"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.발문.style\"]",
+   "value": "발문"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.지문.style\"]",
+   "value": "지문"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.선지.style\"]",
+   "value": "선지"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.진술.style\"]",
+   "value": "진술"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.보기.style\"]",
+   "value": "보기"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.요약문.style\"]",
+   "value": "요약문"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.조건머리.style\"]",
+   "value": "조건머리"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.조건.style\"]",
+   "value": "조건"
+  },
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"slotfmt.답칸.style\"]",
+   "value": "답칸"
+  },
+  "wait": 500
+ },
+ {
+  "say": "번호는 발문 첫 줄 앞에 붙인다 — 번호 칸 폭",
+  "wait": 1200
+ },
+ {
+  "click": "#side input[data-a=\"slotfmt.번호.inline\"]",
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"slotfmt.번호.inline_w\"]",
+   "value": 8.57
+  },
+  "wait": 600
+ },
+ {
+  "say": "GREP — 원고의 _{…} 는 밑줄만",
+  "wait": 1700
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.re\"]",
+   "value": "_\\{([^}]*)\\}"
+  },
+  "wait": 700
+ },
+ {
+  "click": "#side input[data-a=\"grep.0.b\"]",
+  "wait": 500
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.line\"]",
+   "value": 0.176
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.0.line_off\"]",
+   "value": 0.71
+  },
+  "wait": 600
+ },
+ {
+  "click": "#side input[data-a=\"grep.0.u\"]",
+  "wait": 500
+ },
+ {
+  "click": "#side input[data-a=\"grep.0.hide\"]",
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.0.line_color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"grep.0.line_color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "say": "GREP — 원고의 {…} 는 Medium + 밑줄",
+  "wait": 1700
+ },
+ {
+  "click": "#side #s-grep-add",
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.1.re\"]",
+   "value": "\\{([^}]*)\\}"
+  },
+  "wait": 700
+ },
+ {
+  "click": "#side input[data-a=\"grep.1.b\"]",
+  "wait": 500
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.1.line\"]",
+   "value": 0.176
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"grep.1.line_off\"]",
+   "value": 0.71
+  },
+  "wait": 600
+ },
+ {
+  "click": "#side input[data-a=\"grep.1.u\"]",
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.1.weight\"]",
+   "value": "500"
+  },
+  "wait": 550
+ },
+ {
+  "click": "#side input[data-a=\"grep.1.hide\"]",
+  "wait": 500
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"grep.1.line_color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"grep.1.line_color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "say": "글 잇기 — 새 이야기(넘친 줄은 다음 상자로)",
+  "wait": 1200
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"story\"]",
+   "value": "__new"
+  },
+  "wait": 900
+ },
+ {
+  "say": "이어 받는 글상자 — 같은 이야기",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     50,
+     287.5
+    ]
+   },
+   "to": {
+    "mm": [
+     110,
+     311.5
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     80.0,
+     299.5
+    ]
+   },
+   "value": "이어 받는 상자",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "__raw"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 81.87
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 251.13
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 106.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 26.87
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"story\"]",
+   "value": "이야기1"
+  },
+  "wait": 900
+ },
+ {
+  "say": "여백 및 단 — 2단 · 간격 4mm (원고는 왼쪽 단 → 오른쪽 단)",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-col-n",
+   "value": 2
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-col-g",
+   "value": 4
+  },
+  "wait": 900
+ },
+ {
+  "js": "(() => { const c = page.columns || {}; if (c.n !== 2 || c.gutter !== 4) throw new Error('단 지정 실패 ' + JSON.stringify(c)); return '단 ' + c.n + ' · ' + c.gutter + 'mm'; })()"
+ },
+ {
+  "say": "면 이름 「왼쪽 면」",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "왼쪽 면"
+  },
+  "wait": 800
+ },
+ {
+  "say": "③ 오른쪽 면 — 같은 이야기를 이어 받는 두 단",
+  "wait": 1700
+ },
+ {
+  "clickif": {
+   "at": "#tg-strip",
+   "when": "!view.strip"
+  },
+  "wait": 1100
+ },
+ {
+  "click": "#rail .addpg",
+  "wait": 900
+ },
+ {
+  "click": "#rail .addpg .menu [data-new=\"blank\"]",
+  "wait": 2800
+ },
+ {
+  "js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"
+ },
+ {
+  "say": "이어 받는 글상자 — 같은 이야기",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     50,
+     287.5
+    ]
+   },
+   "to": {
+    "mm": [
+     110,
+     311.5
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     80.0,
+     299.5
+    ]
+   },
+   "value": "이어 받는 상자",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "__raw"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 81.87
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 251.13
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 21.5
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 26.87
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"story\"]",
+   "value": "이야기1"
+  },
+  "wait": 900
+ },
+ {
+  "say": "이어 받는 글상자 — 같은 이야기",
+  "wait": 1700
+ },
+ {
+  "draw": {
+   "tool": "text",
+   "from": {
+    "mm": [
+     50,
+     287.5
+    ]
+   },
+   "to": {
+    "mm": [
+     110,
+     311.5
+    ]
+   }
+  },
+  "wait": 750
+ },
+ {
+  "write": {
+   "at": {
+    "mm": [
+     80.0,
+     299.5
+    ]
+   },
+   "value": "이어 받는 상자",
+   "away": {
+    "mm": [
+     205,
+     294
+    ]
+   }
+  },
+  "wait": 700
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"size\"]",
+   "value": 8
+  },
+  "wait": 420
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"font\"]",
+   "value": "__raw"
+  },
+  "wait": 600
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"font\"]",
+   "value": "Noto Sans CJK KR"
+  },
+  "wait": 600
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"color\"]",
+   "value": "__raw"
+  },
+  "wait": 650
+ },
+ {
+  "fill": {
+   "at": "#side input[type=\"text\"][data-a=\"color\"]",
+   "value": "#231f20"
+  },
+  "wait": 750
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"w\"]",
+   "value": 81.87
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-a=\"h\"]",
+   "value": 251.13
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"x\"]",
+   "value": 108.0
+  },
+  "wait": 420
+ },
+ {
+  "fill": {
+   "at": "#side input[data-it=\"y\"]",
+   "value": 26.87
+  },
+  "wait": 550
+ },
+ {
+  "pick": {
+   "at": "#side select[data-a=\"story\"]",
+   "value": "이야기1"
+  },
+  "wait": 900
+ },
+ {
+  "say": "여백 및 단 — 2단 · 간격 4mm (원고는 왼쪽 단 → 오른쪽 단)",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-col-n",
+   "value": 2
+  },
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-col-g",
+   "value": 4
+  },
+  "wait": 900
+ },
+ {
+  "js": "(() => { const c = page.columns || {}; if (c.n !== 2 || c.gutter !== 4) throw new Error('단 지정 실패 ' + JSON.stringify(c)); return '단 ' + c.n + ' · ' + c.gutter + 'mm'; })()"
+ },
+ {
+  "say": "면 이름 「오른쪽 면」 · 넘치면 이어 갈 면 「왼쪽 면」",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "오른쪽 면"
+  },
+  "wait": 800
+ },
+ {
+  "pick": {
+   "at": "#side #s-cont",
+   "text": "왼쪽 면"
+  },
+  "wait": 900
+ },
+ {
+  "say": "왼쪽 면도 넘치면 오른쪽 면으로 — 덧쪽이 왼쪽·오른쪽 번갈아",
+  "wait": 1300
+ },
+ {
+  "click": "#rail .pg[data-i=\"0\"]",
+  "wait": 1500
+ },
+ {
+  "say": "면 이름 「왼쪽 면」 · 넘치면 이어 갈 면 「오른쪽 면」",
+  "wait": 1300
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 800
+ },
+ {
+  "fill": {
+   "at": "#side #s-pname",
+   "value": "왼쪽 면"
+  },
+  "wait": 800
+ },
+ {
+  "pick": {
+   "at": "#side #s-cont",
+   "text": "오른쪽 면"
+  },
+  "wait": 900
+ },
+ {
+  "say": "흐름 틀 완성",
+  "wait": 2000
+ },
+ {
+  "js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+  "wait": 300
+ },
+ {
+  "js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"
+ },
+ {
+  "shot": "p_tpl.png",
+  "wait": 700
+ },
+ {
+  "hide": true,
+  "wait": 500
+ },
+ {
+  "say": "④ 원고 넣기 — 문항 목록(바깥 시스템이 보내는 꼴): 쪽이 모자라면 덧쪽이 생긴다",
+  "wait": 1800
+ },
+ {
+  "key": "Escape",
+  "wait": 500
+ },
+ {
+  "key": "Escape",
+  "wait": 900
+ },
+ {
+  "fill": {
+   "at": "#side #s-content",
+   "value": "{\"번호+발문+지문+선지+진술+보기+요약문+조건머리+조건+답칸\": [[[\"번호\", \"01\"], [\"발문\", \"다음 글의 주제로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① Importance of safety measures in hiking\\n② Effects of weather on hiking trips\\n③ Role of technology in finding lost people\\n④ Reasons for learning about forest fires\\n⑤ Challenges of hiking in forest areas\"]], [[\"번호\", \"02\"], [\"발문\", \"다음 글의 제목으로 가장 알맞은 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① The Role of Photos in Forest Rescues\\n② Surviving Overnight in the Wilderness\\n③ The Dangers of Hiking Alone\\n④ The Story of a Lost Hiker's Courage\\n⑤ How to Stay Safe in National Parks\"]], [[\"번호\", \"03\"], [\"발문\", \"다음 중 이 글에 대한 요지로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① Rene Compean was saved because he shouted loudly for help.\\n② A photo was crucial in locating a lost hiker in the forest.\\n③ Destroyed signs after a forest fire made navigation impossible.\\n④ The dropping temperature posed a serious threat to Compean.\\n⑤ Experienced hikers often face unexpected challenges during hikes.\"]], [[\"번호\", \"04\"], [\"발문\", \"다음 글의 내용과 일치하는 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① A photo was crucial in the rescue of Rene Compean.\\n② Rene Compean went hiking with a group on April 12.\\n③ Signs in the forest were destroyed by a recent flood.\\n④ Rene unexpectedly spent several days on the hike.\\n⑤ The temperature was warm and sunny when Rene got lost.\"]], [[\"번호\", \"05\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and __________. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① wander off\\n② run back\\n③ walk faster\\n④ stay hidden\\n⑤ climb higher\"]], [[\"번호\", \"06\"], [\"발문\", \"다음 중 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. __________, it started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① It was fortunate as he stayed calm and prepared for cold weather.\\n② He took shelter and waited for the night to pass.\\n③ Due to the lack of warm clothes, he encountered serious risk.\\n④ He wisely decided to stop and wait for help.\\n⑤ Night was approaching as the conditions became harsher.\"]], [[\"번호\", \"07\"], [\"발문\", \"밑줄 친 _{a photo played a key role in saving his life}가 다음 글에서 의미하는 바로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that {a photo played a key role in saving his life}. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"선지\", \"① The hiker had a map that guided him back to the right path.\\n② He drew a picture of the area to help rescuers find him.\\n③ A photograph he had taken helped rescuers identify his location.\\n④ He sent a live video call to show where he was.\\n⑤ A satellite image was used by the rescue team to track him.\"]], [[\"번호\", \"08\"], [\"발문\", \"다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"요약문\", \"Rene Compean's (A)__________ in Angeles National Forest was resolved thanks to a (B)__________ that aided his rescue.\"], [\"선지\", \"① hike ┈ message\\n② journey ┈ map\\n③ exploration ┈ call\\n④ adventure ┈ signal\\n⑤ disappearance ┈ photo\"]], [[\"번호\", \"09\"], [\"발문\", \"주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\"], [\"보기\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life.\"], [\"지문\", \"(A) He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\\n(B) As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost.\\n(C) Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest.\"], [\"선지\", \"① (A)-(C)-(B)\\n② (B)-(A)-(C)\\n③ (B)-(C)-(A)\\n④ (C)-(A)-(B)\\n⑤ (C)-(B)-(A)\"]], [[\"번호\", \"10\"], [\"발문\", \"Choose True or False (T/F) based on the content of the following text.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"진술\", \"1) Rene Compean was found by a rescue team in Angeles National Forest. (T/F)\\n2) A photo was not significant in the rescue of Rene Compean. (T/F)\\n3) Compean was an inexperienced hiker who got lost in the forest. (T/F)\\n4) A recent forest fire destroyed some signs, leading Compean to take a wrong turn. (T/F)\\n5) Compean had planned to hike overnight in the forest. (T/F)\"]], [[\"번호\", \"11\"], [\"발문\", \"다음 글을 읽고, 주제문을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo played a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 10단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nin / Rene Compean, / rescued / forest / was / trekker, / a lost / Angeles\"], [\"답칸\", \"주제문: __________________________________________.\"]], [[\"번호\", \"12\"], [\"발문\", \"다음 글을 읽고, 빈칸을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. _______________________ in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. He tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 10단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nturns / a photo / role / out / It / a key / played / that\"]], [[\"번호\", \"13\"], [\"발문\", \"다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 {않은} 것은?\"], [\"지문\", \"A missing hiker named Rene Compean was ①{found} safe on Tuesday by a rescue team in Angeles National Forest. It turns out that a photo ②{ignored} a key role in saving his life. Let’s go over to Marissa Reynolds for more details on this story. Thank you, Thomas. I’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. Compean, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had ③{destroyed} some signs, which caused him to take a wrong turn and get lost. He tried ④{calling} for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was ⑤{lowering} quickly.\"]], [[\"번호\", \"14\"], [\"발문\", \"글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.\"], [\"보기\", \"Let’s go over to Marissa Reynolds for more details on this story.\"], [\"지문\", \"A missing hiker named Rene Compean was found safe on Tuesday by a rescue team in Angeles National Forest. ①{It} turns out that a photo played a key role in saving his life. ②{Thank} you, Thomas. ③{I}’m standing here at the entrance of Angeles National Forest. As you just heard, Rene Compean was recently rescued from this forest. ④{Compean}, an experienced hiker who knew the area well, went on a hike alone on April 12. However, a recent forest fire had destroyed some signs, which caused him to take a wrong turn and get lost. ⑤{He} tried shouting for help and even wrote SOS on the ground in case a plane or helicopter passed by. He had planned to hike for only about two hours, but night was coming. It started getting very windy and the temperature was dropping quickly.\"]], [[\"번호\", \"15\"], [\"발문\", \"다음 글의 주제로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① The challenges of finding a lost person in nature\\n② The effects of forest fires on hiking trails\\n③ The importance of sending photos when lost\\n④ The role of friends in emergency situations\\n⑤ The limitations of using poor-quality images for rescue operations\"]], [[\"번호\", \"16\"], [\"발문\", \"다음 글의 제목으로 가장 알맞은 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① The Difficulties of Rescuing Lost Hikers in Remote Areas\\n② The Impact of Technology on Emergency Situations\\n③ Communicating Emergency Messages with a Dying Phone\\n④ Sending Messages in Weak Signal Areas\\n⑤ Overcoming Obstacles: A Rescue Story\"]], [[\"번호\", \"17\"], [\"발문\", \"다음 중 이 글에 대한 요지로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① A hiker lost in the forest often finds it tough to contact rescuers quickly.\\n② Poor signal and low battery can create dangerous situations for those in remote areas.\\n③ People should always keep their mobile devices charged during travel.\\n④ Sharing location details enhances the effectiveness of rescue operations.\\n⑤ Pictures taken in nature can frequently be unclear and not useful for help.\"]], [[\"번호\", \"18\"], [\"발문\", \"다음 글의 내용과 일치하는 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① Compean had a strong phone signal when he sent the picture.\\n② His friend was able to find him thanks to the picture he sent.\\n③ The rescue team used GPS to locate Compean quickly.\\n④ Compean's message included details about the forest fire location.\\n⑤ The picture Compean sent was of poor quality due to a weak signal.\"]], [[\"번호\", \"19\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to __________. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① identify his surroundings\\n② highlight his footsteps\\n③ confirm his identity\\n④ track his phone\\n⑤ signal for an SOS\"]], [[\"번호\", \"20\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. __________ the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① Thus,\\n② Initially,\\n③ However,\\n④ Likewise,\\n⑤ Surprisingly,\"]], [[\"번호\", \"21\"], [\"발문\", \"밑줄 친 _{his legs were hanging over the edge of a canyon with rocks and green trees}가 다음 글에서 의미하는 바로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, {his legs were hanging over the edge of a canyon with rocks and green trees}. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"선지\", \"① He was dangerously close to the edge, highlighting the urgency of his situation.\\n② He was climbing up the canyon wall to get a better signal.\\n③ He was standing safely away from the canyon, observing the view.\\n④ He was positioned on a ledge to capture the surrounding scenery.\\n⑤ He was walking along a safe path with no immediate danger.\"]], [[\"번호\", \"22\"], [\"발문\", \"다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"요약문\", \"Compean's attempt to send a (A)__________ for help was hindered by poor (B)__________ quality and lack of location data.\"], [\"선지\", \"① call ┈ battery\\n② message ┈ image\\n③ text ┈ network\\n④ request ┈ location\\n⑤ signal ┈ photo\"]], [[\"번호\", \"23\"], [\"발문\", \"주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\"], [\"보기\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal.\"], [\"지문\", \"(A) Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was.\\n(B) In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\\n(C) He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings.\"], [\"선지\", \"① (A)-(C)-(B)\\n② (B)-(A)-(C)\\n③ (B)-(C)-(A)\\n④ (C)-(A)-(B)\\n⑤ (C)-(B)-(A)\"]], [[\"번호\", \"24\"], [\"발문\", \"Choose True or False (T/F) based on the content of the following text.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"진술\", \"1) Compean was able to send a clear and high-quality picture to his friend. (T/F)\\n2) Compean's friend directly informed the rescue team about his situation. (T/F)\\n3) The picture Compean sent showed his legs hanging over the edge of a canyon. (T/F)\\n4) The rescue team found Compean quickly after receiving the message and picture. (T/F)\\n5) Compean's phone had a strong signal in the forest. (T/F)\"]], [[\"번호\", \"25\"], [\"발문\", \"다음 글을 읽고, 주제문을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 8단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nin / texted / Compean / for / the woods, / assistance / lost\"], [\"답칸\", \"주제문: __________________________________________.\"]], [[\"번호\", \"26\"], [\"발문\", \"다음 글을 읽고, 빈칸을 주어진 조건에 맞게 완성하시오.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was lost and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were informed of the missing hiker, they immediately sent a rescue team. Despite searching through the night, _______________________. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off\"], [\"조건머리\", \"[조건]\"], [\"조건\", \"1) 9단어로 빈칸을 완성하시오.\\n2) 다음 단어를 한 번씩 사용하여 배열하시오.\\nwas / Compean / idea / have / still / where / any / they / didn’t\"]], [[\"번호\", \"27\"], [\"발문\", \"다음 글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 {않은} 것은?\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He ①{climbed} up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. In the message, he said that he was ②{lost} and needed help. He also sent a picture to show his surroundings. Compean’s friend shared the message and the picture with the local police. When the local police were ③{notified} of the missing hiker, they immediately sent a rescue team. Despite ④{ignoring} through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were ⑤{covered} in black ash from the recent forest fires. However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"]], [[\"번호\", \"28\"], [\"발문\", \"글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳을 고르시오.\"], [\"보기\", \"He also sent a picture to show his surroundings.\"], [\"지문\", \"Compean was deep in the forest, so his cell phone couldn’t get a signal. To make matters worse, its battery was nearly dead. He climbed up to a higher spot and found a weak signal. He used the last of his battery to send a text message to his friend. ① In the message, he said that he was lost and needed help. ② Compean’s friend shared the message and the picture with the local police. ③ When the local police were informed of the missing hiker, they immediately sent a rescue team. ④ Despite searching through the night, they still didn’t have any idea where Compean was. In the picture, his legs were hanging over the edge of a canyon with rocks and green trees. His legs were covered in black ash from the recent forest fires. ⑤ However, the picture didn’t help the police much because the quality was poor due to the weak signal, and his location settings were turned off.\"]], [[\"번호\", \"29\"], [\"발문\", \"다음 글의 주제로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① The role of hobbies in finding lost people\\n② How social media enabled the rescue of a missing person\\n③ The use of satellites to help rescue efforts\\n④ The significance of recognizing landscape features\\n⑤ The dangers of spending a night outdoors\"]], [[\"번호\", \"30\"], [\"발문\", \"다음 글의 제목으로 가장 알맞은 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Finding Lost People with Online Communities\\n② The Role of Police in Search Operations\\n③ An Unlikely Hero of the Wild\\n④ How to Survive in the Wilderness\\n⑤ Identifying Locations from Pictures\"]], [[\"번호\", \"31\"], [\"발문\", \"다음 중 이 글에 대한 요지로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Police used the internet to ask for help in finding a missing person.\\n② Kuo's hobby of using satellite images helped locate Compean.\\n③ Finding pictures on social media is key to discovering filming locations.\\n④ Kuo's knowledge of plants and trees identified the exact location.\\n⑤ Police rely heavily on local knowledge to solve disappearance cases.\"]], [[\"번호\", \"32\"], [\"발문\", \"다음 글의 내용과 일치하는 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Kuo used social media to help the police find Compean.\\n② The police discovered Compean's exact location through the picture alone.\\n③ Kuo deduced Compean's location by recognizing signs of a forest fire.\\n④ The police did not care about Compean's situation as he was only lost for one night.\\n⑤ Satellite images were not useful to Kuo in identifying the location.\"]], [[\"번호\", \"33\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer ___________. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① his general whereabouts\\n② the weather conditions\\n③ the time of the fire\\n④ the direction of the wind\\n⑤ the height of the mountain\"]], [[\"번호\", \"34\"], [\"발문\", \"다음 빈칸에 가장 알맞은 것을 고르시오.\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. __________. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① His familiarity with the landscape made him confident in his findings\\n② The dark residue on the man's legs was linked to recent fire activity\\n③ He was able to distinguish the specific film location at once\\n④ The image reminded him of a film scene he had recently encountered\\n⑤ His calculations adjusted due to the incorrect details in the photo\"]], [[\"번호\", \"35\"], [\"발문\", \"밑줄 친 _{determining where pictures were taken and where movies were filmed}가 다음 글에서 의미하는 바로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys {determining where pictures were taken and where movies were filmed}. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"선지\", \"① Identifying locations based on visual clues in images\\n② Taking professional photographs and film productions\\n③ Analyzing weather patterns for photography locations\\n④ Creating maps for movie and photo shoots\\n⑤ Traveling to places where famous films were made\"]], [[\"번호\", \"36\"], [\"발문\", \"다음 글의 내용을 한 문장으로 요약하고자 한다. 빈칸 (A), (B)에 들어갈 말로 가장 적절한 것은?\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"], [\"요약문\", \"The use of social media and Ben Kuo's expertise in (A)__________ and (B)__________ helped locate Compean.\"], [\"선지\", \"① fire ┈ geography\\n② tracking ┈ recognition\\n③ visual clues ┈  reasoning\\n④ mapping ┈ analysis\\n⑤ satellite imagery ┈ photo analysis\"]], [[\"번호\", \"37\"], [\"발문\", \"주어진 글 다음에 이어질 글의 순서로 가장 적절한 것을 고르시오.\"], [\"보기\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery.\"], [\"지문\", \"(A) Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\\n(B) When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location.\\n(C) The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed.\"], [\"선지\", \"① (A)-(C)-(B)\\n② (B)-(A)-(C)\\n③ (B)-(C)-(A)\\n④ (C)-(A)-(B)\\n⑤ (C)-(B)-(A)\"]], [[\"번호\", \"38\"], [\"발문\", \"Choose True or False (T/F) based on the content of the following text.\"], [\"지문\", \"As Compean had already spent one night in difficult conditions, the police worried about his spending a second night. So they decided to use social media to find out if anyone could find clues in the picture. They posted the picture and asked if anyone recognized the scenery. The picture shared by the police was seen by a Californian named Ben Kuo. One of his hobbies is examining satellite images to track forest fires and informing people of potential dangers. He also enjoys determining where pictures were taken and where movies were filmed. When he saw the picture of Compean, he was immediately interested. When Kuo saw the black ash on Compean’s legs, it reminded him of a recent forest fire. This helped him to infer Compean’s approximate location. Kuo was very familiar with the area because he had tracked the fire before and had checked the features of the area in satellite images. From the plants and trees in Compean’s picture, Kuo guessed that it must be the south side of the mountain. The north side does not have any green valleys like those in the picture.\"]]]}"
+  },
+  "wait": 900
+ },
+ {
+  "click": "#side #s-content-put",
+  "wait": 2500
+ },
+ {
+  "js": "(() => { const t = document.querySelector('#st').textContent; if (/저장 실패/.test(t)) throw new Error('원고 저장 실패 — ' + t); return '원고 저장 확인'; })()"
+ },
+ {
+  "js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"
+ },
+ {
+  "shot": "p_content.png",
+  "wait": 1200
+ }
+]

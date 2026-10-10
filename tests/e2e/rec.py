@@ -11,8 +11,9 @@
   {"type": "글"}                        키보드로 치기   · {"key": "Enter"} 키
   {"fill": {"at": "#sel", "value": "216"}}  칸을 눌러 다 지우고 쳐 넣기
   {"write": {"at": {"mm": [30, 20]}, "value": "A1"}}  지면의 글상자를 두 번 눌러 글 치기
-  {"pick": {"at": 자리, "value": "wb216"}}  select 을 눌러 키보드로 고르기
+  {"pick": {"at": 자리, "value": "wb216"}}  select 을 눌러 고르기 · {"pick": {"at": 자리, "text": "보이는 글자"}}
   {"clickif": {"at": "#tg-side", "when": "!view.side"}}   조건이 맞을 때만 누르기
+  {"answer": "이름"}                     다음에 뜨는 묻는 창에 칠 글 — 창을 여는 누르기는 그다음 단계에서
   {"wait": ms} · {"shot": "이름.png"} · {"js": "…"}(마지막 수단)
 
 자리: "#sel" (그 요소 가운데) · [x, y] (화면 픽셀) · {"mm": [x, y]} (지면 좌표)
@@ -73,6 +74,7 @@ try:
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}/json/new?{urllib.parse.quote(url, safe='')}", method="PUT")
     tab = json.load(urllib.request.urlopen(req, timeout=30))
     c = CDP(tab["webSocketDebuggerUrl"])
+    c.call("Page.enable")                                    # 묻는 창(prompt)을 받아 답을 친다 — {"answer": "…"} (cdp.CDP.call)
     time.sleep(3.0)
     c.js(CHROME_SETUP)
 
@@ -214,12 +216,14 @@ try:
                 return
         print(f"  ! {spot} 에 {value} 대신 {got}", flush=True)
 
-    def pick(spot, value):
-        """select 을 눌러 고른다 — 헤드리스는 목록이 안 그려지므로 누른 뒤 값을 넣는다(누르는 건 진짜)."""
+    def pick(spot, value, text=None):
+        """select 을 눌러 고른다 — 헤드리스는 목록이 안 그려지므로 누른 뒤 값을 넣는다(누르는 건 진짜).
+        text 를 주면 보이는 글자로 고른다(값이 그때그때 만들어지는 id 일 때 — 쪽 「이어 갈 면」)."""
         click(spot)
         sel = spot if isinstance(spot, str) else None
-        ok = c.js("(() => { const e = document.querySelector(" + json.dumps(sel) + "); if (!e) return false; "
-                  "e.value = " + json.dumps(value) + "; e.dispatchEvent(new Event('change', {bubbles: true})); return e.value === " + json.dumps(value) + "; })()")
+        pickv = ("[...e.options].find(o => o.textContent.trim() === " + json.dumps(text) + ")?.value ?? '__없음'") if text else json.dumps(value)
+        ok = c.js("(() => { const e = document.querySelector(" + json.dumps(sel) + "); if (!e) return false; const v = " + pickv + "; "
+                  "e.value = v; e.dispatchEvent(new Event('change', {bubbles: true})); return e.value === v; })()")
         if not ok:
             raise RuntimeError(f"{value} 안 골라짐")
         frame()
@@ -252,6 +256,8 @@ try:
                     if c.js("page.items.length") > n0:
                         break
                     print(f"  ! {d['tool']} 안 그려짐 — 다시", flush=True)
+            if "answer" in st:                                 # 다음 누르기가 여는 묻는 창에 칠 글(새 단락 스타일 이름 등)
+                c.answer = str(st["answer"])
             if "type" in st:
                 typetext(st["type"])
             if "fill" in st:
@@ -275,7 +281,7 @@ try:
             if "key" in st:
                 key(st["key"])
             if "pick" in st:
-                pick(st["pick"]["at"], st["pick"]["value"])
+                pick(st["pick"]["at"], st["pick"].get("value"), st["pick"].get("text"))
             if "js" in st:
                 v = c.js(st["js"])
                 if v not in (None, True):

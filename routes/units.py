@@ -459,9 +459,11 @@ def api_fill():
     ctx = _ctx(lib, body.get("skin"))
     spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
     svgs = []
-    for pg in pages:
-        sp = store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
-        svgs.extend(render.page_canvas_svgs(ctx, pg, sp)[:1])                  # 쪽 하나 = 면 하나 (캔버스와 같게)
+    spec_of = lambda pg: store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
+    spares = render.story_spares(ctx, pages, spec_of)                         # 넘치면 쪽 더하기 — 이야기가 끝나는 쪽 뒤에 덧쪽(빈 채면 크롬이 지운다)
+    for pi, pg in enumerate(pages):
+        for p2 in [pg] + spares.get(pi, []):
+            svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게)
     if body.get("as") == "svg":
         return jsonify({"svgs": svgs, "report": report, "warnings": ctx.warnings})
     out = os.path.join(store.udir(), "_pdf")
@@ -516,6 +518,9 @@ def api_pdf():
         pre = [s for p in before for s in render.page_canvas_svgs(ctx, p, spec)] if any(
             (it.get("atom") or {}).get("story") for p in before + [pg] for it in p.get("items") or []) else []
         svgs = pre + render.page_canvas_svgs(ctx, pg, spec, sample_set=ss)
+        if fid and before is not None:                                         # 이 쪽에서 이야기가 끝나고 넘치면 덧쪽까지
+            for p2 in render.story_spares(ctx, before + [pg], lambda _p: spec).get(len(before), []):
+                svgs.extend(render.page_canvas_svgs(ctx, p2, spec)[:1])
         keep = set(range(len(pre), len(svgs))) if pre else None
         title = pg.get("name") or page_id
     else:
