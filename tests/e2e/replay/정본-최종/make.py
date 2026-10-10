@@ -1833,6 +1833,7 @@ def wo_body(pno):
 
 
 WO_MAX = 5                                                              # 쪽당 문항 가장 많은 수(원본 186~195쪽)
+WO = {}
 
 
 def wo_starts(pno, items):
@@ -1889,6 +1890,9 @@ def _wo_body(pno):
         g, _ = para_box(st, bx, sorted(wd, key=lambda o: o["base"]), 8.5, "뒤섞인 낱말 — 연보라 둥근 바탕 글상자 · 원고 자리 「보기단어」", "보기단어",
                         "( 임시 / 낱말 / 들이 / 이 자리에 )", sh, fill=bx["fill"], align="left")
         st += [F('#side input[data-a="frame.radius"]', corner_r(bx)), F('#side input[data-a="fold"]', fold)]
+        if "boxw" not in WO:                                             # 낱말 상자 폭은 원고 길이를 따른다(원본 상자마다 다름) — 「높이와 너비」 자동 크기 + 최대 폭 = 원본에서 가장 넓은 상자
+            WO["boxw"] = round(max(it2["box"]["w"] for pg in range(186, 196) for it2 in wo_parts(pg)), 2)
+        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "both"}, "wait": 700}, F('#side input[data-it="w"]', WO["boxw"])]
         grow.append((bx["y"] + bx["h"], g))
         for d in it["deco"]:                                             # 답 쓰는 곳 — 화살표 둘(원본 꼭짓점) · 가는 줄 둘
             y = d["y"] - shift(d["y"])
