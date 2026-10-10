@@ -12,7 +12,7 @@
 > **디자인 단위(2026-09-21)**: 원자(인디자인 오브젝트) → 부품 → 블록 → 지면 → 구간 → 틀 · 옷 · 세트. 스키마 `core/schema/units.schema.json`, 설명 `docs/디자인_단위_스키마.md`,
 > 코드 `core/units/`(store·render·decompose·sample), 화면 `/units` = 왼쪽 레일의 **「만들기」**(캔버스 — 지면·칸·블록 끌어 놓기) · `/units/library`(라이브러리·분해·JSON) (`routes/units.py`), 시드 `catalog/_units/`. 기존 계열 렌더러(`core/render_vivlio/series/*`)와 독립 — 납품 중인 책은 안 건드린다.
 
-> **편집기 재현(기준 결과물을 「만들기」로 똑같이 만들며 녹화·비교·기능 수정)**: 절차 정본 `docs/편집기_재현/절차.md` — 작업 전에 처음부터 읽는다. 명령 `tests/e2e/replay.py`, 단위 폴더 `tests/e2e/replay/<단위>/`.
+> **편집기 재현(기준 결과물을 「만들기」로 똑같이 만들며 녹화·비교·기능 수정)**: 절차 정본 `docs/편집기_재현/절차.md` — 작업 전에 처음부터 읽는다. **「작업 순서 — 확정」(2026-10-10) 절이 우선이고, 바꾸려면 사용자 승인부터.** 명령 `tests/e2e/replay.py`, 단위 폴더 `tests/e2e/replay/<단위>/`.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 > `units.json`(문서 묶음) + `참고/reference.pdf`(문서를 그린 결과) + 견본 그림 + `design.json`(`made: "editor"`). 다시 누르면 같은 카드를 새로 그린다.
 > 카드 라벨 「PDF 등록」/「편집기 제작」(임시 구분). 편집기 카드의 「원고 넣기」 = `/units?design=<틀>/<id>`(그 편집기에 문서가 없으면 묶음을 들여옴).
 > 문서 묶음(문서 파일 내보내기·가져오기) `core/units/package.py` · 「원고마다」 되풀이(구성 첫 쪽 이름 → 레코드 목록) `core/units/content.plan_pages`.
-> 정본 워크북 = 단위 `tests/e2e/replay/15-정본`(단위 01~14 문서를 가져와 모아 등록). ＋ → 간편 제작은 아직 자리만(`/easy`).
+> ＋ → 간편 제작은 아직 자리만(`/easy`). PDF 를 보고 편집기로 만드는 일은 아래 편집기 재현 절차의 「작업 순서 — 확정」대로만(손으로 짠 대본 · 녹화 없는 검사 · 짜깁기 금지).
 
 > **참고자료(모든 세션 공용)**: `docs/참고자료/` — 외부에서 받은 자료를 원본 + 마크다운 README + JSON 으로 둔다(2026-10-09 교재 블록 지도는 지웠다 — 구성 이름·카드에 B1~B11 을 쓰지 않는다).
 

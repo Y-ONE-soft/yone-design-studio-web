@@ -280,7 +280,11 @@ try:
                         print("  ! 글 편집칸이 안 열렸다 — 다시", flush=True)
                         continue
                     wipe(40)
-                    typetext(want)
+                    if len(want) > 300:                        # 긴 글은 붙여넣기 한 번(사람도 긴 글은 붙인다)
+                        c.call("Input.insertText", text=want)
+                        frame()
+                    else:
+                        typetext(want)
                     click(st.get("away") or [W - 60, H - 120])     # 칸 밖을 눌러 확정 (Esc 는 취소다)
                     click(st["write"]["at"])                       # 방금 쓴 글상자를 다시 고른다
                     got = c.js("(() => { const it = page.items[sel]; return it && it.atom ? String(it.atom.text || '') : null; })()")

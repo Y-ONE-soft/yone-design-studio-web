@@ -4,13 +4,11 @@
     python3 tests/e2e/replay.py <단위> rec       같은 대본으로 녹화(기본 4배속) + 비교
     python3 tests/e2e/replay.py <단위> reset     그 단위의 데이터·그림·영상 지우기 (make.py 는 남김)
     python3 tests/e2e/replay.py _audit audit     기능을 고친 뒤 편집기 전체 감사 (빈 데이터로)
-    python3 tests/e2e/replay.py <단위> make      제작 — 녹화·화면 없이 검사를 통과한 기능(서버 주소)을 바로 불러 결과물을 만든다 (build.py)
 
-검사와 제작은 나눈다 (2026-10-10):
-  검사  check·rec — make.py 대본을 마우스·키보드로 재생해 화면 기능이 진짜 되는지 본다. 기능을 새로 만들거나 고쳤을 때.
-  제작  make — 단위 폴더의 build.py 가 화면 버튼이 부르는 서버 주소를 같은 차례로 바로 부른다. 결과물이 필요할 때마다(몇 초~몇 분).
-        제작 데이터는 ~/.cache/yone-make/<단위>/catalog (편집기 저장분만 따로, 틀·디자인 폴더는 리포를 가리켜 등록한 디자인은 리포에 남는다).
-        다른 서버에 바로: python3 tests/e2e/replay/<단위>/build.py <서버 주소>
+검사와 녹화 (2026-10-10 확정 — docs/편집기_재현/절차.md 「작업 순서」):
+  검사  check — make.py 대본(손으로 짠 마우스·키보드)을 녹화 없이 재생해 편집기로 직접 만들고 원본과 요소마다 맞댄다.
+        만들다 막히면 기능·버그를 고치고 그 단위를 지우고 처음부터. 판정은 도구가 낸다(끝 줄 「판정: 통과/실패」).
+  녹화  rec — 같은 대본을 보기용으로 찍는다(선택). 결과는 검사와 같다.
 
 단위 폴더 tests/e2e/replay/<단위>/ 에
   make.py   대본 생성기 — 실행하면 같은 폴더에 steps.json 을 쓴다
@@ -152,9 +150,12 @@ def measure_units(new_ids, state, fix=False):
         pdf = os.path.join(out, f"p{rp}_my.pdf")
         if k >= len(new_ids) or not os.path.exists(pdf):
             continue
-        res = pagecmp.measure(os.path.join(REPO, state["ref"]), rp, pdf, elems[str(k + 1)])
+        tol = float(state.get("원고_허용_mm") or 1.0)                          # 원고 자리 — 줄바꿈·설정으로 조절되는 차이는 이만큼 너그럽게(글 모양 비교는 안 함)
+        es = [dict({kk: vv for kk, vv in e.items() if kk != "text"}, tol=max(float(e.get("tol") or 0.3), tol)) if e.get("원고") else e
+              for e in elems[str(k + 1)]]
+        res = pagecmp.measure(os.path.join(REPO, state["ref"]), rp, pdf, es)
         allres[f"p{rp}"] = res
-        for r, e in zip(res, elems[str(k + 1)]):
+        for r, e in zip(res, es):
             if r["ok"]:
                 continue
             bad += 1
@@ -170,11 +171,65 @@ def measure_units(new_ids, state, fix=False):
                 if n > 1:
                     c["dtr"] = round(c.get("dtr", 0) + r["dw"] / (n - 1) / (e["size"] * 25.4 / 72) * 1000)
     n_all = sum(len(v) for v in allres.values())
+    measure_units.last = allres
     print(f"  요소 {n_all - bad}/{n_all} 맞음 (위치·크기 0.3mm 안 · 글은 모양까지: 잉크 ±{pagecmp.SHAPE_INK:.0%} · 겹침 {pagecmp.SHAPE_IOU})")
     json.dump(allres, open(os.path.join(out, "측정.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if fix:
         json.dump(corr, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print("  보정.json 갱신 — 다시 돌리면 반영")
+
+
+def verdict(state, new_ids, ok_steps):
+    """판정 — 도구가 정한다(사람·클로드가 줄이지 못한다). 하나라도 걸리면 실패:
+      ① 대본 오류  ② 원본 쪽마다 만든 지면이 있어야  ③ 맞댈 요소 목록(elems.json)이 있어야
+      ④ 요소 전부 기준 안 — 예외는 상태.json 「허용」 {"p쪽:요소": "사용자 확정 이유"} 만
+      ⑤ 목록 밖 차이 없음 — 원본과 결과가 다른 화소가 어느 요소 상자에도 안 들면 「목록에 없는 요소」(빠진 장식 등)
+    → (통과 여부, 이유 목록)"""
+    from PIL import Image, ImageChops, ImageDraw
+    why = []
+    if not ok_steps:
+        why.append("대본 오류")
+    if not state.get("pages"):
+        return (not why), why
+    if len(new_ids) < len(state["pages"]):
+        why.append(f"만든 지면 {len(new_ids)} < 원본 쪽 {len(state['pages'])}")
+    allow = state.get("허용") or {}
+    res = getattr(measure_units, "last", None)
+    if not os.path.exists(os.path.join(udir, "elems.json")) or res is None:
+        why.append("맞댈 요소 목록 없음 — make.py 가 elems.json 을 써야 한다")
+        res = {}
+    for pk, rs in res.items():
+        for r in rs:
+            if not r["ok"] and f"{pk}:{r['id']}" not in allow:
+                why.append(f"요소 기준 밖 {pk}:{r['id']}")
+    px = DPI / 25.4
+    for rp in state["pages"]:
+        a_p, b_p = os.path.join(out, f"p{rp}_ref.png"), os.path.join(out, f"p{rp}_my.png")
+        if not (os.path.exists(a_p) and os.path.exists(b_p)):
+            continue
+        a = Image.open(a_p).convert("RGB")
+        b = Image.open(b_p).convert("RGB").resize(a.size)
+        diff = ImageChops.difference(a, b).convert("L").point(lambda v: 255 if v > 48 else 0)
+        cover = Image.new("L", a.size, 0)
+        dr = ImageDraw.Draw(cover)
+        for r in res.get(f"p{rp}", []):
+            for box in (r.get("ref"), r.get("my")):
+                if box:
+                    x, y, w, h = box
+                    dr.rectangle([(x - 1.0) * px, (y - 1.0) * px, (x + w + 1.0) * px, (y + h + 1.0) * px], fill=255)
+        out_of = ImageChops.subtract(diff, cover)
+        cell = int(2 * px)                                                   # 2mm 칸 — 칸의 25% 넘게 다르면 그 칸은 「목록 밖 차이」
+        bad = []
+        for cy in range(0, a.size[1] - cell, cell):
+            for cx in range(0, a.size[0] - cell, cell):
+                n = sum(out_of.crop((cx, cy, cx + cell, cy + cell)).histogram()[255:])
+                if n > cell * cell * 0.25:
+                    bad.append((round(cx / px), round(cy / px)))
+        if bad:
+            keep = [c for c in bad if f"p{rp}:@{c[0]},{c[1]}" not in allow]
+            if keep:
+                why.append(f"p{rp} 목록 밖 차이 {len(keep)}칸 — 처음 {keep[:4]} mm (빠진 요소·목록에 안 넣은 요소)")
+    return (not why), why
 
 
 if cmd == "reset":
@@ -185,23 +240,6 @@ if cmd == "reset":
             os.remove(os.path.join(udir, n))
     print("지움:", unit, "(make.py · 상태.json 은 남김)")
     sys.exit()
-
-if cmd == "make":                                                           # 제작 — 녹화 없이 서버 기능으로 (build.py)
-    bpy = os.path.join(udir, "build.py")
-    if not os.path.exists(bpy):
-        sys.exit(f"제작 대본 없음 — {udir}/build.py (검사 대본 make.py 와 같은 일을 화면이 부르는 서버 주소로)")
-    data = os.path.expanduser(f"~/.cache/yone-make/{unit}/catalog")
-    out = os.path.expanduser(f"~/Downloads/편집기제작/{unit}")
-    os.makedirs(out, exist_ok=True)
-    fresh_data()
-    srv = server()
-    try:
-        t0 = time.time()
-        r = subprocess.run([PY, bpy, BASE], cwd=REPO)
-        print(f"{unit} make — {time.time() - t0:.0f}초" + ("" if r.returncode == 0 else " · 실패"))
-        sys.exit(r.returncode)
-    finally:
-        srv.kill()
 
 state = json.load(open(os.path.join(udir, "상태.json"), encoding="utf-8"))
 os.makedirs(out, exist_ok=True)
@@ -220,8 +258,13 @@ try:
     print(f"{unit} {cmd} — {time.time() - t0:.0f}초 · 새 지면 {len(new_ids)}개")
     compare(new_ids, state)
     measure_units(new_ids, state, fix=ok and os.environ.get("REPLAY_FIX") == "1")      # 대본이 실패한 판은 보정에 안 쓴다
+    passed, why = verdict(state, new_ids, ok)
+    print("판정: 통과" if passed else "판정: 실패 — " + " · ".join(why[:12]) + (f" 외 {len(why) - 12}" if len(why) > 12 else ""))
+    json.dump({"통과": passed, "이유": why, "때": time.strftime("%Y-%m-%d %H:%M")}, open(os.path.join(out, "판정.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if cmd == "rec" and ok:
         print("  영상:", os.path.join(out, unit + ".mp4"))
     print("→", out)
 finally:
     srv.kill()
+if "passed" in globals() and not passed:
+    sys.exit(1)
