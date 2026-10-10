@@ -803,17 +803,77 @@ def design_layouts(series, design):
         return {"total": 0, "layouts": []}
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    cache = os.path.join(tdir, f"layouts14_{int(os.path.getmtime(pdf))}.json")
-    if os.path.exists(cache):
-        return json.load(open(cache, encoding="utf-8"))
     # 틀별 구성 규칙은 그 틀의 원래 책용 — bin/register-design 으로 새로 등록한 책(design.json layout_rules: false)은 안 쓴다
     try:
         dj = json.load(open(os.path.join(_ddir(series, design), "design.json"), encoding="utf-8"))
     except (OSError, ValueError):
         dj = {}
-    out = pdf_layouts(pdf, series, dj.get("layout_rules", True))
+    cache = os.path.join(tdir, f"layouts14{'e' if dj.get('made') == 'editor' else ''}_{int(os.path.getmtime(pdf))}.json")
+    if os.path.exists(cache):
+        return json.load(open(cache, encoding="utf-8"))
+    out = (editor_layouts(series, design, dj, pdf) if dj.get("made") == "editor" else None) or pdf_layouts(pdf, series, dj.get("layout_rules", True))
     json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
     return out
+
+
+def editor_layouts(series, design, dj, pdf):
+    """편집기 제작 디자인 — 구성을 PDF 에서 짐작하지 않고 편집기 문서(units.json)에서 읽는다.
+    구성 견본은 한 벌씩이라 되풀이가 없어 PDF 판정은 펼침면을 알아보지 못한다(정본 2026-10-11: 2면 구성이 첫 면만 보였다).
+    묶음: 「원고마다」 면은 이름 있는 면부터 다음 이름 있는 면 전까지(펼침면 오른쪽 면은 이름 없음) · 「넘치면 이어 갈 면」으로 묶인 면 ·
+    나머지 「한 번만」 면은 하나씩. 이름: 면 이름, 없으면 PDF 판정이 그 면에서 읽은 이름표. 이름·종류·면 수가 같은 묶음은 한 구성(STEP 간지 셋).
+    면 수가 문서 쪽과 안 맞으면(원고 여럿 · 흐르는 쪽 여럿) None — PDF 판정으로."""
+    import fitz
+    try:
+        u = json.load(open(os.path.join(_ddir(series, design), dj.get("units") or "units.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    pages_by = {p["id"]: p for p in u.get("pages") or []}
+    plan = u.get("plan") or {}
+    ents = [e if isinstance(e, dict) else {"page": e, "repeat": "once"} for s in plan.get("sections") or [] for e in s.get("pages") or []]
+    ents = [e for e in ents if e.get("page") in pages_by and e.get("repeat") != "none"]
+    plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)
+    units = []                                            # [[문서 쪽 id …]]
+    for e in ents:
+        p = pages_by[e["page"]]
+        prev = units[-1] if units else None
+        last = pages_by[prev[-1]] if prev else None
+        linked = last is not None and (p.get("cont") in prev or last.get("cont") == p["id"])
+        run = last is not None and e.get("repeat") == "each_set" and plain(p.get("name")) and \
+            next(x for x in ents if x["page"] == prev[-1]).get("repeat") == "each_set"
+        if linked or run:
+            prev.append(p["id"])
+        else:
+            units.append([p["id"]])
+    doc = fitz.open(pdf)
+    total = doc.page_count
+    extra = total - len(ents)                             # 흐르는 쪽이 만든 덧쪽 — 넘치면 이어 갈 면 묶음 하나가 받는다
+    flows = [k for k, un in enumerate(units) if any(pages_by[i].get("cont") for i in un)]
+    if extra < 0 or (extra and len(flows) != 1):
+        doc.close()
+        return None
+    tok = _page_tokens(series, doc, False)
+    doc.close()
+    groups, order, at = {}, [], 0
+    for k, un in enumerate(units):
+        n = len(un) + (extra if flows and k == flows[0] else 0)
+        span = list(range(at + 1, at + n + 1))
+        seg = tok[at:at + n]
+        at += n
+        nm0 = (pages_by[un[0]].get("name") or "").removesuffix(" 오른쪽")
+        kind = "본문" if any(t[0] == "본문" for t in seg) else "간지"
+        nm = nm0 if not plain(nm0) else _unit_name(seg) or "이름 없는 면"
+        key = (nm, kind, len(un))
+        if key not in groups:
+            label = nm
+            while any(groups[q]["label"] == label for q in order):          # 이름이 같아도 종류·면 수가 다르면 다른 구성
+                label += " ·"
+            groups[key] = {"pages": [], "show": span[:len(un)], "kind": kind, "label": label}
+            order.append(key)
+        groups[key]["pages"] += span
+    return {"total": total, "from": "editor",
+            "layouts": [{"n": groups[q]["pages"][0], "pages": groups[q]["pages"], "count": len(groups[q]["pages"]), "kind": groups[q]["kind"],
+                         "section": groups[q]["label"], "show": groups[q]["show"], "unit": len(groups[q]["show"]), "label": groups[q]["label"]}
+                        for q in order]}
 
 
 def pdf_layouts(pdf, series=None, rules=False):

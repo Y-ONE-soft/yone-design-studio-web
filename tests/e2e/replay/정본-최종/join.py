@@ -25,6 +25,23 @@ DATA = os.path.join(CACHE, "정본-최종@합본", "catalog")
 NAME = "스텝바이스텝 워크북 정본 (편집기 제작 최종)"
 STATE = json.load(open(os.path.join(HERE, "상태.json"), encoding="utf-8"))
 ORDER = ["1,2,3", "4", "5", "6", "7", "8", "9", "2.2,3.2", "10", "11", "12", "13", "2.3,3.3", "14", "15,16"]   # 책 차례(원본 쪽 차례)
+NAMES = {"1,2,3": ["속표지", "STEP 간지", "차례"], "2.2,3.2": ["STEP 간지", "차례"], "2.3,3.3": ["STEP 간지", "차례"], "15,16": ["MEMO", "뒤표지"]}
+# 면 이름 = 구성 이름 — 관리 「지면 보기」가 편집기 제작 카드의 구성을 면 이름으로 묶는다(routes/catalog.editor_layouts). 「원고마다」 면은 대본이 이름을 붙였다
+
+
+def name_steps(counts):
+    """이름 없는 「한 번만」 면에 구성 이름 — 쪽 목록에서 그 면을 눌러 고르고 쪽 패널 「이름」에 친다. counts = 구성 문서마다 쪽 수(책 차례)"""
+    st, at = [], 0
+    for g, n in zip(ORDER, counts):
+        for k, nm in enumerate(NAMES.get(g, [])):
+            i = at + k
+            st += [S(f"면 이름 — {i + 1}쪽 「{nm}」", 900),                   # 가운데 지면을 그 쪽까지 굴려 누른다(아래 쪽 띠는 가로로 길어 뒤쪽이 화면 밖)
+                   {"clickif": {"at": f'#pages .pslot[data-i="{i}"]', "when": f"idx() !== {i}"}, "wait": 1500},
+                   {"js": f"(() => {{ if (idx() !== {i}) throw new Error('쪽 안 열림 ' + (idx() + 1)); return '{i + 1}쪽 열림'; }})()"},
+                   {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"fill": {"at": "#side #s-pname", "value": nm}, "wait": 900},
+                   {"js": f"(() => {{ const p = docPages()[{i}]; if (p.name !== {json.dumps(nm)}) throw new Error('면 이름 안 들어감 ' + p.name); return '면 이름 ' + p.name; }})()"}]
+        at += n
+    return st
 
 
 def export_all():
@@ -91,6 +108,7 @@ def steps(files, content):
                {"upload": {"at": "#side #s-pkg-file", "click": "#side #s-pkg-in", "path": f}, "wait": 4000},
                {"js": "(() => '쪽 ' + docPages().length + ' · ' + document.querySelector('#st').textContent)()"}]
     st += [{"js": "(() => { const n = docPages().length; if (n < 30) throw new Error('이은 쪽 ' + n); return '이은 쪽 ' + n; })()"}]
+    st += name_steps([len(json.load(open(f, encoding="utf-8"))["pages"]) for f in files])
     st += put_content(content, "원고 넣기 — 구성마다 견본 원고 하나(바깥 시스템이 보내는 꼴)")
     st += [S("관리에 등록 — 워크북 폴더", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
            {"pick": {"at": "#side #s-reg-series", "value": "workbook"}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
