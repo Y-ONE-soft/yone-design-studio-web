@@ -88,7 +88,29 @@ def elements(pdf, pno):
     p = d[pno - 1]
     ox, oy = p.trimbox.x0, p.trimbox.y0
     out = []
-    for g in p.get_drawings():
+    # 묶음(투명 그룹) 불투명 — 인디자인은 개체 투명도를 바깥 묶음(/ca + Form Do)에 건다. 그 안 경로·글은 제 값이 1 로 나온다.
+    # 묶음은 겹쳐 들어가니 바깥부터 곱한다. 글은 글 상자 가운데를 품은 가장 깊은 묶음의 값.
+    stack, groups, draws = [], [], []
+    for g in p.get_drawings(extended=True):
+        lv = g.get("level", 0)
+        while stack and stack[-1][0] >= lv:
+            stack.pop()
+        cum = stack[-1][1] if stack else 1.0
+        if g.get("type") == "group":
+            cum *= float(g.get("opacity") or 1.0)
+            groups.append((pymupdf.Rect(g["rect"]), cum, len(stack)))
+            stack.append((lv, cum))
+        elif g.get("type") == "clip":
+            stack.append((lv, cum))
+        elif g.get("items"):
+            draws.append((g, cum))
+
+    def group_alpha(bb):
+        c = pymupdf.Point((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2)
+        inn = [(dp, cm) for r, cm, dp in groups if r.x0 - 0.5 <= c.x <= r.x1 + 0.5 and r.y0 - 0.5 <= c.y <= r.y1 + 0.5]
+        return max(inn)[1] if inn else 1.0
+
+    for g, cum in draws:
         r = g["rect"]
         curved = any(it[0] == "c" for it in g["items"])
         kinds = {it[0] for it in g["items"]}
@@ -98,8 +120,8 @@ def elements(pdf, pno):
         out.append({"k": kind, "x": _mm(r.x0 - ox), "y": _mm(r.y0 - oy), "w": _mm(r.width), "h": _mm(r.height),
                     "fill": _hex(g.get("fill")), "stroke": _hex(g.get("color")) if g.get("color") is not None else None,
                     "sw": _mm(g["width"]) if g.get("width") else None, "n": len(g["items"]),
-                    **({"opacity": round(min(o for o in (g.get("fill_opacity"), g.get("stroke_opacity")) if o is not None) * 100)}
-                       if min((o for o in (g.get("fill_opacity"), g.get("stroke_opacity")) if o is not None), default=1) < 0.999 else {})})
+                    **({"opacity": round(cum * min((o for o in (g.get("fill_opacity"), g.get("stroke_opacity")) if o is not None), default=1) * 100)}
+                       if cum * min((o for o in (g.get("fill_opacity"), g.get("stroke_opacity")) if o is not None), default=1) < 0.999 else {})})
     for b in p.get_text("dict")["blocks"]:
         if b["type"] == 1:
             r = pymupdf.Rect(b["bbox"])
@@ -112,10 +134,11 @@ def elements(pdf, pno):
             x0 = min(s["bbox"][0] for s in spans); y0 = min(s["bbox"][1] for s in spans)
             x1 = max(s["bbox"][2] for s in spans); y1 = max(s["bbox"][3] for s in spans)
             txt = _glyph_text(p, ln)
+            al = spans[0].get("alpha", 255) / 255 * group_alpha((x0, y0, x1, y1))
             out.append({"k": "text", "text": txt,
                         "x": _mm(x0 - ox), "y": _mm(y0 - oy), "w": _mm(x1 - x0), "h": _mm(y1 - y0),
                         "size": round(spans[0]["size"], 1), "color": "#%06x" % spans[0]["color"],
-                        **({"opacity": round(spans[0]["alpha"] / 2.55)} if spans[0].get("alpha", 255) < 255 else {}),
+                        **({"opacity": round(al * 100)} if al < 0.999 else {}),
                         "font": spans[0]["font"]})
     for im in p.get_image_info():
         r = pymupdf.Rect(im["bbox"])
@@ -146,7 +169,12 @@ def fonts(pdf, pno, dpi=300, top=3):
     d = pymupdf.open(pdf)
     p = d[pno - 1]
     ox, oy = p.trimbox.x0, p.trimbox.y0
-    paths = {f: next((os.path.join(dd, f) for dd in FONT_DIRS if os.path.exists(os.path.join(dd, f))), None) for f in FONT_CANDIDATES}
+    try:                                                   # 후보 = 시스템 서체(편집기에서 고를 수 있는 것) — 없으면 예전 후보
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        from core.units.fonts import system_fonts
+        paths = {f["file"]: f["path"] for f in system_fonts() if not f["italic"]}
+    except Exception:
+        paths = {f: next((os.path.join(dd, f) for dd in FONT_DIRS if os.path.exists(os.path.join(dd, f))), None) for f in FONT_CANDIDATES}
     extra = os.environ.get("FONTS_TRY")                    # 더 맞대 볼 서체 폴더 (받은 후보) — 그 안의 .otf/.ttf 전부
     if extra:
         for n in sorted(os.listdir(extra)):

@@ -116,7 +116,7 @@ def compare(new_ids, state):
                 print(f"  ! 편집기 경고 p{rp}: {w}")
         except urllib.error.HTTPError as e:
             print(f"  ! 인쇄용 PDF 실패 p{rp}: {e.read().decode()[:300]}")
-        ref[rp - 1].get_pixmap(dpi=DPI).save(os.path.join(out, f"p{rp}_ref.png"))
+        ref[rp - 1].get_pixmap(dpi=DPI, clip=ref[rp - 1].trimbox).save(os.path.join(out, f"p{rp}_ref.png"))   # 재단선 안만 — 만든 지면(210×297)과 같은 판
         pymupdf.open(pdf)[0].get_pixmap(dpi=DPI).save(os.path.join(out, f"p{rp}_my.png"))
         a = Image.open(os.path.join(out, f"p{rp}_ref.png")).convert("RGB")
         b = Image.open(os.path.join(out, f"p{rp}_my.png")).convert("RGB").resize(a.size)

@@ -13,13 +13,14 @@ _FACES = {}
 
 
 def face(family, weight=400):
-    """서체 집·굵기 → (윗높이, 아랫높이, 글 폭 함수 em) — 브라우저가 쓰는 그 파일의 hhea·hmtx (fc-match 로 찾는다)"""
+    """서체 집·굵기 → (윗높이, 아랫높이, 글 폭 함수 em) — 편집기가 그리는 그 파일(시스템 서체·대본이 등록하는 서체)의 hhea·hmtx.
+    시스템에 없는 서체만 fc-match 로 찾는다(검사가 「등록 안 된 서체」로 실패시킨다)"""
     import subprocess
     from fontTools.ttLib import TTFont
-    key = (family, weight)
+    key = (family, weight, font_file(family, weight))
     if key not in _FACES:
-        got = None
-        for q in (f"{family}:style={_STYLE.get(weight, 'Regular')}", family):
+        got = (key[2], 0) if key[2] else None
+        for q in ([] if got else [f"{family}:style={_STYLE.get(weight, 'Regular')}", family]):
             fam, path, idx = subprocess.check_output(["fc-match", "-f", "%{family}|%{file}|%{index}", q], text=True).split("|")
             if family.lower() in fam.lower():                                  # 그 집을 못 찾으면 굵기 없이 다시
                 got = (path, idx)
@@ -34,19 +35,32 @@ def face(family, weight=400):
 
 
 _EXT = {}
+REGISTERED = {}                  # 대본이 「＋ 서체」로 등록하는 서체 (집, 굵기) → 파일 — 재기도 그 파일로(register_font)
+
+
+def font_file(family, weight):
+    """그 서체·굵기를 편집기가 그릴 때 쓰는 파일 — 시스템 서체(core.units.fonts) 또는 대본이 등록하는 서체. 없으면 None"""
+    import os, sys
+    if (family, int(weight)) in REGISTERED:
+        return REGISTERED[(family, int(weight))]
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from core.units.fonts import system_fonts
+    return next((f["path"] for f in system_fonts() if f["family"] == family and f["weight"] == int(weight) and not f["italic"]), None)
 
 
 def chrome_extent(family, weight, size, s, lang="ko"):
     """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값.
     lang = 글 언어(편집기 글상자 「언어」, 기본 한국어) — 편집기처럼 공백·문장부호를 그 언어 꼴로(render.locl_html)"""
     import os, subprocess, tempfile, json as _j, sys
-    key = (family, weight, size, s, lang)
+    key = (family, weight, size, s, lang, font_file(family, weight))
     zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))   # 리포 뿌리 — 대본은 단위 폴더에서 돈다
         from core.units import render
         body = render.locl_html(render.esc(s), render.font_family(family), lang)
-        doc = (f"<!doctype html><html lang=en><meta charset=utf-8><body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
+        ff = font_file(family, weight)                                         # 편집기와 같은 서체 파일로 잰다 — 컴퓨터에 깔린 서체는 판이 달라 커닝이 다를 수 있다(「BY」 0.23mm)
+        face = (f"<style>@font-face{{font-family:'{family}';font-weight:{weight};src:url('file://{ff}')}}</style>" if ff else "")
+        doc = (f"<!doctype html><html lang=en><meta charset=utf-8>{face}<body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
                f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{body}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const c=[],w=document.createTreeWalker(document.getElementById('t'),NodeFilter.SHOW_TEXT),r=document.createRange();"
                "let n;while((n=w.nextNode()))for(let i=0;i<n.data.length;i++)c.push([n,i]);"
@@ -156,7 +170,14 @@ def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=
 
 
 def register_font(path, label=None):
-    """서체 등록 — 글상자를 고른 채 「＋ 서체」를 눌러 뜬 파일 창에서 서체 파일을 고른다. 시스템 서체 목록에 든다"""
+    """서체 등록 — 글상자를 고른 채 「＋ 서체」를 눌러 뜬 파일 창에서 서체 파일을 고른다. 시스템 서체 목록에 든다
+    (이 대본의 재기 — 자간 등 — 도 그 파일로 하게 REGISTERED 에 적는다)"""
+    import os, sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from core.units.fonts import _meta
+    m = _meta(path)
+    if m:
+        REGISTERED[(m[0], int(m[1]))] = path
     return ([S(label)] if label else []) + [{"upload": {"at": "#side #font-file", "path": path}, "wait": 2500}]
 
 
