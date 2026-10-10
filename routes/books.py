@@ -137,8 +137,12 @@ def page_projects():
     ids = {d["id"] for d in _dirs()}
     for m in _meta().values():                       # 틀 수 — 지울 때 "안의 틀 n개는 기타로" 안내용
         tcounts[_dir_of(m, ids)] = tcounts.get(_dir_of(m, ids), 0) + 1
+    from routes.catalog import templates
+    dcounts = {}                                     # 디자인 수 — 카드 숫자는 폴더 안에 보이는 디자인 카드 수와 같아야 한다
+    for t in templates():
+        dcounts[t["dir"]] = dcounts.get(t["dir"], 0) + len(t["designs"])
     # 폴더 = 카탈로그 디렉토리(dirs.json 순서). 기타는 책·틀이 있을 때만.
-    folders = [{**d, "n": counts.get(d["id"], 0), "t": tcounts.get(d["id"], 0)}
+    folders = [{**d, "n": counts.get(d["id"], 0), "t": tcounts.get(d["id"], 0), "dn": dcounts.get(d["id"], 0)}
                for d in _dirs() if d["id"] != DEFAULT_DIR or counts.get(d["id"]) or tcounts.get(d["id"])]
     did = _nfc(request.args.get("dir", "")).strip()
     q = _nfc(request.args.get("q", "")).strip().lower()
@@ -146,7 +150,7 @@ def page_projects():
     designs, bare = [], []
     if folder:
         bs = [b for b in bs if b["dir"] == did]
-        from routes.catalog import design_images, templates     # 이 폴더의 틀·디자인 — 여기서 바로 만들 수 있게
+        from routes.catalog import design_images     # 이 폴더의 틀·디자인 — 여기서 바로 만들 수 있게
         for t in templates():
             if t["dir"] != did:
                 continue
