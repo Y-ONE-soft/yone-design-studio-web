@@ -337,16 +337,24 @@
     return vis(lo)[0];
   }
 
+  function inkBottom(e) {                                              // 실제 글자까지의 아래 끝 — 줄 상자보다 글자(②·큰 번호·대체 서체)가 더 내려가면 그 끝
+    let b = e.getBoundingClientRect().bottom;
+    const r = document.createRange();
+    r.selectNodeContents(e);
+    for (const x of r.getClientRects()) if (x.height > 0.5 && x.bottom > b) b = x.bottom;
+    return b;
+  }
+
   function cutFrom(o) {                                                // 이 상자에서 넘는 것 → 다음 상자로 갈 단락들(잘린 뒷부분 포함). 안 넘치면 null
     const h = holder(o), L = limitOf(o), ps = paras(h);
-    const i = ps.findIndex(p => p.getBoundingClientRect().bottom > L);
+    const i = ps.findIndex(p => inkBottom(p) > L);
     if (i < 0) return null;
     const p = ps[i], rest = ps.slice(i + 1);
     let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
     if (whole) { /* 자르지 않는다 */ }
     else if (p.dataset.jcDone) {                                       // 컴포저 단락 — 줄마다 span
       const lines = [...p.children];
-      let k = lines.findIndex(s => s.getBoundingClientRect().bottom > L);
+      let k = lines.findIndex(s => inkBottom(s) > L);
       // 행 유지(인디자인 「처음 N행 · 마지막 N행」) — 상자 끝에 처음 몇 줄만, 다음 상자에 마지막 몇 줄만 남지 않게
       const kf = +p.dataset.keepFirst || 0, kl = +p.dataset.keepLast || 0;
       if (k > 0 && kl && lines.length - k < kl) k = lines.length - kl;   // 넘어갈 줄이 모자라면 더 넘긴다

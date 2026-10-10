@@ -2272,7 +2272,7 @@ def story_spares(ctx, pages, spec_of):
         cap = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for _, it in chain)
         w = float(head.get("w") or a.get("w") or 80)
         plain = rich_plain(head["fields"][a["bind"]])
-        need = text_h(plain, w, float(a.get("size") or 9), a.get("leading"), a) * 1.25        # 문단 간격·큰 번호 몫으로 넉넉히
+        need = text_h(plain, w, float(a.get("size") or 9), a.get("leading"), a) * 2.0         # 넉넉히 — 자리마다 단락 스타일(행간·앞 간격)은 어림에 안 든다(정본 실전 문제 54쪽에서 모자랐다). 남는 덧쪽은 크롬이 지운다
         if need <= cap * 0.9:
             continue
         last = pages[last_pi]
