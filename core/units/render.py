@@ -293,6 +293,8 @@ def grep_html(html, rules, ctx=None):
             st += f"position:relative;top:{-float(r['bshift']) * PT:.3f}px;"
         if r.get("weight"):                                                # 굵기 100~900 — 굵게(700)보다 먼저
             st += f"font-weight:{int(r['weight'])};"
+        if r.get("font"):                                                  # 서체 — 인디자인 GREP 스타일의 문자 스타일 서체(제목 「A1」 만 다른 서체 등)
+            st += f"font-family:{ctx.font(r['font']) if ctx else font_family(r['font'])};"
         if r.get("track"):                                                 # 자간 ‰ em
             st += f"letter-spacing:{float(r['track']) / 1000:.4f}em;"
         ul = r.get("u") and not r.get("blank") and not r.get("fit") and (r.get("line") or r.get("line_off") or r.get("line_color"))

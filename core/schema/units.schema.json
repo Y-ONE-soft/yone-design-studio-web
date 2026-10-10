@@ -165,7 +165,7 @@
         "lang": {"type": "string", "maxLength": 16, "description": "글 언어(인디자인 문자 패널의 언어) — 없으면 ko(한국어). 글자는 늘 lang=en 으로 그려 라틴 합자를 지키고, 공백·문장부호(유니코드 Zs·P*·~) 중 서체가 그 언어용 글리프(GSUB locl)를 가진 글자만 그 언어로 감싼다(Noto CJK + ko → 공백 0.280em·따옴표·괄호·줄표 한국어 꼴). en 이면 감싸지 않는다. ja · zh-Hans · zh-Hant 도 같은 방식"},
         "grep": {"type": "array", "description": "GREP 스타일 — 패턴(정규식)에 맞는 글자에 서식(인디자인 단락 스타일의 GREP 스타일). 고정 글·원고 모두에 적용",
                  "items": {"type": "object", "required": ["re"], "properties": {
-                   "re": {"type": "string"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"},
+                   "re": {"type": "string"}, "font": {"type": "string", "description": "맞은 글자만 서체(이름 또는 견본 $f…)"}, "b": {"type": "boolean"}, "i": {"type": "boolean"}, "u": {"type": "boolean"},
                    "color": {"$ref": "#/definitions/token"},
                    "size": {"type": "number", "description": "글자 크기 pt"}, "bshift": {"type": "number", "description": "기준선 이동 pt — 양수면 위로"},
                    "blank": {"type": "number", "description": "칸으로 바꾸기 — 맞은 글 대신 이 폭(mm)의 밑줄 칸 (원고의 ____ 빈칸). fit 이면 글 폭에 더할 폭"},
