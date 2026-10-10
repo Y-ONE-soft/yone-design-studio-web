@@ -1300,22 +1300,22 @@ def _order_body(pno):
                     "(A) 임시 문장 하나.\n(B) 임시 문장 둘.\n(C) 임시 문장 셋.", 0, fill=tb["fill"],
                     grep_label={"re": r"^\([A-Z]\)", "color": labels[0]["color"], "size": lab_size} if labels else None)
     grow.append((tb["y"] + tb["h"], g))
-    # 답 줄 — 화살표 둘 · 선 (원본 면 그대로, 위 글이 자라면 같이 밀린다)
+    # 답 줄 — 화살표 둘 · 선 (원본 면 그대로, 위 글이 자라면 같이 밀린다). 높이가 회차마다 다르다(99~127mm · 위 상자와 5~10mm) — 원고를 따라 움직이는 것: 원고 쪽 판정
     st += [S("답 쓰는 줄 — 화살표 둘 · 선", 1100)]
     for d in [d for d in dr if d["n"] == 3 and d["fill"] and d["y"] > tb["y"] + tb["h"] and d["y"] < qt["base"] - 5]:
         E({"id": f"ar{len(ELEMS[len(PAGES)])}", "x": round(d["x"], 2), "y": round(d["y"], 2), "w": round(d["w"], 2), "h": round(d["h"], 2), "color": d["fill"],
-           "see": d["fill"], "pad": 0.2, "ctol": 20})
+           "see": d["fill"], "pad": 0.2, "ctol": 20, "원고": True})
         st += shape(round(d["x"], 2), round(d["y"] - shift(d["y"]), 2), round(d["w"], 2), round(d["h"], 2), d["fill"], d=poly_d(pno, {"x": d["x"], "y": d["y"]}))
     for d in [d for d in dr if d["n"] == 1 and d["fill"] and d["h"] < 1 and d["w"] > 50 and tb["y"] + tb["h"] < d["y"] < qt["base"] - 5]:
         E({"id": f"ln{len(ELEMS[len(PAGES)])}", "x": round(d["x"], 2), "y": round(d["y"], 2), "w": round(d["w"], 2), "h": round(d["h"], 2), "color": d["fill"],
-           "see": d["fill"], "pad": 0.2, "ctol": 20})
+           "see": d["fill"], "pad": 0.2, "ctol": 20, "원고": True})
         st += box(round(d["x"], 2), round(d["y"] - shift(d["y"]), 3), round(d["w"], 2), round(d["h"], 3), d["fill"])
     # 체크 아이콘 + 발문
     q_icon = [d for d in dr if d["n"] == 20 and d["stroke"] and d["w"] < 5][0]
     sh = shift(q_icon["y"])
     o_ = q_icon["sw"] * MM / 2
     E({"id": f"ic{len(ELEMS[len(PAGES)])}", "x": round(q_icon["x"] - o_, 2), "y": round(q_icon["y"] - o_, 2), "w": round(q_icon["w"] + 2 * o_, 2),
-       "h": round(q_icon["h"] + 2 * o_, 2), "color": q_icon["stroke"], "see": q_icon["stroke"], "pad": 0.3, "ctol": 30})
+       "h": round(q_icon["h"] + 2 * o_, 2), "color": q_icon["stroke"], "see": q_icon["stroke"], "pad": 0.3, "ctol": 30, "원고": True})    # 발문을 따라 움직인다
     st += image(round(q_icon["x"] - 0.3, 2), round(q_icon["y"] - 0.3 - sh, 2), 4.15, 4.15, os.path.join(HERE, "check.svg"), label="체크 아이콘")
     st += T(win_el(qt, qt["t"].strip(), qt["x"], qt["x1"]), ELB, 400, slot_name="발문", temp="임시 발문 — 다음 물음에 답하시오.", shift=sh, w=round(185 - qt["x"], 1))
     # 주어진 문장 · 지문
