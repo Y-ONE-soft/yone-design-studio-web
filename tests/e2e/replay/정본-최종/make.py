@@ -1417,8 +1417,9 @@ def c2_style(pno, G=None):
     u0 = min(ul, key=lambda d: abs(d["y"] - ref["base"]) + (abs(d["x"] - ref["x1"]) if pinks else 0))
     pink = {"color": pinks[0]["color"] if pinks else None, "base": min((o["base"] for o in it0["en"] if abs(o["base"] - u0["y"]) < 1.5), default=u0["y"] - 0.4)}
     plain = [o for it in items for o in it["en"] if o["color"] != "#c64a86" and o["font"].endswith("Regular")]
-    G.update(en_size=next(o["size"] for it in items for o in it["en"]), x0=it0["n"]["x"], inline_w=round(first - it0["n"]["x"], 2), indent=round((min(cont) if cont else first) - it0["n"]["x"], 2),
-              en_pt=en_pt, ko_pt=ko_pt, ko_before=ko_before, ko_after=ko_after, en_trk=gaps_track([c for o in plain for c in o["ink"]], 8),
+    en_size = next(o["size"] for it in items for o in it["en"])           # 영어 글 크기 — 구성 9 는 8pt, 구성 12 견본은 9pt
+    G.update(en_size=en_size, x0=it0["n"]["x"], inline_w=round(first - it0["n"]["x"], 2), indent=round((min(cont) if cont else first) - it0["n"]["x"], 2),
+              en_pt=en_pt, ko_pt=ko_pt, ko_before=ko_before, ko_after=ko_after, en_trk=gaps_track([c for o in plain for c in o["ink"]], en_size),
               ko_trk=gaps_track([c for it in items for o in it["ko"] for c in o["ink"]], 8, NOTO, 500),
               blank=round(u0["w"], 2), line=round(u0["sw"] * MM, 3), line_off=round(u0["y"] - pink["base"], 2), right=max(o["x1"] for it in items for o in it["en"]),
               num_color=it0["n"]["color"], pink=pink["color"])
