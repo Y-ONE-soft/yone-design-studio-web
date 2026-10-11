@@ -488,25 +488,35 @@ def grep_html(html, rules, ctx=None):
                 t = f"<{k}>{t}</{k}>"
             return f'<span style="{st}">{t}</span>' if st else t
         out, stack = [], []                                                # 윗주·옆 메모(data-ruby · data-side) 안 글은 건너뛴다 — 인디자인도 다른 글(고정 개체·윗주)
-        for p in _TAG.split(html):
+        head = True                                                        # 문단 첫머리인가 — 「^」 는 문단 처음에서만 맞는다(인디자인). 꾸밈 조각마다 글이
+        for p in _TAG.split(html):                                         # 끊겨도 조각 첫머리에서 맞으면 안 된다(문장 가운데 「12 young」 에 번호 배지, 2026-10-11)
             if p.startswith("<"):
+                inside = bool(stack and stack[-1])
                 if p.startswith("</"):
                     stack and stack.pop()
                 elif not p.endswith("/>"):
                     stack.append(stack[-1] if stack else ("data-ruby=" in p or "data-side=" in p))
                     stack[-1] = stack[-1] or "data-ruby=" in p or "data-side=" in p
+                if not inside and re.match(r"</?(?:p|div)\b|<br\s*/?>", p):
+                    head = True
                 out.append(p)
                 continue
             raw = _unescape(p)
-            if not raw or (stack and stack[-1]) or not rx.search(raw):
+            if not raw or (stack and stack[-1]):
+                out.append(p)
+                continue
+            lead = "" if head else "\0"                                    # 문단 첫머리가 아니면 앞에 글자 하나를 대 「^」 가 못 맞게
+            head = False
+            if not rx.search(lead + raw):
                 out.append(p)
                 continue
             k = 0
-            for m in rx.finditer(raw):
-                if m.end() == m.start():
+            for m in rx.finditer(lead + raw):
+                s, e = m.start() - len(lead), m.end() - len(lead)
+                if e == s or s < 0:
                     continue
-                out.append(esc(raw[k:m.start()]) + wrap(m))
-                k = m.end()
+                out.append(esc(raw[k:s]) + wrap(m))
+                k = e
             out.append(esc(raw[k:]))
         html = "".join(out)
     return html

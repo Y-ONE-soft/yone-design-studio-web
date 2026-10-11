@@ -301,6 +301,19 @@ if cmd == "reset":
     print("지움:", unit, "(make.py · 상태.json 은 남김)")
     sys.exit()
 
+# 구성표 확인(2026-10-11) — 새 책은 구성을 구성 판정(layouts.py → 구성.json)으로만 정한다. 눈으로 나눈 목록 · 손으로 고친 구성.json ·
+# 사용자 확인 전이면 돌지 않는다. 구성 번호(<단위>@N)는 구성.json 의 번호여야 한다. 이 규칙 전에 만든 단위는 예전 방식 그대로(LEGACY)
+LEGACY = {"광문분석본", "정본-최종", "_audit"}
+if base_unit not in LEGACY and not base_unit[:2].isdigit():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import layouts
+    ok_l, why_l = layouts.check(base_unit)
+    if not ok_l:
+        sys.exit("구성표 막힘 — " + why_l)
+    nums = {str(r["번호"]) for r in json.load(open(layouts.path_of(base_unit), encoding="utf-8"))["구성"]}
+    if only and any(g not in nums for g in only.split(",")):
+        sys.exit(f"구성 번호 {only} 가 구성표에 없다 — 있는 번호 {sorted(nums, key=int)}")
+
 state = json.load(open(os.path.join(udir, "상태.json"), encoding="utf-8"))
 if cmd == "judge":                                                          # 판정만 다시 — 지난 판이 만든 결과(PDF·그림)로. 다시 만들지 않는다
     state = json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8"))

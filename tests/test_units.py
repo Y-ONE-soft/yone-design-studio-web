@@ -1191,6 +1191,14 @@ def test_decompose_tokens_per_page(tmp_path):
     assert all(u.lstrip("$") in ca for u in used if isinstance(u, str) and u.startswith("$"))
 
 
+def test_grep_caret_only_at_paragraph_start():
+    """GREP 「^」 는 문단 첫머리에서만 — 꾸밈 조각으로 글이 끊겨도 조각 첫머리에서 맞으면 안 된다(「as 12 young」 에 번호 배지)"""
+    from core.units.render import grep_html
+    rule = [{"re": r"^\d{1,2}(?= )", "b": True}]
+    out = grep_html('1 On <span style="color:red">as </span><span>12 young</span><br/>3 next', rule)
+    assert out.count("<b>") == 2 and "<b>1</b>" in out and "<b>3</b>" in out and "<b>12</b>" not in out
+
+
 def test_font_cff_name_made_ascii():
     """CFF 서체 이름이 한글(UTF-8)이면 크롬이 서체를 거부한다 — 같은 길이 영문으로 바꾸고 나머지 바이트는 그대로"""
     import struct
