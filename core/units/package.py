@@ -172,7 +172,7 @@ def load(pkg, into=None, name=None):
             store.put("skins", skin)
         else:
             merged = copy.deepcopy(have)
-            for sec in ("styles", "images"):
+            for sec in ("styles", "cstyles", "images"):                  # cstyles(문자 스타일)를 빼먹어 들여온 문서의 색·형광·배지가 빠졌다(2026-10-11 광문 분석본)
                 for k, v in (skin.get(sec) or {}).items():
                     if k not in (merged.get(sec) or {}):
                         merged.setdefault(sec, {})[k] = v

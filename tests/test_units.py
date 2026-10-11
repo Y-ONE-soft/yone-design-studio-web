@@ -1189,3 +1189,31 @@ def test_decompose_tokens_per_page(tmp_path):
     assert not (set(ca) & set(cb))                                  # 이름이 안 겹친다
     used = {x.get("fill") or x.get("color") for x in a["atoms"]} - {None}
     assert all(u.lstrip("$") in ca for u in used if isinstance(u, str) and u.startswith("$"))
+
+
+def test_font_cff_name_made_ascii():
+    """CFF 서체 이름이 한글(UTF-8)이면 크롬이 서체를 거부한다 — 같은 길이 영문으로 바꾸고 나머지 바이트는 그대로"""
+    import struct
+    from core.units.fonts import _cff_ascii_names
+    name = "하늘".encode()
+    cff = bytes([1, 0, 4, 1]) + struct.pack(">HB", 1, 1) + bytes([1, 1 + len(name)]) + name + b"REST"
+    head = b"OTTO" + struct.pack(">HHHH", 1, 16, 0, 0)
+    rec = b"CFF " + struct.pack(">III", 0, 12 + 16, len(cff))
+    font = head + rec + cff
+    out = _cff_ascii_names(font)
+    assert len(out) == len(font) and out.endswith(b"REST")
+    assert out[-4 - len(name):-4] == b"Font__"
+    ok = font.replace(name, b"SKYBOR")
+    assert _cff_ascii_names(ok) == ok                                 # 영문 이름은 그대로
+
+
+def test_package_load_merges_cstyles(lib):
+    """문서 묶음을 들여올 때 같은 브랜드가 이미 있으면 빈 칸만 채운다 — 문자 스타일도(빼먹어 색·형광·배지가 빠졌다 2026-10-11)"""
+    from core.units import package, store
+    plan = lib["plans"][0]
+    pkg = package.export(lib, plan["id"])
+    pkg["skin"] = dict(lib["skins"][0], cstyles={"형광 시험": {"bg": "#fff200", "bg_band": 3.17}})
+    sid = pkg["skin"]["id"]
+    package.load(pkg)
+    got = store.by_id(store.library()["skins"])[sid]
+    assert got["cstyles"]["형광 시험"]["bg_band"] == 3.17

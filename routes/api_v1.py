@@ -356,18 +356,23 @@ def _editor_design(series, design):
 
 def _render_editor(series, design, body, book):
     import tempfile
-    from core.sources import yos_editor
+    from core.sources import yos_analysis, yos_editor
     from routes.catalog import _ddir
     src = body.get("source") or {}
     data = src.get("data") if isinstance(src, dict) and src.get("type") == "data" else None
-    if not isinstance(data, dict) or data.get("format") != "yos-workbook-v1":
-        return jsonify({"error": "편집기 제작 디자인은 source.data(format yos-workbook-v1)만 받는다"}), 400
+    conv = {"yos-workbook-v1": yos_editor, "yos-analysis-v1": yos_analysis}.get((data or {}).get("format") if isinstance(data, dict) else None)
+    if not conv:                                                         # 워크북 원고 · 분석본 조판 문서(contents 분석본 NEW)
+        return jsonify({"error": "편집기 제작 디자인은 source.data(format yos-workbook-v1 · yos-analysis-v1)만 받는다"}), 400
     try:
         with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
             pkg = json.load(f)
     except (OSError, ValueError):
         return jsonify({"error": "디자인 문서(units.json)가 없다"}), 400
-    content, rep = yos_editor.to_content(data, (pkg.get("plan") or {}).get("content") or {}, yos_editor.template_caps(pkg))
+    sample = (pkg.get("plan") or {}).get("content") or {}
+    if conv is yos_editor:                                               # 워크북 — 한 벌의 칸 수는 틀의 자리 수로
+        content, rep = conv.to_content(data, sample, yos_editor.template_caps(pkg))
+    else:
+        content, rep = conv.to_content(data, sample)
     if not content:
         return jsonify({"error": "이 디자인에 넣을 원고가 없다 — " + ", ".join(sorted({str(s.get("label") or s.get("key")) for s in rep["skipped"]})) + " 은(는) 아직 자리가 없다",
                         "report": rep}), 400
