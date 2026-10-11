@@ -296,7 +296,8 @@ def analysis(pno, gubun, cs_name, pic=False):
     Eslot(tsp, "#4d4d4d", label="해석")
     ttop = round(top_of(trows[0], 5.9, PRE, 500, TLD), 2)
     tx = round(min(s["x"] for s in tsp), 2)                             # 삽화 면은 그림 오른쪽(74mm)부터
-    st += text(tx, ttop, round(130.0 - tx, 1), round(196.0 - ttop, 1), "임시 해석 글이 이 칸에 들어온다.", 5.9, "#4d4d4d", label="해석 — 한 글상자", font=PRE, leading=TLD, align="justify")
+    # 아래 끝 199mm(아래 띠 위) — 편집기는 한글을 어절에서만 줄 바꿈해(원본은 글자 단위) 같은 원고가 한 줄 길어질 수 있다(단락 컴포저 전까지)
+    st += text(tx, ttop, round(130.0 - tx, 1), round(199.0 - ttop, 1), "임시 해석 글이 이 칸에 들어온다.", 5.9, "#4d4d4d", label="해석 — 한 글상자", font=PRE, leading=TLD, align="justify")
     st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
     st += slot("해석", label="자리 — 해석")
     st += [{"pick": {"at": '#side select[data-a="style"]', "value": "분석 해석"}, "wait": 700}]

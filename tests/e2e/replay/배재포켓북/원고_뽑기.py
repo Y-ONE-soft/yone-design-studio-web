@@ -84,17 +84,24 @@ def analysis(page, H):
     owner = {}
     for mi, m in enumerate(marks):
         cx = (m["x0"] + m["x1"]) / 2
+        wide = None                                       # 낱말 여럿 밑에 깔리는 긴 윗주(「manage to V ~하는 것을 해내다」) — 시작하는 낱말에 왼쪽 맞춤
         best = None
         for wi, w in enumerate(words):
-            if not (w["x0"] - 1 <= cx <= w["x1"] + 1):
+            mw, ww_ = m["x1"] - m["x0"], w["x1"] - w["x0"]
+            # 원본 모양대로 — 낱말보다 넓은 윗주가 왼쪽 끝을 그 낱말 왼쪽 끝에 맞췄으면(가운데끼리보다 가까우면) 왼쪽 맞춤
+            if mw > ww_ * 1.2 and w["x0"] - 1.5 <= m["x0"] <= w["x1"] and abs(m["x0"] - w["x0"]) < abs(cx - (w["x0"] + w["x1"]) / 2):
+                cx_w = m["x0"]
+            else:
+                cx_w = None
+            if cx_w is None and not (w["x0"] - 1 <= cx <= w["x1"] + 1):
                 continue
             pos = "below" if -2 <= m["y0"] - w["y1"] <= 4 else "above" if -2 <= w["y0"] - m["y1"] <= 4 else None   # 낱말 상자와 2pt 까지 겹쳐도(「exciting (X)」)
             if pos:
-                d = abs(cx - (w["x0"] + w["x1"]) / 2)
+                d = abs((cx_w if cx_w is not None else cx) - ((w["x0"] if cx_w is not None else (w["x0"] + w["x1"]) / 2)))
                 if best is None or d < best[0]:
-                    best = (d, wi, pos)
+                    best = (d, wi, pos, cx_w is not None)
         if best:
-            owner.setdefault(best[1], []).append({"t": m["t"].strip(), "pos": best[2]})
+            owner.setdefault(best[1], []).append(dict({"t": m["t"].strip(), "pos": best[2]}, **({"align": "start"} if best[3] else {})))
 
     def ruby_of(w):
         return owner.get(next(i for i, x in enumerate(words) if x is w), [])

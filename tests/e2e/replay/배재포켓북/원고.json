@@ -1116,16 +1116,20 @@
       "pos": "below"
      }
     },
-    ". ",
+    {
+     "t": ".",
+     "ruby": {
+      "t": "a 42-year-old Canadian Sam Lee",
+      "pos": "above",
+      "align": "start"
+     }
+    },
+    " ",
     {
      "t": "According",
      "cs": [
       "형광 분홍"
-     ],
-     "ruby": {
-      "t": "a 42-year-old Canadian Sam Lee",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -3483,10 +3487,17 @@
     " ",
     {
      "t": "it",
-     "ruby": {
-      "t": "O",
-      "pos": "below"
-     }
+     "ruby": [
+      {
+       "t": "O",
+       "pos": "below"
+      },
+      {
+       "t": "Singaporean Sam",
+       "pos": "above",
+       "align": "start"
+      }
+     ]
     },
     " for him, ",
     {
@@ -4660,7 +4671,8 @@
      "t": "in",
      "ruby": {
       "t": "(that)",
-      "pos": "above"
+      "pos": "above",
+      "align": "start"
      }
     },
     "k ",
@@ -8950,18 +8962,19 @@
      "t": ",",
      "cs": [
       "형광 분홍"
-     ]
+     ],
+     "ruby": {
+      "t": "목적",
+      "pos": "below",
+      "align": "start"
+     }
     },
     " ",
     {
      "t": "to",
      "cs": [
       "파랑 글자"
-     ],
-     "ruby": {
-      "t": "목적",
-      "pos": "below"
-     }
+     ]
     },
     " ",
     {
@@ -17554,10 +17567,17 @@
      "cs": [
       "형광 주황"
      ],
-     "ruby": {
-      "t": "선행사",
-      "pos": "below"
-     }
+     "ruby": [
+      {
+       "t": "선행사",
+       "pos": "below"
+      },
+      {
+       "t": "전치사+관계대명사",
+       "pos": "below",
+       "align": "start"
+      }
+     ]
     },
     " ",
     {
@@ -18549,10 +18569,17 @@
      "cs": [
       "형광 주황"
      ],
-     "ruby": {
-      "t": "주관대",
-      "pos": "below"
-     }
+     "ruby": [
+      {
+       "t": "주관대",
+       "pos": "below"
+      },
+      {
+       "t": "V 단수 수동태",
+       "pos": "below",
+       "align": "start"
+      }
+     ]
     },
     " ",
     {
@@ -20201,20 +20228,19 @@
     " sure ",
     {
      "t": "or",
-     "ruby": {
-      "t": "C",
-      "pos": "below"
-     }
+     "ruby": [
+      {
+       "t": "V 대동사 (= hadn't used the internet)",
+       "pos": "above",
+       "align": "start"
+      },
+      {
+       "t": "C",
+       "pos": "below"
+      }
+     ]
     },
-    " unsure ",
-    {
-     "t": "about",
-     "ruby": {
-      "t": "V 대동사 (= hadn't used the internet)",
-      "pos": "above"
-     }
-    },
-    " ",
+    " unsure about ",
     {
      "t": "how",
      "cs": [
@@ -25016,15 +25042,16 @@
       "pos": "below"
      }
     },
-    " developed models for face aging or digital ",
+    " developed models for face aging or ",
     {
-     "t": "de",
+     "t": "digital",
      "ruby": {
       "t": "Face aging or digital de-aging",
-      "pos": "above"
+      "pos": "above",
+      "align": "start"
      }
     },
-    "-aging. ",
+    " de-aging. ",
     {
      "t": "It",
      "cs": [
@@ -27308,16 +27335,21 @@
       "pos": "below"
      }
     },
-    " not ",
+    " ",
+    {
+     "t": "not",
+     "ruby": {
+      "t": "necessary (X)",
+      "pos": "below",
+      "align": "start"
+     }
+    },
+    " ",
     {
      "t": "necessarily",
      "cs": [
       "파랑 글자"
-     ],
-     "ruby": {
-      "t": "necessary (X)",
-      "pos": "below"
-     }
+     ]
     },
     " ",
     {
