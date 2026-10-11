@@ -92,7 +92,7 @@ def server():
     env = dict(os.environ, YONE_CATALOG_DIR=DATA, YONE_AUTH="off")
     p = subprocess.Popen([PY, "-u", "studio_server.py", "--port", str(PORT)], cwd=REPO, env=env,
                          stdout=open(os.path.join(OUT, "server.log"), "w"), stderr=subprocess.STDOUT)
-    for _ in range(120):
+    for _ in range(480):
         try:
             urllib.request.urlopen(BASE + "/api/units/library", timeout=1)
             return p
@@ -126,6 +126,28 @@ def steps(files, content):
 
 def words(t):
     return set(re.findall(r"[A-Za-z가-힣]{3,}", t))
+
+
+def styles_ok(ddir):
+    """등록 묶음(units.json)이 문서·원고가 쓰는 문자 스타일을 다 갖고 있나 — 원고 요소는 「들어갔나」만 봐서
+    색·형광·배지가 통째로 빠져도 맞대기가 통과했다(2026-10-11, 묶음 들여오기가 cstyles 를 안 합침)"""
+    pkg = json.load(open(os.path.join(ddir, "units.json"), encoding="utf-8"))
+    used = set()
+
+    def walk(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == "cs":
+                    used.update([v] if isinstance(v, str) else [x for x in v if isinstance(x, str)] if isinstance(v, list) else [])
+                walk(v)
+        elif isinstance(o, list):
+            for x in o:
+                walk(x)
+    walk([pkg.get("pages"), pkg.get("parts"), pkg.get("blocks"), pkg.get("plan")])
+    used.discard("")
+    miss = sorted(used - set((pkg.get("skin") or {}).get("cstyles") or {}))
+    print(f"문자 스타일 — 쓰는 {len(used)}개" + (f" · 묶음에 없음 {miss}" if miss else " 모두 묶음에 있음"))
+    return not miss
 
 
 def judge(reg_pdf):
@@ -190,5 +212,5 @@ if __name__ == "__main__":
     cat = next(p["catalog"] for p in plans if p.get("catalog"))
     ddir = os.path.join(DATA, cat["series"], "designs", cat["design"])
     print("등록 폴더", ddir)
-    ok = judge(os.path.join(ddir, "참고", "reference.pdf"))
+    ok = styles_ok(ddir) and judge(os.path.join(ddir, "참고", "reference.pdf"))
     print("판정: 통과" if ok else "판정: 실패")

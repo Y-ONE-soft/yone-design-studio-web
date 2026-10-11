@@ -1,0 +1,63 @@
+{
+  "series": "analysis",
+  "book": {
+    "id": "배재고1_스텝업_분석본",
+    "title": "광문 스텝업 분석본 (편집기 제작)",
+    "school": "배재고1",
+    "period": "26-2-중간",
+    "subtitle": "2",
+    "range": "고1 24년 10월 20~41-42번",
+    "series_label": "스텝업 분석본"
+  },
+  "page": {
+    "width": 210,
+    "height": 297,
+    "bleed": 3
+  },
+  "output": {
+    "dir": ".",
+    "stem": "배재고1_스텝업_분석본(26-2-중간)_내지"
+  },
+  "fonts": [
+    {
+      "file": "NotoSansCJKkr-Regular.otf"
+    },
+    {
+      "file": "NotoSansCJKkr-Medium.otf"
+    },
+    {
+      "file": "NotoSansCJKkr-Bold.otf"
+    },
+    {
+      "file": "GmarketSansLight.otf"
+    },
+    {
+      "file": "GmarketSansMedium.otf"
+    },
+    {
+      "file": "GmarketSansBold.otf"
+    },
+    {
+      "file": "EliceDXNeolliOTF-Bold.otf"
+    },
+    {
+      "file": "JalnanOTF.otf"
+    }
+  ],
+  "manuscript": {
+    "dir": "원고",
+    "files": {
+      "_note": "원고 견본 미확보(2026-09-18). 계열 파서는 아직 없다 — 원고를 받으면 core/render_vivlio/series/analysis/data.py 에 구조 판정 파서를 짠다. 임시로 data.json 을 직접 넣으면 조판된다 (스키마: 같은 파일 상단 주석).",
+      "text": "분석본_원고.docx",
+      "answer": "분석본_정답해설.docx"
+    }
+  },
+  "finish": {
+    "trim": {
+      "bleed": 3
+    },
+    "multiple": 2
+  },
+  "_틀": "기준: PDF 실측(catalog/_intake/23d89f0d/ref.pdf, 216×303mm = A4+도련 3mm, 37P). options.expect 는 두지 않는다 — 새 책은 지문 수가 다르다.",
+  "_디자인": "편집기 제작 — 광문 스텝업 분석본 (편집기 제작) (2026-10-11). 모양은 편집기 문서(units.json)가 정본"
+}

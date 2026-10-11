@@ -1189,3 +1189,15 @@ def test_decompose_tokens_per_page(tmp_path):
     assert not (set(ca) & set(cb))                                  # 이름이 안 겹친다
     used = {x.get("fill") or x.get("color") for x in a["atoms"]} - {None}
     assert all(u.lstrip("$") in ca for u in used if isinstance(u, str) and u.startswith("$"))
+
+
+def test_package_load_merges_cstyles(lib):
+    """문서 묶음을 들여올 때 같은 브랜드가 이미 있으면 빈 칸만 채운다 — 문자 스타일도(빼먹어 색·형광·배지가 빠졌다 2026-10-11)"""
+    from core.units import package, store
+    plan = lib["plans"][0]
+    pkg = package.export(lib, plan["id"])
+    pkg["skin"] = dict(lib["skins"][0], cstyles={"형광 시험": {"bg": "#fff200", "bg_band": 3.17}})
+    sid = pkg["skin"]["id"]
+    package.load(pkg)
+    got = store.by_id(store.library()["skins"])[sid]
+    assert got["cstyles"]["형광 시험"]["bg_band"] == 3.17
