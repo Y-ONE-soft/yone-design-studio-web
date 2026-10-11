@@ -367,7 +367,7 @@ def _render_editor(series, design, body, book):
             pkg = json.load(f)
     except (OSError, ValueError):
         return jsonify({"error": "디자인 문서(units.json)가 없다"}), 400
-    content, rep = yos_editor.to_content(data, (pkg.get("plan") or {}).get("content") or {})
+    content, rep = yos_editor.to_content(data, (pkg.get("plan") or {}).get("content") or {}, yos_editor.template_caps(pkg))
     if not content:
         return jsonify({"error": "이 디자인에 넣을 원고가 없다 — " + ", ".join(sorted({str(s.get("label") or s.get("key")) for s in rep["skipped"]})) + " 은(는) 아직 자리가 없다",
                         "report": rep}), 400
@@ -389,16 +389,21 @@ def _render_editor(series, design, body, book):
 
 
 def _content_plan(pkg, content):
-    """틀 문서에서 원고가 온 구성만 남긴 문서 사본 — 「원고마다」 묶음(이름 있는 면부터 다음 이름 있는 면 전까지). 한 번만 나오는 면·간지는 뺀다"""
+    """틀 문서에서 원고가 온 구성만 남긴 문서 사본 — 「원고마다」 묶음(이름 있는 면부터 다음 이름 있는 면 전까지).
+    한 번만 나오는 면은 그 면 자리에 원고가 왔을 때만(실전 문제 한 줄기) — 그 글이 이어지는 면(같은 이야기)도 같이. 간지 등은 뺀다"""
     import copy
     plan = copy.deepcopy(pkg.get("plan") or {})
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
+    parts = {p["id"]: p for p in pkg.get("parts") or []}
     plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)
+    atoms = lambda pg: [it.get("atom") or {} for it in pg.get("items") or []] + [a for it in pg.get("items") or [] for a in (parts.get(it.get("part")) or {}).get("atoms") or []]
+    stories = set()
     for sec in plan.get("sections") or []:
         keep, on = [], False
         for e in sec.get("pages") or []:
             e = e if isinstance(e, dict) else {"page": e, "repeat": "once"}
-            nm = (pages_by.get(e["page"]) or {}).get("name") or ""
+            pg = pages_by.get(e["page"]) or {}
+            nm = pg.get("name") or ""
             if e.get("repeat") == "each_set":
                 if not plain(nm):
                     on = isinstance(content.get(nm), list)
@@ -406,6 +411,10 @@ def _content_plan(pkg, content):
                     keep.append(e)
             else:
                 on = False
+                st = {a["story"] for a in atoms(pg) if a.get("story")}
+                if any(isinstance(content.get(a.get("bind")), list) for a in atoms(pg)) or st & stories:
+                    keep.append(e)
+                    stories |= st
         sec["pages"] = keep
         sec.pop("divider", None)
     plan["front"], plan["back"] = [], []
