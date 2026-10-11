@@ -90,8 +90,18 @@
     </div>
   </div>
 
+  {% if total and faces %}
+  <h2>면 <span class="n">{{ faces|length }}개 — 만드는 단위, 서로 다른 면 모양마다 하나 (지문마다 붙는 면은 원고가 정한다)</span></h2>
+  <div class="secs" id="faces">
+    {% for f in faces %}<div class="sec" title="p{{ f.pages|join(', p') }}">
+      <div class="two"><div class="pg" data-n="{{ f.show[0] }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ f.show[0] }}.png?dpi=30" alt="" loading="lazy"></div></div></div>
+      <div class="lb"><b>{{ loop.index }}. {{ f.label }}</b><br><small>{{ f.count }}면 · 처음 p{{ f.pages[0] }}
+        · <a href="/catalog/pdf/{{ t.series }}/{{ d.id }}#page={{ f.show[0] }}" target="pdfview">PDF에서 보기</a></small></div>
+    </div>{% endfor %}
+  </div>
+  {% endif %}
   {% if total %}
-  <h2>구성 <span class="n">{{ layouts|length }}개 — 지문만 다르고 형태가 같은 면은 하나로 (기준 PDF {{ total }}면)</span>
+  <h2>{% if faces %}원본 차례 견본{% else %}구성{% endif %} <span class="n">{{ layouts|length }}개 — {% if faces %}원본에서 되풀이된 면 묶음(확인용 · 만들지 않는다){% else %}지문만 다르고 형태가 같은 면은 하나로{% endif %} (기준 PDF {{ total }}면)</span>
     <button class="tg" id="tg-all">전체 {{ total }}면 펼치기</button></h2>
   <div class="secs" id="layouts">
     {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}"{% if (l.show or [])|length > 2 %} style="grid-column: span {{ [((l.show|length) + 1) // 2, 3]|min }}"{% endif %}>
@@ -124,7 +134,7 @@
     document.getElementById('pos').textContent = (i + 1) + ' / ' + PAGES.length;
     document.querySelectorAll('#all-pages .pg').forEach(function (p) { p.classList.toggle('on', +p.dataset.n === PAGES[i].n); });
   }
-  document.querySelectorAll('#layouts .pg, #all-pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(REP.length + (+p.dataset.n) - 1); document.getElementById('stage').scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
+  document.querySelectorAll('#faces .pg, #layouts .pg, #all-pages .pg').forEach(function (p) { p.addEventListener('click', function () { show(REP.length + (+p.dataset.n) - 1); document.getElementById('stage').scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
   var tg = document.getElementById('tg-all');
   if (tg) tg.addEventListener('click', function () {      // 전체 면은 펼칠 때만 그림을 청한다
     var all = document.getElementById('all-pages'), open = all.classList.toggle('hide');

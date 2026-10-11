@@ -1,0 +1,192 @@
+{
+ "name": "배재1 포켓북",
+ "desc": "배재1_포켓북(26-2-중간)_내지(수정5).pdf · 118면",
+ "source": "PDF: 배재1_포켓북(26-2-중간)_내지(수정5).pdf",
+ "date": "2026-10-12",
+ "draft": false,
+ "intake": {
+  "verdict": {
+   "verdict": "design",
+   "series": "pocketbook",
+   "confidence": 1.0,
+   "knobs": {},
+   "design_name": "배재1 포켓북",
+   "reasons": [
+    "PDF 등록 — 배재1_포켓북(26-2-중간)_내지(수정5).pdf"
+   ]
+  },
+  "measured": {
+   "pages": 118,
+   "trim_mm": [
+    148.0,
+    210.0
+   ],
+   "bleed_mm": 3.0,
+   "media_mm": [
+    154.0,
+    216.0
+   ],
+   "margins_mm": {
+    "left": 20.8,
+    "right": 17.6,
+    "top": 24.7,
+    "bottom": 40.1
+   },
+   "fonts": [
+    {
+     "font": "Type3 (1415 0 R)",
+     "share": 0.283
+    },
+    {
+     "font": "Type3 (4656 0 R)",
+     "share": 0.155
+    },
+    {
+     "font": "Type3 (2861 0 R)",
+     "share": 0.112
+    },
+    {
+     "font": "Type3 (3654 0 R)",
+     "share": 0.111
+    },
+    {
+     "font": "Type3 (4030 0 R)",
+     "share": 0.105
+    },
+    {
+     "font": "Type3 (944 0 R)",
+     "share": 0.099
+    },
+    {
+     "font": "Type3 (118 0 R)",
+     "share": 0.025
+    },
+    {
+     "font": "Undefined",
+     "share": 0.017
+    }
+   ],
+   "sizes_pt": [
+    {
+     "pt": 9.0,
+     "share": 0.741
+    },
+    {
+     "pt": 5.5,
+     "share": 0.124
+    },
+    {
+     "pt": 7.0,
+     "share": 0.051
+    },
+    {
+     "pt": 6.0,
+     "share": 0.05
+    },
+    {
+     "pt": 8.0,
+     "share": 0.016
+    },
+    {
+     "pt": 9.5,
+     "share": 0.016
+    }
+   ],
+   "text_colors": [
+    {
+     "hex": "#000000",
+     "share": 0.643
+    },
+    {
+     "hex": "#999999",
+     "share": 0.141
+    },
+    {
+     "hex": "#ea9149",
+     "share": 0.125
+    },
+    {
+     "hex": "#4d4d4d",
+     "share": 0.036
+    },
+    {
+     "hex": "#214e8e",
+     "share": 0.025
+    },
+    {
+     "hex": "#ffffff",
+     "share": 0.007
+    },
+    {
+     "hex": "#d2232a",
+     "share": 0.007
+    },
+    {
+     "hex": "#54669f",
+     "share": 0.006
+    }
+   ],
+   "shape_colors": [
+    {
+     "hex": "#93c4d4",
+     "area_mm2": 47249
+    },
+    {
+     "hex": "#b9c1a6",
+     "area_mm2": 6508
+    },
+    {
+     "hex": "#f7f2db",
+     "area_mm2": 1563
+    },
+    {
+     "hex": "#d6e3ef",
+     "area_mm2": 781
+    },
+    {
+     "hex": "#869cd0",
+     "area_mm2": 714
+    },
+    {
+     "hex": "#4a9cb6",
+     "area_mm2": 526
+    },
+    {
+     "hex": "#b5a68a",
+     "area_mm2": 526
+    },
+    {
+     "hex": "#54669f",
+     "area_mm2": 383
+    }
+   ],
+   "running_header": true,
+   "running_footer": false,
+   "sampled_pages": [
+    3,
+    19,
+    36,
+    52,
+    68,
+    84,
+    101,
+    117
+   ]
+  },
+  "applied": {
+   "page.width": 148.0,
+   "page.height": 210.0
+  },
+  "rejected": [],
+  "artwork": {
+   "rewired": [],
+   "ok": true,
+   "log": [
+    "자를 조각이 없는 틀"
+   ],
+   "assets": []
+  }
+ },
+ "layout_rules": false,
+ "made": "pdf"
+}

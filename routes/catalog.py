@@ -467,13 +467,19 @@ def design_pages(series, design):
         return 0
 
 
+def _in_head(b, H):
+    """머리 띠의 글덩어리 — 머리 10% 안에서 시작해 12% 안에서 끝난다. 끝까지 10% 안이어야 하던 때는 조금 아래 붙은
+    이름표 칸(배재1 포켓북 분석 면 '능률(오) 2과 본문1' 8.9~10.8%)을 못 읽어, 그 면이 앞 면 이름을 이어받았다(2026-10-12)."""
+    return b[1] < H * 0.10 and b[3] < H * 0.12
+
+
 def _page_labels(page):
     """러닝 요소의 이름표 — 머리 10%·바닥 7% 안의 짧은 라벨(한글·대문자 위주). 본문 문장(영어 소문자)은 뺀다."""
     W, H = page.rect.width, page.rect.height
     out = []
     for b in page.get_text("blocks"):
         x0, y0, x1, y1, t = b[:5]
-        if not (y1 < H * 0.10 or y0 > H * 0.93):
+        if not (_in_head(b, H) or y0 > H * 0.93):
             continue
         out += _page_labels_in(t)
     return out
@@ -629,18 +635,35 @@ def _content_labels(doc):
     """머리·바닥 같은 자리에 회차마다 다른 글이 오는 라벨 — 지문 제목('중국 고대 공놀이 Cuju') 같은 원고. 구성 이름이 아니다.
     한쪽 면(짝·홀)의 같은 자리(가로 10칸·세로 20칸)에 라벨이 3가지 이상 오고 그 가짓수가 붙은 면 수의 40% 이상이면,
     그 자리 라벨 가운데 책 전체에서 한 면에만 나오는 것. 한 번씩 오는 PART 간지 이름(교과서·모의고사·부교재)은
-    바닥 띠에 되풀이되니 남는다(2026-10-11 광문 분석본 · 단어 카드)."""
-    at, pages = {}, {}
+    바닥 띠에 되풀이되니 남는다(2026-10-11 광문 분석본 · 단어 카드).
+
+    숫자까지 보면 면마다 글이 다른 라벨도 원고다 — 지문 출처('능률(오) 1과 본문1' · '고1 23년 11월 모의고사 18번')는
+    숫자를 빼면 같은 말이 수십 면에 되풀이돼 구성 이름처럼 보였다(2026-10-12 배재1 포켓북). 쪽 번호는 숫자 비교에서 뺀다."""
+    at, pages, raw = {}, {}, {}
+    lines = []
     for p in doc:
         W, H = p.rect.width, p.rect.height
         for b in p.get_text("blocks"):
-            if not (b[3] < H * 0.10 or b[1] > H * 0.93):
+            if not (_in_head(b, H) or b[1] > H * 0.93):
                 continue
-            for l in _page_labels_in(b[4]):
-                at.setdefault((p.number % 2, round(b[0] / W * 10), round(b[1] / H * 20)), []).append(l)
-                pages.setdefault(l, set()).add(p.number)
+            for line in b[4].split("\n"):
+                for l in _page_labels_in(line):
+                    at.setdefault((p.number % 2, round(b[0] / W * 10), round(b[1] / H * 20)), []).append(l)
+                    pages.setdefault(l, set()).add(p.number)
+                    lines.append((l, p.number, re.sub(r"\s+", "", line)))
+    # 쪽 번호 = 머리·바닥 숫자 가운데 (숫자 - 면 차례)가 같은 값으로 절반 넘는 면에 나오는 것
+    off = {}
+    for _, pn, t in {(None, pn, t) for _, pn, t in lines}:
+        for d in set(re.findall(r"\d+", t)):
+            off.setdefault(int(d) - pn, set()).add(pn)
+    pg = max(off, key=lambda k: len(off[k]), default=None)
+    if pg is not None and len(off[pg]) < len(doc) * 0.5:
+        pg = None
+    for l, pn, t in lines:
+        raw.setdefault(l, {})[pn] = re.sub(r"\d+", lambda m: "" if int(m.group()) - pn == pg else m.group(), t)
+    numbered = {l for l, r in raw.items() if len(r) >= 3 and len(set(r.values())) >= len(r) * 0.8}
     return {l for labs in at.values() if len(set(labs)) >= 3 and len(set(labs)) >= len(labs) * 0.4
-            for l in labs if len(pages[l]) == 1}
+            for l in labs if len(pages[l]) == 1} | numbered
 
 
 def _divider_vec(page):
@@ -691,10 +714,19 @@ def _divider_name(page):
 def _page_tokens(series, doc, rules=True):
     """면마다 모양 표 (간지/본문, 구성 이름, 맨 위 제목 유무, 삽화 같은 갈래). 내용(지문 글)은 안 본다."""
     skip = _running_labels(doc)
-    out, section, lead = [], "", []
+    content = _content_labels(doc)
+    out, section, lead, fresh, owns = [], "", [], set(), set()
     for page in doc:
         prev = section
         section = _section_of(series, page, prev, skip, rules)
+        own = _section_of(series, page, "", skip, rules)
+        if len(own) >= 3 and re.search(r"[가-힣]", own) or len(own) >= 4 and own.isupper():
+            owns.add(page.number)                         # 제 이름표(한글 · 영문 대문자)가 찍힌 면
+        # 제 이름표 없이 원고 머리표(지문 출처·제목)만 있는 면은 새 원고의 첫 면이다 — 앞 면 구성을 이어받지 않는다
+        # (배재1 포켓북 분석 면이 바로 앞 '암기 TEST 정답' 면 이름을 받던 것, 2026-10-12)
+        if not own and any(l in content for l in _page_labels(page)):
+            section = ""
+            fresh.add(page.number)
         H = page.rect.height
         blocks = page.get_text("blocks")
         body = sum(1 for b in blocks if H * 0.10 <= b[1] <= H * 0.93 and len(b[4].strip()) > 20)
@@ -715,7 +747,9 @@ def _page_tokens(series, doc, rules=True):
             out.append(("간지", section, 0, ""))
             section = prev                    # 간지 이름표(표지의 학교 이름 등)는 다음 본문 면으로 넘기지 않는다
             continue
-        if not prev and not (len(section) >= 3 and re.search(r"[가-힣]", section)):   # 제 한글 이름표가 없는 첫 본문 면
+        # 제 이름표가 없는 첫 본문 면. 원고 첫 면 바로 뒤 면은 앞 구성이 비어도 첫 면이 아니다(배재1 포켓북 'FLOW NOTE')
+        if page.number in fresh or not prev and page.number - 1 not in fresh and \
+                not (len(section) >= 3 and re.search(r"[가-힣]", section)):
             lead.append(page.number)
         var = "".join(f" · {v}" for pat, v in VARIANT_RULES.get(series, []) if re.search(pat, txt))
         # 제목 표시 — 1: 맨 위 짧은 한글 제목, 2: 큰 제목 글씨. 0 이면 이어지는 면. 시험지 머리는 홀짝 면 문구라 안 본다
@@ -742,17 +776,23 @@ def _page_tokens(series, doc, rules=True):
     # 앞에 본문 면이 없는 첫 본문 면(간지 바로 뒤)은 이어받을 구성이 없다 — 뒤 4면 안에 생김새가 아주 닮은(0.6+) 본문 면이
     # 있으면 그 구성이다(위에서 떨어져 나온 면은 빼고). 광문 분석본 첫 분석 면은 머리에 지문 제목뿐이라 이름표가 없고,
     # 셋째 면부터 '7강 분석'을 이어받는다(2026-10-11)
+    # 원고 머리표가 있는 첫 면은 처음 나오는 이름표 면까지만 본다(다음 원고 첫 면 앞에서 멈춤) — 그 이름표 면이 다른
+    # 구성(배재1 포켓북 'FLOW NOTE')이면 더 뒤의 면('암기 TEST')을 빌려 오지 않는다
     for i in (i for i in lead if out[i][0] == "본문"):
         v = _divider_vec(doc[i])
-        nxt = [j for j in range(i + 1, min(len(out), i + 5)) if out[j][0] == "본문" and j not in lead]
+        stop = len(out)
+        if i in fresh:
+            stop = next((j + (j in owns) for j in range(i + 1, len(out)) if j in fresh or j in owns), len(out))
+        nxt = [j for j in range(i + 1, min(stop, i + 5)) if out[j][0] == "본문" and j not in lead]
         j = next((j for j in nxt if _vec_corr(v, _divider_vec(doc[j])) >= 0.6), None)
         if j is not None:
             out[i] = (out[i][0], out[j][1], out[i][2], out[i][3])
     # 라벨도 앞 구성도 없는 본문 면(책 첫 본문 면 등)은 이름이 없으니 생김새로만 묶는다 — 배재보카 DAY 21 시작 면이
-    # 'DAY 22' 이후 시작 면들과 한 구성이 되게(2026-10-09)
+    # 'DAY 22' 이후 시작 면들과 한 구성이 되게(2026-10-09). 원고 머리표가 있는 면은 글이 꽉 찬 본문 면이라 본문으로
+    # 두고 이름만 비운다(머리표 글은 원고라 이름이 아니다)
     for i, t in enumerate(out):
         if t[0] == "본문" and not t[1]:
-            out[i] = ("간지", "", 0, "")
+            out[i] = ("본문", "이름 없는 면", t[2], t[3]) if i in fresh else ("간지", "", 0, "")
     # 글이 적은 면·위에서 떨어져 나온 면은 생김새끼리 나눈다 — STEP 간지 · 단원 간지 · 빈 면 · 마지막 면 … 은 다른 구성.
     # 첫 면·마지막 면이라고 표지로 정하지 않는다(내지만 있는 PDF 도 있다).
     reps = []                                             # [((그림, 배치), 이름)]
@@ -839,7 +879,7 @@ def design_layouts(series, design):
     면마다 모양 표(_page_tokens: 구성 이름 · 맨 위 제목 유무 · 삽화 갈래 · 간지)를 만들고, 같은 모양 묶음이
     되풀이되는 구간을 찾는다(_repeat_runs). 묶음은 1면일 수도(블랙북 문항), 펼침면 2면일 수도(워크북
     '제목 면 + 이어지는 면', 포켓북 '지문 분석 + 요약노트'), 그 이상일 수도 있다. 이름이 같은 묶음은 한 구성.
-    show = 그 구성을 가장 많이 덮은 묶음의 첫 회. 결과는 `_pages/layouts14_<stamp>.json` 에 둔다.
+    show = 그 구성을 가장 많이 덮은 묶음의 첫 회. 결과는 `_pages/layouts15_<stamp>.json`(15 = 면 목록 faces 를 더한 판) 에 둔다.
     """
     pdf = _design_pdf(series, design)
     if not pdf:
@@ -851,7 +891,7 @@ def design_layouts(series, design):
         dj = json.load(open(os.path.join(_ddir(series, design), "design.json"), encoding="utf-8"))
     except (OSError, ValueError):
         dj = {}
-    cache = os.path.join(tdir, f"layouts14{'e' if dj.get('made') == 'editor' else ''}_{int(os.path.getmtime(pdf))}.json")
+    cache = os.path.join(tdir, f"layouts15{'e' if dj.get('made') == 'editor' else ''}_{int(os.path.getmtime(pdf))}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
     out = (editor_layouts(series, design, dj, pdf) if dj.get("made") == "editor" else None) or pdf_layouts(pdf, series, dj.get("layout_rules", True))
@@ -941,11 +981,12 @@ def pdf_layouts(pdf, series=None, rules=False):
         g["pages"] += range(i + 1, i + cov + 1)
         if cov > g["best"]:
             g["best"], g["show"] = cov, list(range(i + 1, i + k + 1))
-    # 길이가 다른 회차가 남긴 조각(특강 LESSON 이 4면·5면) — 구성 이름이 모두 더 큰 묶음 안에 있으면 그 묶음에 넣는다
+    # 길이가 다른 회차가 남긴 조각(특강 LESSON 이 4면·5면) — 구성 이름이 모두 더 큰 묶음 안에 있으면 그 묶음에 넣는다.
+    # 제 묶음이 연달아 되풀이된 것은 조각이 아니라 따로 된 구성이다(배재1 포켓북 '암기 TEST + 정답' 2면 × 5, 2026-10-12)
     parts = lambda nm: set(nm.split(" + "))
     for nm in list(order):
         g = groups[nm]
-        if g["kind"] != "본문":
+        if g["kind"] != "본문" or g["best"] > len(g["show"]):
             continue
         big = [o for o in order if o != nm and groups[o]["kind"] == "본문" and len(groups[o]["show"]) > len(g["show"])
                and parts(nm) < parts(o)]
@@ -958,6 +999,17 @@ def pdf_layouts(pdf, series=None, rules=False):
                         "kind": groups[nm]["kind"], "section": nm, "show": groups[nm]["show"], "unit": len(groups[nm]["show"]),
                         "label": nm}
                        for nm in order]}
+    # 면 목록 — 만드는 단위(인디자인 상위 페이지). 서로 다른 면 모양마다 하나, 묶음은 「원본 차례 견본」일 뿐이다
+    # (지문마다 붙는 면은 원고가 정한다 — 절차 2단계 「면 나누기」, 2026-10-12). 이름이 같은 면이 둘이면(제목 면 · 이어지는 면) 뒤에 붙여 가른다
+    faces = {}
+    for p, t in enumerate(tok, 1):
+        faces.setdefault(t, []).append(p)
+    named = {}
+    for t in faces:
+        named.setdefault(_unit_name([t]), []).append(t)
+    out["faces"] = sorted(({"label": nm + (f" · {'첫 면' if t[2] else '이어지는 면'}" if len(ts) > 1 else ""),
+                            "kind": t[0], "pages": faces[t], "count": len(faces[t]), "show": [faces[t][0]]}
+                           for nm, ts in named.items() for t in ts), key=lambda f: f["pages"][0])
     doc.close()
     return out
 

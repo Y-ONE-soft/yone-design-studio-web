@@ -208,7 +208,8 @@ def page_design(series, design):
     pages = [] if lay["total"] else \
             [{"src": f"/catalog/master/{series}/{design}/{m['file']}", "label": m["label"], "kind": "페이지 틀", "page": m.get("page")} for m in d["masters"]] \
           + [{"src": f"/catalog/preview/{series}/{design}/{p}", "label": f"견본 {i + 1}", "kind": "견본 사진"} for i, p in enumerate(d["previews"])]
-    return render_template("design_detail.html", t=t, d=d, pages=pages, total=lay["total"], layouts=lay["layouts"], active_nav="프로젝트")
+    return render_template("design_detail.html", t=t, d=d, pages=pages, total=lay["total"], layouts=lay["layouts"],
+                           faces=lay.get("faces"), active_nav="프로젝트")
 
 
 @bp.route("/api/books")
