@@ -1,55 +1,358 @@
 # -*- coding: utf-8 -*-
-"""contents 원고(yos-workbook-v1) → 편집기 제작 틀(units.json)의 원고 — 자리 이름 → 글.
+"""contents 원고(yos-workbook-v1) → 편집기 제작 틀(units.json)의 원고 — 구성 이름 · 자리 이름 → 글.
 
 contents 는 지문마다 항목(item)을 보낸다: {"no", "content", "items": [{"key", "label", "content": {"kind", …}}]}.
 편집기 틀은 「원고마다」 묶음(쪽 이름 = 구성 이름)이 레코드 목록을 받는다: {"A어휘선택": [{"제목", "지문번호": […], "지문": […]}, …]}.
-바꾸는 규칙은 여기 한 곳(contents 는 원고를 가공하지 않고 보낸다 — core/sources/yos_workbook.py 와 같은 약속).
+**약속 = 구성 이름 · 자리 이름.** 작업자가 틀을 만들 때 아래 이름으로 구성(묶음 첫 쪽 이름)과 자리를 지으면 그 틀에도 같은 원고가 들어간다.
+한 벌에 지문 몇 개·문제 몇 칸인지는 **틀의 자리 수**로 센다(template_caps) — 견본 원고가 없는 틀도 된다.
 
-    to_content(data, sample) → (content, report)      sample = 틀에 넣어 둔 견본 원고(plan.content) — 구성 제목 등 틀 고정 값을 거기서
+    to_content(data, sample, caps) → (content, report)   sample = 틀의 견본 원고(구성 제목) · caps = template_caps(묶음)
 
-지금 받는 유형(2026-10-11 정본 워크북 틀, 시험: 어휘선택 1단계부터):
-    vocab-choice  어휘선택 1단계 → 「A어휘선택」 (펼침면 한 벌 = 지문 4개, 「(1)❮ ⓐ a / ⓑ b ❯」 → 「[ ⓐ a / ⓑ b ]」)
+contents 재료 → 구성 (2026-10-11 짝 확정 — 원본 책 머리 제목 기준, 실제 생성 결과로 칸 맞춤):
+    A어휘선택  ← 어휘선택 1단계(vocab-choice, 제목 「… 1」) + 어휘선택 2단계(공통 문제 형식 → 원문에 고르기를 모아 박음, 제목 「… 2」)
+    A본문OX    ← 내용OX 영어(진술 O/X) — 「일치하지 않는 것」 객관식 칸은 비움
+    B내용종합  ← 개별 유형 내용종합(발문 · 선지)
+    C문장배열  ← 순서배열 1단계(보기 문장 (A)~) + 개별 유형 삽입 · 순서배열(지문마다 번갈아)
+    C빈칸어휘  ← 빈칸어휘 1단계(「1[colder]」 → 「{c}__」)   C빈칸어법 ← 빈칸어법(「1[covering]」 → 「__」)
+    A어법선택  ← 어법선택(「1[a / b]」 → 「[a / b]」) — 「어법상 틀린 것」 객관식 지문 칸은 비움
+    B어법OX    ← 어법OX(문제마다 「1.  문장」 → 문장 목록) — 보기 예문 칸은 비움
+    C영작배열  ← 영작배열 1단계(우리말 · 「( a / b / c )」)
+    S실전문제  ← 그 밖의 개별 문제 유형(한 줄기 「지문번호+번호+발문+보기+지문+…」)
+    B본문정리  ← (맞는 재료 없음)
+그 밖의 재료는 report.skipped 에 남기고 넣지 않는다(없는 것을 지어내지 않는다).
 """
 import re
+from collections import Counter
 
 _PICK = re.compile(r"(?:\(\d+\)\s*)?❮\s*(.*?)\s*❯")                     # contents 고르기 표시 — 앞의 (번호)는 원본 책에 없다
+_BLANK = re.compile(r"(\d+)\[([^\[\]]+)\]")                              # contents 빈칸 표시 n[정답]
+_CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩"
+
+# 개별 문제 유형(contents workbook-items 의 question 묶음) — 실전 문제 면으로. 내용종합은 제 구성(B내용종합)이 있다.
+Q_LABELS = {"어휘", "어휘2", "어휘ABC", "영영풀이", "함축의미(영)", "함축의미(한)", "무관한문장", "빈칸추론 구", "빈칸추론 절",
+            "추론 한글", "추론 영어", "순서배열", "삽입", "주제", "제목", "요지", "연결사", "문단요약", "어휘종합", "틀린어법"}
 
 
-def _vocab_text(text):
+def template_caps(pkg):
+    """틀 묶음 → {구성 이름: Counter(자리: 한 벌의 칸 수)} — 「원고마다」 묶음은 첫 쪽 이름으로 쪽들을 모아, 한 번 나오는 쪽은 제 이름으로"""
+    pages = {p["id"]: p for p in pkg.get("pages") or []}
+    parts = {p["id"]: p for p in pkg.get("parts") or []}
+
+    def binds(pg):
+        out = []
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            if a.get("bind"):
+                out.append(a["bind"])
+            out += [x["bind"] for x in (parts.get(it.get("part")) or {}).get("atoms") or [] if x.get("bind")]
+        return [b for b in out if not b.startswith("sys.")]
+    caps, run = {}, None
+    for s in (pkg.get("plan") or {}).get("sections") or []:
+        for e in s.get("pages") or []:
+            e = e if isinstance(e, dict) else {"page": e, "repeat": "once"}
+            pg = pages.get(e["page"]) or {}
+            nm = pg.get("name") or ""
+            if e.get("repeat") == "each_set":
+                if not re.fullmatch(r"빈 면 \d+", nm):
+                    run = caps.setdefault(nm, Counter())
+                if run is not None:
+                    run.update(binds(pg))
+            else:
+                run = None
+                caps.setdefault(nm, Counter()).update(binds(pg))
+    return caps
+
+
+def _circ(i):
+    return _CIRCLED[i] if i < len(_CIRCLED) else f"({i + 1})"
+
+
+def _u(t):
+    """contents 밑줄 표시 <u>…</u> → 틀의 밑줄 약속 {…} (GREP 「표시 감추기 + 밑줄」)"""
+    return re.sub(r"<u>(.*?)</u>", r"{\1}", str(t or ""), flags=re.S)
+
+
+def _choices(cs):
+    """선지 — 앞에 ①~ 를 단다. 선지 글이 이미 원문자로 시작하면(무관한 문장 「①」) 그대로"""
+    return "\n".join(_u(c) if str(c).lstrip()[:1] in _CIRCLED else f"{_circ(i)} {_u(c)}" for i, c in enumerate(cs or []))
+
+
+def _prompt(q):
+    """발문 — 묶음 머리(「[1~2] 다음 글을 읽고 …」)와 앞 번호(「1.」)는 뗀다(번호는 문제번호 자리가 단다). 문제의 보기 글은 아래 줄로"""
+    lines = [ln for ln in str(q.get("prompt") or "").split("\n") if not re.match(r"^\s*\[\d+\s*[~∼-]\s*\d+\]", ln)]
+    t = re.sub(r"^\s*\d+\s*[.)]\s*", "", "\n".join(lines).strip())
+    return _u(t + ("\n" + q["passage"].strip() if q.get("passage") else ""))
+
+
+def _chunks(seq, n):
+    n = max(1, int(n or 1))
+    return [seq[k:k + n] for k in range(0, len(seq), n)]
+
+
+def _title(sample, name):
+    rec = (sample.get(name) or [{}])[0]
+    return (rec or {}).get("제목") or name
+
+
+def _qs(c):
+    return (c or {}).get("questions") or []
+
+
+def _pick(text):
     return _PICK.sub(lambda m: "[ " + re.sub(r"\s*/\s*", " / ", m.group(1)) + " ]", text or "").strip()
 
 
-def _vocab_choice(passages, sample):
-    """A어휘선택 — 펼침면 한 벌에 지문 4개(지문번호 · 지문). 제목은 틀 견본의 것(구성 이름표)"""
-    title = ((sample.get("A어휘선택") or [{}])[0] or {}).get("제목") or "어휘 선택 1"
-    per = len(((sample.get("A어휘선택") or [{}])[0] or {}).get("지문") or []) or 4
+# ── 구성마다 바꾸기: 지문 목록 [(번호, 원문, {재료: 내용})] → 레코드 목록 ─────────
+
+def _merge_picks(text, qs):
+    """공통 문제 형식으로 쪼개 온 고르기(문제마다 문장 하나 + 「(n)❮ … ❯」 하나) → 원문 한 덩어리에 모두 박는다(어휘선택 2단계).
+    문제의 문장에서 표시 앞뒤 글로 원문 자리를 찾고, 못 찾은 것은 넣지 않는다."""
+    hits = []
+    for q in qs:
+        s = str(q.get("passage") or "")
+        m = _PICK.search(s)
+        if not m:
+            continue
+        pre, suf = s[:m.start()], s[m.end():]
+        i = text.find(pre) if pre else 0
+        if i < 0:
+            continue
+        a = i + len(pre)
+        tail = suf[:40]
+        b = text.find(tail, a) if tail else len(text)
+        if b < 0 or b - a > 60:
+            continue
+        hits.append((a, b, m.group(0)))
+    out, k = [], 0
+    for a, b, mk in sorted(hits):
+        if a < k:
+            continue
+        out.append(text[k:a] + mk)
+        k = b
+    return "".join(out) + text[k:]
+
+
+def _a_vocab(ps, sample, cap):
+    """A어휘선택 — 1단계 벌들 다음에 2단계 벌들(원본 책 순서). 같은 구성, 제목만 「… 1」 / 「… 2」"""
+    per = cap.get("지문") or cap.get("지문번호") or 4
+    t1 = _title(sample, "A어휘선택")
+    t2 = re.sub(r"1\s*$", "2", t1) if re.search(r"1\s*$", t1) else t1 + " 2"
+    one = [(no, _pick((g["vocab-choice"] or {}).get("text"))) for no, _, g in ps if g.get("vocab-choice")]
+    two = [(no, _pick(_merge_picks(text or "", _qs(g["q:어휘선택 2단계"])))) for no, text, g in ps if g.get("q:어휘선택 2단계")]
+    return [{"제목": t, "지문번호": [str(no) for no, _ in ch], "지문": [x for _, x in ch]}
+            for t, rows in ((t1, one), (t2, two)) for ch in _chunks(rows, per)]
+
+
+def _a_ox(ps, sample, cap):
+    """A본문OX — 지문마다 [객관식(일치하지 않는 것) · O/X] 두 문제 칸. contents 내용OX 영어는 O/X 진술만 → 객관식 칸은 비워 접는다"""
+    per = cap.get("지문번호") or 2
+    qn = max(1, (cap.get("문제번호") or 2 * per) // per)
+    sn = max(1, (cap.get("진술") or 5 * per) // per)
+    cn = max(0, (cap.get("선지") or per) // per)
     recs = []
-    for k in range(0, len(passages), per):
-        chunk = passages[k:k + per]
-        recs.append({"제목": title, "지문번호": [str(no) for no, _ in chunk], "지문": [_vocab_text(t) for _, t in chunk]})
-    return {"A어휘선택": recs} if recs else {}
+    for ch in _chunks(ps, per):
+        r = {"제목": _title(sample, "A본문OX"), "지문번호": [], "지문": [], "문제번호": [], "발문": [], "선지": [], "진술번호": [], "진술": []}
+        for no, text, g in ch:
+            qs = _qs(g.get("q:내용OX 영어"))
+            r["지문번호"].append(str(no))
+            r["지문"].append(text or "")
+            r["문제번호"] += [""] * (qn - 1) + ["01"]
+            r["발문"] += [""] * (qn - 1) + [_u(qs[0].get("prompt") if qs else "")]
+            r["선지"] += [""] * cn
+            st = [_u(q.get("passage") or "") for q in qs][:sn]
+            r["진술번호"] += [f"{i + 1:02d}" if i < len(st) else "" for i in range(sn)]
+            r["진술"] += st + [""] * (sn - len(st))
+        recs.append(r)
+    return recs
 
 
-RULES = {"vocab-choice": _vocab_choice}                                  # 항목 kind → 바꾸기(지문 [(번호, 글)] , 견본) → {구성: 레코드들}
+def _b_summary(ps, sample, cap):
+    per = cap.get("지문번호") or 2
+    qn = max(1, (cap.get("문제번호") or per) // per)                     # 지문 하나에 문제 칸 수
+    recs = []
+    for ch in _chunks(ps, per):
+        r = {"제목": _title(sample, "B내용종합"), "지문번호": [], "지문": [], "문제번호": [], "발문": [], "선지": []}
+        for no, text, g in ch:
+            qs = _qs(g.get("q:내용종합"))[:qn]
+            r["지문번호"].append(str(no))
+            r["지문"].append(text or "")
+            for i in range(qn):                                          # 모자란 칸은 비워 접는다 — 다음 지문 문제가 앞 지문 칸으로 밀리지 않게
+                q = qs[i] if i < len(qs) else None
+                r["문제번호"].append(f"{i + 1:02d}" if q else "")
+                r["발문"].append(_prompt(q) if q else "")
+                r["선지"].append(_choices(q.get("choices")) if q else "")
+        recs.append(r)
+    return recs
 
 
-def to_content(data, sample=None):
-    sample = sample or {}
-    by_kind, report = {}, {"sent": [], "skipped": []}
+def _split_insert(q):
+    """삽입 문제 → (발문, 주어진 문장, 지문) — 「[주어진 문장 …]\\n문장\\n\\n… ( ① ) …」"""
+    s = str(q.get("passage") or "")
+    head, _, body = s.partition("\n\n")
+    given = re.sub(r"^\s*\[[^\]]*\]\s*", "", head).strip()
+    return _u(q.get("prompt") or ""), _u(given), _u(body.strip())
+
+
+def _split_order(q):
+    """순서 문제 → (발문, 주어진 글, (A)~ 글) — 「주어진 글\\n\\n(A) …」"""
+    s = str(q.get("passage") or "")
+    i = s.find("(A)")
+    return _u(q.get("prompt") or ""), _u(s[:i].strip() if i > 0 else ""), _u(s[i:].strip() if i >= 0 else s)
+
+
+def _c_order(ps, sample, cap):
+    """C문장배열 — 지문마다 보기 문장 목록(순서배열 1단계 (A)~) + 문제 하나. 문제는 지문마다 삽입 → 순서 번갈아(원본 책),
+    그 지문에 한쪽만 있으면 있는 것으로"""
+    per = cap.get("지문번호") or 2
+    recs = []
+    for ch in _chunks(ps, per):
+        r = {"제목": _title(sample, "C문장배열"), "지문번호": [], "보기문장": [], "발문": [], "주어진문장": [], "지문": []}
+        for k, (no, text, g) in enumerate(ch):
+            opts = (g.get("sentence-order") or {}).get("options") or []
+            ins, order = _qs(g.get("q:삽입")), _qs(g.get("q:순서배열"))
+            want = (ins, _split_insert) if k % 2 == 0 else (order, _split_order)
+            other = (order, _split_order) if k % 2 == 0 else (ins, _split_insert)
+            qs, split = want if want[0] else other
+            prompt, given, body = split(qs[0]) if qs else ("", "", "")
+            r["지문번호"].append(str(no))
+            r["보기문장"].append("\n".join(f"({o.get('tag')}) {o.get('text') or ''}" for o in opts))
+            r["발문"].append(prompt)
+            r["주어진문장"].append(given)
+            r["지문"].append(body)
+        recs.append(r)
+    return recs
+
+
+def _blank_rows(c, hint):
+    rows = []
+    for i, r in enumerate(c.get("rows") or [], 1):
+        hints = {int(b.get("no")): (b.get("hint") or (b.get("answer") or "")[:1]) for b in r.get("blanks") or [] if b.get("no") is not None}
+        en = _BLANK.sub(lambda m: ("{" + (hints.get(int(m.group(1))) or m.group(2)[:1]) + "}__") if hint else "__", r.get("en") or "")
+        rows.append({"문항번호": f"{i:02d}.", "빈칸문장": en, "해석": r.get("ko") or ""})
+    return rows
+
+
+def _c_blank(name, src, hint):
+    def conv(ps, sample, cap):
+        key = next((k for k in cap if "빈칸문장" in k), "문항번호+빈칸문장+해석")
+        per = cap.get("지문번호") or cap.get(key) or 2
+        return [{"제목": _title(sample, name), "지문번호": [str(no) for no, _, _ in ch], key: [_blank_rows(g[src], hint) for _, _, g in ch]}
+                for ch in _chunks(ps, per)]
+    return conv
+
+
+def _a_grammar(ps, sample, cap):
+    """A어법선택 — 지문마다 [고르기 지문 · 「어법상 틀린 것」 객관식 지문] 두 칸 + 객관식 발문. contents 어법선택은 고르기만 → 객관식 칸은 비워 접는다.
+    「1[a / b]」 → 「[a / b]」(번호는 원본 책에 없다)"""
+    per = cap.get("지문번호") or 2
+    tn = max(1, (cap.get("지문") or 2 * per) // per)
+    pn = max(0, (cap.get("발문") or per) // per)
+    recs = []
+    for ch in _chunks(ps, per):
+        r = {"제목": _title(sample, "A어법선택"), "지문번호": [], "지문": [], "발문": []}
+        for no, _, g in ch:
+            t = re.sub(r"(?<![A-Za-z])\d+\[([^\[\]]+)\]", r"[\1]", (g.get("grammar-choice") or {}).get("text") or "")
+            r["지문번호"].append(str(no))
+            r["지문"] += [t] + [""] * (tn - 1)
+            r["발문"] += [""] * pn
+        recs.append(r)
+    return recs
+
+
+def _b_grammar_ox(ps, sample, cap):
+    """B어법OX — 지문마다 보기(예문) 칸 + 문장 목록. contents 어법OX 의 문제마다 「1.  문장」 → 문장번호 · 문장"""
+    per = cap.get("지문번호") or 2
+    sn = max(1, (cap.get("문장") or 13 * per) // per)
+    bn = max(0, (cap.get("보기") or per) // per)
+    recs = []
+    for ch in _chunks(ps, per):
+        r = {"제목": _title(sample, "B어법OX"), "보기": [], "지문번호": [], "문장번호": [], "문장": []}
+        for no, _, g in ch:
+            st = [re.sub(r"^\s*\d+\s*[.)]\s*", "", _u(q.get("passage") or "")).strip() for q in _qs(g.get("q:어법OX"))][:sn]
+            r["보기"] += [""] * bn
+            r["지문번호"].append(str(no))
+            r["문장번호"] += [f"{i + 1:02d}." if i < len(st) else "" for i in range(sn)]
+            r["문장"] += st + [""] * (sn - len(st))
+        recs.append(r)
+    return recs
+
+
+def _c_writing(ps, sample, cap):
+    rows = []
+    for no, _, g in ps:
+        for i, it in enumerate((g.get("writing-order") or {}).get("items") or []):
+            rows.append({"지문번호": str(no) if i == 0 else "", "문항번호": f"{i + 1:02d}.", "우리말": it.get("ko") or "",
+                         "보기단어": "( " + " / ".join(it.get("chunks") or []) + " )"})
+    per = cap.get("문항번호") or cap.get("우리말") or 10
+    return [dict({"제목": _title(sample, "C영작배열")}, **{k: [r[k] for r in ch] for k in ("지문번호", "문항번호", "우리말", "보기단어")})
+            for ch in _chunks(rows, per)]
+
+
+def _s_exam(ps):
+    """실전 문제 한 줄기 — 지문마다 머리(지문번호 · 지문) + 그 지문의 문제들(번호 · 발문 · 보기 · 선지)"""
+    out = []
+    for no, text, qs in ps:
+        out.append([["지문번호", str(no)], ["지문", "다음 글을 읽고 물음에 답하시오.\n" + (text or "")]])
+        for i, q in enumerate(qs, 1):
+            rec = [["번호", f"{i:02d}"], ["발문", _u(str(q.get("prompt") or "").strip())]]
+            if q.get("passage"):
+                rec.append(["보기", _u(q["passage"].strip())])
+            rec.append(["선지", _choices(q.get("choices"))])
+            out.append(rec)
+    return out
+
+
+# 구성 → (받는 재료, 바꾸기). 재료 = 원고 꼴(kind), 공통 문제 형식이면 「q:<재료 이름>」
+GROUPS = {
+    "A어휘선택": ({"vocab-choice", "q:어휘선택 2단계"}, _a_vocab),
+    "A본문OX": ({"q:내용OX 영어"}, _a_ox),
+    "B내용종합": ({"q:내용종합"}, _b_summary),
+    "C문장배열": ({"sentence-order", "q:순서배열", "q:삽입"}, _c_order),
+    "C빈칸어휘": ({"vocab-blank"}, _c_blank("C빈칸어휘", "vocab-blank", True)),
+    "A어법선택": ({"grammar-choice"}, _a_grammar),
+    "B어법OX": ({"q:어법OX"}, _b_grammar_ox),
+    "C빈칸어법": ({"grammar-blank"}, _c_blank("C빈칸어법", "grammar-blank", False)),
+    "C영작배열": ({"writing-order"}, _c_writing),
+}
+
+
+def _src(it):
+    c = it.get("content") or {}
+    kind = c.get("kind") or it.get("key")
+    return f"q:{it.get('label')}" if kind == "mock-exam" else kind
+
+
+def to_content(data, sample=None, caps=None):
+    sample, caps = sample or {}, caps or {}
+    story = next((k for nm, c in caps.items() if nm.startswith("S") for k in c if "발문" in k and "+" in k), None)   # 실전 문제 한 줄기 자리
+    used = {s for name, (srcs, _) in GROUPS.items() if name in caps for s in srcs}
+    groups, exam, report = {}, [], {"sent": [], "skipped": []}
     for p in (data or {}).get("passages") or []:
+        got, qs = {}, []
         for it in p.get("items") or []:
+            s, label = _src(it), it.get("label")
             c = it.get("content") or {}
-            kind = c.get("kind") or it.get("key")
-            if kind not in RULES:
-                report["skipped"].append({"passage": p.get("no"), "key": it.get("key"), "label": it.get("label"), "why": "이 틀에 아직 자리 없음"})
+            if s in used:
+                got[s] = c
+            elif story and s.startswith("q:") and (c.get("group") == "question" or label in Q_LABELS):
+                qs += _qs(c)
+            else:
+                report["skipped"].append({"passage": p.get("no"), "key": it.get("key"), "label": label, "why": "이 틀에 아직 자리 없음"})
                 continue
-            text = c.get("text") if kind == "vocab-choice" else c
-            by_kind.setdefault(kind, []).append((p.get("no"), text))
-            report["sent"].append({"passage": p.get("no"), "key": it.get("key"), "label": it.get("label")})
+            report["sent"].append({"passage": p.get("no"), "key": it.get("key"), "label": label})
+        for name, (srcs, _) in GROUPS.items():
+            if name in caps and srcs & set(got):
+                groups.setdefault(name, []).append((p.get("no"), p.get("content"), got))
+        if qs:
+            exam.append((p.get("no"), p.get("content"), qs))
+    if not groups and not exam:
+        return {}, report
     content = {k: v for k, v in sample.items() if isinstance(v, str)}       # 머리글 자리(교재명·단원명) — 책 이름이 오면 그걸로
     title = ((data or {}).get("book") or {}).get("title")
     if title and "교재명" in content:
         content["교재명"] = title
-    for kind, items in by_kind.items():
-        content.update(RULES[kind](items, sample))
-    return (content if by_kind else {}), report
+    for name, ps in groups.items():
+        content[name] = GROUPS[name][1](ps, sample, caps.get(name) or Counter())
+    if exam:
+        content[story] = _s_exam(exam)
+    return content, report
