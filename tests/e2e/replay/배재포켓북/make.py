@@ -76,7 +76,7 @@ def line_of(sps, base, tol=0.3):
     return dict(row[0], x1=row[-1]["x1"], text=t)
 
 
-def pg_new(pno, label, name=None):
+def pg_new(pno, label, name=None, rep=True):
     PAGES.append(pno)
     ELEMS[len(PAGES)] = []
     st = [] if len(PAGES) == 1 else add_page(label) + [{"click": "#rail .pg.on", "wait": 1500}]   # 아래 쪽 목록에서 새 쪽을 눌러 화면을 그 쪽에(연속 보기는 새 쪽이 반쯤 잘려 보인다)
@@ -86,7 +86,8 @@ def pg_new(pno, label, name=None):
         st += [S(f"문서 설정 — 쪽 번호 시작 {pno}", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, F("#side #s-pstart", pno, 1200)]
     if name:                                                             # 면 이름 (관리 지면 보기가 이 이름으로 묶는다)
         st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700}, F("#side #s-pname", name, 900)]
-    st += [{"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1200}]    # 원고마다 — 원고 덩어리 하나에 이 면 한 장
+    if rep:                                                              # 원고마다 — 원고 덩어리 하나에 이 면 한 장(맨 앞 · 맨 뒤 고정 면은 한 번만)
+        st += [{"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1200}]
     return st
 
 
@@ -417,8 +418,85 @@ def memorize(pno, gubun):
     return st
 
 
+BODONI = "Bodoni Moda"
+
+
+def el_line(sp, e):
+    """맞대기 도구가 읽은 글 한 줄(띄어쓰기가 바른 문장) + 그 자리의 글자 조각들로 잰 기준선 · 첫 글자 · 끝 글자 — 글자마다 따로 찍힌 넓은 자간 글"""
+    row = [s for s in sp if e["x"] - 0.5 <= s["x"] <= e["x"] + e["w"] + 0.5 and e["y"] - 1 <= s["base"] - s["size"] * MM * 0.8 <= e["y"] + e["h"] + 1
+           and abs(s["size"] - e["size"]) < 0.3]
+    base = sorted(row, key=lambda s: s["x"])[0]["base"]
+    return dict(line_of(row, base), text=e["text"])
+
+
+def cover(pno, name):
+    """맨 앞 · 맨 뒤 면 — 종이 바탕 그림 · POCKET · 선 · Pocket Book.(Bodoni Moda 34pt) · 학교 칸(테두리 · 자리 「학교」「시험」) · 꼬리.
+    뒷면은 만든 사람 목록(고정 글 — 책마다 바뀌면 편집기에서 고친다)"""
+    st = pg_new(pno, f"{'①' if pno == 1 else '⑥'} {name} — 원본 {pno}쪽", name=name, rep=False)
+    el, sp = els(pno), spans(pno)
+    texts = [e for e in el if e["k"] == "text"]
+    tx = lambda f: next(e for e in texts if f(e))
+    # 바탕 — 원본에 박힌 그림(그러데이션 종이) 그대로
+    xref = REF[pno - 1].get_images()[0][0]
+    pix = pymupdf.Pixmap(REF, xref)
+    if pix.n - pix.alpha >= 4:
+        pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
+    bg = os.path.join(WORK, f"바탕_{pno}.png")
+    pix.save(bg)
+    im = next(e for e in el if e["k"] == "image")
+    E({"id": f"bg{len(ELEMS[len(PAGES)])}", "x": 0, "y": 0, "w": W_MM, "h": H_MM, "color": "auto", "see": "auto", "pad": 0.6, "ctol": 30})
+    st += image(round(im["x"], 2), round(im["y"], 2), round(im["w"], 2), round(im["h"], 2), bg, label="바탕 — 원본 그림(종이 그러데이션)")
+    ln = find(el, "rect", 15.0, 27.5)
+    st += rbox(ln["x"], ln["y"], ln["w"], ln["h"], ln["fill"], label="POCKET 아래 선")
+    st += T(el_line(sp, tx(lambda e: e["text"] == "POCKET")), NOTO, 700, label="POCKET")
+    # Pocket Book. — PDF 에는 3.4pt 로 적히고 행렬로 키워 찍혔다. 잉크 높이로 잰 실제 크기 34pt(Bodoni Moda)
+    for word in ("Pocket", "Book."):
+        s0 = next(s for s in sp if s["text"].startswith(word.rstrip(".")))
+        x1 = max(s["x1"] for s in sp if abs(s["base"] - s0["base"]) < 0.3 and s["size"] == s0["size"])
+        st += T(dict(s0, size=34.0, text=word, x1=x1), BODONI, 400, label=f"{word} — Bodoni Moda 34pt")
+    box = next(e for e in el if e["k"] == "path" and abs(e["y"] - 177.6) < 0.5)
+    st += rframe(box, box["stroke"], 1.1, label="학교 칸 — 테두리 · 모서리 1.1mm")
+    st += T(el_line(sp, tx(lambda e: e["size"] == 10.0)), NOTO, 700, label="학교 — 원고 자리 「학교」", slot_name="학교", temp="학교")
+    st += T(el_line(sp, tx(lambda e: e["size"] == 7.5 and 175 < e["y"] < 186)), NOTO, 400, label="시험 — 원고 자리 「시험」 (오른쪽 맞춤)",
+            slot_name="시험", temp="시험 이름", align="right", w=40)
+    st += T(el_line(sp, tx(lambda e: e["y"] > 193)), NOTO, 700, label="꼬리 — 고정 글")
+    if pno == 1:
+        st += T(el_line(sp, tx(lambda e: e["size"] == 8.0)), NOTO, 500, label="포켓북 · 핵심 암기 노트")
+    else:                                                                # 만든 사람 — 제목(Bodoni Moda 9pt) · 이름 줄(Noto 7.5pt) — 고정 글
+        for e in [e for e in texts if e["size"] < 1.5]:
+            s0 = el_line(sp, e)
+            st += T(dict(s0, size=9.0), BODONI, 700, label=f"만든 사람 제목 — {e['text']}")
+        heads = sorted([e for e in texts if e["size"] < 1.5], key=lambda e: (e["x"], e["y"]))
+        for hd in heads:
+            names = sorted([e for e in texts if e["size"] == 7.5 and abs(e["x"] - hd["x"]) < 1 and e["y"] > hd["y"]
+                            and not any(h2 is not hd and abs(h2["x"] - hd["x"]) < 1 and hd["y"] < h2["y"] < e["y"] for h2 in heads)], key=lambda e: e["y"])
+            names = [n for n in names if n["y"] < 170]
+            if not names:
+                continue
+            rows = [el_line(sp, n) for n in names]
+            lead = round((rows[1]["base"] - rows[0]["base"]) / MM, 2) if len(rows) > 1 else 11.0
+            for r in rows:
+                E({"id": f"t{len(ELEMS[len(PAGES)])}", "x": round(r["x"], 2), "y": round(r["base"] - 7.5 * MM * 0.8, 2), "w": round(r["x1"] - r["x"], 2),
+                   "h": round(7.5 * MM * 1.05, 2), "color": r["color"], "see": r["color"], "ctol": 24, "pad": 0.6, "search": 0.6, "text": r["text"], "size": 7.5})
+            top = round(top_of(rows[0]["base"], 7.5, NOTO, 400, lead), 2)
+            st += text(round(rows[0]["x"], 2), top, 38.0, round(lead * MM * len(rows) + 2, 1), "\n".join(r["text"] for r in rows), 7.5, rows[0]["color"],
+                       label=f"「{hd['text']}」 이름 {len(rows)}줄", font=NOTO, leading=lead)
+    st += done(name, f"p{pno}.png")
+    return st
+
+
 st = open_doc(NAME)
 st += expect_pages(1)
+
+if want(1):
+    st += cover(1, "앞면")
+    CONTENT.setdefault("학교", []).append("배재1")
+    CONTENT.setdefault("시험", []).append("2학기 중간고사")
+
+if want(6):
+    st += cover(118, "뒷면")
+    CONTENT.setdefault("학교", []).append("배재1")
+    CONTENT.setdefault("시험", []).append("2학기 중간고사")
 
 if want(2):
     st += analysis(2, "교과서", "분석 면")
