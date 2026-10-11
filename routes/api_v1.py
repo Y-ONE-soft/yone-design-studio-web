@@ -386,6 +386,65 @@ def _render_editor(series, design, body, book):
                     "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
 
 
+def _content_plan(pkg, content):
+    """틀 문서에서 원고가 온 구성만 남긴 문서 사본 — 「원고마다」 묶음(이름 있는 면부터 다음 이름 있는 면 전까지). 한 번만 나오는 면·간지는 뺀다"""
+    import copy
+    plan = copy.deepcopy(pkg.get("plan") or {})
+    pages_by = {p["id"]: p for p in pkg.get("pages") or []}
+    plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)
+    for sec in plan.get("sections") or []:
+        keep, on = [], False
+        for e in sec.get("pages") or []:
+            e = e if isinstance(e, dict) else {"page": e, "repeat": "once"}
+            nm = (pages_by.get(e["page"]) or {}).get("name") or ""
+            if e.get("repeat") == "each_set":
+                if not plain(nm):
+                    on = isinstance(content.get(nm), list)
+                if on:
+                    keep.append(e)
+            else:
+                on = False
+        sec["pages"] = keep
+        sec.pop("divider", None)
+    plan["front"], plan["back"] = [], []
+    return plan
+
+
+@bp.route("/renders/<jid>/edit")
+def render_edit(jid):
+    """조판 결과 확인 — 왼쪽 찍은 쪽(크게), 오른쪽 원고 글 칸. 원고를 고쳐 「다시 그리기」 하면 같은 틀로 다시 찍는다(틀·contents 원고는 안 바뀐다)."""
+    from flask import render_template
+    job = _find_job(jid)
+    if not job or "editor" not in (job.meta.get("steps") or []):
+        abort(404)
+    try:
+        with open(os.path.join(job.meta["book_dir"], "content.json"), encoding="utf-8") as f:
+            content = json.load(f)["content"]
+    except (OSError, ValueError, KeyError):
+        abort(410)                                                        # 찍기 폴더가 없다(서버 다시 켜짐 등) — contents 에서 다시 찍어야 한다
+    return render_template("render_edit.html", jid=jid, title=job.meta.get("stem") or "조판 결과",
+                           content_json=json.dumps(content, ensure_ascii=False).replace("</", "<\\/"))   # tojson 은 키를 정렬한다 — 자리 차례(지문번호 → 지문) 그대로
+
+
+@bp.route("/renders/<jid>/content", methods=["POST"])
+def render_redraw(jid):
+    """고친 원고로 다시 찍기 → {job} (새 찍기). 원고 꼴(구성 → 레코드 → 자리)은 처음 찍은 것과 같아야 한다."""
+    import tempfile
+    job = _find_job(jid)
+    if not job or "editor" not in (job.meta.get("steps") or []):
+        abort(404)
+    content = (request.get_json(silent=True) or {}).get("content")
+    if not isinstance(content, dict) or not content:
+        return jsonify({"error": "content 가 필요하다"}), 400
+    d = tempfile.mkdtemp(prefix="editor_render_")                         # 새 폴더 — 쪽 그림 캐시가 예전 결과를 내주지 않게
+    with open(os.path.join(d, "content.json"), "w", encoding="utf-8") as f:
+        json.dump({"content": content, "report": job.meta.get("report")}, f, ensure_ascii=False)
+    meta = {k: v for k, v in job.meta.items() if k not in ("book_dir", "bid", "callback", "plan")}   # 다시 그리기는 contents 에 웹훅을 안 보낸다
+    new = jobs.start("render", _run_editor_render, meta=dict(meta, book_dir=d, bid="", redraw_of=jid))
+    new.meta["bid"] = new.id
+    return jsonify({"job": new.id}), 202
+
+
 def _run_editor_render(job, log):
     import base64
     import copy
@@ -411,24 +470,8 @@ def _run_editor_render(job, log):
             _fonts.register(fn, base64.b64decode(b64))
     specs = {s.get("id"): s for s in store.load("specs")}
     specs.update({s.get("id"): s for s in pkg.get("specs") or []})
-    plan = copy.deepcopy(pkg.get("plan") or {})
+    plan = _content_plan(pkg, content)
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
-    plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)
-    for sec in plan.get("sections") or []:                             # 원고가 온 구성만 — 「원고마다」 묶음(이름 있는 면부터 다음 이름 있는 면 전까지)
-        keep, on = [], False
-        for e in sec.get("pages") or []:
-            e = e if isinstance(e, dict) else {"page": e, "repeat": "once"}
-            nm = (pages_by.get(e["page"]) or {}).get("name") or ""
-            if e.get("repeat") == "each_set":
-                if not plain(nm):
-                    on = isinstance(content.get(nm), list)
-                if on:
-                    keep.append(e)
-            else:
-                on = False
-        sec["pages"] = keep
-        sec.pop("divider", None)
-    plan["front"], plan["back"] = [], []
     lib = {"pages": list(pages_by.values()), "parts": pkg.get("parts") or [], "blocks": pkg.get("blocks") or [],
            "skins": [skin], "specs": list(specs.values()), "plans": [plan], "sets": []}
     log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
