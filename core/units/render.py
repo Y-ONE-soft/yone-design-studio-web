@@ -267,8 +267,8 @@ def rich_html(v, ctx=None):
             st += f"color:{ctx.color(v['color']) if ctx else v['color']};"
         if v.get("font"):
             st += f"font-family:{esc(ctx.font(v['font']) if ctx else v['font'])};"
-        if v.get("size"):
-            st += f"font-size:{float(v['size']) * PT:.3f}px;"
+        if v.get("size"):                                                  # 줄 높이 0 — 크기 바꾼 조각이 고정 행간 줄을 키우지 않게(인디자인 행간)
+            st += f"font-size:{float(v['size']) * PT:.3f}px;line-height:0;"
         if v.get("bshift"):
             st += f"position:relative;top:{-float(v['bshift']) * PT:.3f}px;"
         if v.get("tracking"):
@@ -324,8 +324,8 @@ def char_css(cs, ctx=None):
     st = ""
     if cs.get("font"):
         st += f"font-family:{ctx.font(cs['font']) if ctx else font_family(cs['font'])};"
-    if cs.get("size"):
-        st += f"font-size:{float(cs['size']) * PT:.3f}px;"
+    if cs.get("size"):                                                     # 줄 높이 0 — 작은 글자(5.5pt 빈칸 번호)가 고정 행간 줄을 0.5mm 키우던 것(2026-10-12)
+        st += f"font-size:{float(cs['size']) * PT:.3f}px;line-height:0;"
     if cs.get("color"):
         st += f"color:{col(cs['color'])};"
     if cs.get("weight"):
@@ -442,8 +442,8 @@ def grep_html(html, rules, ctx=None):
             continue
         col = (ctx.color(r["color"]) if ctx else r["color"]) if r.get("color") else None
         st = f"color:{col};" if col else ""
-        if r.get("size"):
-            st += f"font-size:{float(r['size']) * PT:.3f}px;"
+        if r.get("size"):                                                  # 줄 높이 0 — 고정 행간을 지킨다(인디자인)
+            st += f"font-size:{float(r['size']) * PT:.3f}px;line-height:0;"
         if r.get("bshift"):                                                # 기준선 이동 pt — 양수면 위로
             st += f"position:relative;top:{-float(r['bshift']) * PT:.3f}px;"
         if r.get("weight"):                                                # 굵기 100~900 — 굵게(700)보다 먼저

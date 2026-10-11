@@ -298,12 +298,112 @@ def analysis(pno, gubun, cs_name):
     return st
 
 
+def rframe(e, color, r, label=None):
+    """테두리만 있는 둥근 칸(원본 도형 그대로) — 칠 없음 · 획 색 · 굵기(mm → pt)"""
+    st = box(e["x"], e["y"], e["w"], e["h"], "#ffffff", label=label, radius=r)
+    st += [{"pick": {"at": '#side select[data-a="fill"]', "value": ""}, "wait": 550}]
+    st += _color("stroke.color", color) + [F('#side input[data-a="stroke.w"]', round(e["sw"] / MM, 3))]
+    o = e["sw"] / 2
+    Ebox(e["x"] - o, e["y"] - o, e["w"] + 2 * o, e["h"] + 2 * o, color)
+    return st
+
+
+def icon(pno, x, y, w, h, name):
+    """원본의 작은 그림(연필 아이콘 — 도형 조각 10개)을 그 자리 그대로 그림 파일로 — 바탕(이름표 색)까지 같이 잘라 덮는다"""
+    path = os.path.join(WORK, f"{name}.png")
+    p, t = REF[pno - 1], REF[pno - 1].trimbox
+    r = pymupdf.Rect(t.x0 + x / MM, t.y0 + y / MM, t.x0 + (x + w) / MM, t.y0 + (y + h) / MM)
+    p.get_pixmap(clip=r, dpi=600).save(path)
+    E({"id": f"i{len(ELEMS[len(PAGES)])}", "x": x, "y": y, "w": w, "h": h, "color": "auto", "see": "auto", "pad": 0.6, "ctol": 30})
+    return image(x, y, w, h, path, label=f"아이콘 — 원본 그림({name}.png)")
+
+
+CS.update({
+    "빈칸 번호": {"size": 5.5, "color": "#999999", "bshift": 1.09},           # 원본: 번호 기준선이 글 기준선보다 1.09mm 위
+    "빈칸": {"color": "#ffffff", "track": 65},                                # 답 글자를 감추고(흰 글) 글자당 0.6pt 넓게 — 원본 빈칸 폭 = 답 폭 + 글자당 0.55~1pt
+    "정답": {"color": "#ea9149"},
+})
+TAB = {"교과서": "#4a9cb6"}
+
+
+def memorize(pno, gubun):
+    """암기 TEST + 정답 — 2쪽 면(펼침). 원고 덩어리 = 암기지문(「번호[답]」) · 단원 · 구분. 왼쪽은 답을 감추고 오른쪽은 답을 주황으로(GREP → 문자 스타일)"""
+    st = []
+    for side, rp in (("TEST", pno), ("정답", pno + 1)):
+        nm = f"암기 TEST · {gubun}" if side == "TEST" else None             # 펼침면 오른쪽 쪽은 이름 없이 왼쪽 면을 따른다
+        st += pg_new(rp, f"④ 암기 TEST + 정답 · {gubun} — 원본 {rp}쪽 ({side})", name=nm)
+        for n in ("빈칸 번호", "빈칸", "정답"):
+            st += need_cstyle(n, CS[n])
+        el, sp = els(rp), spans(rp)
+        band = BAND[gubun]
+        st += [S(f"위 · 아래 띠 — {gubun} 색", 1100)]
+        tb, bb = find(el, "rect", -3, -3, fill=band), find(el, "rect", -3, 204.5, fill=band)
+        st += rbox(tb["x"], tb["y"], tb["w"], tb["h"], band) + rbox(bb["x"], bb["y"], bb["w"], bb["h"], band)
+        lab = find(el, "rect", 18.0, 12.4)
+        st += rbox(lab["x"], lab["y"], lab["w"], lab["h"], lab["fill"], label=f"이름표 칸 — {lab['fill']}")
+        st += icon(rp, 19.9, 13.6, 3.6, 3.6, f"연필_{gubun}_{side}")
+        s_lab = line_of([s for s in sp if s["size"] == 7.0 and s["base"] < 18], next(s["base"] for s in sp if s["size"] == 7.0 and s["base"] < 18))
+        st += T(s_lab, HAK, 300, label=f"이름표 — 「{s_lab['text']}」")
+        ELEMS[len(PAGES)][-1].update(pad=0.2, search=0.2)
+        fr = find(el, "path", 18.1, 20.5)
+        st += rframe(fr, fr["stroke"], 0.9, label="테두리 칸 — 둥근 모서리 0.9mm")
+        # 암기지문 — 한 글상자, 「암기 지문」(Noto 9pt · 양끝맞춤 · 행간 = 원본 줄 간격). 쪽마다 GREP → 문자 스타일
+        rows = sorted({round(s["base"], 2) for s in sp if s["size"] == 9.0 and 22 < s["base"] < 195})
+        lead = round(sorted(b - a for a, b in zip(rows, rows[1:]))[len(rows) // 2 - 1], 3)
+        LEAD = round(lead / MM, 2)
+        last = line_of([s for s in sp if s["size"] == 9.0], rows[-1])
+        st += need_pstyle("암기 지문", {"font": NOTO, "weight": 400, "size": 9.0, "leading": LEAD, "color": "#000000", "align": "justify",
+                                     "tracking": track_of(dict(last, size=9.0), NOTO, 400) if side == "정답" else 0})
+        body = [s for s in sp if s["size"] in (9.0, 5.5) and 22 < s["base"] < 195]
+        Eslot(body, "#000000", label="암기지문")
+        x0 = min(s["x"] for s in body if s["size"] == 9.0)
+        top = round(top_of(rows[0], 9.0, NOTO, 400, LEAD), 2)
+        st += text(round(x0, 2), top, round(fr["x"] + fr["w"] - 4.0 - x0, 1), round(fr["y"] + fr["h"] - 2 - top, 1), "Temporary passage with 1[blank] answers.", 9.0, "#000000",
+                   label=f"암기지문 — 한 글상자 ({side})", font=NOTO, leading=LEAD, align="justify")
+        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+        st += slot("암기지문", label="자리 — 암기지문(「번호[답]」)")
+        st += [{"pick": {"at": '#side select[data-a="style"]', "value": "암기 지문"}, "wait": 700}]
+        st += grep(0, r"\d+(?=\[)", bold=False, label="GREP — 빈칸 앞 번호는 「빈칸 번호」") + [{"pick": {"at": '#side select[data-a="grep.0.cs"]', "value": "빈칸 번호"}, "wait": 700}]
+        st += grep(1, r"(?<=\[)[^\]]+(?=\])", bold=False, label=f"GREP — 대괄호 안 답은 「{'빈칸' if side == 'TEST' else '정답'}」") + \
+            [{"pick": {"at": '#side select[data-a="grep.1.cs"]', "value": "빈칸" if side == "TEST" else "정답"}, "wait": 700}]
+        # 꼬리 — 왼쪽: 쪽 번호 · POCKET BOOK(고정) / 오른쪽: 옆 탭(구분) · 단원 · 쪽 번호
+        st += [S("꼬리", 1000)]
+        s_no = next(s for s in sp if s["base"] > 190 and s["text"] == str(rp))
+        if side == "TEST":
+            st += T(s_no, EL, 700, label="쪽 번호 — 시스템 자리", bind="sys.page_no")
+            if rp != 2 + len(PAGES) - 1:
+                ELEMS[len(PAGES)][-1]["원고"] = True
+            st += T(next(s for s in sp if s["base"] > 190 and "POCKET" in s["text"]), EL, 500)
+        else:
+            tab = next(e for e in el if e["k"] == "path" and abs(e["x"] - 139.0) < 0.5 and e["w"] > 10)
+            st += rbox(tab["x"], tab["y"], 15.0, tab["h"], tab["fill"], r=1.6, label="옆 탭 — 왼쪽 모서리 1.6mm(오른쪽은 재단 밖)", measure=False)
+            Ebox(tab["x"], tab["y"], W_MM - tab["x"], tab["h"], tab["fill"])
+            ts = sorted([s for s in sp if s["size"] == 6.4 and s["color"] == "#ffffff"], key=lambda s: s["base"])
+            Eslot(ts, "#ffffff", label="구분")
+            st += text(round(ts[0]["x"] - 0.3, 2), round(top_of(ts[0]["base"], 6.4, YD, 400, round((ts[1]["base"] - ts[0]["base"]) / MM, 2)), 2), 3.0, 12.0, "구분",
+                       6.4, "#ffffff", label="구분 — 원고 자리 「구분」 (한 글자씩 세로로)", font=YD, leading=round((ts[1]["base"] - ts[0]["base"]) / MM, 2))
+            st += slot("구분")
+            s_u = line_of([s for s in sp if s["base"] > 190 and s["color"] == "#000000"], next(s["base"] for s in sp if s["base"] > 190 and s["color"] == "#000000"))
+            st += T(s_u, EL, 500, label="단원 — 원고 자리 「단원」 (오른쪽 맞춤)", slot_name="단원", temp="단원 이름", align="right", w=40)
+            st += T(s_no, EL, 700, label="쪽 번호 — 시스템 자리(오른쪽 맞춤)", bind="sys.page_no", align="right")
+            if rp != 2 + len(PAGES) - 1:
+                ELEMS[len(PAGES)][-1]["원고"] = True
+        st += done(f"암기 TEST {side} {gubun}", f"p{rp}.png")
+    it = first(lambda x: "암기지문" in x, gubun)
+    CONTENT[f"암기 TEST · {gubun}"] = [{"암기지문": [it["암기지문"], it["암기지문"]], "단원": it["단원"], "구분": it["구분"]}]   # 같은 원고가 두 쪽에
+    return st
+
+
 st = open_doc(NAME)
 st += expect_pages(1)
 
 if want(2):
     st += analysis(2, "교과서", "분석 면")
     st += analysis(42, "모의고사", "분석 면")
+
+if want(4):
+    st += memorize(12, "교과서")
+    st += memorize(46, "모의고사")
 
 if CONTENT:
     st += put_content(CONTENT)
