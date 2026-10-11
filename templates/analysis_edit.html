@@ -64,6 +64,28 @@
   .r-descriptive { background: #fef3a6; } .r-antecedent { background: #dbd4ea; } .r-connector { background: #c4ead9; } .r-blank { background: #c4ead9; box-shadow: inset 0 -2px #6bbf9c; }
   .note { font-size: 11.5px; color: #8a5a00; background: #fff7e6; border-radius: 6px; padding: 5px 8px; margin-top: 6px; }
   .changed { font-size: 11.5px; color: #2b3f9c; margin-top: 6px; }
+  /* 분석본 마법사 — 표기 · 범위 · AI 지시 (contents 분석본 마법사와 같은 구성) */
+  #wiz { position: fixed; right: 16px; bottom: 16px; z-index: 35; width: 360px; background: #fff; border: 1px solid #cdd3dd; border-radius: 12px; box-shadow: 0 12px 32px rgba(20,30,60,.22); font-size: 12px; }
+  #wiz .hd { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: #1f2a44; color: #fff; border-radius: 11px 11px 0 0; cursor: move; user-select: none; }
+  #wiz .hd b { flex: 1; font-size: 12.5px; }
+  #wiz .hd button { border: 0; background: #34405e; color: #fff; border-radius: 5px; padding: 2px 7px; font: inherit; cursor: pointer; }
+  #wiz.fold .bd { display: none; }
+  #wiz.fold { width: auto; }
+  #wiz .bd { padding: 8px 10px 10px; max-height: 60vh; overflow-y: auto; }
+  #wiz h4 { margin: 6px 0 4px; font-size: 11.5px; color: #4b5260; display: flex; align-items: center; gap: 6px; }
+  #wiz h4 span { font-weight: 400; color: #8a91a0; }
+  #wiz .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  #wiz .chips button { border: 1px solid #cbd1da; background: #fff; border-radius: 6px; padding: 2px 6px; font: inherit; font-size: 11.5px; cursor: pointer; }
+  #wiz .chips button.on { border-color: #1f2a44; box-shadow: 0 0 0 1.5px #1f2a44 inset; font-weight: 700; }
+  #wiz .chips .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; }
+  #wiz .chips .k { color: #8a91a0; margin-left: 3px; font-size: 10.5px; }
+  #wiz .scope { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
+  #wiz .scope span { background: #e8edff; color: #2b3f9c; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; }
+  #wiz .scope span button { border: 0; background: none; color: inherit; cursor: pointer; padding: 0 0 0 3px; }
+  #wiz textarea { width: 100%; border: 1px solid #cbd1da; border-radius: 7px; padding: 6px 8px; font: inherit; font-size: 12.5px; resize: vertical; }
+  #wiz .card { border: 1px solid #dde1e7; border-radius: 8px; padding: 7px 8px; margin-top: 6px; background: #f8f9fb; white-space: pre-wrap; }
+  #wiz .card ul { margin: 4px 0 0; padding-left: 16px; color: #4b5260; }
+  .p [data-scope] { outline: 2px solid #4f6bd8 !important; outline-offset: 1px; }
   #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #1f2430; color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; display: none; z-index: 40; }
 </style>
 </head>
@@ -109,6 +131,19 @@
   </aside>
 </main>
 <div id="toast"></div>
+<div id="wiz">
+  <div class="hd" id="wiz-hd"><b>분석본 마법사</b><button id="wiz-fold" title="접기·펴기">접기</button></div>
+  <div class="bd">
+    <h4>표기 <span>숫자키로 고르고 문장 칸에서 끌면 칠합니다 · ~ 누른 채 끌면 지우기 · 다시 누르면 놓기</span></h4>
+    <div class="chips" id="wiz-roles"></div>
+    <h4>범위 <span>⌘(Ctrl) 누른 채 지면을 누르면 담깁니다 · Esc 모두 해제</span></h4>
+    <div class="scope" id="wiz-scope"><span style="background:none;color:#8a91a0;padding:0">고르지 않으면 분석본 전체</span></div>
+    <h4>AI 지시</h4>
+    <textarea id="wiz-ask" rows="2" placeholder="예: 3번 문장 해석을 더 자연스럽게 · 관계사에 선행사 표기 달아줘"></textarea>
+    <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:5px"><button class="btn sm" id="wiz-clear">범위 해제</button><button class="btn pri sm" id="wiz-go">보내기 (Enter)</button></div>
+    <div id="wiz-out"></div>
+  </div>
+</div>
 <script src="/static/js/units_compose.js"></script>
 <script>
 const DESIGN = {{ design|tojson }};
@@ -149,6 +184,7 @@ async function draw(body) {
     if (document.fonts) await document.fonts.ready;
     if (window.unitsCompose) window.unitsCompose($("#pages"));
     status();
+    if (typeof scopeBar === "function" && rec) scopeBar();    // 다시 그려도 고른 범위 표시는 남는다
   } catch (e) { $("#st").textContent = e.message; }
   finally { $("#pages").classList.remove("busy"); }
 }
@@ -189,6 +225,7 @@ $("#pages").addEventListener("pointerdown", (e) => {
   if (!box) return;
   const slot = (p || box).dataset.slot;
   e.preventDefault();
+  if (e.metaKey || e.ctrlKey) return addScope(slot, p, box);      // 마법사 범위 — 고치기 칸을 열지 않고 담는다
   if (side && p && p.dataset.slot === "문장") return openText("gps", rowOf(p, "문장"), side.firstElementChild || side);
   if (slot === "문장") return openSent(rowOf(p, "문장"), p);
   if (slot === "해석") return openText("해석", rowOf(p, "해석"), p);
@@ -239,6 +276,7 @@ function openSent(i, p) {
     else if (e.key === "Enter") { e.preventDefault(); if (e.metaKey || e.ctrlKey) closeEd(true); }
     else if (e.altKey && /^Digit[0-7]$/.test(e.code)) { e.preventDefault(); const n = +e.code.slice(5); n ? toggleRole(box, ROLES[n - 1][0]) : clearSel(box); }
   });
+  box.addEventListener("mouseup", () => setTimeout(() => paintSel(box), 0));   // 마법사 표기를 골라 둔 채 끌면 칠한다(~ 누르면 지운다)
   box.focus();
   openRow(i);
 }
@@ -488,6 +526,99 @@ function rightFill() {
 document.querySelectorAll("#tab-right [data-f]").forEach(el => el.addEventListener("change", () => change(() => { rec[el.dataset.f] = el.value; })));
 document.querySelectorAll("#tab-right [data-k]").forEach(el => el.addEventListener("change", () => change(() => { if (rec["발문+문제지문+선지"]) rec["발문+문제지문+선지"][0][el.dataset.k] = uRuns(el.value); })));
 
+// ── 분석본 마법사 — 표기 · 범위 · AI 지시 (contents 분석본 마법사와 같은 구성) ──
+let picked = null, erasing = false, scopes = [], asking = false;
+function wizRoles() {
+  $("#wiz-roles").innerHTML = ROLES.map(([k, n, , col], j) => `<button data-r="${k}" class="${picked === k ? "on" : ""}"><span class="sw" style="background:${col}"></span>${n}<span class="k">${j + 1}</span></button>`).join("");
+  $("#wiz-roles").querySelectorAll("button").forEach(b => b.onmousedown = (e) => { e.preventDefault(); pick(b.dataset.r); });
+}
+function pick(role) { picked = picked === role ? null : role; wizRoles(); toast(picked ? `표기 「${ROLES.find(r => r[0] === picked)[1]}」 — 문장 칸에서 끌면 칠합니다` : "표기를 놓았습니다"); }
+function paintSel(box) {
+  if (!picked && !erasing) return;
+  const rg = selRange(box); if (!rg || rg[0] === rg[1]) return;
+  if (erasing) clearSel(box); else toggleRole(box, picked);
+}
+document.addEventListener("keydown", (e) => {
+  const typing = e.target.closest && e.target.closest("[contenteditable=true], textarea, input");
+  if (e.code === "Backquote" && !e.metaKey && !e.ctrlKey && !e.altKey) { if (!typing || (ed && ed.kind === "sent")) { e.preventDefault(); erasing = true; } return; }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (/^Digit[1-7]$/.test(e.code)) { e.preventDefault(); pick(ROLES[+e.code.slice(5) - 1][0]); }
+  if (e.key === "Escape" && !ed) { picked = null; wizRoles(); scopes = []; scopeBar(); }
+});
+document.addEventListener("keyup", (e) => { if (e.code === "Backquote") erasing = false; });
+// 범위 — 지면에서 ⌘(Ctrl) 누른 채 누른 자리. 컴포넌트 단위(문장은 번호까지)
+const SCOPE_OF = {"주제": "topic", "요약": "topic", "발문": "key", "문제지문": "key", "선지": "key", "답": "key", "어휘": "voca"};
+const SCOPE_NAME = {"sentence-flow": "문장", topic: "주제·요약", key: "핵심기출", voca: "어휘"};
+function addScope(slot, p, box) {
+  let s = null;
+  if ((slot === "문장" || slot === "해석") && p) {
+    const i = rowOf(p, slot), row = rec["문장+해석"][i];
+    if (row) s = {type: "sentence-flow", no: +(splitRow(row["문장"]).num.trim() || i + 1)};
+  } else if (SCOPE_OF[slot]) s = {type: SCOPE_OF[slot], no: null};
+  if (!s) return;
+  const k = scopes.findIndex(x => x.type === s.type && x.no === s.no);
+  if (k >= 0) scopes.splice(k, 1); else scopes.push(s);
+  scopeBar();
+}
+function scopeBar() {
+  $("#wiz-scope").innerHTML = scopes.length
+    ? scopes.map((s, i) => `<span>${SCOPE_NAME[s.type]}${s.no ? " " + s.no : ""}<button data-i="${i}" title="빼기">✕</button></span>`).join("")
+    : `<span style="background:none;color:#8a91a0;padding:0">고르지 않으면 분석본 전체</span>`;
+  $("#wiz-scope").querySelectorAll("button").forEach(b => b.onclick = () => { scopes.splice(+b.dataset.i, 1); scopeBar(); });
+  // 지면에 고른 자리 표시
+  document.querySelectorAll("#pages [data-scope]").forEach(el => el.removeAttribute("data-scope"));
+  const sents = [...document.querySelectorAll('#pages p[data-slot="문장"]')].filter(x => !x.dataset.storyCont);
+  scopes.forEach(s => {
+    if (s.type === "sentence-flow") { const i = (rec["문장+해석"] || []).findIndex((r, j) => +(splitRow(r["문장"]).num.trim() || j + 1) === s.no); if (sents[i]) sents[i].dataset.scope = "1"; }
+    else Object.entries(SCOPE_OF).filter(([, t]) => t === s.type).forEach(([f]) => document.querySelectorAll(`#pages [data-slot="${f}"]`).forEach(el => el.dataset.scope = "1"));
+  });
+}
+$("#wiz-clear").onclick = () => { scopes = []; scopeBar(); };
+$("#wiz-fold").onclick = () => { $("#wiz").classList.toggle("fold"); $("#wiz-fold").textContent = $("#wiz").classList.contains("fold") ? "펴기" : "접기"; };
+(() => {                                                        // 끌어서 옮기기 — 자리는 이 브라우저에 기억
+  const w = $("#wiz");
+  try { const p = JSON.parse(localStorage.getItem("yos:analysis-edit-wiz") || "null"); if (p) { w.style.left = p.x + "px"; w.style.top = p.y + "px"; w.style.right = "auto"; w.style.bottom = "auto"; } } catch (_) {}
+  $("#wiz-hd").addEventListener("pointerdown", (e) => {
+    if (e.target.tagName === "BUTTON") return;
+    const r = w.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+    const mv = (ev) => { w.style.left = Math.max(0, ev.clientX - dx) + "px"; w.style.top = Math.max(0, ev.clientY - dy) + "px"; w.style.right = "auto"; w.style.bottom = "auto"; };
+    const up = () => { removeEventListener("pointermove", mv); removeEventListener("pointerup", up);
+      try { localStorage.setItem("yos:analysis-edit-wiz", JSON.stringify({x: parseInt(w.style.left), y: parseInt(w.style.top)})); } catch (_) {} };
+    addEventListener("pointermove", mv); addEventListener("pointerup", up);
+  });
+})();
+// AI 지시 — contents 에 맡긴다(같은 제작 표준·프롬프트로 고치고 NEW 사본에 저장). 저장 전 고침도 함께 보낸다
+let pendingAi = null;
+async function ask() {
+  const t = $("#wiz-ask").value.trim();
+  if (!t || asking) return;
+  if (window.parent === window) { toast("AI 지시는 contents 분석본 NEW 안에서 씁니다."); return; }
+  closeEd(true);
+  asking = true; $("#wiz-go").disabled = true; $("#wiz-out").innerHTML = `<div class="card">AI 가 고치는 중… (1분쯤)</div>`;
+  try {
+    const doc = dirty ? (await api("/analysis-edit/doc", {rec, base})).doc : base;
+    const types = [...new Set(scopes.map(s => s.type))];
+    const nos = scopes.filter(s => s.type === "sentence-flow").map(s => s.no).sort((a, b) => a - b);
+    pendingAi = t;
+    post({type: "yos-analysis-ai", doc, instruction: t, scope: types.length ? {types, sentenceNos: nos} : null});
+  } catch (e) { asking = false; $("#wiz-go").disabled = false; $("#wiz-out").innerHTML = `<div class="card">${esc(e.message)}</div>`; }
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
+$("#wiz-go").onclick = ask;
+$("#wiz-ask").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask(); } });
+async function aiDone(m) {
+  asking = false; $("#wiz-go").disabled = false;
+  await load(m.doc);                                            // contents 가 이미 저장했다 — 받은 문서가 새 기준
+  const undoDoc = m.undoDoc;
+  $("#wiz-out").innerHTML = `<div class="card"><b>${esc(pendingAi || "")}</b>\n${esc(m.reply || "")}${(m.changes || []).length ? `<ul>${m.changes.map(c => `<li>${esc(c)}</li>`).join("")}</ul>` : ""}`
+    + (m.editedTypes && m.editedTypes.length ? `<div style="text-align:right;margin-top:5px"><button class="btn sm" id="wiz-undo">↩ 되돌리기</button></div>` : "") + `</div>`;
+  $("#wiz-ask").value = "";
+  const u = $("#wiz-undo");
+  if (u) u.onclick = () => { u.disabled = true; post({type: "yos-analysis-save", doc: undoDoc, changed: ["AI 고치기 되돌림"]}); pendingUndo = undoDoc; };
+}
+let pendingUndo = null;
+wizRoles();
+
 // ── 받고 · 저장 ──
 async function load(doc) {
   closeEd(false);
@@ -511,8 +642,13 @@ window.addEventListener("message", (e) => {
   if (e.source !== window.parent || !e.data || typeof e.data !== "object") return;
   parentOrigin = e.origin;
   if (e.data.type === "yos-analysis-load" && e.data.doc) load(e.data.doc);
-  if (e.data.type === "yos-analysis-saved") { base = e.data.doc || base; dirty = false; status(); $("#st").textContent = "저장함"; }
-  if (e.data.type === "yos-analysis-error") { $("#st").textContent = e.data.message || "저장하지 못했습니다"; $("#save").disabled = false; }
+  if (e.data.type === "yos-analysis-saved") {
+    if (pendingUndo) { const d = pendingUndo; pendingUndo = null; load(d); $("#wiz-out").innerHTML = `<div class="card">AI 고치기를 되돌렸습니다.</div>`; return; }
+    base = e.data.doc || base; dirty = false; status(); $("#st").textContent = "저장함";
+  }
+  if (e.data.type === "yos-analysis-error") { $("#st").textContent = e.data.message || "저장하지 못했습니다"; $("#save").disabled = false; pendingUndo = null; }
+  if (e.data.type === "yos-analysis-ai-done" && e.data.doc) aiDone(e.data);
+  if (e.data.type === "yos-analysis-ai-error") { asking = false; $("#wiz-go").disabled = false; $("#wiz-out").innerHTML = `<div class="card">${esc(e.data.message || "AI 고치기에 실패했습니다.")}</div>`; }
 });
 post({type: "yos-analysis-ready"});
 </script>
