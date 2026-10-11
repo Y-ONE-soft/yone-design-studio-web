@@ -144,8 +144,19 @@ try:
             return float(spot[0]), float(spot[1])
         if isinstance(spot, dict) and "mm" in spot:
             settle()
-            r = c.js("(() => { const p = document.querySelector('#paper'); const b = p.getBoundingClientRect(); return [b.left, b.top, scale]; })()")
-            return r[0] + spot["mm"][0] * r[2], r[1] + spot["mm"][1] * r[2]
+            for _ in range(40):                              # 지면의 그 점이 화면 밖이면 사람처럼 그림판 위에서 휠로 굴린다
+                r = c.js("(() => { const p = document.querySelector('#paper'); const b = p.getBoundingClientRect(); "
+                         "const a = document.querySelector('#area').getBoundingClientRect(); return [b.left, b.top, scale, a.top, a.bottom, (a.left + a.right) / 2]; })()")
+                x, y = r[0] + spot["mm"][0] * r[2], r[1] + spot["mm"][1] * r[2]
+                dy = -1 if y < r[3] + 8 else (1 if y > r[4] - 8 else 0)  # (A5 둘째 쪽 — 연속 보기에서 새 쪽 아래가 잘려 보였다, 2026-10-12)
+                if not dy:
+                    return x, y
+                wx, wy = r[5], (r[3] + r[4]) / 2
+                move(wx, wy, steps=4, shoot=False)
+                c.call("Input.dispatchMouseEvent", type="mouseWheel", x=wx, y=wy, deltaX=0, deltaY=dy * min(240, max(60, abs(y - wy))))
+                time.sleep(0.08)
+                frame()
+            raise RuntimeError(f"굴려도 안 보임 {spot}")
         for _ in range(4):                                   # 접힌 칸(details) — 사람처럼 머리(summary)를 눌러 편다
             sm = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; "
                       "const ds = []; let d = e.closest('details'); while (d) { if (!d.open) ds.push(d); d = d.parentElement && d.parentElement.closest('details'); } "

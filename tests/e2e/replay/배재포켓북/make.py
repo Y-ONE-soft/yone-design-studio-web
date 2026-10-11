@@ -70,19 +70,23 @@ def spans(pno):
 def line_of(sps, base, tol=0.3):
     """기준선이 같은 조각들을 한 줄 글 조각으로(첫 글자 ~ 끝 글자)"""
     row = sorted([s for s in sps if abs(s["base"] - base) < tol], key=lambda s: s["x"])
-    return dict(row[0], x1=row[-1]["x1"], text=" ".join(s["text"] for s in row))
+    t = row[0]["text"]
+    for a, b in zip(row, row[1:]):                                      # 조각 사이 틈이 0.4mm 넘을 때만 빈칸 — 원본은 글자마다 · 꾸밈마다 조각이 끊긴다
+        t += (" " if b["x"] - a["x1"] > 0.4 else "") + b["text"]
+    return dict(row[0], x1=row[-1]["x1"], text=t)
 
 
 def pg_new(pno, label, name=None):
     PAGES.append(pno)
     ELEMS[len(PAGES)] = []
-    st = [] if len(PAGES) == 1 else add_page(label)
+    st = [] if len(PAGES) == 1 else add_page(label) + [{"click": "#rail .pg.on", "wait": 1500}]   # 아래 쪽 목록에서 새 쪽을 눌러 화면을 그 쪽에(연속 보기는 새 쪽이 반쯤 잘려 보인다)
     st += [S(label, 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700},
            {"pick": {"at": "#side #s-spec", "value": "a5"}, "wait": 1500}]           # 판형 A5 148×210
     if len(PAGES) == 1 and pno > 1:
         st += [S(f"문서 설정 — 쪽 번호 시작 {pno}", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, F("#side #s-pstart", pno, 1200)]
     if name:                                                             # 면 이름 (관리 지면 보기가 이 이름으로 묶는다)
         st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700}, F("#side #s-pname", name, 900)]
+    st += [{"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1200}]    # 원고마다 — 원고 덩어리 하나에 이 면 한 장
     return st
 
 
@@ -221,11 +225,13 @@ def analysis(pno, gubun, cs_name):
     tag = find(el, "path", 15.0, 15.0)
     s_src = line_of([s for s in sp if s["size"] == 9.5 and s["color"] == "#ffffff"], next(s["base"] for s in sp if s["size"] == 9.5 and s["color"] == "#ffffff"))
     Ebox(tag["x"], tag["y"], 4.0, tag["h"], tag["fill"])
+    Eslot([s for s in sp if s["size"] == 9.5 and s["color"] == "#ffffff"], "#ffffff", label="출처")   # 출처 글 = 원고(「들어갔나」만)
     TL = round(tag["h"] / MM, 2)                                         # 행간 = 꼬리표 높이(한 줄)
     lpad, rpad = round(s_src["x"] - tag["x"], 2), round(tag["x"] + tag["w"] - s_src["x1"], 2)
     st += T(dict(s_src, base=s_src["base"]), YD, 400, label="출처 — 원고 자리 「출처」 (꼬리표 = 글상자 칠 · 글 길이만큼)", slot_name="출처", temp="출처 이름",
             w=round(W_MM - 15 - tag["x"], 1), leading=TL, measure=False)
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "both"}, "wait": 700}]
+    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "both"}, "wait": 700},
+           F('#side input[data-it="x"]', round(tag["x"], 2))]                # 칠은 상자 가장자리에 — 상자 = 꼬리표 왼쪽 끝, 글은 안쪽 여백만큼 안
     st += _color("frame.fill", tag["fill"]) + [F('#side input[data-a="frame.radius"]', 1.0), F('#side input[data-a="inset4"]', f"0 {rpad} 0 {lpad}")]
     # 지문 — 한 글상자. 단락 스타일 「분석 지문」(Noto Sans CJK KR 9pt · 양끝맞춤), 꾸밈은 조각의 문자 스타일, 문장 성분 · 서술형★ 은 윗주
     rows = sorted({round(s["base"], 2) for s in sp if s["size"] == 9.0 and 20 < s["base"] < 150})
@@ -280,15 +286,15 @@ def analysis(pno, gubun, cs_name):
     # 꼬리 — 쪽 번호(남색 · 시스템 자리) · 책 이름(원고 자리 「책이름」)
     st += [S("꼬리 — 쪽 번호 · 책 이름", 1000)]
     s_no = next(s for s in sp if s["base"] > 190 and s["text"] == str(pno))
-    st += T(s_no, EL, 500, label="쪽 번호 — 시스템 자리", bind="sys.page_no")
+    st += T(s_no, EL, 700, label="쪽 번호 — 시스템 자리 (엘리스 DX 널리체 Bold)", bind="sys.page_no")
+    if pno != 2 + len(PAGES) - 1:                                       # 견본 문서의 쪽 번호가 원본과 다른 면 — 쪽마다 바뀌는 값이라 원고처럼 「들어갔나」만
+        ELEMS[len(PAGES)][-1]["원고"] = True
     s_bk = line_of([s for s in sp if s["base"] > 190 and s["color"] == "#000000"], next(s["base"] for s in sp if s["base"] > 190 and s["color"] == "#000000"))
     st += T(s_bk, EL, 500, label="책 이름 — 원고 자리 「책이름」", slot_name="책이름", temp="POCKET BOOK 책 이름", w=50)
     st += done(f"분석 면 {gubun}", f"p{pno}.png")
+    # 견본 원고 한 벌 — 원고 덩어리 그대로(면 이름 → [덩어리 …], 「원고마다」 면의 레코드). 덩어리 = 출처 · 지문(꾸밈 조각) · 해석
     it = first(lambda x: "지문" in x and "그림" not in x, gubun)
-    CONTENT.setdefault("출처", []).append(it["출처"])
-    CONTENT.setdefault("지문", []).append([it["지문"]])         # 글 하나 자리에 조각 — [[조각 …]] (원고자리_규약)
-    CONTENT.setdefault("해석", []).append(it["해석"])
-    CONTENT.setdefault("책이름", []).append(SRC["book"]["책이름"])
+    CONTENT[f"분석 면 · {gubun}"] = [{"출처": it["출처"], "지문": it["지문"], "해석": it["해석"], "책이름": SRC["book"]["책이름"]}]
     return st
 
 
