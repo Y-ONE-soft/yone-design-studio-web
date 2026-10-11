@@ -319,7 +319,7 @@ def icon(pno, x, y, w, h, name):
 
 
 CS.update({
-    "빈칸 번호": {"size": 5.5, "color": "#999999", "bshift": 1.09},           # 원본: 번호 기준선이 글 기준선보다 1.09mm 위
+    "빈칸 번호": {"size": 5.5, "color": "#999999", "bshift": round(1.09 / MM, 2)},   # 원본: 번호 기준선이 글 기준선보다 1.09mm 위(기준선 칸은 pt)
     "빈칸": {"color": "#ffffff", "track": 65},                                # 답 글자를 감추고(흰 글) 글자당 0.6pt 넓게 — 원본 빈칸 폭 = 답 폭 + 글자당 0.55~1pt
     "정답": {"color": "#ea9149"},
 })
@@ -380,8 +380,9 @@ def memorize(pno, gubun):
             Ebox(tab["x"], tab["y"], W_MM - tab["x"], tab["h"], tab["fill"])
             ts = sorted([s for s in sp if s["size"] == 6.4 and s["color"] == "#ffffff"], key=lambda s: s["base"])
             Eslot(ts, "#ffffff", label="구분")
-            st += text(round(ts[0]["x"] - 0.3, 2), round(top_of(ts[0]["base"], 6.4, YD, 400, round((ts[1]["base"] - ts[0]["base"]) / MM, 2)), 2), 3.0, 12.0, "구분",
-                       6.4, "#ffffff", label="구분 — 원고 자리 「구분」 (한 글자씩 세로로)", font=YD, leading=round((ts[1]["base"] - ts[0]["base"]) / MM, 2))
+            st += text(round(ts[0]["x"] - 0.3, 2), round(top_of(ts[0]["base"], 6.4, EL, 700, round((ts[1]["base"] - ts[0]["base"]) / MM, 2)), 2), 3.0, 12.0, "구분",
+                       6.4, "#ffffff", label="구분 — 원고 자리 「구분」 (한 글자씩 세로로 · 엘리스 DX 널리체 Bold)", font=EL, weight=700,
+                       leading=round((ts[1]["base"] - ts[0]["base"]) / MM, 2))
             st += slot("구분")
             s_u = line_of([s for s in sp if s["base"] > 190 and s["color"] == "#000000"], next(s["base"] for s in sp if s["base"] > 190 and s["color"] == "#000000"))
             st += T(s_u, EL, 500, label="단원 — 원고 자리 「단원」 (오른쪽 맞춤)", slot_name="단원", temp="단원 이름", align="right", w=40)
