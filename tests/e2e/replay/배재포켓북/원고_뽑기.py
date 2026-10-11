@@ -85,15 +85,19 @@ def analysis(page, H):
                 elif 0 <= w["y0"] - m["y1"] <= 4:
                     out.append({"t": m["t"].strip(), "pos": "above"})
         return out
+    deco = decorations(page)
     pieces, prev = [], None
     for row in lines_of(words):
         for w in row:
             if prev is not None and (w["x0"] - prev["x1"] > 0.6 or w["y0"] - prev["y0"] > 3):
                 pieces.append(" ")
             p = {"t": w["t"].strip()}
-            if w["color"] in CS:
-                p["cs"] = [CS[w["color"]]]
+            cs = ([CS[w["color"]]] if w["color"] in CS else []) + deco_cs(w, deco)
+            if cs:
+                p["cs"] = cs
             r = ruby_of(w)
+            if any(d[0] == "badge" and w["x0"] - 1.5 <= d[1] <= w["x1"] and 0 < w["y1"] - d[2] < 16 for d in deco):                 # 표시 아래 끝 = 기준선 위 3mm
+                r = [x for x in r if x["pos"] != "above"] + [{"t": "서술형★", "pos": "above", "cs": "서술형"}]
             if r:
                 p["ruby"] = r[0] if len(r) == 1 else r
             pieces.append(p if len(p) > 1 else p["t"])
@@ -106,6 +110,48 @@ def analysis(page, H):
         else:
             merged.append(p)
     return {"출처": join(lines_of(src)[0]) if src else "", "지문": merged, "해석": para([join(r) for r in lines_of(trans)]).replace("\n", " ")}
+
+
+HL = {0xfffdee: "형광 노랑", 0xfaf7f9: "형광 분홍", 0xfff7f3: "형광 주황", 0xf1f8f6: "형광 민트"}
+
+
+def decorations(page):
+    """원고를 따라 움직이는 꾸밈 — 형광 띠(면) · 분홍 물결(선) · 서술형★(빨강 손글씨 그림). 좌표는 pt(글 조각과 같은 자리)"""
+    out = []
+    for dr in page.get_drawings():
+        col = dr.get("fill") or dr.get("color")
+        if not col:
+            continue
+        c = (round(col[0] * 255) << 16) | (round(col[1] * 255) << 8) | round(col[2] * 255)
+        r = dr["rect"]
+        if c in HL and dr.get("fill"):
+            out.append(("hl", r.x0, r.y0, r.x1, r.y1, HL[c]))
+        elif c == 0xd2232a and dr.get("fill"):
+            out.append(("badge", r.x0, r.y1))
+    pix = page.get_pixmap(dpi=150)                         # 물결은 경로 상자가 줄 끝까지 잡혀서(95mm) 분홍 점으로 찾는다
+    import numpy as np
+    a = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, :3].astype(int)
+    pink = (abs(a[:, :, 0] - 0xee) < 40) & (abs(a[:, :, 1] - 0x4d) < 50) & (abs(a[:, :, 2] - 0x9b) < 50)
+    out.append(("wave", pink, pix.width / page.rect.width))
+    return out
+
+
+def deco_cs(w, deco):
+    out = []
+    ww = w["x1"] - w["x0"]
+    for d in deco:
+        if d[0] == "hl":
+            ov = min(w["x1"], d[3]) - max(w["x0"], d[1])
+            if ov > ww * 0.4 and d[2] - 2 <= (w["y0"] + w["y1"]) / 2 <= d[4] + 2:      # 띠가 낱말 가운데 높이를 덮는다
+                if d[5] not in out:
+                    out.append(d[5])
+        elif d[0] == "wave":
+            pink, z = d[1], d[2]
+            y0, y1 = int((w["y1"] - 1) * z), int((w["y1"] + 5) * z)
+            x0, x1 = int((w["x0"] + ww * 0.2) * z), int((w["x1"] - ww * 0.2) * z)
+            if x1 > x0 and pink[y0:y1, x0:x1].any(axis=0).mean() > 0.6:
+                out.append("분홍 물결")
+    return out
 
 
 def note(page, H, W):
