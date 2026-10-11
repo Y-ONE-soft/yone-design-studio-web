@@ -237,10 +237,10 @@ def runs_sentence(runs):
         rl = set(r.get("rl") or [])
         if not rl or sorted({ROLE_CS[x] for x in rl if x in ROLE_CS}, key=_ORDER.index) != [c for c in _ORDER if c in cs]:
             rl = {CS_ROLE[c] for c in cs if c in CS_ROLE}                # 원래 역할과 색이 다르면(새로 칠함) 색의 대표 역할
-        parts, up_text = [], None
+        parts, up_text, badge = [], None, False
         for a in above:
             if a.get("cs") == "서술형":
-                badges.append(cnt)
+                badge = True
                 parts += a.get("src") or []
             elif a.get("src") and a.get("t", "") == " ".join(x["t"] for x in a["src"]):
                 parts += a["src"]                                        # 안 고친 위 윗주 — 원래 정체대로
@@ -249,6 +249,8 @@ def runs_sentence(runs):
         for x in parts:
             if x.get("k") == "elide":
                 emit(f"⌃({x['t']}) ")
+        if badge:
+            badges.append(cnt)                                           # 딱지 자리 = 낱말 첫 글자(앞의 생략 표기 뒤)
         emit(t, rl)
         for b in below:
             if b.get("raw") and b.get("t", "") == " ".join(_off(x) for x in b["raw"]):
