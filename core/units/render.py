@@ -1669,6 +1669,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             style += ";" + dec
         if a.get("baseline"):
             style += f";position:relative;top:{-float(a['baseline']) * PT:.3f}px"
+        if a.get("opsz"):                                                      # 광학 크기 — 가변 서체 opsz 축을 정한 값으로(자동 끔)
+            style += f";font-optical-sizing:none;font-variation-settings:'opsz' {float(a['opsz']):g}"
         if a.get("weight"):                                                    # 굵기(100~900)가 굵게보다 먼저
             style += f";font-weight:{int(a['weight'])}"
         elif a.get("b"):

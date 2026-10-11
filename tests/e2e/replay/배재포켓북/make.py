@@ -419,6 +419,18 @@ def memorize(pno, gubun):
 
 
 BODONI = "Bodoni Moda"
+FONTS = os.path.expanduser("~/Library/Fonts")
+DOC_FONTS = set()
+
+
+def need_font(fname):
+    """시스템 서체 목록에 없는 굵기 — 글상자 「＋ 서체」로 올려 등록(공식 배포처에서 받은 파일). 등록 뒤 그 글상자는 지운다"""
+    if fname in DOC_FONTS:
+        return []
+    DOC_FONTS.add(fname)
+    st = text(20.0, 3.0, 24.0, 9.0, "서체", 9, "#231f20", label=f"서체 등록 — 「＋ 서체」({fname})")
+    st += register_font(os.path.join(FONTS, fname))
+    return st + [{"click": "#side #s-x", "wait": 900}]
 
 
 def el_line(sp, e):
@@ -444,7 +456,7 @@ def cover(pno, name):
     bg = os.path.join(WORK, f"바탕_{pno}.png")
     pix.save(bg)
     im = next(e for e in el if e["k"] == "image")
-    E({"id": f"bg{len(ELEMS[len(PAGES)])}", "x": 0, "y": 0, "w": W_MM, "h": H_MM, "color": "auto", "see": "auto", "pad": 0.6, "ctol": 30})
+    # 바탕 그림은 요소 목록(색 상자 맞대기)에 넣지 않는다 — 그러데이션 종이라 「한 색 상자」로 잴 수 없다. 빠지거나 어긋나면 「목록 밖 차이」(쪽 전체 화소)가 잡는다
     st += image(round(im["x"], 2), round(im["y"], 2), round(im["w"], 2), round(im["h"], 2), bg, label="바탕 — 원본 그림(종이 그러데이션)")
     ln = find(el, "rect", 15.0, 27.5)
     st += rbox(ln["x"], ln["y"], ln["w"], ln["h"], ln["fill"], label="POCKET 아래 선")
@@ -453,7 +465,8 @@ def cover(pno, name):
     for word in ("Pocket", "Book."):
         s0 = next(s for s in sp if s["text"].startswith(word.rstrip(".")))
         x1 = max(s["x1"] for s in sp if abs(s["base"] - s0["base"]) < 0.3 and s["size"] == s0["size"])
-        st += T(dict(s0, size=34.0, text=word, x1=x1), BODONI, 400, label=f"{word} — Bodoni Moda 34pt")
+        st += T(dict(s0, size=34.0, text=word, x1=x1), BODONI, 400, label=f"{word} — Bodoni Moda 34pt · 광학 크기 24")
+        st += [F('#side input[data-a="opsz"]', 24, 800)]                 # 원본 글자 모양 = 광학 크기 24(겹침 0.90 — 브라우저 자동은 34)
     box = next(e for e in el if e["k"] == "path" and abs(e["y"] - 177.6) < 0.5)
     st += rframe(box, box["stroke"], 1.1, label="학교 칸 — 테두리 · 모서리 1.1mm")
     st += T(el_line(sp, tx(lambda e: e["size"] == 10.0)), NOTO, 700, label="학교 — 원고 자리 「학교」", slot_name="학교", temp="학교")
@@ -462,7 +475,8 @@ def cover(pno, name):
     st += T(el_line(sp, tx(lambda e: e["y"] > 193)), NOTO, 700, label="꼬리 — 고정 글")
     if pno == 1:
         st += T(el_line(sp, tx(lambda e: e["size"] == 8.0)), NOTO, 500, label="포켓북 · 핵심 암기 노트")
-    else:                                                                # 만든 사람 — 제목(Bodoni Moda 9pt) · 이름 줄(Noto 7.5pt) — 고정 글
+    else:                                                                # 만든 사람 — 제목(Bodoni Moda Bold 9pt) · 이름 줄(Noto 350 7.5pt) — 고정 글
+        st += need_font("BodoniModa-Bold.ttf")
         for e in [e for e in texts if e["size"] < 1.5]:
             s0 = el_line(sp, e)
             st += T(dict(s0, size=9.0), BODONI, 700, label=f"만든 사람 제목 — {e['text']}")
@@ -480,7 +494,7 @@ def cover(pno, name):
                    "h": round(7.5 * MM * 1.05, 2), "color": r["color"], "see": r["color"], "ctol": 24, "pad": 0.6, "search": 0.6, "text": r["text"], "size": 7.5})
             top = round(top_of(rows[0]["base"], 7.5, NOTO, 400, lead), 2)
             st += text(round(rows[0]["x"], 2), top, 38.0, round(lead * MM * len(rows) + 2, 1), "\n".join(r["text"] for r in rows), 7.5, rows[0]["color"],
-                       label=f"「{hd['text']}」 이름 {len(rows)}줄", font=NOTO, leading=lead)
+                       label=f"「{hd['text']}」 이름 {len(rows)}줄", font=NOTO, weight=350, leading=lead)
     st += done(name, f"p{pno}.png")
     return st
 

@@ -164,6 +164,7 @@
         "frame": {"type": "object", "additionalProperties": false, "description": "글상자 칠·획·모서리(인디자인 텍스트 프레임의 칠·획) — 안쪽 여백(inset)을 둘러 그린다. 자동 크기 조정이 켜져 있으면 글을 따라 자라고 줄어든다",
                   "properties": {"fill": {"$ref": "#/definitions/token", "description": "칠"}, "stroke": {"$ref": "#/definitions/stroke", "description": "획 — w·color 만 쓴다(가장자리 가운데)"}, "radius": {"$ref": "#/definitions/radius", "description": "모서리 반지름 mm — 하나 또는 [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래]"}}},
         "h_scale": {"type": "number", "minimum": 1, "description": "장평 가로 % (인디자인 수평 비율). 없으면 100"},
+        "opsz": {"type": "number", "minimum": 1, "maximum": 1000, "description": "광학 크기(가변 서체 opsz 축 — 인디자인 문자 패널의 가변 서체 축). 없으면 브라우저가 글 크기로 자동"},
         "v_scale": {"type": "number", "minimum": 1, "description": "장평 세로 % (인디자인 수직 비율). 없으면 100"},
         "baseline": {"$ref": "#/definitions/pt", "description": "기준선 이동 pt — 양수면 위로"},
         "kerning": {"enum": ["metrics", "none"], "description": "커닝 — metrics(기본) 또는 끄기"},
