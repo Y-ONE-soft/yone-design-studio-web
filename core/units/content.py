@@ -79,10 +79,12 @@ def plan_pages(plan, pages_by_id, content=None):
 
 
 def _slot(it):
-    """글상자의 자리 이름. 글 잇기의 이어지는 상자(story_seq ≥ 2)는 자리가 아니다 — 이야기 하나 = 자리 하나, 원고는 첫 상자에만."""
+    """글상자 · 그림 칸의 자리 이름. 글 잇기의 이어지는 상자(story_seq ≥ 2)는 자리가 아니다 — 이야기 하나 = 자리 하나, 원고는 첫 상자에만."""
     from core.units.render import story_cont
     a = it.get("atom") or {}
     b = (a.get("bind") or "").strip()
+    if b and not b.startswith("sys.") and a.get("t") == "image":          # 그림 칸 자리 — 원고 값 = 그림 주소(http · data:) (인디자인 데이터 병합 이미지 필드)
+        return b
     return b if b and not b.startswith("sys.") and a.get("t") == "text" and not story_cont(a) else None
 
 

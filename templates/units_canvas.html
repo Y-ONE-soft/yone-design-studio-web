@@ -2222,6 +2222,8 @@ function side() {
         <select data-a="src" title="이 브랜드에 등록된 그림"><option value="">없음</option>${Object.keys((sk.images || {})).map(k => `<option value="${esc(k)}" ${a.src === k ? "selected" : ""}>${esc(k)}</option>`).join("")}</select></span></div>
         <div class="f"><span>클리핑 패스</span><input type="text" data-a="clip" value="${esc(a.clip || "")}" placeholder="M L C Q Z · 0~1 비율 — 이 모양으로 오려 낸다"></div>
         <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
+        <div class="f"><span title="원고 자리 — 원고가 이 이름으로 그림(주소 · data:)을 보내면 이 칸에 들어간다(인디자인 데이터 병합 이미지 필드). 비우면 고른 그림 그대로">원고 자리</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="없음 — 고른 그림" spellcheck="false"></div>
+        <div class="f"><span title="인디자인 프레임 맞춤 옵션의 기준점 — 비율대로 맞춘 그림을 틀의 어디에 붙이나">기준점</span><select data-a="fit_at">${[["tl", "왼쪽 위"], ["t", "위 가운데"], ["tr", "오른쪽 위"], ["l", "왼쪽 가운데"], ["c", "가운데"], ["r", "오른쪽 가운데"], ["bl", "왼쪽 아래"], ["b", "아래 가운데"], ["br", "오른쪽 아래"]].map(([v, n]) => `<option value="${v}" ${(a.fit_at || "c") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
 `;
       h += `<details class="more" ${view.adv ? "open" : ""}><summary>모양 더 보기 — 개체 스타일 · 회전 · 불투명 · 그림자 · 감싸기</summary>
@@ -2394,6 +2396,7 @@ function side() {
     else if (k === "fold") { const g = String(v || "").trim(); if (g) a.fold = g; else delete a.fold; }      // 접기 묶음 이름
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
     else if (k === "fit") { if (v === "cover") a.fit = "cover"; else delete a.fit; }
+    else if (k === "fit_at") { if (v && v !== "c") a.fit_at = v; else delete a.fit_at; }   // 맞춤 기준점(없으면 가운데)
     else if (k === "d") { if (v) a.d = v; }
     else if (k === "grad") { if (v) a.gradient = {type: "linear", angle: 90, stops: [{c: a.fill || "$s1"}, {c: "$white"}]}; else delete a.gradient; }
     else if (k.startsWith("grad.")) { const g = a.gradient; if (!g) return; const kk = k.slice(5); if (kk === "c0") g.stops[0].c = v || "$ink"; else if (kk === "c1") g.stops[g.stops.length - 1].c = v || "$white"; else if (kk === "angle") g.angle = v; else if (kk === "type") { g.type = v; if (v === "radial") delete g.angle; } }

@@ -283,7 +283,7 @@
         "src": {"type": "string", "description": "옷의 images 키. 옷마다 파일을 바꿔 끼운다"},
         "bind": {"$ref": "#/definitions/bind"},
         "clip": {"type": "string", "pattern": "^[MLCQZmlcqz0-9 .,-]+$", "description": "클리핑 패스 — 0~1 비율 path. 이 모양으로 그림을 오려 낸다(인디자인 클리핑 패스)"},
-        "fit": {"enum": ["contain", "cover"], "description": "contain = 틀 안에 다 보이게(기본) · cover = 틀을 채우고 넘치는 쪽을 자른다(인디자인 '비율에 맞게 프레임 채우기')"},
+        "fit": {"enum": ["contain", "cover"], "description": "contain = 틀 안에 다 보이게(기본) · cover = 틀을 채우고 넘치는 쪽을 자른다(인디자인 '비율에 맞게 프레임 채우기')"}, "fit_at": {"enum": ["tl", "t", "tr", "l", "c", "r", "bl", "b", "br"], "description": "맞춤 기준점(인디자인 프레임 맞춤 옵션의 기준점) — 비율대로 맞춘 그림을 틀의 어디에 붙이나. 없으면 c(가운데)"},
         "img": {"$ref": "#/definitions/box", "description": "틀(x y w h) 안에서 그림 전체가 놓인 자리 — 틀의 왼쪽 위 기준 mm, 음수·틀보다 큰 값 가능. 틀 밖은 잘린다(인디자인의 프레임 안 그래픽). 있으면 fit 은 안 쓴다"},
         "rotate": {"$ref": "#/definitions/rotate"}, "opacity": {"$ref": "#/definitions/opacity"},
         "tint": {"type": "number", "minimum": 0, "maximum": 100, "description": "채움 색조 % (인디자인 Tint). 없으면 100"},

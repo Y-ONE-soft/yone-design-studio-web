@@ -210,9 +210,11 @@ CS = {
 }
 
 
-def analysis(pno, gubun, cs_name):
-    """분석 면 — 출처 꼬리표 · 지문(꾸밈 조각 · 윗주) · TRANSLATION · 해석 · 꼬리. 원고 덩어리 = 출처 · 지문 · 해석"""
-    st = pg_new(pno, f"② 분석 면 · {gubun} — 원본 {pno}쪽", name=f"분석 면 · {gubun}")
+def analysis(pno, gubun, cs_name, pic=False):
+    """분석 면 — 출처 꼬리표 · 지문(꾸밈 조각 · 윗주) · TRANSLATION · 해석 · 꼬리. 원고 덩어리 = 출처 · 지문 · 해석.
+    pic = 삽화 면 — 왼쪽 아래 그림 칸(원고 자리 「그림」) · PICTURE 꼬리표 · 해석은 그림 오른쪽"""
+    face_name = f"분석 면 · {'삽화 · ' if pic else ''}{gubun}"
+    st = pg_new(pno, f"{'⑤' if pic else '②'} {face_name} — 원본 {pno}쪽", name=face_name)
     for n, props in CS.items():
         st += need_cstyle(n, props)
     el, sp = els(pno), spans(pno)
@@ -234,16 +236,18 @@ def analysis(pno, gubun, cs_name):
            F('#side input[data-it="x"]', round(tag["x"], 2))]                # 칠은 상자 가장자리에 — 상자 = 꼬리표 왼쪽 끝, 글은 안쪽 여백만큼 안
     st += _color("frame.fill", tag["fill"]) + [F('#side input[data-a="frame.radius"]', 1.0), F('#side input[data-a="inset4"]', f"0 {rpad} 0 {lpad}")]
     # 지문 — 한 글상자. 단락 스타일 「분석 지문」(Noto Sans CJK KR 9pt · 양끝맞춤), 꾸밈은 조각의 문자 스타일, 문장 성분 · 서술형★ 은 윗주
-    rows = sorted({round(s["base"], 2) for s in sp if s["size"] == 9.0 and 20 < s["base"] < 150})
+    ln = next(e for e in el if e["k"] == "rect" and abs(e["w"] - 115) < 1 and e["h"] < 0.5 and e["y"] > 140)   # TRANSLATION 구분선(삽화 면은 더 위)
+    lim = ln["y"] - 2
+    rows = sorted({round(s["base"], 2) for s in sp if s["size"] == 9.0 and 20 < s["base"] < lim})
     lead = round(sorted(b - a for a, b in zip(rows, rows[1:]))[len(rows) // 2 - 1], 3)       # 줄 간격 가운데 값(mm)
     last = line_of(sp, rows[-1])
     LEAD = round(lead / MM, 2)
     st += need_pstyle("분석 지문", {"font": NOTO, "weight": 400, "size": 9.0, "leading": LEAD, "color": "#000000", "align": "justify",
                                  "tracking": track_of(dict(last, size=9.0), NOTO, 400)})
-    body = [s for s in sp if 20 < s["base"] < 150]
+    body = [s for s in sp if 20 < s["base"] < lim]
     Eslot(body, "#000000", label="지문")
     ptop = round(top_of(rows[0], 9.0, NOTO, 400, LEAD), 2)
-    st += text(15.0, ptop, 115.0, round(150.0 - ptop, 1), "Temporary passage text for styling the analysis page.", 9.0, "#000000",
+    st += text(15.0, ptop, 115.0, round(lim - ptop, 1), "Temporary passage text for styling the analysis page.", 9.0, "#000000",
                label="지문 — 한 글상자(원고만큼)", font=NOTO, leading=LEAD, align="justify")
     st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
     st += slot("지문", label="자리 — 지문(꾸밈 조각)")
@@ -263,23 +267,36 @@ def analysis(pno, gubun, cs_name):
            {"pick": {"at": '#side select[data-a="ruby.align"]', "value": "center"}, "wait": 700}]
     # TRANSLATION — 구분선 · 꼬리표 칸 · 이름표(고정)
     st += [S("TRANSLATION — 구분선 · 꼬리표", 1000)]
-    ln = find(el, "rect", 15.0, 155.4)
     st += rbox(ln["x"], ln["y"], ln["w"], ln["h"], ln["fill"])
-    tg = find(el, "rect", 114.0, 152.7)
-    st += rbox(tg["x"], tg["y"], tg["w"], tg["h"], tg["fill"])
-    st += T(next(s for s in sp if s["text"] == "TRANSLATION"), HAK, 300)
-    ELEMS[len(PAGES)][-1].update(pad=0.2, search=0.2)                    # 밝은 글 — 둘레를 넓게 보면 칸 색이 섞인다
+    for tg in sorted([e for e in el if e["k"] == "rect" and abs(e["w"] - 16) < 0.5 and abs(e["h"] - 2.7) < 0.2], key=lambda e: e["x"]):
+        st += rbox(tg["x"], tg["y"], tg["w"], tg["h"], tg["fill"])
+    for word in (("PICTURE", "TRANSLATION") if pic else ("TRANSLATION",)):
+        st += T(next(s for s in sp if s["text"] == word), HAK, 300)
+        ELEMS[len(PAGES)][-1].update(pad=0.2, search=0.2)                # 밝은 글 — 둘레를 넓게 보면 칸 색이 섞인다
+    if pic:
+        # 그림 칸 — 원고 자리 「그림」. 원본 그림 크기는 지문마다 다르다(44쪽 삽화 45.9 정사각 · 64쪽 그래프 59.6×35.5) — 둘 다 담는 칸
+        # (12.9, 149.1 · 59.6×45.9)에 비율대로 맞추고 위 가운데에 붙인다(44쪽 삽화 x 19.8 = 칸 가운데, 64쪽 그래프 y = 칸 위)
+        im = next(e for e in el if e["k"] == "image")
+        FX, FY, FW, FH = 12.9, round(im["y"], 2), 59.6, 45.9
+        E({"id": f"g{len(ELEMS[len(PAGES)])}", "x": round(im["x"], 2), "y": round(im["y"], 2), "w": round(im["w"], 2), "h": round(im["h"], 2),
+           "color": "auto", "see": "auto", "pad": 1.0, "ctol": 40, "원고": True})
+        st += [S("그림 칸 — 원고 자리 「그림」 · 틀 안에 다 보이게 · 기준점 위 가운데", 1300),
+               {"draw": {"tool": "image", "from": mkpage.SPOT, "to": {"mm": [mkpage.SPOT["mm"][0] + 40, mkpage.SPOT["mm"][1] + 25]}}, "wait": 750}]
+        st += [F('#side input[data-a="w"]', FW), F('#side input[data-a="h"]', FH), F('#side input[data-it="x"]', FX), F('#side input[data-it="y"]', FY),
+               F('#side input[data-a="bind"]', "그림", 900), {"pick": {"at": '#side select[data-a="fit_at"]', "value": "t"}, "wait": 800}]
     # 해석 — 한 글상자, 「분석 해석」(Pretendard 500 5.9pt)
-    trows = sorted({round(s["base"], 2) for s in sp if s["size"] == 5.9 and s["base"] > 155})
+    trows = sorted({round(s["base"], 2) for s in sp if s["size"] == 5.9 and s["base"] > ln["y"]})
     tl = round(sorted(b - a for a, b in zip(trows, trows[1:]))[len(trows) // 2 - 1], 3) if len(trows) > 1 else 3.2
     TLD = round(tl / MM, 2)
     tlast = line_of(sp, trows[-2] if len(trows) > 1 else trows[-1])    # 끝 줄이 아주 짧으면 자간이 튄다 — 그 앞 줄은 양끝맞춤이라 끝 줄만
     tlast = line_of(sp, trows[-1])
     st += need_pstyle("분석 해석", {"font": PRE, "weight": 500, "size": 5.9, "leading": TLD, "color": "#4d4d4d", "align": "justify",
                                  "tracking": track_of(dict(tlast, size=5.9), PRE, 500) if len(tlast["text"]) > 6 else 0})
-    Eslot([s for s in sp if s["size"] == 5.9 and s["base"] > 155], "#4d4d4d", label="해석")
+    tsp = [s for s in sp if s["size"] == 5.9 and s["base"] > ln["y"]]
+    Eslot(tsp, "#4d4d4d", label="해석")
     ttop = round(top_of(trows[0], 5.9, PRE, 500, TLD), 2)
-    st += text(15.0, ttop, 115.0, round(196.0 - ttop, 1), "임시 해석 글이 이 칸에 들어온다.", 5.9, "#4d4d4d", label="해석 — 한 글상자", font=PRE, leading=TLD, align="justify")
+    tx = round(min(s["x"] for s in tsp), 2)                             # 삽화 면은 그림 오른쪽(74mm)부터
+    st += text(tx, ttop, round(130.0 - tx, 1), round(196.0 - ttop, 1), "임시 해석 글이 이 칸에 들어온다.", 5.9, "#4d4d4d", label="해석 — 한 글상자", font=PRE, leading=TLD, align="justify")
     st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
     st += slot("해석", label="자리 — 해석")
     st += [{"pick": {"at": '#side select[data-a="style"]', "value": "분석 해석"}, "wait": 700}]
@@ -291,10 +308,14 @@ def analysis(pno, gubun, cs_name):
         ELEMS[len(PAGES)][-1]["원고"] = True
     s_bk = line_of([s for s in sp if s["base"] > 190 and s["color"] == "#000000"], next(s["base"] for s in sp if s["base"] > 190 and s["color"] == "#000000"))
     st += T(s_bk, EL, 500, label="책 이름 — 원고 자리 「책이름」", slot_name="책이름", temp="POCKET BOOK 책 이름", w=50)
-    st += done(f"분석 면 {gubun}", f"p{pno}.png")
-    # 견본 원고 한 벌 — 원고 덩어리 그대로(면 이름 → [덩어리 …], 「원고마다」 면의 레코드). 덩어리 = 출처 · 지문(꾸밈 조각) · 해석
-    it = first(lambda x: "지문" in x and "그림" not in x, gubun)
-    CONTENT[f"분석 면 · {gubun}"] = [{"출처": it["출처"], "지문": [it["지문"]], "해석": it["해석"], "책이름": SRC["book"]["책이름"]}]   # 글 하나 자리에 조각 = [[조각 …]]
+    st += done(face_name, f"p{pno}.png")
+    # 견본 원고 한 벌 — 원고 덩어리 그대로(면 이름 → [덩어리 …], 「원고마다」 면의 레코드). 덩어리 = 출처 · 지문(꾸밈 조각) · 해석 (· 그림)
+    it = first(lambda x: "지문" in x and ("그림" in x) == pic and x["_원본쪽"][0] == pno, gubun)
+    rec = {"출처": it["출처"], "지문": [it["지문"]], "해석": it["해석"], "책이름": SRC["book"]["책이름"]}   # 글 하나 자리에 조각 = [[조각 …]]
+    if pic:                                                              # 그림 = 주소 — 시험용은 원고_뽑기 가 잘라 둔 그림 파일을 data: 로
+        import base64
+        rec["그림"] = "data:image/png;base64," + base64.b64encode(open(os.path.join(HERE, it["그림"]), "rb").read()).decode()
+    CONTENT[face_name] = [rec]
     return st
 
 
@@ -401,6 +422,9 @@ st += expect_pages(1)
 if want(2):
     st += analysis(2, "교과서", "분석 면")
     st += analysis(42, "모의고사", "분석 면")
+
+if want(5):
+    st += analysis(44, "모의고사", "분석 면", pic=True)
 
 if want(4):
     st += memorize(12, "교과서")

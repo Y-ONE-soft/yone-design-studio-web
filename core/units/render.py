@@ -317,6 +317,14 @@ def font_ascent(family, weight=400):
     return _ASC[key]
 
 
+def _fit_align(a):
+    """그림 맞춤 기준점(인디자인 프레임 맞춤 옵션) → SVG preserveAspectRatio 정렬. tl·t·tr·l·c·r·bl·b·br, 없으면 가운데"""
+    at = a.get("fit_at") or "c"
+    x = "xMin" if "l" in at else "xMax" if "r" in at else "xMid"
+    y = "YMin" if at[0] == "t" else "YMax" if at[0] == "b" else "YMid"
+    return x + y
+
+
 def char_css(cs, ctx=None):
     """문자 스타일(인디자인 문자 스타일) → 인라인 CSS. 서체·크기 pt·색·굵기·기울임·자간 ‰·기준선 pt·밑줄(모양·굵기·내림·색 mm)·바탕(여백·모서리 mm).
     바탕 = 인디자인에서 굵게 올린 밑줄로 까는 형광 — 여백은 바깥으로만 넓혀 글 자리는 그대로 둔다."""
@@ -1542,6 +1550,10 @@ def part_svg(ctx, part, values=None, types=None, width=None):
                 dh += d                                           # 감싸는 상자 → 늘인다
         if a.get("t") == "text":
             h = heights.get(i, h)
+        if a.get("t") == "image" and a.get("bind") and not str(a["bind"]).startswith("sys."):   # 그림 칸 원고 자리 — 값(그림 주소)이 있으면 그 그림, 없으면 빈 칸
+            v = values.get(a["bind"])
+            v = (v[0] if v else "") if isinstance(v, list) else v
+            a = dict(a, _src=v if isinstance(v, str) and v.startswith(("data:image/", "http://", "https://", "/")) else "")
         svg = _atom_svg(ctx, a, dy, h + dh, content.get(i))
         if tag:                                                   # 설계 자리(y·높이) · 서버가 민 만큼 · 지금 높이 — 브라우저가 실제 글 높이로 바로잡을 때 쓴다
             x0 = min(a["x1"], a["x2"]) if a.get("t") == "line" else float(a.get("x") or 0)
@@ -1706,6 +1718,14 @@ def _atom_svg_raw(ctx, a, dy, h, html):
         el = lambda at: f'<ellipse cx="{cx0:.3f}" cy="{cy0:.3f}" rx="{rx0:.3f}" ry="{ry0:.3f}" {at}/>'
         return _aligned_shape(ctx, a, el, (a["x"], a["y"] + dy, a["w"], h))
     if t == "image":
+        if "_src" in a:                                         # 원고 그림(자리 값) — 맞춤 · 기준점대로, 틀 밖은 자른다
+            if not a["_src"]:
+                return ""
+            cid = ctx.uid()
+            par = _fit_align(a) + (" slice" if a.get("fit") == "cover" else " meet")
+            return (f'<clipPath id="{cid}"><rect x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}"/></clipPath>'
+                    f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" href="{esc(a["_src"])}" '
+                    f'preserveAspectRatio="{par}" clip-path="url(#{cid})"/>')
         src = a.get("src") or ""
         if ctx.image(src):
             href = ctx.image_href(src) or f"/api/units/image/{esc(ctx.skin.get('id', ''))}/{esc(src)}"
@@ -1718,11 +1738,11 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                         f'href="{href}" preserveAspectRatio="none" clip-path="url(#{cid})"/>')
             if a.get("clip"):                                   # 클리핑 패스 — 이 모양으로 오려 낸다
                 cid2 = ctx.uid()
-                par2 = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
+                par2 = _fit_align(a) + (" slice" if a.get("fit") == "cover" else " meet")
                 return (f'<clipPath id="{cid2}"><path d="{path_d(a["clip"], a["x"], a["y"] + dy, a["w"], h)}"/></clipPath>'
                         f'<image x="{a["x"]}" y="{a["y"] + dy:.3f}" width="{a["w"]}" height="{h:.3f}" '
                         f'href="{href}" preserveAspectRatio="{par2}" clip-path="url(#{cid2})"/>')
-            par = "xMidYMid slice" if a.get("fit") == "cover" else "xMidYMid meet"
+            par = _fit_align(a) + (" slice" if a.get("fit") == "cover" else " meet")
             bx, by, bw, bh = _bleed_box(ctx, a["x"], a["y"] + dy, a["w"], h)          # 인쇄: 가장자리 그림은 도련까지
             return (f'<image x="{bx:.3f}" y="{by:.3f}" width="{bw:.3f}" height="{bh:.3f}" '
                     f'href="{href}" preserveAspectRatio="{par}"/>')
