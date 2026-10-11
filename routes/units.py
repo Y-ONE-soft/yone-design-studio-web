@@ -627,9 +627,10 @@ def register_design(plan_id, series, name, log=print):
     return {"series": series, "design": did, "pages": n, "url": f"/design/{series}/{did}"}
 
 
-def fill_svgs(lib, plan, data, ctx, drop_empty=False):
+def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
     """문서에 원고를 넣어 면 SVG 목록 — 「원고마다」 되풀이 · 넘치면 덧쪽까지. → (svgs, 넣은 보고, 문서 판형)
-    drop_empty = 원고가 하나도 안 들어간 「원고마다」 쪽은 뺀다(바깥 원고로 찍을 때 — 지문 1개면 펼침면 오른쪽 빈 쪽이 안 나온다)"""
+    drop_empty = 원고가 하나도 안 들어간 「원고마다」 쪽은 뺀다(바깥 원고로 찍을 때 — 지문 1개면 펼침면 오른쪽 빈 쪽이 안 나온다)
+    recs = 목록을 주면 면마다 그 면이 받은 레코드(없으면 None, 덧쪽도 None)를 채운다 — 조판 결과 화면에서 고친 글을 원고 자리로 되돌릴 때"""
     pages, report = content.fill(_plan_pages(lib, plan, data), data, _width_of(lib, plan))
     if drop_empty:
         def empty(pg):
@@ -643,6 +644,8 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False):
     for pi, pg in enumerate(pages):
         for p2 in [pg] + spares.get(pi, []):
             svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2), pno=len(svgs) + _pstart(plan))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게) · 쪽 번호 = 몇째 면
+            if recs is not None:
+                recs.append(pg.get("_rec") if p2 is pg else None)
     return svgs, report, spec
 
 

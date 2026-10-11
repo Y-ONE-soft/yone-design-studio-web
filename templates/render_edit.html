@@ -4,113 +4,123 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ title }} · 조판 결과</title>
+<style>{{ font_css|safe }}</style>
 <style>
-  /* 조판 결과 확인(routes/api_v1.render_edit) — 왼쪽 찍은 쪽, 오른쪽 원고 글 칸. 원고만 고친다(틀은 편집기에서). */
+  /* 조판 결과 확인(routes/api_v1.render_edit) — 찍은 쪽을 그대로 그리고, 원고 자리 글을 그 자리에서 고친다.
+     칸에서 나오면 고친 원고로 다시 짠다(/svgs). 틀(디자인)·contents 의 원고는 안 바뀐다. */
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1f2430; background: #eef0f3; }
-  header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: #fff; border-bottom: 1px solid #dde1e7; }
-  header h1 { margin: 0; font-size: 15px; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  body { margin: 0; font: 14px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1f2430; background: #e9ecf0; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: #fff; border-bottom: 1px solid #dde1e7; }
+  header h1 { margin: 0; font-size: 15px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  header .hint { flex: 1; font-size: 12.5px; color: #6b7382; }
   header .st { font-size: 12.5px; color: #6b7382; }
-  .btn { border: 1px solid #cbd1da; background: #fff; border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; color: inherit; text-decoration: none; }
-  .btn.main { background: #1f2a44; border-color: #1f2a44; color: #fff; }
+  .btn { border: 1px solid #cbd1da; background: #fff; border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; color: inherit; }
   .btn:disabled { opacity: .5; cursor: default; }
-  main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 16px; padding: 16px 18px; align-items: start; }
-  .pages { display: flex; flex-direction: column; align-items: center; gap: 16px; }
-  .pages img { width: 100%; max-width: 900px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
-  .pages .wait { padding: 60px 0; color: #6b7382; }
-  aside { position: sticky; top: 64px; max-height: calc(100vh - 80px); overflow: auto; background: #fff; border: 1px solid #dde1e7; border-radius: 12px; padding: 14px; }
-  aside h2 { margin: 0 0 4px; font-size: 14px; }
-  aside .note { margin: 0 0 12px; font-size: 12px; color: #6b7382; }
-  .grp { border-top: 1px solid #eceff3; padding-top: 10px; margin-top: 10px; }
-  .grp h3 { margin: 0 0 8px; font-size: 12.5px; color: #6b7382; }
-  label { display: block; font-size: 12px; font-weight: 700; color: #6b7382; margin: 8px 0 3px; }
-  input, textarea { width: 100%; border: 1px solid #cbd1da; border-radius: 8px; padding: 6px 8px; font: 13px/1.5 inherit; font-family: inherit; color: inherit; }
-  textarea { min-height: 120px; resize: vertical; }
-  @media (max-width: 900px) { main { grid-template-columns: 1fr; } aside { position: static; max-height: none; } }
+  #pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px; }
+  #pages .wait { padding: 60px 0; color: #6b7382; }
+  .p { width: min(100%, 900px); background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .p > svg { display: block; width: 100%; height: auto; }
+  #pages.busy { opacity: .55; pointer-events: none; }
+  [data-edit] { cursor: text; border-radius: 1px; }
+  [data-edit]:hover { outline: .4px dashed #4f7cff; }
+  [data-edit]:focus { outline: .6px solid #4f7cff; background: rgba(79,124,255,.06); }
 </style>
 </head>
 <body>
 <header>
   <h1>{{ title }}</h1>
+  <span class="hint">글을 눌러 바로 고치세요 — 칸 밖을 누르면 다시 짭니다</span>
   <span class="st" id="st"></span>
-  <a class="btn" id="pdf" target="_blank" rel="noopener" hidden>PDF</a>
-  <button class="btn main" id="redraw">다시 그리기</button>
+  <button class="btn" id="pdf">PDF</button>
 </header>
-<main>
-  <section class="pages" id="pages"><p class="wait">조판 중…</p></section>
-  <aside>
-    <h2>원고</h2>
-    <p class="note">여기서 고친 글로 다시 그립니다. 틀(디자인)과 contents 의 원고는 바뀌지 않습니다.</p>
-    <form id="form"></form>
-  </aside>
-</main>
+<section id="pages"><p class="wait">조판 결과를 불러오는 중…</p></section>
+<script src="/static/js/units_compose.js"></script>
 <script>
 const JID = {{ jid|tojson }};
-const CONTENT = {{ content_json|safe }};
 const API = "/api/v1/renders/";
 const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+let content = null;
+const norm = (t) => String(t || "").replace(/[⁠​]/g, "").replace(/\s+/g, " ").trim();
 
-// 원고 꼴 그대로 글 칸을 만든다 — 맨 위 글(교재명 등) · 구성마다 레코드(한 벌) · 레코드 안 목록은 같은 차례끼리 묶어(지문 번호 + 지문)
-function field(path, v) {
-  const long = String(v).length > 60 || String(v).includes("\n");
-  return long ? `<textarea data-p='${esc(JSON.stringify(path))}'>${esc(v)}</textarea>`
-              : `<input data-p='${esc(JSON.stringify(path))}' value="${esc(v)}">`;
-}
-function build() {
-  let h = "";
-  const top = Object.entries(CONTENT).filter(([, v]) => typeof v === "string");
-  if (top.length) h += `<div class="grp"><h3>책</h3>${top.map(([k, v]) => `<label>${esc(k)}</label>${field([k], v)}`).join("")}</div>`;
-  for (const [k, recs] of Object.entries(CONTENT)) {
-    if (!Array.isArray(recs)) continue;
-    recs.forEach((rec, r) => {
-      if (!rec || typeof rec !== "object") return;
-      h += `<div class="grp"><h3>${esc(k)}${recs.length > 1 ? ` · ${r + 1}벌` : ""}</h3>`;
-      const lists = Object.entries(rec).filter(([, v]) => Array.isArray(v));
-      for (const [f, v] of Object.entries(rec)) if (!Array.isArray(v) && typeof v !== "object") h += `<label>${esc(f)}</label>${field([k, r, f], v)}`;
-      const n = Math.max(0, ...lists.map(([, v]) => v.length));
-      for (let i = 0; i < n; i++)
-        for (const [f, v] of lists) if (i < v.length && typeof v[i] !== "object") h += `<label>${esc(f)} ${i + 1}</label>${field([k, r, f, i], v[i])}`;
-      h += `</div>`;
-    });
-  }
-  $("#form").innerHTML = h;
-}
-function collect() {
-  const c = JSON.parse(JSON.stringify(CONTENT));
-  document.querySelectorAll("[data-p]").forEach((e) => {
-    const p = JSON.parse(e.dataset.p);
-    let o = c;
-    for (let i = 0; i < p.length - 1; i++) o = o[p[i]];
-    o[p[p.length - 1]] = e.value;
-  });
-  return c;
-}
-async function status(jid) { return (await fetch(API + jid)).json(); }
-async function show(jid) {
-  for (;;) {
-    const s = await status(jid);
-    if (s.status === "queued" || s.status === "running") { $("#st").textContent = `조판 중… ${Math.round(s.elapsed || 0)}초`; await new Promise((r) => setTimeout(r, 1500)); continue; }
-    if (s.status !== "done" && s.status !== "done_warn") { $("#st").textContent = "조판 실패" + (s.error ? " — " + s.error : ""); $("#pages").innerHTML = ""; return; }
-    const n = (s.result || {}).pages || 0;
-    $("#st").textContent = `${n}쪽`;
-    $("#pages").innerHTML = Array.from({length: n}, (_, i) => `<img src="${API}${jid}/pages/${i + 1}.png?dpi=150" alt="${i + 1}쪽">`).join("");
-    const main = (s.result || {}).main_pdf;
-    if (main) { $("#pdf").href = `${API}${jid}/files/${encodeURIComponent(main)}`; $("#pdf").hidden = false; }
-    return;
-  }
-}
-$("#redraw").addEventListener("click", async () => {
-  $("#redraw").disabled = true;
+async function draw(next) {
+  $("#pages").classList.add("busy");
+  $("#st").textContent = next ? "다시 짜는 중…" : "";
+  const y = window.scrollY;
   try {
-    const r = await fetch(API + JID + "/content", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content: collect()})});
+    const r = await fetch(API + JID + "/svgs", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(next ? {content: next} : {})});
     const j = await r.json();
-    if (!r.ok) { $("#st").textContent = j.error || "다시 그리지 못했습니다"; return; }
-    location.replace(API + j.job + "/edit");                            // 새 찍기의 화면으로 — 고친 원고가 그 찍기의 원고
-  } finally { $("#redraw").disabled = false; }
+    if (!r.ok) { $("#st").textContent = j.error || "불러오지 못했습니다(결과가 지워졌으면 contents 에서 다시 테스트 생성)"; return; }
+    content = j.content;
+    $("#pages").innerHTML = j.svgs.map((s, i) => `<div class="p" data-i="${i}">${typeof s === "string" ? s : s.svg}</div>`).join("");
+    $("#pages").querySelectorAll(".p > svg").forEach((s) => { s.removeAttribute("width"); s.removeAttribute("height"); });
+    if (document.fonts) await document.fonts.ready;
+    if (window.unitsCompose) window.unitsCompose($("#pages"));
+    wire(j.recs);
+    $("#st").textContent = `${$("#pages").querySelectorAll(".p").length}쪽`;
+    window.scrollTo(0, y);
+  } finally { $("#pages").classList.remove("busy"); }
+}
+
+// 쪽마다 받은 레코드의 목록 자리(지문번호·지문 …)를 화면 차례대로 짝짓는다 — 빈 값은 접혀 안 그려지므로 건너뛴다
+function wire(recs) {
+  const next = {};
+  document.querySelectorAll("#pages .p").forEach((pg) => {
+    const at = recs[+pg.dataset.i];
+    if (!at) return;
+    const [k, r] = at, rec = (content[k] || [])[r];
+    if (!rec) return;
+    pg.querySelectorAll("div[data-slot]:not([data-story])").forEach((el) => {
+      const f = el.dataset.slot, v = rec[f];
+      if (!Array.isArray(v)) return;                                    // 목록 자리만 — 한 벌 전체에 걸리는 글(제목)은 틀 몫
+      const key = `${k}\u0000${r}\u0000${f}`;
+      let i = next[key] || 0;
+      while (i < v.length && !norm(v[i])) i++;
+      if (i >= v.length) return;
+      next[key] = i + 1;
+      el.dataset.edit = JSON.stringify([k, r, f, i]);
+      el.contentEditable = "true";
+      el.spellcheck = false;
+    });
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.dataset && e.target.dataset.edit) { e.preventDefault(); e.target.blur(); }   // 한 자리 = 한 단락 — 줄 나눔은 짜기가 정한다
 });
-build();
-show(JID);
+document.addEventListener("focusout", (e) => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.edit) return;
+  const [k, r, f, i] = JSON.parse(el.dataset.edit);
+  const t = norm(el.innerText);
+  if (t === norm(content[k][r][f][i])) return;
+  const c = JSON.parse(JSON.stringify(content));
+  c[k][r][f][i] = t;
+  draw(c);
+});
+
+$("#pdf").addEventListener("click", async () => {
+  const b = $("#pdf");
+  b.disabled = true;
+  const w = window.open("about:blank", "_blank");
+  try {
+    const r = await fetch(API + JID + "/content", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "PDF 를 만들지 못했습니다");
+    for (;;) {
+      $("#st").textContent = "PDF 만드는 중…";
+      const s = await (await fetch(API + j.job)).json();
+      if (s.status === "queued" || s.status === "running") { await new Promise((x) => setTimeout(x, 1500)); continue; }
+      const main = (s.result || {}).main_pdf;
+      if (!main) throw new Error("PDF 를 만들지 못했습니다");
+      if (w) w.location = `${API}${j.job}/files/${encodeURIComponent(main)}`;
+      $("#st").textContent = `${(s.result || {}).pages || "?"}쪽`;
+      break;
+    }
+  } catch (err) { if (w) w.close(); $("#st").textContent = err.message; }
+  finally { b.disabled = false; }
+});
+
+draw();
 </script>
 </body>
 </html>

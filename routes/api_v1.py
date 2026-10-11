@@ -412,18 +412,45 @@ def _content_plan(pkg, content):
 
 @bp.route("/renders/<jid>/edit")
 def render_edit(jid):
-    """조판 결과 확인 — 왼쪽 찍은 쪽(크게), 오른쪽 원고 글 칸. 원고를 고쳐 「다시 그리기」 하면 같은 틀로 다시 찍는다(틀·contents 원고는 안 바뀐다)."""
+    """조판 결과 확인 — 찍은 쪽을 화면에 그리고(SVG), 원고 자리 글을 그 자리에서 바로 고친다. 고치면 /svgs 로 다시 짠다(틀·contents 원고는 안 바뀐다)."""
     from flask import render_template
     job = _find_job(jid)
     if not job or "editor" not in (job.meta.get("steps") or []):
         abort(404)
-    try:
-        with open(os.path.join(job.meta["book_dir"], "content.json"), encoding="utf-8") as f:
-            content = json.load(f)["content"]
-    except (OSError, ValueError, KeyError):
+    if not os.path.exists(os.path.join(job.meta["book_dir"], "content.json")):
         abort(410)                                                        # 찍기 폴더가 없다(서버 다시 켜짐 등) — contents 에서 다시 찍어야 한다
+    from core.units import fonts
     return render_template("render_edit.html", jid=jid, title=job.meta.get("stem") or "조판 결과",
-                           content_json=json.dumps(content, ensure_ascii=False).replace("</", "<\\/"))   # tojson 은 키를 정렬한다 — 자리 차례(지문번호 → 지문) 그대로
+                           font_css=fonts.fix_css() + fonts.face_css("url"))
+
+
+@bp.route("/renders/<jid>/svgs", methods=["POST"])
+def render_svgs(jid):
+    """조판 결과 화면의 쪽 그림 — {content?} 를 주면 그 원고로 바꿔 두고(찍기 폴더 content.json) 다시 짠다.
+    → {svgs, recs, content}: recs = 면마다 [구성, 몇째 벌] 또는 null(덧쪽·원고 없는 면) — 화면이 고친 글을 원고 자리로 되돌릴 때"""
+    from routes.units import _ctx, fill_svgs
+    job = _find_job(jid)
+    if not job or "editor" not in (job.meta.get("steps") or []):
+        abort(404)
+    p = os.path.join(job.meta["book_dir"], "content.json")
+    try:
+        with open(p, encoding="utf-8") as f:
+            saved = json.load(f)
+    except (OSError, ValueError):
+        abort(410)
+    content = (request.get_json(silent=True) or {}).get("content")
+    if content is not None:
+        if not isinstance(content, dict) or set(content) != set(saved["content"]):
+            return jsonify({"error": "원고 꼴이 처음 찍은 것과 다르다"}), 400
+        saved["content"] = content
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(saved, f, ensure_ascii=False)
+    content = saved["content"]
+    lib, plan, skin = _editor_lib(job.meta, content)
+    recs = []
+    svgs, _rep, _spec = fill_svgs(lib, plan, content, _ctx(lib, skin.get("id")), drop_empty=True, recs=recs)
+    where = lambda rec: next(([k, i] for k, v in content.items() if isinstance(v, list) for i, r in enumerate(v) if r == rec), None)
+    return jsonify({"svgs": svgs, "recs": [where(r) if r is not None else None for r in recs], "content": content})
 
 
 @bp.route("/renders/<jid>/content", methods=["POST"])
@@ -445,17 +472,15 @@ def render_redraw(jid):
     return jsonify({"job": new.id}), 202
 
 
-def _run_editor_render(job, log):
+def _editor_lib(meta, content):
+    """찍기의 틀(디자인 폴더 units.json) → (그리기 라이브러리, 원고가 온 구성만 남긴 문서, 브랜드). 틀 그림은 찍기 폴더에 풀어 절대 경로로"""
     import base64
     import copy
-    from core.units import content as _content, fonts as _fonts, pdf as _pdf, store
+    from core.units import fonts as _fonts, store
     from routes.catalog import _ddir
-    from routes.units import _ctx, fill_svgs
-    d, series, design = job.meta["book_dir"], job.meta["series"], job.meta["design"]
-    with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
+    d = meta["book_dir"]
+    with open(os.path.join(_ddir(meta["series"], meta["design"]), "units.json"), encoding="utf-8") as f:
         pkg = json.load(f)
-    with open(os.path.join(d, "content.json"), encoding="utf-8") as f:
-        content = json.load(f)["content"]
     skin = copy.deepcopy(pkg.get("skin") or {})
     img_dir = os.path.join(d, "_img")                                    # 틀 그림 — 이 작업 폴더에만 풀고 절대 경로로(편집기 그림 폴더와 섞지 않는다)
     os.makedirs(img_dir, exist_ok=True)
@@ -474,6 +499,16 @@ def _run_editor_render(job, log):
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
     lib = {"pages": list(pages_by.values()), "parts": pkg.get("parts") or [], "blocks": pkg.get("blocks") or [],
            "skins": [skin], "specs": list(specs.values()), "plans": [plan], "sets": []}
+    return lib, plan, skin
+
+
+def _run_editor_render(job, log):
+    from core.units import pdf as _pdf
+    from routes.units import _ctx, fill_svgs
+    d, series, design = job.meta["book_dir"], job.meta["series"], job.meta["design"]
+    with open(os.path.join(d, "content.json"), encoding="utf-8") as f:
+        content = json.load(f)["content"]
+    lib, plan, skin = _editor_lib(job.meta, content)
     log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
     svgs, rep, spec = fill_svgs(lib, plan, content, _ctx(lib, skin.get("id")), drop_empty=True)
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else ""))
