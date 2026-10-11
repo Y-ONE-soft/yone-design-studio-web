@@ -145,14 +145,14 @@ def load(pkg, into=None, name=None):
         for key, im in (pkg.get("images") or {}).items():
             os.makedirs(img_dir, exist_ok=True)
             data = base64.b64decode(im.get("b64") or "")
-            name = os.path.basename(im.get("name") or key)
-            stem, ext = os.path.splitext(name)
+            fname = os.path.basename(im.get("name") or key)            # ⚠ name 은 문서 이름(인자) — 그림 이름에 쓰면 문서 이름이 그림 파일 이름이 된다
+            stem, ext = os.path.splitext(fname)
             nk, n = key, 1
             same = lambda nm: open(os.path.join(img_dir, nm), "rb").read() == data
-            while os.path.exists(os.path.join(img_dir, name)) and not same(name) or (nk in have_imgs and have_imgs[nk] != f"_img/{name}"):
+            while os.path.exists(os.path.join(img_dir, fname)) and not same(fname) or (nk in have_imgs and have_imgs[nk] != f"_img/{fname}"):
                 n += 1
-                name, nk = f"{stem}_{n}{ext}", f"{key}_{n}"
-            path = os.path.join(img_dir, name)
+                fname, nk = f"{stem}_{n}{ext}", f"{key}_{n}"
+            path = os.path.join(img_dir, fname)
             if not os.path.exists(path):
                 with open(path, "wb") as fh:
                     fh.write(data)
@@ -160,7 +160,7 @@ def load(pkg, into=None, name=None):
                 imap[key] = nk
                 imgs = skin.setdefault("images", {})
                 imgs.pop(key, None)
-                imgs[nk] = f"_img/{name}"
+                imgs[nk] = f"_img/{fname}"
         if imap:
             def fix_img(d, k, v):
                 if k == "src" and v in imap and d.get("t") == "image":

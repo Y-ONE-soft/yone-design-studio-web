@@ -21,6 +21,10 @@ st = [S("관리 카드 「원고 넣기」 — 편집기에서 연다", 1500), {
       {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000},
       {"js": "(() => '열린 문서 쪽 ' + docPages().length + ' · 카드 ' + JSON.stringify(plan.catalog))()"}]
 st += join.name_steps(counts)
+DOCNAME = os.environ.get("RENAME_DOCNAME", "")                          # 문서 이름 바로잡기(2026-10-11 들여오기 버그로 「logo_back.svg」가 됐다)
+if DOCNAME:
+    st += [S(f"문서 이름 「{DOCNAME}」", 900), {"fill": {"at": "#plname", "value": DOCNAME}, "wait": 1500},
+           {"js": f"(() => {{ if (plan.name !== {json.dumps(DOCNAME)}) throw new Error('문서 이름 안 들어감 ' + plan.name); return '문서 이름 ' + plan.name; }})()"}]
 SKIN = os.environ.get("RENAME_SKIN", "base")                              # 문서 브랜드 — 비어 있으면 그 편집기의 첫 브랜드로 그린다(배포서버에서 스타일이 빠졌다 2026-10-11)
 st += [S(f"문서 패널 — 브랜드 「{SKIN}」", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
        {"pick": {"at": "#side #s-skin", "value": SKIN}, "wait": 1500},

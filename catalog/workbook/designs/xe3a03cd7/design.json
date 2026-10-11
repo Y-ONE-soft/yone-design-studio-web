@@ -1,10 +1,10 @@
 {
  "date": "2026-10-11",
- "name": "logo_back.svg",
+ "name": "스텝바이스텝 워크북 정본 (편집기 제작 최종)",
  "desc": "편집기 제작 · 31면",
- "source": "편집기: logo_back.svg",
+ "source": "편집기: 스텝바이스텝 워크북 정본 (편집기 제작 최종)",
  "made": "editor",
- "plan": "plan_fc4d8ebd",
+ "plan": "plan_cba33366",
  "units": "units.json",
  "pages": 31,
  "draft": false,
