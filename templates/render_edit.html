@@ -39,6 +39,7 @@
   <span class="hint">글을 눌러 바로 고치세요 — 칸 밖을 누르면 다시 짭니다</span>
   <span class="st" id="st"></span>
   <span class="seg" id="view"><button data-v="one">한 쪽</button><button data-v="two">두 쪽</button></span>
+  <button class="btn" id="merge" title="이 결과를 보통 쪽들로 펼쳐 편집기에서 쪽마다 손봅니다(인디자인 「병합된 문서 만들기」) — 틀은 그대로">편집기에서 손보기</button>
   <button class="btn" id="pdf">PDF</button>
 </header>
 <section id="pages"><p class="wait">조판 결과를 불러오는 중…</p></section>
@@ -126,6 +127,19 @@ $("#pdf").addEventListener("click", async () => {
     }
   } catch (err) { if (w) w.close(); $("#st").textContent = err.message; }
   finally { b.disabled = false; }
+});
+
+// 편집기에서 손보기 — 병합 문서를 만들어 이 창에서 편집기로 연다
+$("#merge").addEventListener("click", async () => {
+  const b = $("#merge");
+  b.disabled = true;
+  $("#st").textContent = "편집기 문서 만드는 중…";
+  try {
+    const r = await fetch(API + JID + "/merge", {method: "POST"});
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.url) throw new Error(j.error || "편집기 문서를 만들지 못했습니다");
+    location.href = j.url;
+  } catch (err) { $("#st").textContent = err.message; b.disabled = false; }
 });
 
 // 보기 — 한 쪽(세로로) / 두 쪽(펼침면). 고른 것은 이 브라우저에 기억

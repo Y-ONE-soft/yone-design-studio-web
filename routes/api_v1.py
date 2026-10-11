@@ -479,6 +479,54 @@ def render_source(jid):
     return send_file(p, mimetype="application/json")
 
 
+@bp.route("/renders/<jid>/merge", methods=["POST"])
+def render_merge(jid):
+    """조판 결과 → 편집기 문서(인디자인 「병합된 문서 만들기」) — 원고 글을 박은 보통 쪽들로 펼쳐 편집기에서 쪽마다 손본다.
+    틀(정본 카드)과는 끊긴 새 문서다. 같은 원고로 다시 누르면 만든 문서로 간다. → {plan, url}"""
+    import hashlib
+    from core.units import package, pdf as _pdf, store
+    from routes.units import _ctx, fill_svgs, merged_pages
+    from routes.catalog import _ddir
+    job = _find_job(jid)
+    if not job or "editor" not in (job.meta.get("steps") or []):
+        abort(404)
+    try:
+        with open(os.path.join(job.meta["book_dir"], "content.json"), encoding="utf-8") as f:
+            content = json.load(f)["content"]
+        with open(os.path.join(_ddir(job.meta["series"], job.meta["design"]), "units.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+    except (OSError, ValueError, KeyError):
+        abort(410)
+    key = hashlib.sha1(json.dumps(content, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:12]
+    done = job.meta.get("merged") or {}
+    if done.get("key") == key and store.by_id(store.load("plans")).get(done.get("plan")):
+        return jsonify({"plan": done["plan"], "url": f"/units?plan={done['plan']}"})
+    lib, plan, skin = _editor_lib(job.meta, content)
+    svgs, _rep, spec = fill_svgs(lib, plan, content, _ctx(lib, skin.get("id")), drop_empty=True)
+    tmp = os.path.join(job.meta["book_dir"], "_merge_count.pdf")             # 크롬이 빈 덧쪽을 지운 뒤 몇 쪽인가 — 펼칠 때 덧쪽을 그만큼만
+    _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), tmp, title="count")
+    import fitz
+    used = len(fitz.open(tmp))
+    pages = merged_pages(lib, plan, content, _ctx(lib, skin.get("id")), drop_empty=True, used=used)
+    for i, p in enumerate(pages):
+        p["id"] = f"merged_{i + 1}"
+        p.pop("cont", None)
+    doc = {k: v for k, v in plan.items() if k not in ("content", "catalog")}
+    doc["front"], doc["back"] = [], []
+    doc["sections"] = [{"id": "s1", "name": "본문", "pages": [{"page": p["id"], "repeat": "once"} for p in pages]}]
+    try:
+        with open(os.path.join(_ddir(job.meta["series"], job.meta["design"]), "design.json"), encoding="utf-8") as f:
+            dname = json.load(f).get("name") or job.meta["design"]
+    except (OSError, ValueError):
+        dname = job.meta["design"]
+    skin = dict(pkg.get("skin") or {}, id=f"{(pkg.get('skin') or {}).get('id') or 'base'}_{job.meta['design']}",   # 틀 브랜드 그대로 — 이 편집기의 같은 이름 브랜드 값이 끼어들지 않게
+                name=f"{dname} 브랜드")
+    doc["skin"] = skin["id"]
+    pid, _r = package.load(dict(pkg, plan=doc, pages=pages, skin=skin), name=f"조판 결과 · {job.meta.get('stem') or jid}")
+    job.meta["merged"] = {"key": key, "plan": pid}
+    return jsonify({"plan": pid, "url": f"/units?plan={pid}"})
+
+
 @bp.route("/renders/<jid>/svgs", methods=["POST"])
 def render_svgs(jid):
     """조판 결과 화면의 쪽 그림 — {content?} 를 주면 그 원고로 바꿔 두고(찍기 폴더 content.json) 다시 짠다.

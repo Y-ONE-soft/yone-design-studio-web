@@ -627,10 +627,9 @@ def register_design(plan_id, series, name, log=print):
     return {"series": series, "design": did, "pages": n, "url": f"/design/{series}/{did}"}
 
 
-def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
-    """문서에 원고를 넣어 면 SVG 목록 — 「원고마다」 되풀이 · 넘치면 덧쪽까지. → (svgs, 넣은 보고, 문서 판형)
-    drop_empty = 원고가 하나도 안 들어간 「원고마다」 쪽은 뺀다(바깥 원고로 찍을 때 — 지문 1개면 펼침면 오른쪽 빈 쪽이 안 나온다)
-    recs = 목록을 주면 면마다 그 면이 받은 레코드(없으면 None, 덧쪽도 None)를 채운다 — 조판 결과 화면에서 고친 글을 원고 자리로 되돌릴 때"""
+def _filled(lib, plan, data, ctx, drop_empty=False):
+    """원고를 넣은 쪽 차례 — 「원고마다」 되풀이 · 넘치면 덧쪽까지. → ([(쪽, 받은 레코드 또는 None, 덧쪽 이야기 또는 None)], 넣은 보고, 판형 고르기, 문서 판형)
+    drop_empty = 원고가 하나도 안 들어간 「원고마다」 쪽은 뺀다(바깥 원고로 찍을 때 — 지문 1개면 펼침면 오른쪽 빈 쪽이 안 나온다)"""
     pages, report = content.fill(_plan_pages(lib, plan, data), data, _width_of(lib, plan))
     if drop_empty:
         def empty(pg):
@@ -640,13 +639,70 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
     spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
     spec_of = lambda pg: store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
     spares = render.story_spares(ctx, pages, spec_of)                         # 넘치면 쪽 더하기 — 이야기가 끝나는 쪽 뒤에 덧쪽(빈 채면 크롬이 지운다)
-    svgs = []
+    out = []
     for pi, pg in enumerate(pages):
-        for p2 in [pg] + spares.get(pi, []):
-            svgs.extend(render.page_canvas_svgs(ctx, p2, spec_of(p2), pno=len(svgs) + _pstart(plan))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게) · 쪽 번호 = 몇째 면
-            if recs is not None:
-                recs.append(pg.get("_rec") if p2 is pg else None)
+        out.append((pg, pg.get("_rec"), None))
+        out += [(p2, None, p2.get("_spare")) for p2 in spares.get(pi, [])]
+    return out, report, spec_of, spec
+
+
+def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
+    """문서에 원고를 넣어 면 SVG 목록 — 「원고마다」 되풀이 · 넘치면 덧쪽까지. → (svgs, 넣은 보고, 문서 판형)
+    recs = 목록을 주면 면마다 그 면이 받은 레코드(없으면 None, 덧쪽도 None)를 채운다 — 조판 결과 화면에서 고친 글을 원고 자리로 되돌릴 때"""
+    seq, report, spec_of, spec = _filled(lib, plan, data, ctx, drop_empty)
+    svgs = []
+    for pg, rec, _ in seq:
+        svgs.extend(render.page_canvas_svgs(ctx, pg, spec_of(pg), pno=len(svgs) + _pstart(plan))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게) · 쪽 번호 = 몇째 면
+        if recs is not None:
+            recs.append(rec)
     return svgs, report, spec
+
+
+def _bake(ctx, pg, H):
+    """원고를 넣은 쪽 하나 → 보통 쪽(인디자인 「병합된 문서」의 한 쪽). 원고가 든 자리는 그 글을 고정 글로 박고 자리 연결을 끊는다.
+    접힌 묶음(빈 원고)은 빼고 그 띠만큼 아래 것을 당겨 둔다(render.place_items 와 같은 규칙). 쪽 번호 등 sys 자리는 그대로."""
+    import copy
+    folded, bands = render.fold_bands(pg)
+    items = []
+    for fi, it in enumerate(pg.get("items") or []):
+        if fi in folded:
+            continue
+        it = copy.deepcopy(it)
+        a = it.get("atom")
+        if a and a.get("bind") and not str(a["bind"]).startswith("sys."):
+            f = it.get("fields") or {}
+            if a["bind"] in f:
+                a["text"] = f[a["bind"]]
+            a.pop("bind", None)
+            it.setdefault("grow", True)                                   # 원고 자리였던 상자 — 글 길이만큼 자라 아래를 미는 것은 그대로(조판 결과와 같은 배치)
+        if a is not None:
+            it.pop("fields", None)
+        if bands and not render.is_fixed(ctx, it, pg, H):
+            x = float(it.get("x") or 0)
+            w = float(it.get("w") or (a or {}).get("w") or 0)
+            dy = sum(d for _, x0, x1, gb, d in bands if float(it.get("y") or 0) >= gb - 0.01 and x < x1 - 0.01 and x + w > x0 + 0.01)
+            if dy:
+                it["y"] = round(float(it.get("y") or 0) + dy, 3)
+        items.append({k: v for k, v in it.items() if not k.startswith("_")})
+    out = {k: v for k, v in pg.items() if not k.startswith("_")}
+    out["items"] = items
+    out["mirror"] = False                                                 # 조판 결과는 그린 그대로 찍는다(page_canvas_svgs) — 펼친 쪽도 홀짝으로 뒤집지 않는다
+    return out
+
+
+def merged_pages(lib, plan, data, ctx, drop_empty=False, used=None):
+    """인디자인 「병합된 문서 만들기」 — 원고를 넣은 결과를 보통 쪽들로 펼친다(편집기에서 쪽마다 손보게).
+    used = 실제로 찍힌 쪽 수(크롬이 빈 덧쪽을 지운 뒤) — 주면 남는 덧쪽을 뒤에서부터 덜어 맞춘다. → [쪽]"""
+    seq, _rep, spec_of, _spec = _filled(lib, plan, data, ctx, drop_empty)
+    if used is not None:
+        extra = len(seq) - int(used)
+        while extra > 0:
+            last = max((i for i, (_, _, sp) in enumerate(seq) if sp), default=None)
+            if last is None:
+                break
+            seq.pop(last)
+            extra -= 1
+    return [_bake(ctx, pg, float(spec_of(pg)["h"])) for pg, _, _ in seq]
 
 
 @bp.route("/api/units/fill", methods=["POST"])
