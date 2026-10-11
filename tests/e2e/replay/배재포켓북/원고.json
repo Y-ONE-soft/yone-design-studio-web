@@ -454,7 +454,11 @@
      "t": "m",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "amazing (X)",
+      "pos": "above"
+     }
     },
     {
      "t": "a",
@@ -606,7 +610,14 @@
       "pos": "below"
      }
     },
-    " th",
+    " t",
+    {
+     "t": "h",
+     "ruby": {
+      "t": "several Sam Lees",
+      "pos": "above"
+     }
+    },
     {
      "t": "e",
      "ruby": {
@@ -867,7 +878,11 @@
      "t": "r",
      "cs": [
       "빨강 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "interesting (X)",
+      "pos": "above"
+     }
     },
     {
      "t": "e",
@@ -1106,7 +1121,11 @@
      "t": "According",
      "cs": [
       "형광 분홍"
-     ]
+     ],
+     "ruby": {
+      "t": "a 42-year-old Canadian Sam Lee",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -2296,7 +2315,15 @@
       "pos": "below"
      }
     },
-    " to Singaporean Sam. He ",
+    " to Singaporean Sam. ",
+    {
+     "t": "He",
+     "ruby": {
+      "t": "Singaporean Sam",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "would",
      "cs": [
@@ -3364,7 +3391,15 @@
       "pos": "below"
      }
     },
-    " he ",
+    " ",
+    {
+     "t": "he",
+     "ruby": {
+      "t": "Singaporean Sam",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "had",
      "ruby": {
@@ -3501,7 +3536,11 @@
      "cs": [
       "빨강 글자",
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "hardly (X)",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -3646,17 +3685,10 @@
      "cs": [
       "형광 노랑"
      ],
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "below"
-      },
-      {
-       "t": "서술형★",
-       "pos": "above",
-       "cs": "서술형"
-      }
-     ]
+     "ruby": {
+      "t": "V",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -3695,7 +3727,11 @@
      "t": "him",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "Singaporean Sam",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -4620,7 +4656,14 @@
       "pos": "below"
      }
     },
-    "ink ",
+    {
+     "t": "in",
+     "ruby": {
+      "t": "(that)",
+      "pos": "above"
+     }
+    },
+    "k ",
     {
      "t": "i",
      "cs": [
@@ -4653,17 +4696,10 @@
      "cs": [
       "형광 노랑"
      ],
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "below"
-      },
-      {
-       "t": "서술형★",
-       "pos": "above",
-       "cs": "서술형"
-      }
-     ]
+     "ruby": {
+      "t": "V",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -5865,7 +5901,11 @@
      "t": "this",
      "cs": [
       "형광 분홍"
-     ]
+     ],
+     "ruby": {
+      "t": "도심에서 서쪽으로 십 분간 전차를 타고 간 곳",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -5942,7 +5982,11 @@
      "t": "t",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "(that)",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -6608,7 +6652,11 @@
      "t": "so",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "건물을 허물고 그 자리에 새로운 건물을 짓는 것",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -7193,7 +7241,11 @@
      "t": "c",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "exciting (X)",
+      "pos": "above"
+     }
     },
     {
      "t": "i",
@@ -8041,7 +8093,11 @@
      "t": "to",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "how (X)",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -8715,7 +8771,15 @@
       "형광 분홍"
      ]
     },
-    " They ",
+    " ",
+    {
+     "t": "They",
+     "ruby": {
+      "t": "The architects",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "were",
      "ruby": {
@@ -8745,7 +8809,15 @@
       "파랑 글자"
      ]
     },
-    " these at ",
+    " ",
+    {
+     "t": "these",
+     "ruby": {
+      "t": "old, abandoned boats",
+      "pos": "above"
+     }
+    },
+    " at ",
     {
      "t": "low",
      "cs": [
@@ -9853,7 +9925,11 @@
      "t": "c",
      "cs": [
       "빨강 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "exciting (X)",
+      "pos": "above"
+     }
     },
     {
      "t": "i",
@@ -9955,17 +10031,10 @@
       "파랑 글자",
       "형광 노랑"
      ],
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "below"
-      },
-      {
-       "t": "서술형★",
-       "pos": "above",
-       "cs": "서술형"
-      }
-     ]
+     "ruby": {
+      "t": "V",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -9998,7 +10067,11 @@
      "t": "w",
      "cs": [
       "형광 주황"
-     ]
+     ],
+     "ruby": {
+      "t": "선행사",
+      "pos": "above"
+     }
     },
     {
      "t": "a",
@@ -10225,7 +10298,11 @@
      "t": "t",
      "cs": [
       "형광 분홍"
-     ]
+     ],
+     "ruby": {
+      "t": "지난 5년간",
+      "pos": "above"
+     }
     },
     {
      "t": "ime",
@@ -10717,7 +10794,14 @@
       "pos": "below"
      }
     },
-    " i",
+    " ",
+    {
+     "t": "i",
+     "ruby": {
+      "t": "her gold wedding ring",
+      "pos": "above"
+     }
+    },
     {
      "t": "t",
      "ruby": {
@@ -10792,7 +10876,11 @@
      "t": "it",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "her gold wedding ring",
+      "pos": "above"
+     }
     },
     ". ",
     {
@@ -10965,7 +11053,11 @@
      "t": "t",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "(that)",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -11382,7 +11474,11 @@
      "t": "to",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "manage to V ~하는 것을 해내다",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -11776,7 +11872,15 @@
       "분홍 물결"
      ]
     },
-    " to it and ",
+    " to ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "your growth",
+      "pos": "above"
+     }
+    },
+    " and ",
     {
      "t": "devote",
      "cs": [
@@ -11784,14 +11888,30 @@
       "분홍 물결"
      ]
     },
-    " thought, time, and energy to it. ",
+    " thought, time, and energy to ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "your growth",
+      "pos": "above"
+     }
+    },
+    ". ",
     {
      "t": "Otherwise",
      "cs": [
       "빨강 글자"
      ]
     },
-    ", it simply won't ",
+    ", ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "your growth",
+      "pos": "above"
+     }
+    },
+    " simply won't ",
     {
      "t": "happen",
      "ruby": {
@@ -12320,12 +12440,7 @@
      "t": "a",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "서술형★",
-      "pos": "above",
-      "cs": "서술형"
-     }
+     ]
     },
     " ",
     {
@@ -13363,7 +13478,11 @@
      "t": "it",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "the information",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -13929,12 +14048,7 @@
      "cs": [
       "빨강 글자",
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "서술형★",
-      "pos": "above",
-      "cs": "서술형"
-     }
+     ]
     },
     " ",
     {
@@ -14012,7 +14126,11 @@
      "t": "it",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "your body",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -14049,7 +14167,11 @@
      "t": "it",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "your body",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -14429,7 +14551,11 @@
      "t": "just",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "the tip of the iceberg 빙산의 일각",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -15119,7 +15245,11 @@
      "t": "designed",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "design O toV O가 ~하도록 설계하다",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -15922,7 +16052,11 @@
      "t": "its",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "global energy investment's",
+      "pos": "above"
+     }
     },
     " highest level in 2022. The investment ",
     {
@@ -15956,7 +16090,11 @@
      "t": "that",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "the investment gap",
+      "pos": "above"
+     }
     },
     " in 2019. ",
     {
@@ -16070,7 +16208,11 @@
      "t": "that",
      "cs": [
       "파랑 글자"
-     ]
+     ],
+     "ruby": {
+      "t": "the global investment",
+      "pos": "above"
+     }
     },
     " of fossil fuels."
    ],
@@ -16516,7 +16658,11 @@
      "cs": [
       "파랑 글자",
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "재귀대명사",
+      "pos": "above"
+     }
     },
     {
      "t": "s",
@@ -17164,7 +17310,11 @@
      "t": "they",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "these requirements",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -17199,7 +17349,11 @@
      "t": "They",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "These requirements",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -17600,7 +17754,15 @@
       "pos": "below"
      }
     },
-    " it ",
+    " ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "the term minimalism",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "is",
      "ruby": {
@@ -17677,17 +17839,10 @@
      "cs": [
       "형광 노랑"
      ],
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "below"
-      },
-      {
-       "t": "서술형★",
-       "pos": "above",
-       "cs": "서술형"
-      }
-     ]
+     "ruby": {
+      "t": "V",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -18321,7 +18476,15 @@
       "pos": "below"
      }
     },
-    " of ",
+    " ",
+    {
+     "t": "of",
+     "ruby": {
+      "t": "be of ~을 가지다",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "the",
      "cs": [
@@ -18557,7 +18720,15 @@
       "pos": "below"
      }
     },
-    " it ",
+    " ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "the visual system",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "has",
      "ruby": {
@@ -18611,7 +18782,15 @@
       "pos": "below"
      }
     },
-    " thi",
+    " ",
+    {
+     "t": "t",
+     "ruby": {
+      "t": "앞 문장",
+      "pos": "above"
+     }
+    },
+    "hi",
     {
      "t": "s",
      "ruby": {
@@ -19073,7 +19252,15 @@
       "pos": "below"
      }
     },
-    " it ",
+    " ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "his environment",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "upright",
      "cs": [
@@ -20019,7 +20206,15 @@
       "pos": "below"
      }
     },
-    " unsure about ",
+    " unsure ",
+    {
+     "t": "about",
+     "ruby": {
+      "t": "V 대동사 (= hadn't used the internet)",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "how",
      "cs": [
@@ -20734,7 +20929,11 @@
      "cs": [
       "파랑 글자",
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "so ~ that",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -20837,7 +21036,15 @@
       "pos": "below"
      }
     },
-    " it ",
+    " ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "their fur",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "appears",
      "ruby": {
@@ -20907,7 +21114,15 @@
       "pos": "below"
      }
     },
-    " it as part of a ",
+    " ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "the platypus",
+      "pos": "above"
+     }
+    },
+    " as part of a ",
     {
      "t": "larger",
      "cs": [
@@ -21850,10 +22065,16 @@
     " ",
     {
      "t": "subject",
-     "ruby": {
-      "t": "C",
-      "pos": "below"
-     }
+     "ruby": [
+      {
+       "t": "C",
+       "pos": "below"
+      },
+      {
+       "t": "be subject to ~의 대상이 되다",
+       "pos": "above"
+      }
+     ]
     },
     " to ",
     {
@@ -21947,7 +22168,15 @@
       "pos": "below"
      }
     },
-    " touch the",
+    " touch ",
+    {
+     "t": "t",
+     "ruby": {
+      "t": "perfect circles",
+      "pos": "above"
+     }
+    },
+    "he",
     {
      "t": "m",
      "ruby": {
@@ -22367,12 +22596,7 @@
      "t": "statistics",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "서술형★",
-      "pos": "above",
-      "cs": "서술형"
-     }
+     ]
     },
     {
      "t": ",",
@@ -23494,7 +23718,15 @@
       "pos": "below"
      }
     },
-    " its early twenties. This ",
+    " its early twenties. ",
+    {
+     "t": "This",
+     "ruby": {
+      "t": "앞 문장",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "means",
      "ruby": {
@@ -23560,7 +23792,15 @@
       "pos": "below"
      }
     },
-    " the",
+    " ",
+    {
+     "t": "t",
+     "ruby": {
+      "t": "adolescents",
+      "pos": "above"
+     }
+    },
+    "he",
     {
      "t": "m",
      "ruby": {
@@ -24051,14 +24291,30 @@
       "파랑 글자"
      ]
     },
-    " its ",
+    " ",
+    {
+     "t": "its",
+     "ruby": {
+      "t": "the limbic system",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "earlier",
      "cs": [
       "빨강 글자"
      ]
     },
-    " development, it ",
+    " development, ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "the limbic system",
+      "pos": "above"
+     }
+    },
+    " ",
     {
      "t": "is",
      "ruby": {
@@ -24760,7 +25016,15 @@
       "pos": "below"
      }
     },
-    " developed models for face aging or digital de-aging. ",
+    " developed models for face aging or digital ",
+    {
+     "t": "de",
+     "ruby": {
+      "t": "Face aging or digital de-aging",
+      "pos": "above"
+     }
+    },
+    "-aging. ",
     {
      "t": "It",
      "cs": [
@@ -25344,7 +25608,15 @@
       "파랑 글자"
      ]
     },
-    " it, grain ",
+    " ",
+    {
+     "t": "it",
+     "ruby": {
+      "t": "the strategy",
+      "pos": "above"
+     }
+    },
+    ", grain ",
     {
      "t": "production",
      "ruby": {
@@ -25545,7 +25817,11 @@
      "t": "t",
      "cs": [
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "more uniform crops",
+      "pos": "above"
+     }
     },
     {
      "t": "he",
@@ -26218,7 +26494,11 @@
      "cs": [
       "파랑 글자",
       "형광 노랑"
-     ]
+     ],
+     "ruby": {
+      "t": "비교급 강조",
+      "pos": "above"
+     }
     },
     " ",
     {
@@ -27096,17 +27376,10 @@
      "cs": [
       "형광 노랑"
      ],
-     "ruby": [
-      {
-       "t": "S",
-       "pos": "below"
-      },
-      {
-       "t": "서술형★",
-       "pos": "above",
-       "cs": "서술형"
-      }
-     ]
+     "ruby": {
+      "t": "S",
+      "pos": "below"
+     }
     },
     " ",
     {

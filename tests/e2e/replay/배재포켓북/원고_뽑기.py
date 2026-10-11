@@ -88,7 +88,7 @@ def analysis(page, H):
         for wi, w in enumerate(words):
             if not (w["x0"] - 1 <= cx <= w["x1"] + 1):
                 continue
-            pos = "below" if 0 <= m["y0"] - w["y1"] <= 4 else "above" if 0 <= w["y0"] - m["y1"] <= 4 else None
+            pos = "below" if -2 <= m["y0"] - w["y1"] <= 4 else "above" if -2 <= w["y0"] - m["y1"] <= 4 else None   # 낱말 상자와 2pt 까지 겹쳐도(「exciting (X)」)
             if pos:
                 d = abs(cx - (w["x0"] + w["x1"]) / 2)
                 if best is None or d < best[0]:
@@ -99,6 +99,12 @@ def analysis(page, H):
     def ruby_of(w):
         return owner.get(next(i for i, x in enumerate(words) if x is w), [])
     deco = decorations(page)
+    # 서술형★ 하나는 낱말 하나에 — 표시 왼쪽 끝이 그 낱말 폭 안이고 표시 아래 끝이 기준선 위 3mm 쯤인 낱말 가운데 왼쪽 끝이 가장 가까운 것
+    badge_owner = set()
+    for d in (d for d in deco if d[0] == "badge"):
+        c = [(abs(w["x0"] - d[1]), i) for i, w in enumerate(words) if w["x0"] - 1.5 <= d[1] <= w["x1"] and 0 < w["y1"] - d[2] < 16]
+        if c:
+            badge_owner.add(min(c)[1])
     pieces, prev = [], None
     for row in lines_of(words):
         for w in row:
@@ -109,7 +115,7 @@ def analysis(page, H):
             if cs:
                 p["cs"] = cs
             r = ruby_of(w)
-            if any(d[0] == "badge" and w["x0"] - 1.5 <= d[1] <= w["x1"] and 0 < w["y1"] - d[2] < 16 for d in deco):                 # 표시 아래 끝 = 기준선 위 3mm
+            if next((i for i, x in enumerate(words) if x is w), None) in badge_owner:                 # 표시 아래 끝 = 기준선 위 3mm
                 r = [x for x in r if x["pos"] != "above"] + [{"t": "서술형★", "pos": "above", "cs": "서술형"}]
             if r:
                 p["ruby"] = r[0] if len(r) == 1 else r
@@ -140,7 +146,12 @@ def decorations(page):
         if c in HL and dr.get("fill"):
             out.append(("hl", r.x0, r.y0, r.x1, r.y1, HL[c]))
         elif c == 0xd2232a and dr.get("fill"):
-            out.append(("badge", r.x0, r.y1))
+            prev = next((i for i, d in enumerate(out) if d[0] == "badge" and abs(d[2] - r.y1) < 4 and r.x0 - d[3] < 4 and d[1] - r.x1 < 4), None)
+            if prev is None:                              # 「서술형」 글자 그림과 「★」 그림이 따로 — 가까이 붙은 조각은 표시 하나
+                out.append(("badge", r.x0, r.y1, r.x1))
+            else:
+                d = out[prev]
+                out[prev] = ("badge", min(d[1], r.x0), max(d[2], r.y1), max(d[3], r.x1))
     pix = page.get_pixmap(dpi=150)                         # 물결은 경로 상자가 줄 끝까지 잡혀서(95mm) 분홍 점으로 찾는다
     import numpy as np
     a = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, :3].astype(int)
