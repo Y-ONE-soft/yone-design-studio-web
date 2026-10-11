@@ -30,8 +30,10 @@ DPI = 110
 unit, cmd = sys.argv[1], sys.argv[2]
 base_unit, _, only = unit.partition("@")
 udir = os.path.join(REPO, "tests", "e2e", "replay", base_unit)
-data = os.path.expanduser(f"~/.cache/yone-replay/{unit}/catalog")
-out = os.path.expanduser(f"~/Downloads/편집기재현/{unit}")
+DIRECT = os.environ.get("REC_DIRECT") == "1"                               # 바로 넣기(rec.py) — 결과는 「<단위>~바로」 폴더에 따로.
+store = unit + ("~바로" if DIRECT else "")                                  # 사람 조작 판의 결과(해 본 동작 목록의 출처)를 덮지 않는다
+data = os.path.expanduser(f"~/.cache/yone-replay/{store}/catalog")
+out = os.path.expanduser(f"~/Downloads/편집기재현/{store}")
 wdir = os.path.join(os.path.dirname(data), "work") if only else udir     # make.py 가 쓰는 대본·요소 목록·상태
 
 
@@ -332,7 +334,8 @@ try:
     why += [f"넘침 {w}" for w in compare.over]
     passed = passed and not compare.over
     print("판정: 통과" if passed else "판정: 실패 — " + " · ".join(why[:12]) + (f" 외 {len(why) - 12}" if len(why) > 12 else ""))
-    json.dump({"통과": passed, "이유": why, "때": time.strftime("%Y-%m-%d %H:%M")}, open(os.path.join(out, "판정.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    json.dump({"통과": passed, "이유": why, "때": time.strftime("%Y-%m-%d %H:%M"), "바로넣기": DIRECT},
+              open(os.path.join(out, "판정.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     if cmd == "rec" and ok:
         print("  영상:", os.path.join(out, unit + ".mp4"))
     print("→", out)
