@@ -220,11 +220,41 @@ def font_file(name):
     return next((f["path"] for f in system_fonts() if f["file"] == name), None)
 
 
+def _cff_ascii_names(data):
+    """CFF 서체 이름(Name INDEX)이 영문이 아니면 같은 길이의 영문으로 — 크롬 서체 검사(OTS)가 「CFF : Failed to parse table」로
+    파일째 거부한다(하늘보리체 SKYBORI.otf 의 이름이 UTF-8 한글, 2026-10-11). 맥은 같은 이름의 설치 서체로 대신 그려 몰랐고
+    배포서버는 대체 서체(DejaVu)로 나왔다. 같은 길이로 바꾸니 다른 자리(오프셋)는 그대로다. 고칠 것이 없으면 data 그대로."""
+    import struct
+    try:
+        if data[:4] != b"OTTO":
+            return data
+        n = struct.unpack(">H", data[4:6])[0]
+        rec = next((struct.unpack(">II", data[12 + 16 * i + 8:12 + 16 * i + 16]) for i in range(n)
+                    if data[12 + 16 * i:12 + 16 * i + 4] == b"CFF "), None)
+        if not rec:
+            return data
+        off = rec[0]
+        p = off + data[off + 2]                                          # 머리(hdrSize) 다음이 Name INDEX
+        count, osz = struct.unpack(">H", data[p:p + 2])[0], data[p + 2]
+        offs = [int.from_bytes(data[p + 3 + k * osz:p + 3 + (k + 1) * osz], "big") for k in range(count + 1)]
+        base = p + 3 + (count + 1) * osz - 1
+        out = bytearray(data)
+        for k in range(count):
+            a, b = base + offs[k], base + offs[k + 1]
+            if all(33 <= c <= 126 and chr(c) not in "[](){}<>/%" for c in data[a:b]):
+                continue
+            out[a:b] = (b"Font" + b"_" * (b - a))[:b - a]
+        return bytes(out)
+    except (struct.error, IndexError, ValueError):
+        return data
+
+
 def register(filename, data):
     """서체 올려 등록 — catalog/_fonts/ 에 두고 목록에 든다. → 등록된 항목(같은 파일 이름이면 덮어씀)"""
     base = os.path.basename(filename or "").strip()
     if not base.lower().endswith(FONT_EXT) or base.startswith("."):
         raise ValueError("OTF·TTF 서체 파일만")
+    data = _cff_ascii_names(data)
     sd = store_dir()
     os.makedirs(sd, exist_ok=True)
     path = os.path.join(sd, base)
