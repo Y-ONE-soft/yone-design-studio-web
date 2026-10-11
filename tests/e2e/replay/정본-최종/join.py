@@ -109,6 +109,10 @@ def steps(files, content):
                {"js": "(() => '쪽 ' + docPages().length + ' · ' + document.querySelector('#st').textContent)()"}]
     st += [{"js": "(() => { const n = docPages().length; if (n < 30) throw new Error('이은 쪽 ' + n); return '이은 쪽 ' + n; })()"}]
     st += name_steps([len(json.load(open(f, encoding="utf-8"))["pages"]) for f in files])
+    st += [S("원고 자리 글 → «자리 이름» (틀에는 책 글을 두지 않는다)", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+            {"click": "#side #s-slot-names", "wait": 2000},
+       {"until": "/원고 자리 \\d+곳/.test(document.querySelector('#st').textContent)", "wait": 500},
+            {"js": "(() => { const bad = docPages().flatMap(p => (p.items || []).filter(it => it.atom && it.atom.t === 'text' && it.atom.bind && !String(it.atom.bind).startsWith('sys.') && it.atom.text !== '«' + it.atom.bind + '»')); if (bad.length) throw new Error('자리 이름 안 된 곳 ' + bad.length); return '원고 자리 모두 «자리 이름»'; })()"}]
     st += put_content(content, "원고 넣기 — 구성마다 견본 원고 하나(바깥 시스템이 보내는 꼴)")
     st += [S("관리에 등록 — 워크북 폴더", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
            {"pick": {"at": "#side #s-reg-series", "value": "workbook"}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]

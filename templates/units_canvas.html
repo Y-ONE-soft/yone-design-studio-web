@@ -2093,7 +2093,7 @@ function side() {
       <h3>원고 넣기 <span class="note" style="display:inline">틀 = 자리·임시 글·스타일 · 원고 = {자리 이름: 글 | [글…]}</span></h3>
       <div class="f"><span title="임시 글 = 틀 그대로 · 원고 = 넣어 둔 원고가 자리마다 임시 글 대신">보기</span><select id="s-view"><option value="">임시 글</option><option value="content" ${viewContent ? "selected" : ""}>원고</option></select></div>
       <textarea id="s-content" rows="6" spellcheck="false" style="width:100%;font:11px ui-monospace,monospace" placeholder='{"지문": ["첫 지문", "둘째 지문"], "번호": ["01", "02"]}'>${esc(plan && plan.content ? JSON.stringify(plan.content, null, 1) : "")}</textarea>
-      <div class="f"><span></span><span style="display:flex;gap:6px;align-items:center"><button class="btn sm" id="s-content-put" title="원고를 문서에 넣고 원고 보기로 — 같은 자리가 여러 번이면 쪽 순서 → 위에서 아래 → 왼쪽에서 오른쪽">원고 넣기</button><span id="s-content-rep" class="note" style="display:inline"></span></span></div>
+      <div class="f"><span></span><span style="display:flex;gap:6px;align-items:center"><button class="btn sm" id="s-content-put" title="원고를 문서에 넣고 원고 보기로 — 같은 자리가 여러 번이면 쪽 순서 → 위에서 아래 → 왼쪽에서 오른쪽">원고 넣기</button><button class="btn sm sub" id="s-slot-names" title="원고 자리 글상자의 글을 모두 「«자리 이름»」으로 — 틀에는 책 글을 두지 않는다(인디자인 데이터 병합 자리 표시). 견본은 「보기: 원고」로 본다">자리 글 → «자리 이름»</button><span id="s-content-rep" class="note" style="display:inline"></span></span></div>
       <h3>책에서 <span class="note" style="display:inline">이 면을 몇 장 찍고, 어느 원고를 받을지</span></h3>
       ${bookRow}
       ${layersHtml()}`;
@@ -2269,6 +2269,21 @@ function side() {
   wireLayers(box);
   on("#s-skin", "change", (e) => { $("#skin").value = e.target.value; $("#skin").onchange(); });
   on("#s-view", "change", (e) => { viewContent = e.target.value === "content"; pageSvg = {}; render(); drawRail(); });
+  on("#s-slot-names", "click", async () => {                            // 원고 자리 글 → 「«자리 이름»」 — 틀 하나로 여러 책: 틀에 특정 책 글이 남으면 빠진 자리에 찍혀 나간다
+    let n = 0;
+    for (const p of docPages()) {
+      let ch = false;
+      for (const it of p.items || []) {
+        const a = it.atom;
+        if (!a || a.t !== "text" || !a.bind || String(a.bind).startsWith("sys.")) continue;
+        const t = "«" + a.bind + "»";
+        if (a.text !== t) { a.text = t; ch = true; n++; }
+      }
+      if (ch) { const r = await api("/api/units/pages", p); if (r.error) { say("저장 실패 — " + r.error); return; } }
+    }
+    pageSvg = {}; render(); drawRail(); side();
+    say(`원고 자리 ${n}곳 — 글을 «자리 이름»으로`);
+  });
   on("#s-content-put", "click", async () => {
     const raw = $("#s-content").value.trim(); let obj = {};
     if (raw) { try { obj = JSON.parse(raw); } catch (err) { say("원고가 JSON 이 아니다 — " + err.message); return; } }

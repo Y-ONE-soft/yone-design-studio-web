@@ -25,6 +25,10 @@ SKIN = os.environ.get("RENAME_SKIN", "base")                              # 문�
 st += [S(f"문서 패널 — 브랜드 「{SKIN}」", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
        {"pick": {"at": "#side #s-skin", "value": SKIN}, "wait": 1500},
        {"js": f"(() => {{ if (plan.skin !== {json.dumps(SKIN)}) throw new Error('브랜드 안 들어감 ' + plan.skin); return '브랜드 ' + plan.skin; }})()"}]
+st += [S("원고 자리 글 → «자리 이름» (틀에는 책 글을 두지 않는다)", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+       {"click": "#side #s-slot-names", "wait": 2000},
+       {"until": "/원고 자리 \\d+곳/.test(document.querySelector('#st').textContent)", "wait": 500},
+       {"js": "(() => { const bad = docPages().flatMap(p => (p.items || []).filter(it => it.atom && it.atom.t === 'text' && it.atom.bind && !String(it.atom.bind).startsWith('sys.') && it.atom.text !== '«' + it.atom.bind + '»')); if (bad.length) throw new Error('자리 이름 안 된 곳 ' + bad.length); return '원고 자리 모두 «자리 이름»'; })()"}]
 st += [S("관리에 등록 — 같은 카드를 다시 그린다", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
        {"pick": {"at": "#side #s-reg-series", "value": series}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
 st += [{"until": "/등록됨/.test(document.querySelector('#s-reg-st').textContent)", "wait": 300}] * 30
