@@ -118,7 +118,7 @@
         "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "w": {"$ref": "#/definitions/mm"},
         "h": {"$ref": "#/definitions/mm", "description": "최소 높이. 글이 길면 아래로 늘어난다"},
         "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
-        "style": {"$ref": "#/definitions/id", "description": "단락 스타일 이름 — 옷의 styles 에서 서체·크기·행간·색·정렬·자간·들여쓰기·간격을 가져온다(인디자인 단락 스타일). 스타일에 있는 값이 원자 값보다 우선"},
+        "style": {"type": "string", "minLength": 1, "maxLength": 60, "description": "단락 스타일 이름(옷 styles 의 열쇠 — 한글 · 띄어쓰기 되는 인디자인 단락 스타일 이름) — 옷의 styles 에서 서체·크기·행간·색·정렬·자간·들여쓰기·간격을 가져온다(인디자인 단락 스타일). 스타일에 있는 값이 원자 값보다 우선"},
         "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
         "align": {"enum": ["left", "center", "right", "justify"]},
         "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich). 줄바꿈(\\n) = 단락"},
