@@ -140,12 +140,24 @@ def _put_locked(kind, item, after):
     return item
 
 
+REMOVED = "_removed.json"                                               # 지운 항목 id — 배포 때 시드 보태기(seed.upgrade)가 다시 넣지 않게
+
+
 def delete(kind, uid):
     with _LOCK:
         items = load(kind)
         rest = [x for x in items if x.get("id") != uid]
         if len(rest) != len(items):
             save(kind, rest)
+            p = os.path.join(udir(), REMOVED)                         # 지운 것 기억 — 시드에 같은 id 가 있어도 되살리지 않는다(2026-10-11 상용 예전 문서가 배포마다 되살아났다)
+            try:
+                gone = json.load(open(p, encoding="utf-8"))
+            except (OSError, ValueError):
+                gone = {}
+            if uid not in gone.setdefault(kind, []):
+                gone[kind].append(uid)
+                with open(p, "w", encoding="utf-8") as f:
+                    json.dump(gone, f, ensure_ascii=False, indent=1)
         return len(rest) != len(items)
 
 

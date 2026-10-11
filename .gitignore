@@ -51,6 +51,7 @@ catalog/*/designs/*/_pages/
 # 단위 화면에 올린 PDF·그림 (routes/units.py)
 catalog/_units/_in/
 catalog/_units/_pdf/
+catalog/_units/_removed.json
 
 # 편집기에서 올려 등록한 서체(시스템 서체) — 상용 서체는 리포에 넣지 않는다(서버는 /data/catalog/_fonts, 문서 묶음이 함께 나른다)
 catalog/_fonts/

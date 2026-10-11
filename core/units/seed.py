@@ -36,6 +36,12 @@ def upgrade(live_dir, seed_dir):
         return []
     os.makedirs(live_dir, exist_ok=True)
     changes = []
+    removed = {}                                                        # 화면에서 지운 항목(store.REMOVED) — 시드에 있어도 다시 넣지 않는다
+    try:
+        with open(os.path.join(live_dir, "_removed.json"), encoding="utf-8") as f:
+            removed = json.load(f) or {}
+    except (OSError, ValueError):
+        pass
     for kind in KINDS:
         sp, lp = os.path.join(seed_dir, kind + ".json"), os.path.join(live_dir, kind + ".json")
         if not os.path.exists(sp):
@@ -49,7 +55,7 @@ def upgrade(live_dir, seed_dir):
         ids = {x.get("id") for x in live}
         dirty = False
         for x in seed:
-            if x.get("id") not in ids:
+            if x.get("id") not in ids and x.get("id") not in (removed.get(kind) or []):
                 live.append(json.loads(json.dumps(x)))
                 ids.add(x.get("id"))
                 changes.append(f"{kind}/{x.get('id')}")
