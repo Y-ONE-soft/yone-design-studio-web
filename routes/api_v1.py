@@ -374,6 +374,8 @@ def _render_editor(series, design, body, book):
     d = tempfile.mkdtemp(prefix="editor_render_")
     with open(os.path.join(d, "content.json"), "w", encoding="utf-8") as f:
         json.dump({"content": content, "report": rep}, f, ensure_ascii=False)
+    with open(os.path.join(d, "source.json"), "w", encoding="utf-8") as f:   # 받은 원고 그대로 — 유형별 꼴을 실물로 대 볼 때(/renders/<jid>/source)
+        json.dump(data, f, ensure_ascii=False)
     stem = re.sub(r"[^\w가-힣·() -]+", "_", str(book.get("title") or book.get("name") or design)).strip()[:80] or design
     u = current_user() or {}
     job = jobs.start("render", _run_editor_render,
@@ -422,6 +424,18 @@ def render_edit(jid):
     from core.units import fonts
     return render_template("render_edit.html", jid=jid, title=job.meta.get("stem") or "조판 결과",
                            font_css=fonts.fix_css() + fonts.face_css("url"))
+
+
+@bp.route("/renders/<jid>/source")
+def render_source(jid):
+    """편집기 제작 디자인으로 찍을 때 받은 원고(yos-workbook-v1) 그대로 — 유형별 꼴 확인용"""
+    job = _find_job(jid)
+    if not job or "editor" not in (job.meta.get("steps") or []):
+        abort(404)
+    p = os.path.join(job.meta["book_dir"], "source.json")
+    if not os.path.exists(p):
+        abort(404)
+    return send_file(p, mimetype="application/json")
 
 
 @bp.route("/renders/<jid>/svgs", methods=["POST"])
