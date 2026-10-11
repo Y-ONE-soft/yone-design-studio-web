@@ -342,6 +342,119 @@ def _run_render(job, log):
     return {"pdfs": pdfs, "main_pdf": main, "pages": pages, "verify_ok": job.rc == 0, "blob": uploaded}
 
 
+# ── 편집기 제작 디자인 찍기 ─────────────────────────────────────
+# 틀 = 디자인 폴더의 units.json(편집기 문서 묶음). 찍을 때 그 자리에서만 쓴다 — 편집기 데이터(라이브러리)에 들여오지 않고, 틀을 바꾸지 않는다.
+# 원고 = contents 의 yos-workbook-v1 → core/sources/yos_editor 가 자리 원고로. 원고가 온 구성(「원고마다」 묶음)만 찍는다.
+def _editor_design(series, design):
+    from routes.catalog import _ddir
+    try:
+        with open(os.path.join(_ddir(series, design), "design.json"), encoding="utf-8") as f:
+            return json.load(f).get("made") == "editor"
+    except (OSError, ValueError):
+        return False
+
+
+def _render_editor(series, design, body, book):
+    import tempfile
+    from core.sources import yos_editor
+    from routes.catalog import _ddir
+    src = body.get("source") or {}
+    data = src.get("data") if isinstance(src, dict) and src.get("type") == "data" else None
+    if not isinstance(data, dict) or data.get("format") != "yos-workbook-v1":
+        return jsonify({"error": "편집기 제작 디자인은 source.data(format yos-workbook-v1)만 받는다"}), 400
+    try:
+        with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+    except (OSError, ValueError):
+        return jsonify({"error": "디자인 문서(units.json)가 없다"}), 400
+    content, rep = yos_editor.to_content(data, (pkg.get("plan") or {}).get("content") or {})
+    if not content:
+        return jsonify({"error": "이 디자인에 넣을 원고가 없다 — " + ", ".join(sorted({str(s.get("label") or s.get("key")) for s in rep["skipped"]})) + " 은(는) 아직 자리가 없다",
+                        "report": rep}), 400
+    d = tempfile.mkdtemp(prefix="editor_render_")
+    with open(os.path.join(d, "content.json"), "w", encoding="utf-8") as f:
+        json.dump({"content": content, "report": rep}, f, ensure_ascii=False)
+    stem = re.sub(r"[^\w가-힣·() -]+", "_", str(book.get("title") or book.get("name") or design)).strip()[:80] or design
+    u = current_user() or {}
+    job = jobs.start("render", _run_editor_render,
+                     meta={"book_dir": d, "key": f"editor/{series}/{design}", "bid": "", "stem": stem,
+                           "series": series, "design": design, "design_version": _version(series, design),
+                           "steps": ["editor"], "source": "data", "callback": body.get("callback"), "via": "api_v1",
+                           "created_by": u.get("sub"), "report": rep})
+    job.meta["bid"] = job.id
+    return jsonify({"job": job.id, "book": {"key": job.meta["key"], "bid": job.id},
+                    "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
+
+
+def _run_editor_render(job, log):
+    import base64
+    import copy
+    from core.units import content as _content, fonts as _fonts, pdf as _pdf, store
+    from routes.catalog import _ddir
+    from routes.units import _ctx, fill_svgs
+    d, series, design = job.meta["book_dir"], job.meta["series"], job.meta["design"]
+    with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
+        pkg = json.load(f)
+    with open(os.path.join(d, "content.json"), encoding="utf-8") as f:
+        content = json.load(f)["content"]
+    skin = copy.deepcopy(pkg.get("skin") or {})
+    img_dir = os.path.join(d, "_img")                                    # 틀 그림 — 이 작업 폴더에만 풀고 절대 경로로(편집기 그림 폴더와 섞지 않는다)
+    os.makedirs(img_dir, exist_ok=True)
+    for key, im in (pkg.get("images") or {}).items():
+        p = os.path.join(img_dir, os.path.basename(im.get("name") or key))
+        with open(p, "wb") as fh:
+            fh.write(base64.b64decode(im.get("b64") or ""))
+        skin.setdefault("images", {})[key] = p
+    have = {x["file"] for x in _fonts.system_fonts()}
+    for fn, b64 in (pkg.get("fonts") or {}).items():                    # 틀이 쓰는 올린 서체 — 이 서버에 없으면 등록
+        if fn not in have:
+            _fonts.register(fn, base64.b64decode(b64))
+    specs = {s.get("id"): s for s in store.load("specs")}
+    specs.update({s.get("id"): s for s in pkg.get("specs") or []})
+    plan = copy.deepcopy(pkg.get("plan") or {})
+    pages_by = {p["id"]: p for p in pkg.get("pages") or []}
+    plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)
+    for sec in plan.get("sections") or []:                             # 원고가 온 구성만 — 「원고마다」 묶음(이름 있는 면부터 다음 이름 있는 면 전까지)
+        keep, on = [], False
+        for e in sec.get("pages") or []:
+            e = e if isinstance(e, dict) else {"page": e, "repeat": "once"}
+            nm = (pages_by.get(e["page"]) or {}).get("name") or ""
+            if e.get("repeat") == "each_set":
+                if not plain(nm):
+                    on = isinstance(content.get(nm), list)
+                if on:
+                    keep.append(e)
+            else:
+                on = False
+        sec["pages"] = keep
+        sec.pop("divider", None)
+    plan["front"], plan["back"] = [], []
+    lib = {"pages": list(pages_by.values()), "parts": pkg.get("parts") or [], "blocks": pkg.get("blocks") or [],
+           "skins": [skin], "specs": list(specs.values()), "plans": [plan], "sets": []}
+    log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
+    svgs, rep, spec = fill_svgs(lib, plan, content, _ctx(lib, skin.get("id")), drop_empty=True)
+    log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else ""))
+    main = job.meta["stem"] + ".pdf"
+    _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"])
+    pages = None
+    try:
+        import fitz
+        pages = len(fitz.open(os.path.join(d, main)))
+    except Exception:                                                  # noqa: BLE001
+        pass
+    uploaded = {}
+    if blob.enabled():
+        try:
+            r = blob.put_file(os.path.join(d, main), f"renders/{job.id}/{main}", "application/pdf", access=blob.pdf_access())
+            if r:
+                uploaded[main] = {"url": r["url"], "pathname": r["pathname"], "access": r["access"]}
+        except Exception as e:                                         # noqa: BLE001 — 업로드 실패가 조판 결과를 지우면 안 된다
+            log(f"[blob] {main} 업로드 실패: {e}")
+    job.rc = 0
+    return {"pdfs": [main], "main_pdf": main, "pages": pages, "verify_ok": True, "blob": uploaded,
+            "report": job.meta.get("report"), "fill": {"filled": rep.get("filled"), "unfilled": rep.get("unfilled")}}
+
+
 def _job_out(job, since=0):
     d = job.to_dict(since=since)
     base = _public_base()
@@ -400,6 +513,8 @@ def render_create():
     meta = cat._meta().get(series)
     if not meta:
         return jsonify({"error": "모르는 틀"}), 400
+    if _editor_design(series, design):                        # 편집기 제작 디자인 — 편집기 문서(units.json)에 원고를 넣어 찍는다(예전 조판 길 아님)
+        return _render_editor(series, design, body, book)
     try:
         kind, obj = resolve_source(body.get("source"), series, log=None)
     except SourceError as e:
