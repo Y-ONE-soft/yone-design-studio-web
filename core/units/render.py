@@ -383,7 +383,7 @@ def ruby_html(base, rb, a, ctx):
         off = d.get("off_below" if pos == "below" else "off_above")
     off = float(off if off is not None else (0.6 if pos == "below" else 0.4))
     name = rb.get("cs") or d.get("cs")
-    st = (ctx.cstyle_css(name) if (ctx and name) else "") or "font-size:60%;"
+    st = ((ctx.cstyle_css(name) if (ctx and name) else "") or "font-size:60%;").replace("line-height:0;", "")   # 윗주 글자 칸은 제 줄 높이 — 본문 조각의 줄 높이 0 을 빼야 자리가 안 뜬다
     just = "center" if (rb.get("align") or d.get("align")) == "center" else "start"
     v = f"top:{off:.3f}px" if pos == "below" else f"bottom:{off:.3f}px"
     plain = re.sub(r"<[^>]+>", "", base)
@@ -398,7 +398,7 @@ def side_html(t, a, ctx):
     글상자의 옆 메모 설정(a.side: x · w mm 글상자 왼쪽 기준, off mm 그 줄 기준선→메모 위 끝, cs 문자 스타일, lead 행간 pt).
     폭 0 점(inline-block) 안에 놓아 본문 줄 나눔에 안 낀다."""
     d = (a or {}).get("side") or {}
-    st = ctx.cstyle_css(d["cs"]) if (ctx and d.get("cs")) else ""
+    st = (ctx.cstyle_css(d["cs"]) if (ctx and d.get("cs")) else "").replace("line-height:0;", "")   # 옆 메모는 제 행간(lead) — 본문 조각의 줄 높이 0 을 뺀다
     lead = d.get("lead")
     lh = f"line-height:{float(lead) * PT:.3f}px;" if lead else ""
     return ('<span data-side="1" style="display:inline-block;width:0;height:0">'
