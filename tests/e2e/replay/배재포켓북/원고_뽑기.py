@@ -78,7 +78,7 @@ def analysis(page, H):
     src = [s for s in ss if s["size"] == 9.5 and s["color"] == 0xffffff and s["y0"] < H * 0.12]
     words = [s for s in ss if s["size"] == 9.0 and s["y0"] > H * 0.11 and s["y1"] < H * 0.7]
     marks = [s for s in ss if s["color"] == GRAY and s["size"] < 9 and H * 0.11 < s["y0"] < H * 0.7]
-    trans = [s for s in ss if s["size"] < 6.5 and s["color"] == 0x4d4d4d and s["y0"] > H * 0.72]
+    trans = [s for s in ss if s["size"] < 6.5 and s["color"] == 0x4d4d4d and s["y0"] > H * 0.69]   # 삽화 면은 해석이 151mm(72%)부터 — 72% 로는 첫 줄을 놓쳤다
     # 지문 = 조각 목록 — 글자색은 문자 스타일, 낱말 바로 아래 회색 작은 글은 아래 윗주(문장 성분), 바로 위는 위 윗주
     # 윗주 하나는 가장 가까운 낱말 하나에만 — 가운데가 그 낱말 폭(±1) 안이고 바로 아래·위(4pt 안)인 낱말 가운데 가운데끼리 가장 가까운 것
     owner = {}
