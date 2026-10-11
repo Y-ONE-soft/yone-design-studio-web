@@ -23,14 +23,14 @@ VOCAB = {"key": "vocab-choice", "label": "어휘선택 1단계", "content": {"ki
 
 def test_vocab_choice_marks_and_record():
     content, rep = yos_editor.to_content(_data([VOCAB]), SAMPLE, CAPS)
-    assert content["A어휘선택"] == [{"제목": "어휘 선택 1", "지문번호": ["18"], "지문": ["x [ ⓐ up / ⓑ down ] y"]}]
-    assert content["교재명"] == "연동 시험" and content["단원명"] == "1강"
+    assert content["A어휘선택"] == [{"제목": "어휘 선택 1", "지문번호": ["1"], "지문": ["x [ ⓐ up / ⓑ down ] y"]}]
+    assert content["교재명"] == "연동 시험" and content["단원명"] == ""          # 단원명은 contents 가 안 보낸다 — 견본 글을 남기지 않는다
     assert [s["key"] for s in rep["sent"]] == ["vocab-choice"]
 
 
 def test_passages_per_set_from_template():
     content, _ = yos_editor.to_content(_data([VOCAB], 5), SAMPLE, CAPS)
-    assert [r["지문번호"] for r in content["A어휘선택"]] == [["18", "19", "20", "21"], ["22"]]
+    assert [r["지문번호"] for r in content["A어휘선택"]] == [["1", "2", "3", "4"], ["5"]]
 
 
 def test_unknown_kind_reported_and_empty():
@@ -62,6 +62,6 @@ def test_writing_order_rows_and_exam_story():
     wo = {"key": "writing-order", "label": "영작배열 1단계", "content": {"kind": "writing-order", "items": [{"ko": "가", "chunks": ["a", "b"]}, {"ko": "나", "chunks": ["c"]}]}}
     topic = {"key": "mock-exam", "label": "주제", "content": {"kind": "mock-exam", "questions": [{"prompt": "주제는?", "choices": ["x", "y"]}]}}
     content, _ = yos_editor.to_content(_data([wo, topic]), SAMPLE, CAPS)
-    assert content["C영작배열"][0]["보기단어"] == ["( a / b )", "( c )"] and content["C영작배열"][0]["지문번호"] == ["18", ""]
+    assert content["C영작배열"][0]["보기단어"] == ["( a / b )", "( c )"] and content["C영작배열"][0]["지문번호"] == ["1", ""]
     story = content["지문번호+번호+발문+보기+지문+요약문+선지+조건+주석"]
-    assert story[0][0] == ["지문번호", "18"] and story[1] == [["번호", "01"], ["발문", "주제는?"], ["선지", "① x\n② y"]]
+    assert story[0][0] == ["지문번호", "1"] and story[1] == [["번호", "01"], ["발문", "주제는?"], ["선지", "① x\n② y"]]

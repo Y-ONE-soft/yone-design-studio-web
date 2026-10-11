@@ -327,7 +327,8 @@ def to_content(data, sample=None, caps=None):
     story = next((k for nm, c in caps.items() if nm.startswith("S") for k in c if "발문" in k and "+" in k), None)   # 실전 문제 한 줄기 자리
     used = {s for name, (srcs, _) in GROUPS.items() if name in caps for s in srcs}
     groups, exam, report = {}, [], {"sent": [], "skipped": []}
-    for p in (data or {}).get("passages") or []:
+    for seq, p in enumerate((data or {}).get("passages") or [], 1):
+        num = str(seq)                                                    # 지문 번호 = 이 책 안 차례(1부터) — 모의고사 원래 번호(36 등)는 쓰지 않는다
         got, qs = {}, []
         for it in p.get("items") or []:
             s, label = _src(it), it.get("label")
@@ -342,15 +343,20 @@ def to_content(data, sample=None, caps=None):
             report["sent"].append({"passage": p.get("no"), "key": it.get("key"), "label": label})
         for name, (srcs, _) in GROUPS.items():
             if name in caps and srcs & set(got):
-                groups.setdefault(name, []).append((p.get("no"), p.get("content"), got))
+                groups.setdefault(name, []).append((num, p.get("content"), got))
         if qs:
-            exam.append((p.get("no"), p.get("content"), qs))
+            exam.append((num, p.get("content"), qs))
     if not groups and not exam:
         return {}, report
-    content = {k: v for k, v in sample.items() if isinstance(v, str)}       # 머리글 자리(교재명·단원명) — 책 이름이 오면 그걸로
-    title = ((data or {}).get("book") or {}).get("title")
-    if title and "교재명" in content:
-        content["교재명"] = title
+    # 책 머리글 자리(차례 면의 교재명 · 단원명 — 면마다 하나씩) — 교재명 = contents 책 이름(「26년 6월 고1모의고사」), 그 밖은 비운다(견본 글을 남기지 않는다)
+    bk = (data or {}).get("book") or {}
+    book = " ".join(x for x in (bk.get("line2"), bk.get("line1")) if x) or bk.get("title") or ""
+    content = {}
+    for k, v in sample.items():
+        if k in GROUPS or k == story or not (isinstance(v, str) or (isinstance(v, list) and all(isinstance(x, str) for x in v))):
+            continue
+        val = book if k == "교재명" else ""
+        content[k] = val if isinstance(v, str) else [val] * len(v)
     for name, ps in groups.items():
         content[name] = GROUPS[name][1](ps, sample, caps.get(name) or Counter())
     if exam:

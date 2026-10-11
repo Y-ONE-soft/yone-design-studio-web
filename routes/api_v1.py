@@ -394,36 +394,63 @@ def _render_editor(series, design, body, book):
 
 
 def _content_plan(pkg, content):
-    """틀 문서에서 원고가 온 구성만 남긴 문서 사본 — 「원고마다」 묶음(이름 있는 면부터 다음 이름 있는 면 전까지).
-    한 번만 나오는 면은 그 면 자리에 원고가 왔을 때만(실전 문제 한 줄기) — 그 글이 이어지는 면(같은 이야기)도 같이. 간지 등은 뺀다"""
+    """틀 문서에서 원고가 온 것만 남긴 문서 사본 — 책처럼(속표지 · 간지 · 차례 · 뒤붙이까지).
+
+    - 「원고마다」 묶음: 원고가 온 구성만(이름 있는 면부터 다음 이름 있는 면 전까지)
+    - 원고 자리가 있는 「한 번만」 면(실전 문제 한 줄기): 그 자리에 원고가 왔을 때만 — 그 글이 이어지는 면(같은 이야기)도 같이
+    - 원고 자리가 없는 「한 번만」 면(꾸밈 면): 여러 번 나오는 꾸밈 면 중 맨 앞 것(STEP 간지)이 장(章)을 연다.
+      장 안에 남는 원고 면이 있으면 그 장의 꾸밈 면(간지 · 차례)을 남기고, 없으면 장째 뺀다.
+      첫 장 앞(속표지)과 맨 끝 꾸밈 면들(MEMO · 뒤표지)은 늘 남긴다"""
     import copy
     plan = copy.deepcopy(pkg.get("plan") or {})
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
     parts = {p["id"]: p for p in pkg.get("parts") or []}
     plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)
     atoms = lambda pg: [it.get("atom") or {} for it in pg.get("items") or []] + [a for it in pg.get("items") or [] for a in (parts.get(it.get("part")) or {}).get("atoms") or []]
-    stories = set()
-    for sec in plan.get("sections") or []:
-        keep, on = [], False
+    recs = lambda k: isinstance(content.get(k), list) and content[k] and isinstance(content[k][0], (dict, list))   # 문제 원고(레코드 · 한 줄기)
+    flat = []                                                             # [(구간 번호, 항목, 쪽, 꾸밈 면인가)]
+    for si, sec in enumerate(plan.get("sections") or []):
         for e in sec.get("pages") or []:
             e = e if isinstance(e, dict) else {"page": e, "repeat": "once"}
             pg = pages_by.get(e["page"]) or {}
-            nm = pg.get("name") or ""
-            if e.get("repeat") == "each_set":
-                if not plain(nm):
-                    on = isinstance(content.get(nm), list)
-                if on:
-                    keep.append(e)
-            else:
-                on = False
-                st = {a["story"] for a in atoms(pg) if a.get("story")}
-                if any(isinstance(content.get(a.get("bind")), list) for a in atoms(pg)) or st & stories:
-                    keep.append(e)
-                    stories |= st
-        sec["pages"] = keep
+            ats = atoms(pg)
+            decor = e.get("repeat") != "each_set" and not any(a.get("story") or "+" in str(a.get("bind") or "") or recs(a.get("bind")) for a in ats)   # 꾸밈 면 — 책 이름(교재명) 정도만 받는다
+            flat.append((si, e, pg, decor))
+    keep, on, stories = [False] * len(flat), False, set()
+    for i, (_, e, pg, decor) in enumerate(flat):
+        nm = pg.get("name") or ""
+        if e.get("repeat") == "each_set":
+            if not plain(nm):
+                on = isinstance(content.get(nm), list)
+            keep[i] = on
+        elif not decor:
+            on = False
+            st = {a["story"] for a in atoms(pg) if a.get("story")}
+            if any(isinstance(content.get(a.get("bind")), list) for a in atoms(pg)) or st & stories:
+                keep[i] = True
+                stories |= st
+        else:
+            on = False
+    names = [pg.get("name") or "" for _, _, pg, d in flat if d]
+    opener = next((n for n in names if names.count(n) > 1), None)         # 장을 여는 꾸밈 면(STEP 간지)
+    starts = [i for i, (_, _, pg, d) in enumerate(flat) if d and (pg.get("name") or "") == opener]
+    if starts:
+        tail = len(flat)
+        while tail > starts[-1] + 1 and flat[tail - 1][3] and (flat[tail - 1][2].get("name") or "") != opener:
+            tail -= 1                                                     # 맨 끝 꾸밈 면(MEMO · 뒤표지)
+        for i in range(starts[0]):
+            keep[i] = keep[i] or flat[i][3]                               # 속표지
+        for i in range(tail, len(flat)):
+            keep[i] = True
+        for c, a in enumerate(starts):
+            b = starts[c + 1] if c + 1 < len(starts) else tail
+            if any(keep[i] and not flat[i][3] for i in range(a, b)):
+                for i in range(a, b):
+                    keep[i] = keep[i] or flat[i][3]
+    for si, sec in enumerate(plan.get("sections") or []):
+        sec["pages"] = [e for (s2, e, _, _), k in zip(flat, keep) if s2 == si and k]
         sec.pop("divider", None)
-    plan["front"], plan["back"] = [], []
-    return plan
+    return plan                                                           # 틀의 앞붙이 · 뒷붙이(front · back)는 그대로
 
 
 @bp.route("/renders/<jid>/edit")
