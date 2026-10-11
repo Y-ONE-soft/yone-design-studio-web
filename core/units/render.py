@@ -139,6 +139,14 @@ class Ctx(object):
         hit[key] = f"data:{mime};base64," + base64.b64encode(raw).decode()
         return hit[key]
 
+    def cstyle_css(self, name):
+        """브랜드(옷)의 문자 스타일 → 인라인 CSS. 없으면 경고 + 빈 값."""
+        cs = (self.skin.get("cstyles") or {}).get(name)
+        if cs is None:
+            self.warn(f"문자 스타일 없음 {name} — 옷 {self.skin.get('id') or '(없음)'}")
+            return ""
+        return char_css(cs, self)
+
     def styled(self, a):
         """글 원자에 옷의 단락 스타일(a.style)을 입힌다 — 스타일 값이 원자 값보다 우선. 없는 스타일은 경고 + 원자 값 그대로."""
         name = a.get("style")
@@ -238,6 +246,9 @@ def rich_html(v, ctx=None):
             return f'<div style="{para_css(v["para"], ctx)}">{rich_html(v.get("c"), ctx)}</div>'
         if v.get("anc"):
             return (anchored_html(v, ctx) if ctx else "") + esc(v.get("t", ""))
+        a = getattr(ctx, "cur_atom", None) if ctx else None
+        if "side" in v:                                                    # 옆 메모(고정 개체)
+            return side_html(v["side"], a, ctx)
         t = esc(v.get("t", "")).replace("\n", "<br/>")
         if v.get("u"):
             t = "<u>" + t + "</u>"
@@ -267,13 +278,116 @@ def rich_html(v, ctx=None):
         hs, vs = v.get("hscale"), v.get("vscale")
         if hs or vs:
             st += f"display:inline-block;transform:scale({float(hs or 100) / 100.0:.3f},{float(vs or 100) / 100.0:.3f});transform-origin:0 100%;"
+        if v.get("cs"):                                                    # 문자 스타일 — 조각의 칸 값이 그 위에
+            st = (ctx.cstyle_css(v["cs"]) if ctx else "") + st
         if st:
             t = f'<span style="{st}">' + t + "</span>"
+        rbs = v.get("ruby")                                                # 윗주 — 하나 또는 [위, 아래] 둘
+        for rb in (rbs if isinstance(rbs, list) else [rbs] if rbs else []):
+            if isinstance(rb, dict) and rb.get("t"):
+                t = ruby_html(t, rb, a, ctx)
         return t
     return esc(v)
 
 
 _TAG = re.compile(r"(<[^>]+>)")
+_UL_STYLE = {"wavy": "wavy", "dotted": "dotted", "dashed": "dashed", "double": "double"}     # 밑줄 모양 — 없으면 실선
+CSTYLE_KEYS = ("font", "size", "color", "weight", "b", "i", "track", "bshift", "u", "u_style", "line", "line_off", "line_color",
+               "bg", "bg_pad", "bg_r")
+
+
+def char_css(cs, ctx=None):
+    """문자 스타일(인디자인 문자 스타일) → 인라인 CSS. 서체·크기 pt·색·굵기·기울임·자간 ‰·기준선 pt·밑줄(모양·굵기·내림·색 mm)·바탕(여백·모서리 mm).
+    바탕 = 인디자인에서 굵게 올린 밑줄로 까는 형광 — 여백은 바깥으로만 넓혀 글 자리는 그대로 둔다."""
+    col = lambda v: ctx.color(v) if ctx else v
+    st = ""
+    if cs.get("font"):
+        st += f"font-family:{ctx.font(cs['font']) if ctx else font_family(cs['font'])};"
+    if cs.get("size"):
+        st += f"font-size:{float(cs['size']) * PT:.3f}px;"
+    if cs.get("color"):
+        st += f"color:{col(cs['color'])};"
+    if cs.get("weight"):
+        st += f"font-weight:{int(cs['weight'])};"
+    elif cs.get("b"):
+        st += "font-weight:700;"
+    if cs.get("i"):
+        st += "font-style:italic;"
+    if cs.get("track"):
+        st += f"letter-spacing:{float(cs['track']) / 1000:.4f}em;"
+    if cs.get("bshift"):
+        st += f"position:relative;top:{-float(cs['bshift']) * PT:.3f}px;"
+    if cs.get("u"):
+        lw = float(cs.get("line") or 0.18)
+        st += (f"text-decoration:underline;text-decoration-thickness:{lw:.3f}px;"
+               f"text-decoration-color:{col(cs['line_color']) if cs.get('line_color') else 'currentColor'};"
+               f"text-decoration-style:{_UL_STYLE.get(cs.get('u_style'), 'solid')};"
+               f"text-underline-offset:{float(cs.get('line_off') or 0.4) - lw / 2:.3f}px;text-decoration-skip-ink:none;")
+    if cs.get("bg"):
+        pad, rad = float(cs.get("bg_pad") or 0), float(cs.get("bg_r") or 0)
+        st += (f"background-color:{col(cs['bg'])};padding:{pad:.3f}px;margin:0 {-pad:.3f}px;border-radius:{rad:.3f}px;"
+               "-webkit-box-decoration-break:clone;box-decoration-break:clone;")
+    return st
+
+
+def ruby_html(base, rb, a, ctx):
+    """윗주(인디자인 문자 패널의 윗주) — 본문 글 위나 아래에 작은 글. 본문 첫머리 기준선에 폭·높이 0 인 점(inline-block)을 찍고
+    거기서 잰다: 줄 간격·줄 나눔이 그대로고(단락 컴포저는 inline-block 을 글자 하나로 센다) 본문과 함께 움직인다.
+    rb = {t, pos: above|below, cs?, off?, align?} — 없는 값은 글상자의 윗주 설정(a.ruby: cs · off_above · off_below · align)."""
+    d = (a or {}).get("ruby") or {}
+    pos = "below" if rb.get("pos") == "below" else "above"
+    off = rb.get("off")
+    if off is None:
+        off = d.get("off_below" if pos == "below" else "off_above")
+    off = float(off if off is not None else (0.6 if pos == "below" else 0.4))
+    name = rb.get("cs") or d.get("cs")
+    st = (ctx.cstyle_css(name) if (ctx and name) else "") or "font-size:60%;"
+    just = "center" if (rb.get("align") or d.get("align")) == "center" else "start"
+    v = f"top:{off:.3f}px" if pos == "below" else f"bottom:{off:.3f}px"
+    plain = re.sub(r"<[^>]+>", "", base)
+    return ('\u2060<span data-ruby="1" style="display:inline-block;width:0;height:0;position:relative;vertical-align:baseline">'
+            f'<span style="position:absolute;left:0;{v};display:grid;white-space:nowrap;line-height:1;text-indent:0;letter-spacing:0;word-spacing:0">'
+            f'<span style="grid-area:1/1;height:0;overflow:hidden;visibility:hidden">{plain}</span>'
+            f'<span style="grid-area:1/1;justify-self:{just};{st}">{esc(rb.get("t", ""))}</span></span></span>\u2060{base}')
+
+
+def side_html(t, a, ctx):
+    """옆 메모(인디자인 고정 개체 — 글에 붙어 다니는 글상자, 위치 = 텍스트 프레임 기준) — 메모가 붙은 줄 높이의 옆 칸에.
+    글상자의 옆 메모 설정(a.side: x · w mm 글상자 왼쪽 기준, off mm 그 줄 기준선→메모 위 끝, cs 문자 스타일, lead 행간 pt).
+    폭 0 점(inline-block) 안에 놓아 본문 줄 나눔에 안 낀다."""
+    d = (a or {}).get("side") or {}
+    st = ctx.cstyle_css(d["cs"]) if (ctx and d.get("cs")) else ""
+    lead = d.get("lead")
+    lh = f"line-height:{float(lead) * PT:.3f}px;" if lead else ""
+    return ('<span data-side="1" style="display:inline-block;width:0;height:0">'
+            f'<span style="position:absolute;left:{float(d.get("x") or 0):.3f}px;width:{float(d.get("w") or 30):.3f}px;margin-top:{float(d.get("off") or 0):.3f}px;'
+            f'text-indent:0;letter-spacing:0;word-spacing:0;white-space:normal;text-align:left;{lh}{st}">{esc(t)}</span></span>')
+
+
+# 원고 표시 읽기 — 바깥 시스템이 글로 보내는 약속 표시를 윗주·옆 메모 조각으로(글상자 「원고 표시 읽기」를 켠 자리만).
+# {본문|아래 윗주} · {본문^위 윗주} · {본문^위|아래} · [[옆 메모]]. 꾸밈(형광·색)은 GREP → 문자 스타일로.
+_MARK = re.compile(r"\{([^{}|^]+)(?:\^([^{}|]*))?(?:\|([^{}]*))?\}|\[\[(.+?)\]\]")
+
+
+def markup_runs(v):
+    """약속 표시가 든 글 → 조각 목록. 표시가 없으면 그대로(글)."""
+    if not isinstance(v, str) or not _MARK.search(v):
+        return v
+    out, k = [], 0
+    for m in _MARK.finditer(v):
+        if m.start() > k:
+            out.append(v[k:m.start()])
+        if m.group(4) is not None:
+            out.append({"t": "", "side": m.group(4)})
+        elif m.group(2) is None and m.group(3) is None:          # {글} — 윗주 없는 중괄호는 손대지 않는다(워크북 {밑줄 칠 곳} 같은 다른 약속)
+            out.append(m.group(0))
+        else:
+            rbs = [{"t": t, "pos": p} for t, p in ((m.group(2), "above"), (m.group(3), "below")) if t]
+            out.append({"t": m.group(1), "ruby": rbs[0] if len(rbs) == 1 else rbs})
+        k = m.end()
+    if k < len(v):
+        out.append(v[k:])
+    return out
 
 
 def grep_html(html, rules, ctx=None):
@@ -298,6 +412,8 @@ def grep_html(html, rules, ctx=None):
             st += f"font-family:{ctx.font(r['font']) if ctx else font_family(r['font'])};"
         if r.get("track"):                                                 # 자간 ‰ em
             st += f"letter-spacing:{float(r['track']) / 1000:.4f}em;"
+        if r.get("cs"):                                                    # 문자 스타일 — 인디자인 GREP 스타일이 입히는 그것. 규칙의 칸 값이 그 위에
+            st = (ctx.cstyle_css(r["cs"]) if ctx else "") + st
         ul = r.get("u") and not r.get("blank") and not r.get("fit") and (r.get("line") or r.get("line_off") or r.get("line_color"))
         if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
             lw = float(r.get("line") or 0.18)
@@ -329,10 +445,18 @@ def grep_html(html, rules, ctx=None):
             for k in tags:
                 t = f"<{k}>{t}</{k}>"
             return f'<span style="{st}">{t}</span>' if st else t
-        out = []
+        out, stack = [], []                                                # 윗주·옆 메모(data-ruby · data-side) 안 글은 건너뛴다 — 인디자인도 다른 글(고정 개체·윗주)
         for p in _TAG.split(html):
-            raw = _unescape(p) if not p.startswith("<") else ""
-            if not raw or not rx.search(raw):
+            if p.startswith("<"):
+                if p.startswith("</"):
+                    stack and stack.pop()
+                elif not p.endswith("/>"):
+                    stack.append(stack[-1] if stack else ("data-ruby=" in p or "data-side=" in p))
+                    stack[-1] = stack[-1] or "data-ruby=" in p or "data-side=" in p
+                out.append(p)
+                continue
+            raw = _unescape(p)
+            if not raw or (stack and stack[-1]) or not rx.search(raw):
                 out.append(p)
                 continue
             k = 0
@@ -1215,6 +1339,7 @@ def _text_content(ctx, a, values, types):
     번호 매기기(num)가 켜져 있으면 원고가 번호를 안 줘도 앞 번호 다음으로 저절로 매긴다.
     """
     b = a.get("bind")
+    ctx.cur_atom = a                                                       # 조각의 윗주·옆 메모가 이 글상자 설정을 쓴다
     if a.get("num"):
         t = next_num(ctx, a, values.get(b) if b else None)
         return esc(t), t
@@ -1228,6 +1353,8 @@ def _text_content(ctx, a, values, types):
             return rich_html(a["text"], ctx), rich_plain(a["text"])
         hint = " + ".join(_slot_label(x) for x in b.split("+"))        # 견본 글도 원고도 없으면 자리 이름을 회색으로
         return f'<span style="color:#b0b0b0">‹{esc(hint)}›</span>', "‹" + hint + "›"
+    if a.get("markup"):                                                    # 원고 표시 읽기 — {본문|윗주} · [[옆 메모]] → 조각
+        v = markup_runs(v)
     return fmt(v, types.get(b, "text"), ctx)
 
 

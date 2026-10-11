@@ -34,6 +34,10 @@ H = int(sys.argv[5]) if len(sys.argv) > 5 else 1000
 FPS = int(sys.argv[6]) if len(sys.argv) > 6 else 8
 FAST = os.environ.get("REC_FAST") == "1"        # 빠른 모드 — 기다리지 않고 프레임도 안 찍는다 (대본 검사용)
 SPEED = float(os.environ.get("REC_SPEED", "2"))  # 녹화 배율 — 2 면 기다림·타이핑이 절반 (영상도 절반 길이)
+# 바로 넣기 — 검증한 동작만 쓰는 대본을 빠르게(tests/e2e/actions.py 가 가른다). 같은 칸·같은 단추·같은 지면 자리를 쓰되
+# 마우스를 한 번에 옮기고, 글은 한꺼번에 넣고(Input.insertText), 목록은 편집기 목록이 고를 때와 같은 신호(input·change)로 고르고,
+# 패널이 멈추길 0.2초만 본다. 녹화 없이(REC_FAST 와 같이) 쓴다. 판정은 사람 조작 검사와 같다(2026-10-11)
+DIRECT = os.environ.get("REC_DIRECT") == "1"
 frames = os.path.join(SP, "frames_" + os.path.basename(out).split(".")[0])
 subprocess.run(["rm", "-rf", frames], capture_output=True)
 os.makedirs(frames, exist_ok=True)
@@ -97,6 +101,9 @@ try:
 
     def hold(ms):
         ms = ms / SPEED
+        if DIRECT:
+            time.sleep(min(ms, 60) / 1000.0)
+            return
         if FAST:
             time.sleep(min(ms, 300) / 1000.0)      # 화면이 따라올 최소한만
             return
@@ -126,7 +133,7 @@ try:
                 time.sleep(0.1)
                 continue
             same = same + 1 if cur == last else 0
-            if same >= 8:                                # 0.8초 그대로 — 값을 넣으면 편집기가 0.5초쯤 뒤에 패널을 다시 그린다(그 사이 연 목록은 닫힌다)
+            if same >= (2 if DIRECT else 8):                              # 0.8초 그대로 — 값을 넣으면 편집기가 0.5초쯤 뒤에 패널을 다시 그린다(그 사이 연 목록은 닫힌다)
                 return
             last = cur
             time.sleep(0.1)
@@ -169,6 +176,8 @@ try:
         c.js(f"__cur({x:.0f},{y:.0f},{'true' if down else 'false'})")
 
     def move(x, y, steps=12, shoot=True):
+        if DIRECT:
+            steps = 1
         x0, y0 = pos
         for i in range(1, steps + 1):
             cx, cy = x0 + (x - x0) * i / steps, y0 + (y - y0) * i / steps
@@ -230,6 +239,16 @@ try:
     def typetext(t, per=0.035):
         """사람처럼 친다 — 영문·숫자·기호는 키를 하나씩 누르고 떼고, 한글은 입력기 조합(자모 → 음절)으로, 줄 나눔은 키로."""
         per = per / SPEED
+        if DIRECT:                                       # 한꺼번에 — 새 문단(Enter)·줄 나눔(Shift+Enter)만 키로
+            for i, part in enumerate(t.split("\n")):
+                if i:
+                    key("Enter")
+                for j, seg in enumerate(part.split(" ")):
+                    if j:
+                        key("Enter", shift=True)
+                    if seg:
+                        c.call("Input.insertText", text=seg)
+            return
         for ch in t:
             if ch == "\u2028":                          # 줄 나눔 — Shift+Enter
                 key("Enter", shift=True)
@@ -318,6 +337,15 @@ try:
         fm = ("[...m.children].find(d => d.textContent.trim() === " + json.dumps(text) + ")") if text else \
              ("[...m.children].find(d => d.dataset.value === " + json.dumps(value) + ")")
         got = None
+        if DIRECT:                                       # 편집기 목록이 고를 때와 같은 신호 — 안 되면 아래 사람 조작으로
+            quiet()
+            r = c.js("(() => { const e = document.querySelector(" + sel + "); if (!e) return null; const i = " + find + "; if (i < 0) return null; "
+                     "if (e.selectedIndex !== i) { e.selectedIndex = i; e.dispatchEvent(new Event('input', {bubbles: true})); "
+                     "e.dispatchEvent(new Event('change', {bubbles: true})); } return true; })()")
+            quiet()
+            if r and ((str(value).startswith("__") and not text) or
+                      c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + chk + " : false; })()")):
+                return
         for attempt in range(3):
             quiet()
             want = c.js("(() => { const e = document.querySelector(" + sel + "); return e ? " + find + " : null; })()")
@@ -404,6 +432,19 @@ try:
                     if got is not None and want[:6] in got:
                         break
                     print(f"  ! 글이 「{str(got)[:14]}」 — 다시", flush=True)
+            if "select" in st:                                 # 글 고치기 칸에서 글자 고르기 — 그 글의 첫 글자에서 끝 글자까지 마우스로 끈다(사람처럼)
+                q = st["select"]
+                r = c.js("(() => { const box = document.querySelector('#tedit'); const want = " + json.dumps(q["text"]) + ", nth = " + str(int(q.get("nth", 0))) + "; "
+                         "const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT); let n, k = 0; "
+                         "while ((n = w.nextNode())) { let i = -1; while ((i = n.data.indexOf(want, i + 1)) >= 0) { if (k++ === nth) { "
+                         "const a = document.createRange(); a.setStart(n, i); a.setEnd(n, i + 1); const b = document.createRange(); b.setStart(n, i + want.length - 1); b.setEnd(n, i + want.length); "
+                         "const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return [ra.left + 0.5, (ra.top + ra.bottom) / 2, rb.right - 0.5, (rb.top + rb.bottom) / 2]; } } } return null; })()")
+                if not r:
+                    raise RuntimeError(f"고를 글 없음 {q['text']}")
+                drag([r[0], r[1]], [r[2], r[3]], steps=8)
+                got = c.js("String(getSelection())")
+                if got != q["text"]:
+                    raise RuntimeError(f"고른 글이 「{got}」 — 「{q['text']}」 이어야")
             if "key" in st:
                 key(st["key"])
             if "pick" in st:
