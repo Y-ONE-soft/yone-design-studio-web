@@ -294,7 +294,7 @@ def analysis(pno, gubun, cs_name):
     st += done(f"분석 면 {gubun}", f"p{pno}.png")
     # 견본 원고 한 벌 — 원고 덩어리 그대로(면 이름 → [덩어리 …], 「원고마다」 면의 레코드). 덩어리 = 출처 · 지문(꾸밈 조각) · 해석
     it = first(lambda x: "지문" in x and "그림" not in x, gubun)
-    CONTENT[f"분석 면 · {gubun}"] = [{"출처": it["출처"], "지문": it["지문"], "해석": it["해석"], "책이름": SRC["book"]["책이름"]}]
+    CONTENT[f"분석 면 · {gubun}"] = [{"출처": it["출처"], "지문": [it["지문"]], "해석": it["해석"], "책이름": SRC["book"]["책이름"]}]   # 글 하나 자리에 조각 = [[조각 …]]
     return st
 
 

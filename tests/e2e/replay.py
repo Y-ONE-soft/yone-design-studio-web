@@ -169,12 +169,21 @@ def measure_units(new_ids, state, fix=False):
             if e.get("원고"):
                 r["원고"] = True
                 r["ok"] = r.get("my") is not None
+                # 견본 원고(원본 글 그대로)를 넣은 판이면 원본 글 자리의 가로 · 세로 절반은 채워야 한다 — 「들어갔나」만 보면
+                # 조각 원고가 첫 조각만 들어가 한 줄로 끝나도 통과했다(2026-10-12 배재1 포켓북 지문)
+                if r["ok"] and state.get("fill") and r.get("ref") and r["ref"][2] > 20 and r["ref"][3] > 8:   # 원본에서 잡힌 글 자리와 견준다
+                    full = r["my"][2] >= r["ref"][2] * 0.5 and r["my"][3] >= r["ref"][3] * 0.5
+                    if not full:
+                        r["ok"] = False
+                        r["덜 참"] = True
         allres[f"p{rp}"] = res
         for r, e in zip(res, es):
             if r["ok"]:
                 continue
             bad += 1
             shape = (f"  · 모양 잉크 {r['ink']:.2f} 겹침 {r['iou']:.2f}" + ("" if r.get("shape_ok") else " ✗") if r.get("ink") is not None else "")
+            if r.get("덜 참"):
+                shape = f"  · 원고 덜 참 — 결과 {r['my'][2]:.1f}×{r['my'][3]:.1f}mm · 원본 글 자리 {r['ref'][2]:.1f}×{r['ref'][3]:.1f}mm"
             print(f"  ✗ p{rp} {r['id']:9s} " + (f"dx {r['dx']:+.2f} dy {r['dy']:+.2f} dw {r['dw']:+.2f} dh {r['dh']:+.2f}" + shape if r.get("my") and r.get("ref")
                                                 else f"못 찾음 (원본 {r['ref']} · 결과 {r['my']})"))
             if fix and "text" in e and r.get("my") and r.get("ref"):
