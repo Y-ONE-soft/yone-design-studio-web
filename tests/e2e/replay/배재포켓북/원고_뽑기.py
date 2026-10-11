@@ -18,13 +18,18 @@ CS = {RED: "빨강 글자", BLUE: "파랑 글자"}                  # 원본 글
 
 
 def spans(page):
+    """글 조각 — 가로 끝은 빈칸이 아닌 글자 상자로(조각 끝 빈칸까지 재면 다음 조각과의 틈이 0 이 돼 띄어쓰기를 잃는다).
+    sp = 조각 글이 빈칸으로 끝난다(원본이 그 뒤를 띄웠다)"""
     out = []
-    for b in page.get_text("dict")["blocks"]:
+    for b in page.get_text("rawdict")["blocks"]:
         for ln in b.get("lines", []):
             for s in ln["spans"]:
-                if s["text"].strip():
-                    out.append({"t": s["text"], "size": round(s["size"], 1), "color": s["color"],
-                                "x0": s["bbox"][0], "y0": s["bbox"][1], "x1": s["bbox"][2], "y1": s["bbox"][3]})
+                ch = [c for c in s["chars"] if c["c"].strip()]
+                if not ch:
+                    continue
+                t = "".join(c["c"] for c in s["chars"])
+                out.append({"t": t, "size": round(s["size"], 1), "color": s["color"], "sp": t != t.rstrip(),
+                            "x0": ch[0]["bbox"][0], "y0": s["bbox"][1], "x1": ch[-1]["bbox"][2], "y1": s["bbox"][3]})
     return out
 
 
@@ -75,21 +80,29 @@ def analysis(page, H):
     marks = [s for s in ss if s["color"] == GRAY and s["size"] < 9 and H * 0.11 < s["y0"] < H * 0.7]
     trans = [s for s in ss if s["size"] < 6.5 and s["color"] == 0x4d4d4d and s["y0"] > H * 0.72]
     # 지문 = 조각 목록 — 글자색은 문자 스타일, 낱말 바로 아래 회색 작은 글은 아래 윗주(문장 성분), 바로 위는 위 윗주
+    # 윗주 하나는 가장 가까운 낱말 하나에만 — 가운데가 그 낱말 폭(±1) 안이고 바로 아래·위(4pt 안)인 낱말 가운데 가운데끼리 가장 가까운 것
+    owner = {}
+    for mi, m in enumerate(marks):
+        cx = (m["x0"] + m["x1"]) / 2
+        best = None
+        for wi, w in enumerate(words):
+            if not (w["x0"] - 1 <= cx <= w["x1"] + 1):
+                continue
+            pos = "below" if 0 <= m["y0"] - w["y1"] <= 4 else "above" if 0 <= w["y0"] - m["y1"] <= 4 else None
+            if pos:
+                d = abs(cx - (w["x0"] + w["x1"]) / 2)
+                if best is None or d < best[0]:
+                    best = (d, wi, pos)
+        if best:
+            owner.setdefault(best[1], []).append({"t": m["t"].strip(), "pos": best[2]})
+
     def ruby_of(w):
-        out = []
-        for m in marks:
-            cx = (m["x0"] + m["x1"]) / 2
-            if w["x0"] - 1 <= cx <= w["x1"] + 1:
-                if 0 <= m["y0"] - w["y1"] <= 4:
-                    out.append({"t": m["t"].strip(), "pos": "below"})
-                elif 0 <= w["y0"] - m["y1"] <= 4:
-                    out.append({"t": m["t"].strip(), "pos": "above"})
-        return out
+        return owner.get(next(i for i, x in enumerate(words) if x is w), [])
     deco = decorations(page)
     pieces, prev = [], None
     for row in lines_of(words):
         for w in row:
-            if prev is not None and (w["x0"] - prev["x1"] > 0.6 or w["y0"] - prev["y0"] > 3):
+            if prev is not None and (w["x0"] - prev["x1"] > 0.6 or prev["sp"] or w["y0"] - prev["y0"] > 3):
                 pieces.append(" ")
             p = {"t": w["t"].strip()}
             cs = ([CS[w["color"]]] if w["color"] in CS else []) + deco_cs(w, deco)

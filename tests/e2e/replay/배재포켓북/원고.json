@@ -115,14 +115,7 @@
       "pos": "below"
      }
     },
-    " Sam",
-    {
-     "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " Sam, ",
     {
      "t": "I",
      "ruby": {
@@ -300,16 +293,7 @@
       "pos": "below"
      }
     },
-    {
-     "t": "'",
-     "cs": [
-      "형광 노랑"
-     ],
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " ",
     {
      "t": "it",
      "cs": [
@@ -320,7 +304,12 @@
       "pos": "below"
      }
     },
-    " ",
+    {
+     "t": "'",
+     "cs": [
+      "형광 노랑"
+     ]
+    },
     {
      "t": "s",
      "cs": [
@@ -390,6 +379,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "too",
      "cs": [
@@ -402,6 +392,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "When",
      "ruby": {
@@ -425,7 +416,7 @@
       "pos": "below"
      }
     },
-    "\"Sam ",
+    " \"Sam ",
     {
      "t": "Lee",
      "ruby": {
@@ -433,14 +424,7 @@
       "pos": "below"
      }
     },
-    "\"on a social media website",
-    {
-     "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    "\" on a social media website, ",
     {
      "t": "I",
      "ruby": {
@@ -515,7 +499,7 @@
       "pos": "below"
      }
     },
-    ".There ",
+    ". There ",
     {
      "t": "were",
      "cs": [
@@ -572,13 +556,7 @@
       "빨강 글자"
      ]
     },
-    {
-     "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    ", ",
     {
      "t": "I",
      "ruby": {
@@ -798,12 +776,9 @@
      "t": ",",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
+     ]
     },
+    " ",
     {
      "t": "I",
      "cs": [
@@ -855,7 +830,7 @@
       "형광 노랑"
      ]
     },
-    "Several Sam ",
+    " Several Sam ",
     {
      "t": "Lees",
      "ruby": {
@@ -910,7 +885,7 @@
       "빨강 글자"
      ]
     },
-    " in music.There ",
+    " in music. There ",
     {
      "t": "was",
      "cs": [
@@ -1002,7 +977,7 @@
       "pos": "below"
      }
     },
-    " lyrics.",
+    " lyrics. ",
     {
      "t": "And",
      "cs": [
@@ -1337,11 +1312,11 @@
     },
     {
      "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
+     "cs": [
+      "형광 분홍"
+     ]
     },
+    " ",
     {
      "t": "I",
      "ruby": {
@@ -1372,13 +1347,7 @@
       "pos": "below"
      }
     },
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    ". ",
     {
      "t": "I",
      "ruby": {
@@ -1405,7 +1374,7 @@
       "pos": "below"
      }
     },
-    " to all three.Here ",
+    " to all three. Here ",
     {
      "t": "is",
      "ruby": {
@@ -1440,14 +1409,7 @@
       "pos": "below"
      }
     },
-    ": \"Hi",
-    {
-     "t": "! '",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    ": \"Hi! '",
     {
      "t": "I",
      "ruby": {
@@ -1471,14 +1433,7 @@
       "pos": "below"
      }
     },
-    " from Korea",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " from Korea. ",
     {
      "t": "I",
      "ruby": {
@@ -1585,7 +1540,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "That",
      "cs": [
@@ -1957,6 +1912,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "Secondly",
      "cs": [
@@ -1969,7 +1925,7 @@
       "형광 분홍"
      ]
     },
-    "there ",
+    " there ",
     {
      "t": "were",
      "cs": [
@@ -2011,7 +1967,7 @@
       "pos": "below"
      }
     },
-    " with the app,",
+    " with the app, ",
     {
      "t": "which",
      "cs": [
@@ -2080,7 +2036,7 @@
       "빨강 글자"
      ]
     },
-    ".",
+    ". ",
     {
      "t": "So",
      "cs": [
@@ -2249,7 +2205,7 @@
       "빨강 글자"
      ]
     },
-    " music factory.",
+    " music factory. ",
     {
      "t": "After",
      "ruby": {
@@ -2284,14 +2240,7 @@
       "pos": "below"
      }
     },
-    " a song",
-    {
-     "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " a song, ",
     {
      "t": "I",
      "ruby": {
@@ -2387,7 +2336,7 @@
       "pos": "below"
      }
     },
-    " to American Sam.",
+    " to American Sam. ",
     {
      "t": "Then",
      "cs": [
@@ -2504,7 +2453,7 @@
       "파랑 글자"
      ]
     },
-    ",",
+    ", ",
     {
      "t": "we",
      "ruby": {
@@ -2534,7 +2483,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "Since",
      "cs": [
@@ -2792,13 +2741,10 @@
     {
      "t": ".",
      "cs": [
-      "형광 분홍"
-     ],
-     "ruby": {
-      "t": "앞 문장",
-      "pos": "below"
-     }
+      "형광 노랑"
+     ]
     },
+    " ",
     {
      "t": "It",
      "cs": [
@@ -2932,7 +2878,7 @@
   {
    "출처": "능률(오) 1과 본문4",
    "지문": [
-    "\"Long-Distance Friendship\"Shortly ",
+    "\"Long-Distance Friendship\" Shortly ",
     {
      "t": "after",
      "ruby": {
@@ -2967,7 +2913,7 @@
       "pos": "below"
      }
     },
-    ",a global ",
+    ", a global ",
     {
      "t": "pandemic",
      "ruby": {
@@ -3170,7 +3116,7 @@
       "파랑 글자"
      ]
     },
-    " some time in the hospital,so the ",
+    " some time in the hospital, so the ",
     {
      "t": "band",
      "ruby": {
@@ -3207,7 +3153,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "However",
      "cs": [
@@ -3250,7 +3196,7 @@
       "pos": "below"
      }
     },
-    " the video chat app.",
+    " the video chat app. ",
     {
      "t": "We",
      "cs": [
@@ -3410,6 +3356,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "Since",
      "ruby": {
@@ -3432,7 +3379,7 @@
       "빨강 글자"
      ]
     },
-    " in the hospital on his birthday,the ",
+    " in the hospital on his birthday, the ",
     {
      "t": "rest",
      "ruby": {
@@ -3675,7 +3622,7 @@
       "빨강 글자"
      ]
     },
-    " singer in the band- me! ",
+    " singer in the band - me! ",
     {
      "t": "It",
      "cs": [
@@ -3847,6 +3794,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "After",
      "ruby": {
@@ -3873,7 +3821,7 @@
       "pos": "below"
      }
     },
-    ",",
+    ", ",
     {
      "t": "we",
      "ruby": {
@@ -3916,7 +3864,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "We",
      "ruby": {
@@ -3940,7 +3888,7 @@
       "pos": "below"
      }
     },
-    "\"Long-",
+    " \"Long-",
     {
      "t": "Distance",
      "ruby": {
@@ -3948,7 +3896,7 @@
       "pos": "below"
      }
     },
-    " Friendship,\"and ",
+    " Friendship,\" and ",
     {
      "t": "we",
      "ruby": {
@@ -3982,7 +3930,7 @@
       "빨강 글자"
      ]
     },
-    ".The ",
+    ". The ",
     {
      "t": "song",
      "ruby": {
@@ -4023,7 +3971,7 @@
       "pos": "below"
      }
     },
-    ",but ",
+    ", but ",
     {
      "t": "we",
      "ruby": {
@@ -4225,7 +4173,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "Never",
      "cs": [
@@ -4386,6 +4334,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "After",
      "cs": [
@@ -4405,6 +4354,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "we",
      "cs": [
@@ -4473,6 +4423,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "nor",
      "cs": [
@@ -4559,6 +4510,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "Yet",
      "cs": [
@@ -4652,14 +4604,7 @@
       "pos": "below"
      }
     },
-    " in life",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " in life. ",
     {
      "t": "I",
      "ruby": {
@@ -5099,6 +5044,7 @@
       "형광 민트"
      ]
     },
+    " ",
     {
      "t": "Life",
      "ruby": {
@@ -5669,7 +5615,7 @@
       "pos": "below"
      }
     },
-    ".Wallisblok:The One-Euro Apartment Project ",
+    ". Wallisblok: The One-Euro Apartment Project ",
     {
      "t": "Rotterdam",
      "ruby": {
@@ -5698,14 +5644,7 @@
       "빨강 글자"
      ]
     },
-    " city in the Netherlands",
-    {
-     "t": ",",
-     "ruby": {
-      "t": "V 단",
-      "pos": "below"
-     }
-    },
+    " city in the Netherlands, ",
     {
      "t": "is",
      "cs": [
@@ -5817,7 +5756,7 @@
       "pos": "below"
      }
     },
-    " streets,",
+    " streets, ",
     {
      "t": "you",
      "ruby": {
@@ -6141,6 +6080,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "Yet",
      "cs": [
@@ -6561,6 +6501,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "having",
      "cs": [
@@ -6607,6 +6548,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "the",
      "cs": [
@@ -6745,7 +6687,7 @@
       "형광 노랑"
      ]
     },
-    "The ",
+    " The ",
     {
      "t": "plan",
      "ruby": {
@@ -7079,13 +7021,10 @@
     {
      "t": ",",
      "cs": [
-      "형광 노랑"
-     ],
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
+      "형광 분홍"
+     ]
     },
+    " ",
     {
      "t": "it",
      "cs": [
@@ -7406,7 +7345,7 @@
       "pos": "below"
      }
     },
-    ".The ",
+    ". The ",
     {
      "t": "residents",
      "ruby": {
@@ -7489,7 +7428,7 @@
       "pos": "below"
      }
     },
-    " with a community garden and rooftop terrace.The ",
+    " with a community garden and rooftop terrace. The ",
     {
      "t": "surrounding",
      "cs": [
@@ -7537,7 +7476,7 @@
       "빨강 글자"
      ]
     },
-    " as well.",
+    " as well. ",
     {
      "t": "Today",
      "cs": [
@@ -7550,6 +7489,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "Wallisblok",
      "ruby": {
@@ -7649,7 +7589,7 @@
   {
    "출처": "능률(오) 2과 본문3",
    "지문": [
-    "De Ceuvel:A Green-Technology Playground In the early 20th century,there ",
+    "De Ceuvel: A Green-Technology Playground In the early 20th century, there ",
     {
      "t": "was",
      "cs": [
@@ -7740,7 +7680,7 @@
       "빨강 글자"
      ]
     },
-    " shipyards and factories.Over time,the ",
+    " shipyards and factories. Over time, the ",
     {
      "t": "shipyards",
      "ruby": {
@@ -7766,7 +7706,7 @@
       "빨강 글자"
      ]
     },
-    ",and the ",
+    ", and the ",
     {
      "t": "work",
      "ruby": {
@@ -8110,14 +8050,7 @@
       "파랑 글자"
      ]
     },
-    " with",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "De Ceuvel",
-      "pos": "below"
-     }
-    },
+    " with ",
     {
      "t": "it",
      "ruby": {
@@ -8125,7 +8058,7 @@
       "pos": "below"
      }
     },
-    " ",
+    ". ",
     {
      "t": "So",
      "cs": [
@@ -8329,11 +8262,11 @@
     },
     {
      "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
+     "cs": [
+      "형광 분홍"
+     ]
     },
+    " ",
     {
      "t": "it",
      "ruby": {
@@ -8604,7 +8537,7 @@
       "pos": "below"
      }
     },
-    " on the former shipyard.The ",
+    " on the former shipyard. The ",
     {
      "t": "plan",
      "ruby": {
@@ -8717,7 +8650,7 @@
       "pos": "below"
      }
     },
-    " land,the ",
+    " land, the ",
     {
      "t": "architects",
      "ruby": {
@@ -8758,7 +8691,7 @@
       "빨강 글자"
      ]
     },
-    ",",
+    ", ",
     {
      "t": "abandoned",
      "cs": [
@@ -9037,11 +8970,7 @@
      "t": "p ants",
      "cs": [
       "형광 주황"
-     ],
-     "ruby": {
-      "t": "선행사",
-      "pos": "below"
-     }
+     ]
     },
     {
      "t": "l",
@@ -9218,7 +9147,7 @@
       "빨강 글자"
      ]
     },
-    " technologies such as bio-filters and water reuse systems.Many ",
+    " technologies such as bio-filters and water reuse systems. Many ",
     {
      "t": "others",
      "ruby": {
@@ -9480,13 +9409,7 @@
       "pos": "below"
      }
     },
-    {
-     "t": ".",
-     "ruby": {
-      "t": "O",
-      "pos": "below"
-     }
-    },
+    " ",
     {
      "t": "it",
      "ruby": {
@@ -9494,7 +9417,7 @@
       "pos": "below"
      }
     },
-    " These two ",
+    ". These two ",
     {
      "t": "examples",
      "ruby": {
@@ -9576,6 +9499,7 @@
       "형광 민트"
      ]
     },
+    " ",
     {
      "t": "Innovative",
      "cs": [
@@ -9595,6 +9519,7 @@
       "형광 민트"
      ]
     },
+    " ",
     {
      "t": "creativity",
      "cs": [
@@ -9607,6 +9532,7 @@
       "형광 민트"
      ]
     },
+    " ",
     {
      "t": "community",
      "cs": [
@@ -9673,7 +9599,7 @@
       "빨강 글자"
      ]
     },
-    ".These ",
+    ". These ",
     {
      "t": "projects",
      "ruby": {
@@ -9900,14 +9826,7 @@
   {
    "출처": "고1 23년 11월 모의고사 18번",
    "지문": [
-    "Dear Ms. MacAlpine",
-    {
-     "t": ",",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    "Dear Ms. MacAlpine, ",
     {
      "t": "I",
      "ruby": {
@@ -10011,21 +9930,7 @@
       "pos": "below"
      }
     },
-    " a new shop on Bruns Street next month",
-    {
-     "t": ".",
-     "ruby": [
-      {
-       "t": "S",
-       "pos": "below"
-      },
-      {
-       "t": "서술형★",
-       "pos": "above",
-       "cs": "서술형"
-      }
-     ]
-    },
+    " a new shop on Bruns Street next month. ",
     {
      "t": "I",
      "cs": [
@@ -10212,11 +10117,11 @@
     },
     {
      "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
+     "cs": [
+      "형광 노랑"
+     ]
     },
+    " ",
     {
      "t": "I",
      "ruby": {
@@ -10246,14 +10151,7 @@
       "pos": "below"
      }
     },
-    " in response to your ad in the Bruns Journal",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " in response to your ad in the Bruns Journal. ",
     {
      "t": "I",
      "ruby": {
@@ -10304,7 +10202,7 @@
       "pos": "below"
      }
     },
-    " a sales assistant at LoganMart for the last five years.",
+    " a sales assistant at LoganMart for the last five years. ",
     {
      "t": "During",
      "cs": [
@@ -10386,7 +10284,7 @@
       "pos": "below"
      }
     },
-    " sales skills,and now ",
+    " sales skills, and now ",
     {
      "t": "I",
      "ruby": {
@@ -10420,14 +10318,7 @@
       "파랑 글자"
      ]
     },
-    " for the sales position in your clothing store",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " for the sales position in your clothing store. ",
     {
      "t": "I",
      "ruby": {
@@ -10467,13 +10358,7 @@
       "빨강 글자"
      ]
     },
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    ". ",
     {
      "t": "I",
      "ruby": {
@@ -10508,7 +10393,7 @@
       "pos": "below"
      }
     },
-    " from you.Thank you for ",
+    " from you. Thank you for ",
     {
      "t": "reading",
      "cs": [
@@ -10519,7 +10404,7 @@
       "pos": "below"
      }
     },
-    " my letter.Yours sincerely,Grace Braddock"
+    " my letter. Yours sincerely, Grace Braddock"
    ],
    "해석": "친애하는 MacAlpine씨께, 저는 당신의 브랜드가 다음 달에 Bruns 거리에 새 매장을 연다는 것을 듣고 매우 들떴습니다. 저는 당신의 브랜드가 여성들이 더 멋지고 자신감 있게 느끼도록 도와주는 방식을 항상 높이 평가해 왔습니다. 저는 Bruns Journal에 있는 당신의 광고에 대한응답으로 편지를 쓰고 있습니다. 저는 Meline 패션 학교를 졸업했고 지난 5년간 LoganMart에서 판매 보조원으로 일해 왔습니다. 그 기간 동안 저는 뛰어난 고객 서비스 및 판매 기술을 발달시켜 왔고, 이제 당신의 의류 매장의 판매직에 지원하고 싶습니다. 저는 당신이 편한 가장 빠른 시간에 인터뷰가 가능합니다. 당신으로부터 대답을 듣게 되기를 기대합니다. 저의 편지를 읽어 주셔서 감사드립니다. Grace Braddock 드림",
    "_원본쪽": [
@@ -10787,14 +10672,7 @@
       "빨강 글자"
      ]
     },
-    " her hand",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " her hand. ",
     {
      "t": "I",
      "ruby": {
@@ -10855,7 +10733,7 @@
       "pos": "below"
      }
     },
-    ",but the ",
+    ", but the ",
     {
      "t": "sun",
      "ruby": {
@@ -10909,21 +10787,14 @@
       "pos": "below"
      }
     },
-    " of",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "S",
-      "pos": "below"
-     }
-    },
+    " of ",
     {
      "t": "it",
      "cs": [
       "파랑 글자"
      ]
     },
-    " ",
+    ". ",
     {
      "t": "I",
      "ruby": {
@@ -11223,7 +11094,7 @@
       "pos": "below"
      }
     },
-    ",",
+    ", ",
     {
      "t": "like",
      "ruby": {
@@ -11231,7 +11102,7 @@
       "pos": "below"
      }
     },
-    " gold,",
+    " gold, ",
     {
      "t": "would",
      "cs": [
@@ -11346,7 +11217,7 @@
       "빨강 글자"
      ]
     },
-    ".",
+    ". ",
     {
      "t": "Instead",
      "cs": [
@@ -11359,6 +11230,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "they",
      "ruby": {
@@ -11393,7 +11265,7 @@
       "pos": "below"
      }
     },
-    " out for them.",
+    " out for them. ",
     {
      "t": "They",
      "cs": [
@@ -11486,7 +11358,7 @@
       "형광 노랑"
      ]
     },
-    "Maybe ",
+    " Maybe ",
     {
      "t": "they",
      "ruby": {
@@ -11756,7 +11628,7 @@
       "빨강 글자"
      ]
     },
-    ".",
+    ". ",
     {
      "t": "In",
      "cs": [
@@ -11776,6 +11648,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "that",
      "ruby": {
@@ -11783,13 +11656,7 @@
       "pos": "below"
      }
     },
-    {
-     "t": "'",
-     "ruby": {
-      "t": "V",
-      "pos": "below"
-     }
-    },
+    "' ",
     {
      "t": "s",
      "ruby": {
@@ -11824,7 +11691,7 @@
       "pos": "below"
      }
     },
-    ".When ",
+    ". When ",
     {
      "t": "school",
      "ruby": {
@@ -11850,7 +11717,7 @@
       "파랑 글자"
      ]
     },
-    ",your ",
+    ", your ",
     {
      "t": "growth",
      "ruby": {
@@ -11877,7 +11744,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "Like",
      "ruby": {
@@ -11917,14 +11784,14 @@
       "분홍 물결"
      ]
     },
-    " thought, time, and energy to.it ",
+    " thought, time, and energy to it. ",
     {
      "t": "Otherwise",
      "cs": [
       "빨강 글자"
      ]
     },
-    ",it simply won't ",
+    ", it simply won't ",
     {
      "t": "happen",
      "ruby": {
@@ -12140,7 +12007,7 @@
       "pos": "below"
      }
     },
-    " of things,or of ",
+    " of things, or of ",
     {
      "t": "the",
      "cs": [
@@ -12180,7 +12047,7 @@
       "pos": "below"
      }
     },
-    " off them.",
+    " off them. ",
     {
      "t": "They",
      "ruby": {
@@ -12402,7 +12269,7 @@
       "pos": "below"
      }
     },
-    " only in the eye or mind of the viewer.",
+    " only in the eye or mind of the viewer. ",
     {
      "t": "They",
      "ruby": {
@@ -12783,13 +12650,7 @@
       "pos": "below"
      }
     },
-    {
-     "t": ".",
-     "ruby": {
-      "t": "O",
-      "pos": "below"
-     }
-    },
+    " ",
     {
      "t": "it",
      "ruby": {
@@ -12797,7 +12658,7 @@
       "pos": "below"
      }
     },
-    " Both ",
+    ". Both ",
     {
      "t": "positions",
      "ruby": {
@@ -12865,7 +12726,7 @@
       "pos": "below"
      }
     },
-    " ―\"the ",
+    " ― \"the ",
     {
      "t": "place",
      "cs": [
@@ -13277,7 +13138,7 @@
       "형광 분홍"
      ]
     },
-    "or scientific thrillers.",
+    " or scientific thrillers. ",
     {
      "t": "The",
      "cs": [
@@ -13352,6 +13213,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "one",
      "cs": [
@@ -13440,6 +13302,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "so",
      "cs": [
@@ -13516,7 +13379,7 @@
       "형광 노랑"
      ]
     },
-    "Often,a polite ",
+    " Often, a polite ",
     {
      "t": "letter",
      "ruby": {
@@ -13631,7 +13494,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "But",
      "cs": [
@@ -13908,7 +13771,7 @@
       "pos": "below"
      }
     },
-    " the characters, the tension,and the conflict ― not the train timetable or the building blueprint."
+    " the characters, the tension, and the conflict ― not the train timetable or the building blueprint."
    ],
    "해석": "들어 범죄 소설이나 과학 스릴러와 같은 어떤 종류의 소설은 더 높은수준의 세부 사항을 요구한다는 것이다. 정보는 찾기에 결코 어렵지않다. 작가들을 위한 한 웹사이트는 범죄물 작가들이 정보를 제대로얻을 수 있도록 심지어 경찰서로의 탐방을 조직하기도 한다. 종종 정중한 편지는 여러분에게 특정한 장소를 방문하고 필요한 모든 세부사항을 기록할 수 있는 허가를 얻어 줄 것이다. 하지만 만약 여러분이발견한 모든 것을 작품에 담아야 한다고 생각할 경우 여러분은 독자들을 지루하게 만들 것이라는 것을 기억하라. 중요한 세부 사항은 인간의 경험을 드러내는 것이다. 중요한 것은 기차 시간표나 건물 청사진이 아니라 인물, 긴장, 그리고 갈등을 찾아가며 이야기를 말하는 것이다.",
    "그림": "그림/p052.png",
@@ -14048,7 +13911,7 @@
       "빨강 글자"
      ]
     },
-    " of you,from food and air to bacteria and viruses. ",
+    " of you, from food and air to bacteria and viruses. ",
     {
      "t": "A",
      "cs": [
@@ -14298,6 +14161,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "and",
      "cs": [
@@ -14418,7 +14282,7 @@
       "형광 노랑"
      ]
     },
-    "From ",
+    " From ",
     {
      "t": "the",
      "cs": [
@@ -14462,7 +14326,7 @@
       "파랑 글자"
      ]
     },
-    ",oral ",
+    ", oral ",
     {
      "t": "health",
      "ruby": {
@@ -14719,6 +14583,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "Poor",
      "cs": [
@@ -14844,7 +14709,7 @@
       "pos": "below"
      }
     },
-    " anywhere in the body,",
+    " anywhere in the body, ",
     {
      "t": "posing",
      "cs": [
@@ -14987,7 +14852,7 @@
       "빨강 글자"
      ]
     },
-    " their toys,college ",
+    " their toys, college ",
     {
      "t": "students",
      "ruby": {
@@ -15024,7 +14889,7 @@
       "빨강 글자"
      ]
     },
-    " cafeteria food,and sooner or later ",
+    " cafeteria food, and sooner or later ",
     {
      "t": "most",
      "ruby": {
@@ -15051,7 +14916,7 @@
       "pos": "below"
      }
     },
-    " in our favorite TV shows.The bottom ",
+    " in our favorite TV shows. The bottom ",
     {
      "t": "line",
      "ruby": {
@@ -15435,7 +15300,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "We",
      "cs": [
@@ -15660,6 +15525,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "(",
      "cs": [
@@ -15813,7 +15679,7 @@
       "pos": "below"
      }
     },
-    "(like our ancestor's hypothetical puma threat) ",
+    " (like our ancestor's hypothetical puma threat) ",
     {
      "t": "stand",
      "cs": [
@@ -15839,13 +15705,7 @@
       "pos": "below"
      }
     },
-    {
-     "t": "'",
-     "ruby": {
-      "t": "V",
-      "pos": "below"
-     }
-    },
+    "' ",
     {
      "t": "s",
      "ruby": {
@@ -16046,7 +15906,7 @@
       "파랑 글자"
      ]
     },
-    ",",
+    ", ",
     {
      "t": "reaching",
      "cs": [
@@ -16064,7 +15924,7 @@
       "파랑 글자"
      ]
     },
-    " highest level in 2022.The investment ",
+    " highest level in 2022. The investment ",
     {
      "t": "gap",
      "ruby": {
@@ -16262,7 +16122,7 @@
       "빨강 글자"
      ]
     },
-    " at a farm in Maryland.His full ",
+    " at a farm in Maryland. His full ",
     {
      "t": "name",
      "ruby": {
@@ -16535,6 +16395,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "He",
      "ruby": {
@@ -16592,7 +16453,7 @@
       "pos": "below"
      }
     },
-    " to other areas in the north.",
+    " to other areas in the north. ",
     {
      "t": "As",
      "ruby": {
@@ -17014,7 +16875,7 @@
       "빨강 글자"
      ]
     },
-    ". In several European countries,there ",
+    ". In several European countries, there ",
     {
      "t": "are",
      "cs": [
@@ -17121,14 +16982,7 @@
       "pos": "below"
      }
     },
-    " brain death in potential organ donors",
-    {
-     "t": ",",
-     "ruby": {
-      "t": "V 단수",
-      "pos": "below"
-     }
-    },
+    " brain death in potential organ donors ",
     {
      "t": "is",
      "cs": [
@@ -17139,7 +16993,7 @@
       "pos": "below"
      }
     },
-    " no doubt,",
+    ", no doubt, ",
     {
      "t": "to",
      "cs": [
@@ -17340,6 +17194,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "They",
      "cs": [
@@ -18363,7 +18218,7 @@
       "빨강 글자"
      ]
     },
-    " item but sooner than later,this ",
+    " item but sooner than later, this ",
     {
      "t": "feeling",
      "ruby": {
@@ -18740,7 +18595,7 @@
       "pos": "below"
      }
     },
-    ".Psychologist George M.",
+    ". Psychologist George M. ",
     {
      "t": "Stratton",
      "ruby": {
@@ -18775,7 +18630,7 @@
       "pos": "below"
      }
     },
-    " in an impressive self-experiment.",
+    " in an impressive self-experiment. ",
     {
      "t": "Stratton",
      "cs": [
@@ -18849,6 +18704,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "which",
      "cs": [
@@ -18935,6 +18791,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "In",
      "cs": [
@@ -18961,6 +18818,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "this",
      "cs": [
@@ -19204,7 +19062,7 @@
       "pos": "below"
      }
     },
-    " in his environment again,even ",
+    " in his environment again, even ",
     {
      "t": "seeing",
      "cs": [
@@ -19571,7 +19429,7 @@
       "pos": "below"
      }
     },
-    "\"",
+    " \"",
     {
      "t": "Why",
      "ruby": {
@@ -19611,7 +19469,7 @@
       "pos": "below"
      }
     },
-    "?\"Half ",
+    "?\" Half ",
     {
      "t": "the",
      "ruby": {
@@ -19655,7 +19513,7 @@
       "파랑 글자"
      ]
     },
-    " for the answers on the internet,",
+    " for the answers on the internet, ",
     {
      "t": "while",
      "ruby": {
@@ -19719,7 +19577,7 @@
       "파랑 글자"
      ]
     },
-    " so.",
+    " so. ",
     {
      "t": "Then",
      "cs": [
@@ -19732,7 +19590,7 @@
       "형광 분홍"
      ]
     },
-    "in the second part of the study,",
+    " in the second part of the study, ",
     {
      "t": "all",
      "ruby": {
@@ -19758,7 +19616,7 @@
       "파랑 글자"
      ]
     },
-    " with a new set of questions, such as\"",
+    " with a new set of questions, such as \"",
     {
      "t": "Why",
      "ruby": {
@@ -19942,6 +19800,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "so",
      "cs": [
@@ -20758,14 +20617,7 @@
       "빨강 글자"
      ]
     },
-    " features within",
-    {
-     "t": ".",
-     "ruby": {
-      "t": "the world",
-      "pos": "below"
-     }
-    },
+    " features within ",
     {
      "t": "it",
      "ruby": {
@@ -20773,7 +20625,7 @@
       "pos": "below"
      }
     },
-    " ",
+    ". ",
     {
      "t": "Take",
      "cs": [
@@ -20792,7 +20644,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "We",
      "cs": [
@@ -21008,14 +20860,14 @@
       "빨강 글자"
      ]
     },
-    ",",
+    ", ",
     {
      "t": "uniform",
      "cs": [
       "빨강 글자"
      ]
     },
-    " object.",
+    " object. ",
     {
      "t": "We",
      "ruby": {
@@ -21039,7 +20891,7 @@
       "pos": "below"
      }
     },
-    " as an individual,or ",
+    " as an individual, or ",
     {
      "t": "we",
      "ruby": {
@@ -21129,7 +20981,7 @@
       "pos": "below"
      }
     },
-    " of these perspectives,",
+    " of these perspectives, ",
     {
      "t": "although",
      "cs": [
@@ -21215,6 +21067,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "we",
      "ruby": {
@@ -21248,7 +21101,7 @@
       "pos": "below"
      }
     },
-    " at a time.",
+    " at a time. ",
     {
      "t": "We",
      "ruby": {
@@ -21276,7 +21129,7 @@
       "pos": "below"
      }
     },
-    " to the varied behavior of individual animals,",
+    " to the varied behavior of individual animals, ",
     {
      "t": "look",
      "cs": [
@@ -21593,7 +21446,7 @@
       "pos": "below"
      }
     },
-    ",",
+    ", ",
     {
      "t": "what",
      "ruby": {
@@ -21617,7 +21470,7 @@
       "pos": "below"
      }
     },
-    "?",
+    "? ",
     {
      "t": "You",
      "ruby": {
@@ -21668,7 +21521,7 @@
       "pos": "below"
      }
     },
-    " in the sand.",
+    " in the sand. ",
     {
      "t": "However",
      "cs": [
@@ -21681,6 +21534,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "Plato",
      "cs": [
@@ -21741,6 +21595,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "if",
      "cs": [
@@ -22301,7 +22156,7 @@
       "pos": "below"
      }
     },
-    " in perfect circles around perfect rocks.",
+    " in perfect circles around perfect rocks. ",
     {
      "t": "Plato",
      "ruby": {
@@ -22764,6 +22619,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "the",
      "cs": [
@@ -23445,7 +23301,7 @@
       "pos": "below"
      }
     },
-    ",depending on their age,region,or car brand.Both casinos ",
+    ", depending on their age, region, or car brand. Both casinos ",
     {
      "t": "and",
      "ruby": {
@@ -24141,7 +23997,7 @@
       "빨강 글자"
      ]
     },
-    ",",
+    ", ",
     {
      "t": "playing",
      "cs": [
@@ -24177,7 +24033,7 @@
       "빨강 글자"
      ]
     },
-    " responses.",
+    " responses. ",
     {
      "t": "Because",
      "cs": [
@@ -24272,14 +24128,14 @@
       "빨강 글자"
      ]
     },
-    " than the perception of consequences.Due to these ",
+    " than the perception of consequences. Due to these ",
     {
      "t": "differences",
      "cs": [
       "빨강 글자"
      ]
     },
-    ",there ",
+    ", there ",
     {
      "t": "is",
      "cs": [
@@ -24312,7 +24168,7 @@
       "pos": "below"
      }
     },
-    " by the more mature limbic system and logical-based decision-making by the not-yet-mature prefrontal cortex.",
+    " by the more mature limbic system and logical-based decision-making by the not-yet-mature prefrontal cortex. ",
     {
      "t": "This",
      "ruby": {
@@ -24775,7 +24631,7 @@
       "파랑 글자"
      ]
     },
-    " over 10 years ago.The ",
+    " over 10 years ago. The ",
     {
      "t": "factor",
      "ruby": {
@@ -25008,6 +24864,7 @@
       "형광 주황"
      ]
     },
+    " ",
     {
      "t": "which",
      "cs": [
@@ -25256,7 +25113,7 @@
       "형광 민트"
      ]
     },
-    "The biggest ",
+    " The biggest ",
     {
      "t": "loss",
      "cs": [
@@ -25323,7 +25180,7 @@
       "pos": "below"
      }
     },
-    ".In an attempt ",
+    ". In an attempt ",
     {
      "t": "to",
      "ruby": {
@@ -25338,7 +25195,7 @@
       "빨강 글자"
      ]
     },
-    " millions from extreme hunger,crop ",
+    " millions from extreme hunger, crop ",
     {
      "t": "scientists",
      "ruby": {
@@ -25435,7 +25292,7 @@
       "pos": "below"
      }
     },
-    ".The ",
+    ". The ",
     {
      "t": "strategy",
      "ruby": {
@@ -25469,7 +25326,7 @@
       "빨강 글자"
      ]
     },
-    ",at least to begin with. ",
+    ", at least to begin with. ",
     {
      "t": "Because",
      "cs": [
@@ -25487,7 +25344,7 @@
       "파랑 글자"
      ]
     },
-    ",it grain ",
+    " it, grain ",
     {
      "t": "production",
      "ruby": {
@@ -25519,7 +25376,7 @@
       "pos": "below"
      }
     },
-    ".",
+    ". ",
     {
      "t": "Leaving",
      "cs": [
@@ -25600,6 +25457,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "the",
      "cs": [
@@ -25779,7 +25637,7 @@
       "형광 노랑"
      ]
     },
-    "Specifically,",
+    " Specifically, ",
     {
      "t": "a",
      "cs": [
@@ -25984,6 +25842,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "pests",
      "cs": [
@@ -26164,7 +26023,7 @@
       "pos": "below"
      }
     },
-    " of the first 28 World Cups and 3 of 5 Olympic Games.The ",
+    " of the first 28 World Cups and 3 of 5 Olympic Games. The ",
     {
      "t": "Cubans",
      "ruby": {
@@ -26219,7 +26078,7 @@
       "pos": "below"
      }
     },
-    " in red from head to toe,a ",
+    " in red from head to toe, a ",
     {
      "t": "strong",
      "cs": [
@@ -26244,7 +26103,7 @@
       "pos": "below"
      }
     },
-    " grey or white pants.",
+    " grey or white pants. ",
     {
      "t": "Not",
      "cs": [
@@ -26324,6 +26183,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "the",
      "cs": [
@@ -27048,7 +26908,7 @@
       "빨강 글자"
      ]
     },
-    " between genetic and cultural transmission.",
+    " between genetic and cultural transmission. ",
     {
      "t": "For",
      "cs": [
@@ -27068,6 +26928,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "we",
      "ruby": {
@@ -27120,7 +26981,7 @@
       "pos": "below"
      }
     },
-    ".If two biological ",
+    ". If two biological ",
     {
      "t": "parents",
      "ruby": {
@@ -27151,7 +27012,7 @@
       "pos": "below"
      }
     },
-    " of a cultural trait,their ",
+    " of a cultural trait, their ",
     {
      "t": "child",
      "ruby": {
@@ -27204,7 +27065,7 @@
       "빨강 글자"
      ]
     },
-    " the mother's or father's form of that trait.",
+    " the mother's or father's form of that trait. ",
     {
      "t": "Further",
      "cs": [
@@ -27217,6 +27078,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "a",
      "cs": [
@@ -27373,6 +27235,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "thus",
      "cs": [
@@ -27385,6 +27248,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "the",
      "cs": [
@@ -27725,7 +27589,7 @@
       "pos": "below"
      }
     },
-    " it,",
+    " it, ",
     {
      "t": "persisting",
      "cs": [
@@ -27737,72 +27601,26 @@
       "pos": "below"
      }
     },
-    " as ",
-    {
-     "t": "inertia",
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
-    },
-    " of ",
-    {
-     "t": "movement",
-     "ruby": {
-      "t": "과거분사",
-      "pos": "above"
-     }
-    },
-    " and ",
+    " as inertia of movement and ",
     {
      "t": "tending",
      "cs": [
       "파랑 글자",
       "분홍 물결"
      ],
-     "ruby": [
-      {
-       "t": "V 수동태",
-       "pos": "above"
-      },
-      {
-       "t": "분사구문2",
-       "pos": "below"
-      }
-     ]
-    },
-    " to carry it in the same ",
-    {
-     "t": "straight",
      "ruby": {
-      "t": "과거분사",
-      "pos": "above"
+      "t": "분사구문2",
+      "pos": "below"
      }
     },
-    " line,",
-    {
-     "t": "and",
-     "ruby": {
-      "t": "분사구문1",
-      "pos": "above"
-     }
-    },
-    " by the ",
+    " to carry it in the same straight line, and by the ",
     {
      "t": "constant",
      "cs": [
       "빨강 글자"
      ]
     },
-    " pull of gravity ",
-    {
-     "t": "downward",
-     "ruby": {
-      "t": "분사구문2",
-      "pos": "above"
-     }
-    },
-    ", as well as by the ",
+    " pull of gravity downward, as well as by the ",
     {
      "t": "resistance",
      "cs": [
@@ -27855,27 +27673,13 @@
       "pos": "below"
      }
     },
-    " ",
-    {
-     "t": "the",
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
-    },
-    " ",
+    " the ",
     {
      "t": "working",
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "above"
-      },
-      {
-       "t": "O",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "O",
+      "pos": "below"
+     }
     },
     " of any particular force; there ",
     {
@@ -27888,15 +27692,7 @@
       "pos": "below"
      }
     },
-    " simply ",
-    {
-     "t": "the",
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
-    },
-    " ",
+    " simply the ",
     {
      "t": "combination",
      "cs": [
@@ -27907,23 +27703,7 @@
       "pos": "below"
      }
     },
-    " of ",
-    {
-     "t": "the",
-     "ruby": {
-      "t": "V",
-      "pos": "above"
-     }
-    },
-    " three ",
-    {
-     "t": "elementary",
-     "ruby": {
-      "t": "O",
-      "pos": "above"
-     }
-    },
-    " forces ",
+    " of the three elementary forces ",
     {
      "t": "mentioned",
      "cs": [
@@ -27934,15 +27714,7 @@
       "pos": "below"
      }
     },
-    ";but in a ",
-    {
-     "t": "real",
-     "ruby": {
-      "t": "V",
-      "pos": "above"
-     }
-    },
-    " sense,there ",
+    "; but in a real sense, there ",
     {
      "t": "is",
      "cs": [
@@ -27956,45 +27728,19 @@
     " ",
     {
      "t": "something",
-     "ruby": [
-      {
-       "t": "S",
-       "pos": "above"
-      },
-      {
-       "t": "S",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "S",
+      "pos": "below"
+     }
     },
     " in the total action besides the ",
     {
      "t": "isolated",
      "cs": [
       "빨강 글자"
-     ],
-     "ruby": {
-      "t": "과거분사",
-      "pos": "above"
-     }
+     ]
     },
-    " action of three forces, ",
-    {
-     "t": "namely",
-     "ruby": {
-      "t": "V",
-      "pos": "above"
-     }
-    },
-    ", ",
-    {
-     "t": "their",
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
-    },
-    " ",
+    " action of three forces, namely, their ",
     {
      "t": "joint",
      "cs": [
@@ -28035,6 +27781,7 @@
       "형광 분홍"
      ]
     },
+    " ",
     {
      "t": "when",
      "cs": [
@@ -28109,6 +27856,7 @@
       "형광 노랑"
      ]
     },
+    " ",
     {
      "t": "their",
      "cs": [
@@ -28178,11 +27926,7 @@
      "t": "group",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -28202,16 +27946,10 @@
      "cs": [
       "형광 주황"
      ],
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "above"
-      },
-      {
-       "t": "C (선행사)",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "C (선행사)",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -28262,11 +28000,7 @@
      "cs": [
       "파랑 글자",
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "S1",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -28308,11 +28042,7 @@
      "t": "our",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "S2",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -28337,22 +28067,14 @@
      "t": "each",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "V 복수",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
      "t": "individual",
      "cs": [
       "형광 노랑"
-     ],
-     "ruby": {
-      "t": "C (선행사)",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -28361,16 +28083,10 @@
       "파랑 글자",
       "형광 노랑"
      ],
-     "ruby": [
-      {
-       "t": "조동사 과거",
-       "pos": "above"
-      },
-      {
-       "t": "separate (X)",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "separate (X)",
+      "pos": "below"
+     }
     },
     {
      "t": ".",
@@ -28378,45 +28094,15 @@
       "형광 노랑"
      ]
     },
-    " ",
-    {
-     "t": "The",
-     "ruby": {
-      "t": "V 수동태",
-      "pos": "above"
-     }
-    },
-    " ",
+    " The ",
     {
      "t": "significance",
-     "ruby": [
-      {
-       "t": "가정법",
-       "pos": "above"
-      },
-      {
-       "t": "S",
-       "pos": "below"
-      }
-     ]
-    },
-    " ",
-    {
-     "t": "of",
      "ruby": {
       "t": "S",
-      "pos": "above"
+      "pos": "below"
      }
     },
-    " group ",
-    {
-     "t": "behavior",
-     "ruby": {
-      "t": "과거 V",
-      "pos": "above"
-     }
-    },
-    " ",
+    " of group behavior ",
     {
      "t": "is",
      "cs": [
@@ -28433,16 +28119,10 @@
      "cs": [
       "파랑 글자"
      ],
-     "ruby": [
-      {
-       "t": "O",
-       "pos": "above"
-      },
-      {
-       "t": "great (X)",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "great (X)",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -28455,24 +28135,12 @@
       "pos": "below"
      }
     },
-    " in the case of ",
-    {
-     "t": "human",
-     "ruby": {
-      "t": "separate (X)",
-      "pos": "above"
-     }
-    },
-    " beings by ",
+    " in the case of human beings by ",
     {
      "t": "the",
      "cs": [
       "형광 주황"
-     ],
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -28500,29 +28168,7 @@
       "pos": "below"
      }
     },
-    " of the ",
-    {
-     "t": "tendencies",
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "above"
-      },
-      {
-       "t": "great (X)",
-       "pos": "above"
-      }
-     ]
-    },
-    " to ",
-    {
-     "t": "action",
-     "ruby": {
-      "t": "수동태",
-      "pos": "above"
-     }
-    },
-    " of the individual ",
+    " of the tendencies to action of the individual ",
     {
      "t": "are",
      "cs": [
@@ -28555,23 +28201,7 @@
       "pos": "below"
      }
     },
-    " to ",
-    {
-     "t": "other",
-     "ruby": {
-      "t": "동격",
-      "pos": "above"
-     }
-    },
-    " ",
-    {
-     "t": "persons",
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
-    },
-    ", and could not ",
+    " to other persons, and could not ",
     {
      "t": "be",
      "cs": [
@@ -28589,38 +28219,16 @@
       "파랑 글자"
      ]
     },
-    " except by ",
-    {
-     "t": "other",
-     "ruby": {
-      "t": "V1 복수",
-      "pos": "above"
-     }
-    },
-    " ",
-    {
-     "t": "persons",
-     "ruby": {
-      "t": "수동태",
-      "pos": "above"
-     }
-    },
-    " ",
+    " except by other persons ",
     {
      "t": "acting",
      "cs": [
       "파랑 글자"
      ],
-     "ruby": [
-      {
-       "t": "definite (X)",
-       "pos": "above"
-      },
-      {
-       "t": "현재분사",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "현재분사",
+      "pos": "below"
+     }
     },
     " as stimuli. An ",
     {
@@ -28630,15 +28238,7 @@
       "pos": "below"
      }
     },
-    " in ",
-    {
-     "t": "complete",
-     "ruby": {
-      "t": "V2 수동태",
-      "pos": "above"
-     }
-    },
-    " ",
+    " in complete ",
     {
      "t": "isolation",
      "cs": [
@@ -28656,15 +28256,7 @@
       "pos": "below"
      }
     },
-    " their ",
-    {
-     "t": "competitive",
-     "ruby": {
-      "t": "현재분사",
-      "pos": "above"
-     }
-    },
-    " ",
+    " their competitive ",
     {
      "t": "tendencies",
      "cs": [
@@ -28676,15 +28268,7 @@
       "pos": "below"
      }
     },
-    ", ",
-    {
-     "t": "their",
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
-    },
-    " ",
+    ", their ",
     {
      "t": "tendencies",
      "cs": [
@@ -28696,41 +28280,19 @@
       "pos": "below"
      }
     },
-    " towards the opposite ",
-    {
-     "t": "sex",
-     "ruby": {
-      "t": "V",
-      "pos": "above"
-     }
-    },
-    ", their protective ",
+    " towards the opposite sex, their protective ",
     {
      "t": "tendencies",
      "cs": [
       "파랑 글자",
       "분홍 물결"
      ],
-     "ruby": [
-      {
-       "t": "O1",
-       "pos": "above"
-      },
-      {
-       "t": "O3",
-       "pos": "below"
-      }
-     ]
-    },
-    " towards ",
-    {
-     "t": "children",
      "ruby": {
-      "t": "O2",
-      "pos": "above"
+      "t": "O3",
+      "pos": "below"
      }
     },
-    ". ",
+    " towards children. ",
     {
      "t": "This",
      "ruby": {
@@ -28790,16 +28352,10 @@
       "파랑 글자",
       "형광 민트"
      ],
-     "ruby": [
-      {
-       "t": "O3",
-       "pos": "above"
-      },
-      {
-       "t": "full (X)",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "full (X)",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -28833,16 +28389,10 @@
      "cs": [
       "형광 민트"
      ],
-     "ruby": [
-      {
-       "t": "S",
-       "pos": "above"
-      },
-      {
-       "t": "S",
-       "pos": "below"
-      }
-     ]
+     "ruby": {
+      "t": "S",
+      "pos": "below"
+     }
     },
     " ",
     {
@@ -28862,16 +28412,6 @@
      "cs": [
       "파랑 글자",
       "형광 민트"
-     ],
-     "ruby": [
-      {
-       "t": "V",
-       "pos": "above"
-      },
-      {
-       "t": "명접",
-       "pos": "above"
-      }
      ]
     },
     " ",
@@ -28886,11 +28426,7 @@
      "t": "relationships",
      "cs": [
       "형광 민트"
-     ],
-     "ruby": {
-      "t": "S",
-      "pos": "above"
-     }
+     ]
     },
     " ",
     {
@@ -28911,27 +28447,13 @@
      "t": "individuals",
      "cs": [
       "형광 민트"
-     ],
-     "ruby": [
-      {
-       "t": "V 복수",
-       "pos": "above"
-      },
-      {
-       "t": "full (X)",
-       "pos": "above"
-      }
      ]
     },
     {
      "t": ".",
      "cs": [
       "형광 민트"
-     ],
-     "ruby": {
-      "t": "full (X)",
-      "pos": "above"
-     }
+     ]
     }
    ],
    "해석": "운동의 관성으로 지속하며 같은 직선으로 나아가려는 경향을 보이고, 공기의 저항뿐만 아니라 아래로 지속적으로 당기는 중력에 의해서도움직여진다. 그에 맞춰 공은 곡선의 경로로 움직인다. 이제 그 경로는어떤 특정한 힘의 작동을 나타내지는 않는다. 언급된 세 가지 기본적인힘의 결합이 존재할 뿐이다. 하지만 사실은 세 가지 힘의 고립된 작용외에 전체적인 작용에 무언가가 있다. 이름하여 그들의 공동 작용이다. 같은 방식으로, 두 명 혹은 그 이상의 인간 개인이 같이 있을 때 그들의상호 관계와 그들의 집단으로의 배치는 만약 우리가 관심을 개별적으로 각각의 개인에게 국한시킨다면 드러나지 않을 것들이다. 개인 행동의 몇몇 경향은 명백하게 다른 사람들과 관련이 있고 자극으로 작동하는 다른 사람들 없이는 유발되지 않을 수 있다는 사실로 인해 그룹 행동의 중요성이 인간의 경우 크게 증가된다. 완전한 고립 속의 개인은그들의 경쟁적인 성향, 이성에 대한 그들의 성향, 아이에 대한 그들의보호적 성향을 드러내지 않을 것이다. 이것은 개인이 다른 개인과의 관계에 관여될 때까지는 인간 본성의 특성이 완전히 나타나지 않는다는것을 보여 준다.",
