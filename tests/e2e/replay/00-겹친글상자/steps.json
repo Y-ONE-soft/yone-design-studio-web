@@ -1,0 +1,451 @@
+[
+{
+"say": "＋ 새 문서",
+"wait": 1300
+},
+{
+"answer": "겹친 글상자 시험"
+},
+{
+"click": "#pcards .pcard.new",
+"wait": 5000
+},
+{
+"until": "docPages().length > 0 && page",
+"wait": 500
+},
+{
+"clickif": {
+"at": "#tg-side",
+"when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"
+},
+"wait": 1000
+},
+{
+"js": "(() => { const k = docPages().length; if (k !== 1) throw new Error('시작 쪽 수가 1 이 아니라 ' + k); return '시작 쪽 1 확인'; })()",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "연한"
+},
+{
+"click": "#cs-new",
+"wait": 1200
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"연한:color\"]",
+"value": "#a7bcbc"
+},
+"wait": 900
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "아래 도형",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L1 1 L1 0 Z"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 94.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 66.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 118.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 233.5
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#dfe1e3"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"opacity\"]",
+"value": 60
+},
+"wait": 420
+},
+{
+"say": "도형 위 글상자",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+260
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+255.0
+]
+},
+"value": "첫 글상자",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 12
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 60
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 10
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 30
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 30
+},
+"wait": 550
+},
+{
+"say": "두 줄 글",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+270
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+260.0
+]
+},
+"value": "교재 이름\n00강 강 제목",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 12
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 60
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 20
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 30
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 60
+},
+"wait": 550
+},
+{
+"say": "작은 글",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+154.4,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+137.2,
+254.5
+]
+},
+"value": "GRAMMAR POINT",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.58
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#759b9b"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 34.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 147.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 23.0
+},
+"wait": 550
+},
+{
+"dbl": {
+"mm": [
+160.0,
+24.7
+]
+},
+"wait": 1200
+},
+{
+"select": {
+"text": "POINT"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#rt-cs",
+"value": "연한"
+},
+"wait": 900
+},
+{
+"click": {
+"mm": [
+205,
+294
+]
+},
+"wait": 1200
+},
+{
+"js": "(() => { const t = page.items.filter(i => (i.atom||{}).t === 'text').map(i => i.atom.text); if (t[1] !== '교재 이름\\n00강 강 제목') throw new Error('두 줄 글 ' + JSON.stringify(t[1])); if (!Array.isArray(t[2]) || !t[2].some(r => r.cs === '연한' && r.t === 'POINT')) throw new Error('작은 글 고르기 ' + JSON.stringify(t[2])); return '확인 — ' + JSON.stringify(t); })()"
+}
+]

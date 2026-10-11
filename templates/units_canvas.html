@@ -277,6 +277,15 @@
   .paper .svgwrap svg g[data-lock].sel2, .paper .svgwrap svg g.lk-sel { outline: 2px dashed #f0a441; }
   /* 글 바로 고치기 */
   .tedit { position: absolute; z-index: 30; border: 2px solid var(--pp); border-radius: 2px; background: rgba(255,255,255,.95); padding: 0; margin: 0; resize: none; overflow: hidden; line-height: 1.45; font-family: inherit; box-sizing: border-box; }
+  .tedit.rt { white-space: pre-wrap; overflow: auto; outline: none; word-break: break-word; line-height: 1.9; }
+  .tedit.rt [data-cs] { background: rgba(125,42,232,.13); border-bottom: 1px dotted #7d2ae8; }
+  .tedit.rt [data-rba], .tedit.rt [data-rbb] { position: relative; }
+  .tedit.rt [data-rba]::before { content: attr(data-rba); position: absolute; left: 0; bottom: 78%; font-size: 55%; line-height: 1; color: #2d5bd1; white-space: nowrap; pointer-events: none; }
+  .tedit.rt [data-rbb]::after { content: attr(data-rbb); position: absolute; left: 0; top: 88%; font-size: 55%; line-height: 1; color: #2d5bd1; white-space: nowrap; pointer-events: none; }
+  .tedit.rt .rt-side { display: inline-block; background: #fff3c4; border: 1px solid #e0b400; border-radius: 3px; font-size: 70%; line-height: 1.3; padding: 0 3px; margin: 0 1px; cursor: pointer; user-select: none; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+  .rtbar { position: absolute; z-index: 31; display: flex; gap: 4px; align-items: center; background: #fff; border: 1px solid #d6d3e0; border-radius: 8px; padding: 3px 5px; box-shadow: 0 4px 14px rgba(0,0,0,.12); font-size: 12px; white-space: nowrap; }
+  .rtbar button { font-size: 12px; padding: 2px 7px; border: 1px solid #d6d3e0; background: #faf9fd; border-radius: 5px; cursor: pointer; }
+  .rtbar select { font-size: 12px; max-width: 130px; }
   /* 오른쪽 클릭 메뉴 · 레이어 */
   .cmenu { position: fixed; z-index: 100; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(30,20,60,.2); padding: 5px; min-width: 180px; display: none; }
   .cmenu button { display: flex; width: 100%; border: 0; background: transparent; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12.5px; text-align: left; color: #1f2330; }
@@ -373,7 +382,8 @@
         <div class="selbox" id="selbox"><span class="lb" id="sellb"></span><span class="rot" data-rot title="회전 (Shift = 15°)"></span><span class="hd" data-h="nw"></span><span class="hd" data-h="n"></span><span class="hd" data-h="ne"></span><span class="hd" data-h="w"></span><span class="hd" data-h="e"></span><span class="hd" data-h="sw"></span><span class="hd" data-h="s"></span><span class="hd" data-h="se"></span></div>
         <div class="slots" id="slots"></div>
         <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
-        <textarea id="tedit" class="tedit" style="display:none"></textarea>
+        <div id="tedit" class="tedit rt" contenteditable="true" spellcheck="false" style="display:none"></div>
+        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs"></select><button id="rt-rba" title="고른 글자 위에 작은 글(인디자인 윗주)">위 윗주</button><button id="rt-rbb" title="고른 글자 아래에 작은 글">아래 윗주</button><button id="rt-side" title="커서 자리에 옆 메모(인디자인 고정 개체) — 그 줄 높이의 옆 칸에 놓인다. 자리는 오른쪽 패널 「옆 메모」">옆 메모</button><button id="rt-clear" title="고른 글자의 꾸밈(문자 스타일 · 윗주 · 색 · 굵게 …)을 지운다">꾸밈 지우기</button></div>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
         <div class="tools" id="tools">
           <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 블록을 고치려면 풀어서 고친 뒤 다시 블록으로 저장">그룹 해제</button><button id="t-up" title="고른 것을 블록 패널에 저장한다. 글상자의 「자리 이름」이 원고가 들어올 자리가 된다">★ 블록으로 저장</button>
@@ -827,16 +837,20 @@ function hitStack(m) {
   }
   return out.reverse();
 }
+function topText(e, i) {                                   // 누른 자리가 그보다 위에 그린 글상자 테두리 안이면 그 글상자 — 글이 없는 빈 곳을 눌러도(인디자인 텍스트 프레임)
+  const t = hitStack(mmOf(e)).find(j => ((page.items[j] || {}).atom || {}).t === "text");
+  return t != null && t > i ? t : i;
+}
 function wire() {
   const svg = $("#svgwrap svg"); if (!svg) return;
   svg.querySelectorAll("g[data-fi]").forEach(g => {
     g.addEventListener("click", (e) => e.stopPropagation());
     if (editing && page.items[+g.dataset.fi] && page.items[+g.dataset.fi]._edit) g.classList.add("edt");
-    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const it = page.items[+g.dataset.fi]; if (it && (it.block || it.part) && !editing) { enterEdit(+g.dataset.fi); return; } if (it && it.atom && it.atom.t === "text") editTextInline(+g.dataset.fi); });
+    g.addEventListener("dblclick", (e) => { e.stopPropagation(); const fi = topText(e, +g.dataset.fi), it = page.items[fi]; if (it && (it.block || it.part) && !editing) { enterEdit(fi); return; } if (it && it.atom && it.atom.t === "text") editTextInline(fi); });
     g.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return; if (e.ctrlKey || e.metaKey) return;          // Ctrl/⌘+끌기 = 범위 선택 (area 가 받는다)
       e.stopPropagation();
-      const i = +g.dataset.fi;
+      const i = topText(e, +g.dataset.fi);
       if (linkPick) { linkTo(i); return; }                                   // 다음 상자 잇기 — 누른 글상자가 이어 받는다
       if (e.shiftKey) { const ids = new Set(sels); if (ids.has(i)) ids.delete(i); else ids.add(i); select([...ids], ids.has(i) ? i : null); return; }
       const under = hitStack(mmOf(e));                                   // 그 자리에 겹쳐 있는 것들 (위에서부터)
@@ -924,7 +938,7 @@ function dragItems(e) {
 function guide(gx, gy) { const v = $("#gv"), h = $("#gh"); if (gx == null) v.style.display = "none"; else { v.style.display = "block"; v.style.left = (gx * scale) + "px"; } if (gy == null) h.style.display = "none"; else { h.style.display = "block"; h.style.top = (gy * scale) + "px"; } }
 // 영역 선택 — 빈 곳에서 끌면 상자, 상자에 걸치는 요소를 고른다. 안 끌면 선택 해제
 $("#area").addEventListener("pointerdown", (e) => {
-  if (e.button !== 0 || !page || spaceDown || handTool || e.target.closest(".selbox, .tools, .ptool, .editbar, .ruler, .guide, .warn, .start, .pv, #tedit, .cmenu")) return;
+  if (e.button !== 0 || !page || spaceDown || handTool || e.target.closest(".selbox, .tools, .ptool, .editbar, .ruler, .guide, .warn, .start, .pv, #tedit, #rtbar, .cmenu")) return;
   if (drawTool) { e.preventDefault(); drawStart(e); return; }                     // 도구를 골랐으면 = 그리기
   if (e.target.closest("g[data-fi]") && !(e.ctrlKey || e.metaKey)) return;        // 요소 위 = 옮기기. Ctrl/⌘ 누르면 범위 선택
   const s0 = mmOf(e); const m = $("#marq"); let moved = false;
@@ -1120,16 +1134,172 @@ $("#t-lock").onclick = (e) => { e.stopPropagation(); lockSel(); };
 document.querySelectorAll("#tools [data-ds]").forEach(b => b.onclick = (e) => { e.stopPropagation(); distribute(b.dataset.ds); });
 document.querySelectorAll("#tools [data-ms]").forEach(b => b.onclick = (e) => { e.stopPropagation(); matchSize(b.dataset.ms); });
 
-// ── 글 바로 고치기 (글상자 더블클릭) ──
+// ── 글 바로 고치기 (글상자 더블클릭) — 글자를 골라 꾸민다: 문자 스타일 · 윗주 · 옆 메모(인디자인 문자 스타일 · 윗주 · 고정 개체) ──
+// 글은 조각 목록(rich — 글 · {t, cs, ruby, …} · {t: "", side})으로 오간다. 꾸밈이 없으면 그냥 글. 옆 메모는 글자 하나로 센다.
+const rtKeys = (r) => { const o = Object.assign({}, r); delete o.t; return o; };
+const rtRuns = (t) => (Array.isArray(t) ? t : [t || ""]).map(r => typeof r === "string" ? {t: r} : Object.assign({}, r));
+const rtLen = (r) => r.side != null ? 1 : (r.t || "").length;
+function rtNorm(runs) {                                    // 같은 꾸밈끼리 잇고, 꾸밈이 하나도 없으면 그냥 글
+  const out = [];
+  for (const r of runs) {
+    if (r.side == null && !r.t) continue;
+    const p = out[out.length - 1];
+    if (p && p.side == null && r.side == null && JSON.stringify(rtKeys(p)) === JSON.stringify(rtKeys(r))) p.t += r.t; else out.push(Object.assign({}, r));
+  }
+  if (out.every(r => r.side == null && Object.keys(r).length === 1)) return out.map(r => r.t).join("");
+  return out.map(r => (r.side == null && Object.keys(r).length === 1) ? r.t : r);
+}
+function rtSplit(runs, at) {                               // 글자 자리 at 에서 조각을 나눈다 → at 뒤 첫 조각 번호
+  let k = 0;
+  for (let i = 0; i < runs.length; i++) {
+    const n = rtLen(runs[i]);
+    if (at === k) return i;
+    if (at < k + n && runs[i].side == null) { const r = runs[i]; runs.splice(i, 1, Object.assign({}, r, {t: r.t.slice(0, at - k)}), Object.assign({}, r, {t: r.t.slice(at - k)})); return i + 1; }
+    k += n;
+  }
+  return runs.length;
+}
+function rtDom(box, runs) {
+  box.textContent = "";
+  for (const r of runs) {
+    if (r.side != null) { const c = document.createElement("span"); c.className = "rt-side"; c.contentEditable = "false"; c.dataset.run = JSON.stringify(r); c.title = "옆 메모 — 두 번 눌러 고치기 · 비우면 지운다"; c.textContent = "메모 " + r.side; box.appendChild(c); continue; }
+    const k = rtKeys(r);
+    if (!Object.keys(k).length) { box.appendChild(document.createTextNode(r.t)); continue; }
+    const sp = document.createElement("span"); sp.dataset.run = JSON.stringify(k);
+    if (r.cs) { sp.dataset.cs = r.cs; sp.title = "문자 스타일 " + r.cs; }
+    const rbs = [].concat(r.ruby || []), up = rbs.find(x => x.pos !== "below"), dn = rbs.find(x => x.pos === "below");
+    if (up) sp.dataset.rba = up.t;
+    if (dn) sp.dataset.rbb = dn.t;
+    sp.textContent = r.t; box.appendChild(sp);
+  }
+}
+function rtRead(box) {                                     // 화면 → 조각 목록 (쳐 넣은 줄 바꿈 · 붙여 넣은 줄 상자도 글로)
+  const out = [];
+  const walk = (n, props) => {
+    for (const c of n.childNodes) {
+      if (c.nodeType === 3) { out.push(Object.assign({}, props, {t: c.data})); continue; }
+      if (c.nodeType !== 1) continue;
+      if (c.classList.contains("rt-side")) { out.push(JSON.parse(c.dataset.run)); continue; }
+      if (c.tagName === "BR") { if (!c.dataset.tail) out.push(Object.assign({}, props, {t: "\n"})); continue; }   // 끝 자리 표시(data-tail)는 글이 아니다
+      if ((c.tagName === "DIV" || c.tagName === "P") && out.length) out.push(Object.assign({}, props, {t: "\n"}));
+      walk(c, c.dataset.run ? Object.assign({}, props, JSON.parse(c.dataset.run)) : props);
+    }
+  };
+  walk(box, {});
+  return out;
+}
+function rtPos(box, node, off) {                           // 화면 자리 → 글자 자리
+  const r = document.createRange(); r.setStart(box, 0); r.setEnd(node, off);
+  const d = document.createElement("div"); d.appendChild(r.cloneContents());
+  return rtRead(d).reduce((k, x) => k + rtLen(x), 0);
+}
+function rtLoc(box, at) {                                  // 글자 자리 → 화면 자리
+  let k = 0;
+  const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {acceptNode: (n) =>
+    n.nodeType === 3 ? (n.parentNode.classList && n.parentNode.classList.contains("rt-side") ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+      : (n.classList.contains("rt-side") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP)});
+  let n;
+  while ((n = w.nextNode())) {
+    const len = n.nodeType === 3 ? n.data.length : 1;
+    if (at <= k + len) {
+      if (n.nodeType === 3) return [n, at - k];
+      const ix = [...n.parentNode.childNodes].indexOf(n);
+      return [n.parentNode, at === k ? ix : ix + 1];
+    }
+    k += len;
+  }
+  return [box, box.childNodes.length];
+}
+function rtSel(box, s, e) {
+  const r = document.createRange(), [a, ao] = rtLoc(box, s), [b, bo] = rtLoc(box, e);
+  r.setStart(a, ao); r.setEnd(b, bo); const g = getSelection(); g.removeAllRanges(); g.addRange(r);
+}
+function rtInsert(box, txt) {                              // 커서 자리에 글(줄 바꿈 · 붙여 넣기) — 브라우저가 줄 상자를 만들지 않게 글 그대로
+  const g = getSelection(); if (!g.rangeCount) return;
+  const r = g.getRangeAt(0); r.deleteContents();
+  const parts = txt.split("\n");                           // 새 문단 = 줄바꿈 요소 — 글 끝의 "\n" 글자 뒤에는 크롬이 커서를 못 둔다
+  let last = null;
+  parts.forEach((p, k) => {
+    if (k) { const br = document.createElement("br"); r.insertNode(br); r.setStartAfter(br); r.collapse(true); last = br; }
+    if (p) { const t = document.createTextNode(p); r.insertNode(t); r.setStart(t, t.length); r.collapse(true); last = t; }
+  });
+  let nx = last && last.nextSibling;                       // 글 가운데를 나누면 빈 글 조각이 남는다 — 건너뛰고 본다
+  while (nx && nx.nodeType === 3 && !nx.data) { const e2 = nx.nextSibling; nx.remove(); nx = e2; }
+  if (last && last.nodeName === "BR" && !nx && !box.querySelector("br[data-tail]")) {   // 맨 끝 줄바꿈 — 다음 줄에 커서가 서게 자리 표시
+    const tail = document.createElement("br"); tail.dataset.tail = "1"; box.appendChild(tail);
+  }
+  g.removeAllRanges(); g.addRange(r);
+}
 function editTextInline(i) {
   const it = page.items[i]; if (!it || !it.atom || it.atom.t !== "text") return; const b = bboxOf(i); if (!b) return;
-  const ta = $("#tedit"); const a = it.atom; const before = JSON.stringify(page.items);
+  const ta = $("#tedit"), bar = $("#rtbar"); const a = it.atom; const before = JSON.stringify(page.items);
   Object.assign(ta.style, {display: "", left: (b.x * scale) + "px", top: (b.y * scale) + "px", width: Math.max(40, b.w * scale) + "px", height: Math.max(24, b.h * scale + 6) + "px", fontSize: (a.size * 25.4 / 72 * scale) + "px", textAlign: a.align || "left"});
-  ta.value = plainText(a.text); ta.focus(); ta.select();
-  const done = (commit) => { ta.style.display = "none"; ta.onblur = ta.onkeydown = null; if (commit && ta.value !== plainText(a.text)) { hist(before); a.text = ta.value; save(); render(); side(); } };
-  ta.onblur = () => done(true);
+  const orig = JSON.stringify(rtNorm(rtRuns(a.text)));
+  rtDom(ta, rtRuns(a.text));
+  ta.style.fontFamily = a.font && !String(a.font).startsWith("$") ? `"${a.font}", sans-serif` : "";   // 그 글상자 서체로 — 글 폭이 지면과 비슷하게
+  const fit = () => { ta.style.height = "auto"; ta.style.height = Math.max(24, b.h * scale + 6, ta.scrollHeight + 4) + "px"; };   // 넘친 줄이 가려지지 않게 글만큼 늘린다
+  fit(); ta.oninput = fit;
+  const cs = (skin() || {}).cstyles || {};
+  $("#rt-cs").innerHTML = `<option value="">문자 스타일…</option>${Object.keys(cs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__none">문자 스타일 빼기</option>`;
+  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px", top: Math.max(0, b.y * scale - 34) + "px"});
+  ta.select = () => { const r = document.createRange(); r.selectNodeContents(ta); const g = getSelection(); g.removeAllRanges(); g.addRange(r); };
+  ta.focus(); ta.select();
+  let last = [0, rtRead(ta).reduce((k, x) => k + rtLen(x), 0)];
+  const track = () => { const g = getSelection(); if (!g.rangeCount || !ta.contains(g.anchorNode)) return; const r = g.getRangeAt(0); last = [rtPos(ta, r.startContainer, r.startOffset), rtPos(ta, r.endContainer, r.endOffset)];
+    let k = 0; const at = rtRead(ta).find(x => (k += rtLen(x)) > last[0]); $("#rt-cs").value = (at && at.cs && cs[at.cs]) ? at.cs : ""; };   // 고른 글자의 문자 스타일을 막대에 보인다
+  document.addEventListener("selectionchange", track);
+  const op = (fn) => {                                     // 고른 글자에 꾸밈 — 조각을 나눠 고친 뒤 다시 그리고 고른 자리를 되살린다
+    const runs = rtRead(ta), [s0, e0] = last;
+    const x = rtSplit(runs, s0), y = rtSplit(runs, e0);
+    for (let k = x; k < y; k++) if (runs[k].side == null) fn(runs[k]);
+    rtDom(ta, rtRuns(rtNorm(runs))); ta.focus(); rtSel(ta, s0, e0);
+  };
+  const setRuby = (pos) => {
+    if (last[0] === last[1]) { $("#st").textContent = "윗주 — 먼저 글자를 고르세요"; return; }
+    const t = prompt(pos === "below" ? "아래 윗주 글 (비우면 지운다)" : "위 윗주 글 (비우면 지운다)", "");
+    if (t == null) { ta.focus(); rtSel(ta, last[0], last[1]); return; }
+    op(r => { const rbs = [].concat(r.ruby || []).filter(x => (x.pos === "below") !== (pos === "below")); if (t.trim()) rbs.push(pos === "below" ? {t: t.trim(), pos: "below"} : {t: t.trim(), pos: "above"});
+      if (!rbs.length) delete r.ruby; else r.ruby = rbs.length === 1 ? rbs[0] : rbs; });
+  };
+  const keep = (e) => e.preventDefault();                  // 막대를 눌러도 글 칸의 고른 자리가 남게
+  bar.querySelectorAll("button").forEach(x => x.onmousedown = keep);
+  $("#rt-rba").onclick = () => setRuby("above");
+  $("#rt-rbb").onclick = () => setRuby("below");
+  $("#rt-clear").onclick = () => op(r => { for (const k of Object.keys(r)) if (k !== "t") delete r[k]; });
+  $("#rt-side").onclick = () => {
+    const t = prompt("옆 메모 글", ""); if (!t || !t.trim()) { ta.focus(); return; }
+    const runs = rtRead(ta), at = last[1], k = rtSplit(runs, at);
+    runs.splice(k, 0, {t: "", side: t.trim()});
+    rtDom(ta, rtRuns(rtNorm(runs))); ta.focus(); rtSel(ta, at + 1, at + 1);
+  };
+  $("#rt-cs").onchange = () => { const v = $("#rt-cs").value; if (!v) return;
+    if (last[0] === last[1]) { $("#st").textContent = "문자 스타일 — 먼저 글자를 고르세요"; ta.focus(); return; }
+    op(r => { if (v === "__none") delete r.cs; else r.cs = v; }); $("#rt-cs").value = v; };
+  ta.ondblclick = (e) => { const c = e.target.closest && e.target.closest(".rt-side"); if (!c) return; e.preventDefault();
+    const r = JSON.parse(c.dataset.run); const t = prompt("옆 메모 글 (비우면 지운다)", r.side); if (t == null) return;
+    if (t.trim()) { r.side = t.trim(); c.dataset.run = JSON.stringify(r); c.textContent = "메모 " + r.side; } else c.remove(); };
+  let closed = false;
+  const outside = (e) => {                                 // 창 밖을 누르면 저장하고 닫는다 — 개체를 누르면 편집기가 누르기를 가로채 글 칸이 포커스를 잃지 않는다(도형 위 확정)
+    if (ta.contains(e.target) || bar.contains(e.target) || (e.target.closest && e.target.closest(".selmenu"))) return;
+    done(true);
+  };
+  document.addEventListener("pointerdown", outside, true);
+  const done = (commit) => {
+    if (closed) return; closed = true;
+    document.removeEventListener("pointerdown", outside, true);
+    ta.style.display = "none"; bar.style.display = "none"; ta.onblur = ta.onkeydown = ta.onpaste = ta.oninput = null;
+    document.removeEventListener("selectionchange", track);
+    const nt = rtNorm(rtRead(ta));
+    if (commit && JSON.stringify(nt) !== orig) { hist(before); a.text = nt; save(); render(); side(); }
+  };
+  ta.onblur = () => setTimeout(() => {                     // 꾸밈 막대(목록 포함)로 간 건 끝이 아니다
+    const ae = document.activeElement;
+    if (ta.style.display === "none" || ae === ta || bar.contains(ae) || document.querySelector(".selmenu")) return;
+    done(true);
+  }, 0);
+  ta.onpaste = (e) => { e.preventDefault(); rtInsert(ta, (e.clipboardData || window.clipboardData).getData("text/plain")); };
   ta.onkeydown = (e) => { if (e.key === "Escape") { e.preventDefault(); done(false); } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); done(true); }
-    else if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); ta.setRangeText(" ", ta.selectionStart, ta.selectionEnd, "end"); }   // 줄 나눔 — 문단은 그대로, 줄만 꺾는다(인디자인 강제 줄바꿈)
+    else if (e.key === "Enter") { e.preventDefault(); rtInsert(ta, e.shiftKey ? " " : "\n"); }   // Shift+Enter 줄 나눔(문단은 그대로, 인디자인 강제 줄바꿈) · Enter 새 문단
     e.stopPropagation(); };
 }
 
@@ -1586,6 +1756,10 @@ async function uploadFont(file) {                                  // 서체 등
         document.fonts.add(await ff.load()); } catch (err) {}             // 이 화면에서 바로 쓴다(새로 열면 @font-face 로)
   say(`서체 등록 — ${j.font.family} ${j.font.weight}`); return j.font;
 }
+function cstyleSel(k, cur, attr = "data-a") {             // 문자 스타일 고르기 — 지금 브랜드의 문자 스타일(인디자인 문자 스타일). 새로 만들기는 브랜드 패널
+  const cs = (skin() || {}).cstyles || {};
+  return `<select ${attr}="${k}"><option value="">없음</option>${Object.keys(cs).map(n => `<option value="${esc(n)}" ${cur === n ? "selected" : ""}>${esc(n)}</option>`).join("")}${cur && !cs[cur] ? `<option value="${esc(cur)}" selected>${esc(cur)} (브랜드에 없음)</option>` : ""}</select>`;
+}
 function colorSel2(k, cur, none) {                            // strokeMore 는 side() 밖이라 옷 토큰을 여기서 읽는다
   const sk2 = skin() || {tokens: {}};
   return `<select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${Object.entries((sk2.tokens || {}).color || {}).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}</select>`;
@@ -1616,6 +1790,7 @@ const card = (thumb, nm, ds, drag) => { const d = document.createElement("div");
   palDrag(d, drag); return d; };
 function panel() {
   const hd = $("#phd"), body = $("#pbody"); body.innerHTML = "";
+  const aiKeep = $("#ai") && { v: $("#ai").value, f: document.activeElement === $("#ai") };
   if (sheetKind) fillSheet();                       // 열려 있는 브랜드·원고 창도 같이
   {
     hd.innerHTML = `<div class="ttl"><b>블록</b><button class="fold" id="fold-left" title="접기 (Ctrl+\\)">◧</button></div>
@@ -1631,6 +1806,7 @@ function panel() {
       o.style.display = on ? "block" : "none"; localStorage.setItem("units.howto", on ? "1" : "0"); };
     if (localStorage.getItem("units.howto") === "1") $("#howto").style.display = "block";
     $("#fold-left").onclick = () => togglePanel("left");
+    if (aiKeep) { $("#ai").value = aiKeep.v; if (aiKeep.f) $("#ai").focus(); }   // 목록이 다시 그려져도(블록 저장 뒤 그림 새로 받기) 치던 설명은 남긴다
     $("#btn-ai").onclick = makeByPrompt; $("#ai").addEventListener("keydown", (e) => { if (e.key === "Enter") makeByPrompt(); });
     // 기본 도형 — 인디자인 오브젝트. 직접 그려서 「요소로 저장」
     const h0 = foldHead(body, "직접 그리기", "_draw", "");
@@ -1801,6 +1977,15 @@ function panelSkins(hd, body) {
         <div class="m4" title="양끝 정렬 균등 배치 — 낱말 최소·최대 % · 자간 최소·최대 ‰ (인디자인 균등 배치). 비우면 글상자 것"><label>낱말 최소<input type="number" step="5" data-st="${n}:jc.word_min" value="${(st.jc || {}).word_min ?? ""}"></label><label>낱말 최대<input type="number" step="5" data-st="${n}:jc.word_max" value="${(st.jc || {}).word_max ?? ""}"></label><label>자간 최소<input type="number" step="1" data-st="${n}:jc.letter_min" value="${(st.jc || {}).letter_min ?? ""}"></label><label>자간 최대<input type="number" step="5" data-st="${n}:jc.letter_max" value="${(st.jc || {}).letter_max ?? ""}"></label></div>
         <div class="m3"><label title="인디자인 행 유지 — 단·쪽 끝에 이 문단이 처음 몇 줄 이상 남을 때만 나눈다">처음 N행<input type="number" step="1" min="0" data-st="${n}:keep_first" value="${st.keep_first ?? ""}"></label><label title="다음 단·쪽으로 마지막 몇 줄 이상 넘길 때만 나눈다">마지막 N행<input type="number" step="1" min="0" data-st="${n}:keep_last" value="${st.keep_last ?? ""}"></label><label title="같은 스타일 문단 사이 간격 mm(인디자인 「동일한 스타일 단락 사이 간격」) — 선지끼리">같은 스타일 사이<input type="number" step="0.5" data-st="${n}:space_same" value="${st.space_same ?? ""}"></label></div></div>`).join("")}
       <div class="row"><button class="btn sm sub" id="st-new">＋ 단락 스타일</button></div>
+      <h3>문자 스타일 <span class="note" style="display:inline">글자 일부의 꾸밈(인디자인 문자 스타일) — 글에서 고른 글자 · GREP 규칙 · 윗주 · 옆 메모가 가리킨다</span></h3>
+      ${Object.entries(sk.cstyles || {}).map(([n, c]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-csx="${esc(n)}" title="지우기">✕</span>
+        <div class="m3"><label>서체${fontSel("data-cs", `${n}:font`, c.font, Object.fromEntries(Object.keys(sk.tokens.font || {}).map(f => [f, (sk.tokens.font || {})[f]])), "-")}</label><label>크기 pt<input type="number" step="0.5" data-cs="${esc(n)}:size" value="${c.size ?? ""}"></label><label>굵기<select data-cs="${esc(n)}:weight"><option value="">-</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option ${+c.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
+        <div class="m3"><label title="견본 이름($ink) 또는 #색번호">색<input type="text" list="tok-col" data-cs="${esc(n)}:color" value="${esc(c.color || "")}" placeholder="글상자 색"></label><label>자간 ‰<input type="number" step="10" data-cs="${esc(n)}:track" value="${c.track ?? ""}"></label><label title="기준선 이동 pt — 양수면 위로">기준선 pt<input type="number" step="0.1" data-cs="${esc(n)}:bshift" value="${c.bshift ?? ""}"></label></div>
+        <div class="m3"><label>굵게<input type="checkbox" data-cs="${esc(n)}:b" ${c.b ? "checked" : ""} style="width:auto"></label><label>기울임<input type="checkbox" data-cs="${esc(n)}:i" ${c.i ? "checked" : ""} style="width:auto"></label><label>밑줄<input type="checkbox" data-cs="${esc(n)}:u" ${c.u ? "checked" : ""} style="width:auto"></label></div>
+        ${c.u ? `<div class="m4"><label>모양<select data-cs="${esc(n)}:u_style">${[["", "실선"], ["wavy", "물결"], ["dotted", "점선"], ["dashed", "파선"], ["double", "겹선"]].map(([v, m]) => `<option value="${v}" ${(c.u_style || "") === v ? "selected" : ""}>${m}</option>`).join("")}</select></label><label>굵기 mm<input type="number" step="0.01" data-cs="${esc(n)}:line" value="${c.line ?? ""}" placeholder="0.18"></label><label title="기준선 → 밑줄 가운데">내림 mm<input type="number" step="0.05" data-cs="${esc(n)}:line_off" value="${c.line_off ?? ""}" placeholder="0.4"></label><label>선 색<input type="text" list="tok-col" data-cs="${esc(n)}:line_color" value="${esc(c.line_color || "")}" placeholder="글자색"></label></div>` : ""}
+        <div class="m3"><label title="글 뒤 색 면 — 형광 · 번호 배지">바탕<input type="text" list="tok-col" data-cs="${esc(n)}:bg" value="${esc(c.bg || "")}" placeholder="없음"></label><label title="바탕을 글 밖으로 넓히는 양 — 글 자리는 그대로">바탕 여백 mm<input type="number" step="0.1" data-cs="${esc(n)}:bg_pad" value="${c.bg_pad ?? ""}"></label><label>바탕 모서리 mm<input type="number" step="0.1" data-cs="${esc(n)}:bg_r" value="${c.bg_r ?? ""}"></label></div>
+        <div class="m3" title="띠 — 바탕을 글 높이 전체가 아니라 가로 띠로(형광펜). 비우면 글 높이 전체"><label>띠 두께 mm<input type="number" step="0.05" data-cs="${esc(n)}:bg_band" value="${c.bg_band ?? ""}"></label><label title="기준선에서 띠 가운데까지 위로">띠 높이 mm<input type="number" step="0.05" data-cs="${esc(n)}:bg_off" value="${c.bg_off ?? ""}"></label><label></label></div></div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="cs-new">＋ 문자 스타일</button></div>
       ${LIB.blocks.filter(b => (b.variants || []).length > 1).length ? `<h3>블록 모양 고르기</h3>${LIB.blocks.filter(b => (b.variants || []).length > 1).map(b => `<div class="f"><span>${esc(b.name)}</span><select data-var="${b.id}">${b.variants.map(v => `<option value="${v.id}" ${((sk.variants || {})[b.id] || b.variants[0].id) === v.id ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>`).join("")}` : ""}`);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-font]").forEach(i => i.onchange = () => { sk.tokens.font[i.dataset.font] = i.value; saveSkin(); render(); });
@@ -1810,6 +1995,12 @@ function panelSkins(hd, body) {
       if (k.startsWith("jc.")) { const kk = k.slice(3); st.jc = Object.assign({}, st.jc); if (v === "" || v == null) delete st.jc[kk]; else st.jc[kk] = v; if (!Object.keys(st.jc).length) delete st.jc; }
       else if (v === "" || v == null || v === false) delete st[k]; else st[k] = (k === "weight" ? +v : v);
       saveSkin(); pageSvg = {}; render(); });
+    body.querySelectorAll("[data-cs]").forEach(i => i.onchange = () => { const at = i.dataset.cs.lastIndexOf(":"); const n = i.dataset.cs.slice(0, at), k = i.dataset.cs.slice(at + 1); const c = sk.cstyles[n];
+      const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
+      if (v === "" || v == null || v === false) delete c[k]; else c[k] = (k === "weight" ? +v : v);
+      saveSkin(); pageSvg = {}; render(); if (k === "u") panel(); });
+    body.querySelectorAll("[data-csx]").forEach(i => i.onclick = () => { if (!confirm(`문자 스타일 ${i.dataset.csx} 을 지울까요? 이 스타일을 쓰는 글자는 꾸밈이 빠진다`)) return; delete sk.cstyles[i.dataset.csx]; saveSkin(); pageSvg = {}; render(); panel(); });
+    $("#cs-new").onclick = () => { const n = prompt("문자 스타일 이름 (예: 형광 민트 · 분석 표기)", ""); if (!n || !n.trim() || /["<>:]/.test(n)) return; sk.cstyles = sk.cstyles || {}; if (!sk.cstyles[n.trim()]) sk.cstyles[n.trim()] = {}; saveSkin(); panel(); };
     body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 지울까요? 이 스타일을 쓰는 글상자는 자기 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
     $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (한글 가능 · 원고 docx 스타일 이름과 맞추려면 자리 이름과 같게)", ""); if (!n || !n.trim() || /["<>]/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
     $("#sk-dup").onclick = async () => { const name = prompt("새 브랜드 이름", sk.name + " 복사"); if (name == null) return; let n = 1; while (byId("skins")["skin_" + n]) n++;
@@ -1946,7 +2137,7 @@ function side() {
         </span></div>
         ${a.bind && !a.bind.startsWith("sys.") ? `<div class="f"><span title="한 글상자에 원고 자리를 여럿 — 원고에 나온 순서대로 섞여 흐른다(발문 다음 선지, 문장 다음 해석). 인디자인의 한 스토리 여러 단락 스타일">자리 더하기</span><select data-a="bindadd"><option value="">＋ 같이 흘릴 자리…</option>${allSlots().filter(([v]) => !v.startsWith("sys.") && !a.bind.split("+").includes(v)).map(([v, n2]) => `<option value="${v}">${esc(n2)}</option>`).join("")}</select></div>` : ""}
         ${a.bind && !a.bind.startsWith("sys.") ? a.bind.split("+").map(f => { const d = slotFmt(a, f); return `<div class="f"><span title="자리마다 서식 — 한 흐름 안에서 이 자리 단락만 (인디자인 단락 스타일)">${esc((Object.fromEntries(allSlots()))[f] || f)}</span><span style="display:flex;gap:8px"><label><input type="checkbox" data-a="slotfmt.${f}.b" ${d.b ? "checked" : ""}> 굵게</label><label><input type="checkbox" data-a="slotfmt.${f}.i" ${d.i ? "checked" : ""}> 기울임</label><label title="이 자리 단락을 테두리 상자로 — 잇닿은 단락은 한 상자"><input type="checkbox" data-a="slotfmt.${f}.box" ${d.box ? "checked" : ""}> 상자</label></span></div>
-          <div class="f"><span></span><span style="display:flex;gap:6px"><label title="이 자리 문단에 입힐 단락 스타일(브랜드 탭) — 서체·크기·간격·바탕·「다음 문단과 함께」「쪼개지 않기」까지">스타일 <select data-a="slotfmt.${f}.style"><option value="">(글상자 것)</option>${Object.keys(sk.styles || {}).map(n => `<option value="${esc(n)}" ${d.style === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label title="따로 문단을 만들지 않고 다음 문단 첫머리에 붙인다 — 문항 번호를 발문 첫 줄 앞에"><input type="checkbox" data-a="slotfmt.${f}.inline" ${d.inline ? "checked" : ""}> 앞에 붙이기</label>${d.inline ? `<label title="붙인 글이 차지하는 폭 mm(번호 칸) — 비우면 글 폭만큼">폭 <input type="number" step="0.5" min="0" style="width:44px" data-a="slotfmt.${f}.inline_w" value="${d.inline_w || ""}"></label>` : ""}</span></div>
+          <div class="f"><span></span><span style="display:flex;gap:6px"><label title="이 자리 문단에 입힐 단락 스타일(브랜드 탭) — 서체·크기·간격·바탕·「다음 문단과 함께」「쪼개지 않기」까지">스타일 <select data-a="slotfmt.${f}.style"><option value="">(글상자 것)</option>${Object.keys(sk.styles || {}).map(n => `<option value="${esc(n)}" ${d.style === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label title="따로 문단을 만들지 않고 다음 문단 첫머리에 붙인다 — 문항 번호를 발문 첫 줄 앞에"><input type="checkbox" data-a="slotfmt.${f}.inline" ${d.inline ? "checked" : ""}> 앞에 붙이기</label>${d.inline ? `<label title="붙인 글이 차지하는 폭 mm(번호 칸) — 비우면 글 폭만큼">폭 <input type="number" step="0.5" min="0" style="width:44px" data-a="slotfmt.${f}.inline_w" value="${d.inline_w || ""}"></label><label title="붙인 글 뒤 간격 mm — 뒤 글과 띄운다(인디자인 번호 뒤 간격). 폭을 정했으면 쓰지 않는다">뒤 <input type="number" step="0.1" min="0" style="width:44px" data-a="slotfmt.${f}.inline_gap" value="${d.inline_gap || ""}"></label>` : ""}</span></div>
           <div class="f"><span></span><span style="display:flex;gap:6px"><label title="들여쓰기 mm">들여 <input type="number" step="0.5" min="0" style="width:48px" data-a="slotfmt.${f}.indent" value="${d.indent || ""}"></label><label title="단락 앞 간격 mm">앞 <input type="number" step="0.5" min="0" style="width:48px" data-a="slotfmt.${f}.space" value="${d.space || ""}"></label></span></div>`; }).join("") : ""}
         ${a.bind ? `<div class="note">이 상자 = 원고의 <b>${esc(a.bind.split("+").map(b => (Object.fromEntries(allSlots()))[b] || b).join(" + "))}</b> — ${a.bind.includes("+") ? "원고에 나온 순서대로 섞여 흐른다" : "같은 자리 상자가 여럿이면 위에서부터 1번째·2번째 … 값, 하나뿐이면 전부 흘러 들어간다"}</div>`
                  : `<div class="note">원고와 상관없이 늘 같은 글이면 <b>고정 글</b> 그대로 둔다</div>`}
@@ -1961,7 +2152,7 @@ function side() {
         ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 브랜드 탭에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
         <div class="f"><span title="인디자인 글꼴 — 시스템 서체에서 고른다. 없으면 「＋ 서체」로 등록">글꼴</span><span style="display:flex;gap:4px;align-items:center">${fontSel("data-a", "font", a.font, Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {}))}<label class="btn sm sub" title="서체 파일(OTF·TTF)을 올려 시스템 서체로 등록">＋ 서체<input type="file" id="font-file" accept=".otf,.ttf" style="display:none"></label></span></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
-        <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div>
+        <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div><div class="f"><span title="글 전체를 기울임 — 서체에 기울임 파일이 있어야 한다(없으면 「＋ 서체」로 올린다)">기울임</span><input type="checkbox" data-a="i" ${a.i ? "checked" : ""}></div>
         <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${[[100, "Thin"], [200, "ExtraLight"], [300, "Light"], [400, "Regular"], [500, "Medium"], [600, "SemiBold"], [700, "Bold"], [800, "ExtraBold"], [900, "Black"]].map(([v, n]) => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${n}</option>`).join("")}</select></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
         <div class="f"><span title="인디자인 문자 패널의 언어 — 공백·문장부호를 서체의 그 언어 글리프로(Noto CJK + 한국어: 공백 0.280em·따옴표·괄호·줄표 한국어 꼴). 글자는 늘 영어로 그려 라틴 합자(fi·ff)를 지킨다">언어</span><select data-a="lang">${[["ko", "한국어"], ["en", "영어"], ["ja", "일본어"], ["zh-Hans", "중국어 간체"]].map(([v, n]) => `<option value="${v}" ${(a.lang || "ko") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
@@ -1972,6 +2163,7 @@ function side() {
         <div class="f"><span title="안쪽 여백을 쪽마다 — 위 오른쪽 아래 왼쪽 mm (인디자인 텍스트 프레임 옵션의 인세트). 하나만 적으면 네 쪽 같게">안쪽 여백 mm</span><input type="text" data-a="inset4" value="${[].concat(a.inset == null ? [] : a.inset).join(" ")}" placeholder="위 오른쪽 아래 왼쪽" spellcheck="false"></div>
         <h3>GREP 스타일 <span class="note" style="display:inline">패턴에 맞는 글자만 서식 — 인디자인 GREP 스타일 · 원고 글에도</span></h3>
         ${(a.grep || []).map((r, k) => `<div class="grep-rule"><div class="f"><span title="정규식 — 예: \\[[^\\]]*\\] = 대괄호 [ ] 와 그 안">패턴</span><input type="text" data-a="grep.${k}.re" value="${esc(r.re || "")}" spellcheck="false" placeholder="\\[[^\\]]*\\]"></div>
+        <div class="f"><span title="맞은 글자에 입힐 문자 스타일(브랜드) — 인디자인 GREP 스타일. 아래 칸 값은 그 위에 더한다">문자 스타일</span>${cstyleSel(`grep.${k}.cs`, r.cs)}</div>
         <div class="f"><span>굵게</span><input type="checkbox" data-a="grep.${k}.b" ${r.b ? "checked" : ""}></div><div class="f"><span>기울임</span><input type="checkbox" data-a="grep.${k}.i" ${r.i ? "checked" : ""}></div>
         <div class="f"><span>색</span>${colorSel(`grep.${k}.color`, r.color, true)}</div>
         <div class="m3"><label title="맞은 글자만 크기 — 비우면 글상자 크기">크기 pt<input type="number" data-a="grep.${k}.size" step="0.5" value="${r.size || ""}"></label><label title="기준선 이동 pt — 양수면 위로, 음수면 아래로">기준선 pt<input type="number" data-a="grep.${k}.bshift" step="0.1" value="${r.bshift || ""}"></label><label>밑줄<input type="checkbox" data-a="grep.${k}.u" ${r.u ? "checked" : ""} style="width:auto"></label></div>
@@ -1982,6 +2174,13 @@ function side() {
         <div class="m3"><label title="맞은 글자만 굵기 — 굵게(700)보다 먼저">굵기<select data-a="grep.${k}.weight"><option value="">기본</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}" ${+r.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label title="표시 감추기 — 패턴의 ( ) 묶음 1 의 글만 보이고 나머지(원고의 약속 표시, 예: {밑줄 칠 곳})는 지운다">표시 감추기<input type="checkbox" data-a="grep.${k}.hide" ${r.hide ? "checked" : ""} style="width:auto"></label></div>
         <button class="btn sm sub grep-x" data-k="${k}">이 규칙 빼기</button></div>`).join("")}
         <button class="btn sm sub" id="s-grep-add">＋ GREP 규칙</button>
+        <h3>윗주 <span class="note" style="display:inline">글자 위·아래 작은 글(인디자인 윗주) — 글을 두 번 눌러 단어를 고르고 「윗주」. 여기는 이 글상자의 기본값</span></h3>
+        <div class="f"><span title="윗주 글의 모양 — 브랜드의 문자 스타일">문자 스타일</span>${cstyleSel("ruby.cs", (a.ruby || {}).cs)}</div>
+        <div class="m3"><label title="위 윗주 — 본문 기준선에서 윗주 아래 끝까지">위 거리 mm<input type="number" data-a="ruby.off_above" step="0.1" value="${(a.ruby || {}).off_above ?? ""}" placeholder="0.4"></label><label title="아래 윗주 — 본문 기준선에서 윗주 위 끝까지">아래 거리 mm<input type="number" data-a="ruby.off_below" step="0.1" value="${(a.ruby || {}).off_below ?? ""}" placeholder="0.6"></label><label>맞춤<select data-a="ruby.align">${[["", "본문 첫머리"], ["center", "본문 가운데"]].map(([v, n]) => `<option value="${v}" ${((a.ruby || {}).align || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+        <h3>옆 메모 <span class="note" style="display:inline">글에 붙어 다니는 메모(인디자인 고정 개체) — 메모가 든 줄 높이의 옆 칸에. 글을 두 번 눌러 「옆 메모」로 넣는다</span></h3>
+        <div class="m4"><label title="글상자 왼쪽에서 메모 칸 왼쪽까지">x mm<input type="number" data-a="side.x" step="0.1" value="${(a.side || {}).x ?? ""}"></label><label>폭 mm<input type="number" data-a="side.w" step="0.1" value="${(a.side || {}).w ?? ""}" placeholder="30"></label><label title="그 줄 기준선에서 메모 위 끝까지 — 음수면 위로">위아래 mm<input type="number" data-a="side.off" step="0.1" value="${(a.side || {}).off ?? ""}" placeholder="0"></label><label>행간 pt<input type="number" data-a="side.lead" step="0.1" value="${(a.side || {}).lead ?? ""}" placeholder="자동"></label></div>
+        <div class="f"><span>문자 스타일</span>${cstyleSel("side.cs", (a.side || {}).cs)}</div>
+        <div class="f"><span title="원고(바깥 시스템이 보낸 글)의 약속 표시를 윗주·옆 메모로 — {본문|아래 윗주} · {본문^위 윗주} · {본문^위|아래} · [[옆 메모]]">원고 표시 읽기</span><input type="checkbox" data-a="markup" ${a.markup ? "checked" : ""}></div>
         <h3>글 끝에 붙이기 <span class="note" style="display:inline">부품을 글 끝에 글자처럼 — 자리가 모자라면 마지막 낱말과 함께 다음 줄로(인디자인 인라인 앵커)</span></h3>
         <div class="f"><span>부품</span><select data-a="tail.part"><option value="">없음</option>${(LIB.parts || []).map(p2 => `<option value="${esc(p2.id)}" ${(a.tail || {}).part === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></div>
         ${a.tail ? `<div class="m3"><label title="마지막 글자와 개체 사이">간격 mm<input type="number" data-a="tail.gap" step="0.1" value="${a.tail.gap || ""}" placeholder="0"></label><label title="기준선에서 개체 아래 끝까지 — 음수면 위로">아래로 mm<input type="number" data-a="tail.drop" step="0.1" value="${a.tail.drop || ""}" placeholder="0"></label><label title="켜면 글 끝과 개체 사이가 띄어쓰기 — 줄 끝에 자리가 없으면 개체만 다음 줄로(낱말은 남는다). 끄면 마지막 낱말과 붙어 함께 넘어간다"><input type="checkbox" data-a="tail.space" ${a.tail.space ? "checked" : ""} style="width:auto"> 띄어 붙이기</label></div>` : ""}
@@ -1990,7 +2189,7 @@ function side() {
         <div class="m3"><label>높이 mm<input type="number" data-a="h" step="0.5" value="${a.h}"></label><label>행간 pt<input type="number" data-a="leading" step="0.5" value="${a.leading || ""}" placeholder="자동"></label><label>자간 ‰<input type="number" data-a="tracking" step="10" value="${a.tracking || 0}"></label></div>
         <div class="m3"><label>들여쓰기<input type="number" data-a="indent" step="0.5" value="${a.indent || 0}"></label><label>첫 줄<input type="number" data-a="indent_first" step="0.5" value="${a.indent_first || 0}" title="음수 = 내어쓰기"></label><label>오른쪽<input type="number" data-a="indent_right" step="0.5" value="${a.indent_right || 0}"></label></div>
         <div class="m3"><label>단락 앞<input type="number" data-a="space_before" step="0.5" value="${a.space_before || 0}"></label><label>단락 뒤<input type="number" data-a="space_after" step="0.5" value="${a.space_after || 0}"></label><label>안쪽 여백<input type="number" data-a="inset" step="0.5" value="${Array.isArray(a.inset) ? a.inset[0] : (a.inset || 0)}"></label></div>
-        <div class="m3"><label>세로 정렬<select data-a="valign">${[["top", "위"], ["center", "가운데"], ["bottom", "아래"]].map(([v, n]) => `<option value="${v}" ${(a.valign || "top") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>단 수<input type="number" data-a="columns" min="1" max="6" step="1" value="${a.columns || 1}"></label><label>단 간격<input type="number" data-a="gutter" step="0.5" value="${a.gutter || 0}"></label></div>
+        <div class="m3"><label>세로 정렬<select data-a="valign">${[["top", "위"], ["center", "가운데"], ["bottom", "아래"]].map(([v, n]) => `<option value="${v}" ${(a.valign || "top") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>단 수<input type="number" data-a="columns" min="1" max="6" step="1" value="${a.columns || 1}"></label><label>단 간격<input type="number" data-a="gutter" step="0.5" value="${a.gutter || 0}"></label></div>${(a.columns || 1) > 1 ? `<div class="f"><span title="인디자인 텍스트 프레임 기본 — 첫 단을 상자 높이만큼 다 채운 뒤 다음 단으로(어휘 표). 끄면 단마다 같은 양(단 균형 맞추기)">차례로 채우기</span><input type="checkbox" data-a="col_seq" ${a.col_seq ? "checked" : ""}></div>` : ""}
         <h3>단락 — 인디자인 단락 패널</h3>
         <div class="m3"><label>글머리<select data-a="bullet"><option value="">없음</option>${[["disc", "● 점"], ["circle", "○ 원"], ["square", "■ 네모"], ["decimal", "1. 숫자"], ["decimal-paren", "1) 숫자"], ["upper-alpha", "A. 대문자"], ["lower-alpha", "a. 소문자"]].map(([v, n]) => `<option value="${v}" ${a.bullet === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>탭 mm<input type="number" data-a="tab" step="1" value="${a.tab || ""}" placeholder="없음" title="글 안의 탭 문자가 이 간격으로 선다"></label><label>음영${colorSel("shade", a.shade, true)}</label></div>
         <div class="m3"><label>위 선 pt<input type="number" data-a="rule_above.w" step="0.1" value="${(a.rule_above || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("rule_above.color", (a.rule_above || {}).color, true)}</label><label>거리 mm<input type="number" data-a="rule_above.offset" step="0.5" value="${(a.rule_above || {}).offset || ""}"></label></div>
@@ -2155,7 +2354,11 @@ function side() {
     else if (k === "ostyle") { if (v) a.ostyle = v; else delete a.ostyle; }
     else if (k === "layer") { if (v) a.layer = v; else delete a.layer; }
     else if (k === "clip") { if (v) a.clip = v; else delete a.clip; }
-    else if (k === "hyphenate" || k === "snap_baseline") { if (v) a[k] = true; else delete a[k]; }
+    else if (k.startsWith("ruby.") || k.startsWith("side.")) { const [g2, kk] = k.split(".");      // 윗주 기본값 · 옆 메모 자리 — 빈 칸이면 지운다
+      const o = Object.assign({}, a[g2]); if (i.value === "" || v === "") delete o[kk]; else o[kk] = i.type === "number" ? +i.value : v;
+      if (Object.keys(o).length) a[g2] = o; else delete a[g2]; }
+    else if (k === "markup") { if (v) a.markup = true; else delete a.markup; }
+    else if (k === "hyphenate" || k === "snap_baseline" || k === "col_seq") { if (v) a[k] = true; else delete a[k]; }
     else if (k === "justify_mode") { if (v) a.justify_mode = v; else delete a.justify_mode; }
     else if (k === "word_spacing") { if (v) a.word_spacing = +v; else delete a.word_spacing; }
     else if (k === "word_min") { if (v && +v < 0) a.word_min = +v; else delete a.word_min; }

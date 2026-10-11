@@ -1,0 +1,312 @@
+[
+{
+"say": "＋ 새 문서",
+"wait": 1300
+},
+{
+"answer": "글꾸밈 시험"
+},
+{
+"click": "#pcards .pcard.new",
+"wait": 5000
+},
+{
+"until": "docPages().length > 0 && page",
+"wait": 500
+},
+{
+"clickif": {
+"at": "#tg-side",
+"when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"
+},
+"wait": 1000
+},
+{
+"js": "(() => { const k = docPages().length; if (k !== 1) throw new Error('시작 쪽 수가 1 이 아니라 ' + k); return '시작 쪽 1 확인'; })()",
+"wait": 500
+},
+{
+"say": "브랜드 — 문자 스타일 둘",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "형광 민트"
+},
+{
+"click": "#cs-new",
+"wait": 1200
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 민트:bg\"]",
+"value": "#d7efe6"
+},
+"wait": 900
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 민트:bg_pad\"]",
+"value": 0.4
+},
+"wait": 900
+},
+{
+"answer": "분석 표기"
+},
+{
+"click": "#cs-new",
+"wait": 1200
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"분석 표기:size\"]",
+"value": 5.5
+},
+"wait": 900
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"분석 표기:color\"]",
+"value": "#3b5998"
+},
+"wait": 900
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "글상자",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+274
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+262.0
+]
+},
+"value": "Cuju holds a significant place in sporting history.",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 10.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 26
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 120
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 30
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 20
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 40
+},
+"wait": 550
+},
+{
+"say": "윗주 · 옆 메모 기본값 — 글상자 패널",
+"wait": 1200
+},
+{
+"pick": {
+"at": "#side select[data-a=\"ruby.cs\"]",
+"value": "분석 표기"
+},
+"wait": 900
+},
+{
+"fill": {
+"at": "#side input[data-a=\"ruby.off_below\"]",
+"value": 1.5
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.x\"]",
+"value": 130
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.w\"]",
+"value": 45
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.off\"]",
+"value": -3
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#side select[data-a=\"side.cs\"]",
+"value": "분석 표기"
+},
+"wait": 900
+},
+{
+"say": "고치기 창 — 단어 골라 아래 윗주",
+"wait": 1300
+},
+{
+"dbl": {
+"mm": [
+40,
+44
+]
+},
+"wait": 1200
+},
+{
+"select": {
+"text": "Cuju"
+},
+"wait": 600
+},
+{
+"answer": "단 S"
+},
+{
+"click": "#rt-rbb",
+"wait": 900
+},
+{
+"say": "구절 골라 문자 스타일 「형광 민트」",
+"wait": 1200
+},
+{
+"select": {
+"text": "holds a significant place"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#rt-cs",
+"value": "형광 민트"
+},
+"wait": 900
+},
+{
+"say": "커서 자리에 옆 메모",
+"wait": 1200
+},
+{
+"select": {
+"text": "history"
+},
+"wait": 600
+},
+{
+"answer": "* 메모 — 옆 칸에 놓인다"
+},
+{
+"click": "#rt-side",
+"wait": 900
+},
+{
+"click": {
+"mm": [
+205,
+294
+]
+},
+"wait": 1500
+},
+{
+"js": "(() => { const it = page.items.find(i => (i.atom||{}).t === 'text'); return JSON.stringify(it.atom.text); })()",
+"wait": 300
+},
+{
+"js": "(() => { const t = page.items.find(i => (i.atom||{}).t === 'text').atom.text; const ok = Array.isArray(t) && t.some(r => r.ruby && r.ruby.t === '단 S' && r.t === 'Cuju') && t.some(r => r.cs === '형광 민트' && r.t === 'holds a significant place') && t.some(r => r.side); if (!ok) throw new Error('꾸밈 저장 안 됨'); return '꾸밈 저장 확인'; })()"
+},
+{
+"shot": "glkkumim.png",
+"wait": 1500
+}
+]

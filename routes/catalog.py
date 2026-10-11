@@ -475,11 +475,18 @@ def _page_labels(page):
         x0, y0, x1, y1, t = b[:5]
         if not (y1 < H * 0.10 or y0 > H * 0.93):
             continue
-        for line in t.split("\n"):
-            t2 = re.sub(r"[\d\s.·:/()\-~|_,'\"!?]+", "", line)
-            if not t2 or len(t2) > 20 or sum(c.islower() for c in t2) > len(t2) * 0.5:   # 20: '능률보카수능고난도어휘PRACTICE'(19)
-                continue
-            out.append(t2)
+        out += _page_labels_in(t)
+    return out
+
+
+def _page_labels_in(t):
+    """글덩어리 하나에서 이름표 후보 — 숫자·기호·띄어쓰기를 뺀 짧은 줄."""
+    out = []
+    for line in t.split("\n"):
+        t2 = re.sub(r"[\d\s.·:/()\-~|_,'\"!?]+", "", line)
+        if not t2 or len(t2) > 20 or sum(c.islower() for c in t2) > len(t2) * 0.5:   # 20: '능률보카수능고난도어휘PRACTICE'(19)
+            continue
+        out.append(t2)
     return out
 
 
@@ -588,8 +595,12 @@ def _big_heading(page):
     spans = [sp for b in page.get_text("dict")["blocks"] for ln in b.get("lines", []) for sp in ln["spans"] if sp["text"].strip()]
     if not spans:
         return False
-    sizes = sorted(sp["size"] for sp in spans for _ in sp["text"].strip())
-    body = sizes[len(sizes) // 2]
+    # 본문 글씨 = 글자 수가 가장 많은 크기. 가운데 값은 작은 주석 글자(분석본 S·V 표시)가 많은 면에서 흔들려
+    # 같은 모양 면인데 큰 제목이 있다 없다 했다(2026-10-11 광문 분석본 '7강' 18.3pt — 가운데 값 7.0 / 7.6)
+    cnt = {}
+    for sp in spans:
+        cnt[round(sp["size"], 1)] = cnt.get(round(sp["size"], 1), 0) + len(sp["text"].strip())
+    body = max(cnt, key=cnt.get)
     top = [sp for sp in spans if sp["bbox"][1] < H * 0.35]
     # 글자가 든 큰 제목(1.8배+, 글자가 칸마다 쪼개진 것도 모아서 센다) 또는 아주 큰 숫자(2.6배+, 단어장 DAY 번호).
     # 문항 번호('66.' 2배)처럼 숫자만 조금 큰 건 제목이 아니다
@@ -610,7 +621,26 @@ def _running_labels(doc):
         for l in set(_page_labels(p)) & foot:
             if re.search(r"[가-힣]", l):
                 cnt[side][l] = cnt[side].get(l, 0) + 1
-    return {l for side in (0, 1) for l, c in cnt[side].items() if n[side] and c >= n[side] * 0.4}
+    run = {l for side in (0, 1) for l, c in cnt[side].items() if n[side] and c >= n[side] * 0.4}
+    return run | _content_labels(doc)
+
+
+def _content_labels(doc):
+    """머리·바닥 같은 자리에 회차마다 다른 글이 오는 라벨 — 지문 제목('중국 고대 공놀이 Cuju') 같은 원고. 구성 이름이 아니다.
+    한쪽 면(짝·홀)의 같은 자리(가로 10칸·세로 20칸)에 라벨이 3가지 이상 오고 그 가짓수가 붙은 면 수의 40% 이상이면,
+    그 자리 라벨 가운데 책 전체에서 한 면에만 나오는 것. 한 번씩 오는 PART 간지 이름(교과서·모의고사·부교재)은
+    바닥 띠에 되풀이되니 남는다(2026-10-11 광문 분석본 · 단어 카드)."""
+    at, pages = {}, {}
+    for p in doc:
+        W, H = p.rect.width, p.rect.height
+        for b in p.get_text("blocks"):
+            if not (b[3] < H * 0.10 or b[1] > H * 0.93):
+                continue
+            for l in _page_labels_in(b[4]):
+                at.setdefault((p.number % 2, round(b[0] / W * 10), round(b[1] / H * 20)), []).append(l)
+                pages.setdefault(l, set()).add(p.number)
+    return {l for labs in at.values() if len(set(labs)) >= 3 and len(set(labs)) >= len(labs) * 0.4
+            for l in labs if len(pages[l]) == 1}
 
 
 def _divider_vec(page):
@@ -661,9 +691,10 @@ def _divider_name(page):
 def _page_tokens(series, doc, rules=True):
     """면마다 모양 표 (간지/본문, 구성 이름, 맨 위 제목 유무, 삽화 같은 갈래). 내용(지문 글)은 안 본다."""
     skip = _running_labels(doc)
-    out, section = [], ""
+    out, section, lead = [], "", []
     for page in doc:
-        section = _section_of(series, page, section, skip, rules)
+        prev = section
+        section = _section_of(series, page, prev, skip, rules)
         H = page.rect.height
         blocks = page.get_text("blocks")
         body = sum(1 for b in blocks if H * 0.10 <= b[1] <= H * 0.93 and len(b[4].strip()) > 20)
@@ -682,7 +713,10 @@ def _page_tokens(series, doc, rules=True):
             short_end = any(_vec_corr(v, _divider_vec(doc[j])) >= 0.6 for j in back)
         if low and not short_end:
             out.append(("간지", section, 0, ""))
+            section = prev                    # 간지 이름표(표지의 학교 이름 등)는 다음 본문 면으로 넘기지 않는다
             continue
+        if not prev and not (len(section) >= 3 and re.search(r"[가-힣]", section)):   # 제 한글 이름표가 없는 첫 본문 면
+            lead.append(page.number)
         var = "".join(f" · {v}" for pat, v in VARIANT_RULES.get(series, []) if re.search(pat, txt))
         # 제목 표시 — 1: 맨 위 짧은 한글 제목, 2: 큰 제목 글씨. 0 이면 이어지는 면. 시험지 머리는 홀짝 면 문구라 안 본다
         title = 0 if series == "mockexam" else int(_head_title(page)) + 2 * int(_big_heading(page))
@@ -705,6 +739,15 @@ def _page_tokens(series, doc, rules=True):
             near = sorted((j for j in members[t[1]] if j != i), key=lambda j: abs(j - i))[:8]
             if len(near) >= 2 and max(_vec_corr(V(i), V(j)) for j in near) < cut:
                 out[i] = ("간지", t[1], 0, "")
+    # 앞에 본문 면이 없는 첫 본문 면(간지 바로 뒤)은 이어받을 구성이 없다 — 뒤 4면 안에 생김새가 아주 닮은(0.6+) 본문 면이
+    # 있으면 그 구성이다(위에서 떨어져 나온 면은 빼고). 광문 분석본 첫 분석 면은 머리에 지문 제목뿐이라 이름표가 없고,
+    # 셋째 면부터 '7강 분석'을 이어받는다(2026-10-11)
+    for i in (i for i in lead if out[i][0] == "본문"):
+        v = _divider_vec(doc[i])
+        nxt = [j for j in range(i + 1, min(len(out), i + 5)) if out[j][0] == "본문" and j not in lead]
+        j = next((j for j in nxt if _vec_corr(v, _divider_vec(doc[j])) >= 0.6), None)
+        if j is not None:
+            out[i] = (out[i][0], out[j][1], out[i][2], out[i][3])
     # 라벨도 앞 구성도 없는 본문 면(책 첫 본문 면 등)은 이름이 없으니 생김새로만 묶는다 — 배재보카 DAY 21 시작 면이
     # 'DAY 22' 이후 시작 면들과 한 구성이 되게(2026-10-09)
     for i, t in enumerate(out):
