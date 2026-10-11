@@ -17,7 +17,7 @@ sys.path.insert(0, REPO)
 def judged(series, did):
     from routes.catalog import design_layouts
     r = design_layouts(series, did)
-    rows = [{"번호": k + 1, "이름": f["label"], "쪽": f["pages"], "견본": f["show"]} for k, f in enumerate(r.get("faces") or [])]
+    rows = [{"번호": k + 1, "이름": f["label"], "크기": f.get("size", 1), "쪽": f["pages"], "견본": f["show"]} for k, f in enumerate(r.get("faces") or [])]
     return rows, hashlib.sha1(json.dumps(rows, ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:12], \
         [{"이름": l["label"], "쪽": l["pages"], "묶음": l["unit"]} for l in r["layouts"]]
 
@@ -34,7 +34,7 @@ def write(card, unit):
     json.dump({"원본": card, "판정": sig, "확인": False, "구성": rows, "차례견본": order}, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"면 {len(rows)}개 → {p}")
     for r in rows:
-        print(f"  {r['번호']}. {r['이름']} — {len(r['쪽'])}면 · 견본 {r['견본']}")
+        print(f"  {r['번호']}. {r['이름']} — {r['크기']}쪽 면 · {len(r['쪽'])}쪽 · 견본 {r['견본']}")
 
 
 def check(unit):

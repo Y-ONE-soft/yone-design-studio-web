@@ -94,8 +94,8 @@
   <h2>면 <span class="n">{{ faces|length }}개 — 만드는 단위, 서로 다른 면 모양마다 하나 (지문마다 붙는 면은 원고가 정한다)</span></h2>
   <div class="secs" id="faces">
     {% for f in faces %}<div class="sec" title="p{{ f.pages|join(', p') }}">
-      <div class="two"><div class="pg" data-n="{{ f.show[0] }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ f.show[0] }}.png?dpi=30" alt="" loading="lazy"></div></div></div>
-      <div class="lb"><b>{{ loop.index }}. {{ f.label }}</b><br><small>{{ f.count }}면 · 처음 p{{ f.pages[0] }}
+      <div class="two">{% for n in f.show %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}</div>
+      <div class="lb"><b>{{ loop.index }}. {{ f.label }}</b><br><small>{{ '2쪽 면(펼침면)' if f.size == 2 else '1쪽 면' }} · {{ f.count }}번 · 처음 p{{ f.pages[0] }}
         · <a href="/catalog/pdf/{{ t.series }}/{{ d.id }}#page={{ f.show[0] }}" target="pdfview">PDF에서 보기</a></small></div>
     </div>{% endfor %}
   </div>

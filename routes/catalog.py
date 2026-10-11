@@ -606,7 +606,10 @@ def _big_heading(page):
     cnt = {}
     for sp in spans:
         cnt[round(sp["size"], 1)] = cnt.get(round(sp["size"], 1), 0) + len(sp["text"].strip())
-    body = max(cnt, key=cnt.get)
+    # 더 큰 크기가 가장 많은 크기의 절반 넘게 쓰였으면 그 큰 크기가 본문이다 — 작은 주석 글자가 본문보다 많은 쪽(광문 분석본 20쪽:
+    # 7pt 1192자 · 9pt 803자)에서 주석 크기를 본문으로 잡아 '8강'(18.3pt)이 큰 제목이 돼 같은 면이 갈라졌다(2026-10-12)
+    most = max(cnt.values())
+    body = max(s for s, c in cnt.items() if c >= most * 0.5)
     top = [sp for sp in spans if sp["bbox"][1] < H * 0.35]
     # 글자가 든 큰 제목(1.8배+, 글자가 칸마다 쪼개진 것도 모아서 센다) 또는 아주 큰 숫자(2.6배+, 단어장 DAY 번호).
     # 문항 번호('66.' 2배)처럼 숫자만 조금 큰 건 제목이 아니다
@@ -1007,9 +1010,36 @@ def pdf_layouts(pdf, series=None, rules=False):
     named = {}
     for t in faces:
         named.setdefault(_unit_name([t]), []).append(t)
-    out["faces"] = sorted(({"label": nm + (f" · {'첫 면' if t[2] else '이어지는 면'}" if len(ts) > 1 else ""),
-                            "kind": t[0], "pages": faces[t], "count": len(faces[t]), "show": [faces[t][0]]}
-                           for nm, ts in named.items() for t in ts), key=lambda f: f["pages"][0])
+    label = {}
+    for nm, ts in named.items():
+        side = lambda t: {p % 2 for p in faces[t]}
+        for k, t in enumerate(ts):
+            if len(ts) == 1:
+                label[t] = nm
+            elif len({bool(x[2]) for x in ts}) > 1:               # 제목 있는 면 / 없는 면
+                label[t] = f"{nm} · {'첫 면' if t[2] else '이어지는 면'}"
+            elif all(len(side(x)) == 1 for x in ts) and len({min(side(x)) for x in ts}) > 1:   # 왼쪽 / 오른쪽 면
+                label[t] = f"{nm} · {'왼쪽 면' if not min(side(t)) else '오른쪽 면'}"
+            else:
+                label[t] = nm if k == 0 else f"{nm} ({k + 1})"
+    # 펼침면 — 왼쪽(짝수 쪽) 면 A 뒤에 늘 면 B 가 오고 B 는 늘 A 뒤에만 온다(2번 넘게) → 두 쪽 한 벌을 면 하나로
+    # (배재1 포켓북 암기 TEST + 정답, 워크북 유형 제목 면 + 이어지는 면 — 인디자인 2쪽 상위 페이지)
+    pair = {}
+    for a, pa in faces.items():
+        if a[0] != "본문" or len(pa) < 2 or any(p % 2 for p in pa) or any(p >= len(tok) for p in pa):
+            continue
+        b = tok[pa[0]]                                    # pa[0] 은 1부터 센 쪽 → tok[pa[0]] 이 바로 다음 쪽
+        if b != a and b[0] == "본문" and all(tok[p] == b for p in pa) and len(faces[b]) == len(pa) and b not in pair.values():
+            pair[a] = b
+    rows = []
+    for t, ps in faces.items():
+        if t in pair.values():
+            continue
+        b = pair.get(t)
+        nm = label[t] if not b else _unit_name([t]) if _unit_name([t]) == _unit_name([b]) else f"{label[t]} + {label[b]}"
+        rows.append({"label": nm, "kind": t[0], "size": 2 if b else 1,
+                     "pages": sorted(ps + faces[b]) if b else ps, "count": len(ps), "show": [ps[0], ps[0] + 1] if b else [ps[0]]})
+    out["faces"] = sorted(rows, key=lambda f: f["pages"][0])
     doc.close()
     return out
 
