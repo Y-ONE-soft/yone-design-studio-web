@@ -223,7 +223,8 @@ def fill(pages, content, width_of=None):
             if rq:
                 pages[pi]["items"][i]["fields"] = {name: rq.pop(0)}
                 filled += 1
-            else:
+            else:                                                                  # 이 벌의 원고가 모자라다(지문 4칸에 1개) — 틀 글(«자리 이름»)을 내보이지 않고 비운다
+                pages[pi]["items"][i]["fields"] = {name: ""}
                 unfilled[name] = unfilled.get(name, 0) + 1
             continue
         q = queue.get(name)

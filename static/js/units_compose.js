@@ -15,6 +15,11 @@
   const brkOK = (a, b) => !OPEN.test(a) && !CLOSE.test(b) && ((CJK.test(a) && CJK.test(b)) || (ENC.test(a) && !isSp(b)) || (!isSp(a) && ENC.test(b))
     || (a === "/" && !isSp(b) && !/\d/.test(b)));   // 공백 없이 꺾을 수 있는 글자 사이 — 빗금 뒤도(「(T/ | F)」, 인디자인·유니코드 줄 나눔, 단위 14a)
   const isSp = (c) => c === " " || c === "\u00a0";
+  // 줄바꿈 안 함(GREP nobreak — 렌더러가 white-space:nowrap 으로 감싼 글, 인디자인 No Break) 안의 글자 — 여기서는 안 꺾는다
+  function inNoBreak(c, p) {
+    for (let e = c[0].parentElement; e && e !== p; e = e.parentElement) if (e.style && e.style.whiteSpace === "nowrap") return true;
+    return false;
+  }
 
   function tokens(p) {
     // 글자 단위로 펴서 낱말(공백 아닌 것의 연속)과 공백 덩어리로 — 낱말이 서식 경계를 넘어도 하나로.
@@ -36,9 +41,9 @@
       if (sp) while (j < chars.length && isSp(chars[j][2])) j++;
       else while (j < chars.length && !isSp(chars[j][2]) && !brkOK(chars[j - 1][2], chars[j][2])) j++;
       const seg = chars.slice(i, j);
-      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " "), n: sp ? seg.length : 0, seg: sp ? seg : null,
+      out.push({space: sp, a: seg[0], b: seg[seg.length - 1], breakable: sp && seg.some(c => c[2] === " " && !inNoBreak(c, p)), n: sp ? seg.length : 0, seg: sp ? seg : null,
                 c: seg.length});                                                // 글자 수 — 인디자인 자간은 글자마다 붙는다
-      if (!sp && j < chars.length && brkOK(chars[j - 1][2], chars[j][2]))
+      if (!sp && j < chars.length && brkOK(chars[j - 1][2], chars[j][2]) && !inNoBreak(chars[j], p))
         out.push({space: true, zero: true, breakable: true, n: 0, w: 0, sp0: 0, c: 0});    // 한글 음절 사이 — 폭 0, 여기서도 꺾을 수 있다
       i = j;
     }

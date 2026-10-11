@@ -454,6 +454,8 @@ def grep_html(html, rules, ctx=None):
             st += f"letter-spacing:{float(r['track']) / 1000:.4f}em;"
         if r.get("cs"):                                                    # 문자 스타일 — 인디자인 GREP 스타일이 입히는 그것. 규칙의 칸 값이 그 위에
             st = (ctx.cstyle_css(r["cs"]) if ctx else "") + st
+        if r.get("nobreak"):                                               # 줄바꿈 안 함(인디자인 No Break) — 맞은 글은 한 줄에. 고르기 [ ⓐ … / ⓑ … ] 가 줄 끝에서 갈라지지 않게
+            st += "white-space:nowrap;"
         ul = r.get("u") and not r.get("blank") and not r.get("fit") and (r.get("line") or r.get("line_off") or r.get("line_color"))
         if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
             lw = float(r.get("line") or 0.18)

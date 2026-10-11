@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} · 조판 결과</title>
+<style>{{ font_css|safe }}</style>
+<style>
+  /* 조판 결과 확인(routes/api_v1.render_edit) — 찍은 쪽을 그대로 그리고, 원고 자리 글을 그 자리에서 고친다.
+     칸에서 나오면 고친 원고로 다시 짠다(/svgs). 틀(디자인)·contents 의 원고는 안 바뀐다. */
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1f2430; background: #e9ecf0; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px 18px; background: #fff; border-bottom: 1px solid #dde1e7; }
+  header h1 { margin: 0; font-size: 15px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  header .hint { flex: 1; font-size: 12.5px; color: #6b7382; }
+  header .st { font-size: 12.5px; color: #6b7382; }
+  .btn { border: 1px solid #cbd1da; background: #fff; border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; color: inherit; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  #pages { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 18px; }
+  #pages .wait { padding: 60px 0; color: #6b7382; }
+  .p { width: min(100%, 900px); background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  .p > svg { display: block; width: 100%; height: auto; }
+  #pages.busy { opacity: .55; pointer-events: none; }
+  [data-edit] { cursor: text; border-radius: 1px; }
+  [data-edit]:hover { outline: .4px dashed #4f7cff; }
+  [data-edit]:focus { outline: .6px solid #4f7cff; background: rgba(79,124,255,.06); }
+</style>
+</head>
+<body>
+<header>
+  <h1>{{ title }}</h1>
+  <span class="hint">글을 눌러 바로 고치세요 — 칸 밖을 누르면 다시 짭니다</span>
+  <span class="st" id="st"></span>
+  <button class="btn" id="pdf">PDF</button>
+</header>
+<section id="pages"><p class="wait">조판 결과를 불러오는 중…</p></section>
+<script src="/static/js/units_compose.js"></script>
+<script>
+const JID = {{ jid|tojson }};
+const API = "/api/v1/renders/";
+const $ = (s) => document.querySelector(s);
+let content = null;
+const norm = (t) => String(t || "").replace(/[⁠​]/g, "").replace(/\s+/g, " ").trim();
+
+async function draw(next) {
+  $("#pages").classList.add("busy");
+  $("#st").textContent = next ? "다시 짜는 중…" : "";
+  const y = window.scrollY;
+  try {
+    const r = await fetch(API + JID + "/svgs", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(next ? {content: next} : {})});
+    const j = await r.json();
+    if (!r.ok) { $("#st").textContent = j.error || "불러오지 못했습니다(결과가 지워졌으면 contents 에서 다시 테스트 생성)"; return; }
+    content = j.content;
+    $("#pages").innerHTML = j.svgs.map((s, i) => `<div class="p" data-i="${i}">${typeof s === "string" ? s : s.svg}</div>`).join("");
+    $("#pages").querySelectorAll(".p > svg").forEach((s) => { s.removeAttribute("width"); s.removeAttribute("height"); });
+    if (document.fonts) await document.fonts.ready;
+    if (window.unitsCompose) window.unitsCompose($("#pages"));
+    wire(j.recs);
+    $("#st").textContent = `${$("#pages").querySelectorAll(".p").length}쪽`;
+    window.scrollTo(0, y);
+  } finally { $("#pages").classList.remove("busy"); }
+}
+
+// 쪽마다 받은 레코드의 목록 자리(지문번호·지문 …)를 화면 차례대로 짝짓는다 — 빈 값은 접혀 안 그려지므로 건너뛴다
+function wire(recs) {
+  const next = {};
+  document.querySelectorAll("#pages .p").forEach((pg) => {
+    const at = recs[+pg.dataset.i];
+    if (!at) return;
+    const [k, r] = at, rec = (content[k] || [])[r];
+    if (!rec) return;
+    pg.querySelectorAll("div[data-slot]:not([data-story])").forEach((el) => {
+      const f = el.dataset.slot, v = rec[f];
+      if (!Array.isArray(v)) return;                                    // 목록 자리만 — 한 벌 전체에 걸리는 글(제목)은 틀 몫
+      const key = `${k}\u0000${r}\u0000${f}`;
+      let i = next[key] || 0;
+      while (i < v.length && !norm(v[i])) i++;
+      if (i >= v.length) return;
+      next[key] = i + 1;
+      el.dataset.edit = JSON.stringify([k, r, f, i]);
+      el.contentEditable = "true";
+      el.spellcheck = false;
+    });
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && e.target.dataset && e.target.dataset.edit) { e.preventDefault(); e.target.blur(); }   // 한 자리 = 한 단락 — 줄 나눔은 짜기가 정한다
+});
+document.addEventListener("focusout", (e) => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.edit) return;
+  const [k, r, f, i] = JSON.parse(el.dataset.edit);
+  const t = norm(el.innerText);
+  if (t === norm(content[k][r][f][i])) return;
+  const c = JSON.parse(JSON.stringify(content));
+  c[k][r][f][i] = t;
+  draw(c);
+});
+
+$("#pdf").addEventListener("click", async () => {
+  const b = $("#pdf");
+  b.disabled = true;
+  const w = window.open("about:blank", "_blank");
+  try {
+    const r = await fetch(API + JID + "/content", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({content})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "PDF 를 만들지 못했습니다");
+    for (;;) {
+      $("#st").textContent = "PDF 만드는 중…";
+      const s = await (await fetch(API + j.job)).json();
+      if (s.status === "queued" || s.status === "running") { await new Promise((x) => setTimeout(x, 1500)); continue; }
+      const main = (s.result || {}).main_pdf;
+      if (!main) throw new Error("PDF 를 만들지 못했습니다");
+      if (w) w.location = `${API}${j.job}/files/${encodeURIComponent(main)}`;
+      $("#st").textContent = `${(s.result || {}).pages || "?"}쪽`;
+      break;
+    }
+  } catch (err) { if (w) w.close(); $("#st").textContent = err.message; }
+  finally { b.disabled = false; }
+});
+
+draw();
+</script>
+</body>
+</html>
