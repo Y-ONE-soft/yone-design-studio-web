@@ -20,6 +20,13 @@
   #pages .wait { padding: 60px 0; color: #6b7382; }
   .p { width: min(100%, 900px); background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
   .p > svg { display: block; width: 100%; height: auto; }
+  /* 두 쪽 보기(펼침면) — 1쪽(표지)은 오른쪽에 홀로, 다음부터 짝수 쪽 왼쪽 · 홀수 쪽 오른쪽 */
+  #pages.two { display: grid; grid-template-columns: repeat(2, minmax(0, 700px)); justify-content: center; column-gap: 0; row-gap: 18px; }
+  #pages.two .p { width: 100%; }
+  #pages.two .p:first-child { grid-column: 2; }
+  .seg { display: inline-flex; border: 1px solid #cbd1da; border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: #fff; padding: 6px 10px; font: inherit; font-size: 12.5px; font-weight: 700; color: #6b7382; cursor: pointer; }
+  .seg button.on { background: #1f2a44; color: #fff; }
   #pages.busy { opacity: .55; pointer-events: none; }
   [data-edit] { cursor: text; border-radius: 1px; }
   [data-edit]:hover { outline: .4px dashed #4f7cff; }
@@ -31,6 +38,7 @@
   <h1>{{ title }}</h1>
   <span class="hint">글을 눌러 바로 고치세요 — 칸 밖을 누르면 다시 짭니다</span>
   <span class="st" id="st"></span>
+  <span class="seg" id="view"><button data-v="one">한 쪽</button><button data-v="two">두 쪽</button></span>
   <button class="btn" id="pdf">PDF</button>
 </header>
 <section id="pages"><p class="wait">조판 결과를 불러오는 중…</p></section>
@@ -120,6 +128,16 @@ $("#pdf").addEventListener("click", async () => {
   finally { b.disabled = false; }
 });
 
+// 보기 — 한 쪽(세로로) / 두 쪽(펼침면). 고른 것은 이 브라우저에 기억
+function setView(v) {
+  $("#pages").classList.toggle("two", v === "two");
+  document.querySelectorAll("#view button").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
+  try { localStorage.setItem("render-edit-view", v); } catch (e) { /* 기억 못 해도 이번 보기는 산다 */ }
+}
+document.querySelectorAll("#view button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.v)));
+let saved = "one";
+try { saved = new URLSearchParams(location.search).get("view") || localStorage.getItem("render-edit-view") || "one"; } catch (e) { /* 기본 한 쪽 */ }
+setView(saved);
 draw();
 </script>
 </body>
