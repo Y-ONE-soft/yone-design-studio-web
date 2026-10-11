@@ -278,8 +278,9 @@ def rich_html(v, ctx=None):
         hs, vs = v.get("hscale"), v.get("vscale")
         if hs or vs:
             st += f"display:inline-block;transform:scale({float(hs or 100) / 100.0:.3f},{float(vs or 100) / 100.0:.3f});transform-origin:0 100%;"
-        if v.get("cs"):                                                    # 문자 스타일 — 조각의 칸 값이 그 위에
-            st = (ctx.cstyle_css(v["cs"]) if ctx else "") + st
+        if v.get("cs"):                                                    # 문자 스타일(하나 또는 여럿 — 글자색 + 형광 띠) — 조각의 칸 값이 그 위에
+            names = [v["cs"]] if isinstance(v["cs"], str) else list(v["cs"])
+            st = ("".join(ctx.cstyle_css(c) for c in names) if ctx else "") + st
         if st:
             t = f'<span style="{st}">' + t + "</span>"
         rbs = v.get("ruby")                                                # 윗주 — 하나 또는 [위, 아래] 둘
@@ -293,7 +294,27 @@ def rich_html(v, ctx=None):
 _TAG = re.compile(r"(<[^>]+>)")
 _UL_STYLE = {"wavy": "wavy", "dotted": "dotted", "dashed": "dashed", "double": "double"}     # 밑줄 모양 — 없으면 실선
 CSTYLE_KEYS = ("font", "size", "color", "weight", "b", "i", "track", "bshift", "u", "u_style", "line", "line_off", "line_color",
-               "bg", "bg_pad", "bg_r")
+               "bg", "bg_pad", "bg_r", "bg_band", "bg_off")
+_ASC = {}
+
+
+def font_ascent(family, weight=400):
+    """서체 윗높이(em) — hhea(크롬이 글 상자 높이를 잡는 값). 못 찾으면 1.0"""
+    key = (family, int(weight or 400))
+    if key not in _ASC:
+        v = 1.0
+        try:
+            from core.units.fonts import system_fonts
+            fs = [f for f in system_fonts() if f["family"] == family and not f["italic"]]
+            f = next((f for f in fs if f["weight"] == key[1]), None) or (fs[0] if fs else None)
+            if f:
+                from fontTools.ttLib import TTFont
+                t = TTFont(f["path"], lazy=True)
+                v = t["hhea"].ascent / t["head"].unitsPerEm
+        except Exception:
+            pass
+        _ASC[key] = v
+    return _ASC[key]
 
 
 def char_css(cs, ctx=None):
@@ -323,7 +344,20 @@ def char_css(cs, ctx=None):
                f"text-decoration-color:{col(cs['line_color']) if cs.get('line_color') else 'currentColor'};"
                f"text-decoration-style:{_UL_STYLE.get(cs.get('u_style'), 'solid')};"
                f"text-underline-offset:{float(cs.get('line_off') or 0.4) - lw / 2:.3f}px;text-decoration-skip-ink:none;")
-    if cs.get("bg"):
+    if cs.get("bg") and cs.get("bg_band"):
+        # 띠 — 글 뒤 가로 띠(인디자인에서 굵은 밑줄을 올려 까는 형광). 두께 bg_band mm, 가운데가 기준선 위 bg_off mm.
+        # 밑줄(text-decoration)로 올려 그리면 크롬이 조각이 섞인 글에서 글자 밑 띠를 빠뜨린다 — 바탕 그림으로 그린다.
+        # 띠 자리 = 글 상자 위 끝(기준선 − 윗높이) 기준이라 서체 윗높이(hhea)를 em 으로 쓴다
+        a = getattr(ctx, "cur_atom", None) or {} if ctx else {}
+        fam = cs.get("font") or a.get("font") or ""
+        if ctx and str(fam).startswith("$"):
+            fam = ctx._tok(fam, "font", "")
+        asc = font_ascent(fam, cs.get("weight") or a.get("weight") or 400)
+        t, off = float(cs["bg_band"]), float(cs.get("bg_off") or 0)
+        st += (f"background-image:linear-gradient({col(cs['bg'])},{col(cs['bg'])});background-repeat:no-repeat;"
+               f"background-size:100% {t:.3f}px;background-position:0 calc({asc:.4f}em - {off + t / 2:.3f}px);"
+               "-webkit-box-decoration-break:clone;box-decoration-break:clone;")
+    elif cs.get("bg"):
         pad, rad = float(cs.get("bg_pad") or 0), float(cs.get("bg_r") or 0)
         st += (f"background-color:{col(cs['bg'])};padding:{pad:.3f}px;margin:0 {-pad:.3f}px;border-radius:{rad:.3f}px;"
                "-webkit-box-decoration-break:clone;box-decoration-break:clone;")
@@ -361,7 +395,7 @@ def side_html(t, a, ctx):
     lh = f"line-height:{float(lead) * PT:.3f}px;" if lead else ""
     return ('<span data-side="1" style="display:inline-block;width:0;height:0">'
             f'<span style="position:absolute;left:{float(d.get("x") or 0):.3f}px;width:{float(d.get("w") or 30):.3f}px;margin-top:{float(d.get("off") or 0):.3f}px;'
-            f'text-indent:0;letter-spacing:0;word-spacing:0;white-space:normal;text-align:left;{lh}{st}">{esc(t)}</span></span>')
+            f'text-indent:0;letter-spacing:0;word-spacing:0;white-space:normal;text-align:left;{lh}{st}">{"".join(f'<span style="display:block">{esc(x)}</span>' for x in str(t).split(chr(10)))}</span></span>')   # 메모 문단 — <br/> 은 글상자 문단 나눔이라 쓰지 않는다
 
 
 # 원고 표시 읽기 — 바깥 시스템이 글로 보내는 약속 표시를 윗주·옆 메모 조각으로(글상자 「원고 표시 읽기」를 켠 자리만).
@@ -371,6 +405,12 @@ _MARK = re.compile(r"\{([^{}|^]+)(?:\^([^{}|]*))?(?:\|([^{}]*))?\}|\[\[(.+?)\]\]
 
 def markup_runs(v):
     """약속 표시가 든 글 → 조각 목록. 표시가 없으면 그대로(글)."""
+    if isinstance(v, list):                                    # 조각 목록(한 글상자 여러 자리 등) — 글 조각마다
+        out = []
+        for x in v:
+            r = markup_runs(x) if isinstance(x, str) else x
+            out.extend(r if isinstance(r, list) else [r])
+        return out
     if not isinstance(v, str) or not _MARK.search(v):
         return v
     out, k = [], 0
@@ -859,11 +899,18 @@ def _tab_html(a, para, ctx=None):
         st = stops[min(i - 1, len(stops) - 1)]
         at = float(st.get("at") or 0)
         cols.append((at, st.get("align") or "left", st.get("leader") or "", seg))
-    out = ""
+    out, open_ = "", None                                         # open_ = 왼쪽 맞춤 탭 앞 조각 [시작 자리, 글] — 다음 탭 자리까지 넓힌다
     for i, (at, al, leader, seg) in enumerate(cols):
         if i == 0:
-            out += f'<span>{seg}</span>'
+            open_ = [0.0, seg]
             continue
+        if al == "left" and not leader:                           # 왼쪽 탭 — 글이 탭 자리에서 시작한다(인디자인). 앞 조각을 그 자리까지 넓힌다
+            out += f'<span style="display:inline-block;min-width:{max(at - open_[0], 0):.3f}px">{open_[1]}</span>'
+            open_ = [at, seg]
+            continue
+        if open_ is not None:
+            out += f'<span>{open_[1]}</span>'
+            open_ = None
         prev_at = cols[i - 1][0]
         w = max(at - prev_at, 0.5)
         just = {"left": "flex-start", "center": "center", "right": "flex-end", "decimal": "flex-end"}[al]
@@ -873,6 +920,8 @@ def _tab_html(a, para, ctx=None):
                     + (esc(leader) * 60) + "</span>")
         out += (f'<span style="display:inline-flex;min-width:{w:.3f}px;justify-content:{just};align-items:baseline">'
                 f'{lead}<span>{seg}</span></span>')
+    if open_ is not None:                                         # 끝 조각
+        out += f'<span>{open_[1]}</span>'
     return out
 
 
@@ -976,6 +1025,8 @@ def _inline_css(st, ctx):
     css = "text-indent:0;line-height:0;" + re.sub(r"line-height:[^;]*;", "", _font_css(st, ctx))   # 큰 번호가 줄 높이를 늘리지 않게(줄 높이는 문단 것)
     if st.get("inline_w"):
         css += f"display:inline-block;width:{float(st['inline_w']):.3f}px;"
+    elif st.get("inline_gap"):                                         # 붙인 글 뒤 간격 mm (인디자인 번호 뒤 간격) — 「7강  분석」
+        css += f"margin-right:{float(st['inline_gap']):.3f}px;"
     if st.get("drop"):                                                 # 기준선 내리기 mm — 원본 번호는 발문 기준선보다 0.55mm 아래
         css += f"position:relative;top:{float(st['drop']):.3f}px;"
     return css
@@ -1039,7 +1090,8 @@ def _text_html(a, html, h, ctx=None):
         rule = ""
         if cr and cr.get("w"):
             rule = f";column-rule:{float(cr['w']) * PT:.3f}px solid {(ctx.color(cr.get('color'), '#000000') if ctx else (cr.get('color') or '#000000'))}"
-        inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;column-fill:balance{rule}">{inner}</div>'
+        fill = f"column-fill:auto;height:{max(h - it - ib, 1):.3f}px" if a.get("col_seq") else "column-fill:balance"   # 차례로 채우기 = 인디자인 기본(첫 단부터 상자 높이까지)
+        inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;{fill}{rule}">{inner}</div>'
     hs, vs = float(a.get("h_scale") or 100), float(a.get("v_scale") or 100)
     if hs != 100 or vs != 100:                                   # 장평 — 글자는 늘리고 상자 폭은 지킨다
         inner = (f'<div style="width:{float(a["w"]) * 100.0 / hs:.3f}px;transform:scale({hs / 100.0:.4f},{vs / 100.0:.4f});'

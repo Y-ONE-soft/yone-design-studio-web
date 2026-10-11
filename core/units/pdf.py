@@ -116,10 +116,15 @@ def stamp_boxes(path, trim_w, trim_h, bleed, marks, log=None):
     doc = fitz.open(path)
     tw, th, b = float(trim_w) * PT, float(trim_h) * PT, float(bleed) * PT
     for pg in doc:
-        mb = pg.mediabox                                             # 크로미움이 매체를 0.1mm 쯤 반올림한다 — 재단은 정확히 판형 크기로, 가운데에
+        # 크로미움이 매체를 0.1mm 쯤 반올림한다 — 재단은 정확히 판형 크기로, 가운데에.
+        # 상자는 쪽 좌표(page.rect, 0 에서 시작)로 — mediabox 는 PDF 좌표라 크롬 PDF 처럼 y0 가 0 이 아니면(2.7pt) 그만큼 어긋나
+        # 재단선 없는 인쇄(매체 = 도련)는 「BleedBox not in MediaBox」 로 실패했다(2026-10-11)
+        mb = pg.rect
         cx, cy = (mb.x0 + mb.x1) / 2, (mb.y0 + mb.y1) / 2
         trim = fitz.Rect(cx - tw / 2, cy - th / 2, cx + tw / 2, cy + th / 2)
-        pg.set_bleedbox(fitz.Rect(trim.x0 - b, trim.y0 - b, trim.x1 + b, trim.y1 + b) & mb)   # 재단선 없이(도련 = 매체)면 반올림만큼 매체 밖 — 매체 안으로
+        bb = fitz.Rect(trim.x0 - b, trim.y0 - b, trim.x1 + b, trim.y1 + b) & mb   # 재단선 없이(도련 = 매체)면 반올림만큼 매체 밖 — 매체 안으로
+        e = 0.01                                                     # 매체와 딱 같으면 PyMuPDF 가 float 끝자리로 밖이라 본다 — 0.01pt(0.004mm) 안으로
+        pg.set_bleedbox(fitz.Rect(max(bb.x0, mb.x0 + e), max(bb.y0, mb.y0 + e), min(bb.x1, mb.x1 - e), min(bb.y1, mb.y1 - e)))
         pg.set_trimbox(trim)
     tmp = path + ".box"
     doc.save(tmp, garbage=3, deflate=True)

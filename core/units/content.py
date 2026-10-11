@@ -162,6 +162,18 @@ def story_value(bind, records, slot_fmt=None):
             if (fmt.get(s) or {}).get("inline"):
                 carry.append({"ps": s, "inline": True, "t": str(v)})
                 continue
+            if isinstance(v, (list, dict)):                             # 꾸밈 조각(문자 스타일 · 윗주 · 옆 메모) — 조각 그대로, 글 조각의 \n 에서 문단을 나눈다
+                para(s, "")
+                for r in (v if isinstance(v, list) else [v]):
+                    if isinstance(r, str) and "\n" in r:
+                        first, *rest = r.split("\n")
+                        if first:
+                            out.append(first)
+                        for x in rest:
+                            para(s, x)
+                    else:
+                        out.append(r)
+                continue
             for line in str(v).split("\n"):
                 para(s, line)
     if carry:                                                           # 붙을 문단이 없으면 제 문단으로
@@ -180,6 +192,13 @@ def fill(pages, content, width_of=None):
     for pi, i, name, _ in slots(pages, width_of):
         known.add(name)
         rec = pages[pi].get("_rec")
+        parts = name.split("+")
+        if rec is not None and name not in rec and len(parts) > 1 and all(p in rec and not isinstance(rec[p], list) for p in parts):
+            # 여러 자리 한 줄 — 레코드의 글 자리들을 이어 쓴다(쪽 꼬리 「7강  분석」 = 강 + 회차). 바깥 시스템이 같은 값을 두 번 보내지 않게
+            atom = pages[pi]["items"][i].get("atom") or {}
+            pages[pi]["items"][i]["fields"] = {name: story_value(name, [{p: rec[p] for p in parts}], atom.get("slot_fmt"))}
+            filled += 1
+            continue
         if rec is not None and name in rec:
             v = rec[name]
             if "+" in name and isinstance(v, list) and v and isinstance(v[0], (dict, list)):   # 흐름 자리

@@ -441,6 +441,8 @@ try:
                          "const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(); return [ra.left + 0.5, (ra.top + ra.bottom) / 2, rb.right - 0.5, (rb.top + rb.bottom) / 2]; } } } return null; })()")
                 if not r:
                     raise RuntimeError(f"고를 글 없음 {q['text']}")
+                click([r[0], r[1]])                            # 먼저 한 번 눌러 고른 것을 푼다 — 골라진 글 위에서 끌면 크롬은 「글 옮기기」로 받는다(창을 열면 글 전체가 골라져 있다)
+                time.sleep(0.3)
                 drag([r[0], r[1]], [r[2], r[3]], steps=8)
                 got = c.js("String(getSelection())")
                 if got != q["text"]:

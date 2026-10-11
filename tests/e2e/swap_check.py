@@ -5,6 +5,7 @@
   rotate  자리마다 원고를 한 칸씩 밀어 넣는다(1번 문항 자리에 2번 문항 글 …) — 길이가 다른 실제 원고
   long    글마다 첫 문장을 한 번 더 붙인다(길어진 원고)
   short   글마다 앞 절반만(짧아진 원고)
+  file    SWAP_CONTENT=<json> 의 원고로 그 자리들을 바꿔 넣는다(다른 회차의 실제 원고 — 바깥 시스템이 보낼 꼴)
 
 잰다(크롬이 실제로 그린 결과 — PDF 와 같은 코드 · units_compose.js 까지 돈 뒤):
   잘림    글상자 안 글이 상자 아래 끝을 넘어 잘린 상자(자동 크기 조정 꺼짐·글 잇기 끝 상자)
@@ -39,6 +40,8 @@ def each(f, v):
 
 
 def vary(content):
+    if mode == "file":                                                   # 다른 회차 원고 — 파일의 자리만 바꿔 넣고 나머지는 그대로
+        return dict(content, **json.load(open(os.environ["SWAP_CONTENT"], encoding="utf-8")))
     out = {}
     for k, v in content.items():
         vs = list(v) if isinstance(v, list) else [v]

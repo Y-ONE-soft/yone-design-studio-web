@@ -22,7 +22,7 @@ SINCE = "2026-10-10 18:00"                    # 사람 조작 목록 고르기(.
 def kinds(st):
     """단계 하나 → 동작 이름들. 자리가 지면 좌표·화면 픽셀이면 「지면」으로 묶는다."""
     # 칸 자리에 든 이름(단락 스타일 「실전·발문」, 원고 자리 「문항번호」)은 값이다 — 같은 칸이면 같은 동작
-    spot = lambda v: re.sub(r'(data-st="|slotfmt\.)[^:."]+', r"\1*", v) if isinstance(v, str) else "지면"
+    spot = lambda v: re.sub(r'(data-st="|data-cs="|slotfmt\.)[^:."]+', r"\1*", v) if isinstance(v, str) else "지면"
     out = []
     for k in ("click", "dbl", "move"):
         if k in st:
