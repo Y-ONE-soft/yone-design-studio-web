@@ -2453,8 +2453,8 @@ function side() {
     hist(); const n = Math.max(1, Math.min(6, Math.round(+$("#s-col-n").value || 1))), g = Math.max(0, +$("#s-col-g").value || 0);
     if (n > 1) page.columns = {n, gutter: g}; else delete page.columns;
     save(); applyView(); side(); }));
-  on("#s-gubun", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value.trim();   // 면 설정 「구분」 — 원고 덩어리 차례로 넣을 때 색만 다른 면 고르기
-    if (v) q.구분 = v; else delete q.구분; await savePlan(); side(); });
+  on("#s-gubun", "input", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value.trim();   // 면 설정 「구분」 — 원고 덩어리 차례로 넣을 때 색만 다른 면 고르기(칠 때마다 저장 — 「이름」 칸처럼)
+    if (v) q.구분 = v; else delete q.구분; await savePlan(); });
   on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
     q.repeat = v === "once" || v === "none" ? v : "each_set"; if (v === "each_set_2") q.per = 2; else delete q.per;     // 지문 2개씩 = 그 면에 지문 자리를 두 벌 그려 둔다
     await savePlan(); drawRail(); side(); });

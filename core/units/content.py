@@ -87,18 +87,19 @@ _DEFAULT_NAME = re.compile(r"^(본문|빈 면|간지|표지) \d+$")          # �
 def _faces_by_chunk(plan, pages_by_id, chunks):
     """원고 덩어리 차례로 면 고르기 — 원고 = [덩어리 …](원본 차례). 덩어리마다 그 자리를 가장 많이 담는 「원고마다」 면을 골라 그 덩어리로 찍는다.
     면 = 이름을 정한 「원고마다」 쪽부터 다음 이름 정한 쪽 전까지(늘 붙어 나오는 두 쪽 = 한 면). 고르기:
-    ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
-    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 면들 앞). 맞는 자리가 없는 덩어리는 건너뛴다."""
-    faces, fixed = [], []
+    ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 덩어리에 없어 비는 면 자리가 적은 면(그림 없는 지문 → 그림 자리 없는 면)
+    ④ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
+    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다."""
+    faces, head, tail = [], [], []
     for sc in plan.get("sections") or []:
         if sc.get("divider"):
-            fixed.append(sc["divider"])
+            (tail if faces else head).append(sc["divider"])
         for e in sc.get("pages") or []:
             pid = e["page"] if isinstance(e, dict) else e
             each = isinstance(e, dict) and e.get("repeat") == "each_set"
             if not each:
                 if not (isinstance(e, dict) and e.get("repeat") == "none"):
-                    fixed.append(pid)
+                    (tail if faces else head).append(pid)
                 continue
             name = (pages_by_id.get(pid) or {}).get("name") or ""
             if not faces or (name and not _DEFAULT_NAME.match(name)):
@@ -119,8 +120,9 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
         hit = sum(1 for k in keys if k in f["occ"])
         g = (rec.get("구분") or "").strip()
         gub = 0 if not (f["구분"] and g) else (1 if f["구분"] == g else -1)
+        empty = -sum(1 for k in f["occ"] if k not in rec)
         cap = -sum(abs(len(rec[k]) - f["occ"][k]) for k in keys if k in f["occ"] and f["occ"][k] > 1 and isinstance(rec[k], list))
-        return hit, gub, cap
+        return hit, gub, empty, cap
 
     out, n = [], {}
 
@@ -134,7 +136,7 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
             if k:
                 pg["id"] = f"{pid}~{k + 1}"
         out.append(pg)
-    for pid in list(plan.get("front") or []) + fixed:
+    for pid in list(plan.get("front") or []) + head:
         put(pid)
     for rec in chunks:
         if not isinstance(rec, dict) or not faces:
@@ -146,7 +148,7 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
         n[best["pages"][0]] = k + 1
         for pid in best["pages"]:
             put(pid, rec, k)
-    for pid in plan.get("back") or []:
+    for pid in tail + list(plan.get("back") or []):
         put(pid)
     return out
 

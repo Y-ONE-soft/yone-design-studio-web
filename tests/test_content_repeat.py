@@ -119,19 +119,23 @@ def test_chunks_pick_face_by_slots_then_group_then_count():
         "front": {"id": "front", "name": "앞면", "items": [box("학교")]},
         "a1": {"id": "a1", "name": "분석 교과서", "items": [box("지문"), box("해석", 90)]},
         "a2": {"id": "a2", "name": "분석 모의고사", "items": [box("지문"), box("해석", 90)]},
+        "ap": {"id": "ap", "name": "분석 삽화", "items": [box("지문"), box("해석", 90), {"x": 20, "y": 150, "atom": {"t": "image", "bind": "그림", "w": 40}}]},
         "n3": {"id": "n3", "name": "노트 3칸", "items": [box("흐름", 20 + 20 * k) for k in range(3)]},
         "n4": {"id": "n4", "name": "노트 4칸", "items": [box("흐름", 20 + 20 * k) for k in range(4)]},
         "t": {"id": "t", "name": "TEST", "items": [box("암기")]},
         "t2": {"id": "t2", "name": "빈 면 6", "items": [box("암기")]},   # 이름 안 정한 쪽 = 앞 면에 붙은 쪽(펼침면)
+        "back": {"id": "back", "name": "뒷면", "items": [box("학교")]},
     }
     plan = {"front": ["front"], "sections": [{"id": "s", "pages": [
         {"page": "a1", "repeat": "each_set", "구분": "교과서"}, {"page": "a2", "repeat": "each_set", "구분": "모의고사"},
+        {"page": "ap", "repeat": "each_set", "구분": "모의고사"},
         {"page": "n3", "repeat": "each_set"}, {"page": "n4", "repeat": "each_set"},
-        {"page": "t", "repeat": "each_set"}, {"page": "t2", "repeat": "each_set"}]}]}
+        {"page": "t", "repeat": "each_set"}, {"page": "t2", "repeat": "each_set"}, {"page": "back", "repeat": "once"}]}]}   # 구간 끝 「한 번만」 = 맨 뒤
     chunks = [{"지문": "가", "해석": "A", "구분": "모의고사"}, {"흐름": ["1", "2", "3", "4"]}, {"지문": "나", "해석": "B", "구분": "교과서"},
-              {"흐름": ["1", "2", "3"]}, {"암기": ["x", "y"]}, {"모르는 자리": "?"}]
+              {"흐름": ["1", "2", "3"]}, {"암기": ["x", "y"]}, {"모르는 자리": "?"},
+              {"지문": "다", "해석": "C", "그림": "data:,", "구분": "모의고사"}]
     out = content.plan_pages(plan, pages, {"원고": chunks})
-    assert [p["id"] for p in out] == ["front", "a2", "n4", "a1", "n3", "t", "t2"]
+    assert [p["id"] for p in out] == ["front", "a2", "n4", "a1", "n3", "t", "t2", "ap", "back"]
     filled, rep = content.fill(out, {"원고": chunks})
     assert text_of(filled[1]) == ["가", "A"] and text_of(filled[4]) == ["1", "2", "3"]
     assert rep["unknown"] == []
