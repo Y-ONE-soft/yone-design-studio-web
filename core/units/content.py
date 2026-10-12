@@ -80,12 +80,9 @@ def plan_pages(plan, pages_by_id, content=None):
     return out
 
 
-def _faces_by_chunk(plan, pages_by_id, chunks):
-    """원고 덩어리 차례로 면 고르기 — 원고 = [덩어리 …](원본 차례). 덩어리마다 그 자리를 가장 많이 담는 「원고마다」 면을 골라 그 덩어리로 찍는다.
-    면(상위 페이지) = 「원고마다」 쪽 하나, 그 쪽에 「두 페이지짜리」(펼침면)를 켰으면 다음 쪽까지 둘(인디자인 펼침면 상위 페이지 — 쪽 이름은 안 본다). 고르기:
-    ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 덩어리에 없어 비는 면 자리가 적은 면(그림 없는 지문 → 그림 자리 없는 면)
-    ④ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
-    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다."""
+def _faces(plan, pages_by_id):
+    """문서의 상위 페이지(「레코드마다」 페이지 하나, 「두 페이지짜리」면 다음 페이지까지) · 첫 상위 페이지 앞 「한 번만」 페이지 · 뒤 「한 번만」 페이지.
+    상위 페이지 = {"pages": [쪽 id …], "구분": 분류, "occ": {데이터 필드: 개수}}"""
     faces, head, tail, spread = [], [], [], False
     for sc in plan.get("sections") or []:
         if sc.get("divider"):
@@ -111,6 +108,68 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
                 if b:
                     occ[b] = occ.get(b, 0) + 1
         f["occ"] = occ
+    return faces, head, tail
+
+
+def to_records(plan, pages_by_id, old):
+    """옛 꼴 원고 → 레코드 차례 원고({원고: [레코드 …]}) — 이 문서의 상위 페이지 차례대로(데이터 병합 원고 꼴 통일, 2026-10-12).
+    옛 꼴 = {상위 페이지 첫 페이지 이름: [레코드 …], 책 머리 데이터 필드: 값 | [값 …]}(워크북 · 분석본 어댑터가 만드는 꼴).
+    - 첫 페이지 이름이 옛 원고 키인 상위 페이지: 그 레코드들을 차례로
+    - 아니면 그 상위 페이지 데이터 필드가 모두 옛 원고의 책 머리 데이터 필드면: 그 값으로 레코드 하나(STEP 시작 · 간지 · 실전 한 줄기).
+      글 목록이면 상위 페이지마다 하나씩 꺼내고, 한 줄기(목록의 목록)는 통째로.
+      장을 여는 상위 페이지(첫 페이지 이름이 같은 상위 페이지가 여럿 — STEP 간지)는 다음 장 전까지 레코드가 있을 때만
+    - 분류가 있는 상위 페이지의 레코드엔 그 분류(「구분」)를 단다 — 자동 상위 페이지 적용이 같은 상위 페이지를 고르게
+    꺼내지 않은 책 머리 데이터 필드(앞 · 뒤 「한 번만」 페이지 몫)는 그대로 둔다."""
+    old = old or {}
+    if isinstance(old.get("원고"), list):
+        return old
+    faces, _, _ = _faces(plan, pages_by_id)
+    name = lambda f: (pages_by_id.get(f["pages"][0]) or {}).get("name") or ""
+    recs_of = lambda k: old[k] if isinstance(old.get(k), list) and old[k] and all(isinstance(x, dict) for x in old[k]) else None
+    whole = lambda v: isinstance(v, list) and v and isinstance(v[0], (list, dict))   # 한 줄기(실전 문제) — 통째로
+    queue = {k: (list(v) if isinstance(v, list) else v) for k, v in old.items() if not recs_of(k)}
+    names = [name(f) for f in faces]
+    rows = []                                                              # [(상위 페이지, 레코드, 장을 여나)]
+    for f, nm in zip(faces, names):
+        if recs_of(nm):
+            rows += [(f, r, False) for r in recs_of(nm)]
+            continue
+        keys = [k for k in f["occ"] if not k.startswith("sys.")]
+        if not keys or not all(k in queue for k in keys):
+            continue
+        rec = {}
+        for k in keys:
+            v = queue[k]
+            if whole(v):
+                rec[k] = v
+            elif isinstance(v, list):
+                rec[k] = v.pop(0) if v else ""
+            else:
+                rec[k] = v
+        rows.append((f, rec, names.count(nm) > 1))
+    keep = []
+    for i, (f, rec, opener) in enumerate(rows):
+        if opener:                                                         # 장을 여는 상위 페이지 — 다음 장 전까지 레코드가 있어야
+            j = next((j for j in range(i + 1, len(rows)) if rows[j][2]), len(rows))
+            if not any(not rows[k][2] for k in range(i + 1, j)):
+                continue
+        r = dict(rec)
+        if f["구분"]:
+            r["구분"] = f["구분"]
+        keep.append(r)
+    out = {"원고": keep}
+    used = {k for f, rec, _ in rows for k in rec if not recs_of(name(f))}
+    out.update({k: v for k, v in old.items() if not recs_of(k) and k not in used})
+    return out
+
+
+def _faces_by_chunk(plan, pages_by_id, chunks):
+    """원고 덩어리 차례로 면 고르기 — 원고 = [덩어리 …](원본 차례). 덩어리마다 그 자리를 가장 많이 담는 「원고마다」 면을 골라 그 덩어리로 찍는다.
+    면(상위 페이지) = 「원고마다」 쪽 하나, 그 쪽에 「두 페이지짜리」(펼침면)를 켰으면 다음 쪽까지 둘(인디자인 펼침면 상위 페이지 — 쪽 이름은 안 본다). 고르기:
+    ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 덩어리에 없어 비는 면 자리가 적은 면(그림 없는 지문 → 그림 자리 없는 면)
+    ④ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
+    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다."""
+    faces, head, tail = _faces(plan, pages_by_id)
 
     def score(f, rec):
         keys = [k for k in rec if not k.startswith("_")]

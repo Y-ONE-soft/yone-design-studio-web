@@ -147,3 +147,23 @@ def test_chunk_faces_split_without_spread_flag():
     plan = {"sections": [{"id": "s", "pages": [{"page": "t", "repeat": "each_set"}, {"page": "t2", "repeat": "each_set"}]}]}
     out = content.plan_pages(plan, pages, {"원고": [{"암기": "x", "단원": "1과"}]})
     assert [p["id"] for p in out] == ["t2"]
+
+
+def test_to_records_follows_template_order_and_opens_chapters_with_records():
+    """옛 꼴 원고 → 레코드 차례 — 템플릿 상위 페이지 차례, 장을 여는 상위 페이지(같은 이름 여럿)는 그 장에 레코드가 있을 때만, 분류를 레코드에"""
+    pages = {
+        "g1": {"id": "g1", "name": "STEP 간지", "items": [box("단원명")]}, "g2": {"id": "g2", "name": "STEP 간지", "items": [box("단원명")]},
+        "a": {"id": "a", "name": "어휘", "items": [box("지문")]}, "b": {"id": "b", "name": "어법", "items": [box("지문"), box("발문", 90)]},
+        "s": {"id": "s", "name": "실전", "items": [box("실전+문제")]},
+    }
+    plan = {"sections": [{"id": "x", "pages": [
+        {"page": "g1", "repeat": "each_set", "구분": "STEP 1"}, {"page": "a", "repeat": "each_set"},
+        {"page": "g2", "repeat": "each_set", "구분": "STEP 2"}, {"page": "b", "repeat": "each_set"}, {"page": "s", "repeat": "each_set"}]}]}
+    old = {"단원명": ["1장", "2장"], "어휘": [{"지문": "가"}, {"지문": "나"}], "실전+문제": [["q1"], ["q2"]]}
+    new = content.to_records(plan, pages, old)
+    assert new["원고"] == [{"단원명": "1장", "구분": "STEP 1"}, {"지문": "가"}, {"지문": "나"}, {"단원명": "2장", "구분": "STEP 2"}, {"실전+문제": [["q1"], ["q2"]]}]
+    out = content.plan_pages(plan, pages, new)
+    assert [p["id"].split("~")[0] for p in out] == ["g1", "a", "a", "g2", "s"]
+    del old["실전+문제"]                                                   # STEP 2 장에 레코드가 없으면 그 장을 여는 상위 페이지도 빠진다
+    old["단원명"] = ["1장", "2장"]
+    assert [r.get("구분") or r.get("지문") for r in content.to_records(plan, pages, old)["원고"]] == ["STEP 1", "가", "나"]
