@@ -298,6 +298,34 @@ CSTYLE_KEYS = ("font", "size", "color", "weight", "b", "i", "track", "bshift", "
 _ASC = {}
 
 
+_HW = {}
+HANGUL_BASE = 0.92                 # 넘침 어림(한글 1em)을 맞춰 둔 서체 Noto Sans CJK KR 의 한글 폭(em)
+
+
+def hangul_scale(family, weight=400):
+    """넘침 어림의 한글 폭 배율 — 그 서체 「가」 폭 / Noto 한글 폭(0.92em), 1 을 넘지 않는다. 못 찾으면 1(지금 어림 그대로).
+    KCC도담도담처럼 한글이 좁은 서체(0.76em)는 안 넘치는 글을 넘친다고 보던 것"""
+    if not family:
+        return 1.0
+    key = (family, int(weight or 400))
+    if key not in _HW:
+        v = 1.0
+        try:
+            from core.units.fonts import system_fonts
+            fs = [f for f in system_fonts() if f["family"] == family and not f["italic"]]
+            f = next((f for f in fs if f["weight"] == key[1]), None) or (fs[0] if fs else None)
+            if f:
+                from fontTools.ttLib import TTFont
+                t = TTFont(f["path"], lazy=True, fontNumber=0)
+                g = t.getBestCmap().get(ord("가"))
+                if g:
+                    v = min(1.0, t["hmtx"][g][0] / t["head"].unitsPerEm / HANGUL_BASE)
+        except Exception:
+            pass
+        _HW[key] = v
+    return _HW[key]
+
+
 def font_ascent(family, weight=400):
     """서체 윗높이(em) — hhea(크롬이 글 상자 높이를 잡는 값). 못 찾으면 1.0"""
     key = (family, int(weight or 400))
@@ -825,14 +853,48 @@ def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     col_w = (w_mm - il - ir - gutter * (cols - 1)) / cols - float(a.get("indent") or 0) - float(a.get("indent_right") or 0)
     track = em * float(a.get("tracking") or 0) / 1000.0
     tsume = em * float(a.get("tsume") or 0) / 100.0 * 0.13             # 자간 축소 — 글자 양옆 빈 곳 어림 0.13em(Noto CJK 한글 0.10~0.16)
+    hs = hangul_scale(a.get("font"), a.get("weight"))                # 한글 폭 — 서체가 좁으면 그만큼(Noto 기준 어림)
     lines = 0
     paras = (plain or "").replace(" ", "\n").split("\n")             # 줄 나눔도 줄 하나
     first = float(a.get("indent_first") or 0)                          # 첫 줄 들여쓰기(음수 = 내어쓰기 — 첫 줄이 그만큼 넓다, 단위 14c 한 줄 발문이 두 줄로 어림됐다)
     for para in paras:
-        width = first + sum(em * (1.0 if ord(c) > 0x2E7F else 0.28 if c == " " else ROMAN_EM) + track - (tsume if c != " " else 0) for c in para)   # 공백 0.28em(Noto CJK 한국어 꼴)
+        width = first + sum(em * (hs if ord(c) > 0x2E7F else 0.28 if c == " " else ROMAN_EM) + track - (tsume if c != " " else 0) for c in para)   # 공백 0.28em(Noto CJK 한국어 꼴)
         lines += max(1, int(math.ceil(width / max(col_w, 0.1))))
     gaps = (len(paras) - 1) * (float(a.get("space_before") or 0) + float(a.get("space_after") or 0))
     return math.ceil(lines / float(cols)) * lead + gaps + it + ib
+
+
+def story_h(ctx, a, v):
+    """한 줄기 여러 자리 글(content.story_value — 문단마다 자리 표시 ps)의 높이 어림 — 문단마다 그 자리 단락 스타일(서체 · 크기 · 행간 · 자간 ·
+    들여쓰기)로 세고, 문단 사이는 앞 · 뒤 간격(같은 자리끼리는 「같은 스타일 사이 간격」). 자리 표시가 없는 값이면 None(보통 어림을 쓴다)"""
+    if not (isinstance(v, list) and any(isinstance(x, dict) and "ps" in x and not x.get("inline") for x in v)):
+        return None
+    paras, cur = [], None
+    for x in v:
+        if isinstance(x, dict) and "ps" in x and not x.get("inline"):
+            cur = [x["ps"], ""]
+            paras.append(cur)
+            continue
+        if x == "\n":
+            continue
+        if cur is None:
+            cur = [None, ""]
+            paras.append(cur)
+        cur[1] += x.get("t", "") if isinstance(x, dict) and "ps" in x else rich_plain(x)
+    it, ir, ib, il = insets(a)
+    h, prev = it + ib, None
+    for slot, t in paras:
+        st = slot_style(a, slot, ctx) if slot else {}
+        aa = {k: v2 for k, v2 in a.items() if k not in ("inset", "space_before", "space_after", "table", "columns")}
+        aa.update({k: st[k] for k in ("font", "weight", "size", "leading", "tracking", "indent", "indent_right", "indent_first", "tsume") if st.get(k) not in (None, "")})
+        h += text_h(t, float(a["w"]) - il - ir, float(aa.get("size") or a["size"]), aa.get("leading"), aa)
+        if prev is not None:
+            if prev == slot and st.get("space_same") is not None:
+                h += float(st["space_same"])
+            else:
+                h += float(st.get("space_before") or 0) + float((slot_style(a, prev, ctx) if prev else {}).get("space_after") or 0)
+        prev = slot
+    return h
 
 
 def text_end(plain, w_mm, size_pt, a=None):
@@ -845,11 +907,12 @@ def text_end(plain, w_mm, size_pt, a=None):
     it, ir, ib, il = insets(a)
     track = em * float(a.get("tracking") or 0) / 1000.0
     col_w = max(w_mm - il - ir - float(a.get("indent") or 0) - float(a.get("indent_right") or 0), 0.1)
+    hs = hangul_scale(a.get("font"), a.get("weight"))
     last = 0.0
     for para in (plain or "").split("\n"):
         run = 0.0
         for c in para:
-            cw = em * (1.0 if ord(c) > 0x2E7F else ROMAN_EM) + track
+            cw = em * (hs if ord(c) > 0x2E7F else ROMAN_EM) + track
             if run + cw > col_w:
                 run = cw                      # 줄바꿈 — 새 줄에서 다시
             else:
@@ -1576,7 +1639,9 @@ def part_svg(ctx, part, values=None, types=None, width=None):
         plains[i] = plain
         if a.get("story"):                                             # 첫 상자 — 자라지 않는다(넘침은 이어지는 상자가 받는다)
             continue
-        need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
+        need = story_h(ctx, a, values.get(a["bind"]) if a.get("bind") else None)    # 여러 자리 한 줄기 — 문단마다 그 자리 스타일로
+        if need is None:
+            need = text_h(plain, a["w"], a["size"], a.get("leading"), a)
         if auto_size(a) == "off":                        # 상자 높이를 지킨다(인디자인 자동 크기 조정 끔)
             heights[i] = a["h"]
             if need > a["h"] + 0.01:

@@ -510,6 +510,271 @@ def cover(pno, name):
 st = open_doc(NAME)
 st += expect_pages(1)
 
+# ── FLOWNOTE — 흐름 칸(3칸 한 줄 · 2×2 네 칸) · 주제 · 요약문 · 동반의어(표) ──
+JAL, KCC = "Jalnan OTF", "KCCDodamdodam"
+CONTENT_LAST, SRC_TAB_Y, SRC_TS_Y = [], None, None
+
+
+def ref_draws(pno):
+    """원본 도형 — mm 상자 · 칠 · 선 · 경로 d(상자 안 0~1, 편집기 「경로 d」 칸 꼴)"""
+    p, t = REF[pno - 1], REF[pno - 1].trimbox
+    hexc = lambda c: "#%02x%02x%02x" % tuple(round(v * 255) for v in c) if c else None
+    out = []
+    for dr in p.get_drawings():
+        r = dr["rect"]
+        x, y, w, h = (r.x0 - t.x0) * MM, (r.y0 - t.y0) * MM, r.width * MM, r.height * MM
+        if w <= 0 or h <= 0:
+            continue
+        nx = lambda pt: f"{(pt.x - r.x0) / r.width:.4f} {(pt.y - r.y0) / r.height:.4f}"
+        d, cur = [], None
+        for it in dr["items"]:
+            if it[0] == "l":
+                if cur is None or abs(cur.x - it[1].x) > 1e-3 or abs(cur.y - it[1].y) > 1e-3:
+                    d.append("M" + nx(it[1]))
+                d.append("L" + nx(it[2]))
+                cur = it[2]
+            elif it[0] == "c":
+                if cur is None or abs(cur.x - it[1].x) > 1e-3 or abs(cur.y - it[1].y) > 1e-3:
+                    d.append("M" + nx(it[1]))
+                d.append("C" + nx(it[2]) + " " + nx(it[3]) + " " + nx(it[4]))
+                cur = it[4]
+        if dr.get("closePath") or (d and d[0][1:] == d[-1].split(" ", 0)[0][1:]):
+            d.append("Z")
+        out.append({"x": round(x, 2), "y": round(y, 2), "w": round(w, 2), "h": round(h, 2), "fill": hexc(dr.get("fill")),
+                    "stroke": hexc(dr.get("color")), "sw": (dr.get("width") or 0) * MM, "d": " ".join(d), "n": len(dr["items"])})
+    return out
+
+
+def ref_shape(e, fill=None, stroke=None, sw=None, label=None, measure=True):
+    """원본 도형 그대로 — 「도형」 도구 + 경로 d(원본 꼭짓점 · 곡선) · 칠 · 선"""
+    st = shape(e["x"], e["y"], e["w"], e["h"], fill or "#ffffff", label=label, d=e["d"])
+    if not fill:
+        st += [{"pick": {"at": '#side select[data-a="fill"]', "value": ""}, "wait": 550}]
+    if stroke:
+        st += _color("stroke.color", stroke) + [F('#side input[data-a="stroke.w"]', round(sw / MM, 3))]
+    if measure:
+        o = (sw or 0) / 2
+        Ebox(e["x"] - o, e["y"] - o, e["w"] + 2 * o, e["h"] + 2 * o, fill or stroke)
+    return st
+
+
+def ref_pic(pno, info, name, box=None):
+    """원본에 박힌 그림 한 장(모눈 바탕 등) — 출력 색 프로필로 꺼내 그 자리에(그림 칸 · 틀에 맞게 늘이기).
+    box = 그 그림에서 이 자리만 잘라 쓴다(원본은 큰 그림 한 장을 칸 모양으로 잘라 보였다 — 3칸 흐름 바탕)"""
+    from PIL import Image as _Im
+    path = ref_image(REF, info["xref"], os.path.join(WORK, f"{name}.png"))
+    t = REF[pno - 1].trimbox
+    b = info["bbox"]
+    x, y, w, h = (b[0] - t.x0) * MM, (b[1] - t.y0) * MM, (b[2] - b[0]) * MM, (b[3] - b[1]) * MM
+    if box:
+        im = _Im.open(path)
+        kx, ky = im.width / w, im.height / h
+        im.crop((round((box["x"] - x) * kx), round((box["y"] - y) * ky), round((box["x"] + box["w"] - x) * kx), round((box["y"] + box["h"] - y) * ky))).save(path)
+        x, y, w, h = box["x"], box["y"], box["w"], box["h"]
+    return image(round(x, 2), round(y, 2), round(w, 2), round(h, 2), path, label=f"그림 — 원본 {name}") + [{"pick": {"at": '#side select[data-a="fit"]', "value": "fill"}, "wait": 900}]
+
+
+def flownote(pno, gubun):
+    """FLOWNOTE 면 — 흐름 칸(칸 수는 원고 흐름 단계 수: 3칸 한 줄 · 4칸 2×2) · 주제 · 요약문 · 동반의어 카드(표 — 원고 수만큼 칸).
+    원고 덩어리 = 흐름(단계마다 제목 · 글) · 주제 · 요약문 · 동반의어(낱말 · 뜻 · 동의어 · 반의어) · 단원 · 구분"""
+    el, sp, dr = els(pno), spans(pno), ref_draws(pno)
+    cards = sorted([d for d in dr if d["fill"] == "#ffffff" and d["stroke"] and d["w"] > 30 and d["h"] > 25 and d["y"] < 90],   # 흐름 칸 = 흰 칠 + 테두리 한 도형
+                   key=lambda d: (d["x"], d["y"]))
+    n = len(cards)
+    face_name = f"FLOWNOTE · {gubun} · {n}칸"
+    st = pg_new(pno, f"③ {face_name} — 원본 {pno}쪽", name=face_name)
+    if n == 4:                                                           # 2×2 — 흐름 칸 차례는 왼쪽 단 위 → 아래, 오른쪽 단(① ② / ③ ④)
+        st += columns(2, 4.0, label="여백 및 단 — 2단(흐름 칸 넷을 왼쪽 단 위→아래, 다음 단 차례로 받는다)")
+    band = BAND[gubun]
+    st += [S(f"위 · 아래 띠 — {gubun} 색", 1100)]
+    tb, bb = find(el, "rect", -3, -3, fill=band), find(el, "rect", -3, 204.5, fill=band)
+    st += rbox(tb["x"], tb["y"], tb["w"], tb["h"], band) + rbox(bb["x"], bb["y"], bb["w"], bb["h"], band)
+    # FLOW NOTE 이름표 — 탭 모양(원본 경로) · 전구 아이콘 · 글(학교안심 운동장 L 8pt)
+    tab = next(d for d in dr if abs(d["x"] - 104.0) < 0.5 and abs(d["y"] - 12.87) < 0.5)
+    st += ref_shape(tab, fill=tab["fill"], label="FLOW NOTE 탭 — 원본 경로")
+    area = find(el, "rect", 18.0, 18.3)
+    st += rbox(area["x"], area["y"], area["w"], area["h"], area["fill"], label="흐름 바탕")
+    ELEMS[len(PAGES)][-1].update(ctol=20)                                # 더 엄격하게 — 아래 요약 바탕 색(차 18 · 14 · 28)이 허용 30 안이라 결과에서만 상자가 0.6mm 길게 잡혔다
+    for d in [d for d in dr if 108.0 < d["x"] < 111.5 and 13.8 < d["y"] < 17.5 and d["w"] < 3]:   # 전구 — 원본 도형 조각 그대로(잘라 붙이면 탭 색과 둘레가 달라 네모가 보였다)
+        st += ref_shape(d, fill=d["fill"], measure=d["w"] > 1)
+    st += T(next(s for s in sp if s["text"] == "FLOW NOTE"), HAK, 300, label="FLOW NOTE — 학교안심 운동장 L")
+    ELEMS[len(PAGES)][-1].update(pad=0.2, search=0.2)
+    # 흐름 칸 — 흰 둥근 칸(테두리) · 모눈 그림 · 번호 동그라미 · 칸 글상자(자리 「흐름제목+흐름글」 — 칸마다 단계 하나)
+    imgs = sorted([i for i in REF[pno - 1].get_image_info(xrefs=True)], key=lambda i: (i["bbox"][0], i["bbox"][1]))
+    ttl = sorted([s for s in sp if s["size"] == 7.0 and s["color"] == "#0067b4"], key=lambda s: s["base"])
+    body = [s for s in sp if s["size"] == 9.5]
+    rows = sorted({round(s["base"], 2) for s in body if s["base"] < cards[0]["y"] + cards[0]["h"]})
+    lead = round(sorted(b - a for a, b in zip(rows, rows[1:]))[len(rows) // 2 - 1], 3)
+    BL = round(lead / MM, 2)
+    TLD = 10.0                                                           # 제목 줄 행간 — 제목 · 첫 글 줄 사이는 「흐름 글」 단락 앞 간격으로
+    t_base = min(s["base"] for s in ttl)
+    b_base = min(s["base"] for s in body if s["x"] < cards[0]["x"] + cards[0]["w"] and s["base"] < cards[0]["y"] + cards[0]["h"])
+    gap = round(top_of(b_base, 9.5, KCC, 700, BL) - (top_of(t_base, 7.0, JAL, 400, TLD) + TLD * MM), 2)
+    first_line = line_of([s for s in body if s["x"] < cards[0]["x"] + cards[0]["w"]], b_base)
+    t1 = line_of([s for s in ttl if cards[0]["x"] < s["x"] < cards[0]["x"] + cards[0]["w"]], t_base)    # 첫 칸 제목만 — 같은 기준선에 옆 칸 제목도 있다
+    st += need_pstyle("흐름 제목", {"font": JAL, "weight": 400, "size": 7.0, "leading": TLD, "color": "#0067b4", "indent": round(t1["x"] - (cards[0]["x"] + 2.11), 2),
+                                 "tracking": track_of(t1, JAL, 400) if len(t1["text"]) > 1 else 0})
+    st += need_pstyle("흐름 글", {"font": KCC, "weight": 700, "size": 9.5, "leading": BL, "color": "#000000", "space_before": gap, "space_same": 0,
+                                "tracking": track_of(dict(first_line, size=9.5), KCC, 700)})
+    for k, c in enumerate(cards):
+        st += [S(f"흐름 칸 {k + 1} — 흰 둥근 칸 · 테두리", 900)]
+        rim = c                                                          # 테두리는 모눈 그림 위에 — 칠 칸 · 그림 · 테두리 칸 차례
+        st += ref_shape(c, fill="#ffffff", measure=False)
+        t0 = REF[pno - 1].trimbox
+        cover = [i for i in imgs if (i["bbox"][0] - t0.x0) * MM <= c["x"] + 0.5 and (i["bbox"][1] - t0.y0) * MM <= c["y"] + 0.5
+                 and (i["bbox"][2] - t0.x0) * MM >= c["x"] + c["w"] - 0.5 and (i["bbox"][3] - t0.y0) * MM >= c["y"] + c["h"] - 0.5]
+        im = min(cover, key=lambda i: (i["bbox"][2] - i["bbox"][0]) * (i["bbox"][3] - i["bbox"][1]))     # 칸을 덮는 가장 작은 그림
+        inset = round(rim["sw"] / 2, 2)
+        st += ref_pic(pno, im, f"모눈_{gubun}_{n}_{k + 1}", box={"x": c["x"] + inset, "y": c["y"] + inset, "w": c["w"] - 2 * inset, "h": c["h"] - 2 * inset})
+        st += ref_shape(rim, stroke=rim["stroke"], sw=rim["sw"])
+        badge = next(d for d in dr if d["fill"] == "#0067b4" and c["x"] < d["x"] < c["x"] + 4 and c["y"] < d["y"] < c["y"] + 5)
+        st += ellipse(badge["x"], badge["y"], badge["w"], fill=badge["fill"], h=badge["h"])
+        Ebox(badge["x"], badge["y"], badge["w"], badge["h"], badge["fill"])
+        dig = next(s for s in sp if s["size"] == 5.5 and badge["x"] < s["x"] < badge["x"] + badge["w"] and abs(s["base"] - (badge["y"] + badge["h"] * 0.7)) < 1.5)
+        st += T(dig, JAL, 400, label=f"칸 번호 {dig['text']} — 잘난체")
+        ELEMS[len(PAGES)][-1].update(pad=0.0, search=0.0)               # 둘레를 보면 동그라미 밖 흰 칸이 들어온다(1200dpi 맞대기: 위치 차 0 · 잉크 0.998)
+        inner = [s for s in sp if (s["size"] == 9.5 or (s["size"] == 7.0 and s["color"] == "#0067b4")) and c["x"] < s["x"] < c["x"] + c["w"] and c["y"] < s["base"] < c["y"] + c["h"]]
+        Eslot(inner, "#000000", label=f"흐름 칸 {k + 1}")
+        x0 = round(c["x"] + 2.11, 2)
+        top = round(top_of(t_base, 7.0, JAL, 400, TLD), 2)
+        top = round(top + (c["y"] - cards[0]["y"]), 2)
+        st += text(x0, top, round(c["w"] - 4.2, 1), round(c["y"] + c["h"] - 1.0 - top, 1), "흐름 제목\n흐름 글 임시", 9.5, "#000000",
+                   label=f"흐름 칸 {k + 1} 글상자 — 자리 「흐름제목+흐름글」(칸마다 단계 하나)", font=KCC, weight=700, leading=BL)
+        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+        st += slot("흐름제목+흐름글")
+        st += [{"pick": {"at": '#side select[data-a="slotfmt.흐름제목.style"]', "value": "흐름 제목"}, "wait": 700},
+               {"pick": {"at": '#side select[data-a="slotfmt.흐름글.style"]', "value": "흐름 글"}, "wait": 700}]
+        st += grep(0, r"^→", color="#f39857", bold=False, label="GREP — 줄 앞 「→」 주황")
+        st += grep(1, r"\[[^\]]*\]", color="#0067b4", bold=False, label="GREP — 「[꼬리표]」 파랑")
+    # 칸 사이 화살표 — 원본 경로 그대로, 흐름 칸 위에(원본 차례)
+    for d in [d for d in dr if d["fill"] == "#b9c1a6" and d["y"] > area["y"] and d["y"] < area["y"] + area["h"] and d["w"] < 12]:
+        st += ref_shape(d, fill=d["fill"], label="화살표 — 원본 경로")
+        ELEMS[len(PAGES)][-1].update(ctol=18)                            # 화살표 색(원본 화면에서 차 9) · 모눈 줄(차 26~27) 사이 — 30 이면 결과에서만 모눈 줄이 같이 잡혔다
+    # 주제 · 요약문 — 바탕 · 꼬리표(KCC도담도담) · 글(Noto 8pt, 원고 자리)
+    st += [S("주제 · 요약문", 1000)]
+    sbg = find(el, "rect", 18.0, 89.47)
+    st += rbox(sbg["x"], sbg["y"], sbg["w"], sbg["h"], sbg["fill"])
+    for pill in sorted([d for d in dr if d["fill"] in ("#54669f", "#e5aa7e") and abs(d["w"] - 11.61) < 0.3], key=lambda d: d["y"]):
+        st += ref_shape(pill, fill=pill["fill"])
+        lab = line_of([s for s in sp if s["size"] == 9.0 and s["color"] == "#ffffff" and pill["y"] < s["base"] < pill["y"] + pill["h"]],
+                      next(s["base"] for s in sp if s["size"] == 9.0 and s["color"] == "#ffffff" and pill["y"] < s["base"] < pill["y"] + pill["h"]))
+        st += T(lab, KCC, 700, label=f"꼬리표 「{lab['text']}」 — KCC도담도담")
+        ELEMS[len(PAGES)][-1].update(pad=0.2, search=0.2)
+    tsp = sorted([s for s in sp if s["size"] == 8.0 and s["color"] == "#000000"], key=lambda s: (round(s["base"], 1), s["x"]))
+    srows = sorted({round(s["base"], 2) for s in tsp})
+    topic = [s for s in tsp if abs(s["base"] - srows[0]) < 0.3]
+    summ = [s for s in tsp if s["base"] > srows[0] + 0.3]
+    sl = round(sorted(b - a for a, b in zip(srows[1:], srows[2:]))[max(len(srows) - 2, 1) // 2 - 1] if len(srows) > 2 else 4.0, 3)
+    SL = round(sl / MM, 2)
+    Eslot(topic, "#000000", label="주제")
+    Eslot(summ, "#000000", label="요약문")
+    tx = round(min(s["x"] for s in tsp), 2)
+    st += need_pstyle("노트 글", {"font": NOTO, "weight": 400, "size": 8.0, "leading": SL, "color": "#000000", "align": "justify",
+                                "tracking": track_of(dict(line_of(tsp, srows[-1]), size=8.0), NOTO, 400) if len(line_of(tsp, srows[-1])["text"]) > 6 else 0})
+    for nm, base, h in (("주제", srows[0], round(SL * MM * 1.05, 1)), ("요약문", srows[1], round(sbg["y"] + sbg["h"] - 0.5 - top_of(srows[1], 8.0, NOTO, 400, SL), 1))):
+        y0 = round(top_of(base, 8.0, NOTO, 400, SL), 2)
+        st += text(tx, y0, round(sbg["x"] + sbg["w"] - 2.0 - tx, 1), h, f"{nm} 임시 글", 8.0, "#000000", label=f"{nm} — 원고 자리 「{nm}」", font=NOTO, leading=SL, align="justify")
+        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+        st += slot(nm) + [{"pick": {"at": '#side select[data-a="style"]', "value": "노트 글"}, "wait": 700}]
+    # 동반의어 — 둥근 테두리 · 머리(흰 바탕 · 주사위 아이콘 · 점 둘 · 글) · 카드 표(원고 수만큼 칸, 3열 · 열마다 색)
+    st += [S("동반의어 — 테두리 · 머리", 1000)]
+    fr = next(d for d in dr if d["stroke"] and not d["fill"] and d["w"] > 100 and d["y"] > 110)
+    st += ref_shape(fr, stroke=fr["stroke"], sw=fr["sw"], label="동반의어 테두리 — 원본 경로")
+    hd = find(el, "rect", 20.71, 114.77)
+    st += rbox(hd["x"], hd["y"], hd["w"], hd["h"], hd["fill"], label="머리 흰 바탕(테두리를 끊는다)", measure=False)
+    st += icon(pno, 24.6, 115.1, 5.5, 5.9, f"주사위_{gubun}_{n}")
+    for dot in [d for d in dr if d["fill"] == "#bfc9e6"]:
+        st += ellipse(dot["x"], dot["y"], dot["w"], fill=dot["fill"], h=dot["h"])
+        Ebox(dot["x"], dot["y"], dot["w"], dot["h"], dot["fill"])
+    hsp = [s for s in sp if s["size"] == 7.0 and s["color"] == "#54669f"]
+    st += T(line_of(hsp, hsp[0]["base"]), JAL, 400, label="「동반의어」 — 잘난체")
+    vc = sorted([d for d in dr if d["fill"] and abs(d["w"] - 34.59) < 0.3 and d["y"] > 118], key=lambda d: (round(d["y"]), d["x"]))
+    fills = [d["fill"] for d in vc[:3]]
+    gx = round(vc[1]["x"] - (vc[0]["x"] + vc[0]["w"]), 2)
+    row2 = [d for d in vc if d["y"] > vc[0]["y"] + 5]
+    gy = round(row2[0]["y"] - (vc[0]["y"] + vc[0]["h"]), 2) if row2 else 2.12
+    # 알려진 차이(2026-10-12 사용자 확정 「추천하는대로 최대한 보편적이게 인디자인 중심으로」): 원본 카드 오른쪽 아래 접힘 삼각형(카드 색과 밝기 차 6)은
+    # 만들지 않는다 — 인디자인 표도 칸마다 장식을 붙일 수 없다. 표(원고 수만큼 칸)를 쓴다
+    for d in vc[:3]:                                                     # 첫 줄 칸 — 위 끝 · 폭 · 색 · 칸 사이(표 설정). 높이는 원고 따라 자라니(줄 최소 높이) 위 3mm 띠만
+        Ebox(d["x"], d["y"], d["w"], 3.0, d["fill"], pad=0.3)
+    vsp = [s for s in sp if s["size"] == 7.0 and s["color"] in ("#000000", "#214e8e", "#e14e6b") and s["base"] > vc[0]["y"]]
+    Eslot(vsp, "#000000", label="동반의어 카드")
+    vrows = sorted({round(s["base"], 2) for s in vsp if vc[0]["x"] < s["x"] < vc[0]["x"] + vc[0]["w"] and s["base"] < vc[0]["y"] + vc[0]["h"]})
+    VL = round((vrows[1] - vrows[0]) / MM, 2)
+    word = next(s for s in vsp if s["color"] == "#000000" and abs(s["base"] - vrows[0]) < 0.2 and s["x"] < vc[0]["x"] + 3)
+    mean = min((s for s in vsp if s["color"] == "#000000" and abs(s["base"] - vrows[0]) < 0.2 and s["x"] > word["x1"]), key=lambda s: s["x"])
+    il = round(word["x"] - vc[0]["x"], 2)
+    it_ = round(top_of(vrows[0], 7.0, NOTO, 400, VL) - vc[0]["y"], 2)
+    st += need_pstyle("동반의어 동의어", {"font": NOTO, "weight": 400, "size": 7.0, "leading": VL, "color": "#214e8e"})
+    st += need_pstyle("동반의어 반의어", {"font": NOTO, "weight": 400, "size": 7.0, "leading": VL, "color": "#e14e6b"})
+    tw = round(vc[2]["x"] + vc[2]["w"] - vc[0]["x"], 2)
+    st += text(vc[0]["x"], vc[0]["y"], tw, round(vc[0]["h"], 1), "낱말 뜻\n= 동의어\n↔ 반의어", 7.0, "#000000",
+               label="동반의어 카드 — 표 글상자 · 자리 「낱말+뜻+동의어+반의어」(항목 하나가 한 칸)", font=NOTO, leading=VL)
+    st += slot("낱말+뜻+동의어+반의어")
+    st += [S(f"표 — 3열 · 칸 색 {', '.join(fills)} · 칸 사이 {gx}/{gy}mm · 칸 여백 · 줄 최소 {vc[0]['h']}mm", 1300),
+           F('#side input[data-a="table.cols"]', 3, 900), F('#side input[data-a="table.gap_x"]', gx, 700), F('#side input[data-a="table.gap_y"]', gy, 700),
+           F('#side input[data-a="table.inset"]', f"{it_},{il},0,{il}", 700), F('#side input[data-a="table.row_h"]', round(vc[0]["h"], 2), 700),
+           F('#side input[data-a="table.fills"]', ", ".join(fills), 800)]
+    st += [{"click": '#side input[data-a="slotfmt.낱말.inline"]', "wait": 800},
+           F('#side input[data-a="slotfmt.낱말.inline_gap"]', round(mean["x"] - word["x1"], 2), 700),
+           {"pick": {"at": '#side select[data-a="slotfmt.동의어.style"]', "value": "동반의어 동의어"}, "wait": 700},
+           F('#side input[data-a="slotfmt.동의어.bullet_text"]', "= ", 700),
+           {"pick": {"at": '#side select[data-a="slotfmt.반의어.style"]', "value": "동반의어 반의어"}, "wait": 700},
+           F('#side input[data-a="slotfmt.반의어.bullet_text"]', "↔ ", 700)]
+    # 옆 탭 · 꼬리 — 암기 정답 면과 같은 꼴
+    st += [S("옆 탭 · 꼬리", 1000)]
+    stab = next(e for e in el if e["k"] == "path" and abs(e["x"] - 139.0) < 0.5 and e["w"] > 10)
+    st += rbox(stab["x"], stab["y"], 15.0, stab["h"], stab["fill"], r=1.6, label="옆 탭 — 왼쪽 모서리 1.6mm(오른쪽은 재단 밖)", measure=False)
+    Ebox(stab["x"], stab["y"], W_MM - stab["x"], stab["h"], stab["fill"])
+    ts = sorted([s for s in sp if s["size"] == 6.4 and s["color"] == "#ffffff"], key=lambda s: s["base"])
+    Eslot(ts, "#ffffff", label="구분")
+    st += text(round(ts[0]["x"] - 0.3, 2), round(top_of(ts[0]["base"], 6.4, EL, 700, round((ts[1]["base"] - ts[0]["base"]) / MM, 2)), 2), 3.0, 12.0, "구분",
+               6.4, "#ffffff", label="구분 — 원고 자리 「구분」", font=EL, weight=700, leading=round((ts[1]["base"] - ts[0]["base"]) / MM, 2))
+    st += slot("구분")
+    s_u = line_of([s for s in sp if s["base"] > 190 and s["color"] == "#000000"], next(s["base"] for s in sp if s["base"] > 190 and s["color"] == "#000000"))
+    st += T(s_u, EL, 500, label="단원 — 원고 자리 「단원」 (오른쪽 맞춤)", slot_name="단원", temp="단원 이름", align="right", w=40)
+    s_no = next(s for s in sp if s["base"] > 190 and s["text"] == str(pno))
+    st += T(s_no, EL, 700, label="쪽 번호 — 시스템 자리(오른쪽 맞춤)", bind="sys.page_no", align="right")
+    if pno != 2 + len(PAGES) - 1:
+        ELEMS[len(PAGES)][-1]["원고"] = True
+    st += done(face_name, f"p{pno}.png")
+    global SRC_TAB_Y, SRC_TS_Y
+    SRC_TAB_Y, SRC_TS_Y = stab["y"], round(top_of(ts[0]["base"], 6.4, EL, 700, round((ts[1]["base"] - ts[0]["base"]) / MM, 2)), 2)   # 다음 복제 면이 이 자리를 눌러 고른다
+    CONTENT_LAST[:] = [face_name]
+    it = first(lambda x: "흐름" in x and x["_원본쪽"][0] == pno, gubun)
+    CONTENT[face_name] = [{"흐름제목+흐름글": [[{"흐름제목": f["제목"], "흐름글": f["글"]}] for f in it["흐름"]],     # 칸마다 제 몫(단계 하나)
+                           "주제": it["주제"], "요약문": it["요약문"],
+                           "낱말+뜻+동의어+반의어": [[{"낱말": v["낱말"], "뜻": v["뜻"], "동의어": v["동의어"], "반의어": v["반의어"]} for v in it["동반의어"]]],
+                           "단원": it["단원"], "구분": it["구분"]}]
+    return st
+
+
+
+def face_dup(make, pno, gubun, src_gubun):
+    """색 갈래 면 — 앞 면(같은 모양 · 다른 색)을 복제해 다른 것만 바꾼다(인디자인 상위 페이지 복제 → 색 바꾸기).
+    make(pno, gubun) 로 이 면의 맞댈 요소 · 견본 원고만 만들고(그 단계는 버린다), 단계는 복제 → 이름 · 원고마다 → 띠 색 · 옆 탭(색 · 자리) · 구분 글 자리"""
+    make(pno, gubun)                                                     # 요소 목록 · 원고만 — 이 면을 처음부터 그리지 않는다
+    face_name = CONTENT_LAST[0]
+    el, sp = els(pno), spans(pno)
+    st = [S(f"③ {face_name} — {src_gubun} 면을 복제해 색 · 옆 탭만 바꾼다 (원본 {pno}쪽)", 1500),
+          {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700},
+          {"click": "#rail .pg.on [data-pg-dup]", "wait": 2200}, {"click": "#rail .pg.on", "wait": 1500},
+          S(f"면 이름 「{face_name}」 · 원고마다", 1000), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700},
+          F("#side #s-pname", face_name, 900), {"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1200}]
+    band = BAND[gubun]
+    st += [S(f"위 · 아래 띠 — {gubun} 색", 1000), {"click": {"mm": [74.0, 1.0]}, "wait": 900}] + _color("fill", band)
+    st += [{"click": {"mm": [74.0, 208.0]}, "wait": 900}] + _color("fill", band)
+    tab = next(e for e in el if e["k"] == "path" and abs(e["x"] - 139.0) < 0.5 and e["w"] > 10)
+    ts = sorted([s for s in sp if s["size"] == 6.4 and s["color"] == "#ffffff"], key=lambda s: s["base"])
+    lead = round((ts[1]["base"] - ts[0]["base"]) / MM, 2)
+    st += [S(f"옆 탭 — {gubun} 색 · 자리 {round(tab['y'], 2)}mm", 1000), {"click": {"mm": [146.8, SRC_TAB_Y + 2.0]}, "wait": 900}]
+    st += _color("fill", tab["fill"]) + [F('#side input[data-it="y"]', round(tab["y"], 2), 800)]
+    st += [S("구분 글상자 — 옆 탭을 따라 아래로", 1000), {"click": {"mm": [143.6, SRC_TS_Y + 3.0]}, "wait": 900},
+           F('#side input[data-it="y"]', round(top_of(ts[0]["base"], 6.4, EL, 700, lead), 2), 800)]
+    st += done(face_name, f"p{pno}.png")
+    return st
+
+
 if want(1):
     st += cover(1, "앞면")
     CONTENT.setdefault("학교", []).append("배재1")
@@ -530,6 +795,14 @@ if want(5):
 if want(4):
     st += memorize(12, "교과서")
     st += memorize(46, "모의고사")
+
+if want(3):                                                              # NOTE_PAGES=5 — 막힌 곳 찾을 때 한 쪽만(판정 통과는 세 쪽 다)
+    for pno, gb in ((3, "교과서"), (5, "교과서"), (45, "모의고사")):
+        if not os.environ.get("NOTE_PAGES") or str(pno) in os.environ["NOTE_PAGES"].split(","):
+            if pno == 45 and SRC_TAB_Y is not None:                      # 같은 모양 · 다른 색 — 바로 앞 교과서 4칸 면을 복제해 색만
+                st += face_dup(flownote, pno, gb, "교과서 4칸")
+            else:
+                st += flownote(pno, gb)
 
 if CONTENT:
     st += put_content(CONTENT)
