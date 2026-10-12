@@ -239,6 +239,27 @@ def grep(n, pattern, color=None, bold=True, label=None, size=None, bshift=None, 
     return st
 
 
+def ref_image(doc, xref, path):
+    """원본 PDF 에 박힌 그림을 화면에 보이는 색 그대로 PNG 로. CMYK 는 문서의 출력 색 프로필(OutputIntent)로 바꾼다 —
+    원본 쪽도 그 프로필로 그려진다. 기본 변환은 밝기가 6~7 어둡게 나와 위의 글 잉크까지 틀리게 쟀다(2026-10-12 배재1 포켓북 바탕)"""
+    import io
+    import re
+    import pymupdf
+    from PIL import Image, ImageCms
+    pix = pymupdf.Pixmap(doc, xref)
+    oi = re.search(r"/OutputIntents\s*\[\s*(\d+) 0 R", doc.xref_object(doc.pdf_catalog()))
+    if pix.n - pix.alpha == 4 and oi:
+        prof = re.search(r"/DestOutputProfile (\d+) 0 R", doc.xref_object(int(oi.group(1))))
+        im = Image.frombytes("CMYK", (pix.width, pix.height), pix.samples if not pix.alpha else pymupdf.Pixmap(pix, 0).samples)
+        ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(doc.xref_stream(int(prof.group(1))))),
+                                  ImageCms.createProfile("sRGB"), outputMode="RGB").save(path)
+        return path
+    if pix.n - pix.alpha >= 4:
+        pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
+    pix.save(path)
+    return path
+
+
 def image(x, y, w, h, path, label=None):
     """그림 — 「그림」 도구로 자리를 끌고, 속성에서 파일을 골라 넣는다"""
     st = ([S(label)] if label else [])

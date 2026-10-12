@@ -130,12 +130,13 @@ def need_cstyle(name, props, label=None):
     return st + [{"click": "#sheet-x", "wait": 1200}]
 
 
-def T(s, font, weight, label=None, slot_name=None, temp=None, align=None, w=None, leading=None, h=None, bind=None, measure=True):
-    """원본 글 조각 하나 — 기준선 = 원본 기준점, 자간은 원본 글자 자리에서"""
+def T(s, font, weight, label=None, slot_name=None, temp=None, align=None, w=None, leading=None, h=None, bind=None, measure=True, opsz=None):
+    """원본 글 조각 하나 — 기준선 = 원본 기준점, 자간은 원본 글자 자리에서.
+    opsz = 그 글상자에 줄 광학 크기 — 자간도 그 광학 크기의 글자 폭으로 잰다(안 주면 브라우저 자동 광학 크기 폭이라 넓게 나왔다)"""
     size = s["size"]
     track = 0
     if len(s["text"]) > 1:
-        track = round(((s["x1"] - s["x"]) - chrome_extent(font, weight, size, s["text"]) - face(font, weight)[2](s["text"][-1]) * size * MM)
+        track = round(((s["x1"] - s["x"]) - chrome_extent(font, weight, size, s["text"], opsz=opsz) - face(font, weight)[2](s["text"][-1]) * size * MM)
                       / (len(s["text"]) - 1) / (size * MM) * 1000)
     bw = w or round((s["x1"] - s["x"]) * 1.3 + size * 0.4, 1)
     bh = h or round((leading or size * 1.45) * MM * 1.03, 1)
@@ -441,6 +442,14 @@ def el_line(sp, e):
     return dict(line_of(row, base), text=e["text"])
 
 
+# Bodoni 글(Pocket Book. · 만든 사람 제목) 색 허용 — 첫 글자 머리카락 세리프가 원본 300dpi 판에서 가장 진해도 142(글 색 78 과 64 차)라
+# 「같은 색」에서 빠져 원본 상자가 1mm 좁게 잡혔다. 600dpi 직접 맞대기: 잉크 왼쪽 끝 차 0.04mm, P · B 글자 겹침 0.95 · 0.97, 잉크 1.03.
+# 통과 기준(0.3mm · 모양)은 그대로 — 원본을 재는 색 범위만(바탕 237 과는 159 차라 섞이지 않는다)
+BODONI_CTOL = 70
+# 9pt 만든 사람 제목은 세리프가 더 가늘어 300dpi 에서 글 색과 87 · 바탕과 81 차(가운데)다 — 90. 1200dpi 맞대기: Assistant 겹침 0.92 · 잉크 1.00 · 폭 차 0.02mm
+BODONI_CTOL_SMALL = 90
+
+
 def cover(pno, name):
     """맨 앞 · 맨 뒤 면 — 종이 바탕 그림 · POCKET · 선 · Pocket Book.(Bodoni Moda 34pt) · 학교 칸(테두리 · 자리 「학교」「시험」) · 꼬리.
     뒷면은 만든 사람 목록(고정 글 — 책마다 바뀌면 편집기에서 고친다)"""
@@ -449,16 +458,12 @@ def cover(pno, name):
     texts = [e for e in el if e["k"] == "text"]
     tx = lambda f: next(e for e in texts if f(e))
     # 바탕 — 원본에 박힌 그림(그러데이션 종이) 그대로
-    xref = REF[pno - 1].get_images()[0][0]
-    pix = pymupdf.Pixmap(REF, xref)
-    if pix.n - pix.alpha >= 4:
-        pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
-    bg = os.path.join(WORK, f"바탕_{pno}.png")
-    pix.save(bg)
+    bg = ref_image(REF, REF[pno - 1].get_images()[0][0], os.path.join(WORK, f"바탕_{pno}.png"))
     im = next(e for e in el if e["k"] == "image")
     # 바탕 그림은 요소 목록(색 상자 맞대기)에 넣지 않는다 — 그러데이션 종이라 「한 색 상자」로 잴 수 없다. 빠지거나 어긋나면 「목록 밖 차이」(쪽 전체 화소)가 잡는다
     st += image(round(im["x"], 2), round(im["y"], 2), round(im["w"], 2), round(im["h"], 2), bg, label="바탕 — 원본 그림(종이 그러데이션)")
     st += [{"pick": {"at": '#side select[data-a="fit"]', "value": "fill"}, "wait": 900}]   # 원본은 가로 그림(273×191)을 세로 쪽에 비율 무시하고 늘였다
+    st += [{"pick": {"at": '#side select[data-a="flip"]', "value": "v"}, "wait": 900}]    # 그리고 상하로 뒤집었다(원본 그림 변환 행렬 세로 -611.2) — 그러데이션 밝은 쪽이 위
     ln = find(el, "rect", 15.0, 27.5)
     st += rbox(ln["x"], ln["y"], ln["w"], ln["h"], ln["fill"], label="POCKET 아래 선")
     st += T(el_line(sp, tx(lambda e: e["text"] == "POCKET")), NOTO, 700, label="POCKET")
@@ -466,8 +471,9 @@ def cover(pno, name):
     for word in ("Pocket", "Book."):
         s0 = next(s for s in sp if s["text"].startswith(word.rstrip(".")))
         x1 = max(s["x1"] for s in sp if abs(s["base"] - s0["base"]) < 0.3 and s["size"] == s0["size"])
-        st += T(dict(s0, size=34.0, text=word, x1=x1), BODONI, 400, label=f"{word} — Bodoni Moda 34pt · 광학 크기 24")
+        st += T(dict(s0, size=34.0, text=word, x1=x1), BODONI, 400, label=f"{word} — Bodoni Moda 34pt · 광학 크기 24", opsz=24)
         st += [F('#side input[data-a="opsz"]', 24, 800)]                 # 원본 글자 모양 = 광학 크기 24(겹침 0.90 — 브라우저 자동은 34)
+        ELEMS[len(PAGES)][-1].update(ctol=BODONI_CTOL)
     box = next(e for e in el if e["k"] == "path" and abs(e["y"] - 177.6) < 0.5)
     st += rframe(box, box["stroke"], 1.1, label="학교 칸 — 테두리 · 모서리 1.1mm")
     st += T(el_line(sp, tx(lambda e: e["size"] == 10.0)), NOTO, 700, label="학교 — 원고 자리 「학교」", slot_name="학교", temp="학교")
@@ -475,12 +481,13 @@ def cover(pno, name):
             slot_name="시험", temp="시험 이름", align="right", w=40)
     st += T(el_line(sp, tx(lambda e: e["y"] > 193)), NOTO, 700, label="꼬리 — 고정 글")
     if pno == 1:
-        st += T(el_line(sp, tx(lambda e: e["size"] == 8.0)), NOTO, 500, label="포켓북 · 핵심 암기 노트")
+        st += T(el_line(sp, tx(lambda e: e["size"] == 8.0)), NOTO, 700, label="포켓북 · 핵심 암기 노트 (Noto Bold — 서체 맞대기 0.72 · 500 은 21% 옅었다)")
     else:                                                                # 만든 사람 — 제목(Bodoni Moda Bold 9pt) · 이름 줄(Noto 350 7.5pt) — 고정 글
         st += need_font("BodoniModa-Bold.ttf")
         for e in [e for e in texts if e["size"] < 1.5]:
             s0 = el_line(sp, e)
             st += T(dict(s0, size=9.0), BODONI, 700, label=f"만든 사람 제목 — {e['text']}")
+            ELEMS[len(PAGES)][-1].update(ctol=BODONI_CTOL_SMALL)
         heads = sorted([e for e in texts if e["size"] < 1.5], key=lambda e: (e["x"], e["y"]))
         for hd in heads:
             names = sorted([e for e in texts if e["size"] == 7.5 and abs(e["x"] - hd["x"]) < 1 and e["y"] > hd["y"]
@@ -495,7 +502,7 @@ def cover(pno, name):
                    "h": round(7.5 * MM * 1.05, 2), "color": r["color"], "see": r["color"], "ctol": 24, "pad": 0.6, "search": 0.6, "text": r["text"], "size": 7.5})
             top = round(top_of(rows[0]["base"], 7.5, NOTO, 400, lead), 2)
             st += text(round(rows[0]["x"], 2), top, 38.0, round(lead * MM * len(rows) + 2, 1), "\n".join(r["text"] for r in rows), 7.5, rows[0]["color"],
-                       label=f"「{hd['text']}」 이름 {len(rows)}줄", font=NOTO, weight=350, leading=lead)
+                       label=f"「{hd['text']}」 이름 {len(rows)}줄", font=NOTO, weight=400, leading=lead)   # 서체 맞대기 다섯 이름 모두 400 상위(350 은 13~15% 옅었다)
     st += done(name, f"p{pno}.png")
     return st
 
