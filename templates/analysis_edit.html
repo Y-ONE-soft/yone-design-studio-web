@@ -91,6 +91,19 @@
   body.view main { grid-template-columns: minmax(0, 1fr); padding: 8px; }
   body.view .p [data-slot]:hover { outline: none; cursor: default; }
   body.view { background: #f4f5f7; }
+  /* 끼움 모드(?embed=1) — contents 분석본 NEW 의 지면 편집기 안. 도구는 contents 가(기존 분석본과 같은 요소 상자·분석본 마법사),
+     여기는 지면만 그리고 누른 자리·끈 구간·눌린 키를 알려 준다. 지면 위 입력칸만 여기서 띄운다. */
+  body.embed header, body.embed aside, body.embed #wiz { display: none; }
+  body.embed main { grid-template-columns: minmax(0, 1fr); padding: 10px; }
+  body.embed .p [data-slot]:hover { outline: none; }
+  body.embed #pages.busy { opacity: 1; }
+  body.embed.picking #pages p[data-slot="문장"], body.embed.erasing #pages p[data-slot="문장"] { cursor: pointer; }
+  #hl { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 15; }
+  #hl i { position: absolute; display: block; border-radius: 2px; }
+  #hl i.sel { background: rgba(79,107,216,.22); }
+  #hl i.hov { background: rgba(79,107,216,.16); box-shadow: inset 0 -2px #4f6bd8; }
+  #hl i.hov.er { background: rgba(226,91,95,.16); box-shadow: inset 0 -2px #e25b5f; }
+  #ov .ihint { font-size: 11.5px; color: #6b7382; margin-top: 4px; background: #fff; border-radius: 4px; padding: 2px 6px; }
   #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #1f2430; color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; display: none; z-index: 40; }
 </style>
 </head>
@@ -109,6 +122,7 @@
   <section id="stage">
     <div id="pages"><p class="wait">분석본을 받는 중…</p></div>
     <div id="ov"><div id="itb"></div><div id="ovbox"></div></div>
+    <div id="hl"></div>
   </section>
   <aside id="panel">
     <div class="tabs"><button class="btn on" data-tab="left">좌면 · 문장</button><button class="btn" data-tab="right">우면 · 주제 · 기출 · 어휘</button></div>
@@ -154,6 +168,8 @@
 const DESIGN = {{ design|tojson }};
 let VIEW = new URLSearchParams(location.search).get("mode") === "view";
 document.body.classList.toggle("view", VIEW);
+const EMBED = new URLSearchParams(location.search).get("embed") === "1";
+document.body.classList.toggle("embed", EMBED);
 const $ = (s) => document.querySelector(s);
 // contents 역할 → 틀 문자 스타일(core/sources/yos_analysis.ROLE_CS 와 같은 표) · 화면 이름 · Alt+숫자
 const ROLES = [["grammar", "중요 문법", "파랑 글자", "#5b8ee6"], ["vocab", "중요 어휘", "빨강 글자", "#e25b5f"], ["parallel", "병렬", "빨강 물결", "#e25b5f"],
@@ -181,10 +197,13 @@ const toast = (t) => { const el = $("#toast"); el.textContent = t; el.style.disp
 const warn = (t) => { $("#warn").textContent = t; $("#warn").style.display = t ? "" : "none"; if (t) toast(t); };
 
 // ── 지면 ──
+let drawSeq = 0;
 async function draw(body) {
+  const seq = ++drawSeq;
   $("#pages").classList.add("busy");
   try {
     const j = await api("/analysis-edit/render", Object.assign({design: DESIGN}, body));
+    if (seq !== drawSeq) return;                                // 그새 더 새 요청이 왔다 — 그것이 그린다
     if (!rec) rec = j.rec;
     $("#pages").innerHTML = j.svgs.map((s, i) => `<div class="p" data-i="${i}">${typeof s === "string" ? s : s.svg}</div>`).join("");
     $("#pages").querySelectorAll(".p > svg").forEach((s) => { s.removeAttribute("width"); s.removeAttribute("height"); });
@@ -192,7 +211,8 @@ async function draw(body) {
     if (window.unitsCompose) window.unitsCompose($("#pages"));
     status();
     postHeight();
-    if (typeof scopeBar === "function" && rec) scopeBar();    // 다시 그려도 고른 범위 표시는 남는다
+    if (EMBED) embedDrawn();
+    else if (typeof scopeBar === "function" && rec) scopeBar();    // 다시 그려도 고른 범위 표시는 남는다
   } catch (e) { $("#st").textContent = e.message; }
   finally { $("#pages").classList.remove("busy"); }
 }
@@ -215,6 +235,7 @@ function undo() { if (!hist.length) return; closeEd(false); fut.push(JSON.string
 function redo() { if (!fut.length) return; closeEd(false); hist.push(JSON.stringify(rec)); rec = JSON.parse(fut.pop()); dirty = true; status(); draw({rec}); syncPanel(); }
 $("#undo").onclick = undo; $("#redo").onclick = redo;
 document.addEventListener("keydown", (e) => {
+  if (EMBED) return;
   const inField = e.target.closest && e.target.closest("[contenteditable=true], textarea, input");
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !inField) { e.preventDefault(); e.shiftKey ? redo() : undo(); }
 });
@@ -228,7 +249,7 @@ function rowOf(p, slot) {
   return all.filter(x => !x.dataset.storyCont).indexOf(head);
 }
 $("#pages").addEventListener("pointerdown", (e) => {
-  if (!rec || ed || VIEW) return;
+  if (!rec || ed || VIEW || EMBED) return;
   const side = e.target.closest("[data-side]"), p = e.target.closest("p[data-slot]"), box = e.target.closest("[data-slot]");
   if (!box) return;
   const slot = (p || box).dataset.slot;
@@ -547,6 +568,7 @@ function paintSel(box) {
   if (erasing) clearSel(box); else toggleRole(box, picked);
 }
 document.addEventListener("keydown", (e) => {
+  if (EMBED) return;
   const typing = e.target.closest && e.target.closest("[contenteditable=true], textarea, input");
   if (e.code === "Backquote" && !e.metaKey && !e.ctrlKey && !e.altKey) { if (!typing || (ed && ed.kind === "sent")) { e.preventDefault(); erasing = true; } return; }
   if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -649,6 +671,7 @@ $("#save").onclick = async () => {
 window.addEventListener("message", (e) => {
   if (e.source !== window.parent || !e.data || typeof e.data !== "object") return;
   parentOrigin = e.origin;
+  if (EMBED) return embedMessage(e.data);
   if (e.data.type === "yos-analysis-load" && e.data.doc) load(e.data.doc);
   if (e.data.type === "yos-analysis-mode") { closeEd(true); VIEW = e.data.mode === "view"; document.body.classList.toggle("view", VIEW); setTimeout(postHeight, 50); }
   if (e.data.type === "yos-analysis-saved") {
@@ -659,6 +682,224 @@ window.addEventListener("message", (e) => {
   if (e.data.type === "yos-analysis-ai-done" && e.data.doc) aiDone(e.data);
   if (e.data.type === "yos-analysis-ai-error") { asking = false; $("#wiz-go").disabled = false; $("#wiz-out").innerHTML = `<div class="card">${esc(e.data.message || "AI 고치기에 실패했습니다.")}</div>`; }
 });
+// ── 끼움 모드(?embed=1) — contents 분석본 NEW 지면 편집기 안의 지면 ──
+// 고치는 도구(요소 상자 · 표기 · 분석본 마법사 · 되돌리기)는 contents 가 기존 분석본 부품 그대로 띄운다. 여기는
+//   그리기(yos-analysis-load) · 누른 자리(pick) · 끈 구간(select) · 눌린 키(key) 알리기 · 지면 위 입력칸(inline) 만.
+// 자리는 원문(en) 글자 자리로 알린다 — contents 의 표기 규칙이 그 자리로 일한다. 지면 글자 ↔ 원문 글자는
+// 윗주·옆 메모 안 글을 뺀 「보이는 글자」를 원문과 뒤에서부터 맞춰 잇는다(앞의 문장 번호 「3 」은 남는다).
+let ROWS = [], UI = {}, SELS = [], selClearSeen = null, ied = null, lastPick = null;
+const rowCache = new Map();
+function embedMessage(m) {
+  if (m.type === "yos-analysis-hello") return post({type: "yos-analysis-ready"});   // 바깥이 늦게 들었다 — 다시 알린다
+  if (m.type === "yos-analysis-load" && m.doc) { ROWS = Array.isArray(m.rows) ? m.rows : []; base = m.doc; rec = null; return draw({doc: m.doc}); }
+  if (m.type === "yos-analysis-ui") {
+    UI = m;
+    document.body.classList.toggle("picking", !!m.picking); document.body.classList.toggle("erasing", !!m.erasing);
+    if (selClearSeen !== null && m.selClear !== selClearSeen) SELS = [];
+    selClearSeen = m.selClear;
+    paintMarks();
+  }
+  if (m.type === "yos-analysis-inline") openInline(m);
+  if (m.type === "yos-analysis-inline-close") closeInline(false);
+}
+function embedDrawn() { rowCache.clear(); paintMarks(); }
+// 문장 i 의 문단들(쪽을 넘어 이어진 것까지) — 머리 문단 다음의 data-story-cont 들
+function rowParts(slot, i) {
+  const out = []; let r = -1;
+  for (const p of $("#pages").querySelectorAll(`p[data-slot="${slot}"]`)) { if (!p.dataset.storyCont) r++; if (r === i) out.push(p); else if (r > i) break; }
+  return out;
+}
+// 보이는 글자 + 원문 자리
+function rowChars(i) {
+  if (rowCache.has(i)) return rowCache.get(i);
+  const chars = [];
+  for (const p of rowParts("문장", i)) {
+    const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = w.nextNode())) {
+      if (n.parentElement.closest("[data-ruby],[data-side]")) continue;
+      for (let k = 0; k < n.data.length; k++) { const c = n.data[k]; if (c === "⁠" || c === "­") continue; chars.push({n, k, c, en: -1}); }
+    }
+  }
+  const en = (ROWS[i] || {}).en || "";
+  let j = en.length - 1;
+  for (let a = chars.length - 1; a >= 0 && j >= 0; a--) {                    // 뒤에서부터 — 공백은 건너뛰고 같은 글자끼리
+    if (/\s/.test(chars[a].c)) continue;
+    while (j >= 0 && /\s/.test(en[j])) j--;
+    if (j >= 0 && chars[a].c === en[j]) { chars[a].en = j; j--; }
+  }
+  const rg = document.createRange();
+  chars.forEach((ch) => { rg.setStart(ch.n, ch.k); rg.setEnd(ch.n, ch.k + 1); ch.r = rg.getBoundingClientRect(); });
+  const out = {chars, en};
+  rowCache.set(i, out);
+  return out;
+}
+function charAt(chars, x, y) {                                            // 누른 자리의 글자 — 같은 줄을 먼저
+  let best = -1, bd = Infinity;
+  chars.forEach((ch, a) => {
+    const r = ch.r; if (!r.width && !r.height) return;
+    const dx = x < r.left ? r.left - x : x > r.right ? x - r.right : 0, dy = y < r.top ? r.top - y : y > r.bottom ? y - r.bottom : 0;
+    const d = dy * 20 + dx; if (d < bd) { bd = d; best = a; }
+  });
+  return best;
+}
+function enAt(chars, a, dir) {                                           // 그 글자의 원문 자리(공백·번호면 옆 글자로)
+  for (let b = a; b >= 0 && b < chars.length; b += dir) if (chars[b].en >= 0) return chars[b].en;
+  return -1;
+}
+function wordOf(en, s, e) {                                              // 원문 자리 → 낱말(앞뒤 부호는 뗀다)
+  while (s > 0 && !/\s/.test(en[s - 1])) s--;
+  while (e < en.length && !/\s/.test(en[e])) e++;
+  while (s < e && /[^\p{L}\p{N}]/u.test(en[s])) s++;
+  while (e > s && /[^\p{L}\p{N}]/u.test(en[e - 1])) e--;
+  return s < e ? {start: s, end: e} : null;
+}
+function hitSentence(target, x, y) {                                     // 문장 영문 위를 눌렀나 → {i, no, a, at, row, word}
+  const p = target.closest && target.closest('p[data-slot="문장"]');
+  if (!p || target.closest("[data-side]")) return null;
+  const i = rowOf(p, "문장"), row = rowChars(i);
+  const a = charAt(row.chars, x, y); if (a < 0) return null;
+  const at = row.chars[a].en >= 0 ? row.chars[a].en : enAt(row.chars, a, 1);
+  return {i, no: (ROWS[i] || {}).no ?? i + 1, a, at, row, word: at >= 0 ? wordOf(row.en, at, at + 1) : null};
+}
+function slotIndex(el, slot) {                                           // 여러 칸 자리의 몇째(선지 · 지문 단락 · 어휘 줄) — 이어진 문단은 앞 칸
+  const ps = [...$("#pages").querySelectorAll(`[data-slot="${slot}"]`)].flatMap(b => b.tagName === "P" ? [b] : [...b.querySelectorAll("p")]);
+  const at = ps.indexOf(el.closest("p"));
+  let k = -1;
+  for (let q = 0; q <= at; q++) if (!ps[q].dataset.storyCont) k++;
+  return Math.max(0, k);
+}
+function pickInfo(e, kind) {
+  const box = e.target.closest && e.target.closest("[data-slot]");
+  if (!box) return null;
+  const side = e.target.closest("[data-side]"), sp = e.target.closest("p[data-slot]");
+  const slot = side && sp && sp.dataset.slot === "문장" ? "문법 포인트" : (sp || box).dataset.slot;
+  const m = {type: "yos-analysis-pick", kind, slot, no: null, start: null, end: null, word: null, index: null, field: null, text: "", x: e.clientX, y: e.clientY};
+  if (sp && ["문장", "해석"].includes(sp.dataset.slot)) { const i = rowOf(sp, sp.dataset.slot); m.no = (ROWS[i] || {}).no ?? i + 1; }
+  if (slot === "문장") {
+    const h = hitSentence(e.target, e.clientX, e.clientY);
+    if (h && h.at >= 0) { m.start = h.at; m.end = h.at + 1; m.word = h.word; m.text = h.word ? h.row.en.slice(h.word.start, h.word.end) : h.row.en[h.at]; }
+  } else {
+    m.text = ((side || e.target.closest("p") || box).textContent || "").replace(/⁠/g, "").trim().slice(0, 40);
+  }
+  if (["문제지문", "선지", "어휘"].includes(slot)) m.index = slotIndex(e.target, slot);
+  if (slot === "어휘") { const p = e.target.closest("p") || box; const r = p.getBoundingClientRect(); m.field = e.clientX - r.left > r.width * 0.35 ? "meaning" : "word"; }
+  lastPick = {el: side ? (side.firstElementChild || side) : slot === "문장" || slot === "해석" ? rowParts(slot, rowOf(sp, slot))[0] : (["발문", "문제지문", "선지", "답"].includes(slot) ? box.closest("div[data-slot]") || sp || box : sp || box), slot};
+  return m;
+}
+// 표시 — 모은 구간(옅은 파랑) · 낱말 짚기(표기 켜 둠 · 지우는 중) · 고른 범위(파란 테두리)
+function rectsOf(i, s, e) {
+  const row = rowChars(i), out = [];
+  row.chars.forEach((ch) => { if (ch.en >= s && ch.en < e && (ch.r.width || ch.r.height)) out.push(ch.r); });
+  return out;
+}
+function paintMarks(hover) {
+  const st = $("#stage").getBoundingClientRect(); let h = "";
+  const put = (r, cls) => { h += `<i class="${cls}" style="left:${r.left - st.left}px;top:${r.top - st.top}px;width:${r.width}px;height:${r.height}px"></i>`; };
+  for (const sel of SELS) { const i = ROWS.findIndex(r => r.no === sel.no); if (i >= 0) rectsOf(i, sel.start, sel.end).forEach(r => put(r, "sel")); }
+  if (hover) rectsOf(hover.i, hover.start, hover.end).forEach(r => put(r, "hov" + (UI.erasing ? " er" : "")));
+  $("#hl").innerHTML = h;
+  document.querySelectorAll("#pages [data-scope]").forEach(el => el.removeAttribute("data-scope"));
+  const SL = {topic: ["주제", "요약"], key: ["발문", "문제지문", "선지", "답"], voca: ["어휘"]};
+  for (const sc of UI.scopes || []) {
+    if (sc.type === "sentence-flow") { const i = ROWS.findIndex(r => r.no === sc.no); if (i >= 0) ["문장", "해석"].forEach(sl => rowParts(sl, i).forEach(p => p.dataset.scope = "1")); }
+    else (SL[sc.type] || []).forEach(sl => document.querySelectorAll(`#pages [data-slot="${sl}"]`).forEach(el => el.dataset.scope = "1"));
+  }
+}
+// 누르기 · 끌기
+let drag = null;
+$("#pages").addEventListener("pointerdown", (e) => {
+  if (!EMBED || e.button !== 0 || ied) return;
+  const h = hitSentence(e.target, e.clientX, e.clientY);
+  drag = {x: e.clientX, y: e.clientY, h, moved: false, e};
+  if (h) e.preventDefault();                                             // 끄는 동안 브라우저 글자 고르기 대신 우리 표시
+});
+function dragRange(e) {                                                  // 끈 구간 → 원문 자리(낱말 단위로 넓힌다 · 같은 문장 안)
+  const h0 = drag.h, row = h0.row;
+  const b = charAt(row.chars, e.clientX, e.clientY); if (b < 0) return null;
+  const lo = Math.min(h0.a, b), hi = Math.max(h0.a, b);
+  const s = enAt(row.chars, lo, 1), en = enAt(row.chars, hi, -1);
+  if (s < 0 || en < 0 || en < s) return null;
+  const w1 = wordOf(row.en, s, s + 1), w2 = wordOf(row.en, en, en + 1);
+  return {i: h0.i, no: h0.no, start: w1 ? Math.min(w1.start, s) : s, end: w2 ? Math.max(w2.end, en + 1) : en + 1};
+}
+addEventListener("pointermove", (e) => {
+  if (!EMBED) return;
+  if (drag) {
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 4) drag.moved = true;
+    if (drag.moved && drag.h) { const r = dragRange(e); paintMarks(r); }
+    return;
+  }
+  if (!(UI.picking || UI.erasing)) return;
+  cancelAnimationFrame(paintMarks.raf);
+  paintMarks.raf = requestAnimationFrame(() => { const h = hitSentence(e.target, e.clientX, e.clientY); paintMarks(h && h.word ? {i: h.i, start: h.word.start, end: h.word.end} : null); });
+});
+addEventListener("pointerup", (e) => {
+  if (!EMBED || !drag) return;
+  const d = drag;
+  if (d.moved) {
+    if (!d.h) { drag = null; if (d.e.target.closest && d.e.target.closest("[data-slot]")) post({type: "yos-analysis-select", sels: [], unmarkable: true}); return; }
+    const r = dragRange(e); drag = null;
+    if (!r) return paintMarks();
+    const sel = {no: r.no, start: r.start, end: r.end, x: e.clientX, y: e.clientY};
+    SELS = UI.accumulate && !UI.erasing ? SELS.concat([sel]) : [sel];
+    paintMarks();
+    return post({type: "yos-analysis-select", sels: SELS});
+  }
+  drag = null;
+  // 한 번 클릭 — 표기를 켜 뒀거나 지우는 중이거나 표기 키를 쥐고 있으면 그 낱말을 칠하기·지우기·모으기로, 아니면 요소 상자
+  if (d.h && d.h.word && (UI.picking || UI.erasing || UI.held)) {
+    const sel = {no: d.h.no, start: d.h.word.start, end: d.h.word.end, x: e.clientX, y: e.clientY};
+    SELS = UI.held && !UI.erasing ? SELS.concat([sel]) : [sel];
+    paintMarks();
+    return post({type: "yos-analysis-select", sels: SELS});
+  }
+  const m = pickInfo(d.e, "click");
+  if (m) post(m);
+});
+$("#pages").addEventListener("dblclick", (e) => { if (!EMBED || ied) return; const m = pickInfo(e, "dbl"); if (m) { e.preventDefault(); post(m); } });
+$("#pages").addEventListener("contextmenu", (e) => { if (!EMBED) return; const m = pickInfo(e, "context"); if (m && m.word) { e.preventDefault(); post(m); } else if (UI.accumulate) e.preventDefault(); });
+// 키 — 지면 안에서 눌린 키를 contents 로(표기 글쇠 · ~ · Ctrl+1 · Ctrl+Z · Esc · 방향키 · Tab). 입력칸에서 치는 글은 넘기지 않는다
+["keydown", "keyup"].forEach(t => document.addEventListener(t, (e) => {
+  if (!EMBED || ied) return;
+  if (e.target.closest && e.target.closest("textarea, input")) return;
+  const k = e.code;
+  if (k === "Backquote" || (/^(Digit|Numpad)[0-9]$/.test(k) || /^Key[A-Z]$/.test(k)) && !e.metaKey && !e.ctrlKey) e.preventDefault();
+  if ((e.ctrlKey || e.metaKey) && (k === "Digit1" || k === "KeyZ")) e.preventDefault();
+  if (UI.box && (/^Arrow/.test(e.key) || e.key === "Tab")) e.preventDefault();
+  post({type: "yos-analysis-key", t, key: e.key, code: k, ctrlKey: e.ctrlKey, metaKey: e.metaKey, altKey: e.altKey, shiftKey: e.shiftKey, repeat: e.repeat});
+}));
+// 지면 위 입력칸 — 요소 상자 [글 고치기] · 두 번 클릭. 저장값 짓기는 contents(기존 대응표 규칙) 몫
+function openInline(m) {
+  closeInline(false);
+  const target = lastPick && lastPick.el && lastPick.el.isConnected ? lastPick.el : null;
+  if (!target) return post({type: "yos-analysis-inline-cancel"});
+  const f = place(target, 360);
+  const ta = document.createElement("textarea");
+  ta.className = "ed"; ta.style.fontSize = f.size + "px"; ta.style.fontFamily = f.family; ta.value = m.text || "";
+  $("#itb").innerHTML = `<span>${esc(m.label || "")} · ${m.multiline ? "Ctrl+⏎ 저장" : "⏎ 저장"} · Esc 취소</span><span class="sep"></span><button data-a="ok">저장</button><button data-a="no">취소</button>`;
+  $("#itb").querySelectorAll("button").forEach(b => b.onmousedown = (ev) => { ev.preventDefault(); closeInline(b.dataset.a === "ok"); });
+  $("#ovbox").appendChild(ta);
+  if (m.hint) { const h = document.createElement("div"); h.className = "ihint"; h.textContent = m.hint; $("#ovbox").appendChild(h); }
+  const fit = () => { ta.style.height = "auto"; ta.style.height = Math.max(m.multiline ? 70 : 34, ta.scrollHeight + 4) + "px"; };
+  ta.addEventListener("input", fit);
+  ta.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); closeInline(false); }
+    else if (e.key === "Enter" && !e.isComposing && (e.metaKey || e.ctrlKey || !m.multiline)) { e.preventDefault(); closeInline(true); }
+  });
+  ied = {ta, before: ta.value};
+  setTimeout(() => { fit(); ta.focus(); }, 0);
+}
+function closeInline(commit) {
+  if (!ied) return;
+  const {ta, before} = ied; ied = null;
+  $("#ov").style.display = "none"; $("#ovbox").innerHTML = ""; $("#itb").innerHTML = "";
+  if (commit && ta.value !== before) post({type: "yos-analysis-inline-done", text: ta.value});
+  else post({type: "yos-analysis-inline-cancel"});
+}
+document.addEventListener("pointerdown", (e) => { if (EMBED && ied && !e.target.closest("#ov")) closeInline(true); }, true);
+addEventListener("scroll", () => { if (EMBED) { rowCache.clear(); paintMarks(); } }, true);
+addEventListener("resize", () => { if (EMBED) { rowCache.clear(); paintMarks(); } });
 // 끼운 쪽이 iframe 높이를 맞추게 — 다 그린 뒤 · 모드를 바꾼 뒤
 function postHeight() { post({type: "yos-analysis-height", h: Math.ceil(document.documentElement.scrollHeight)}); }
 addEventListener("resize", () => { clearTimeout(postHeight.t); postHeight.t = setTimeout(postHeight, 150); });
