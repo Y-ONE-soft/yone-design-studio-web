@@ -169,7 +169,12 @@
     p.style.textAlign = "left";                                         // 늘이기 전 자연 폭으로 잰다
     const toks = tokens(p);
     if (toks.length < 3) { p.style.whiteSpace = save[0]; p.style.textAlign = save[1]; return; }
+    // 윗주 · 옆 메모 글(폭 0 칸 안에 떠 있는 글)은 줄 짜기에 안 낀다(인디자인) — 범위 폭에 그 글이 들어가지 않게 잠깐 숨기고 잰다
+    const floats = [...p.querySelectorAll("[data-ruby] > *, [data-side] > *")];
+    const disp = floats.map(e => e.style.display);                      // 윗주 글은 display:grid — 그대로 되돌린다
+    floats.forEach(e => { e.style.display = "none"; });
     for (const t of toks) if (!t.zero) t.w = rangeOf(t).getBoundingClientRect().width;
+    floats.forEach((e, i) => { e.style.display = disp[i]; });
     const rect = p.getBoundingClientRect();
     const k = rect.width / (p.offsetWidth || 1);                         // 화면 px / 이 단락의 px (zoom·확대 포함)
     if (p.closest("[data-tsume]")) {                                     // 자간 축소 — 낱말 폭 = 펜 자리에서 다음 낱말 펜 자리까지(낱말 끝 글자 여백이 범위 밖이다)
