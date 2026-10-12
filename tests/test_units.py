@@ -1225,3 +1225,20 @@ def test_package_load_merges_cstyles(lib):
     package.load(pkg)
     got = store.by_id(store.library()["skins"])[sid]
     assert got["cstyles"]["형광 시험"]["bg_band"] == 3.17
+
+
+def test_package_load_clashing_skin_kept_apart(lib):
+    """새 문서로 들여오는데 같은 이름 스타일 정의가 이 편집기 것과 다르면 문서 브랜드를 따로 — 문서는 제 스타일을 쓴다(인디자인).
+    이 편집기의 브랜드는 그대로(2026-10-12 배포서버에서 광문 분석본 형광이 서버 「기본」 것으로 바뀌었다)"""
+    from core.units import package, store
+    plan = lib["plans"][0]
+    pkg = package.export(lib, plan["id"])
+    sk = lib["skins"][0]
+    name = next(iter(sk.get("cstyles") or {}), None) or "형광 시험"
+    store.put("skins", dict(sk, cstyles=dict(sk.get("cstyles") or {}, **{name: {"bg": "#000000"}})))   # 편집기 쪽 정의
+    pkg["skin"] = dict(sk, cstyles={name: {"bg": "#fff200"}})                                      # 문서 쪽 정의
+    pid, rep = package.load(pkg)
+    lib2 = store.library()
+    p2 = store.by_id(lib2["plans"])[pid]
+    assert p2["skin"] != sk["id"] and store.by_id(lib2["skins"])[p2["skin"]]["cstyles"][name]["bg"] == "#fff200"
+    assert store.by_id(lib2["skins"])[sk["id"]]["cstyles"][name]["bg"] == "#000000"

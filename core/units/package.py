@@ -9,6 +9,7 @@
 """
 import base64
 import copy
+import json
 import os
 import secrets
 
@@ -168,7 +169,18 @@ def load(pkg, into=None, name=None):
             for kind in ("pages", "parts", "blocks"):
                 for x in pkg.get(kind) or []:
                     _walk(x, fix_img)
-        if not have:
+        clash = have and into is None and any(                           # 새 문서로 들여오는데 같은 이름 스타일 정의가 다르다 — 그 문서 브랜드를 따로(인디자인: 문서는 제 스타일을 쓴다)
+            k in (have.get(sec) or {}) and have[sec][k] != v for sec in ("styles", "cstyles") for k, v in (skin.get(sec) or {}).items()) or have and into is None and any(
+            k in ((have.get("tokens") or {}).get(grp) or {}) and have["tokens"][grp][k] != v for grp, vals in (skin.get("tokens") or {}).items() for k, v in (vals or {}).items())
+        if clash:
+            import hashlib
+            sig = hashlib.sha1(json.dumps({k: skin.get(k) for k in ("styles", "cstyles", "tokens")}, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:6]
+            skin = dict(skin, id=f"{skin['id']}_{sig}", name=f"{skin.get('name') or skin['id']} · 문서 {sig}")
+            pkg["skin"] = skin
+            if not store.by_id(lib["skins"]).get(skin["id"]):
+                store.put("skins", skin)
+            added.append(f"브랜드 따로 {skin['id']}")
+        elif not have:
             store.put("skins", skin)
         else:
             merged = copy.deepcopy(have)
