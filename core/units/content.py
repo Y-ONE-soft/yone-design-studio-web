@@ -10,7 +10,6 @@
 규약: docs/편집기_재현/원고자리_규약.md
 """
 import copy
-import re
 
 
 def plan_page_ids(plan):
@@ -81,16 +80,13 @@ def plan_pages(plan, pages_by_id, content=None):
     return out
 
 
-_DEFAULT_NAME = re.compile(r"^(본문|빈 면|간지|표지) \d+$")          # 편집기가 새 쪽에 붙이는 이름(units_canvas newPage) — 면 이름을 안 정한 쪽
-
-
 def _faces_by_chunk(plan, pages_by_id, chunks):
     """원고 덩어리 차례로 면 고르기 — 원고 = [덩어리 …](원본 차례). 덩어리마다 그 자리를 가장 많이 담는 「원고마다」 면을 골라 그 덩어리로 찍는다.
-    면 = 이름을 정한 「원고마다」 쪽부터 다음 이름 정한 쪽 전까지(늘 붙어 나오는 두 쪽 = 한 면). 고르기:
+    면(상위 페이지) = 「원고마다」 쪽 하나, 그 쪽에 「두 페이지짜리」(펼침면)를 켰으면 다음 쪽까지 둘(인디자인 펼침면 상위 페이지 — 쪽 이름은 안 본다). 고르기:
     ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 덩어리에 없어 비는 면 자리가 적은 면(그림 없는 지문 → 그림 자리 없는 면)
     ④ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
     맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다."""
-    faces, head, tail = [], [], []
+    faces, head, tail, spread = [], [], [], False
     for sc in plan.get("sections") or []:
         if sc.get("divider"):
             (tail if faces else head).append(sc["divider"])
@@ -101,11 +97,12 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
                 if not (isinstance(e, dict) and e.get("repeat") == "none"):
                     (tail if faces else head).append(pid)
                 continue
-            name = (pages_by_id.get(pid) or {}).get("name") or ""
-            if not faces or (name and not _DEFAULT_NAME.match(name)):
-                faces.append({"pages": [pid], "구분": (e.get("구분") or "").strip()})
-            else:
+            if spread and faces:                                           # 앞 쪽이 「두 페이지짜리」 — 이 쪽은 그 펼침면의 둘째 쪽
                 faces[-1]["pages"].append(pid)
+                spread = False
+                continue
+            faces.append({"pages": [pid], "구분": (e.get("구분") or "").strip()})
+            spread = bool(e.get("펼침면"))
     for f in faces:
         occ = {}
         for pid in f["pages"]:

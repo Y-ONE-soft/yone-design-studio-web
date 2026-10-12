@@ -123,6 +123,13 @@ def steps(files, content):
                {"js": "(() => '쪽 ' + docPages().length + ' · ' + document.querySelector('#st').textContent)()"}]
     names = [n for _, ns in files for n in ns]
     st += [{"js": f"(() => {{ const n = docPages().length; if (n !== {len(names)}) throw new Error('이은 쪽 ' + n); return '이은 쪽 ' + n; }})()"}]
+    for i, nm in enumerate(names):                                     # 두 페이지짜리 — 암기 TEST + 정답(펼침면 상위 페이지)
+        if not nm.startswith("암기 TEST"):
+            continue
+        st += [S(f"두 페이지짜리 — {i + 1}쪽 「{nm}」 + 다음 쪽", 900),
+               {"js": f"(() => {{ openPage(docPages()[{i}]); return '쪽 열기 {i + 1}'; }})()"}, {"wait": 1500},
+               {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-spread2", "wait": 1200},
+               {"js": f"(() => {{ const q = planPg(docPages()[{i}].id); if (!q || !q.펼침면) throw new Error('두 페이지짜리 안 켜짐'); return '두 페이지짜리 ' + docPages()[{i}].name; }})()"}]
     for i, nm in enumerate(names):                                     # 색만 다른 면 — 쪽 패널 「구분」
         g = "교과서" if "교과서" in nm else "모의고사" if "모의고사" in nm else None
         if not g:
@@ -132,6 +139,8 @@ def steps(files, content):
                {"js": f"(() => {{ if (idx() !== {i}) throw new Error('쪽 안 열림 ' + (idx() + 1)); return '{i + 1}쪽 열림'; }})()"},
                {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"fill": {"at": "#side #s-gubun", "value": g}, "wait": 1200},
                {"js": f"(() => {{ const q = planPg(docPages()[{i}].id); if (!q || q.구분 !== {json.dumps(g)}) throw new Error('구분 안 들어감'); return '구분 ' + q.구분; }})()"}]
+    if os.environ.get("JOIN_REGISTER", "1") == "0":                     # 등록 없이 잇기 · 책 만들기만(1분 시험)
+        return st
     st += put_content(sample(content), "원고 넣기 — 면마다 견본 원고 하나(원고 덩어리 차례 — 바깥 시스템이 보내는 꼴)")
     st += [S("관리에 등록 — 포켓북 폴더", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
            {"pick": {"at": "#side #s-reg-series", "value": "pocketbook"}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
@@ -255,6 +264,8 @@ if __name__ == "__main__":
     pdf, res = build(content)
     ok = judge(pdf, res)
     print("7 책 만들기 판정:", "통과" if ok else "실패", "→", pdf)
+    if os.environ.get("JOIN_REGISTER", "1") == "0":
+        sys.exit(0)
     plans = json.load(open(os.path.join(DATA, "_units", "plans.json"), encoding="utf-8"))
     cat = next(p["catalog"] for p in plans if p.get("catalog"))
     ddir = os.path.join(REPO, "catalog", cat["series"], "designs", cat["design"])
