@@ -466,7 +466,8 @@ const BOARD = 20;                 // 대지(pasteboard) mm — 지면 둘레. �
 // 블록에 group 이 없으면 블록 지도 갈래(B1~B11)로 기본 자리를 잡는다.
 const FAMG = {B1: "passage", B2: "passage", B3: "passage", B7: "passage", B6: "question", B5: "drill", B8: "drill", B10: "chrome", B11: "chrome"};
 const groupOf = (b) => b.group || (b.source === "system" ? "chrome" : (FAMG[b.family] || ""));
-const DEFAULT_TEXT = "글상자 — 오른쪽에서 글·크기·색을";
+const DEFAULT_TEXT = "텍스트 프레임 — 오른쪽에서 글·크기·색을";
+const OLD_DEFAULT_TEXT = "글상자 — 오른쪽에서 글·크기·색을";              // 용어 바꾸기(2026-10-12) 전 문서에 들어 있는 기본 문구
 const ATOMS = [
   ["text", "글상자", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: DEFAULT_TEXT}],
   ["line", "선", {t: "line", x1: 0, y1: 0, x2: 80, y2: 0, stroke: {w: 0.5, color: "$rule"}}],
@@ -2396,7 +2397,7 @@ function side() {
     else if (k.startsWith("slotfmt.")) { const [, f, prop] = k.split("."); a.slot_fmt = a.slot_fmt || {}; a.slot_fmt[f] = Object.assign({}, a.slot_fmt[f], {[prop]: typeof v === "boolean" ? v : (prop === "style" || prop === "bullet_text" ? String(i.value || "") : (+v || 0))}); }
     else if (k === "bindadd") { if (v && a.bind) a.bind = a.bind + "+" + v; }
     else if (k === "bindsel") { if (v === "__other") { a.bind = (a.bind && !allSlots().some(([x]) => x === a.bind)) ? a.bind : "자리"; } else if (v) a.bind = v; else delete a.bind;   // 직접 적기 — 빈 이름은 저장이 안 되니 「자리」로 시작 · 목록 자리는 그 이름 · 고정 글은 자리 없음
-      if (a.bind && a.text === DEFAULT_TEXT) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 자리 이름이 회색으로 보인다
+      if (a.bind && (a.text === DEFAULT_TEXT || a.text === OLD_DEFAULT_TEXT)) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 데이터 필드 이름이 회색으로 보인다(용어 바꾸기 전 문서의 기본 문구도)
     else if (k === "bind" && !v) delete a.bind;
     else if (k === "story") { if (v === "__new") { a.story = storyNew(); a.story_seq = 1; } else if (v) { a.story = v; a.story_seq = storyNext(v, a); } else { delete a.story; delete a.story_seq; } }   // 글 잇기 — 있는 이야기를 고르면 그 끝 다음 순서로
     else if (k === "story_seq") a.story_seq = Math.max(1, Math.round(+v || 1));
