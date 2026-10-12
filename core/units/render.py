@@ -804,6 +804,19 @@ ROMAN_EM = 0.47          # 로마자 한 글자 폭 어림 (기준 책 실측 0.
 def text_h(plain, w_mm, size_pt, leading_pt=None, a=None):
     """글이 차지할 높이(mm) 어림 — 한글·한자는 1em, 로마자는 ROMAN_EM. 자간·들여쓰기·여백·다단·단락 간격을 넣는다."""
     a = a or {}
+    tb = a.get("table")
+    if tb:                                                             # 표 — 줄마다 그 줄에서 가장 긴 칸(최소 높이 이상), 줄 사이 간격
+        it, ir, ib, il = insets(a)
+        cols = max(int(tb.get("cols") or 1), 1)
+        gx, gy = float(tb.get("gap_x") or 0), float(tb.get("gap_y") or 0)
+        cw = (w_mm - il - ir - gx * (cols - 1)) / cols
+        ca = {k: v for k, v in a.items() if k not in ("table", "inset", "columns")}
+        if tb.get("inset") is not None:
+            ca["inset"] = tb["inset"]
+        cells = (plain or "").split(CELL_SEP)
+        rows = [cells[k:k + cols] for k in range(0, len(cells), cols)]
+        return (sum(max(float(tb.get("row_h") or 0), max(text_h(c, cw, size_pt, leading_pt, ca) for c in r)) for r in rows)
+                + gy * max(len(rows) - 1, 0) + it + ib)
     em = size_pt * PT
     lead = (leading_pt or size_pt * 1.45) * PT
     it, ir, ib, il = insets(a)
@@ -1040,6 +1053,8 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
     if just and a.get("compose") is not False and "\u2028" not in x:          # 손으로 친 줄 나눔이 있으면 컴포저 대신 브라우저
         attrs += f' data-jc="{jc_spec(dict(a, jc=st["jc"]) if st.get("jc") else a)}"'
     x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="{_inline_css(slot_style(a, m.group(1), ctx), ctx)}">', x)
+    if st.get("bullet_text"):                                         # 글머리 글(인디자인 글머리 기호 사용자 정의 문자) — 원고 앞에 디자인이 붙이는 표시
+        x = _PS_RE.sub(lambda m: m.group(0) + esc(st["bullet_text"]), x, count=1) if _PS_RE.search(x) else esc(st["bullet_text"]) + x
     return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None) or "&#160;"}</p>'
 
 
@@ -1053,6 +1068,20 @@ def _inline_css(st, ctx):
     if st.get("drop"):                                                 # 기준선 내리기 mm — 원본 번호는 발문 기준선보다 0.55mm 아래
         css += f"position:relative;top:{float(st['drop']):.3f}px;"
     return css
+
+
+def _paras_html(a, html, ps, ctx=None):
+    """글 HTML → 문단(<p>)들. 한 줄기 여러 자리면 문단마다 그 자리의 단락 서식(_slot_para), 아니면 글상자 단락 서식(ps)"""
+    paras = (html or "").split("<br/>")
+    just = a.get("align") == "justify"
+    # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
+    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
+    slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
+    if any(slots):
+        return "".join(_slot_para(a, x, s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
+    last = len(paras) - 1                                               # 상자 끝 문단은 뒤 간격 없이(인디자인 — 마지막 단락 뒤 간격은 상자 높이에 안 든다)
+    return "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>'
+                   for k, x in enumerate(paras))
 
 
 def _text_html(a, html, h, ctx=None):
@@ -1075,17 +1104,10 @@ def _text_html(a, html, h, ctx=None):
     if bul:
         ps += f"display:list-item;list-style-type:{bul};list-style-position:inside;"
     paras = (html or "").split("<br/>")
-    just = a.get("align") == "justify"
-    # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
-    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
-    slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
-    if any(slots):
-        inner = "".join(_slot_para(a, x, s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
-    else:
-        last = len(paras) - 1                                           # 상자 끝 문단은 뒤 간격 없이(인디자인 — 마지막 단락 뒤 간격은 상자 높이에 안 든다)
-        inner = "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>'
-                        for k, x in enumerate(paras))
-    dc = a.get("drop_cap")
+    inner = _paras_html(a, html, ps, ctx)
+    if a.get("table"):
+        inner = _table_html(a, html, ps, ctx)
+    dc = None if a.get("table") else a.get("drop_cap")
     if dc and dc.get("lines", 0) >= 2 and paras and paras[0]:
         n = int(dc.get("chars") or 1)
         lines = int(dc["lines"])
@@ -1122,6 +1144,25 @@ def _text_html(a, html, h, ctx=None):
     if ctx is not None:
         inner = _wrap_floats(ctx, a, h) + inner                   # 감싸기 — 비울 자리를 먼저
     return f'<div style="{box}">{inner}</div>'
+
+
+def _table_html(a, html, ps, ctx=None):
+    """글상자 안 표(인디자인 표) — 칸이 왼쪽→오른쪽 · 위→아래. 열마다 칸 색, 칸 여백, 칸 사이, 줄 최소 높이.
+    줄 높이는 그 줄의 가장 긴 칸(격자 줄이 늘어나고 같은 줄 칸은 함께 늘어난다) — 브라우저가 그린 높이로 상자가 자란다(units_compose grow)"""
+    tb = a["table"]
+    cols = max(int(tb.get("cols") or 1), 1)
+    fills = tb.get("fills") or []
+    t, r, b, l = insets({"inset": tb.get("inset")})
+    gx, gy, rh = float(tb.get("gap_x") or 0), float(tb.get("gap_y") or 0), float(tb.get("row_h") or 0)
+    cells = []
+    for k, c in enumerate((html or "").split(CELL)):
+        body = _paras_html(a, c, ps, ctx)                              # 칸 안 문단 — 자리마다 단락 서식(항목 칸)까지
+        f = fills[(k % cols) % len(fills)] if fills else None
+        bg = f"background:{ctx.color(f) if ctx else f};" if f else ""
+        cells.append(f'<div data-cell="{k}" style="{bg}padding:{t:.3f}px {r:.3f}px {b:.3f}px {l:.3f}px;box-sizing:border-box;min-width:0;'
+                     f'{f"min-height:{rh:.3f}px;" if rh else ""}">{body}</div>')
+    return (f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));column-gap:{gx:.3f}px;row-gap:{gy:.3f}px">'
+            + "".join(cells) + "</div>")
 
 
 # ── 부품 ────────────────────────────────────────────────────────────
@@ -1408,6 +1449,36 @@ def story_cont(a):
     return bool(a.get("story")) and story_seq(a) > 1
 
 
+CELL = '<div data-cell=""></div>'                      # 표 칸 나눔(그리기 HTML 안) — 글자 색 규칙이 문단 경계로 본다(칸 첫 줄에서 「^」 가 맞게)
+CELL_SEP = "\x1e"                                       # 표 칸 나눔(높이 어림 글 안)
+
+
+def table_cells(v):
+    """표 칸 — 원고 값이 목록이면 하나가 한 칸, 글 하나면 빈 줄이 칸 나눔(인디자인 「텍스트를 표로」처럼 글에서 나눌 수도)"""
+    if isinstance(v, list):
+        return v
+    if isinstance(v, str):
+        return re.split(r"\n[ \t]*\n", v)
+    return [v]
+
+
+def _table_content(ctx, a, values):
+    """표 글상자의 (html, plain) — 칸마다 원고 하나"""
+    b = a.get("bind")
+    v = values.get(b) if b else None
+    if v is None and b and b.startswith("sys."):
+        v = ctx.sys.get(b[4:])
+    if v is None:
+        v = a.get("text")
+    if v is None:
+        hint = " + ".join(_slot_label(x) for x in b.split("+")) if b else ""
+        return f'<span style="color:#b0b0b0">‹{esc(hint)}›</span>', "‹" + hint + "›"
+    cells = table_cells(v)
+    if a.get("markup"):
+        cells = [markup_runs(c) for c in cells]
+    return CELL.join(rich_html(c, ctx) for c in cells), CELL_SEP.join(rich_plain(c) for c in cells)
+
+
 def _text_content(ctx, a, values, types):
     """글 원자의 (html, plain). bind → 값 → 없으면 sys → 없으면 견본 글 → 없으면 {bind} 회색.
 
@@ -1415,6 +1486,8 @@ def _text_content(ctx, a, values, types):
     """
     b = a.get("bind")
     ctx.cur_atom = a                                                       # 조각의 윗주·옆 메모가 이 글상자 설정을 쓴다
+    if a.get("table"):
+        return _table_content(ctx, a, values)
     if a.get("num"):
         t = next_num(ctx, a, values.get(b) if b else None)
         return esc(t), t

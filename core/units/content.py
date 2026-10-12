@@ -183,6 +183,13 @@ def story_value(bind, records, slot_fmt=None):
     return out
 
 
+def story_cells(atom, name, items):
+    """여러 자리 원고 → 그 글상자 값. 표 글상자(atom.table)면 항목 하나가 한 칸(칸마다 한 줄기), 아니면 항목 전부가 한 줄기"""
+    if atom.get("table"):
+        return [story_value(name, [r], atom.get("slot_fmt")) for r in items]
+    return story_value(name, items, atom.get("slot_fmt"))
+
+
 def fill(pages, content, width_of=None):
     """원고를 자리에 나눠 넣은 쪽 사본과 보고. 쪽 원본은 건드리지 않는다.
     보고 = {"filled": n, "unfilled": {자리: 남은 자리 수}, "extra": {자리: 남은 원고 수}, "unknown": [틀에 없는 자리 이름]}."""
@@ -208,10 +215,10 @@ def fill(pages, content, width_of=None):
                 if per_occurrence(v) and not atom.get("story"):            # 쪽마다 제 몫 — [[왼쪽 쪽 문항들], [오른쪽 쪽 문항들]] (글 잇기 안 한 상자는 한 몫씩)
                     rq = recq.setdefault((id(rec), name), list(v))
                     items = rq.pop(0) if rq else []
-                    pages[pi]["items"][i]["fields"] = {name: story_value(name, items, atom.get("slot_fmt")) if items else ""}
+                    pages[pi]["items"][i]["fields"] = {name: story_cells(atom, name, items) if items else ""}
                     filled += len(items)
                     continue
-                pages[pi]["items"][i]["fields"] = {name: story_value(name, v, atom.get("slot_fmt"))}   # 이 벌의 문항 목록 전부(글 잇기 상자들로 흐른다)
+                pages[pi]["items"][i]["fields"] = {name: story_cells(atom, name, v)}   # 이 벌의 문항 목록 전부(글 잇기 상자들로 흐른다 · 표면 칸마다)
                 filled += len(v)
                 continue
             if not isinstance(v, list):                                            # 글 하나 = 레코드 전체의 값(두 쪽 머리의 제목 등)
@@ -232,7 +239,7 @@ def fill(pages, content, width_of=None):
         q = queue.get(name)
         if q and "+" in name and isinstance(q[0], (dict, list)):              # 여러 자리 한 줄기 — 문항 목록 전부가 이 글(잇기 상자들로 흘러간다)
             atom = pages[pi]["items"][i].get("atom") or {}
-            pages[pi]["items"][i]["fields"] = {name: story_value(name, q, atom.get("slot_fmt"))}
+            pages[pi]["items"][i]["fields"] = {name: story_cells(atom, name, q)}
             filled += len(q)
             q.clear()
         elif q:

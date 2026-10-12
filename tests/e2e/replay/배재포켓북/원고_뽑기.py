@@ -185,37 +185,42 @@ def deco_cs(w, deco):
     return out
 
 
+def _boxes(page, y0, y1, wmin, wmax, hmin, hmax):
+    """칠한 칸 상자(pt) — 흐름 칸 · 동반의어 카드. 원본에서 칸 하나 = 칠한 사각형 하나"""
+    out = []
+    for d in page.get_drawings():
+        r = d["rect"]
+        if d.get("fill") and y0 <= r.y0 <= y1 and wmin <= r.width <= wmax and hmin <= r.height <= hmax:
+            out.append(r)
+    return out
+
+
 def note(page, H, W):
     ss = spans(page)
-    heads = [s for s in ss if s["size"] == 7.0 and s["color"] == 0x0067b4 and s["y0"] < H * 0.16]
-    words = []                                          # 칸 제목 — 한 글자씩 찍힌 것을 낱말로(틈 3 안)
-    for h in sorted(heads, key=lambda s: s["x0"]):
-        if words and h["x0"] - words[-1]["x1"] < 3:
-            words[-1] = dict(words[-1], t=words[-1]["t"].strip() + h["t"].strip(), x1=h["x1"])
-        else:
-            words.append(dict(h))
-    flow = []
-    edge = [h["x0"] - 15 for h in words] + [W]           # 칸 = 이 칸 제목(번호 동그라미 앞)부터 다음 칸 제목 앞까지
-    for k, h in enumerate(words):
-        col = [s for s in ss if s["size"] == 9.5 and H * 0.14 < s["y0"] < H * 0.40 and edge[k] <= s["x0"] < edge[k + 1]]
-        flow.append({"제목": h["t"].strip(), "글": text(col)})
+    inside = lambda s, r: r.x0 - 0.5 <= s["x0"] <= r.x1 and r.y0 - 0.5 <= s["y0"] <= r.y1
+    flow = []                                           # 흐름 칸 — 칸 상자마다(3칸 한 줄 · 2×2 네 칸). 차례 = 칸 번호(동그라미 숫자)
+    for r in _boxes(page, H * 0.08, H * 0.40, W * 0.2, W * 0.45, H * 0.10, H * 0.32):       # 3칸 한 줄 0.30H 높이 · 2×2 0.14H
+        cs = [s for s in ss if inside(s, r)]
+        no = next((int(s["t"].strip()) for s in cs if s["t"].strip().isdigit() and len(s["t"].strip()) == 1), 9)
+        head = [s for s in cs if s["size"] == 7.0 and s["color"] == 0x0067b4]
+        flow.append((no, {"제목": join(sorted(head, key=lambda s: s["x0"]), gap=3).replace(" ", ""), "글": text([s for s in cs if s["size"] == 9.5])}))
+    flow = [f for _, f in sorted(flow, key=lambda t: t[0])]
     body = [s for s in ss if s["size"] == 8.0 and s["color"] == 0 and H * 0.40 < s["y0"] < H * 0.52]
     rows = lines_of(body)
     topic = join(rows[0]) if rows else ""
     summary = para([join(r) for r in rows[1:]]).replace("\n", " ")
-    voca_ss = [s for s in ss if s["size"] == 7.0 and s["color"] in (0, 0x214e8e, 0xe14e6b) and s["y0"] > H * 0.57 and s["y0"] < H * 0.9]
-    cards = {}
-    for s in voca_ss:                                   # 카드 = 세 단 중 하나 · 위아래 칸 — 단은 가로 셋, 칸은 그 단의 낱말 줄(검정)에서 시작
-        cards.setdefault(int((s["x0"] - W * 0.08) // (W * 0.27)), []).append(s)
-    voca = []
-    for c in sorted(cards):
+    voca_ss = [s for s in ss if s["size"] == 7.0 and s["color"] in (0, 0x214e8e, 0xe14e6b) and s["y0"] > H * 0.55 and s["y0"] < H * 0.95]
+    voca = []                                           # 카드 상자마다 하나 — 차례는 원본 칸 차례(위 줄 왼쪽 → 오른쪽, 다음 줄)
+    for r in sorted(_boxes(page, H * 0.55, H * 0.95, W * 0.2, W * 0.27, H * 0.07, H * 0.15), key=lambda r: (round(r.y0), r.x0)):
         cur = None
-        for row in lines_of(cards[c]):
+        for row in lines_of([s for s in voca_ss if inside(s, r)]):
             t = join(row)
-            if row[0]["color"] == 0:
-                w = t.split(" ", 1)
-                cur = {"낱말": w[0], "뜻": w[1] if len(w) > 1 else "", "동의어": "", "반의어": ""}
+            if row[0]["color"] == 0 and cur is None:       # 카드 첫 검정 줄 = 낱말(영문 — 여러 낱말 숙어도) + 뜻(한글부터)
+                m = re.match(r"([^가-힣]*?)\s*([가-힣(~].*)?$", t)
+                cur = {"낱말": m.group(1).strip(), "뜻": (m.group(2) or "").strip(), "동의어": "", "반의어": ""}
                 voca.append(cur)
+            elif row[0]["color"] == 0:                      # 검정 줄이 또 — 넘친 뜻
+                cur["뜻"] = (cur["뜻"] + ("" if re.search(r"[가-힣]$", cur["뜻"]) and re.match(r"[가-힣]", t) else " ") + t).strip()
             elif cur is not None and t.startswith("="):
                 cur["동의어"] = (cur["동의어"] + " " + t[1:].strip()).strip()
             elif cur is not None and t.startswith("↔"):

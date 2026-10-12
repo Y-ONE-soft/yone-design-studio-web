@@ -670,28 +670,28 @@
      "반의어": "ordinary, dull"
     },
     {
-     "낱말": "common",
-     "뜻": "흔한, 공통의",
-     "동의어": "ordinary, widespread, usual",
-     "반의어": "rare, unusual"
-    },
-    {
      "낱말": "vitality",
      "뜻": "활력",
      "동의어": "energy, vigor, liveliness",
      "반의어": "lethargy"
     },
     {
-     "낱말": "amaze",
-     "뜻": "놀라게 하다",
-     "동의어": "astonish, astound, surprise",
-     "반의어": "bore"
-    },
-    {
      "낱말": "decide",
      "뜻": "결정하다",
      "동의어": "determine, resolve, settle",
      "반의어": "hesitate"
+    },
+    {
+     "낱말": "common",
+     "뜻": "흔한, 공통의",
+     "동의어": "ordinary, widespread, usual",
+     "반의어": "rare, unusual"
+    },
+    {
+     "낱말": "amaze",
+     "뜻": "놀라게 하다",
+     "동의어": "astonish, astound, surprise",
+     "반의어": "bore"
     }
    ],
    "단원": "교과서 1과",
@@ -1606,11 +1606,19 @@
    "흐름": [
     {
      "제목": "수락",
-     "글": "많은 사람이 친구 요청을 수락함\n[발견] 프로필에서 흥미로운 공통점\n→ 여러 나이·국적의 Sam Lee가 음악에 관심\n→ 싱가포르에서 온 30대 중반의 Sam Lee 30대 중반, 노래와 작사를 즐김\n[캐나다] 42살 드럼 연주자 Samantha\n→ 본명과 달리 모두 Sam이라 불렀다"
+     "글": "많은 사람이 친구 요청을 수락함\n[발견] 프로필에서 흥미로운 공통점\n→ 여러 나이·국적의 Sam Lee가 음악에 관심\n→ 싱가포르에서 온 30대 중반의 Sam Lee"
+    },
+    {
+     "제목": "싱가포르와캐나다",
+     "글": "30대 중반, 노래와 작사를 즐김\n[캐나다] 42살 드럼 연주자 Samantha\n→ 본명과 달리 모두 Sam이라 불렀다"
     },
     {
      "제목": "미국",
-     "글": "전기 기타를 연주하는 Sam Lee\n→ 나는 곡을 쓰고 키보드를 연주한다고 소개가상 밴드 The Sam Lees를 만들자\n→ 세 명 모두 열렬히 동의\n[시작] 그것이 밴드 여정의 출발점"
+     "글": "전기 기타를 연주하는 Sam Lee\n→ 나는 곡을 쓰고 키보드를 연주한다고 소개"
+    },
+    {
+     "제목": "제안",
+     "글": "가상 밴드 The Sam Lees를 만들자\n→ 세 명 모두 열렬히 동의\n[시작] 그것이 밴드 여정의 출발점"
     }
    ],
    "주제": "음악에 관심 있는 Sam Lee들에게 가상 밴드를 제안해 결성하게 된 과정",
@@ -1623,34 +1631,10 @@
      "반의어": "refuse, reject, turn down"
     },
     {
-     "낱말": "various",
-     "뜻": "다양한",
-     "동의어": "diverse, varied, assorted",
-     "반의어": "identical, uniform"
-    },
-    {
-     "낱말": "agree",
-     "뜻": "동의하다",
-     "동의어": "accept, approve, consent",
-     "반의어": "disagree, object, oppose"
-    },
-    {
      "낱말": "notice",
      "뜻": "알아차리다",
      "동의어": "observe, spot, detect",
      "반의어": "overlook, ignore"
-    },
-    {
-     "낱말": "virtual",
-     "뜻": "가상의",
-     "동의어": "online, simulated",
-     "반의어": "real, physical"
-    },
-    {
-     "낱말": "journey",
-     "뜻": "여정, 여행",
-     "동의어": "trip, voyage, course",
-     "반의어": ""
     },
     {
      "낱말": "interested",
@@ -1659,10 +1643,34 @@
      "반의어": "indifferent, uninterested"
     },
     {
+     "낱말": "various",
+     "뜻": "다양한",
+     "동의어": "diverse, varied, assorted",
+     "반의어": "identical, uniform"
+    },
+    {
+     "낱말": "virtual",
+     "뜻": "가상의",
+     "동의어": "online, simulated",
+     "반의어": "real, physical"
+    },
+    {
      "낱말": "eager",
      "뜻": "열렬한, 간절히 바라는",
      "동의어": "keen, enthusiastic, willing",
      "반의어": "reluctant, indifferent"
+    },
+    {
+     "낱말": "agree",
+     "뜻": "동의하다",
+     "동의어": "accept, approve, consent",
+     "반의어": "disagree, object, oppose"
+    },
+    {
+     "낱말": "journey",
+     "뜻": "여정, 여행",
+     "동의어": "trip, voyage, course",
+     "반의어": ""
     }
    ],
    "단원": "교과서 1과",
@@ -2829,11 +2837,19 @@
    "흐름": [
     {
      "제목": "문제1",
-     "글": "주 1회 영상 채팅 앱으로 연습 시도\n[문제1] 넷이 다른 시간대에 살고 있음\n→ 모두 편한 시간을 고르기 어려웠다앱의 오디오 문제\n→ 동시에 연주할 수 없었다"
+     "글": "주 1회 영상 채팅 앱으로 연습 시도\n[문제1] 넷이 다른 시간대에 살고 있음\n→ 모두 편한 시간을 고르기 어려웠다"
+    },
+    {
+     "제목": "문제2",
+     "글": "앱의 오디오 문제\n→ 동시에 연주할 수 없었다"
     },
     {
      "제목": "해결",
-     "글": "가상의 음악 공장처럼 노래를 조합\n→ 내 키보드 연주를 싱가포르 Sam에게\n→ 그가 노래를 얹어 미국 Sam에게 보냄\n→ 미국 Sam은 기타, Samantha는 드럼번갈아 가며 고름\n[결과] 서로 다른 장르와 문화를 많이 배움"
+     "글": "가상의 음악 공장처럼 노래를 조합\n→ 내 키보드 연주를 싱가포르 Sam에게\n→ 그가 노래를 얹어 미국 Sam에게 보냄\n→ 미국 Sam은 기타, Samantha는 드럼"
+    },
+    {
+     "제목": "곡선정",
+     "글": "번갈아 가며 고름\n[결과] 서로 다른 장르와 문화를 많이 배움"
     }
    ],
    "주제": "시간대와 오디오 문제를 노래 이어 붙이기로 해결한 가상 밴드의 연습 방식",
@@ -2846,40 +2862,10 @@
      "반의어": "avoid, evade"
     },
     {
-     "낱말": "out",
-     "뜻": "of sync 동시에 맞지 않",
-     "동의어": "",
-     "반의어": ""
-    },
-    {
-     "낱말": "는",
-     "뜻": "",
-     "동의어": "out of time, uncoordinated",
-     "반의어": "in sync, synchronized"
-    },
-    {
-     "낱말": "finish",
-     "뜻": "끝마치다",
-     "동의어": "complete, conclude, finalize, terminate",
-     "반의어": "begin, commence"
-    },
-    {
      "낱말": "problem",
      "뜻": "문제",
      "동의어": "difficulty, issue, trouble",
      "반의어": "solution, answer, resolution"
-    },
-    {
-     "낱말": "devise",
-     "뜻": "고안하다",
-     "동의어": "invent, design, work out, come up with",
-     "반의어": ""
-    },
-    {
-     "낱말": "take",
-     "뜻": "turns 번갈아 하다",
-     "동의어": "alternate",
-     "반의어": "do all at once"
     },
     {
      "낱말": "convenient",
@@ -2888,10 +2874,34 @@
      "반의어": "inconvenient, awkward, clumsy"
     },
     {
+     "낱말": "out of sync",
+     "뜻": "동시에 맞지 않는",
+     "동의어": "out of time, uncoordinated",
+     "반의어": "in sync, synchronized"
+    },
+    {
+     "낱말": "devise",
+     "뜻": "고안하다",
+     "동의어": "invent, design, work out, come up with",
+     "반의어": ""
+    },
+    {
      "낱말": "assemble",
      "뜻": "모으다, 조립하다",
      "동의어": "gather, put together, collect",
      "반의어": "scatter, disassemble"
+    },
+    {
+     "낱말": "finish",
+     "뜻": "끝마치다",
+     "동의어": "complete, conclude, finalize, terminate",
+     "반의어": "begin, commence"
+    },
+    {
+     "낱말": "take turns",
+     "뜻": "번갈아 하다",
+     "동의어": "alternate",
+     "반의어": "do all at once"
     },
     {
      "낱말": "prefer",
@@ -4102,57 +4112,35 @@
    "흐름": [
     {
      "제목": "배경",
-     "글": "밴드 시작 직후 전 세계적 유행병\n→ 평범한 삶이 멈춰 온라인 소통이 더 소중싱가포르 Sam이 아파 병원에 입원\n→ 밴드는 잠시 휴식\n[연결] 영상 채팅으로 가끔 만나 격려함"
+     "글": "밴드 시작 직후 전 세계적 유행병\n→ 평범한 삶이 멈춰 온라인 소통이 더 소중"
+    },
+    {
+     "제목": "위기",
+     "글": "싱가포르 Sam이 아파 병원에 입원\n→ 밴드는 잠시 휴식\n[연결] 영상 채팅으로 가끔 만나 격려함"
     },
     {
      "제목": "생일",
-     "글": "그가 좋아하는 노래를 녹음해 선물\n→ 그는 너무 웃어서 눈물까지 흘렸다\n→ 밴드에서 가장 못 부르는 내가 불러서이후 우리만의 곡을 쓰고 녹음\n[발표] '장거리 우정'을 온라인에 게시\n→ 관심은 적었지만 함께 이룬 것이 자랑"
+     "글": "그가 좋아하는 노래를 녹음해 선물\n→ 그는 너무 웃어서 눈물까지 흘렸다\n→ 밴드에서 가장 못 부르는 내가 불러서"
+    },
+    {
+     "제목": "회복",
+     "글": "이후 우리만의 곡을 쓰고 녹음\n[발표] '장거리 우정'을 온라인에 게시\n→ 관심은 적었지만 함께 이룬 것이 자랑"
     }
    ],
    "주제": "유행병 시기에 서로를 격려하며 자신들의 곡까지 만든 밴드의 우정",
    "요약문": "전 세계적 유행병으로 평범한 삶이 멈추자 온라인 소통은 더 소중해졌다. 싱가포르 Sam이 입원했을 때는 영상 채팅으로 만나 격려했고 생일에는 그가 좋아하는 노래를녹음해 선물했다. 그가 회복한 뒤 자신들의 곡 '장거리 우정'을 녹음해 게시했고, 관심은 적었지만 함께 이룬 것이 자랑스러웠다.",
    "동반의어": [
     {
-     "낱말": "put",
-     "뜻": "on hold 보류하다",
-     "동의어": "keep on hold, postpone suspend, delay",
+     "낱말": "put on hold",
+     "뜻": "보류하다",
+     "동의어": "keep on hold, postpone, suspend, delay",
      "반의어": "resume, continue"
-    },
-    {
-     "낱말": "ill",
-     "뜻": "아픈",
-     "동의어": "sick, develop(병에 걸리 다), contract(병에 걸리다), come down with(병에 걸리 다)",
-     "반의어": "healthy, sound"
-    },
-    {
-     "낱말": "attention",
-     "뜻": "관심",
-     "동의어": "notice, interest, regard",
-     "반의어": "neglect, indifference"
     },
     {
      "낱말": "value",
      "뜻": "소중히 여기다",
-     "동의어": ", = cherish, appreciate, prize, treasure",
+     "동의어": "cherish, appreciate, prize, treasure",
      "반의어": "neglect, despise, look down on"
-    },
-    {
-     "낱말": "cheer",
-     "뜻": "기운 나게 하다, 격려하",
-     "동의어": "",
-     "반의어": ""
-    },
-    {
-     "낱말": "다",
-     "뜻": "",
-     "동의어": "encourage, comfort, lift",
-     "반의어": "discourage, depress"
-    },
-    {
-     "낱말": "proud",
-     "뜻": "자랑스러워하는",
-     "동의어": "pleased, satisfied, delighted",
-     "반의어": "ashamed, shy"
     },
     {
      "낱말": "interaction",
@@ -4161,10 +4149,34 @@
      "반의어": ""
     },
     {
+     "낱말": "ill",
+     "뜻": "아픈",
+     "동의어": "sick, develop(병에 걸리 다), contract(병에 걸리다), come down with(병에 걸리 다)",
+     "반의어": "healthy, sound"
+    },
+    {
+     "낱말": "cheer",
+     "뜻": "기운 나게 하다, 격려하다",
+     "동의어": "encourage, comfort, lift",
+     "반의어": "discourage, depress"
+    },
+    {
      "낱말": "recover",
      "뜻": "회복하다",
      "동의어": "get better, heal, recuperate",
      "반의어": "worsen, relapse"
+    },
+    {
+     "낱말": "attention",
+     "뜻": "관심",
+     "동의어": "notice, interest, regard",
+     "반의어": "neglect, indifference"
+    },
+    {
+     "낱말": "proud",
+     "뜻": "자랑스러워하는",
+     "동의어": "pleased, satisfied, delighted",
+     "반의어": "ashamed, shy"
     },
     {
      "낱말": "achieve",
@@ -5153,27 +5165,21 @@
      "반의어": "common, commonplace, ordinary, normal"
     },
     {
+     "낱말": "strong relationship",
+     "뜻": "끈끈한관계",
+     "동의어": "bond, connection, kinship, friendship",
+     "반의어": ""
+    },
+    {
+     "낱말": "similar",
+     "뜻": "유사한",
+     "동의어": "identical, same",
+     "반의어": "different, dissimilar, diverse, alien"
+    },
+    {
      "낱말": "hardship",
      "뜻": "고난",
      "동의어": "adversity, suffering, difficulty, trouble",
-     "반의어": ""
-    },
-    {
-     "낱말": "lucky",
-     "뜻": "운이 좋은",
-     "동의어": "fortunate",
-     "반의어": "unlucky, unfortunate"
-    },
-    {
-     "낱말": "strong",
-     "뜻": "relationship 끈끈한",
-     "동의어": "",
-     "반의어": ""
-    },
-    {
-     "낱말": "관계",
-     "뜻": "",
-     "동의어": "bond, connection, kinship, friendship",
      "반의어": ""
     },
     {
@@ -5183,16 +5189,16 @@
      "반의어": "worthless, of no value"
     },
     {
-     "낱말": "similar",
-     "뜻": "유사한",
-     "동의어": "identical, same",
-     "반의어": "different, dissimilar, diverse, alien"
-    },
-    {
-     "낱말": "in",
-     "뜻": "person 직접 만나서",
+     "낱말": "in person",
+     "뜻": "직접 만나서",
      "동의어": "face-to-face, personally, directly",
      "반의어": "online, remotely"
+    },
+    {
+     "낱말": "lucky",
+     "뜻": "운이 좋은",
+     "동의어": "fortunate",
+     "반의어": "unlucky, unfortunate"
     }
    ],
    "단원": "교과서 1과",
@@ -6205,11 +6211,19 @@
    "흐름": [
     {
      "제목": "문제",
-     "글": "도시가 낡으면 지역이 활기를 잃는다\n→ 시민들이 그곳을 떠날 수도 있다지역 정부와 시민의 협력\n→ 지역을 되살리는 효과적인 방법\n[사례] 네덜란드의 두 프로젝트를 살펴본다"
+     "글": "도시가 낡으면 지역이 활기를 잃는다\n→ 시민들이 그곳을 떠날 수도 있다"
+    },
+    {
+     "제목": "해법",
+     "글": "지역 정부와 시민의 협력\n→ 지역을 되살리는 효과적인 방법\n[사례] 네덜란드의 두 프로젝트를 살펴본다"
     },
     {
      "제목": "로테르담",
-     "글": "현대 건축과 붐비는 항구로 유명\n→ 도심에서 서쪽으로 전차 10분 거리\n[지금] 이웃이 이야기하고 가족은 정원에서\n[건물] 큰 아파트 Wallisblok 얼마 전까지 전혀 다른 지역이었다\n→ 가족이 살 곳이 되리라 아무도 몰랐다"
+     "글": "현대 건축과 붐비는 항구로 유명\n→ 도심에서 서쪽으로 전차 10분 거리\n[지금] 이웃이 이야기하고 가족은 정원에서\n[건물] 큰 아파트 Wallisblok"
+    },
+    {
+     "제목": "과거",
+     "글": "얼마 전까지 전혀 다른 지역이었다\n→ 가족이 살 곳이 되리라 아무도 몰랐다"
     }
    ],
    "주제": "지역 정부와 시민의 협력으로 도시를 되살린 네덜란드 사례의 도입",
@@ -6222,28 +6236,10 @@
      "반의어": "lively, vigorous, dynamic, vibrant, animate, energetic"
     },
     {
-     "낱말": "revitalize",
-     "뜻": "활성화하다",
-     "동의어": "renew, restore, revive",
-     "반의어": "weaken, destroy, ruin decline"
-    },
-    {
-     "낱말": "crowded",
-     "뜻": "붐비는",
-     "동의어": "packed, congested, jammed",
-     "반의어": "empty"
-    },
-    {
      "낱말": "collaboration",
      "뜻": "협력",
      "동의어": "cooperation",
      "반의어": "competition"
-    },
-    {
-     "낱말": "successful",
-     "뜻": "성공적인",
-     "동의어": "accomplished, , prosperous, thriving",
-     "반의어": "unsuccessful"
     },
     {
      "낱말": "effective",
@@ -6252,10 +6248,28 @@
      "반의어": "ineffective"
     },
     {
+     "낱말": "revitalize",
+     "뜻": "활성화하다",
+     "동의어": "renew, restore, revive",
+     "반의어": "weaken, destroy, ruin, decline"
+    },
+    {
+     "낱말": "successful",
+     "뜻": "성공적인",
+     "동의어": "accomplished, prosperous, thriving",
+     "반의어": "unsuccessful"
+    },
+    {
      "낱말": "peaceful",
      "뜻": "평화로운, 한적한",
      "동의어": "calm, quiet, tranquil, serene",
      "반의어": "noisy, crowded, chaotic"
+    },
+    {
+     "낱말": "crowded",
+     "뜻": "붐비는",
+     "동의어": "packed, congested, jammed",
+     "반의어": "empty"
     }
    ],
    "단원": "교과서 2과",
@@ -7573,33 +7587,29 @@
    "흐름": [
     {
      "제목": "과거",
-     "글": "높은 범죄율로 알려진 지역\n→ 버려진 아파트를 불법 거주자가 점령건물을 허물고 새로 짓기\n→ 제한된 예산 탓에 할 수 없었다\n[2안] 빈 아파트를 각각 1유로에 판매"
+     "글": "높은 범죄율로 알려진 지역\n→ 버려진 아파트를 불법 거주자가 점령"
+    },
+    {
+     "제목": "방안",
+     "글": "건물을 허물고 새로 짓기\n→ 제한된 예산 탓에 할 수 없었다\n[2안] 빈 아파트를 각각 1유로에 판매"
     },
     {
      "제목": "조건",
-     "글": "사는 사람이 직접 개조해야 함\n→ 보수 비용을 내야 해도 신청자가 몰림\n[이유] 1유로라는 값만이 아니었다\n→ 창의성을 펼칠 기회에도 흥미를 느낌 42가구가 이사, 계획은 성공\n→ 정원과 옥상 테라스를 갖춘 42채로\n[파급] 주변도 좋아져 살기 좋은 곳이 됨"
+     "글": "사는 사람이 직접 개조해야 함\n→ 보수 비용을 내야 해도 신청자가 몰림\n[이유] 1유로라는 값만이 아니었다\n→ 창의성을 펼칠 기회에도 흥미를 느낌"
+    },
+    {
+     "제목": "결과",
+     "글": "42가구가 이사, 계획은 성공\n→ 정원과 옥상 테라스를 갖춘 42채로\n[파급] 주변도 좋아져 살기 좋은 곳이 됨"
     }
    ],
    "주제": "1유로 아파트와 직접 개조 조건으로 되살아난 Wallisblok의 변화",
    "요약문": "범죄율이 높고 아파트가 버려졌던 Wallisblok에서 정부는 예산이 부족해 재건축 대신 빈 아파트를 1유로에 팔고 매입자가 직접 개조하게 했다. 사람들은 값보다 창의성을 펼칠 기회에 끌렸고, 42가구가 이사해 정원과 옥상 테라스를 갖춘 집으로 바꾸면서 주변 지역까지 살기 좋아졌다.",
    "동반의어": [
     {
-     "낱말": "tear",
-     "뜻": "down 허물다",
+     "낱말": "tear down",
+     "뜻": "허물다",
      "동의어": "demolish, destroy",
      "반의어": "build, construct"
-    },
-    {
-     "낱말": "attractive",
-     "뜻": "매력적인",
-     "동의어": "appealing, charming, inviting, engaging",
-     "반의어": "unattractive"
-    },
-    {
-     "낱말": "transform",
-     "뜻": "바꾸다",
-     "동의어": "turn, change, convert, reshape, alter",
-     "반의어": "preserve, maintain, keep"
     },
     {
      "낱말": "limited",
@@ -7608,22 +7618,22 @@
      "반의어": "unlimited, boundless"
     },
     {
-     "낱말": "improve",
-     "뜻": "개선하다",
-     "동의어": "enhance, refine, upgrade",
-     "반의어": "worsen, degrade"
-    },
-    {
-     "낱말": "unique",
-     "뜻": "독특한",
-     "동의어": "distinctive, exceptional, special",
-     "반의어": "normal, common, ordinary"
-    },
-    {
      "낱말": "empty",
      "뜻": "빈",
      "동의어": "vacant, unoccupied, hollow",
      "반의어": "full, occupied"
+    },
+    {
+     "낱말": "attractive",
+     "뜻": "매력적인",
+     "동의어": "appealing, charming, inviting, engaging",
+     "반의어": "unattractive"
+    },
+    {
+     "낱말": "improve",
+     "뜻": "개선하다",
+     "동의어": "enhance, refine, upgrade",
+     "반의어": "worsen, degrade"
     },
     {
      "낱말": "bold",
@@ -7632,14 +7642,20 @@
      "반의어": "cautious, timid, conservative"
     },
     {
-     "낱말": "desirable",
-     "뜻": "바람직한, 살기 좋",
-     "동의어": "",
-     "반의어": ""
+     "낱말": "transform",
+     "뜻": "바꾸다",
+     "동의어": "turn, change, convert, reshape, alter",
+     "반의어": "preserve, maintain, keep"
     },
     {
-     "낱말": "은",
-     "뜻": "",
+     "낱말": "unique",
+     "뜻": "독특한",
+     "동의어": "distinctive, exceptional, special",
+     "반의어": "normal, common, ordinary"
+    },
+    {
+     "낱말": "desirable",
+     "뜻": "바람직한, 살기 좋은",
      "동의어": "inhabitable, favorable",
      "반의어": "undesirable"
     }
@@ -8427,28 +8443,10 @@
    "요약문": "20세기 초 조선소와 공장으로 가득했던 암스테르담 북부는 조선소가 닫히고 공장 일이 해외로 옮겨지면서 수년간 버려지고 오염되었다. 시는 버려진 조선소 De Ceuvel 을 매입했지만 활용법을 몰라, 땅을 정화해 지속 가능한 개발지로 만들고 창의적인 업무 공간으로 바꾸는 두 목표를 담은 계획을 대중에게 요청했다.",
    "동반의어": [
     {
-     "낱말": "close",
-     "뜻": "down 문을 닫다",
+     "낱말": "close down",
+     "뜻": "문을 닫다",
      "동의어": "shut down, cease operation, go out of business",
      "반의어": "run, start up, resume operation"
-    },
-    {
-     "낱말": "purchase",
-     "뜻": "구매하다, 매입하",
-     "동의어": "",
-     "반의어": ""
-    },
-    {
-     "낱말": "다",
-     "뜻": "",
-     "동의어": "buy, acquire, obtain",
-     "반의어": "sell"
-    },
-    {
-     "낱말": "sustainable",
-     "뜻": "지속 가능한",
-     "동의어": "eco-friendly, lasting",
-     "반의어": "wasteful"
     },
     {
      "낱말": "abandon",
@@ -8457,28 +8455,40 @@
      "반의어": "keep, reclaim"
     },
     {
-     "낱말": "turn",
-     "뜻": "to ~에 의지하다",
-     "동의어": "depend on, rely on, resort to, lean on, draw on, count on",
-     "반의어": ""
-    },
-    {
-     "낱말": "creative",
-     "뜻": "창의적인",
-     "동의어": "ingenious, inventive, imaginative, original",
-     "반의어": "conventional, traditional, unimaginative"
-    },
-    {
      "낱말": "pollute",
      "뜻": "오염시키다",
      "동의어": "contaminate, dirty, taint",
      "반의어": "purify, clean"
     },
     {
+     "낱말": "purchase",
+     "뜻": "구매하다, 매입하다",
+     "동의어": "buy, acquire, obtain",
+     "반의어": "sell"
+    },
+    {
+     "낱말": "turn to",
+     "뜻": "~에 의지하다",
+     "동의어": "depend on, rely on, resort to, lean on, draw on, count on",
+     "반의어": ""
+    },
+    {
      "낱말": "primary",
      "뜻": "주요한, 기본적인",
      "동의어": "main, chief, principal",
      "반의어": "minor, secondary"
+    },
+    {
+     "낱말": "sustainable",
+     "뜻": "지속 가능한",
+     "동의어": "eco-friendly, lasting",
+     "반의어": "wasteful"
+    },
+    {
+     "낱말": "creative",
+     "뜻": "창의적인",
+     "동의어": "ingenious, inventive, imaginative, original",
+     "반의어": "conventional, traditional, unimaginative"
     }
    ],
    "단원": "교과서 2과",
@@ -9293,11 +9303,19 @@
    "흐름": [
     {
      "제목": "선정",
-     "글": "한 건축 회사의 획기적인 계획\n→ 옛 조선소에 10년 임대차 계약을 받음기름진 진흙에 기초를 못 세움\n→ 낡고 버려진 배들을 쓰기로 결정\n→ 배 소유주에게서 낮은 값에 구입"
+     "글": "한 건축 회사의 획기적인 계획\n→ 옛 조선소에 10년 임대차 계약을 받음"
+    },
+    {
+     "제목": "난관",
+     "글": "기름진 진흙에 기초를 못 세움\n→ 낡고 버려진 배들을 쓰기로 결정\n→ 배 소유주에게서 낮은 값에 구입"
     },
     {
      "제목": "업사이클",
-     "글": "배로 작은 공동체를 만듦\n→ 업무 공간·스튜디오·회의실·카페\n[연결] 배 사이를 나무 길로 이음\n[정화] 오염된 흙을 정화하는 식물을 심음바이오필터·물 재사용 기술을 시험\n→ 재활성화 프로젝트를 직접 보러 온다"
+     "글": "배로 작은 공동체를 만듦\n→ 업무 공간·스튜디오·회의실·카페\n[연결] 배 사이를 나무 길로 이음\n[정화] 오염된 흙을 정화하는 식물을 심음"
+    },
+    {
+     "제목": "오늘",
+     "글": "바이오필터·물 재사용 기술을 시험\n→ 재활성화 프로젝트를 직접 보러 온다"
     }
    ],
    "주제": "버려진 배를 업사이클해 지속 가능한 복합 지구로 바꾼 De Ceuvel의 재생",
@@ -9310,12 +9328,6 @@
      "반의어": "conventional, unoriginal, traditional"
     },
     {
-     "낱말": "purify",
-     "뜻": "정화하다",
-     "동의어": "cleanse, filter, decontaminate",
-     "반의어": "contaminate, pollute"
-    },
-    {
      "낱말": "impossible",
      "뜻": "불가능한",
      "동의어": "unattainable, unfeasible, hopeless",
@@ -9326,6 +9338,12 @@
      "뜻": "재활용하다",
      "동의어": "repurpose, reuse, recycle",
      "반의어": "discard, throw away"
+    },
+    {
+     "낱말": "purify",
+     "뜻": "정화하다",
+     "동의어": "cleanse, filter, decontaminate",
+     "반의어": "contaminate, pollute"
     }
    ],
    "단원": "교과서 2과",
@@ -9839,12 +9857,6 @@
      "반의어": "inactive, quiet, lifeless"
     },
     {
-     "낱말": "inspiration",
-     "뜻": "영감",
-     "동의어": "motivation, encouragement, stimulus",
-     "반의어": ""
-    },
-    {
      "낱말": "valuable",
      "뜻": "가치 있는",
      "동의어": "precious, priceless, invaluable, of value",
@@ -9855,6 +9867,12 @@
      "뜻": "매우 중요한",
      "동의어": "essential, crucial, critical, significant",
      "반의어": "unimportant, trivial, insignificant"
+    },
+    {
+     "낱말": "inspiration",
+     "뜻": "영감",
+     "동의어": "motivation, encouragement, stimulus",
+     "반의어": ""
     }
    ],
    "단원": "교과서 2과",
@@ -11980,11 +11998,19 @@
    "흐름": [
     {
      "제목": "문제",
-     "글": "많은 사람이 성장의 책임을 안 진다\n→ 놓인 경주를 그대로 달릴 뿐\n[모습] 학교에서 계속 올라갈 만큼은 잘함\n→ 잘 운영되는 회사의 좋은 일자리도 얻음배움이 대학에서 끝난 듯 행동\n→ 놓인 항목을 다 체크하고 지도가 없음\n[전환] 사실 그때가 여정의 진짜 시작"
+     "글": "많은 사람이 성장의 책임을 안 진다\n→ 놓인 경주를 그대로 달릴 뿐\n[모습] 학교에서 계속 올라갈 만큼은 잘함\n→ 잘 운영되는 회사의 좋은 일자리도 얻음"
+    },
+    {
+     "제목": "착각",
+     "글": "배움이 대학에서 끝난 듯 행동\n→ 놓인 항목을 다 체크하고 지도가 없음\n[전환] 사실 그때가 여정의 진짜 시작"
     },
     {
      "제목": "핵심",
-     "글": "학교가 끝나면 성장은 자발적이다\n→ 식습관·운동처럼 전념하고 쏟아야 한다그러지 않으면 그냥 일어나지 않는다\n→ 삶과 경력이 진전을 멈출 수 있다"
+     "글": "학교가 끝나면 성장은 자발적이다\n→ 식습관·운동처럼 전념하고 쏟아야 한다"
+    },
+    {
+     "제목": "경고",
+     "글": "그러지 않으면 그냥 일어나지 않는다\n→ 삶과 경력이 진전을 멈출 수 있다"
     }
    ],
    "주제": "학교가 끝난 뒤의 성장은 스스로 전념해야 이뤄진다는 주장",
@@ -11997,34 +12023,10 @@
      "반의어": "irresponsibility, neglect"
     },
     {
-     "낱말": "journey",
-     "뜻": "여정",
-     "동의어": "trip, voyage, path",
-     "반의어": ""
-    },
-    {
-     "낱말": "commit",
-     "뜻": "전념하다",
-     "동의어": "dedicate, devote, pledge",
-     "반의어": "abandon, neglect, quit"
-    },
-    {
      "낱말": "advance",
      "뜻": "발전하다",
      "동의어": "progress, improve, move forward",
      "반의어": "decline, regress, retreat"
-    },
-    {
-     "낱말": "lack",
-     "뜻": "부족하다",
-     "동의어": "miss, need, want",
-     "반의어": "possess, have, own"
-    },
-    {
-     "낱말": "progress",
-     "뜻": "발전하다",
-     "동의어": "advance, improve, develop, move forward",
-     "반의어": "regress, decline, stagnate"
     },
     {
      "낱말": "manage",
@@ -12033,10 +12035,34 @@
      "반의어": "fail, struggle"
     },
     {
+     "낱말": "journey",
+     "뜻": "여정",
+     "동의어": "trip, voyage, path",
+     "반의어": ""
+    },
+    {
+     "낱말": "lack",
+     "뜻": "부족하다",
+     "동의어": "miss, need, want",
+     "반의어": "possess, have, own"
+    },
+    {
      "낱말": "voluntary",
      "뜻": "자발적인",
      "동의어": "willing, intentional, deliberate",
      "반의어": "involuntary, forced, compulsory"
+    },
+    {
+     "낱말": "commit",
+     "뜻": "전념하다",
+     "동의어": "dedicate, devote, pledge",
+     "반의어": "abandon, neglect, quit"
+    },
+    {
+     "낱말": "progress",
+     "뜻": "발전하다",
+     "동의어": "advance, improve, develop, move forward",
+     "반의어": "regress, decline, stagnate"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -13018,11 +13044,19 @@
    "흐름": [
     {
      "제목": "견해1",
-     "글": "색은 사물이나 빛의 객관적 속성\n→ 잎이 녹색 빛을 반사하니 녹색이다색은 물리적 세계에 없다\n→ 보는 사람의 눈과 정신 안에만 있다\n→ 볼 사람이 없으면 잎도 색이 없다"
+     "글": "색은 사물이나 빛의 객관적 속성\n→ 잎이 녹색 빛을 반사하니 녹색이다"
+    },
+    {
+     "제목": "견해2",
+     "글": "색은 물리적 세계에 없다\n→ 보는 사람의 눈과 정신 안에만 있다\n→ 볼 사람이 없으면 잎도 색이 없다"
     },
     {
      "제목": "절충",
-     "글": "두 입장 모두 어떤 면에서 옳다\n[핵심] 색은 객관적이며 동시에 주관적\n→ Cezanne: 뇌와 우주가 만나는 곳빛이 눈에 등록되고 뇌가 해석할 때\n→ 그때 색이 만들어진다"
+     "글": "두 입장 모두 어떤 면에서 옳다\n[핵심] 색은 객관적이며 동시에 주관적\n→ Cezanne: 뇌와 우주가 만나는 곳"
+    },
+    {
+     "제목": "결론",
+     "글": "빛이 눈에 등록되고 뇌가 해석할 때\n→ 그때 색이 만들어진다"
     }
    ],
    "주제": "색은 객관적 속성이자 동시에 보는 이의 해석으로 만들어진다는 설명",
@@ -13035,28 +13069,10 @@
      "반의어": "subjective, biased, prejudiced, partial"
     },
     {
-     "낱말": "maintain",
-     "뜻": "주장하다",
-     "동의어": "assert, claim, affirm, state, declare",
-     "반의어": "deny, refute, reject, contradict, renounce"
-    },
-    {
-     "낱말": "interpret",
-     "뜻": "해석하다",
-     "동의어": "explain, clarify, understand",
-     "반의어": "misunderstand, confuse, misinterpret, distort"
-    },
-    {
      "낱말": "real",
      "뜻": "진짜인",
      "동의어": "genuine, authentic, actual, true",
      "반의어": "fake, false, artificial, counterfeit"
-    },
-    {
-     "낱말": "correct",
-     "뜻": "옳은",
-     "동의어": "right, proper, exact, precise",
-     "반의어": "incorrect, wrong, false, inaccurate, mistaken"
     },
     {
      "낱말": "physical",
@@ -13065,10 +13081,28 @@
      "반의어": "mental, emotional, abstract"
     },
     {
+     "낱말": "maintain",
+     "뜻": "주장하다",
+     "동의어": "assert, claim, affirm, state, declare",
+     "반의어": "deny, refute, reject, contradict, renounce"
+    },
+    {
+     "낱말": "correct",
+     "뜻": "옳은",
+     "동의어": "right, proper, exact, precise",
+     "반의어": "incorrect, wrong, false, inaccurate, mistaken"
+    },
+    {
      "낱말": "create",
      "뜻": "만들다",
      "동의어": "make, generate, produce, invent, design",
      "반의어": "destroy, ruin, eliminate, demolish"
+    },
+    {
+     "낱말": "interpret",
+     "뜻": "해석하다",
+     "동의어": "explain, clarify, understand",
+     "반의어": "misunderstand, confuse, misinterpret, distort"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -13917,11 +13951,19 @@
    "흐름": [
     {
      "제목": "전제",
-     "글": "소설을 쓰려면 조사가 필요하다\n[문제] 범죄 소설·과학 스릴러는\n→ 더 높은 수준의 세부 사항을 요구정보는 찾기 어렵지 않다\n→ 범죄물 작가를 위한 경찰서 탐방도 있다\n→ 정중한 편지로 방문 허가를 얻는다"
+     "글": "소설을 쓰려면 조사가 필요하다\n[문제] 범죄 소설·과학 스릴러는\n→ 더 높은 수준의 세부 사항을 요구"
+    },
+    {
+     "제목": "수단",
+     "글": "정보는 찾기 어렵지 않다\n→ 범죄물 작가를 위한 경찰서 탐방도 있다\n→ 정중한 편지로 방문 허가를 얻는다"
     },
     {
      "제목": "경고",
-     "글": "찾은 것을 다 담으면\n→ 독자를 지루하게 만든다\n[핵심] 중요한 세부는 인간의 경험을 드러냄시간표나 청사진이 아니라\n→ 인물·긴장·갈등으로 이야기를 말하는 것"
+     "글": "찾은 것을 다 담으면\n→ 독자를 지루하게 만든다\n[핵심] 중요한 세부는 인간의 경험을 드러냄"
+    },
+    {
+     "제목": "결론",
+     "글": "시간표나 청사진이 아니라\n→ 인물·긴장·갈등으로 이야기를 말하는 것"
     }
    ],
    "주제": "소설의 조사는 세부 자체가 아니라 인간의 경험을 드러낼 때 의미가 있다",
@@ -13934,28 +13976,10 @@
      "반의어": ""
     },
     {
-     "낱말": "earn",
-     "뜻": "가져오다",
-     "동의어": "gain, obtain, acquire, procure",
-     "반의어": "lose, surrender, give up"
-    },
-    {
-     "낱말": "crucial",
-     "뜻": "중대한",
-     "동의어": "essential, vital, important, critical",
-     "반의어": "trivial, unimportant, minor, negligible"
-    },
-    {
      "낱말": "organize",
      "뜻": "조직하다",
      "동의어": "arrange, structure, coordinate, plan",
      "반의어": "disorganize, disorder, scatter, disrupt"
-    },
-    {
-     "낱말": "pack",
-     "뜻": "채우다",
-     "동의어": "fill, load, stuff, crowd",
-     "반의어": "empty, unpack, remove"
     },
     {
      "낱말": "polite",
@@ -13964,10 +13988,28 @@
      "반의어": "rude, impolite, disrespectful"
     },
     {
+     "낱말": "earn",
+     "뜻": "가져오다",
+     "동의어": "gain, obtain, acquire, procure",
+     "반의어": "lose, surrender, give up"
+    },
+    {
+     "낱말": "pack",
+     "뜻": "채우다",
+     "동의어": "fill, load, stuff, crowd",
+     "반의어": "empty, unpack, remove"
+    },
+    {
      "낱말": "reveal",
      "뜻": "드러내다",
      "동의어": "disclose, expose, unveil, show",
      "반의어": "conceal, hide, cover, obscure"
+    },
+    {
+     "낱말": "crucial",
+     "뜻": "중대한",
+     "동의어": "essential, vital, important, critical",
+     "반의어": "trivial, unimportant, minor, negligible"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -14901,11 +14943,19 @@
    "흐름": [
     {
      "제목": "전제",
-     "글": "음식·공기부터 세균·바이러스까지\n→ 거의 모든 것이 입을 거쳐 몸에 닿는다\n[역할] 건강한 입은 폐로 갈 공기 길을 열고\n→ 치아·잇몸이 해로운 미생물을 막는다생겨난 순간부터 삶의 모든 측면에\n→ 구강 건강이 영향을 미친다"
+     "글": "음식·공기부터 세균·바이러스까지\n→ 거의 모든 것이 입을 거쳐 몸에 닿는다\n[역할] 건강한 입은 폐로 갈 공기 길을 열고\n→ 치아·잇몸이 해로운 미생물을 막는다"
+    },
+    {
+     "제목": "범위",
+     "글": "생겨난 순간부터 삶의 모든 측면에\n→ 구강 건강이 영향을 미친다"
     },
     {
      "제목": "비유",
-     "글": "입안의 일은 빙산의 일각\n→ 몸 다른 곳에서 일어나는 일의 반영나쁜 구강 건강은 전신 질병의 원인\n→ 미생물이 혈류로 들어가 어디든 이동\n[결론] 심각한 건강상의 위험을 초래한다"
+     "글": "입안의 일은 빙산의 일각\n→ 몸 다른 곳에서 일어나는 일의 반영"
+    },
+    {
+     "제목": "위험",
+     "글": "나쁜 구강 건강은 전신 질병의 원인\n→ 미생물이 혈류로 들어가 어디든 이동\n[결론] 심각한 건강상의 위험을 초래한다"
     }
    ],
    "주제": "입은 몸의 관문이며 구강 건강이 전신 건강을 좌우한다는 설명",
@@ -14915,7 +14965,19 @@
      "낱말": "prevent",
      "뜻": "지키다",
      "동의어": "stop, avoid, hinder, obstruct",
-     "반의어": "allow, permit, facilitate encourage"
+     "반의어": "allow, permit, facilitate, encourage"
+    },
+    {
+     "낱말": "adequate",
+     "뜻": "적당한",
+     "동의어": "sufficient, enough, acceptable, satisfactory",
+     "반의어": "inadequate, insufficient, lacking, deficient"
+    },
+    {
+     "낱말": "harmful",
+     "뜻": "해로운",
+     "동의어": "damaging, injurious, detrimental, destructive",
+     "반의어": "beneficial, helpful, safe, harmless"
     },
     {
      "낱말": "affect",
@@ -14924,22 +14986,10 @@
      "반의어": ""
     },
     {
-     "낱말": "adequate",
-     "뜻": "적당한",
-     "동의어": "sufficient, enough, acceptable, satisfactory",
-     "반의어": "inadequate, , insufficient, lacking, deficient"
-    },
-    {
      "낱말": "poor",
      "뜻": "형편없는",
      "동의어": "inadequate, bad, insufficient",
      "반의어": "excellent, good, sufficient"
-    },
-    {
-     "낱말": "harmful",
-     "뜻": "해로운",
-     "동의어": "damaging, injurious, detrimental, destructive",
-     "반의어": "beneficial, helpful, safe, harmless"
     },
     {
      "낱말": "serious",
@@ -15914,11 +15964,19 @@
    "흐름": [
     {
      "제목": "사례",
-     "글": "아이는 장난감에, 대학생은 식당 음식에\n→ 우리도 좋아하던 TV쇼에 흥미를 잃는다\n[요점] 인간은 쉽게 지루해한다신경 세포가 그렇게 설계되어 있다\n→ 같은 자극의 초기 흥분 반응을 약화\n→ 변하는 것, 특히 빨리 변하는 것엔 강화"
+     "글": "아이는 장난감에, 대학생은 식당 음식에\n→ 우리도 좋아하던 TV쇼에 흥미를 잃는다\n[요점] 인간은 쉽게 지루해한다"
+    },
+    {
+     "제목": "원인",
+     "글": "신경 세포가 그렇게 설계되어 있다\n→ 같은 자극의 초기 흥분 반응을 약화\n→ 변하는 것, 특히 빨리 변하는 것엔 강화"
     },
     {
      "제목": "진화",
-     "글": "조상은 나무보다 나무에서 움직이는\n→ 퓨마 같은 것에 주의해 생존 값을 얻음변하지 않는 환경에서의 지루함은\n→ 신경 흥분을 낮춰 새 자극을 두드러지게\n[비유] 반딧불이를 보려 앞문 불을 끄는 일"
+     "글": "조상은 나무보다 나무에서 움직이는\n→ 퓨마 같은 것에 주의해 생존 값을 얻음"
+    },
+    {
+     "제목": "기능",
+     "글": "변하지 않는 환경에서의 지루함은\n→ 신경 흥분을 낮춰 새 자극을 두드러지게\n[비유] 반딧불이를 보려 앞문 불을 끄는 일"
     }
    ],
    "주제": "인간이 쉽게 지루해하는 것은 새 자극을 알아채기 위한 신경의 설계라는 설명",
@@ -15931,34 +15989,10 @@
      "반의어": "gain, obtain, acquire, keep"
     },
     {
-     "낱말": "evolve",
-     "뜻": "진화하다",
-     "동의어": "develop, progress, advance, transform",
-     "반의어": "regress, stagnate, halt"
-    },
-    {
-     "낱말": "stand",
-     "뜻": "out 두드러지다, 눈에",
-     "동의어": "",
-     "반의어": ""
-    },
-    {
-     "낱말": "띄다",
-     "뜻": "",
-     "동의어": "be noticeable, be prominent, shine",
-     "반의어": ""
-    },
-    {
      "낱말": "reduce",
      "뜻": "줄이다",
      "동의어": "decrease, lessen, diminish, cut",
      "반의어": "increase, raise, expand, enhance"
-    },
-    {
-     "낱말": "unchanging",
-     "뜻": "변하지 않는",
-     "동의어": "constant, stable, fixed, static",
-     "반의어": "changing, variable, dynamic"
     },
     {
      "낱말": "enhance",
@@ -15967,10 +16001,28 @@
      "반의어": "weaken, diminish, reduce, undermine"
     },
     {
-     "낱말": "turn",
-     "뜻": "down 낮추다",
+     "낱말": "evolve",
+     "뜻": "진화하다",
+     "동의어": "develop, progress, advance, transform",
+     "반의어": "regress, stagnate, halt"
+    },
+    {
+     "낱말": "unchanging",
+     "뜻": "변하지 않는",
+     "동의어": "constant, stable, fixed, static",
+     "반의어": "changing, variable, dynamic"
+    },
+    {
+     "낱말": "turn down",
+     "뜻": "낮추다",
      "동의어": "reduce, decrease, lower",
      "반의어": "increase, raise, boost"
+    },
+    {
+     "낱말": "stand out",
+     "뜻": "두드러지다, 눈에띄다",
+     "동의어": "be noticeable, be prominent, shine",
+     "반의어": ""
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -17633,11 +17685,19 @@
    "흐름": [
     {
      "제목": "현상",
-     "글": "일부 국가는 뇌사 판정 지침을 강화\n→ 장기 이식을 고려할 때 더 엄격하게\n[사례] 몇몇 유럽 국가의 법적 요건\n→ 기증자는 의사 팀 전체가 동의해야 함대중의 두려움을 완화하려는 것\n→ 장기 확보를 위한 이른 판정에 대한 의심"
+     "글": "일부 국가는 뇌사 판정 지침을 강화\n→ 장기 이식을 고려할 때 더 엄격하게\n[사례] 몇몇 유럽 국가의 법적 요건\n→ 기증자는 의사 팀 전체가 동의해야 함"
+    },
+    {
+     "제목": "의도",
+     "글": "대중의 두려움을 완화하려는 것\n→ 장기 확보를 위한 이른 판정에 대한 의심"
     },
     {
      "제목": "반론",
-     "글": "의심을 줄이는지 의문이다\n→ 오히려 의심을 만들어 내기도 한다\n[문제] 뇌사 판정이 부정확하다는 잘못된 믿음일관성을 위해서라도\n→ 기준은 매장·화장 예정자와 똑같아야 한다"
+     "글": "의심을 줄이는지 의문이다\n→ 오히려 의심을 만들어 내기도 한다\n[문제] 뇌사 판정이 부정확하다는 잘못된 믿음"
+    },
+    {
+     "제목": "주장",
+     "글": "일관성을 위해서라도\n→ 기준은 매장·화장 예정자와 똑같아야 한다"
     }
    ],
    "주제": "장기 기증자에게만 엄격한 뇌사 판정 기준이 오히려 불신을 키운다는 주장",
@@ -17650,22 +17710,22 @@
      "반의어": "lenient, easygoing, gentle, soft, flexible"
     },
     {
-     "낱말": "reduce",
-     "뜻": "줄이다",
-     "동의어": "decrease, diminish, lessen, cut down, minimize",
-     "반의어": "increase, expand, grow raise"
-    },
-    {
      "낱말": "ease",
      "뜻": "완화시키다",
      "동의어": "alleviate, relieve, reduce, soothe, lessen",
      "반의어": "intensify, worsen, aggravate"
     },
     {
+     "낱말": "reduce",
+     "뜻": "줄이다",
+     "동의어": "decrease, diminish, lessen, cut down, minimize",
+     "반의어": "increase, expand, grow, raise"
+    },
+    {
      "낱말": "maintain",
      "뜻": "유지하다",
      "동의어": "sustain, keep, uphold",
-     "반의어": "discontinue, abandon ,"
+     "반의어": "discontinue, abandon"
     },
     {
      "낱말": "unreliable",
@@ -18627,11 +18687,19 @@
    "흐름": [
     {
      "제목": "인상",
-     "글": "미니멀리즘은 부정적으로 비친다\n→ 소중한 소유물을 희생하는 일로만 봐서\n[이유] 불안은 소유물에 대한 애착에서 온다\n→ 오래 곁에 둔 것과 멀어지기는 어렵다감정의 동물인 인간은\n→ 곁의 물건에 의미를 부여한다\n[의문] 감정을 상하게 하는데 왜 하는가"
+     "글": "미니멀리즘은 부정적으로 비친다\n→ 소중한 소유물을 희생하는 일로만 봐서\n[이유] 불안은 소유물에 대한 애착에서 온다\n→ 오래 곁에 둔 것과 멀어지기는 어렵다"
+    },
+    {
+     "제목": "전제",
+     "글": "감정의 동물인 인간은\n→ 곁의 물건에 의미를 부여한다\n[의문] 감정을 상하게 하는데 왜 하는가"
     },
     {
      "제목": "반박",
-     "글": "그 질문의 가정이 근본적으로 틀렸다\n→ 미니멀리즘은 감정을 상하게 하지 않는다치울 때 조금 슬프지만\n→ 머지않아 명료함의 기쁨이 이긴다\n[결론] 안 쓰는 물건만 없애면 된다"
+     "글": "그 질문의 가정이 근본적으로 틀렸다\n→ 미니멀리즘은 감정을 상하게 하지 않는다"
+    },
+    {
+     "제목": "경험",
+     "글": "치울 때 조금 슬프지만\n→ 머지않아 명료함의 기쁨이 이긴다\n[결론] 안 쓰는 물건만 없애면 된다"
     }
    ],
    "주제": "미니멀리즘이 감정을 해친다는 가정은 틀렸다는 반박",
@@ -18644,34 +18712,10 @@
      "반의어": "positive, optimistic, favorable"
     },
     {
-     "낱말": "hurt",
-     "뜻": "상하게 하다",
-     "동의어": "injure, harm, damage, wound, distress",
-     "반의어": "heal, soothe, comfort aid, repair"
-    },
-    {
-     "낱말": "overcome",
-     "뜻": "극복하다",
-     "동의어": "conquer, surmount, prevail, defeat, resolve",
-     "반의어": "succumb, fail, yield, surrender, give up"
-    },
-    {
      "낱말": "valuable",
      "뜻": "가치 있는",
      "동의어": "precious, worthwhile, important, beneficial",
      "반의어": "worthless, insignificant, trivial, unimportant"
-    },
-    {
-     "낱말": "simple",
-     "뜻": "간단한",
-     "동의어": "easy, straightforward, basic, uncomplicated, clear , ↔ complex, difficult, elaborate",
-     "반의어": ""
-    },
-    {
-     "낱말": "clarity",
-     "뜻": "명료함",
-     "동의어": "clearness, transparency",
-     "반의어": "confusion, uncertainty, obscurity"
     },
     {
      "낱말": "emotional",
@@ -18680,10 +18724,34 @@
      "반의어": "unemotional, detached, rational, indifferent, reserved"
     },
     {
+     "낱말": "hurt",
+     "뜻": "상하게 하다",
+     "동의어": "injure, harm, damage, wound, distress",
+     "반의어": "heal, soothe, comfort, aid, repair"
+    },
+    {
+     "낱말": "simple",
+     "뜻": "간단한",
+     "동의어": "easy, straightforward, basic, uncomplicated, clear",
+     "반의어": "complex, difficult, elaborate"
+    },
+    {
      "낱말": "useless",
      "뜻": "쓸모없는",
      "동의어": "worthless, futile, ineffective, unproductive",
      "반의어": "useful, valuable, beneficial, effective, productive"
+    },
+    {
+     "낱말": "overcome",
+     "뜻": "극복하다",
+     "동의어": "conquer, surmount, prevail, defeat, resolve",
+     "반의어": "succumb, fail, yield, surrender, give up"
+    },
+    {
+     "낱말": "clarity",
+     "뜻": "명료함",
+     "동의어": "clearness, transparency",
+     "반의어": "confusion, uncertainty, obscurity"
     },
     {
      "낱말": "eliminate",
@@ -19527,11 +19595,19 @@
    "흐름": [
     {
      "제목": "주장",
-     "글": "시각 체계는 스스로 적응한다\n[실험] 심리학자 Stratton의 자가 실험\n→ 며칠간 세상을 뒤집는 반전 안경을 씀큰 어려움을 겪었다\n→ 포크로 음식을 입에 넣는 것도 도전\n[적응] 시간이 지나며 새 자극에 적응\n→ 집중하면 똑바로 보고 정상 행동까지"
+     "글": "시각 체계는 스스로 적응한다\n[실험] 심리학자 Stratton의 자가 실험\n→ 며칠간 세상을 뒤집는 반전 안경을 씀"
+    },
+    {
+     "제목": "초기",
+     "글": "큰 어려움을 겪었다\n→ 포크로 음식을 입에 넣는 것도 도전\n[적응] 시간이 지나며 새 자극에 적응\n→ 집중하면 똑바로 보고 정상 행동까지"
     },
     {
      "제목": "반대",
-     "글": "안경을 벗자 다시 문제에 부딪힘\n→ 잡으려 할 때 반대 손을 썼다지각을 되돌릴 수 있었다\n→ 하루 만에 모든 것이 정상으로 돌아옴"
+     "글": "안경을 벗자 다시 문제에 부딪힘\n→ 잡으려 할 때 반대 손을 썼다"
+    },
+    {
+     "제목": "결말",
+     "글": "지각을 되돌릴 수 있었다\n→ 하루 만에 모든 것이 정상으로 돌아옴"
     }
    ],
    "주제": "반전 안경 실험으로 드러난 시각 체계의 적응 능력",
@@ -19540,8 +19616,20 @@
     {
      "낱말": "remarkable",
      "뜻": "주목할 만한",
-     "동의어": "extraordinary, notable exceptional, outstanding",
+     "동의어": "extraordinary, notable, exceptional, outstanding",
      "반의어": "ordinary, unremarkable, average, common"
+    },
+    {
+     "낱말": "clear",
+     "뜻": "분명한",
+     "동의어": "obvious, evident, plain, apparent",
+     "반의어": "unclear, ambiguous, vague, obscure"
+    },
+    {
+     "낱말": "reverse",
+     "뜻": "뒤집다",
+     "동의어": "invert, overturn, switch, flip",
+     "반의어": "maintain, keep, uphold, support"
     },
     {
      "낱말": "adjust",
@@ -19550,22 +19638,10 @@
      "반의어": ""
     },
     {
-     "낱말": "clear",
-     "뜻": "분명한",
-     "동의어": ", = obvious, evident, plain, apparent",
-     "반의어": "unclear, ambiguous, vague, obscure"
-    },
-    {
      "낱말": "normal",
      "뜻": "정상의",
      "동의어": "typical, usual, standard, regular",
      "반의어": "abnormal, irregular, unusual, rare"
-    },
-    {
-     "낱말": "reverse",
-     "뜻": "뒤집다",
-     "동의어": "invert, overturn, switch, flip",
-     "반의어": "maintain, keep, uphold, support"
     },
     {
      "낱말": "confront",
@@ -20710,11 +20786,19 @@
    "흐름": [
     {
      "제목": "실험",
-     "글": "참가자에게 '달은 왜 상이 있나' 질문\n→ 절반은 인터넷 검색, 절반은 금지\n[2단계] 모두에게 새 질문을 제시\n→ '스위스 치즈엔 왜 구멍이 있나' 등 1단계 질문과 관련이 없었다\n→ 검색한 쪽에 이점이 전혀 없었다\n[예상] 두 집단의 자신감이 같아야 한다"
+     "글": "참가자에게 '달은 왜 상이 있나' 질문\n→ 절반은 인터넷 검색, 절반은 금지\n[2단계] 모두에게 새 질문을 제시\n→ '스위스 치즈엔 왜 구멍이 있나' 등"
+    },
+    {
+     "제목": "조건",
+     "글": "1단계 질문과 관련이 없었다\n→ 검색한 쪽에 이점이 전혀 없었다\n[예상] 두 집단의 자신감이 같아야 한다"
     },
     {
      "제목": "결과",
-     "글": "검색한 쪽이 더 많이 안다고 평가\n→ 검색하지 않은 질문에 대해서도관련 없는 정보 접근만으로도\n→ 지적 자신감이 부풀려진다"
+     "글": "검색한 쪽이 더 많이 안다고 평가\n→ 검색하지 않은 질문에 대해서도"
+    },
+    {
+     "제목": "시사",
+     "글": "관련 없는 정보 접근만으로도\n→ 지적 자신감이 부풀려진다"
     }
    ],
    "주제": "인터넷 접근이 관련 없는 문제의 지적 자신감까지 부풀린다는 연구",
@@ -20727,28 +20811,28 @@
      "반의어": "related, connected, relevant, associated"
     },
     {
-     "낱말": "pump",
-     "뜻": "up ~을 증가시키다",
-     "동의어": "increase, boost, amplify elevate",
-     "반의어": "reduce, decrease, lower, lessen"
-    },
-    {
      "낱말": "advantage",
      "뜻": "이점",
      "동의어": "benefit, asset, edge",
      "반의어": "disadvantage, drawback"
     },
     {
-     "낱말": "confidence",
-     "뜻": "자신감",
-     "동의어": ", = self-assurance, certainty, trust",
-     "반의어": "doubt, insecurity, uncertainty"
-    },
-    {
      "낱말": "knowledgeable",
      "뜻": "지식이 있는",
      "동의어": "informed, educated",
      "반의어": "ignorant, uneducated"
+    },
+    {
+     "낱말": "pump up",
+     "뜻": "~을 증가시키다",
+     "동의어": "increase, boost, amplify, elevate",
+     "반의어": "reduce, decrease, lower, lessen"
+    },
+    {
+     "낱말": "confidence",
+     "뜻": "자신감",
+     "동의어": "self-assurance, certainty, trust",
+     "반의어": "doubt, insecurity, uncertainty"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -21506,11 +21590,19 @@
    "흐름": [
     {
      "제목": "주장",
-     "글": "Bateson: 우리는 특정 특징에 초점을\n→ 맞추는 방식으로 세상을 이해한다오리너구리의 털을 확대하면\n→ 각 가닥이 서로 다르게 보인다\n→ 축소하면 하나의 동일한 개체로 보인다"
+     "글": "Bateson: 우리는 특정 특징에 초점을\n→ 맞추는 방식으로 세상을 이해한다"
+    },
+    {
+     "제목": "예시",
+     "글": "오리너구리의 털을 확대하면\n→ 각 가닥이 서로 다르게 보인다\n→ 축소하면 하나의 동일한 개체로 보인다"
     },
     {
      "제목": "층위",
-     "글": "개체로도, 종이나 생태계로도 본다\n→ 도구가 있으면 층위 사이 이동도 가능\n[한계] 결정적으로 한 번에 하나만 취한다개체의 행동, 종의 공통점,\n→ 더 큰 생태 패턴 중 하나를 본다\n[결론] 모든 관점은 한 면을 강조하고\n→ 다른 면을 외면하는 일을 포함한다"
+     "글": "개체로도, 종이나 생태계로도 본다\n→ 도구가 있으면 층위 사이 이동도 가능\n[한계] 결정적으로 한 번에 하나만 취한다"
+    },
+    {
+     "제목": "선택",
+     "글": "개체의 행동, 종의 공통점,\n→ 더 큰 생태 패턴 중 하나를 본다\n[결론] 모든 관점은 한 면을 강조하고\n→ 다른 면을 외면하는 일을 포함한다"
     }
    ],
    "주제": "세상을 이해하는 관점은 한 번에 하나이며 늘 다른 면을 외면한다는 주장",
@@ -21523,34 +21615,10 @@
      "반의어": "general, ordinary, common"
     },
     {
-     "낱말": "uniform",
-     "뜻": "동일한",
-     "동의어": "consistent, identical",
-     "반의어": "varied, diverse, different"
-    },
-    {
-     "낱말": "emphasize",
-     "뜻": "강조하다",
-     "동의어": "stress, highlight, underline",
-     "반의어": "ignore, overlook, disregard"
-    },
-    {
-     "낱말": "take",
-     "뜻": "up ~을 차지하다",
+     "낱말": "take up",
+     "뜻": "~을 차지하다",
      "동의어": "occupy, consume, engage, fill, absorb",
      "반의어": "free up, release, relinquish, vacate, yield"
-    },
-    {
-     "낱말": "unite",
-     "뜻": "통합하다",
-     "동의어": "merge, join, combine, integrate, consolidate",
-     "반의어": "divide, separate, split"
-    },
-    {
-     "낱말": "ignore",
-     "뜻": "무시하다",
-     "동의어": "disregard, neglect, overlook",
-     "반의어": "acknowledge, notice, recognize, pay attention to"
     },
     {
      "낱말": "different",
@@ -21559,10 +21627,34 @@
      "반의어": "similar, alike, identical, analogous"
     },
     {
+     "낱말": "uniform",
+     "뜻": "동일한",
+     "동의어": "consistent, identical",
+     "반의어": "varied, diverse, different"
+    },
+    {
+     "낱말": "unite",
+     "뜻": "통합하다",
+     "동의어": "merge, join, combine, integrate, consolidate",
+     "반의어": "divide, separate, split"
+    },
+    {
      "낱말": "additional",
      "뜻": "추가적인",
      "동의어": "extra, supplementary, added",
      "반의어": "reduced, subtracted"
+    },
+    {
+     "낱말": "emphasize",
+     "뜻": "강조하다",
+     "동의어": "stress, highlight, underline",
+     "반의어": "ignore, overlook, disregard"
+    },
+    {
+     "낱말": "ignore",
+     "뜻": "무시하다",
+     "동의어": "disregard, neglect, overlook",
+     "반의어": "acknowledge, notice, recognize, pay attention to"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -22529,11 +22621,19 @@
    "흐름": [
     {
      "제목": "주제",
-     "글": "플라톤의 실재론과 원의 예\n[문제] '원이란 무엇인가'\n→ 돌에 새긴 원, 모래에 그린 원을 가리킴면밀히 보면 완벽한 원은 없다\n→ 모두 결함이 있고 시간이 지나며 쇠한다\n[난문] 보거나 만질 수 없다면\n→ 완벽한 원을 어떻게 말할 수 있는가"
+     "글": "플라톤의 실재론과 원의 예\n[문제] '원이란 무엇인가'\n→ 돌에 새긴 원, 모래에 그린 원을 가리킴"
+    },
+    {
+     "제목": "지적",
+     "글": "면밀히 보면 완벽한 원은 없다\n→ 모두 결함이 있고 시간이 지나며 쇠한다\n[난문] 보거나 만질 수 없다면\n→ 완벽한 원을 어떻게 말할 수 있는가"
     },
     {
      "제목": "대답",
-     "글": "우리가 보는 세상은\n→ '형상'이라는 실재의 불충분한 반영물\n[비유] 완벽한 고양이가 완벽한 쥐를 쫓는형상은 감각을 넘어선 완벽한 세계에\n→ 보이지 않지만 존재하는 진정한 실재"
+     "글": "우리가 보는 세상은\n→ '형상'이라는 실재의 불충분한 반영물\n[비유] 완벽한 고양이가 완벽한 쥐를 쫓는"
+    },
+    {
+     "제목": "신념",
+     "글": "형상은 감각을 넘어선 완벽한 세계에\n→ 보이지 않지만 존재하는 진정한 실재"
     }
    ],
    "주제": "완벽한 원은 없다는 지적에서 출발한 플라톤의 형상 이론",
@@ -22543,37 +22643,13 @@
      "낱말": "include",
      "뜻": "포함하다",
      "동의어": "contain, encompass, incorporate, involve, comprise",
-     "반의어": "exclude, omit, remove eliminate, leave out"
-    },
-    {
-     "낱말": "perfect",
-     "뜻": "완벽한",
-     "동의어": "flawless, ideal, complete",
-     "반의어": "flawed, imperfect, defective, incomplete, faulty"
-    },
-    {
-     "낱말": "poor",
-     "뜻": "형편없는",
-     "동의어": "inadequate, deficient, inferior, bad",
-     "반의어": "excellent, superior, high-quality"
+     "반의어": "exclude, omit, remove, eliminate, leave out"
     },
     {
      "낱말": "consider",
      "뜻": "고려하다",
-     "동의어": "contemplate, think about, reflect on, ponder , ↔ disregard, ignore, overlook, neglect",
-     "반의어": ""
-    },
-    {
-     "낱말": "flaw",
-     "뜻": "결함",
-     "동의어": "defect, fault, weakness, imperfection",
-     "반의어": "strength, merit, perfection"
-    },
-    {
-     "낱말": "invisible",
-     "뜻": "안 보이는",
-     "동의어": "unseen, hidden, concealed, undetectable",
-     "반의어": "visible, apparent, noticeable, perceivable, detectable"
+     "동의어": "contemplate, think about, reflect on, ponder",
+     "반의어": "disregard, ignore, overlook, neglect"
     },
     {
      "낱말": "indicate",
@@ -22582,10 +22658,34 @@
      "반의어": "conceal, hide, obscure"
     },
     {
+     "낱말": "perfect",
+     "뜻": "완벽한",
+     "동의어": "flawless, ideal, complete",
+     "반의어": "flawed, imperfect, defective, incomplete, faulty"
+    },
+    {
+     "낱말": "flaw",
+     "뜻": "결함",
+     "동의어": "defect, fault, weakness, imperfection",
+     "반의어": "strength, merit, perfection"
+    },
+    {
      "낱말": "extraordinary",
      "뜻": "비범한",
      "동의어": "exceptional, remarkable, outstanding, unusual, amazing",
      "반의어": "ordinary, common, typical, usual"
+    },
+    {
+     "낱말": "poor",
+     "뜻": "형편없는",
+     "동의어": "inadequate, deficient, inferior, bad",
+     "반의어": "excellent, superior, high-quality"
+    },
+    {
+     "낱말": "invisible",
+     "뜻": "안 보이는",
+     "동의어": "unseen, hidden, concealed, undetectable",
+     "반의어": "visible, apparent, noticeable, perceivable, detectable"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -23623,11 +23723,19 @@
    "흐름": [
     {
      "제목": "정의",
-     "글": "대수의 법칙은 통계학의 법칙\n→ 데이터가 많을수록 예측이 좋아진다\n[법칙] 실험을 더 자주 할수록\n→ 결과의 평균이 실제 상태에 맞춰진다룰렛에서 7에 걸면 초보자의 운도\n→ 베팅을 반복하면 진짜 승률에 가까워짐\n→ 곧 운은 어느 순간 사라진다"
+     "글": "대수의 법칙은 통계학의 법칙\n→ 데이터가 많을수록 예측이 좋아진다\n[법칙] 실험을 더 자주 할수록\n→ 결과의 평균이 실제 상태에 맞춰진다"
+    },
+    {
+     "제목": "예1",
+     "글": "룰렛에서 7에 걸면 초보자의 운도\n→ 베팅을 반복하면 진짜 승률에 가까워짐\n→ 곧 운은 어느 순간 사라진다"
     },
     {
      "제목": "예2",
-     "글": "자동차 보험사는 많은 데이터를 모음\n→ 연령·지역·차 브랜드별 사고 확률 파악카지노와 보험업 모두\n→ 개별 손실의 균형을 이 법칙에 의존한다"
+     "글": "자동차 보험사는 많은 데이터를 모음\n→ 연령·지역·차 브랜드별 사고 확률 파악"
+    },
+    {
+     "제목": "결론",
+     "글": "카지노와 보험업 모두\n→ 개별 손실의 균형을 이 법칙에 의존한다"
     }
    ],
    "주제": "데이터가 많아질수록 실제 확률에 수렴한다는 대수의 법칙",
@@ -23640,28 +23748,28 @@
      "반의어": ""
     },
     {
-     "낱말": "fade",
-     "뜻": "away 사라지다",
-     "동의어": "disappear, vanish, diminish",
-     "반의어": "appear, emerge"
-    },
-    {
      "낱말": "repeat",
      "뜻": "반복하다",
      "동의어": "reiterate, replicate, duplicate",
      "반의어": "stop, cease, halt"
     },
     {
-     "낱말": "rely",
-     "뜻": "on ~에 의존하다",
-     "동의어": "depend on, trust, lean on, count on",
-     "반의어": "doubt, distrust, oppose, resist"
-    },
-    {
      "낱말": "approach",
      "뜻": "~에 접근하다",
      "동의어": "move toward, reach, come close, advance",
      "반의어": "avoid, distance"
+    },
+    {
+     "낱말": "fade away",
+     "뜻": "사라지다",
+     "동의어": "disappear, vanish, diminish",
+     "반의어": "appear, emerge"
+    },
+    {
+     "낱말": "rely on",
+     "뜻": "~에 의존하다",
+     "동의어": "depend on, trust, lean on, count on",
+     "반의어": "doubt, distrust, oppose, resist"
     },
     {
      "낱말": "individual",
@@ -24575,11 +24683,19 @@
    "흐름": [
     {
      "제목": "전제",
-     "글": "청소년의 뇌는 20대 초반까지\n→ 완전히 발달하지 않는다\n[결과] 의사 결정 회로가 불리하게 작동늦게 성숙하는 전전두엽 피질\n→ 미리 생각하고 결과를 평가하는 통제 센터\n→ 화난 문자를 고쳐 쓰게 하는 영역"
+     "글": "청소년의 뇌는 20대 초반까지\n→ 완전히 발달하지 않는다\n[결과] 의사 결정 회로가 불리하게 작동"
+    },
+    {
+     "제목": "늦음",
+     "글": "늦게 성숙하는 전전두엽 피질\n→ 미리 생각하고 결과를 평가하는 통제 센터\n→ 화난 문자를 고쳐 쓰게 하는 영역"
     },
     {
      "제목": "빠름",
-     "글": "대뇌변연계는 더 일찍 성숙\n→ 정서적 반응 처리의 중심 역할\n→ 그래서 의사 결정에 더 많이 개입결과 인식보다 감정 요인이 이끈다\n[불균형] 감정 기반과 논리 기반 사이의 차이\n→ 십 대의 그릇된 결정을 설명해 준다"
+     "글": "대뇌변연계는 더 일찍 성숙\n→ 정서적 반응 처리의 중심 역할\n→ 그래서 의사 결정에 더 많이 개입"
+    },
+    {
+     "제목": "결정",
+     "글": "결과 인식보다 감정 요인이 이끈다\n[불균형] 감정 기반과 논리 기반 사이의 차이\n→ 십 대의 그릇된 결정을 설명해 준다"
     }
    ],
    "주제": "전전두엽과 대뇌변연계의 성숙 시차가 십 대의 결정을 설명한다는 글",
@@ -24592,34 +24708,10 @@
      "반의어": "neglect, ignore, abandon, overlook"
     },
     {
-     "낱말": "evaluate",
-     "뜻": "평가하다",
-     "동의어": "assess, judge, estimate appraise, rate",
-     "반의어": "ignore, disregard, neglect, overlook"
-    },
-    {
-     "낱말": "emotional",
-     "뜻": "감정적인",
-     "동의어": "sensitive, expressive, sentimental",
-     "반의어": "unemotional, detached, rational, indifferent, reserved"
-    },
-    {
      "낱말": "disadvantage",
      "뜻": "불리한 점",
      "동의어": "drawback, hindrance, liability, weakness, shortcoming",
      "반의어": "advantage, benefit, strength, asset"
-    },
-    {
-     "낱말": "responsible",
-     "뜻": "책임이 있는",
-     "동의어": ", = accountable, liable, in charge",
-     "반의어": "irresponsible, unaccountable, exempt, free"
-    },
-    {
-     "낱말": "imbalance",
-     "뜻": "불균형",
-     "동의어": "inequality, disparity, unevenness, disequilibrium",
-     "반의어": "balance, equality, equilibrium"
     },
     {
      "낱말": "mature",
@@ -24628,10 +24720,34 @@
      "반의어": "immature, regress, decline"
     },
     {
+     "낱말": "evaluate",
+     "뜻": "평가하다",
+     "동의어": "assess, judge, estimate, appraise, rate",
+     "반의어": "ignore, disregard, neglect, overlook"
+    },
+    {
+     "낱말": "responsible",
+     "뜻": "책임이 있는",
+     "동의어": "accountable, liable, in charge",
+     "반의어": "irresponsible, unaccountable, exempt, free"
+    },
+    {
      "낱말": "prevent",
      "뜻": "막다",
      "동의어": "stop, hinder, obstruct, block",
      "반의어": "allow, permit, enable"
+    },
+    {
+     "낱말": "emotional",
+     "뜻": "감정적인",
+     "동의어": "sensitive, expressive, sentimental",
+     "반의어": "unemotional, detached, rational, indifferent, reserved"
+    },
+    {
+     "낱말": "imbalance",
+     "뜻": "불균형",
+     "동의어": "inequality, disparity, unevenness, disequilibrium",
+     "반의어": "balance, equality, equilibrium"
     },
     {
      "낱말": "rule",
@@ -25239,11 +25355,19 @@
    "흐름": [
     {
      "제목": "현황",
-     "글": "딥러닝 얼굴 인식의 눈에 띄는 발전\n→ 그래도 식별 성능에 한계가 남는다\n[원인] 학습 단계에서 쓰는 데이터베이스\n→ 사례가 충분치 않으면 결과가 흔들린다 10년도 더 전에 등록된 사람이면\n→ 안면 생체 측정 성능이 떨어진다"
+     "글": "딥러닝 얼굴 인식의 눈에 띄는 발전\n→ 그래도 식별 성능에 한계가 남는다\n[원인] 학습 단계에서 쓰는 데이터베이스\n→ 사례가 충분치 않으면 결과가 흔들린다"
+    },
+    {
+     "제목": "예시",
+     "글": "10년도 더 전에 등록된 사람이면\n→ 안면 생체 측정 성능이 떨어진다"
     },
     {
      "제목": "요인",
-     "글": "얼굴 질감의 변화를 겪는다\n→ 주름과 처진 피부가 나타난다\n→ 체중 증가·감소로 더 두드러진다연구자들이 얼굴 노화 모델을 개발\n→ 기간에 따른 얼굴 특성 차이를 보완한다"
+     "글": "얼굴 질감의 변화를 겪는다\n→ 주름과 처진 피부가 나타난다\n→ 체중 증가·감소로 더 두드러진다"
+    },
+    {
+     "제목": "대응",
+     "글": "연구자들이 얼굴 노화 모델을 개발\n→ 기간에 따른 얼굴 특성 차이를 보완한다"
     }
    ],
    "주제": "등록 시점과의 얼굴 변화가 딥러닝 얼굴 인식의 한계를 만든다는 설명",
@@ -25252,44 +25376,32 @@
     {
      "낱말": "remarkable",
      "뜻": "눈에 띄는",
-     "동의어": "extraordinary, notable exceptional, impressive",
+     "동의어": "extraordinary, notable, exceptional, impressive",
      "반의어": "ordinary, unremarkable, typical, average"
+    },
+    {
+     "낱말": "limitation",
+     "뜻": "한계",
+     "동의어": "restriction, constraint, drawback, weakness, flaw",
+     "반의어": "advantage, strength"
+    },
+    {
+     "낱말": "relate to",
+     "뜻": "~에 관련 있다",
+     "동의어": "connect, link, associate, pertain",
+     "반의어": "separate, dissociate, distinguish, exclude"
     },
     {
      "낱말": "contain",
      "뜻": "포함하다",
      "동의어": "include, encompass, hold, comprise",
-     "반의어": "exclude, release, omit lack"
-    },
-    {
-     "낱말": "highlight",
-     "뜻": "강조하다",
-     "동의어": "emphasize, underline, stress",
-     "반의어": "ignore, downplay, minimize, overlook"
-    },
-    {
-     "낱말": "limitation",
-     "뜻": "한계",
-     "동의어": ", restriction, constraint, drawback, weakness, flaw",
-     "반의어": "advantage, strength"
+     "반의어": "exclude, release, omit, lack"
     },
     {
      "낱말": "decrease",
      "뜻": "감소하다",
-     "동의어": "reduce, decline, lessen, drop , ↔ increase, grow, rise, expand",
-     "반의어": ""
-    },
-    {
-     "낱말": "counteract",
-     "뜻": "대응하다",
-     "동의어": "offset, prevent, correct",
-     "반의어": ""
-    },
-    {
-     "낱말": "relate",
-     "뜻": "to ~에 관련 있다",
-     "동의어": "connect, link, associate, pertain",
-     "반의어": "separate, dissociate, distinguish, exclude"
+     "동의어": "reduce, decline, lessen, drop",
+     "반의어": "increase, grow, rise, expand"
     },
     {
      "낱말": "identify",
@@ -25298,14 +25410,20 @@
      "반의어": ""
     },
     {
-     "낱말": "compensate",
-     "뜻": "for ~을 보완하",
-     "동의어": "",
+     "낱말": "highlight",
+     "뜻": "강조하다",
+     "동의어": "emphasize, underline, stress",
+     "반의어": "ignore, downplay, minimize, overlook"
+    },
+    {
+     "낱말": "counteract",
+     "뜻": "대응하다",
+     "동의어": "offset, prevent, correct",
      "반의어": ""
     },
     {
-     "낱말": "다",
-     "뜻": "",
+     "낱말": "compensate for",
+     "뜻": "~을 보완하다",
      "동의어": "make up for, offset, counterbalance",
      "반의어": ""
     }
@@ -26192,11 +26310,19 @@
    "흐름": [
     {
      "제목": "전제",
-     "글": "음식 다양성의 감소는 인간이 만든 일\n[시기] 2차 대전 이후 수십 년에 최대 손실\n[배경] 수백만 명을 배고픔에서 구하려고\n→ 쌀·밀을 엄청난 규모로 생산하는 법 발견수천 개 전통 종이 대체됨\n→ 소수의 초생산적인 종으로 바뀌었다"
+     "글": "음식 다양성의 감소는 인간이 만든 일\n[시기] 2차 대전 이후 수십 년에 최대 손실\n[배경] 수백만 명을 배고픔에서 구하려고\n→ 쌀·밀을 엄청난 규모로 생산하는 법 발견"
+    },
+    {
+     "제목": "결과",
+     "글": "수천 개 전통 종이 대체됨\n→ 소수의 초생산적인 종으로 바뀌었다"
     },
     {
      "제목": "성과",
-     "글": "처음에는 굉장히 잘 작동했다\n→ 1970~2020년 생산량 3배, 인구 2배 이상획일적인 작물은 재앙에 더 취약\n→ 좁은 선택에 의존하는 세계 식량 시스템\n→ 질병·해충·기후 위기에 못 버틸 수 있다"
+     "글": "처음에는 굉장히 잘 작동했다\n→ 1970~2020년 생산량 3배, 인구 2배 이상"
+    },
+    {
+     "제목": "위험",
+     "글": "획일적인 작물은 재앙에 더 취약\n→ 좁은 선택에 의존하는 세계 식량 시스템\n→ 질병·해충·기후 위기에 못 버틸 수 있다"
     }
    ],
    "주제": "증산을 위한 작물 획일화가 식량 시스템을 재앙에 취약하게 만든다는 글",
@@ -26209,34 +26335,10 @@
      "반의어": "increase, rise, surge"
     },
     {
-     "낱말": "produce",
-     "뜻": "생산하다",
-     "동의어": "create, generate, manufacture, make, yield",
-     "반의어": "consume, destroy, deplete, use up"
-    },
-    {
-     "낱말": "uniform",
-     "뜻": "획일적인",
-     "동의어": "consistent, identical, standardized",
-     "반의어": "varied, diverse, different"
-    },
-    {
      "낱말": "loss",
      "뜻": "상실",
      "동의어": "deprivation, lack, absence",
      "반의어": "gain, acquisition, recovery"
-    },
-    {
-     "낱말": "enormous",
-     "뜻": "엄청난",
-     "동의어": "huge, vast, immense, massive, gigantic",
-     "반의어": "tiny, small, insignificant"
-    },
-    {
-     "낱말": "narrow",
-     "뜻": "좁은",
-     "동의어": "tight, confined, limited, restricted",
-     "반의어": "wide, broad, large"
     },
     {
      "낱말": "save",
@@ -26245,10 +26347,34 @@
      "반의어": "endanger, harm"
     },
     {
+     "낱말": "produce",
+     "뜻": "생산하다",
+     "동의어": "create, generate, manufacture, make, yield",
+     "반의어": "consume, destroy, deplete, use up"
+    },
+    {
+     "낱말": "enormous",
+     "뜻": "엄청난",
+     "동의어": "huge, vast, immense, massive, gigantic",
+     "반의어": "tiny, small, insignificant"
+    },
+    {
      "낱말": "replace",
      "뜻": "대체하다",
      "동의어": "substitute, swap, exchange",
      "반의어": "keep, retain, preserve, maintain"
+    },
+    {
+     "낱말": "uniform",
+     "뜻": "획일적인",
+     "동의어": "consistent, identical, standardized",
+     "반의어": "varied, diverse, different"
+    },
+    {
+     "낱말": "narrow",
+     "뜻": "좁은",
+     "동의어": "tight, confined, limited, restricted",
+     "반의어": "wide, broad, large"
     },
     {
      "낱말": "survive",
@@ -26976,11 +27102,19 @@
    "흐름": [
     {
      "제목": "전성기",
-     "글": "1940~2000년 쿠바가 야구계를 지배\n→ 월드컵 28회 중 25회, 올림픽 5회 중 3회\n[상징] 머리부터 발끝까지 빨간 유니폼\n→ 회색·흰색 바지의 북미 스타일과 대조재능에 유니폼 색까지 더해져\n→ 경기 전부터 상대가 겁에 질렸다\n[변화] 몇 년 전 유니폼을 현대화함\n→ 다른 나라 스타일에 맞추었다"
+     "글": "1940~2000년 쿠바가 야구계를 지배\n→ 월드컵 28회 중 25회, 올림픽 5회 중 3회\n[상징] 머리부터 발끝까지 빨간 유니폼\n→ 회색·흰색 바지의 북미 스타일과 대조"
+    },
+    {
+     "제목": "효과",
+     "글": "재능에 유니폼 색까지 더해져\n→ 경기 전부터 상대가 겁에 질렸다\n[변화] 몇 년 전 유니폼을 현대화함\n→ 다른 나라 스타일에 맞추었다"
     },
     {
      "제목": "결과",
-     "글": "그 시기부터 대표 팀이 쇠퇴\n→ 교체 이후 정상에 오른 적이 없다브랜드는 시대에 맞게 조정 가능\n→ 뿌리를 버리면 부정적 영향이 드러난다"
+     "글": "그 시기부터 대표 팀이 쇠퇴\n→ 교체 이후 정상에 오른 적이 없다"
+    },
+    {
+     "제목": "교훈",
+     "글": "브랜드는 시대에 맞게 조정 가능\n→ 뿌리를 버리면 부정적 영향이 드러난다"
     }
    ],
    "주제": "유니폼 교체 이후 쇠퇴한 쿠바 야구가 보여 주는 전통의 무게",
@@ -26993,28 +27127,28 @@
      "반의어": "follow, submit, obey, comply"
     },
     {
-     "낱말": "decline",
-     "뜻": "쇠퇴하다",
-     "동의어": "decrease, deteriorate, diminish",
-     "반의어": "improve, advance, rise grow"
-    },
-    {
      "낱말": "superior",
      "뜻": "우월한",
      "동의어": "better, greater, advanced, higher",
      "반의어": "inferior, lower, worse, subordinate"
     },
     {
-     "낱말": "abandon",
-     "뜻": "버리다",
-     "동의어": "discard, relinquish",
-     "반의어": "keep, maintain, retain, , cherish"
-    },
-    {
      "낱말": "alter",
      "뜻": "변경하다",
      "동의어": "modify, change, adjust, adapt",
      "반의어": "maintain, preserve, stabilize, keep"
+    },
+    {
+     "낱말": "decline",
+     "뜻": "쇠퇴하다",
+     "동의어": "decrease, deteriorate, diminish",
+     "반의어": "improve, advance, rise, grow"
+    },
+    {
+     "낱말": "abandon",
+     "뜻": "버리다",
+     "동의어": "discard, relinquish",
+     "반의어": "keep, maintain, retain, cherish"
     },
     {
      "낱말": "neglect",
@@ -27769,11 +27903,19 @@
    "흐름": [
     {
      "제목": "출발",
-     "글": "초기 문화 진화 모델들은\n→ 집단 유전학 개념을 문화에 적용했다전파·혁신·선택은 개념적으로\n→ 전달·돌연변이·선택과 닮았다\n[수정] 그러나 차이를 설명하려면 고쳐야 함"
+     "글": "초기 문화 진화 모델들은\n→ 집단 유전학 개념을 문화에 적용했다"
+    },
+    {
+     "제목": "유사",
+     "글": "전파·혁신·선택은 개념적으로\n→ 전달·돌연변이·선택과 닮았다\n[수정] 그러나 차이를 설명하려면 고쳐야 함"
     },
     {
      "제목": "이유1",
-     "글": "문화 전파는 유전 규칙을 안 따른다\n→ 부모가 다른 형태를 가져도\n→ 자녀가 한쪽을 그대로 얻지 않는다부모가 아닌 성인·또래에게서도 얻음\n[결론] 집단의 문화적 특성 빈도는\n→ 부모가 그 특성을 가졌을 확률을 넘어선다"
+     "글": "문화 전파는 유전 규칙을 안 따른다\n→ 부모가 다른 형태를 가져도\n→ 자녀가 한쪽을 그대로 얻지 않는다"
+    },
+    {
+     "제목": "이유2",
+     "글": "부모가 아닌 성인·또래에게서도 얻음\n[결론] 집단의 문화적 특성 빈도는\n→ 부모가 그 특성을 가졌을 확률을 넘어선다"
     }
    ],
    "주제": "문화 전파는 유전 규칙을 그대로 따르지 않는다는 문화 진화 모델의 수정",
@@ -27786,22 +27928,22 @@
      "반의어": "unnoticeable, subtle, hidden, inconspicuous, minor"
     },
     {
-     "낱말": "modify",
-     "뜻": "수정하다",
-     "동의어": "alter, adjust, change, revise",
-     "반의어": "keep, retain, maintain"
-    },
-    {
-     "낱말": "acquire",
-     "뜻": "얻다",
-     "동의어": "obtain, gain, receive, secure, get",
-     "반의어": "lose, give up, surrender"
-    },
-    {
      "낱말": "connection",
      "뜻": "접점",
      "동의어": "link, relationship, association, tie",
      "반의어": "disconnection, separation"
+    },
+    {
+     "낱말": "liken A to B A",
+     "뜻": "를 B에 비유하다",
+     "동의어": "compare A to B, equate A with B, associate A with B",
+     "반의어": ""
+    },
+    {
+     "낱말": "modify",
+     "뜻": "수정하다",
+     "동의어": "alter, adjust, change, revise",
+     "반의어": "keep, retain, maintain"
     },
     {
      "낱말": "follow",
@@ -27810,22 +27952,16 @@
      "반의어": "disobey, ignore, defy, resist, disregard"
     },
     {
-     "낱말": "liken",
-     "뜻": "A to B A를 B에 비유하",
-     "동의어": "",
-     "반의어": ""
-    },
-    {
-     "낱말": "다",
-     "뜻": "",
-     "동의어": "compare A to B, equate A with B, associate A with B",
-     "반의어": ""
-    },
-    {
      "낱말": "strictly",
      "뜻": "엄격하게",
      "동의어": "rigidly, firmly, severely, rigorously",
      "반의어": "loosely, leniently, casually, flexibly, gently"
+    },
+    {
+     "낱말": "acquire",
+     "뜻": "얻다",
+     "동의어": "obtain, gain, receive, secure, get",
+     "반의어": "lose, give up, surrender"
     }
    ],
    "단원": "고1 23년 11월 모의고사",
@@ -28773,11 +28909,19 @@
    "흐름": [
     {
      "제목": "예시",
-     "글": "공중으로 던져진 공의 움직임\n→ 처음 준 힘, 관성, 공기 저항, 중력\n→ 그에 맞춰 곡선 경로로 움직인다그 경로는 특정한 힘을 나타내지 않음\n→ 세 기본 힘의 결합만 있을 뿐이다\n[핵심] 고립된 작용 외에 무언가가 있다\n→ 바로 그들의 공동 작용이다"
+     "글": "공중으로 던져진 공의 움직임\n→ 처음 준 힘, 관성, 공기 저항, 중력\n→ 그에 맞춰 곡선 경로로 움직인다"
+    },
+    {
+     "제목": "관찰",
+     "글": "그 경로는 특정한 힘을 나타내지 않음\n→ 세 기본 힘의 결합만 있을 뿐이다\n[핵심] 고립된 작용 외에 무언가가 있다\n→ 바로 그들의 공동 작용이다"
     },
     {
      "제목": "적용",
-     "글": "사람도 둘 이상이 함께 있으면\n→ 상호 관계와 집단 배치가 생긴다\n→ 개인만 보면 드러나지 않는 것들이다어떤 성향은 자극이 될 타인 없이는\n→ 유발되지 않는다(경쟁·이성·보호 성향)\n[결론] 관계에 들어갈 때까지\n→ 인간 본성의 특성은 다 나타나지 않는다"
+     "글": "사람도 둘 이상이 함께 있으면\n→ 상호 관계와 집단 배치가 생긴다\n→ 개인만 보면 드러나지 않는 것들이다"
+    },
+    {
+     "제목": "근거",
+     "글": "어떤 성향은 자극이 될 타인 없이는\n→ 유발되지 않는다(경쟁·이성·보호 성향)\n[결론] 관계에 들어갈 때까지\n→ 인간 본성의 특성은 다 나타나지 않는다"
     }
    ],
    "주제": "공의 곡선 경로에 비유해 관계 속에서만 드러나는 인간 본성을 설명한 글",
@@ -28790,34 +28934,10 @@
      "반의어": "stop, cease, quit"
     },
     {
-     "낱말": "isolated",
-     "뜻": "고립된",
-     "동의어": "secluded, remote, solitary, separated",
-     "반의어": "connected, integrated joined, linked"
-    },
-    {
-     "낱말": "reveal",
-     "뜻": "드러내다",
-     "동의어": "disclose, expose, uncover, show",
-     "반의어": "conceal, hide, cover, obscure"
-    },
-    {
      "낱말": "constant",
      "뜻": "지속적인",
      "동의어": "continuous, perpetual, steady, unceasing",
      "반의어": "intermittent, irregular, occasional"
-    },
-    {
-     "낱말": "joint",
-     "뜻": "공동의",
-     "동의어": "shared, mutual, collaborative, united , ↔ individual, separate, single, independent",
-     "반의어": ""
-    },
-    {
-     "낱말": "confine",
-     "뜻": "국한시키다",
-     "동의어": "restrict, limit, restrain, enclose",
-     "반의어": "free, liberate, expand, release"
     },
     {
      "낱말": "combination",
@@ -28826,10 +28946,34 @@
      "반의어": "separation, division, isolation"
     },
     {
+     "낱말": "isolated",
+     "뜻": "고립된",
+     "동의어": "secluded, remote, solitary, separated",
+     "반의어": "connected, integrated, joined, linked"
+    },
+    {
+     "낱말": "joint",
+     "뜻": "공동의",
+     "동의어": "shared, mutual, collaborative, united",
+     "반의어": "individual, separate, single, independent"
+    },
+    {
      "낱말": "mutual",
      "뜻": "상호적인",
      "동의어": "reciprocal, shared, common, joint",
      "반의어": "one-sided, exclusive, independent"
+    },
+    {
+     "낱말": "reveal",
+     "뜻": "드러내다",
+     "동의어": "disclose, expose, uncover, show",
+     "반의어": "conceal, hide, cover, obscure"
+    },
+    {
+     "낱말": "confine",
+     "뜻": "국한시키다",
+     "동의어": "restrict, limit, restrain, enclose",
+     "반의어": "free, liberate, expand, release"
     },
     {
      "낱말": "arouse",
