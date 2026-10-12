@@ -1138,7 +1138,7 @@ def _paras_html(a, html, ps, ctx=None):
     paras = (html or "").split("<br/>")
     just = a.get("align") == "justify"
     # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
-    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and " " not in x and not a.get("tab") else "")
+    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and "\u2028" not in x and not a.get("tab") else "")
     slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
     if any(slots):
         return "".join(_slot_para(a, x, s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
