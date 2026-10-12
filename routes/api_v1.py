@@ -354,6 +354,15 @@ def _editor_design(series, design):
         return False
 
 
+def _editor_dir():
+    """편집기 제작 디자인 찍기 폴더 — 스튜디오 루트의 _jobs/editor 아래(볼륨). 임시 폴더(/tmp)에 두면 배포·재시작 때 찍은 PDF 가
+    사라져, 잡 기록은 남는데 쪽 그림·PDF 를 못 내줬다(contents 가 찍어 둔 지면을 다시 쓰려면 남아 있어야 한다, 2026-10-12)."""
+    import tempfile
+    root = os.path.join(jobs._dir(), "editor")
+    os.makedirs(root, exist_ok=True)
+    return tempfile.mkdtemp(prefix="editor_render_", dir=root)
+
+
 def _render_editor(series, design, body, book):
     import tempfile
     from core.sources import yos_analysis, yos_editor
@@ -376,7 +385,7 @@ def _render_editor(series, design, body, book):
     if not content:
         return jsonify({"error": "이 디자인에 넣을 원고가 없다 — " + ", ".join(sorted({str(s.get("label") or s.get("key")) for s in rep["skipped"]})) + " 은(는) 아직 자리가 없다",
                         "report": rep}), 400
-    d = tempfile.mkdtemp(prefix="editor_render_")
+    d = _editor_dir()
     with open(os.path.join(d, "content.json"), "w", encoding="utf-8") as f:
         json.dump({"content": content, "report": rep}, f, ensure_ascii=False)
     with open(os.path.join(d, "source.json"), "w", encoding="utf-8") as f:   # 받은 원고 그대로 — 유형별 꼴을 실물로 대 볼 때(/renders/<jid>/source)
@@ -566,7 +575,7 @@ def render_redraw(jid):
     content = (request.get_json(silent=True) or {}).get("content")
     if not isinstance(content, dict) or not content:
         return jsonify({"error": "content 가 필요하다"}), 400
-    d = tempfile.mkdtemp(prefix="editor_render_")                         # 새 폴더 — 쪽 그림 캐시가 예전 결과를 내주지 않게
+    d = _editor_dir()                                                    # 새 폴더 — 쪽 그림 캐시가 예전 결과를 내주지 않게
     with open(os.path.join(d, "content.json"), "w", encoding="utf-8") as f:
         json.dump({"content": content, "report": job.meta.get("report")}, f, ensure_ascii=False)
     meta = {k: v for k, v in job.meta.items() if k not in ("book_dir", "bid", "callback", "plan")}   # 다시 그리기는 contents 에 웹훅을 안 보낸다
