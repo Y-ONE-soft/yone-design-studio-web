@@ -378,6 +378,9 @@ def _render_editor(series, design, body, book):
     except (OSError, ValueError):
         return jsonify({"error": "디자인 문서(units.json)가 없다"}), 400
     sample = (pkg.get("plan") or {}).get("content") or {}
+    if isinstance(sample.get("원고"), list):                             # 레코드 차례 샘플 — 어댑터는 옛 꼴 샘플(책 머리 데이터 필드 · 유형 제목)을 읽는다
+        from core.units import content as _content
+        sample = _content.from_records(pkg.get("plan") or {}, {p["id"]: p for p in pkg.get("pages") or []}, sample)
     if conv is yos_editor:                                               # 워크북 — 한 벌의 칸 수는 틀의 자리 수로
         content, rep = conv.to_content(data, sample, yos_editor.template_caps(pkg))
     else:

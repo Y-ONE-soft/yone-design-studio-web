@@ -161,7 +161,9 @@ def test_to_records_follows_template_order_and_opens_chapters_with_records():
         {"page": "g2", "repeat": "each_set", "구분": "STEP 2"}, {"page": "b", "repeat": "each_set"}, {"page": "s", "repeat": "each_set"}]}]}
     old = {"단원명": ["1장", "2장"], "어휘": [{"지문": "가"}, {"지문": "나"}], "실전+문제": [["q1"], ["q2"]]}
     new = content.to_records(plan, pages, old)
-    assert new["원고"] == [{"단원명": "1장", "구분": "STEP 1"}, {"지문": "가"}, {"지문": "나"}, {"단원명": "2장", "구분": "STEP 2"}, {"실전+문제": [["q1"], ["q2"]]}]
+    assert new["원고"] == [{"단원명": "1장", "구분": "STEP 1", "_머리": "1"}, {"지문": "가"}, {"지문": "나"}, {"단원명": "2장", "구분": "STEP 2", "_머리": "1"},
+                          {"실전+문제": [["q1"], ["q2"]], "_머리": "1"}]
+    assert content.from_records(plan, pages, new) == old                  # 거꾸로 — 어댑터가 템플릿 샘플을 옛 꼴로 읽는다
     out = content.plan_pages(plan, pages, new)
     assert [p["id"].split("~")[0] for p in out] == ["g1", "a", "a", "g2", "s"]
     del old["실전+문제"]                                                   # STEP 2 장에 레코드가 없으면 그 장을 여는 상위 페이지도 빠진다
@@ -174,4 +176,6 @@ def test_to_records_multi_field_value_is_not_a_page():
     pages = {"g": {"id": "g", "name": "간지", "items": [box("학교"), box("교재명+강제목", 90)]}, "a": {"id": "a", "name": "분석", "items": [box("지문")]}}
     plan = {"sections": [{"id": "x", "pages": [{"page": "g", "repeat": "each_set"}, {"page": "a", "repeat": "each_set"}]}]}
     old = {"학교": ["광문고"], "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}], "분석": [{"지문": "가"}]}
-    assert content.to_records(plan, pages, old)["원고"] == [{"학교": "광문고", "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}]}, {"지문": "가"}]
+    new = content.to_records(plan, pages, old)
+    assert new["원고"] == [{"학교": "광문고", "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}], "_머리": "1"}, {"지문": "가"}]
+    assert content.from_records(plan, pages, new) == old

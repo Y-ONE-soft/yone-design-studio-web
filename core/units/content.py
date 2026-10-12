@@ -147,6 +147,7 @@ def to_records(plan, pages_by_id, old):
                 rec[k] = v.pop(0) if v else ""
             else:
                 rec[k] = v
+        rec["_머리"] = "1"                                                # 책 머리 데이터 필드로 만든 레코드 — from_records 가 되돌릴 때
         rows.append((f, rec, names.count(nm) > 1))
     keep = []
     for i, (f, rec, opener) in enumerate(rows):
@@ -159,9 +160,39 @@ def to_records(plan, pages_by_id, old):
             r["구분"] = f["구분"]
         keep.append(r)
     out = {"원고": keep}
-    used = {k for f, rec, _ in rows for k in rec if not recs_of(name(f))}
+    used = {k for f, rec, _ in rows for k in rec if not recs_of(name(f)) and k != "_머리"}
     out.update({k: v for k, v in old.items() if not recs_of(k) and k not in used})
     return out
+
+
+def from_records(plan, pages_by_id, new):
+    """레코드 차례 원고 → 옛 꼴({상위 페이지 첫 페이지 이름: [레코드]} + 책 머리 데이터 필드 목록) — to_records 의 거꾸로.
+    레코드마다 자동 상위 페이지 적용으로 고른 상위 페이지 이름 아래로. 글만 든 레코드(STEP 시작 · 간지)는 그 값들을 책 머리 데이터 필드 목록으로.
+    어댑터가 템플릿 샘플을 옛 꼴로 읽을 때(워크북 교재명 · 단원명 · 유형 제목)."""
+    new = new or {}
+    if not isinstance(new.get("원고"), list):
+        return new
+    out = {k: v for k, v in new.items() if k != "원고"}
+    seen = set()
+    for pg in _faces_by_chunk(plan, pages_by_id, new["원고"]):
+        rec = pg.get("_rec")
+        if rec is None or id(rec) in seen:
+            continue
+        seen.add(id(rec))
+        r = {k: v for k, v in rec.items() if (k != "구분" or k in _slots_of(pg)) and k != "_머리"}
+        if rec.get("_머리"):                                               # 책 머리 데이터 필드 — 글은 상위 페이지마다 하나씩 목록으로, 한 줄기(목록)는 통째로
+            for k, v in r.items():
+                if isinstance(v, list):
+                    out.setdefault(k, v)
+                else:
+                    out.setdefault(k, []).append(v)
+        else:
+            out.setdefault((pages_by_id.get(pg["id"].split("~")[0]) or {}).get("name") or "", []).append(r)
+    return out
+
+
+def _slots_of(pg):
+    return {_slot(it) for it in pg.get("items") or [] if _slot(it)}
 
 
 def _faces_by_chunk(plan, pages_by_id, chunks):

@@ -23,12 +23,11 @@ from core.units import content as C                                       # noqa
 
 card = sys.argv[1]
 series, _, did = card.partition("/")
-pkg = json.load(open(os.path.join(REPO, "catalog", series, "designs", did, "units.json"), encoding="utf-8"))
-pages = {p["id"]: p for p in pkg["pages"]}
-entries = [e for s in pkg["plan"]["sections"] for e in s["pages"]]
 
 
-def want(i, e):
+
+
+def want(i, e, pages, entries):
     """이 페이지에 둘 설정 — (레코드마다, 두 페이지짜리, 분류)"""
     nm = pages[e["page"]]["name"]
     each = e.get("repeat") == "each_set"
@@ -51,44 +50,55 @@ def want(i, e):
     sys.exit(f"이 도구가 모르는 틀 {series}")
 
 
-new = copy.deepcopy(pkg["plan"])
-st = [S("관리 카드 「원고 넣기」 — 편집기에서 연다", 1500), {"until": "docPages().length > 0 && page", "wait": 800},
-      {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000},
-      {"js": f"(() => {{ if (docPages().length !== {len(entries)}) throw new Error('쪽 수 ' + docPages().length); return '열린 문서 쪽 ' + docPages().length + ' · 카드 ' + JSON.stringify(plan.catalog); }})()"}]
-for i, e in enumerate(entries):
-    each, spread, gub = want(i, e)
-    ne = [x for s in new["sections"] for x in s["pages"]][i]
-    if each:
-        ne["repeat"] = "each_set"
-    if spread:
-        ne["펼침면"] = True
-    if gub:
-        ne["구분"] = gub
-    if (each == (e.get("repeat") == "each_set")) and not spread and not gub:
-        continue
-    nm = pages[e["page"]]["name"]
-    st += [S(f"{i + 1}쪽 「{nm}」 — {'레코드마다 · ' if each else ''}{'두 페이지짜리 · ' if spread else ''}{'분류 ' + gub if gub else ''}", 900),
-           {"js": f"(() => {{ openPage(docPages()[{i}]); return '쪽 열기 {i + 1}'; }})()"}, {"wait": 1500},
-           {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
-    if each and e.get("repeat") != "each_set":
-        st += [{"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1500}]
-    if spread:
-        st += [{"clickif": {"at": "#side #s-spread2", "when": "!document.querySelector('#side #s-spread2').checked"}, "wait": 1200}]
-    if gub:
-        st += [{"fill": {"at": "#side #s-gubun", "value": gub}, "wait": 1200}]
-    st += [{"js": f"(() => {{ const q = planPg(docPages()[{i}].id) || {{}}; "
-                  f"if ({'true' if each else 'false'} && q.repeat !== 'each_set') throw new Error('레코드마다 안 됨'); "
-                  f"if ({'true' if spread else 'false'} && !q.펼침면) throw new Error('두 페이지짜리 안 켜짐'); "
-                  f"if ({json.dumps(gub)} && q.구분 !== {json.dumps(gub)}) throw new Error('분류 안 들어감'); "
-                  f"return '{i + 1}쪽 ' + JSON.stringify({{repeat: q.repeat, 펼침면: q.펼침면, 구분: q.구분}}); }})()"}]
-sample = C.to_records(new, pages, pkg["plan"].get("content") or {})
-st += put_content(sample, "샘플 레코드 — 레코드 차례 꼴(옛 샘플을 바꾼 것)")
-st += [S("관리에 등록 — 같은 카드를 다시 그린다", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
-       {"pick": {"at": "#side #s-reg-series", "value": series}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
-st += [{"until": "/등록됨/.test(document.querySelector('#s-reg-st').textContent)", "wait": 300}] * 60
-st += [{"js": "(() => { const t = document.querySelector('#s-reg-st').textContent; if (!/등록됨/.test(t)) throw new Error('관리 등록 안 됨 — ' + t); "
-              f"if (!plan.catalog || plan.catalog.design !== '{did}') throw new Error('다른 카드로 등록 ' + JSON.stringify(plan.catalog)); "
-              "return '등록 ' + JSON.stringify(plan.catalog) + ' · ' + t; })()"}]
+
+def build(pkg):
+    """서버에서 연 문서(문서 묶음) → 할 일 단계 · 샘플"""
+    pages = {p["id"]: p for p in pkg["pages"]}
+    entries = [e for s in pkg["plan"]["sections"] for e in s["pages"]]
+    new = copy.deepcopy(pkg["plan"])
+    st = [S("관리 카드 「원고 넣기」 — 편집기에서 연다", 1500), {"until": "docPages().length > 0 && page", "wait": 800},
+          {"clickif": {"at": "#tg-side", "when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"}, "wait": 1000},
+          {"js": f"(() => {{ if (docPages().length !== {len(entries)}) throw new Error('쪽 수 ' + docPages().length); return '열린 문서 쪽 ' + docPages().length + ' · 카드 ' + JSON.stringify(plan.catalog); }})()"}]
+    for i, e in enumerate(entries):
+        each, spread, gub = want(i, e, pages, entries)
+        ne = [x for s in new["sections"] for x in s["pages"]][i]
+        if each:
+            ne["repeat"] = "each_set"
+        if spread:
+            ne["펼침면"] = True
+        if gub:
+            ne["구분"] = gub
+        if (each == (e.get("repeat") == "each_set")) and not spread and not gub:
+            continue
+        nm = pages[e["page"]]["name"]
+        st += [S(f"{i + 1}쪽 「{nm}」 — {'레코드마다 · ' if each else ''}{'두 페이지짜리 · ' if spread else ''}{'분류 ' + gub if gub else ''}", 900),
+               {"js": f"(() => {{ openPage(docPages()[{i}]); return '쪽 열기 {i + 1}'; }})()"}, {"wait": 1500},
+               {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
+        if each and e.get("repeat") != "each_set":
+            st += [{"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1500}]
+        if spread:
+            st += [{"clickif": {"at": "#side #s-spread2", "when": "!document.querySelector('#side #s-spread2').checked"}, "wait": 1200}]
+        if gub:
+            st += [{"fill": {"at": "#side #s-gubun", "value": gub}, "wait": 1200}]
+        st += [{"js": f"(() => {{ const q = planPg(docPages()[{i}].id) || {{}}; "
+                      f"if ({'true' if each else 'false'} && q.repeat !== 'each_set') throw new Error('레코드마다 안 됨'); "
+                      f"if ({'true' if spread else 'false'} && !q.펼침면) throw new Error('두 페이지짜리 안 켜짐'); "
+                      f"if ({json.dumps(gub)} && q.구분 !== {json.dumps(gub)}) throw new Error('분류 안 들어감'); "
+                      f"return '{i + 1}쪽 ' + JSON.stringify({{repeat: q.repeat, 펼침면: q.펼침면, 구분: q.구분}}); }})()"}]
+    base = pkg["plan"].get("content") or {}
+    if os.environ.get("UNIFY_FROM"):                                         # 옛 꼴 샘플을 그 커밋에서(이미 바꾼 템플릿을 다시 만들 때)
+        base = json.loads(subprocess.run(["git", "show", f"{os.environ['UNIFY_FROM']}:catalog/{series}/designs/{did}/units.json"],
+                                         cwd=REPO, capture_output=True, text=True, check=True).stdout)["plan"]["content"]
+    sample = C.to_records(new, pages, C.from_records(new, pages, base))
+    st += put_content(sample, "샘플 레코드 — 레코드 차례 꼴(옛 샘플을 바꾼 것)")
+    st += [S("관리에 등록 — 같은 카드를 다시 그린다", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+           {"pick": {"at": "#side #s-reg-series", "value": series}, "wait": 900}, {"click": "#side #s-reg", "wait": 3000}]
+    st += [{"until": "/등록됨/.test(document.querySelector('#s-reg-st').textContent)", "wait": 300}] * 60
+    st += [{"js": "(() => { const t = document.querySelector('#s-reg-st').textContent; if (!/등록됨/.test(t)) throw new Error('관리 등록 안 됨 — ' + t); "
+                  f"if (!plan.catalog || plan.catalog.design !== '{did}') throw new Error('다른 카드로 등록 ' + JSON.stringify(plan.catalog)); "
+                  "return '등록 ' + JSON.stringify(plan.catalog) + ' · ' + t; })()"}]
+    return st, sample
+
 
 OUT = os.path.expanduser(f"~/Downloads/편집기재현/통일_{series}_{did}")
 os.makedirs(OUT, exist_ok=True)
@@ -102,9 +112,6 @@ else:
     join.fresh_data()
     srv = join.server()
 try:
-    sf = os.path.join(OUT, "steps.json")
-    json.dump(st, open(sf, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-
     class _NoRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, *a, **k):
             return None
@@ -114,6 +121,11 @@ try:
     except urllib.error.HTTPError as e:
         start = join.BASE + e.headers["Location"] if e.headers.get("Location", "").startswith("/") else e.headers.get("Location")
     print("문서 주소", start, flush=True)
+    plan_id = start.split("plan=")[-1].split("&")[0]
+    pkg = json.load(urllib.request.urlopen(f"{join.BASE}/api/units/package?plan={plan_id}"))   # 서버에서 연 그 문서
+    st, sample = build(pkg)
+    sf = os.path.join(OUT, "steps.json")
+    json.dump(st, open(sf, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     r = subprocess.run([join.PY, "tests/e2e/rec.py", start, sf, os.path.join(OUT, "rereg.mp4"), "1600", "1000", "8"],
                        cwd=REPO, env=dict(os.environ, REC_FAST="1"), capture_output=True, text=True)
     log = r.stdout + r.stderr
