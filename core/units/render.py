@@ -421,10 +421,7 @@ def ruby_html(base, rb, a, ctx):
     return ('\u2060<span data-ruby="1" style="display:inline-block;width:0;height:0;position:relative;vertical-align:baseline">'
             f'<span style="position:absolute;left:0;{v};display:grid;white-space:nowrap;line-height:1;text-indent:0;letter-spacing:0;word-spacing:0">'
             f'<span style="grid-area:1/1;height:0;overflow:hidden;visibility:hidden">{plain}</span>'
-            + (f'<span style="grid-area:1/1;justify-self:center;width:0;display:flex;justify-content:center;{st}"><span style="white-space:nowrap">{esc(rb.get("t", ""))}</span></span>'
-               if just == "center" else                                   # 가운데 — 폭 0 칸을 본문 가운데에 두고 그 칸에서 양옆으로(본문보다 긴 윗주도 양옆 글자 위로 나간다)
-               f'<span style="grid-area:1/1;justify-self:start;{st}">{esc(rb.get("t", ""))}</span>')
-            + f'</span></span>\u2060{base}')
+            f'<span style="grid-area:1/1;justify-self:{just};{st}">{esc(rb.get("t", ""))}</span></span></span>\u2060{base}')
 
 
 def side_html(t, a, ctx):
