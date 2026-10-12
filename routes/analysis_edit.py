@@ -11,6 +11,7 @@ contents 조판 문서 모양으로 되돌려(core/sources/yos_analysis.to_doc) 
 
 틀은 디자인 폴더의 units.json 그대로(찍기와 같은 _editor_lib). 틀 그림은 디자인마다 임시 폴더 하나에 푼다.
 """
+import json
 import os
 import re
 import tempfile
@@ -50,6 +51,10 @@ def render_pages():
             return jsonify({"error": "조판 문서(doc)나 레코드(rec)가 필요하다"}), 400
         rec = yos_analysis.record(doc)
     content = {"분석 펼침면": [rec]}
+    from routes.api_v1 import records_for
+    from routes.catalog import _ddir
+    with open(os.path.join(_ddir(SERIES, design), "units.json"), encoding="utf-8") as f:
+        content = records_for(json.load(f), content)                      # 템플릿이 레코드 차례 꼴이면 레코드 차례로
     work = os.path.join(tempfile.gettempdir(), "analysis_edit", design)   # 틀 그림 풀 자리 — 디자인마다 하나
     os.makedirs(work, exist_ok=True)
     lib, plan, skin = _editor_lib({"book_dir": work, "series": SERIES, "design": design}, content)

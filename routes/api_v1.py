@@ -382,6 +382,8 @@ def _render_editor(series, design, body, book):
         content, rep = conv.to_content(data, sample, yos_editor.template_caps(pkg))
     else:
         content, rep = conv.to_content(data, sample)
+    if content:
+        content = records_for(pkg, content)
     if not content:
         return jsonify({"error": "이 디자인에 넣을 원고가 없다 — " + ", ".join(sorted({str(s.get("label") or s.get("key")) for s in rep["skipped"]})) + " 은(는) 아직 자리가 없다",
                         "report": rep}), 400
@@ -402,6 +404,14 @@ def _render_editor(series, design, body, book):
                     "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
 
 
+def records_for(pkg, content):
+    """템플릿 샘플 레코드가 레코드 차례 꼴({원고: […]})이면 원고도 레코드 차례로(데이터 병합 원고 꼴 통일 — content.to_records). 아니면 그대로"""
+    if not isinstance(((pkg.get("plan") or {}).get("content") or {}).get("원고"), list):
+        return content
+    from core.units import content as _content
+    return _content.to_records(pkg.get("plan") or {}, {p["id"]: p for p in pkg.get("pages") or []}, content)
+
+
 def _content_plan(pkg, content):
     """틀 문서에서 원고가 온 것만 남긴 문서 사본 — 책처럼(속표지 · 간지 · 차례 · 뒤붙이까지).
 
@@ -412,6 +422,8 @@ def _content_plan(pkg, content):
       첫 장 앞(속표지)과 맨 끝 꾸밈 면들(MEMO · 뒤표지)은 늘 남긴다"""
     import copy
     plan = copy.deepcopy(pkg.get("plan") or {})
+    if isinstance(content.get("원고"), list):                            # 레코드 차례 원고 — 레코드마다 상위 페이지를 고른다(자동 상위 페이지 적용). 원고가 안 온 상위 페이지는 안 찍힌다
+        return plan
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
     parts = {p["id"]: p for p in pkg.get("parts") or []}
     plain = lambda nm: not nm or re.fullmatch(r"빈 면 \d+", nm)

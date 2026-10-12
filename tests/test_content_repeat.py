@@ -123,14 +123,14 @@ def test_chunks_pick_face_by_slots_then_group_then_count():
         "n3": {"id": "n3", "name": "노트 3칸", "items": [box("흐름", 20 + 20 * k) for k in range(3)]},
         "n4": {"id": "n4", "name": "노트 4칸", "items": [box("흐름", 20 + 20 * k) for k in range(4)]},
         "t": {"id": "t", "name": "TEST", "items": [box("암기")]},
-        "t2": {"id": "t2", "name": "빈 면 6", "items": [box("암기")]},   # 이름 안 정한 쪽 = 앞 면에 붙은 쪽(펼침면)
+        "t2": {"id": "t2", "name": "정답", "items": [box("암기")]},   # 이름과 상관없이 — 앞 쪽 「두 페이지짜리」로 한 펼침면
         "back": {"id": "back", "name": "뒷면", "items": [box("학교")]},
     }
     plan = {"front": ["front"], "sections": [{"id": "s", "pages": [
         {"page": "a1", "repeat": "each_set", "구분": "교과서"}, {"page": "a2", "repeat": "each_set", "구분": "모의고사"},
         {"page": "ap", "repeat": "each_set", "구분": "모의고사"},
         {"page": "n3", "repeat": "each_set"}, {"page": "n4", "repeat": "each_set"},
-        {"page": "t", "repeat": "each_set"}, {"page": "t2", "repeat": "each_set"}, {"page": "back", "repeat": "once"}]}]}   # 구간 끝 「한 번만」 = 맨 뒤
+        {"page": "t", "repeat": "each_set", "펼침면": True}, {"page": "t2", "repeat": "each_set"}, {"page": "back", "repeat": "once"}]}]}   # 구간 끝 「한 번만」 = 맨 뒤
     chunks = [{"지문": "가", "해석": "A", "구분": "모의고사"}, {"흐름": ["1", "2", "3", "4"]}, {"지문": "나", "해석": "B", "구분": "교과서"},
               {"흐름": ["1", "2", "3"]}, {"암기": ["x", "y"]}, {"모르는 자리": "?"},
               {"지문": "다", "해석": "C", "그림": "data:,", "구분": "모의고사"}]
@@ -139,3 +139,39 @@ def test_chunks_pick_face_by_slots_then_group_then_count():
     filled, rep = content.fill(out, {"원고": chunks})
     assert text_of(filled[1]) == ["가", "A"] and text_of(filled[4]) == ["1", "2", "3"]
     assert rep["unknown"] == []
+
+
+def test_chunk_faces_split_without_spread_flag():
+    """「두 페이지짜리」를 안 켜면 쪽마다 따로 된 상위 페이지 — 쪽 이름(「빈 면 N」)으로 짐작하지 않는다"""
+    pages = {"t": {"id": "t", "name": "TEST", "items": [box("암기")]}, "t2": {"id": "t2", "name": "빈 면 2", "items": [box("암기"), box("단원", 90)]}}
+    plan = {"sections": [{"id": "s", "pages": [{"page": "t", "repeat": "each_set"}, {"page": "t2", "repeat": "each_set"}]}]}
+    out = content.plan_pages(plan, pages, {"원고": [{"암기": "x", "단원": "1과"}]})
+    assert [p["id"] for p in out] == ["t2"]
+
+
+def test_to_records_follows_template_order_and_opens_chapters_with_records():
+    """옛 꼴 원고 → 레코드 차례 — 템플릿 상위 페이지 차례, 장을 여는 상위 페이지(같은 이름 여럿)는 그 장에 레코드가 있을 때만, 분류를 레코드에"""
+    pages = {
+        "g1": {"id": "g1", "name": "STEP 간지", "items": [box("단원명")]}, "g2": {"id": "g2", "name": "STEP 간지", "items": [box("단원명")]},
+        "a": {"id": "a", "name": "어휘", "items": [box("지문")]}, "b": {"id": "b", "name": "어법", "items": [box("지문"), box("발문", 90)]},
+        "s": {"id": "s", "name": "실전", "items": [box("실전+문제")]},
+    }
+    plan = {"sections": [{"id": "x", "pages": [
+        {"page": "g1", "repeat": "each_set", "구분": "STEP 1"}, {"page": "a", "repeat": "each_set"},
+        {"page": "g2", "repeat": "each_set", "구분": "STEP 2"}, {"page": "b", "repeat": "each_set"}, {"page": "s", "repeat": "each_set"}]}]}
+    old = {"단원명": ["1장", "2장"], "어휘": [{"지문": "가"}, {"지문": "나"}], "실전+문제": [["q1"], ["q2"]]}
+    new = content.to_records(plan, pages, old)
+    assert new["원고"] == [{"단원명": "1장", "구분": "STEP 1"}, {"지문": "가"}, {"지문": "나"}, {"단원명": "2장", "구분": "STEP 2"}, {"실전+문제": [["q1"], ["q2"]]}]
+    out = content.plan_pages(plan, pages, new)
+    assert [p["id"].split("~")[0] for p in out] == ["g1", "a", "a", "g2", "s"]
+    del old["실전+문제"]                                                   # STEP 2 장에 레코드가 없으면 그 장을 여는 상위 페이지도 빠진다
+    old["단원명"] = ["1장", "2장"]
+    assert [r.get("구분") or r.get("지문") for r in content.to_records(plan, pages, old)["원고"]] == ["STEP 1", "가", "나"]
+
+
+def test_to_records_multi_field_value_is_not_a_page():
+    """여러 칸 데이터 필드(「교재명+강제목」)의 값 목록은 상위 페이지 레코드가 아니다 — 그 필드를 가진 상위 페이지(간지)의 레코드 값"""
+    pages = {"g": {"id": "g", "name": "간지", "items": [box("학교"), box("교재명+강제목", 90)]}, "a": {"id": "a", "name": "분석", "items": [box("지문")]}}
+    plan = {"sections": [{"id": "x", "pages": [{"page": "g", "repeat": "each_set"}, {"page": "a", "repeat": "each_set"}]}]}
+    old = {"학교": ["광문고"], "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}], "분석": [{"지문": "가"}]}
+    assert content.to_records(plan, pages, old)["원고"] == [{"학교": "광문고", "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}]}, {"지문": "가"}]
