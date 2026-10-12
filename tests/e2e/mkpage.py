@@ -48,11 +48,12 @@ def font_file(family, weight):
     return next((f["path"] for f in system_fonts() if f["family"] == family and f["weight"] == int(weight) and not f["italic"]), None)
 
 
-def chrome_extent(family, weight, size, s, lang="ko"):
+def chrome_extent(family, weight, size, s, lang="ko", opsz=None):
     """브라우저에서 자간 없이 그린 글의 첫 글자 왼쪽 → 끝 글자 왼쪽 거리(mm) — 커닝·합자까지 들어간 실제 값.
-    lang = 글 언어(편집기 글상자 「언어」, 기본 한국어) — 편집기처럼 공백·문장부호를 그 언어 꼴로(render.locl_html)"""
+    lang = 글 언어(편집기 글상자 「언어」, 기본 한국어) — 편집기처럼 공백·문장부호를 그 언어 꼴로(render.locl_html)
+    opsz = 글상자 「광학 크기」(가변 서체) — 키워 그려 재면 브라우저가 광학 크기를 최대로 잡아 폭이 달라진다(배재1 포켓북 Bodoni Moda)"""
     import os, subprocess, tempfile, json as _j, sys
-    key = (family, weight, size, s, lang, font_file(family, weight))
+    key = (family, weight, size, s, lang, font_file(family, weight), opsz)
     zm = max(1, min(100, int(9000 / (size * MM))))                             # 편집기 글 배치 해상도와 같게(render.TEXT_ZOOM, 큰 글은 낮춤) — 크기마다 글자 폭 반올림이 다르다
     if key not in _EXT:
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))   # 리포 뿌리 — 대본은 단위 폴더에서 돈다
@@ -61,7 +62,8 @@ def chrome_extent(family, weight, size, s, lang="ko"):
         ff = font_file(family, weight)                                         # 편집기와 같은 서체 파일로 잰다 — 컴퓨터에 깔린 서체는 판이 달라 커닝이 다를 수 있다(「BY」 0.23mm)
         face = (f"<style>@font-face{{font-family:'{family}';font-weight:{weight};src:url('file://{ff}')}}</style>" if ff else "")
         doc = (f"<!doctype html><html lang=en><meta charset=utf-8>{face}<body style='margin:0'><span id=t style=\"font-family:'{family}';font-weight:{weight};"
-               f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1\">{body}</span><pre id=o></pre><script>"
+               f"font-size:{size * MM * zm:.3f}px;white-space:pre;font-feature-settings:'liga' 1,'calt' 1"
+               + (f";font-optical-sizing:none;font-variation-settings:'opsz' {opsz:g}" if opsz else "") + f"\">{body}</span><pre id=o></pre><script>"
                "document.fonts.ready.then(()=>{const c=[],w=document.createTreeWalker(document.getElementById('t'),NodeFilter.SHOW_TEXT),r=document.createRange();"
                "let n;while((n=w.nextNode()))for(let i=0;i<n.data.length;i++)c.push([n,i]);"
                "const at=i=>{r.setStart(c[i][0],c[i][1]);r.setEnd(c[i][0],c[i][1]+1);return r.getBoundingClientRect().left};"

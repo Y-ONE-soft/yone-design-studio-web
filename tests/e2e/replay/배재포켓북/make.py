@@ -458,6 +458,7 @@ def cover(pno, name):
     im = next(e for e in el if e["k"] == "image")
     # 바탕 그림은 요소 목록(색 상자 맞대기)에 넣지 않는다 — 그러데이션 종이라 「한 색 상자」로 잴 수 없다. 빠지거나 어긋나면 「목록 밖 차이」(쪽 전체 화소)가 잡는다
     st += image(round(im["x"], 2), round(im["y"], 2), round(im["w"], 2), round(im["h"], 2), bg, label="바탕 — 원본 그림(종이 그러데이션)")
+    st += [{"pick": {"at": '#side select[data-a="fit"]', "value": "fill"}, "wait": 900}]   # 원본은 가로 그림(273×191)을 세로 쪽에 비율 무시하고 늘였다
     ln = find(el, "rect", 15.0, 27.5)
     st += rbox(ln["x"], ln["y"], ln["w"], ln["h"], ln["fill"], label="POCKET 아래 선")
     st += T(el_line(sp, tx(lambda e: e["text"] == "POCKET")), NOTO, 700, label="POCKET")

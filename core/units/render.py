@@ -318,7 +318,10 @@ def font_ascent(family, weight=400):
 
 
 def _fit_align(a):
-    """그림 맞춤 기준점(인디자인 프레임 맞춤 옵션) → SVG preserveAspectRatio 정렬. tl·t·tr·l·c·r·bl·b·br, 없으면 가운데"""
+    """그림 맞춤 기준점(인디자인 프레임 맞춤 옵션) → SVG preserveAspectRatio 정렬. tl·t·tr·l·c·r·bl·b·br, 없으면 가운데.
+    fit = fill(틀에 맞게 늘이기)이면 "none" — 뒤에 붙는 meet · slice 는 SVG 가 무시한다"""
+    if a.get("fit") == "fill":
+        return "none"
     at = a.get("fit_at") or "c"
     x = "xMin" if "l" in at else "xMax" if "r" in at else "xMid"
     y = "YMin" if at[0] == "t" else "YMax" if at[0] == "b" else "YMid"

@@ -2153,7 +2153,9 @@ function side() {
         <div class="f"><span title="인디자인 글꼴 — 시스템 서체에서 고른다. 없으면 「＋ 서체」로 등록">글꼴</span><span style="display:flex;gap:4px;align-items:center">${fontSel("data-a", "font", a.font, Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {}))}<label class="btn sm sub" title="서체 파일(OTF·TTF)을 올려 시스템 서체로 등록">＋ 서체<input type="file" id="font-file" accept=".otf,.ttf" style="display:none"></label></span></div>
         <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
         <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div><div class="f"><span title="글 전체를 기울임 — 서체에 기울임 파일이 있어야 한다(없으면 「＋ 서체」로 올린다)">기울임</span><input type="checkbox" data-a="i" ${a.i ? "checked" : ""}></div>
-        <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${[[100, "Thin"], [200, "ExtraLight"], [300, "Light"], [400, "Regular"], [500, "Medium"], [600, "SemiBold"], [700, "Bold"], [800, "ExtraBold"], [900, "Black"]].map(([v, n]) => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${n}</option>`).join("")}</select></div>
+        <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${(() => { const nm = {100: "Thin", 200: "ExtraLight", 300: "Light", 350: "DemiLight", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black"};   // 서체 집에 있는 굵기(350 DemiLight 등)까지 — 인디자인 글꼴 스타일 목록처럼
+          const ws = [...new Set([100, 200, 300, 400, 500, 600, 700, 800, 900].concat(((LIB.fonts || {})[a.font] || []).map(Number)))].sort((x, y) => x - y);
+          return ws.map(v => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${nm[v] || ""}</option>`).join(""); })()}</select></div>
         <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
         <div class="f"><span title="인디자인 문자 패널의 언어 — 공백·문장부호를 서체의 그 언어 글리프로(Noto CJK + 한국어: 공백 0.280em·따옴표·괄호·줄표 한국어 꼴). 글자는 늘 영어로 그려 라틴 합자(fi·ff)를 지킨다">언어</span><select data-a="lang">${[["ko", "한국어"], ["en", "영어"], ["ja", "일본어"], ["zh-Hans", "중국어 간체"]].map(([v, n]) => `<option value="${v}" ${(a.lang || "ko") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         <h3>상자 <span class="note" style="display:inline">칠·획·모서리 · 자동 크기 — 인디자인 텍스트 프레임</span></h3>
@@ -2221,7 +2223,7 @@ function side() {
         <label class="btn sm sub" title="그림 파일을 골라 바로 넣는다 (PNG·JPG·WEBP·SVG). 로고처럼 또렷해야 하면 SVG">📎 파일<input type="file" id="img-file" accept=".png,.jpg,.jpeg,.webp,.svg" style="display:none"></label>
         <select data-a="src" title="이 브랜드에 등록된 그림"><option value="">없음</option>${Object.keys((sk.images || {})).map(k => `<option value="${esc(k)}" ${a.src === k ? "selected" : ""}>${esc(k)}</option>`).join("")}</select></span></div>
         <div class="f"><span>클리핑 패스</span><input type="text" data-a="clip" value="${esc(a.clip || "")}" placeholder="M L C Q Z · 0~1 비율 — 이 모양으로 오려 낸다"></div>
-        <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option></select></div>
+        <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>틀 안에 다 보이게</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>틀 채우고 자르기</option><option value="fill" ${a.fit === "fill" ? "selected" : ""}>틀에 맞게 늘이기</option></select></div>
         <div class="f"><span title="원고 자리 — 원고가 이 이름으로 그림(주소 · data:)을 보내면 이 칸에 들어간다(인디자인 데이터 병합 이미지 필드). 비우면 고른 그림 그대로">원고 자리</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="없음 — 고른 그림" spellcheck="false"></div>
         <div class="f"><span title="인디자인 프레임 맞춤 옵션의 기준점 — 비율대로 맞춘 그림을 틀의 어디에 붙이나">기준점</span><select data-a="fit_at">${[["tl", "왼쪽 위"], ["t", "위 가운데"], ["tr", "오른쪽 위"], ["l", "왼쪽 가운데"], ["c", "가운데"], ["r", "오른쪽 가운데"], ["bl", "왼쪽 아래"], ["b", "아래 가운데"], ["br", "오른쪽 아래"]].map(([v, n]) => `<option value="${v}" ${(a.fit_at || "c") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
         <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="틀"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
@@ -2396,7 +2398,7 @@ function side() {
     else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }
     else if (k === "fold") { const g = String(v || "").trim(); if (g) a.fold = g; else delete a.fold; }      // 접기 묶음 이름
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
-    else if (k === "fit") { if (v === "cover") a.fit = "cover"; else delete a.fit; }
+    else if (k === "fit") { if (v === "cover" || v === "fill") a.fit = v; else delete a.fit; }
     else if (k === "fit_at") { if (v && v !== "c") a.fit_at = v; else delete a.fit_at; }   // 맞춤 기준점(없으면 가운데)
     else if (k === "d") { if (v) a.d = v; }
     else if (k === "grad") { if (v) a.gradient = {type: "linear", angle: 90, stops: [{c: a.fill || "$s1"}, {c: "$white"}]}; else delete a.gradient; }
