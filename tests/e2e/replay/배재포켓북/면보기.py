@@ -18,13 +18,17 @@ FACES = [  # (번호, 면 이름, 단위, 원본 쪽들)
     (10, "FLOWNOTE · 모의고사 · 4칸", "배재포켓북@3", [45]),
 ]
 
+def verdict(unit):
+    try:
+        return json.load(open(os.path.join(OUT, unit, "판정.json"), encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 rows = []
 for no, name, unit, pages in FACES:
-    v = {}
-    try:
-        v = json.load(open(os.path.join(OUT, unit, "판정.json"), encoding="utf-8"))
-    except Exception:
-        pass
+    unit = max((unit, unit + "~바로"), key=lambda u: verdict(u).get("때", ""))   # 사람 조작 판 · 바로 넣기 판 중 나중 것
+    v = verdict(unit)
     imgs = [p for p in pages if os.path.exists(os.path.join(OUT, unit, f"p{p}_side.png"))]
     if not imgs:
         state = "아직 결과 없음"
@@ -43,7 +47,8 @@ body{{font-family:-apple-system,"Apple SD Gothic Neo",sans-serif;margin:0 auto;m
 h1{{font-size:20px}} h2{{font-size:16px;margin:0 0 6px}} section{{background:#fff;border-radius:8px;padding:14px;margin:14px 0}}
 .ok{{color:#147a3d;font-weight:600}} .no{{color:#b3261e;font-weight:600}} .when{{color:#888;font-size:12px;margin:0 0 8px}}
 figure{{margin:0 0 10px}} img{{max-width:100%;border:1px solid #ddd}} figcaption{{font-size:12px;color:#666}}
-</style></head><body><h1>배재1 포켓북 — 면 10개 (원본 · 결과)</h1>{"".join(rows)}</body></html>"""
+</style></head><body><h1>배재1 포켓북 — 면 10개 (원본 · 결과)</h1>
+<section><h2>진행 — 10단계 중 5단계(만들기 + 검사)</h2><p>1 원본 올리기 ✓ · 2 면 나누기 ✓ · 3 대본 짜기 ✓ · 4 가르기 ✓ · <b>5 만들기 + 검사 ← 지금</b> · 6 원고 넣기 · 7 잇기 · 책 만들기 검사 · 8 편집기 제작 등록 · 9 맞대기 · 10 반영</p></section>{"".join(rows)}</body></html>"""
 dst = os.path.join(OUT, "배재포켓북_면보기.html")
 open(dst, "w", encoding="utf-8").write(page)
 print(dst)

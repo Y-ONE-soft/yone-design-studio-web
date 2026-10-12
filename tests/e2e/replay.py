@@ -269,7 +269,7 @@ def deco_check(new_ids, state):
                 continue
             a, b = decos(R, e, 1), decos(M, e, 8)                             # 결과는 둘레 8mm — 원고 판정과 같은 찾기 범위
             for t, offs in a.items():
-                mine = b.get(t, [])
+                mine = b.get(t, []) + [o2 for k2, v2 in b.items() if k2 != t and t.replace(" ", "") in k2.replace(" ", "") for o2 in v2]   # 붙어 그려진 작은 글은 PDF 에서 한 덩어리로 읽힌다(「V 조」+「S」 → 「V 조S」) — 그 안에서도 찾는다
                 for i, o in enumerate(offs):
                     n += 1
                     if i >= len(mine):
