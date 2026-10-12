@@ -441,6 +441,7 @@
         "pages": {"type": "array", "description": "비어 있을 수 있다 — 캔버스에서 막 만든 틀", "items": {"type": "object", "required": ["page", "repeat"], "properties": {
           "page": {"$ref": "#/definitions/id"},
           "repeat": {"enum": ["once", "each_set", "none"], "description": "each_set = 세트마다 이 지면 · none = 찍지 않음(다른 면이 넘친 글을 이어 받는 모양으로만, page.cont)"}, "per": {"type": "integer", "minimum": 1, "description": "each_set 일 때 한 면에 원고 몇 개씩 — 2 면 지문 둘(자리를 두 벌 그려 둔다)"},
+          "구분": {"type": "string", "description": "면 설정 구분 — 원고를 덩어리 차례({원고: [덩어리 …]})로 넣을 때 자리가 같은 면이 여럿이면 덩어리 「구분」 값이 같은 면이 골라진다(content._faces_by_chunk)"},
           "sets": {"type": "array", "items": {"type": "string"}, "description": "받는 세트 kind. `answers` 를 넣으면 앞 구간 세트들의 정답을 모은 정답 세트가 자동으로 생긴다(core/units/answers.py) — 지면엔 answer_row 쌓기 자리(flow)"}
         }}}
       }

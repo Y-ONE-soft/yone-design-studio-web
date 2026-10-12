@@ -111,3 +111,27 @@ def test_flow_per_page_share():
     assert "다" in flat(filled[1]) and "가" not in flat(filled[1])
     assert rep["filled"] == 3
     assert not content.per_occurrence([[["번호", "01"], ["문장", "가"]]])          # 문항 하나가 [자리, 글] 목록인 꼴은 몫이 아니다
+
+
+def test_chunks_pick_face_by_slots_then_group_then_count():
+    """원고 덩어리 차례({원고: [덩어리 …]}) — 덩어리마다 자리가 가장 많이 맞는 면, 같으면 면 「구분」, 그다음 같은 자리 개수 = 원고 목록 길이"""
+    pages = {
+        "front": {"id": "front", "name": "앞면", "items": [box("학교")]},
+        "a1": {"id": "a1", "name": "분석 교과서", "items": [box("지문"), box("해석", 90)]},
+        "a2": {"id": "a2", "name": "분석 모의고사", "items": [box("지문"), box("해석", 90)]},
+        "n3": {"id": "n3", "name": "노트 3칸", "items": [box("흐름", 20 + 20 * k) for k in range(3)]},
+        "n4": {"id": "n4", "name": "노트 4칸", "items": [box("흐름", 20 + 20 * k) for k in range(4)]},
+        "t": {"id": "t", "name": "TEST", "items": [box("암기")]},
+        "t2": {"id": "t2", "name": "빈 면 6", "items": [box("암기")]},   # 이름 안 정한 쪽 = 앞 면에 붙은 쪽(펼침면)
+    }
+    plan = {"front": ["front"], "sections": [{"id": "s", "pages": [
+        {"page": "a1", "repeat": "each_set", "구분": "교과서"}, {"page": "a2", "repeat": "each_set", "구분": "모의고사"},
+        {"page": "n3", "repeat": "each_set"}, {"page": "n4", "repeat": "each_set"},
+        {"page": "t", "repeat": "each_set"}, {"page": "t2", "repeat": "each_set"}]}]}
+    chunks = [{"지문": "가", "해석": "A", "구분": "모의고사"}, {"흐름": ["1", "2", "3", "4"]}, {"지문": "나", "해석": "B", "구분": "교과서"},
+              {"흐름": ["1", "2", "3"]}, {"암기": ["x", "y"]}, {"모르는 자리": "?"}]
+    out = content.plan_pages(plan, pages, {"원고": chunks})
+    assert [p["id"] for p in out] == ["front", "a2", "n4", "a1", "n3", "t", "t2"]
+    filled, rep = content.fill(out, {"원고": chunks})
+    assert text_of(filled[1]) == ["가", "A"] and text_of(filled[4]) == ["1", "2", "3"]
+    assert rep["unknown"] == []

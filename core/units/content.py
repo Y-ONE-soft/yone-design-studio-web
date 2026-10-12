@@ -10,6 +10,7 @@
 규약: docs/편집기_재현/원고자리_규약.md
 """
 import copy
+import re
 
 
 def plan_page_ids(plan):
@@ -30,6 +31,8 @@ def plan_pages(plan, pages_by_id, content=None):
     목록이 없으면 한 번(전처럼). 되풀이한 쪽은 _rec 에 제 레코드를 갖고 fill 이 그 자리부터 채운다."""
     content = content or {}
     out = []
+    if isinstance(content.get("원고"), list):
+        return _faces_by_chunk(plan, pages_by_id, content["원고"])
 
     def put(pid, rec=None, k=0):
         pg = pages_by_id.get(pid)
@@ -73,6 +76,76 @@ def plan_pages(plan, pages_by_id, content=None):
             run = []
             put(pid)
         flush(run)
+    for pid in plan.get("back") or []:
+        put(pid)
+    return out
+
+
+_DEFAULT_NAME = re.compile(r"^(본문|빈 면|간지|표지) \d+$")          # 편집기가 새 쪽에 붙이는 이름(units_canvas newPage) — 면 이름을 안 정한 쪽
+
+
+def _faces_by_chunk(plan, pages_by_id, chunks):
+    """원고 덩어리 차례로 면 고르기 — 원고 = [덩어리 …](원본 차례). 덩어리마다 그 자리를 가장 많이 담는 「원고마다」 면을 골라 그 덩어리로 찍는다.
+    면 = 이름을 정한 「원고마다」 쪽부터 다음 이름 정한 쪽 전까지(늘 붙어 나오는 두 쪽 = 한 면). 고르기:
+    ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
+    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 면들 앞). 맞는 자리가 없는 덩어리는 건너뛴다."""
+    faces, fixed = [], []
+    for sc in plan.get("sections") or []:
+        if sc.get("divider"):
+            fixed.append(sc["divider"])
+        for e in sc.get("pages") or []:
+            pid = e["page"] if isinstance(e, dict) else e
+            each = isinstance(e, dict) and e.get("repeat") == "each_set"
+            if not each:
+                if not (isinstance(e, dict) and e.get("repeat") == "none"):
+                    fixed.append(pid)
+                continue
+            name = (pages_by_id.get(pid) or {}).get("name") or ""
+            if not faces or (name and not _DEFAULT_NAME.match(name)):
+                faces.append({"pages": [pid], "구분": (e.get("구분") or "").strip()})
+            else:
+                faces[-1]["pages"].append(pid)
+    for f in faces:
+        occ = {}
+        for pid in f["pages"]:
+            for it in (pages_by_id.get(pid) or {}).get("items") or []:
+                b = _slot(it)
+                if b:
+                    occ[b] = occ.get(b, 0) + 1
+        f["occ"] = occ
+
+    def score(f, rec):
+        keys = [k for k in rec if not k.startswith("_")]
+        hit = sum(1 for k in keys if k in f["occ"])
+        g = (rec.get("구분") or "").strip()
+        gub = 0 if not (f["구분"] and g) else (1 if f["구분"] == g else -1)
+        cap = -sum(abs(len(rec[k]) - f["occ"][k]) for k in keys if k in f["occ"] and f["occ"][k] > 1 and isinstance(rec[k], list))
+        return hit, gub, cap
+
+    out, n = [], {}
+
+    def put(pid, rec=None, k=0):
+        pg = pages_by_id.get(pid)
+        if not pg:
+            return
+        if rec is not None:
+            pg = copy.deepcopy(pg)
+            pg["_rec"] = rec
+            if k:
+                pg["id"] = f"{pid}~{k + 1}"
+        out.append(pg)
+    for pid in list(plan.get("front") or []) + fixed:
+        put(pid)
+    for rec in chunks:
+        if not isinstance(rec, dict) or not faces:
+            continue
+        best = max(faces, key=lambda f: score(f, rec))
+        if score(best, rec)[0] == 0:
+            continue
+        k = n.get(best["pages"][0], 0)
+        n[best["pages"][0]] = k + 1
+        for pid in best["pages"]:
+            put(pid, rec, k)
     for pid in plan.get("back") or []:
         put(pid)
     return out
@@ -195,7 +268,8 @@ def fill(pages, content, width_of=None):
     보고 = {"filled": n, "unfilled": {자리: 남은 자리 수}, "extra": {자리: 남은 원고 수}, "unknown": [틀에 없는 자리 이름]}."""
     pages = copy.deepcopy(pages)
     runs = {pg.get("name") for pg in pages if pg.get("_rec") is not None}           # 「원고마다」 묶음 원고(plan_pages 가 레코드로 나눠 줬다)
-    queue = {k: (list(v) if isinstance(v, list) else [v]) for k, v in (content or {}).items() if k not in runs}
+    chunked = isinstance((content or {}).get("원고"), list)                      # 덩어리 차례 원고 — plan_pages 가 덩어리마다 면을 골라 레코드로 줬다
+    queue = {k: (list(v) if isinstance(v, list) else [v]) for k, v in (content or {}).items() if k not in runs and not (chunked and k == "원고")}
     recq = {}                                                                     # 레코드마다 꺼낼 값 — 목록은 그 레코드의 쪽들(펼침면)을 이어 차례로, 글 하나는 그 레코드의 같은 자리 모두에
     known, filled, unfilled = set(runs), 0, {}
     for pi, i, name, _ in slots(pages, width_of):

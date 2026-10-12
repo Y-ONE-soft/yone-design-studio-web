@@ -2261,6 +2261,7 @@ function side() {
     const nSheets = eachPgs.reduce((t, q) => t + nOf(q), 0), perPg = eachN ? Math.round(nSheets / eachN) : 0;
     const bookRow = !pe ? `<div class="note">앞붙이·뒤붙이 — 원고 없이 한 장</div>` : `
       <div class="f"><span title="인디자인 데이터 병합의 「여러 레코드」 — 원고(지문)가 12개면 이 면을 12장 찍고 한 장에 한 지문씩 넣는다">원고마다</span><select id="s-rep"><option value="once" ${pe.repeat === "each_set" || pe.repeat === "none" ? "" : "selected"}>한 번만 — 1장</option><option value="each_set" ${pe.repeat === "each_set" && !(pe.per > 1) ? "selected" : ""}>지문마다 한 장</option><option value="each_set_2" ${pe.repeat === "each_set" && pe.per === 2 ? "selected" : ""}>지문 2개씩 한 장</option><option value="none" ${pe.repeat === "none" ? "selected" : ""}>찍지 않음 — 이어 갈 면으로만</option></select></div>
+      ${pe.repeat === "each_set" ? `<div class="f"><span title="원고 덩어리 차례로 넣을 때(원고 = {원고: [덩어리 …]}) — 자리가 같은 면이 여럿이면 덩어리의 「구분」 값이 이것과 같은 면이 골라진다(색만 다른 면: 교과서 · 모의고사). 비우면 구분을 안 본다">구분</span><input type="text" id="s-gubun" value="${esc(pe.구분 || "")}" placeholder="예: 교과서"></div>` : ""}
       ${pe.repeat === "each_set" ? `<div class="f"><span title="한 면에 원고 몇 개를 넣을지 — 자리를 그만큼 그려 둬야 한다(지문 둘이면 번호·본문을 두 벌)">한 면에</span><input type="number" id="s-per" min="1" max="12" step="1" value="${pe.per || 1}" style="width:70px"> 개</div>` : ""}
       <div class="f"><span title="비우면 모든 원고를 받는다. 「정답지」를 고르면 앞 구간 원고들의 정답을 모은 원고가 저절로 생긴다">받는 원고</span><select id="s-sets"><option value="" ${curK ? "" : "selected"}>모두</option>${kinds.map(k => `<option value="${esc(k)}" ${curK === k ? "selected" : ""}>${esc(k)}</option>`).join("")}<option value="answers" ${curK === "answers" ? "selected" : ""}>정답지 (answers)</option>${curK && curK !== "answers" && !kinds.includes(curK) ? `<option value="${esc(curK)}" selected>${esc(curK)}</option>` : ""}</select></div>
       ${page.items.some(it => it.flow) ? `<div class="note">쌓기 자리가 있다 — 그 자리엔 세트를 하나씩 아래로 쌓고 면이 차면 다음 면으로 넘긴다</div>` : ""}
@@ -2452,6 +2453,8 @@ function side() {
     hist(); const n = Math.max(1, Math.min(6, Math.round(+$("#s-col-n").value || 1))), g = Math.max(0, +$("#s-col-g").value || 0);
     if (n > 1) page.columns = {n, gutter: g}; else delete page.columns;
     save(); applyView(); side(); }));
+  on("#s-gubun", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value.trim();   // 면 설정 「구분」 — 원고 덩어리 차례로 넣을 때 색만 다른 면 고르기
+    if (v) q.구분 = v; else delete q.구분; await savePlan(); side(); });
   on("#s-rep", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = e.target.value;
     q.repeat = v === "once" || v === "none" ? v : "each_set"; if (v === "each_set_2") q.per = 2; else delete q.per;     // 지문 2개씩 = 그 면에 지문 자리를 두 벌 그려 둔다
     await savePlan(); drawRail(); side(); });
