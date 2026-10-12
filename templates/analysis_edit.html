@@ -86,6 +86,11 @@
   #wiz .card { border: 1px solid #dde1e7; border-radius: 8px; padding: 7px 8px; margin-top: 6px; background: #f8f9fb; white-space: pre-wrap; }
   #wiz .card ul { margin: 4px 0 0; padding-left: 16px; color: #4b5260; }
   .p [data-scope] { outline: 2px solid #4f6bd8 !important; outline-offset: 1px; }
+  /* 보기 모드(?mode=view · {type:"yos-analysis-mode"}) — 고치기 도구를 감추고 지면만. contents 「지면 보기」 */
+  body.view header, body.view aside, body.view #wiz { display: none; }
+  body.view main { grid-template-columns: minmax(0, 1fr); padding: 8px; }
+  body.view .p [data-slot]:hover { outline: none; cursor: default; }
+  body.view { background: #f4f5f7; }
   #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #1f2430; color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; display: none; z-index: 40; }
 </style>
 </head>
@@ -147,6 +152,8 @@
 <script src="/static/js/units_compose.js"></script>
 <script>
 const DESIGN = {{ design|tojson }};
+let VIEW = new URLSearchParams(location.search).get("mode") === "view";
+document.body.classList.toggle("view", VIEW);
 const $ = (s) => document.querySelector(s);
 // contents 역할 → 틀 문자 스타일(core/sources/yos_analysis.ROLE_CS 와 같은 표) · 화면 이름 · Alt+숫자
 const ROLES = [["grammar", "중요 문법", "파랑 글자", "#5b8ee6"], ["vocab", "중요 어휘", "빨강 글자", "#e25b5f"], ["parallel", "병렬", "빨강 물결", "#e25b5f"],
@@ -184,6 +191,7 @@ async function draw(body) {
     if (document.fonts) await document.fonts.ready;
     if (window.unitsCompose) window.unitsCompose($("#pages"));
     status();
+    postHeight();
     if (typeof scopeBar === "function" && rec) scopeBar();    // 다시 그려도 고른 범위 표시는 남는다
   } catch (e) { $("#st").textContent = e.message; }
   finally { $("#pages").classList.remove("busy"); }
@@ -220,7 +228,7 @@ function rowOf(p, slot) {
   return all.filter(x => !x.dataset.storyCont).indexOf(head);
 }
 $("#pages").addEventListener("pointerdown", (e) => {
-  if (!rec || ed) return;
+  if (!rec || ed || VIEW) return;
   const side = e.target.closest("[data-side]"), p = e.target.closest("p[data-slot]"), box = e.target.closest("[data-slot]");
   if (!box) return;
   const slot = (p || box).dataset.slot;
@@ -642,6 +650,7 @@ window.addEventListener("message", (e) => {
   if (e.source !== window.parent || !e.data || typeof e.data !== "object") return;
   parentOrigin = e.origin;
   if (e.data.type === "yos-analysis-load" && e.data.doc) load(e.data.doc);
+  if (e.data.type === "yos-analysis-mode") { closeEd(true); VIEW = e.data.mode === "view"; document.body.classList.toggle("view", VIEW); setTimeout(postHeight, 50); }
   if (e.data.type === "yos-analysis-saved") {
     if (pendingUndo) { const d = pendingUndo; pendingUndo = null; load(d); $("#wiz-out").innerHTML = `<div class="card">AI 고치기를 되돌렸습니다.</div>`; return; }
     base = e.data.doc || base; dirty = false; status(); $("#st").textContent = "저장함";
@@ -650,6 +659,9 @@ window.addEventListener("message", (e) => {
   if (e.data.type === "yos-analysis-ai-done" && e.data.doc) aiDone(e.data);
   if (e.data.type === "yos-analysis-ai-error") { asking = false; $("#wiz-go").disabled = false; $("#wiz-out").innerHTML = `<div class="card">${esc(e.data.message || "AI 고치기에 실패했습니다.")}</div>`; }
 });
+// 끼운 쪽이 iframe 높이를 맞추게 — 다 그린 뒤 · 모드를 바꾼 뒤
+function postHeight() { post({type: "yos-analysis-height", h: Math.ceil(document.documentElement.scrollHeight)}); }
+addEventListener("resize", () => { clearTimeout(postHeight.t); postHeight.t = setTimeout(postHeight, 150); });
 post({type: "yos-analysis-ready"});
 </script>
 </body>
