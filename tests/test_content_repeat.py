@@ -167,3 +167,11 @@ def test_to_records_follows_template_order_and_opens_chapters_with_records():
     del old["실전+문제"]                                                   # STEP 2 장에 레코드가 없으면 그 장을 여는 상위 페이지도 빠진다
     old["단원명"] = ["1장", "2장"]
     assert [r.get("구분") or r.get("지문") for r in content.to_records(plan, pages, old)["원고"]] == ["STEP 1", "가", "나"]
+
+
+def test_to_records_multi_field_value_is_not_a_page():
+    """여러 칸 데이터 필드(「교재명+강제목」)의 값 목록은 상위 페이지 레코드가 아니다 — 그 필드를 가진 상위 페이지(간지)의 레코드 값"""
+    pages = {"g": {"id": "g", "name": "간지", "items": [box("학교"), box("교재명+강제목", 90)]}, "a": {"id": "a", "name": "분석", "items": [box("지문")]}}
+    plan = {"sections": [{"id": "x", "pages": [{"page": "g", "repeat": "each_set"}, {"page": "a", "repeat": "each_set"}]}]}
+    old = {"학교": ["광문고"], "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}], "분석": [{"지문": "가"}]}
+    assert content.to_records(plan, pages, old)["원고"] == [{"학교": "광문고", "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}]}, {"지문": "가"}]

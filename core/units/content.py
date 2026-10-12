@@ -125,7 +125,8 @@ def to_records(plan, pages_by_id, old):
         return old
     faces, _, _ = _faces(plan, pages_by_id)
     name = lambda f: (pages_by_id.get(f["pages"][0]) or {}).get("name") or ""
-    recs_of = lambda k: old[k] if isinstance(old.get(k), list) and old[k] and all(isinstance(x, dict) for x in old[k]) else None
+    face_names = {name(f) for f in faces}                                 # 상위 페이지 이름 키만 레코드 목록 — 여러 칸 데이터 필드(「교재명+강제목」)의 목록은 값이다
+    recs_of = lambda k: old[k] if k in face_names and isinstance(old.get(k), list) and old[k] and all(isinstance(x, dict) for x in old[k]) else None
     whole = lambda v: isinstance(v, list) and v and isinstance(v[0], (list, dict))   # 한 줄기(실전 문제) — 통째로
     queue = {k: (list(v) if isinstance(v, list) else v) for k, v in old.items() if not recs_of(k)}
     names = [name(f) for f in faces]
