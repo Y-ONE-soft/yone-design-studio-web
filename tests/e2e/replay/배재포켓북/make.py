@@ -512,7 +512,6 @@ st += expect_pages(1)
 
 # ── FLOWNOTE — 흐름 칸(3칸 한 줄 · 2×2 네 칸) · 주제 · 요약문 · 동반의어(표) ──
 JAL, KCC = "Jalnan OTF", "KCCDodamdodam"
-CONTENT_LAST, SRC_TAB_Y, SRC_TS_Y = [], None, None
 
 
 def ref_draws(pno):
@@ -738,9 +737,6 @@ def flownote(pno, gubun):
     if pno != 2 + len(PAGES) - 1:
         ELEMS[len(PAGES)][-1]["원고"] = True
     st += done(face_name, f"p{pno}.png")
-    global SRC_TAB_Y, SRC_TS_Y
-    SRC_TAB_Y, SRC_TS_Y = stab["y"], round(top_of(ts[0]["base"], 6.4, EL, 700, round((ts[1]["base"] - ts[0]["base"]) / MM, 2)), 2)   # 다음 복제 면이 이 자리를 눌러 고른다
-    CONTENT_LAST[:] = [face_name]
     it = first(lambda x: "흐름" in x and x["_원본쪽"][0] == pno, gubun)
     CONTENT[face_name] = [{"흐름제목+흐름글": [[{"흐름제목": f["제목"], "흐름글": f["글"]}] for f in it["흐름"]],     # 칸마다 제 몫(단계 하나)
                            "주제": it["주제"], "요약문": it["요약문"],
@@ -749,30 +745,6 @@ def flownote(pno, gubun):
     return st
 
 
-
-def face_dup(make, pno, gubun, src_gubun):
-    """색 갈래 면 — 앞 면(같은 모양 · 다른 색)을 복제해 다른 것만 바꾼다(인디자인 상위 페이지 복제 → 색 바꾸기).
-    make(pno, gubun) 로 이 면의 맞댈 요소 · 견본 원고만 만들고(그 단계는 버린다), 단계는 복제 → 이름 · 원고마다 → 띠 색 · 옆 탭(색 · 자리) · 구분 글 자리"""
-    make(pno, gubun)                                                     # 요소 목록 · 원고만 — 이 면을 처음부터 그리지 않는다
-    face_name = CONTENT_LAST[0]
-    el, sp = els(pno), spans(pno)
-    st = [S(f"③ {face_name} — {src_gubun} 면을 복제해 색 · 옆 탭만 바꾼다 (원본 {pno}쪽)", 1500),
-          {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700},
-          {"click": "#rail .pg.on [data-pg-dup]", "wait": 2200}, {"click": "#rail .pg.on", "wait": 1500},
-          S(f"면 이름 「{face_name}」 · 원고마다", 1000), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 700},
-          F("#side #s-pname", face_name, 900), {"pick": {"at": "#side #s-rep", "value": "each_set"}, "wait": 1200}]
-    band = BAND[gubun]
-    st += [S(f"위 · 아래 띠 — {gubun} 색", 1000), {"click": {"mm": [74.0, 1.0]}, "wait": 900}] + _color("fill", band)
-    st += [{"click": {"mm": [74.0, 208.0]}, "wait": 900}] + _color("fill", band)
-    tab = next(e for e in el if e["k"] == "path" and abs(e["x"] - 139.0) < 0.5 and e["w"] > 10)
-    ts = sorted([s for s in sp if s["size"] == 6.4 and s["color"] == "#ffffff"], key=lambda s: s["base"])
-    lead = round((ts[1]["base"] - ts[0]["base"]) / MM, 2)
-    st += [S(f"옆 탭 — {gubun} 색 · 자리 {round(tab['y'], 2)}mm", 1000), {"click": {"mm": [146.8, SRC_TAB_Y + 2.0]}, "wait": 900}]
-    st += _color("fill", tab["fill"]) + [F('#side input[data-it="y"]', round(tab["y"], 2), 800)]
-    st += [S("구분 글상자 — 옆 탭을 따라 아래로", 1000), {"click": {"mm": [143.6, SRC_TS_Y + 3.0]}, "wait": 900},
-           F('#side input[data-it="y"]', round(top_of(ts[0]["base"], 6.4, EL, 700, lead), 2), 800)]
-    st += done(face_name, f"p{pno}.png")
-    return st
 
 
 if want(1):
@@ -799,10 +771,7 @@ if want(4):
 if want(3):                                                              # NOTE_PAGES=5 — 막힌 곳 찾을 때 한 쪽만(판정 통과는 세 쪽 다)
     for pno, gb in ((3, "교과서"), (5, "교과서"), (45, "모의고사")):
         if not os.environ.get("NOTE_PAGES") or str(pno) in os.environ["NOTE_PAGES"].split(","):
-            if pno == 45 and SRC_TAB_Y is not None:                      # 같은 모양 · 다른 색 — 바로 앞 교과서 4칸 면을 복제해 색만
-                st += face_dup(flownote, pno, gb, "교과서 4칸")
-            else:
-                st += flownote(pno, gb)
+            st += flownote(pno, gb)
 
 if CONTENT:
     st += put_content(CONTENT)

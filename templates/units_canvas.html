@@ -2461,14 +2461,19 @@ function side() {
   });
   on("#img-file", "change", async (e) => {                                 // 그림 넣기 — 올려서 브랜드 그림 목록에 등록
     const f = e.target.files && e.target.files[0]; if (!f) return;
+    const it = page.items[sel];                                            // 고른 그림 칸 — 올리는 사이 다른 것을 골라도 이 칸에 넣는다
     const fd = new FormData(); fd.append("file", f); fd.append("skin", skin().id); fd.append("key", f.name.replace(/\.[^.]+$/, ""));
     say("그림 올리는 중…");
-    const r = await fetch("/api/units/image", {method: "POST", body: fd});
-    const j = await r.json().catch(() => ({error: "올리기 실패"}));
+    window.__busy++;
+    let j;
+    try {
+      const r = await fetch("/api/units/image", {method: "POST", body: fd});
+      j = await r.json().catch(() => ({error: "올리기 실패"}));
+    } finally { setTimeout(() => window.__busy--, 50); }
     if (j.error) { say(j.error); return; }
     const lib2 = await api("/api/units/library");                          // 브랜드 그림 목록을 서버에서 다시 읽는다
     LIB.skins = lib2.skins;
-    hist(); page.items[sel].atom.src = j.key; save(); pageSvg = {}; render(); side(); thumbsLoad();
+    hist(); it.atom.src = j.key; save(); pageSvg = {}; render(); side(); thumbsLoad();
     say(`그림 「${j.key}」 넣음`);
   });
   on("#s-per", "change", async (e) => { const q = planPg(page.id); if (!q) return; const v = Math.max(1, +e.target.value || 1);

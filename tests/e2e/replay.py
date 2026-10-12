@@ -70,7 +70,7 @@ def server():
                 env.setdefault(k, v.strip("'\""))
     log = open(os.path.join(out, "server.log"), "w")
     p = subprocess.Popen([PY, "-u", "studio_server.py", "--port", str(PORT)], cwd=REPO, env=env, stdout=log, stderr=log)
-    for _ in range(80):
+    for _ in range(240):                                                      # 2분 — 기동 때 모든 디자인 구성을 미리 계산한다(warm_layouts, 디자인 30개 41초)
         try:
             urllib.request.urlopen(BASE + "/api/units/library", timeout=1)
             return p
