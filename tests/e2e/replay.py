@@ -206,6 +206,81 @@ def measure_units(new_ids, state, fix=False):
     if fix:
         json.dump(corr, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print("  보정.json 갱신 — 다시 돌리면 반영")
+    deco_check(new_ids, state)
+
+
+def deco_check(new_ids, state):
+    """원고 자리 안 작은 글(윗주 · 위첨자 번호 · 구문 표기 등 본문보다 작은 글)의 높이 — 원본과 0.3mm 안.
+    원고 글 모양·줄 끝은 맞대지 않지만, 작은 글이 주인 글자에서 떨어진 높이는 원고가 바뀌어도 그대로라 맞댄다
+    (2026-10-12 배재1 포켓북: 윗주가 줄에 붙고 번호 높이가 틀려도 「들어감」만 봐서 통과했다).
+    주인 글자 = 상자 사이가 가장 가까운 본문 글. 견본 원고(원본 글 그대로)를 넣은 판에서만 — 글로 짝을 짓는다."""
+    deco_check.bad = []
+    ep = os.path.join(wdir, "elems.json")
+    if not state.get("fill") or not os.path.exists(ep):
+        return
+    import collections
+    import pymupdf
+    mm = 25.4 / 72
+    elems = json.load(open(ep, encoding="utf-8"))
+
+    def spans(page, ox, oy):
+        res = []
+        for b in page.get_text("rawdict")["blocks"]:
+            for ln in b.get("lines", []):
+                for s in ln["spans"]:
+                    t = "".join(c["c"] for c in s["chars"])
+                    x0, y0, x1, y1 = s["bbox"]
+                    for w in t.split():                                   # 붙은 표시(「S V」)는 결과 PDF 가 한 덩어리로 낸다 — 낱말로
+                        res.append(dict(t=w, size=s["size"], by=(s["origin"][1] - oy) * mm, x0=(x0 - ox) * mm, x1=(x1 - ox) * mm,
+                                        y0=(y0 - oy) * mm, y1=(y1 - oy) * mm))
+        return res
+
+    def decos(S, e, pad):
+        x, y, w, h = e["x"] - pad, e["y"] - 4, e["w"] + 2 * pad, e["h"] + 4 + pad      # 위 4mm — 첫 줄 윗주
+        ss = [s for s in S if x <= s["x0"] <= x + w and y <= s["y0"] <= y + h]
+        if not ss:
+            return {}
+        cnt = collections.Counter()
+        for s in ss:
+            cnt[round(s["size"], 1)] += len(s["t"])
+        body = cnt.most_common(1)[0][0]
+        bodys = [s for s in ss if s["size"] >= body * 0.85]
+        d = collections.defaultdict(list)
+        for s in sorted(ss, key=lambda s: (round(s["by"]), s["x0"])):
+            if s["size"] >= body * 0.85:
+                continue
+            gap = lambda b: (max(0, b["x0"] - s["x1"], s["x0"] - b["x1"]) ** 2 + max(0, b["y0"] - s["y1"], s["y0"] - b["y1"]) ** 2) ** 0.5
+            o = min(bodys, key=lambda b: (round(gap(b), 1), abs(b["by"] - s["by"])), default=None)
+            if o:
+                d[s["t"]].append(s["by"] - o["by"])
+        return d
+
+    ref = pymupdf.open(os.path.join(REPO, state["ref"]))
+    allow = state.get("허용") or {}
+    for k, rp in enumerate(state["pages"]):
+        pdf = os.path.join(out, f"p{rp}_my.pdf")
+        if k >= len(new_ids) or not os.path.exists(pdf):
+            continue
+        rpg = ref[rp - 1]
+        R, M = spans(rpg, rpg.trimbox.x0, rpg.trimbox.y0), spans(pymupdf.open(pdf)[0], 0, 0)
+        n = 0
+        for e in elems[str(k + 1)]:
+            if not e.get("원고") or f"p{rp}:{e['id']}:작은 글" in allow:
+                continue
+            a, b = decos(R, e, 1), decos(M, e, 8)                             # 결과는 둘레 8mm — 원고 판정과 같은 찾기 범위
+            for t, offs in a.items():
+                mine = b.get(t, [])
+                for i, o in enumerate(offs):
+                    n += 1
+                    if i >= len(mine):
+                        deco_check.bad.append(f"p{rp}:{e['id']} 작은 글 「{t[:10]}」 빠짐 (원본 높이 {o:+.2f}mm)")
+                    elif abs(mine[i] - o) > 0.3:
+                        deco_check.bad.append(f"p{rp}:{e['id']} 작은 글 「{t[:10]}」 높이 원본 {o:+.2f} · 결과 {mine[i]:+.2f}mm")
+        print(f"  원본 p{rp}: 원고 자리 작은 글 {n}개 높이 맞대기")
+    for w in deco_check.bad[:20]:
+        print("  ✗", w)
+    if len(deco_check.bad) > 20:
+        print(f"  … 외 {len(deco_check.bad) - 20}개")
 
 
 def font_problems():
@@ -248,6 +323,7 @@ def verdict(state, new_ids, ok_steps):
     """판정 — 도구가 정한다(사람·클로드가 줄이지 못한다). 하나라도 걸리면 실패:
       ① 대본 오류  ② 원본 쪽마다 만든 지면이 있어야  ③ 맞댈 요소 목록(elems.json)이 있어야
       ④ 요소 전부 기준 안 — 예외는 상태.json 「허용」 {"p쪽:요소": "사용자 확정 이유"} 만
+      ⑥ 원고 자리 작은 글(윗주 · 번호)의 높이가 원본과 0.3mm 안 — deco_check
       ⑤ 목록 밖 차이 없음 — 원본과 결과가 다른 화소가 어느 요소 상자에도 안 들면 「목록에 없는 요소」(빠진 장식 등)
     → (통과 여부, 이유 목록)"""
     from PIL import Image, ImageChops, ImageDraw
@@ -255,6 +331,7 @@ def verdict(state, new_ids, ok_steps):
     if not ok_steps:
         why.append("대본 오류")
     why += font_problems()
+    why += getattr(deco_check, "bad", [])
     if not state.get("pages"):
         return (not why), why
     if len(new_ids) < len(state["pages"]):
