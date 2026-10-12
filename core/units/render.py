@@ -679,11 +679,12 @@ def jc_spec(a):
     return ",".join(f"{x:g}" for x in v)
 
 
-def soft_breaks(x, justify=False, word_min=None):
+def soft_breaks(x, justify=False, word_min=None, jc=None):
     """줄 나눔(U+2028, Shift+Enter) — 문단은 그대로 두고 그 자리에서 줄만 꺾는다(인디자인 강제 줄바꿈).
     양끝맞춤이면 꺾인 앞줄도 양끝을 맞춘다(인디자인과 같다). 조각마다 열린 태그를 닫았다 다시 연다.
     word_min(‰ em, 음수) — 양끝을 맞추는 줄의 낱말 간격 최소(인디자인 양끝맞춤 「낱말 간격 최소」): 그만큼 좁혀 놓고 양끝까지 늘린다.
-    브라우저는 공백을 늘리기만 하므로, 인디자인이 공백을 줄여 한 줄에 넣은 글이 넘치지 않게."""
+    브라우저는 공백을 늘리기만 하므로, 인디자인이 공백을 줄여 한 줄에 넣은 글이 넘치지 않게.
+    jc — 단락 컴포저 설정(data-jc): 조각마다 컴포저가 줄 끝을 고른다(인디자인은 강제 줄바꿈이 있어도 단락 컴포저로 짠다)."""
     if " " not in (x or ""):
         return x
     segs, stack, cur = [], [], ""
@@ -709,7 +710,8 @@ def soft_breaks(x, justify=False, word_min=None):
         segs[-1] += tail
         last = len(segs)
     ws =f"word-spacing:{float(word_min) / 1000.0:.4f}em;" if justify and word_min else ""
-    return "".join(f'<span style="display:block;{"text-align-last:justify;" + ws if justify and i < last else ""}{"text-indent:0;" if i else ""}">'
+    dj = f' data-jc="{jc}"' if jc else ""
+    return "".join(f'<span style="display:block;{"text-align-last:justify;" + ws if justify and i < last else ""}{"text-indent:0;" if i else ""}"{dj}>'
                    f'{s or "&#160;"}</span>' for i, s in enumerate(segs))
 
 
@@ -1113,12 +1115,13 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
     if st.get("tsume"):
         attrs += f' data-tsume="{float(st["tsume"]):g}"'
     just = (st.get("align") or a.get("align")) == "justify"
-    if just and a.get("compose") is not False and "\u2028" not in x:          # 손으로 친 줄 나눔이 있으면 컴포저 대신 브라우저
-        attrs += f' data-jc="{jc_spec(dict(a, jc=st["jc"]) if st.get("jc") else a)}"'
+    spec = jc_spec(dict(a, jc=st["jc"]) if st.get("jc") else a) if just and a.get("compose") is not False else None
+    if spec and "\u2028" not in x:                                    # 손으로 친 줄 나눔이 있으면 나뉜 조각마다(soft_breaks)
+        attrs += f' data-jc="{spec}"'
     x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="{_inline_css(slot_style(a, m.group(1), ctx), ctx)}">', x)
     if st.get("bullet_text"):                                         # 글머리 글(인디자인 글머리 기호 사용자 정의 문자) — 원고 앞에 디자인이 붙이는 표시
         x = _PS_RE.sub(lambda m: m.group(0) + esc(st["bullet_text"]), x, count=1) if _PS_RE.search(x) else esc(st["bullet_text"]) + x
-    return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None) or "&#160;"}</p>'
+    return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None, spec) or "&#160;"}</p>'
 
 
 def _inline_css(st, ctx):
@@ -1138,12 +1141,13 @@ def _paras_html(a, html, ps, ctx=None):
     paras = (html or "").split("<br/>")
     just = a.get("align") == "justify"
     # 단락 컴포저(static/js/units_compose.js) — 양끝맞춤이고 손으로 친 줄 나눔·탭이 없는 단락은 크롬 안에서 문단 전체를 보고 줄 끝을 고른다
-    jc = (lambda x: f' data-jc="{jc_spec(a)}"' if just and a.get("compose") is not False and "\u2028" not in x and not a.get("tab") else "")
+    spec = jc_spec(a) if just and a.get("compose") is not False and not a.get("tab") else None
+    jc = (lambda x: f' data-jc="{spec}"' if spec and "\u2028" not in x else "")      # 손으로 친 줄 나눔이 있으면 나뉜 조각마다(soft_breaks)
     slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
     if any(slots):
         return "".join(_slot_para(a, x, s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
     last = len(paras) - 1                                               # 상자 끝 문단은 뒤 간격 없이(인디자인 — 마지막 단락 뒤 간격은 상자 높이에 안 든다)
-    return "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None) or "&#160;"}</p>'
+    return "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None, spec) or "&#160;"}</p>'
                    for k, x in enumerate(paras))
 
 

@@ -73,6 +73,45 @@ def text(ss):
     return para([join(r) for r in lines_of(ss)])
 
 
+GAP_MIN = 0.607 / 25.4 * 72      # 9pt 낱말 간격 최소(pt) — 편집기 컴포저가 줄일 수 있는 데까지(공백 0.749mm − 기준 0.711mm × 20%)
+GAP_MAX = 0.984 / 25.4 * 72      # 낱말 간격 최대(pt) — 133%
+
+
+def forced_breaks(page, rows):
+    """손으로 친 줄 나눔(인디자인 Shift+Enter) — 낱말 간격이 최대(133%)를 넘게 벌어졌는데 다음 줄 첫 낱말이 최소 간격 안에 들어가는 줄.
+    인디자인 컴포저는 들어가는 낱말을 넘기고 줄을 벌리지 않는다 — 원본 작업자가 줄 끝 긴 윗주를 칸 안에 두려고 꺾은 자리(2쪽 첫 줄 · 44쪽 넷째 줄).
+    rows = lines_of(9pt 조각) — 줄 번호 집합을 돌려준다(그 줄 끝에서 꺾는다)"""
+    ch = [c for b in page.get_text("rawdict")["blocks"] for ln in b.get("lines", []) for sp in ln["spans"] if round(sp["size"], 1) == 9.0
+          for c in sp["chars"]]
+    right = max(r[-1]["x1"] for r in rows)
+    out = set()
+
+    def words(r):
+        y0 = r[0]["y0"]
+        cs = sorted((c for c in ch if abs(c["bbox"][1] - y0) <= 3 and r[0]["x0"] - 1 <= c["bbox"][0] <= r[-1]["x1"] + 1), key=lambda c: c["bbox"][0])
+        ws, cur = [], None
+        for c in cs:
+            if not c["c"].strip():                              # 낱말 경계는 틈으로만 — 낱말 안에 폭 없는 공백 글자가 낀 곳이 있다(2쪽 「thought」)
+                continue
+            if cur and c["bbox"][0] - cur[1] < 0.6:
+                cur[1] = c["bbox"][2]
+            else:
+                cur = [c["bbox"][0], c["bbox"][2]]
+                ws.append(cur)
+        return ws
+    for i in range(len(rows) - 1):
+        a, b = words(rows[i]), words(rows[i + 1])
+        if len(a) < 2 or not b or right - a[-1][1] > 3:          # 문단 끝 줄(오른쪽까지 안 감)은 아니다
+            continue
+        ink = sum(x1 - x0 for x0, x1 in a)
+        n = len(a) - 1
+        now = (right - a[0][0] - ink) / n
+        need = (right - a[0][0] - ink - (b[0][1] - b[0][0])) / (n + 1)
+        if now > GAP_MAX and need >= GAP_MIN:
+            out.add(i)
+    return out
+
+
 def analysis(page, H):
     ss = spans(page)
     src = [s for s in ss if s["size"] == 9.5 and s["color"] == 0xffffff and s["y0"] < H * 0.12]
@@ -113,9 +152,13 @@ def analysis(page, H):
         if c:
             badge_owner.add(min(c)[1])
     pieces, prev = [], None
-    for row in lines_of(words):
+    rows = lines_of(words)
+    forced = forced_breaks(page, rows)
+    for ri, row in enumerate(rows):
         for w in row:
-            if prev is not None and (w["x0"] - prev["x1"] > 0.6 or prev["sp"] or w["y0"] - prev["y0"] > 3):
+            if prev is not None and w["y0"] - prev["y0"] > 3 and ri - 1 in forced:
+                pieces.append("\u2028")                        # 원본의 손 줄 나눔
+            elif prev is not None and (w["x0"] - prev["x1"] > 0.6 or prev["sp"] or w["y0"] - prev["y0"] > 3):
                 pieces.append(" ")
             p = {"t": w["t"].strip()}
             cs = ([CS[w["color"]]] if w["color"] in CS else []) + deco_cs(w, deco)
