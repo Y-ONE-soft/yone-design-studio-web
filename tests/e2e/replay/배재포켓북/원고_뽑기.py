@@ -11,7 +11,8 @@ import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
 sys.path.insert(0, REPO)
-CARD = ("pocketbook", "x47abc561")
+CARD = ("pocketbook", "x47abc561")                     # 원본 PDF 등록 카드(2026-10-12 편집기 제작 카드를 만든 뒤 지움 — 원본은 같은 폴더 원본.pdf)
+REF_PDF = os.path.join(HERE, "원본.pdf")
 
 RED, BLUE, ORANGE, GRAY = 0xd2232a, 0x214e8e, 0xea9149, 0x999999
 CS = {RED: "빨강 글자", BLUE: "파랑 글자"}                  # 원본 글자색 → 문자 스타일 이름(틀의 브랜드에 같은 이름)
@@ -291,8 +292,8 @@ def unit_of(page, H):
 
 def main():
     import fitz
-    from routes.catalog import _design_pdf, pdf_layouts
-    pdf = _design_pdf(*CARD)
+    from routes.catalog import pdf_layouts
+    pdf = REF_PDF
     doc = fitz.open(pdf)
     W, H = doc[0].rect.width, doc[0].rect.height
     face = {}
