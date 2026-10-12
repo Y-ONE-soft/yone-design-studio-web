@@ -638,6 +638,9 @@ def _filled(lib, plan, data, ctx, drop_empty=False):
         pages = [pg for pg in pages if not empty(pg)]
     spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
     spec_of = lambda pg: store.by_id(lib["specs"]).get(pg.get("spec") or plan.get("spec") or "a4") or spec
+    own = {pg.get("spec") for pg in pages if pg.get("spec")}
+    if len(own) == 1 and len(own) == len({pg.get("spec") or "" for pg in pages}):   # 쪽이 모두 같은 판형 — PDF 쪽 크기도 그 판형(인디자인은 쪽마다 그 쪽 크기로 내보낸다)
+        spec = spec_of(pages[0])
     spares = render.story_spares(ctx, pages, spec_of)                         # 넘치면 쪽 더하기 — 이야기가 끝나는 쪽 뒤에 덧쪽(빈 채면 크롬이 지운다)
     out = []
     for pi, pg in enumerate(pages):

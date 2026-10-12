@@ -1,0 +1,12 @@
+{
+ "date": "2026-10-12",
+ "name": "배재1 포켓북 (편집기 제작)",
+ "desc": "편집기 제작 · 12면",
+ "source": "편집기: 배재1 포켓북 (편집기 제작)",
+ "made": "editor",
+ "plan": "plan_01ba3f50",
+ "units": "units.json",
+ "pages": 12,
+ "draft": false,
+ "updated": "2026-10-12"
+}
