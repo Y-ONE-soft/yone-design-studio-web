@@ -581,26 +581,9 @@
     });
   }
 
-  // 윗주 돌출 조정(인디자인 윗주 설정) — 줄 끝 낱말에 붙은 긴 윗주가 문단 칸 밖으로 나가면 넘친 만큼 안쪽으로 민다.
-  // 줄 바꿈이 원본과 달라 「to」 같은 짧은 낱말이 줄 끝에 오면 가운데 맞춘 긴 윗주가 쪽 여백까지 나갔다(배재1 포켓북 44쪽, 2026-10-12)
-  function rubyFit(root) {
-    root.querySelectorAll("[data-ruby]").forEach(r => {
-      const box = r.closest("p") || r.parentElement, inner = r.firstElementChild;
-      if (!box || !inner) return;
-      inner.style.translate = "";
-      const b = box.getBoundingClientRect(), i = inner.getBoundingClientRect();
-      const k = inner.offsetWidth ? i.width / inner.offsetWidth : 1;          // 화면 배율(지면 보기 확대) — 옮김은 글상자 좌표로
-      let dx = 0;
-      if (i.right > b.right + 0.5) dx = b.right - i.right;
-      if (i.left + dx < b.left - 0.5) dx = b.left - i.left;
-      if (dx) inner.style.translate = (dx / k).toFixed(2) + "px 0";
-    });
-  }
-
   function composeAll(root) {
     try { tsume(root || document); } catch (e) { /* 못 하면 자간 축소 없이 */ }
     (root || document).querySelectorAll("[data-jc]").forEach(p => { try { compose(p); } catch (e) { /* 못 하면 브라우저 줄바꿈 */ } });
-    try { rubyFit(root || document); } catch (e) { /* 못 하면 윗주가 칸 밖으로 나간 채 */ }
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
     try { dropSpares(root || document); } catch (e) { /* 못 하면 빈 덧쪽이 남는다 */ }
     try { grow(root || document); } catch (e) { /* 못 하면 서버 어림 높이 그대로 */ }
