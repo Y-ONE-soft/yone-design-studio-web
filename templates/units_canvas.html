@@ -1243,7 +1243,9 @@ function editTextInline(i) {
   fit(); ta.oninput = fit;
   const cs = (skin() || {}).cstyles || {};
   $("#rt-cs").innerHTML = `<option value="">문자 스타일…</option>${Object.keys(cs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__none">문자 스타일 빼기</option>`;
-  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px", top: Math.max(0, b.y * scale - 34) + "px"});
+  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"});
+  const above = b.y * scale - bar.offsetHeight - 4;                  // 위에 자리가 없으면(페이지 맨 위 글상자) 아래에 — 막대가 고치는 글을 덮지 않게
+  bar.style.top = (above >= 0 ? above : Math.max(b.h * scale + 6, ta.offsetHeight + 4) + b.y * scale) + "px";
   ta.select = () => { const r = document.createRange(); r.selectNodeContents(ta); const g = getSelection(); g.removeAllRanges(); g.addRange(r); };
   ta.focus(); ta.select();
   let last = [0, rtRead(ta).reduce((k, x) => k + rtLen(x), 0)];

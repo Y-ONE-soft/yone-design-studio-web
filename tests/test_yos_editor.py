@@ -58,6 +58,20 @@ def test_summary_pads_questions_per_passage():
     assert r["선지"][0] == "① a\n② b"
 
 
+def test_summary_flow_story_per_passage():
+    """흐름 틀(지문+문제번호+발문+선지 — 인디자인 스토리) — 지문마다 한 줄기, 있는 문제만(칸 채우기 · 접기 묶음 없이), 밑줄은 문자 스타일 조각"""
+    q = {"prompt": "1. Which is <u>true</u>?", "choices": ["a", "b"], "answer": "1"}
+    item = {"key": "mock-exam", "label": "내용종합", "content": {"kind": "mock-exam", "questions": [q, dict(q, prompt="2. Pick all.")]}}
+    caps = dict(CAPS, B내용종합=Counter({"제목": 1, "지문번호": 2, "지문+문제번호+발문+선지": 2}))
+    content, _ = yos_editor.to_content(_data([item], 2), SAMPLE, caps)
+    r = content["B내용종합"][0]
+    k = "지문+문제번호+발문+선지"
+    assert r["지문번호"] == ["1", "2"] and len(r[k]) == 2
+    first = r[k][0]
+    assert first[0] == [["지문", "passage 0"]] and len(first) == 3                # 지문 + 문제 둘(빈 문제 칸 없음)
+    assert first[1] == [["문제번호", "01"], ["발문", ["Which is ", {"t": "true", "cs": "밑줄"}, "?"]], ["선지", "① a\n② b"]]
+
+
 def test_writing_order_rows_and_exam_story():
     wo = {"key": "writing-order", "label": "영작배열 1단계", "content": {"kind": "writing-order", "items": [{"ko": "가", "chunks": ["a", "b"]}, {"ko": "나", "chunks": ["c"]}]}}
     topic = {"key": "mock-exam", "label": "주제", "content": {"kind": "mock-exam", "questions": [{"prompt": "주제는?", "choices": ["x", "y"]}]}}

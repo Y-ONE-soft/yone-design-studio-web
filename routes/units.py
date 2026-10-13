@@ -746,8 +746,14 @@ def api_pdf():
     """PDF 저장 — ?plan=<틀> (세트 전부) 또는 ?page=<지면> (견본 값·?set=). ?skin= 옷. 크로미움 인쇄."""
     from core.units import pdf as _pdf
     lib = store.library()
-    ctx = _ctx(lib, request.args.get("skin"))
     plan_id, page_id = request.args.get("plan"), request.args.get("page")
+    sid = request.args.get("skin")
+    if not sid:                                   # 스타일은 문서마다 — 쪽만 그려도 그 쪽이 든 문서의 스타일 · 색상 견본으로(인디자인)
+        own = store.by_id(lib["plans"]).get(plan_id or "")
+        if not own and page_id:
+            own = next((p for p in lib["plans"] if page_id in content.plan_page_ids(p)), None)
+        sid = (own or {}).get("skin")
+    ctx = _ctx(lib, sid)
     printing = request.args.get("print") == "1"
     if printing:
         pl = store.by_id(lib["plans"]).get(plan_id or "") or {}

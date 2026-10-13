@@ -166,7 +166,43 @@ def _a_ox(ps, sample, cap):
     return recs
 
 
+def _flow_key(cap, need):
+    """그 구성의 흐름 자리(인디자인 스토리 — 여러 자리 한 줄기) 가운데 need 자리가 든 것"""
+    return next((k for k in cap if "+" in k and need in k.split("+")), None)
+
+
+def _frags(t):
+    """밑줄 약속 {…}(_u) → 꾸밈 조각(문자 스타일 「밑줄」) — 흐름 자리는 표시를 감추는 GREP 대신 조각으로 받는다(인디자인 태그 텍스트처럼).
+    표시가 없으면 글 그대로"""
+    s = str(t or "")
+    if "{" not in s:
+        return s
+    out, k = [], 0
+    for m in re.finditer(r"\{([^{}]*)\}", s):
+        if m.start() > k:
+            out.append(s[k:m.start()])
+        out.append({"t": m.group(1), "cs": "밑줄"})
+        k = m.end()
+    if k < len(s):
+        out.append(s[k:])
+    return out
+
+
 def _b_summary(ps, sample, cap):
+    key = _flow_key(cap, "발문")
+    if key:                                                              # 흐름 틀(2026-10-14) — 지문마다 한 줄기: 지문 · 문제마다 번호 · 발문 · 선지(없는 문제는 안 보낸다)
+        per = cap.get("지문번호") or cap.get(key) or 2
+        recs = []
+        for ch in _chunks(ps, per):
+            r = {"제목": _title(sample, "B내용종합"), "지문번호": [], key: []}
+            for no, text, g in ch:
+                items = [[["지문", text or ""]]]
+                for i, q in enumerate(_qs(g.get("q:내용종합")), 1):
+                    items.append([["문제번호", f"{i:02d}"], ["발문", _frags(_prompt(q))], ["선지", _frags(_choices(q.get("choices")))]])
+                r["지문번호"].append(str(no))
+                r[key].append(items)
+            recs.append(r)
+        return recs
     per = cap.get("지문번호") or 2
     qn = max(1, (cap.get("문제번호") or per) // per)                     # 지문 하나에 문제 칸 수
     recs = []

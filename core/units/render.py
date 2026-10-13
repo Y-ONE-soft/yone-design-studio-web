@@ -1022,6 +1022,7 @@ def _tab_html(a, para, ctx=None):
 
 _PS_RE = re.compile(r'<span data-ps="([^"]*)"></span>')
 _PSI_RE = re.compile(r'<span data-psi="([^"]*)">')
+_PS_LEAD_RE = re.compile(r'<span data-ps="[^"]*"></span>(?:<span data-psi="[^"]*"[^>]*>[^<]*</span>)*')   # 문단 첫머리 + 붙인 번호들
 
 
 def slot_style(a, slot, ctx=None):
@@ -1114,15 +1115,16 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
         attrs += f' data-jc="{spec}"'
     x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="{_inline_css(slot_style(a, m.group(1), ctx), ctx)}">', x)
     if st.get("bullet_text"):                                         # 글머리 글(인디자인 글머리 기호 사용자 정의 문자) — 원고 앞에 디자인이 붙이는 표시
-        x = _PS_RE.sub(lambda m: m.group(0) + esc(st["bullet_text"]), x, count=1) if _PS_RE.search(x) else esc(st["bullet_text"]) + x
+        m = _PS_LEAD_RE.search(x)                                     # 붙인 번호(문항 번호)가 있으면 그 뒤에 — 「01 | 발문」
+        x = (x[:m.end()] + esc(st["bullet_text"]) + x[m.end():]) if m else esc(st["bullet_text"]) + x
     return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None, spec) or "&#160;"}</p>'
 
 
 def _inline_css(st, ctx):
     """문단 첫머리에 붙는 자리(문항 번호) — 글자 모양 + 정한 폭(번호 칸)"""
     css = "text-indent:0;line-height:0;" + re.sub(r"line-height:[^;]*;", "", _font_css(st, ctx))   # 큰 번호가 줄 높이를 늘리지 않게(줄 높이는 문단 것)
-    if st.get("inline_w"):
-        css += f"display:inline-block;width:{float(st['inline_w']):.3f}px;"
+    if st.get("inline_w"):                                              # 번호 칸 — 칸 안에서 줄을 바꾸지 않는다(줄 높이 0 이라 겹쳐 찍힌다)
+        css += f"display:inline-block;width:{float(st['inline_w']):.3f}px;white-space:nowrap;"
     elif st.get("inline_gap"):                                         # 붙인 글 뒤 간격 mm (인디자인 번호 뒤 간격) — 「7강  분석」
         css += f"margin-right:{float(st['inline_gap']):.3f}px;"
     if st.get("drop"):                                                 # 기준선 내리기 mm — 원본 번호는 발문 기준선보다 0.55mm 아래

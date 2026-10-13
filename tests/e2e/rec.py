@@ -425,7 +425,7 @@ try:
             if "fill" in st:
                 fill_in(st["fill"]["at"], st["fill"]["value"])
             if "write" in st:                                  # 지면의 글상자를 두 번 눌러 글을 친다
-                want = st["write"]["value"]
+                want, got = st["write"]["value"], None
                 for tryn in range(3):
                     click(st["write"]["at"], 2)
                     time.sleep(0.4 / SPEED)
@@ -437,13 +437,17 @@ try:
                         paste(want)
                     else:
                         typetext(want)
+                    if os.environ.get("REC_DEBUG"):
+                        print("  ? 친 뒤", c.js("(() => { const t = document.querySelector('#tedit'); const a = document.activeElement; return JSON.stringify([t && t.innerText, t && t.style.display, a && (a.tagName + '#' + a.id + '.' + a.className)]); })()"), flush=True)
                     click(st.get("away") or [W - 60, H - 120])     # 칸 밖을 눌러 확정 (Esc 는 취소다)
                     click(st["write"]["at"])                       # 방금 쓴 글상자를 다시 고른다
                     got = c.js("(() => { const it = page.items[sel]; return it && it.atom ? String(it.atom.text || '') : null; })()")
                     if got is not None and want[:6] in got:
                         break
-                    print(f"  ! 글이 「{str(got)[:14]}」 — 다시", flush=True)
-            if "select" in st:                                 # 글 고치기 칸에서 글자 고르기 — 그 글의 첫 글자에서 끝 글자까지 마우스로 끈다(사람처럼)
+                    print(f"  ! 글이 「{str(got)[:14]}」 — 다시 ({st['write']['at']})", flush=True)
+                else:                                          # 세 번 쳐도 안 들어가면 대본 오류 — 기본 문구가 남은 채 넘어가지 않는다
+                    raise RuntimeError(f"글 안 들어감 {st['write']['at']} — 지금 「{str(got)[:20]}」")
+            if "select" in st:                                # 글 고치기 칸에서 글자 고르기 — 그 글의 첫 글자에서 끝 글자까지 마우스로 끈다(사람처럼)
                 q = st["select"]
                 r = c.js("(() => { const box = document.querySelector('#tedit'); const want = " + json.dumps(q["text"]) + ", nth = " + str(int(q.get("nth", 0))) + "; "
                          "const w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT); let n, k = 0; "

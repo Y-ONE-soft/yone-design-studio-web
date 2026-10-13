@@ -346,7 +346,7 @@ def done(name, shot):
     """면 끝 — 덜 쓴 글상자가 없는지 스스로 센다"""
     return [S(f"{name} 완성", 2000),
             {"js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()", "wait": 300},
-            {"js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); "
+            {"js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^(텍스트 프레임|글상자) —/.test((i.atom||{}).text || '')); "
                    "return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + "
                    "'개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"},
             {"shot": shot, "wait": 700}, {"hide": True, "wait": 500}]
