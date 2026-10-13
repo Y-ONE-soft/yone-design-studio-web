@@ -32,6 +32,7 @@ from routes.make import bp as make_bp  # noqa: E402
 from routes.units import bp as units_bp  # noqa: E402
 from routes import api_v1  # noqa: E402
 from routes.analysis_edit import bp as analysis_edit_bp  # noqa: E402
+from routes.pocketbook_view import bp as pocketbook_view_bp  # noqa: E402
 from core import jobs, webauth  # noqa: E402
 
 
@@ -55,6 +56,7 @@ def create_app():
     app.register_blueprint(make_bp)
     app.register_blueprint(units_bp)
     app.register_blueprint(analysis_edit_bp)   # 분석본 지면 위 고치기 — contents 분석본 NEW 가 끼워 쓴다
+    app.register_blueprint(pocketbook_view_bp)  # 포켓북 지면 보기 — contents 포켓북이 끼워 쓴다
     api_v1.install(app)                 # /api/v1 — contents·core·앱이 부르는 계약
     jobs.mark_lost_on_boot()            # 재시작 전에 돌던 잡은 lost 로
 
