@@ -213,8 +213,8 @@ try:
         wait("(LIB.blocks || []).some(b => b.id === 'passage')", 10)
 
     def c1():
-        n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('.g0 button, .pal button, .draw button, button')].find(b => /글상자/.test(b.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
-        if not b: return (False, "글상자 버튼 없음")
+        n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('.g0 button, .pal button, .draw button, button')].find(b => /텍스트 프레임/.test(b.textContent)); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        if not b: return (False, "텍스트 프레임 버튼 없음")
         click(*b)
         if not js("drawTool === 'text'"): return (False, "도구가 안 골라짐")
         x0, y0 = paper_pt(25, 60); x1, y1 = paper_pt(95, 80); drag(x0, y0, x1, y1, steps=10)
@@ -222,7 +222,7 @@ try:
         it = json.loads(item(n0)) if ok else {}; a = it.get("atom", {})
         return (ok and a.get("t") == "text" and abs(a.get("w", 0) - 70) < 2 and abs(a.get("h", 0) - 20) < 2 and abs(it.get("x", 0) - 25) < 2 and js("sel") == n0 and not js("drawTool"),
                 f"items {n0}→{n_items()} {a.get('w')}×{a.get('h')}mm sel={js('sel')}")
-    step("C1 「글상자」 고르고 지면에서 끌면 그 크기로 그려진다 (인디자인처럼)", c1)
+    step("C1 「텍스트 프레임」 고르고 페이지에서 끌면 그 크기로 그려진다 (인디자인처럼)", c1)
     def c2():
         n0 = n_items()
         js("(() => { const el = [...document.querySelectorAll('.card')].find(d => (d.querySelector('.nm') || {}).textContent === '지문 상자 (감사)'); if (el) el.scrollIntoView({block: 'center'}); })()"); time.sleep(0.5)
@@ -235,12 +235,12 @@ try:
         return (ok and it.get("block") == "passage" and abs(it.get("x", 0) - 30) < 3 and abs(it.get("y", 0) - 100) < 3, f"{it}")
     step("C2 팔레트 카드를 끌어 페이지 위 자리에 놓기", c2)
     def c3():
-        n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('button')].find(b => /^\\s*(면|□)/.test(b.textContent) && b.closest('.upanel, .pal, #pbody')); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
-        if not b: return (False, "면 버튼 없음")
+        n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('button')].find(b => /^\\s*(사각형|□)/.test(b.textContent) && b.closest('.upanel, .pal, #pbody')); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        if not b: return (False, "사각형 버튼 없음")
         click(*b); px, py = paper_pt(40, 120); click(px, py)
         ok = wait(f"page.items.length === {n0 + 1}", 8); a = json.loads(item(n0)).get("atom", {}) if ok else {}
         return (ok and a.get("t") == "rect" and a.get("w") == 60, item(n0)[:90])
-    step("C3 「면」 고르고 지면을 그냥 누르면 기본 크기로 놓인다", c3)
+    step("C3 「사각형」 고르고 페이지를 그냥 누르면 기본 크기로 놓인다", c3)
     def c4():
         n0 = n_items(); b = js("(() => { const el = [...document.querySelectorAll('button')].find(b => /표/.test(b.textContent) && b.closest('.upanel, .pal, #pbody')); if (!el) return null; const r = el.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
         if not b: return (False, "표 버튼 없음")

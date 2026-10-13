@@ -39,7 +39,7 @@ def glossary():
 # 용어집 「바꾸지 않는 것(문맥 예외)」 — 그 절 그대로
 KEEP = ["제본쪽", "왼쪽", "오른쪽", "안쪽", "바깥쪽", "위쪽", "아래쪽", "양쪽", "한쪽", '"오른"}쪽', '"왼" : "오른"}쪽',
         "색 면", "색상 견본", "견본 이름", "들어올 자리", "들어갈 자리", "글 자리", "그 자리만큼", "쌓기 자리", "그 자리엔"]
-CONTEXT = [("쪽마다", "변마다"), ("네 쪽 같게", "네 변 같게"), ("커서 자리", "커서 위치"), ("자리는 오른쪽 패널", "위치는 오른쪽 패널"),
+CONTEXT = [("R 면 ·", "R 사각형 ·"), ("쪽마다", "변마다"), ("네 쪽 같게", "네 변 같게"), ("커서 자리", "커서 위치"), ("자리는 오른쪽 패널", "위치는 오른쪽 패널"),
            ("틀 저장 실패", "문서 저장 실패"), ("폴더(틀)", "폴더(템플릿)"), ("틀에는", "템플릿에는"), ("틀 =", "템플릿 ="), ("순서(틀)", "순서(템플릿)"),
            ("XML 태그 자리", "XML 태그에 해당"), ("같은 이야기의", "같은 스토리의"), ("이 이야기를", "이 스토리를"),
            ("견본은 「보기: 원고」", "레코드 미리 보기는 「보기: 원고」"), ("데이터 병합 자리 표시", "데이터 병합 필드 표시"),
@@ -85,16 +85,31 @@ if os.path.exists(_ex):
     EXPLICIT.update(json.load(open(_ex, encoding="utf-8")))
 
 
-PATS = [r">([^<>`\n]{1,300})<", r'title="([^"]{2,500})"', r'placeholder="([^"]{1,120})"', r'(?:say|textContent\s*=)\(?\s*[`"]([^`"]{2,300})[`"]']
+PATS = [r">([^<>`\n]{1,300})<", r'title="([^"]{2,1500})"', r'placeholder="([^"]{1,120})"', r'(?:say|textContent\s*=)\(?\s*[`"]([^`"]{2,300})[`"]']
 CODE = re.compile(r"=>|\bconst\b|\breturn\b|\bfunction\b|\bif\s*\(|;\s*$|===|!==|&&|\|\|")
+
+
+LIT_DATA = {"자리", "빈 면", "본문", "간지", "표지"}                              # 새 데이터 필드 기본 이름 · 새 페이지 기본 이름(저장되는 데이터)
+LIT = re.compile(r'"([^"\n]*)"|`([^`]*)`')                                  # 코드 안 글자 묶음 — 표(EXPLICIT)에 똑같이 적힌 것만(데이터 글자는 안 건드리게)
 
 
 def changes(src, rules):
     seen = set()
+    for m in LIT.finditer(src):
+        g = 1 if m.group(1) is not None else 2
+        t = m.group(g)
+        if t in LIT_DATA:                                                  # 코드가 데이터로 쓰는 글자 — 안 바꾼다
+            continue
+        n = EXPLICIT.get(t, t)
+        if t == "면":                                                       # 같은 글자 둘 — 도구 목록의 사각형(["rect", "면"])과 등록 쪽 수(+ "면")
+            n = "사각형" if src[max(0, m.start() - 10):m.start()].rstrip().endswith('"rect",') else "페이지"
+        if n != t:
+            seen.add((m.start(g), m.end(g)))
+            yield m.start(g), m.end(g), t, n
     for p in PATS:
         for m in re.finditer(p, src):
             a, b, t = m.start(1), m.end(1), m.group(1)
-            if (a, b) in seen or not re.search(r"[가-힣]", t) or (p.startswith(">") and CODE.search(t)):
+            if (a, b) in seen or any(x <= a < y for x, y in seen) or not re.search(r"[가-힣]", t) or (p.startswith(">") and CODE.search(t)):
                 continue
             seen.add((a, b))
             n = convert(t, rules)
