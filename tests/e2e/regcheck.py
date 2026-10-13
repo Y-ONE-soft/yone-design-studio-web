@@ -6,7 +6,7 @@
 
 카드마다 문서 묶음(units.json)을 빈 편집기 데이터에 들여와 등록 때와 같은 함수(routes.units.fill_svgs → core.units.pdf.to_pdf)로
 ① 이 체크아웃 코드 ② origin/main 코드 로 각각 그려 쪽마다 맞댄다 — 이 브랜치의 변경이 기존 책을 바꿨는가만 본다
-(등록본과의 차이는 main 에 원래 있던 것일 수 있어 따로 적기만 한다). 바뀐 쪽은 나란히 그림
+(등록본과의 차이는 main 에 원래 있던 것일 수 있어 따로 적기만 한다). 원본 PDF(참고/원본.pdf)가 없는 카드는 오류 — 머지가 막힌다. 바뀐 쪽은 나란히 그림
 (~/Downloads/편집기재현/_regcheck/<틀>_<카드>/p<쪽>_side.png — 왼쪽 main · 오른쪽 이 브랜치)을 남긴다.
 
 결과 파일 ~/Downloads/편집기재현/_regcheck/결과.json — {commit: 돌린 판의 HEAD, cards: {<틀>/<카드>: {changed: [...], verdict, why}}}.
@@ -104,6 +104,10 @@ def run():
     try:
         for series, did, name in cards():
             key = f"{series}/{did}"
+            if not os.path.exists(os.path.join(REPO, "catalog", series, "designs", did, "참고", "원본.pdf")):   # 템플릿 보기 「원본 페이지 차례」(2026-10-13)
+                res["cards"][key] = {"name": name, "error": "원본 PDF 없음 — tests/e2e/attach_origin.py 로 붙인다"}
+                print(f"✗ {key} 「{name}」 — 원본 PDF 없음: python3 tests/e2e/attach_origin.py {key} <원본 PDF | PDF 등록 카드 id>")
+                continue
             out = os.path.join(OUT, f"{series}_{did}")
             shutil.rmtree(out, ignore_errors=True)
             work = tempfile.mkdtemp(prefix="regcheck_pdf_")

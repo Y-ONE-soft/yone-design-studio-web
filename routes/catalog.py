@@ -21,6 +21,7 @@
     POST /api/catalog/create              새 책 → data → build → print → verify (배경)
     POST /api/catalog/design/<series>     책 하나를 디자인으로 등록 (config·css 복사, 페이지 틀 뽑기)
     DELETE /api/catalog/design/<series>/<design>
+    POST /api/catalog/design/<series>/<design>/origin  편집기 템플릿에 원본 PDF 붙이기 (file 또는 from=<같은 틀 PDF 등록 카드>)
 
 폴더:
     catalog/dirs.json                           디렉토리 목록(순서·이름·설명·색)
@@ -453,6 +454,13 @@ def _design_pdf(series, design):
         if os.path.isdir(bd):
             return _book_pdf(bd)
     return None
+
+
+def _origin_pdf(series, design):
+    """편집기 템플릿이 따라 만든 원본 PDF(참고/원본.pdf) — 템플릿 보기의 「원본 페이지 차례」. 없으면 None.
+    다시 등록해도 지우지 않는다(register_design 은 reference.pdf · 견본 그림만 새로 그린다)."""
+    p = os.path.join(_ddir(series, design), "참고", "원본.pdf")
+    return p if os.path.exists(p) else None
 
 
 def design_pages(series, design):
@@ -894,10 +902,16 @@ def design_layouts(series, design):
         dj = json.load(open(os.path.join(_ddir(series, design), "design.json"), encoding="utf-8"))
     except (OSError, ValueError):
         dj = {}
-    cache = os.path.join(tdir, f"layouts15{'e' if dj.get('made') == 'editor' else ''}_{int(os.path.getmtime(pdf))}.json")
+    editor = dj.get("made") == "editor"
+    origin = _origin_pdf(series, design) if editor else None
+    stamp = f"{int(os.path.getmtime(pdf))}" + (f"_o{int(os.path.getmtime(origin))}" if origin else "")
+    cache = os.path.join(tdir, f"layouts15{'e' if editor else ''}_{stamp}.json")
     if os.path.exists(cache):
         return json.load(open(cache, encoding="utf-8"))
-    out = (editor_layouts(series, design, dj, pdf) if dj.get("made") == "editor" else None) or pdf_layouts(pdf, series, dj.get("layout_rules", True))
+    out = (editor_layouts(series, design, dj, pdf) if editor else None) or pdf_layouts(pdf, series, dj.get("layout_rules", True))
+    if origin:                                            # 원본 페이지 차례 — PDF 등록 카드와 같은 판정(새 PDF 라 틀 규칙 없이)
+        o = pdf_layouts(origin, series, False)
+        out["origin"] = {"total": o["total"], "layouts": o["layouts"]}
     json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
     return out
 
@@ -1062,7 +1076,7 @@ def design_pdf_view(series, design):
     """기준 PDF 원본 — 브라우저 PDF 뷰어로 연다(내려받기 아님). 구성과 나란히 대조용, 주소 뒤 #page=N 으로 그 면부터."""
     if series not in _meta() or not _ID.match(design):
         abort(404)
-    pdf = _design_pdf(series, design)
+    pdf = _origin_pdf(series, design) if request.args.get("src") == "origin" else _design_pdf(series, design)
     if not pdf:
         abort(404)
     return send_from_directory(os.path.dirname(pdf), os.path.basename(pdf), mimetype="application/pdf")
@@ -1070,10 +1084,11 @@ def design_pdf_view(series, design):
 
 @bp.route("/catalog/page/<series>/<design>/<int:n>.png")
 def design_page_img(series, design, n):
-    """기준 PDF 의 n 면 그림(1부터). `_pages/` 에 두고 다시 안 그린다. ?dpi= 24~120."""
+    """기준 PDF 의 n 면 그림(1부터). `_pages/` 에 두고 다시 안 그린다. ?dpi= 24~120. ?src=origin = 편집기 템플릿의 원본 PDF."""
     if not _ID.match(design) or n < 1:
         abort(404)
-    pdf = _design_pdf(series, design)
+    org = request.args.get("src") == "origin"
+    pdf = _origin_pdf(series, design) if org else _design_pdf(series, design)
     if not pdf:
         abort(404)
     try:
@@ -1082,7 +1097,7 @@ def design_page_img(series, design, n):
         dpi = 36
     tdir = os.path.join(_ddir(series, design), "_pages")
     os.makedirs(tdir, exist_ok=True)
-    out = f"{int(os.path.getmtime(pdf))}_{n}_{dpi}.png"
+    out = f"{'o' if org else ''}{int(os.path.getmtime(pdf))}_{n}_{dpi}.png"
     if not os.path.exists(os.path.join(tdir, out)):
         try:
             import fitz
@@ -1188,6 +1203,44 @@ def design_add(series):
     from core import yos_hooks
     yos_hooks.design_changed(series, did, "added")      # contents 가 카탈로그 캐시를 비우도록
     return jsonify({"design": did})
+
+
+@bp.route("/api/catalog/design/<series>/<design>/origin", methods=["POST"])
+def design_origin(series, design):
+    """편집기 템플릿에 원본 PDF 붙이기(절차 8단계 템플릿 등록 뒤) — 템플릿 보기 「원본 페이지 차례」.
+    form file=<PDF> 또는 from=<같은 틀의 PDF 등록 카드 id>(그 카드의 기준 PDF 를 복사). → {ok, pages}"""
+    if not _ID.match(design) or series not in _meta():
+        abort(404)
+    d = _ddir(series, design)
+    try:
+        dj = json.load(open(os.path.join(d, "design.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        abort(404)
+    if dj.get("made") != "editor":
+        return jsonify({"error": "편집기 템플릿에만 붙인다"}), 400
+    import fitz
+    dst = os.path.join(d, "참고", "원본.pdf")
+    tmp = dst + ".part"
+    os.makedirs(os.path.dirname(dst), exist_ok=True)
+    src = (request.form.get("from") or "").strip()
+    if src:
+        if not _ID.match(src) or src == design:
+            return jsonify({"error": "원본 카드 id 가 틀렸다"}), 400
+        pdf = _design_pdf(series, src)
+        if not pdf:
+            return jsonify({"error": f"{series}/{src} 에 기준 PDF 가 없다"}), 404
+        shutil.copyfile(pdf, tmp)
+    elif request.files.get("file"):
+        request.files["file"].save(tmp)
+    else:
+        return jsonify({"error": "file 또는 from 이 있어야 한다"}), 400
+    try:
+        n = fitz.open(tmp).page_count
+    except Exception:
+        os.remove(tmp)
+        return jsonify({"error": "PDF 가 아니다"}), 400
+    os.replace(tmp, dst)
+    return jsonify({"ok": True, "pages": n, "layouts": len(design_layouts(series, design).get("origin", {}).get("layouts") or [])})
 
 
 @bp.route("/api/catalog/design/<series>/<design>", methods=["DELETE"])

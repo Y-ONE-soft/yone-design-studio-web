@@ -90,25 +90,57 @@
     </div>
   </div>
 
-  {% if total and faces %}
-  <h2>면 <span class="n">{{ faces|length }}개 — 만드는 단위, 서로 다른 면 모양마다 하나 (지문마다 붙는 면은 원고가 정한다)</span></h2>
+  {% if total and d.made == "editor" %}
+  {# 편집기 템플릿 — 상위 페이지는 편집기 문서에서 읽고(routes/catalog.editor_layouts), 원본 페이지 차례는 템플릿에 붙인 원본 PDF 를 PDF 등록 카드와 같은 판정으로 #}
+  <h2>상위 페이지 <span class="n">{{ layouts|length }}개 — 만드는 단위, 편집기 문서에서 읽음 (레코드 미리 보기로 그린 템플릿 {{ total }}페이지)</span>
+    <button class="tg" id="tg-all">전체 {{ total }}페이지 펼치기</button></h2>
+  <div class="secs" id="layouts">
+    {% for l in layouts %}{% set u = (l.show or [l.n])|length %}<div class="sec" title="p{{ l.pages|join(', p') }}"{% if u > 2 %} style="grid-column: span {{ [(u + 1) // 2, 3]|min }}"{% endif %}>
+      <div class="two">
+        {% for n in (l.show or [l.n]) %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}
+      </div>
+      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ '펼침면' if u == 2 else u ~ '페이지' }} · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}
+        · <a href="/catalog/pdf/{{ t.series }}/{{ d.id }}#page={{ (l.show or [l.n])[0] }}" target="pdfview">PDF에서 보기</a></small></div>
+    </div>{% endfor %}
+  </div>
+  <div class="pages all hide" id="all-pages">
+    {% for n in range(1, total + 1) %}<div class="pg" data-n="{{ n }}"><div class="th"><img data-src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div><div class="lb">p{{ n }}</div></div>{% endfor %}
+  </div>
+  {% if origin %}
+  <h2>원본 페이지 차례 <span class="n">{{ origin.layouts|length }}개 — 원본에서 되풀이된 상위 페이지 묶음(확인용 · 만들지 않는다) (원본 {{ origin.total }}페이지)</span>
+    <a class="tg" href="/catalog/pdf/{{ t.series }}/{{ d.id }}?src=origin" target="pdfview" style="text-decoration:none">원본 PDF 보기</a></h2>
+  <div class="secs" id="origin">
+    {% for l in origin.layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}"{% if (l.show or [])|length > 2 %} style="grid-column: span {{ [((l.show|length) + 1) // 2, 3]|min }}"{% endif %}>
+      <div class="two">
+        {% for n in (l.show or [l.n]) %}<a class="pg" href="/catalog/pdf/{{ t.series }}/{{ d.id }}?src=origin#page={{ n }}" target="pdfview"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30&src=origin" alt="" loading="lazy"></div></a>{% endfor %}
+      </div>
+      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}페이지 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}</small></div>
+    </div>{% endfor %}
+  </div>
+  {% else %}
+  <h2>원본 페이지 차례</h2>
+  <div class="info"><div class="box" id="origin-none">원본 PDF 가 아직 없습니다 — 이 템플릿이 따라 만든 원본 PDF 를 붙이면 원본에서 되풀이된 차례가 여기 나옵니다.
+    <div style="margin-top:8px"><input type="file" id="origin-file" accept="application/pdf"> <button class="tg" id="origin-up">원본 PDF 붙이기</button></div></div></div>
+  {% endif %}
+  {% elif total %}
+  {% if faces %}
+  <h2>상위 페이지 <span class="n">{{ faces|length }}개 — 만드는 단위, 서로 다른 페이지 모양마다 하나 (레코드마다 붙는 페이지는 레코드가 정한다)</span></h2>
   <div class="secs" id="faces">
     {% for f in faces %}<div class="sec" title="p{{ f.pages|join(', p') }}">
       <div class="two">{% for n in f.show %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}</div>
-      <div class="lb"><b>{{ loop.index }}. {{ f.label }}</b><br><small>{{ '2쪽 면(펼침면)' if f.size == 2 else '1쪽 면' }} · {{ f.count }}번 · 처음 p{{ f.pages[0] }}
+      <div class="lb"><b>{{ loop.index }}. {{ f.label }}</b><br><small>{{ '펼침면' if f.size == 2 else '1페이지' }} · {{ f.count }}번 · 처음 p{{ f.pages[0] }}
         · <a href="/catalog/pdf/{{ t.series }}/{{ d.id }}#page={{ f.show[0] }}" target="pdfview">PDF에서 보기</a></small></div>
     </div>{% endfor %}
   </div>
   {% endif %}
-  {% if total %}
-  <h2>{% if faces %}원본 차례 견본{% else %}구성{% endif %} <span class="n">{{ layouts|length }}개 — {% if faces %}원본에서 되풀이된 면 묶음(확인용 · 만들지 않는다){% else %}지문만 다르고 형태가 같은 면은 하나로{% endif %} (기준 PDF {{ total }}면)</span>
-    <button class="tg" id="tg-all">전체 {{ total }}면 펼치기</button></h2>
+  <h2>{% if faces %}원본 페이지 차례{% else %}구성{% endif %} <span class="n">{{ layouts|length }}개 — {% if faces %}원본에서 되풀이된 상위 페이지 묶음(확인용 · 만들지 않는다){% else %}지문만 다르고 형태가 같은 면은 하나로{% endif %} (원본 {{ total }}페이지)</span>
+    <button class="tg" id="tg-all">전체 {{ total }}페이지 펼치기</button></h2>
   <div class="secs" id="layouts">
     {% for l in layouts %}<div class="sec" title="p{{ l.pages|join(', p') }}"{% if (l.show or [])|length > 2 %} style="grid-column: span {{ [((l.show|length) + 1) // 2, 3]|min }}"{% endif %}>
       <div class="two">
         {% for n in (l.show or [l.n]) %}<div class="pg" data-n="{{ n }}"><div class="th"><img src="/catalog/page/{{ t.series }}/{{ d.id }}/{{ n }}.png?dpi=30" alt="" loading="lazy"></div></div>{% endfor %}
       </div>
-      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}면 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}
+      <div class="lb"><b>{{ loop.index }}. {{ l.label }}</b><br><small>{{ l.count }}페이지 · p{{ l.pages[0] }}{% if l.count > 1 %}–{{ l.pages[-1] }}{% endif %}
         · <a href="/catalog/pdf/{{ t.series }}/{{ d.id }}#page={{ (l.show or [l.n])[0] }}" target="pdfview">PDF에서 보기</a></small></div>
     </div>{% endfor %}
   </div>
@@ -139,12 +171,20 @@
   if (tg) tg.addEventListener('click', function () {      // 전체 면은 펼칠 때만 그림을 청한다
     var all = document.getElementById('all-pages'), open = all.classList.toggle('hide');
     all.querySelectorAll('img[data-src]').forEach(function (im) { im.src = im.dataset.src; im.removeAttribute('data-src'); });
-    tg.textContent = open ? '전체 ' + TOTAL + '면 펼치기' : '전체 접기';
+    tg.textContent = open ? '전체 ' + TOTAL + '페이지 펼치기' : '전체 접기';
   });
   if (PAGES.length) { document.getElementById('prev').addEventListener('click', function () { show(i - 1); }); document.getElementById('next').addEventListener('click', function () { show(i + 1); }); }
   document.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') show(i - 1); if (e.key === 'ArrowRight') show(i + 1); });
   var c = document.getElementById('confirm');
   if (c) c.addEventListener('click', function () { fetch('/api/catalog/design/' + S + '/' + D + '/confirm', { method: 'POST' }).then(function () { location.reload(); }); });
+  var up = document.getElementById('origin-up');
+  if (up) up.addEventListener('click', function () {      // 원본 PDF 붙이기 — 편집기 템플릿의 「원본 페이지 차례」
+    var f = document.getElementById('origin-file').files[0], fd = new FormData();
+    if (!f) { alert('원본 PDF 를 고르세요'); return; }
+    fd.append('file', f); up.disabled = true; up.textContent = '판정 중…';
+    fetch('/api/catalog/design/' + S + '/' + D + '/origin', { method: 'POST', body: fd }).then(function (r) { return r.json(); })
+      .then(function (j) { if (j.error) { alert(j.error); up.disabled = false; up.textContent = '원본 PDF 붙이기'; } else location.reload(); });
+  });
   document.getElementById('del').addEventListener('click', function () {
     if (!confirm('디자인 “{{ d.name }}” 을 지울까요?\n\n디자인 폴더(config · 페이지 틀 · 견본)가 삭제됩니다. 이 디자인으로 만든 책은 그대로 남습니다.')) return;
     fetch('/api/catalog/design/' + S + '/' + D, { method: 'DELETE' }).then(function (r) { return r.json(); })

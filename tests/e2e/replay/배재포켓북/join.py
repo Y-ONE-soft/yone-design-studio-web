@@ -7,6 +7,7 @@
   빈 편집기에서 「문서 파일 가져오기」(첫 묶음은 새 문서로, 나머지는 이 문서 끝에)로 앞면 → 면들 → 뒷면 차례로 잇는다.
   색만 다른 면(교과서 · 모의고사)은 쪽 패널 「구분」에 그 값을 친다 — 원고 덩어리의 「구분」으로 면이 골라진다.
 8 편집기 제작 등록 — 이은 문서에 면마다 견본 원고 하나(SAMPLE 원본 쪽 덩어리)를 「원고 넣기」로 넣고 문서 패널 「관리에 등록」(포켓북 폴더).
+  그 뒤 원본 PDF 를 템플릿에 붙이고(attach_origin.py) 관리 템플릿 보기에 「상위 페이지」 · 「원본 페이지 차례」 두 칸이 나오는지 본다.
 9 맞대기 — 등록 PDF 의 쪽마다 그 구성의 요소 목록(5단계 elems.json)으로 원본 그 쪽과 다시 판정(원고 요소 · 쪽 번호는 들어갔나만).
 책 만들기 검사 — 원본 원고 전체(원고.json 덩어리 88개 — 원본 차례)를 {원고: [레코드 …]} 로 넣어 책을 그리고(관리 등록과 같은 함수),
   쪽 수 · 쪽마다 원본 쪽(덩어리의 _원본쪽) · 면이 원본 판정의 그 쪽 구성과 같은지 맞댄다.
@@ -259,6 +260,11 @@ if __name__ == "__main__":
         print("\n".join(ln for ln in log.splitlines() if "js →" in ln or "ERR" in ln)[-3000:])
         if any("ERR" in ln or "Traceback" in ln for ln in log.splitlines()):
             sys.exit("잇기 실패 — " + os.path.join(OUT, "rec.log"))
+        if os.environ.get("JOIN_REGISTER", "1") != "0":                 # 8 끝 — 원본 PDF 를 템플릿에 붙이고 템플릿 보기 두 칸(상위 페이지 · 원본 페이지 차례) 확인
+            cat = next(p["catalog"] for p in json.load(open(os.path.join(DATA, "_units", "plans.json"), encoding="utf-8")) if p.get("catalog"))
+            if subprocess.run([PY, os.path.join(E2E, "attach_origin.py"), f"{cat['series']}/{cat['design']}", os.path.join(HERE, "원본.pdf"),
+                               "--base", BASE], cwd=REPO).returncode:
+                sys.exit("템플릿 보기 확인 실패 — 원본 페이지 차례가 안 나온다")
     finally:
         srv.kill()
     pdf, res = build(content)
