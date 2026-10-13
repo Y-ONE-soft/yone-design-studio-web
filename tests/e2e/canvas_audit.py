@@ -483,16 +483,16 @@ try:
         return (ok and js("JSON.stringify(page.items)") == snap0, f"same={js('JSON.stringify(page.items)') == snap0} st={st} n={js('page.items.length')}")
     step("K1 새로고침 후 그대로 (자동 저장)", k1)
 
-    # ───────── L. 브랜드·원고·미리보기·검수·PDF ─────────
+    # ───────── L. 색상 견본·원고·미리보기·검수·PDF ─────────
     def l1():
         click(*center("#s-skin-edit")); time.sleep(0.6); r = rect('input[data-col="cream"]')
-        if not r: return (False, "색 입력 없음 (브랜드 창)")
+        if not r: return (False, "색 입력 없음 (스타일 · 색상 견본 창)")
         js("(() => { const i = document.querySelector('input[data-col=\"cream\"]'); i.value = '#ff0000'; i.dispatchEvent(new Event('input')); })()")
         ok = wait("document.querySelector('#svgwrap svg').innerHTML.includes('#ff0000')", 6)
         js("(() => { const i = document.querySelector('input[data-col=\"cream\"]'); i.value = '#f6f1e6'; i.dispatchEvent(new Event('input')); })()"); time.sleep(1)
         click(*center("#sheet-x")); time.sleep(0.3)
         return (ok and not visible(".sheet-bg.on"), "창 열고 색 → 캔버스 → 닫기")
-    step("L1 브랜드 색 바꾸면 캔버스에 바로", l1)
+    step("L1 색상 견본 색 바꾸면 캔버스에 바로", l1)
     def l2():
         click(*center("#s-set-edit")); time.sleep(0.8)
         if not wait("sheetKind === 'sets'", 5): return (False, "원고 창이 안 뜸")

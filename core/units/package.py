@@ -179,7 +179,7 @@ def load(pkg, into=None, name=None):
             pkg["skin"] = skin
             if not store.by_id(lib["skins"]).get(skin["id"]):
                 store.put("skins", skin)
-            added.append(f"브랜드 따로 {skin['id']}")
+            added.append(f"스타일 따로 {skin['id']}")
         elif not have:
             store.put("skins", skin)
         else:

@@ -25,10 +25,6 @@ DOCNAME = os.environ.get("RENAME_DOCNAME", "")                          # 문서
 if DOCNAME:
     st += [S(f"문서 이름 「{DOCNAME}」", 900), {"fill": {"at": "#plname", "value": DOCNAME}, "wait": 1500},
            {"js": f"(() => {{ if (plan.name !== {json.dumps(DOCNAME)}) throw new Error('문서 이름 안 들어감 ' + plan.name); return '문서 이름 ' + plan.name; }})()"}]
-SKIN = os.environ.get("RENAME_SKIN", "base")                              # 문서 브랜드 — 비어 있으면 그 편집기의 첫 브랜드로 그린다(배포서버에서 스타일이 빠졌다 2026-10-11)
-st += [S(f"문서 패널 — 브랜드 「{SKIN}」", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
-       {"pick": {"at": "#side #s-skin", "value": SKIN}, "wait": 1500},
-       {"js": f"(() => {{ if (plan.skin !== {json.dumps(SKIN)}) throw new Error('브랜드 안 들어감 ' + plan.skin); return '브랜드 ' + plan.skin; }})()"}]
 st += [S("원고 자리 글 → «자리 이름» (틀에는 책 글을 두지 않는다)", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
        {"click": "#side #s-slot-names", "wait": 2000},
        {"until": "/데이터 필드 \\d+곳/.test(document.querySelector('#st').textContent)", "wait": 500},
