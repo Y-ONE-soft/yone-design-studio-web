@@ -53,6 +53,8 @@ def check_all():
 
 def attach(key, src):
     series, _, did = key.partition("/")
+    if not os.path.isfile(src) and ("/" in src or src.lower().endswith(".pdf")):
+        sys.exit(f"원본 PDF 파일이 없다 — {src}")
     if os.path.isfile(src):
         out = curl("-F", f"file=@{src};type=application/pdf", f"{base}/api/catalog/design/{series}/{did}/origin")
     else:
