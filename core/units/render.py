@@ -95,6 +95,8 @@ class Ctx(object):
         return v
 
     def color(self, ref, default="#000000"):
+        if ref == "none":                                 # 색상 견본 [없음] — 투명(인디자인). 글자 색 [없음] + 밑줄 = 정답 칸
+            return "transparent"
         return self._tok(ref, "color", default)
 
     def font(self, ref):
@@ -498,7 +500,7 @@ def grep_html(html, rules, ctx=None):
             st = (ctx.cstyle_css(r["cs"]) if ctx else "") + st
         if r.get("nobreak"):                                               # 줄바꿈 안 함(인디자인 No Break) — 맞은 글은 한 줄에. 고르기 [ ⓐ … / ⓑ … ] 가 줄 끝에서 갈라지지 않게
             st += "white-space:nowrap;"
-        ul = r.get("u") and not r.get("blank") and not r.get("fit") and (r.get("line") or r.get("line_off") or r.get("line_color"))
+        ul = r.get("u") and not r.get("blank") and (r.get("line") or r.get("line_off") or r.get("line_color"))
         if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
             lw = float(r.get("line") or 0.18)
             lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else "currentColor"
@@ -507,17 +509,6 @@ def grep_html(html, rules, ctx=None):
         tags = [k for k in ("u", "i", "b") if r.get(k) and not (k == "u" and ul) and not (k == "b" and r.get("weight"))]
 
         def wrap(m):
-            if r.get("fit"):                                               # 글 폭 칸 — 맞은 글을 감추고 그 폭(크기·자간 포함) + 더할 폭만큼 밑줄 (인디자인: 정답 글 칠 없음 + 밑줄)
-                lw = float(r.get("line") or 0.2)
-                off = float(r.get("line_off") or 0.4)
-                lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
-                t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
-                fs = st.replace(f"color:{col};", "") if col else st
-                # overflow:hidden 인 inline-block 은 아래 끝이 기준선에 선다 — 높이 0 이면 밑줄을 기준선에서 정확히 내린다. 글은 칸 폭만 잡고 안 보인다
-                # 폭은 낱자 폭 합(합자·커닝 없이) — 원본 칸 71개가 그 식에 맞는다(「off」 의 ff 합자가 자간 한 칸을 먹던 것, 단위 11)
-                return (f'<span style="display:inline-block;height:0;overflow:hidden;white-space:nowrap;font-feature-settings:\'liga\' 0,\'calt\' 0;font-kerning:none;{fs}padding-right:{float(r.get("blank") or 0):.3f}px;'
-                        f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"><span style="color:transparent">{t}</span></span>'
-                        f'<span style="{fs}">⁠</span>')                    # 감춘 글 크기의 줄 높이는 남긴다(원본: 큰 정답 글이 든 줄은 기준선이 내려간다)
             if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
                 lw = float(r.get("line") or 0.2)
                 off = float(r.get("line_off") or 0.4)
