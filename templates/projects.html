@@ -109,7 +109,7 @@
 
   {% if folder %}
   <section id="designs">
-    <h2>틀 · 템플릿 <span class="n">{{ designs|length }}개</span></h2>
+    <h2>하위 폴더 · 템플릿 <span class="n">{{ designs|length }}개</span></h2>
     {# 틀 관리 · PDF 판정 · 디자인 없는 틀(등록 단추)은 지금 작업 범위 밖이라 뺐다 — 주소로는 그대로 열린다 #}
     {% if filters %}<div class="flt" id="flt">
       {% for k, vs in filters.items() %}<div class="fg" data-k="{{ k }}"><span class="fk">{{ k }}</span><button class="on" data-v="">전체</button>{% for v in vs %}<button data-v="{{ v }}">{{ v }}</button>{% endfor %}</div>{% endfor %}
@@ -140,7 +140,7 @@
     <div class="folders" id="folder-list">
       {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
          data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
-        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '템플릿 ' ~ f.dn ~ '개' if f.dn else ('틀 ' ~ f.t ~ '개 · 템플릿 없음' if f.t else '비어 있음') }}</span></span>
+        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '템플릿 ' ~ f.dn ~ '개' if f.dn else ('하위 폴더 ' ~ f.t ~ '개 · 템플릿 없음' if f.t else '비어 있음') }}</span></span>
         <span class="acts"><button class="edit" title="수정">✎</button>{% if f.id != 'etc' %}<button class="del" title="삭제">×</button>{% endif %}</span>
       </a>{% endfor %}
     </div>

@@ -1961,7 +1961,6 @@ function panelSkins(hd, body) {
     const sk = skin();
     hd.innerHTML = `<b>스타일 · 색상 견본</b>`;
     body.insertAdjacentHTML("beforeend", `<h3>색상 견본</h3><div class="colors">${Object.entries((sk.tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
-      <h3>글꼴</h3>${Object.entries((sk.tokens || {}).font || {}).map(([k, v]) => `<div class="f"><span>${k}</span>${fontSel("data-font", k, v, null, "")}</div>`).join("")}
       <h3>단락 스타일 <span class="note" style="display:inline">텍스트 프레임의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 데이터 필드도 맞춰진다</span></h3>
       ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
         <div class="m3"><label>서체${fontSel("data-st", `${n}:font`, st.font, Object.fromEntries(Object.keys(sk.tokens.font || {}).map(f => [f, (sk.tokens.font || {})[f]])), "-")}</label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
@@ -1986,7 +1985,6 @@ function panelSkins(hd, body) {
       <div class="row"><button class="btn sm sub" id="cs-new">＋ 문자 스타일</button></div>
 `);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
-    body.querySelectorAll("[data-font]").forEach(i => i.onchange = () => { sk.tokens.font[i.dataset.font] = i.value; saveSkin(); render(); });
     body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = i.dataset.st.split(":"); const st = sk.styles[n]; const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
       if (k === "font" && i.type === "text" && v === "" && String(st[k] || "").startsWith("$")) return;     // 「서체 직접」을 비워도 토큰 서체는 그대로
       if (k.startsWith("jc.")) { const kk = k.slice(3); st.jc = Object.assign({}, st.jc); if (v === "" || v == null) delete st.jc[kk]; else st.jc[kk] = v; if (!Object.keys(st.jc).length) delete st.jc; }
@@ -2546,7 +2544,7 @@ function side() {
   on("#s-pstart", "change", async (e) => { const v = Math.max(1, Math.round(+e.target.value || 1)); if (v > 1) plan.page_start = v; else delete plan.page_start;
     pageSvg = {}; await savePlan(); render(); drawRail(); side(); });
   on("#s-format", "change", async (e) => { if (e.target.value) plan.format = e.target.value; else delete plan.format; await savePlan(); side(); });
-  on("#s-skin-edit", "click", () => openSheet("skins"));
+  on("#s-skin-edit", "click", async () => { await ownSkin(); openSheet("skins"); });
   on("#s-set", "change", (e) => { curSet = e.target.value; pageSvg = {}; render(); drawRail(); });
   on("#s-set-edit", "click", () => openSheet("sets"));
   on("#s-map", "click", () => openSheet("map"));
@@ -2592,6 +2590,7 @@ function side() {
   // 개체 스타일로 저장 — 지금 요소의 모양만 뽑아 옷에 넣는다
   on("#s-ostyle-new", "click", async () => {
     const it = page.items[sel]; if (!it || !it.atom) return;
+    const sk = await ownSkin();                                         // 문서마다 자기 스타일
     const nm = prompt("개체 스타일 이름", "스타일 " + (Object.keys(sk.obj_styles || {}).length + 1)); if (nm == null || !nm.trim()) return;
     const keep = ["fill", "gradient", "stroke", "radius", "corner", "tint", "fx", "opacity"];
     const st = {}; keep.forEach(k => { if (it.atom[k] !== undefined) st[k] = clone(it.atom[k]); });
@@ -2644,6 +2643,19 @@ function save() {
     const w = $("#warn");
     if (j.error) { $("#st").textContent = "저장 실패: " + j.error; w.style.display = ""; w.dataset.save = "1"; w.textContent = "저장 안 됨 — " + j.error + " (고칠 때까지 이 페이지의 바뀐 것이 저장되지 않는다)"; }
     else { if (w.dataset.save) { w.style.display = "none"; delete w.dataset.save; } if (Date.now() > stHold) $("#st").textContent = "저장됨"; } }, 500);
+}
+// 인디자인처럼 문서마다 자기 스타일 · 색상 견본 — 다른 문서도 쓰는 상자(또는 칸이 비어 쓰는 「기본」)는 고치기 전에 이 문서 것으로 복사한다.
+// 값이 같아 모양은 그대로이고, 이 뒤로 고친 것은 이 문서에만 든다(2026-10-12 광문 분석본: 한 문서에서 고친 스타일이 다른 문서에 번졌다)
+async function ownSkin() {
+  const sk = skin();
+  if (!plan || !sk.id) return sk;
+  const shared = plan.skin !== sk.id || LIB.plans.some(p => p.id !== plan.id && (p.skin || "base") === sk.id);
+  if (!shared) return sk;
+  let id = "doc_" + plan.id, n = 2; while (byId("skins")[id]) id = "doc_" + plan.id + "_" + n++;
+  const c = clone(sk); c.id = id; c.name = (plan.name || plan.id) + " 스타일";
+  const j = await api("/api/units/skins", c); if (j.error) { say("스타일 복사 실패: " + j.error); return sk; }
+  LIB.skins.push(c); $("#skin").insertAdjacentHTML("beforeend", `<option value="${c.id}">${esc(c.name)}</option>`); $("#skin").value = c.id;
+  plan.skin = c.id; await savePlan(); return c;
 }
 function saveSkin() { clearTimeout(skt); skt = setTimeout(async () => { const j = await api("/api/units/skins", skin()); if (j.error) $("#st").textContent = "스타일 저장 실패: " + j.error; thumbsLoad(); pageSvg = {}; drawRail(); }, 800); }
 async function thumbsLoad() { thumbs = await api("/api/units/thumbs?skin=" + encodeURIComponent($("#skin").value || "")); panel(); }

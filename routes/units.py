@@ -196,7 +196,11 @@ def api_delete(kind):
     uid = (request.get_json(silent=True) or {}).get("id") or request.args.get("id")
     if not uid:
         return jsonify({"error": "id 없음"}), 400
-    return jsonify({"ok": store.delete(kind, uid)})
+    own = (store.get("plans", uid) or {}).get("skin") if kind == "plans" else None
+    ok = store.delete(kind, uid)
+    if ok and own and own.startswith("doc_") and not any(p.get("skin") == own for p in store.load("plans")):
+        store.delete("skins", own)                    # 문서 전용 스타일 · 색상 견본(ownSkin)은 문서와 같이 지운다
+    return jsonify({"ok": ok})
 
 
 def _ctx(lib, skin_id, sys=None, skin_item=None):

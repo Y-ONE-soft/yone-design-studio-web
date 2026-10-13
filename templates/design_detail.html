@@ -81,12 +81,12 @@
     </div>
     <div class="info">
       <div class="box"><h3>템플릿</h3>
-        <dl><dt>틀</dt><dd>{{ t.name }} (<code>{{ t.series }}</code>)</dd><dt>폴더</dt><dd>{{ t.dir_name }}</dd><dt>페이지 크기</dt><dd>{{ t.page.width_mm ~ '×' ~ t.page.height_mm ~ 'mm' if t.page and t.page.width_mm else '틀 기본' }}</dd>
+        <dl><dt>하위 폴더</dt><dd>{{ t.name }} (<code>{{ t.series }}</code>)</dd><dt>폴더</dt><dd>{{ t.dir_name }}</dd><dt>페이지 크기</dt><dd>{{ t.page.width_mm ~ '×' ~ t.page.height_mm ~ 'mm' if t.page and t.page.width_mm else '하위 폴더 기본' }}</dd>
         {% if d.source %}<dt>출처</dt><dd>{{ d.source }}</dd>{% endif %}
         {% for k, v in (d.tags or {}).items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}
         {% if d.pairs %}<dt>짝 내지</dt><dd><a href="/design/{{ d.pairs }}">{{ d.pairs }}</a></dd>{% endif %}</dl></div>
       {% if t.fonts_missing %}<div class="box" style="background:#fff4e5;color:#8a5a00"><h3 style="color:#8a5a00">서체 부족</h3>{{ t.fonts_missing|join(' · ') }}</div>{% endif %}
-      {% if d.draft %}<div class="box"><h3>초안</h3>PDF 에서 잰 색·페이지 크기로 만든 초안입니다. 레이아웃은 틀 것이라 미리 보기와 대조해 맞으면 <b>확인 완료</b>.</div>{% endif %}
+      {% if d.draft %}<div class="box"><h3>초안</h3>PDF 에서 잰 색·페이지 크기로 만든 초안입니다. 레이아웃은 하위 폴더 것이라 미리 보기와 대조해 맞으면 <b>확인 완료</b>.</div>{% endif %}
     </div>
   </div>
 
