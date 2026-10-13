@@ -14,6 +14,7 @@
 import datetime
 import json
 import os
+import re
 import shutil
 import threading
 import time
@@ -204,10 +205,12 @@ def page_design(series, design):
     if not d:
         abort(404)
     lay = design_layouts(series, design)          # 지면 형태(지문만 다른 면은 하나로) + 전체 면수
+    if re.search(r"\d+면$", d.get("desc") or ""):    # 용어 바꾸기(2026-10-13) 전에 등록된 설명 「… · 12면」 — 화면에는 페이지로
+        d = dict(d, desc=re.sub(r"(\d+)면$", r"\1페이지", d["desc"]))
     # 페이지 틀 · 견본 사진은 기준 PDF 가 없을 때만 큰 그림에 — 있으면 구성(실제 면)으로 충분하다
     pages = [] if lay["total"] else \
-            [{"src": f"/catalog/master/{series}/{design}/{m['file']}", "label": m["label"], "kind": "페이지 틀", "page": m.get("page")} for m in d["masters"]] \
-          + [{"src": f"/catalog/preview/{series}/{design}/{p}", "label": f"견본 {i + 1}", "kind": "견본 사진"} for i, p in enumerate(d["previews"])]
+            [{"src": f"/catalog/master/{series}/{design}/{m['file']}", "label": m["label"], "kind": "상위 페이지", "page": m.get("page")} for m in d["masters"]] \
+          + [{"src": f"/catalog/preview/{series}/{design}/{p}", "label": f"미리 보기 {i + 1}", "kind": "미리 보기"} for i, p in enumerate(d["previews"])]
     return render_template("design_detail.html", t=t, d=d, pages=pages, total=lay["total"], layouts=lay["layouts"],
                            faces=lay.get("faces"), origin=lay.get("origin"), active_nav="프로젝트")
 

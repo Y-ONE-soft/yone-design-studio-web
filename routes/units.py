@@ -620,7 +620,7 @@ def register_design(plan_id, series, name, log=print):
                 shutil.copy2(src, os.path.join(d, "overrides.css"))
     p = os.path.join(d, "design.json")
     info = json.load(open(p, encoding="utf-8")) if os.path.exists(p) else {"date": datetime.date.today().isoformat()}
-    info.update({"name": name, "desc": f"편집기 제작 · {n}면", "source": f"편집기: {plan.get('name') or plan_id}", "made": "editor",
+    info.update({"name": name, "desc": f"편집기 제작 · {n}페이지", "source": f"편집기: {plan.get('name') or plan_id}", "made": "editor",
                  "plan": plan_id, "units": "units.json", "pages": n, "draft": False, "updated": datetime.date.today().isoformat()})
     json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     log("등록 끝")

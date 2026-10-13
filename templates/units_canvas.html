@@ -366,7 +366,7 @@
       <button data-tool="ellipse" data-draw="ellipse" title="원 (O) — 페이지에서 끌면 그 크기. Shift = 정원"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/></svg>원</button>
       <button data-tool="line" data-draw="line" title="선 (L) — 페이지에서 끌면 그 길이. Shift = 수평·수직"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/></svg>선</button>
       <button data-tool="path" data-draw="path" title="도형 (P) — 그린 뒤 오른쪽에서 모양(화살표·삼각형·별…)을 고른다"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 6 6.5.5-5 4.3 1.6 6.2L12 17.2 6.4 20.5 8 14.3 3 10l6.5-.5z"/></svg>도형</button>
-      <button data-tool="image" data-draw="image" title="그림 (I) — 그린 뒤 오른쪽에서 그림을 고른다"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 16l4.5-4.5 3.5 3.5 3-2.5L20 16"/><circle cx="9" cy="9.5" r="1.2"/></svg>그림</button>
+      <button data-tool="image" data-draw="image" title="그래픽 프레임 (I) — 그린 뒤 오른쪽에서 그림을 고른다"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 16l4.5-4.5 3.5 3.5 3-2.5L20 16"/><circle cx="9" cy="9.5" r="1.2"/></svg>그래픽 프레임</button>
       <div class="sep"></div>
       <button id="t-undo" title="되돌리기 (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7H5V3M5.6 7a8 8 0 111.2 9.6"/></svg>되돌리기</button>
       <button id="t-redo" title="다시 (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M15 7h4V3M18.4 7A8 8 0 1017.2 16.6"/></svg>다시</button>
@@ -400,7 +400,7 @@
     <div class="strip">
       <div class="rail" id="rail"></div>
       <div class="foot">
-        <span class="help" title="도구: V 선택 · H 손 · T 텍스트 프레임 · R 사각형 · O 원 · L 선 · P 도형 · I 그림 — 고르고 페이지에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · Alt+클릭 겹친 아래 것 · 빈 곳(페이지 밖도) 끌기 = 범위 · 개체 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(블록 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 쪽 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
+        <span class="help" title="도구: V 선택 · H 손 · T 텍스트 프레임 · R 사각형 · O 원 · L 선 · P 도형 · I 그림 — 고르고 페이지에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · Alt+클릭 겹친 아래 것 · 빈 곳(페이지 밖도) 끌기 = 범위 · 개체 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(블록 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 페이지 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <button class="btn sm sub" id="f-cnt" title="페이지 띠 펴기·접기 (Ctrl+Alt+\\)"><span class="cnt" id="cnt"></span></button>
         <button class="btn sm sub" id="f-addpg" title="이 페이지 뒤에 새 본문 페이지">＋ 페이지</button>
         <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 블록 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 페이지 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="이어 보기 — 페이지를 세로로 이어 놓는다. 굴리면 다음 페이지로 넘어간다">연속</button><button class="btn sm sub" id="tg-spread" title="펼침면 — 인디자인의 「페이지 마주보기」. 2·3페이지가 한 장처럼 붙어 보이고 1페이지는 오른쪽에 선다. 펼침 보기에선 페이지 둘레 대지를 안 그린다">펼침</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
@@ -473,7 +473,7 @@ const ATOMS = [
   ["line", "선", {t: "line", x1: 0, y1: 0, x2: 80, y2: 0, stroke: {w: 0.5, color: "$rule"}}],
   ["rect", "사각형", {t: "rect", x: 0, y: 0, w: 60, h: 20, fill: "$gray", radius: 1}],
   ["ellipse", "원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$ink"}}],
-  ["image", "그림", {t: "image", x: 0, y: 0, w: 40, h: 30, src: "img1"}],
+  ["image", "그래픽 프레임", {t: "image", x: 0, y: 0, w: 40, h: 30, src: "img1"}],
   ["path", "도형", {t: "path", x: 0, y: 0, w: 12, h: 8, d: "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", fill: "$ink"}],
 ];
 const ATOM_NM = Object.fromEntries(ATOMS.map(a => [a[0], a[1]]));
@@ -603,7 +603,7 @@ $("#p-preview").onclick = async () => {
   $("#pvpdf").href = `/api/units/pdf?plan=${encodeURIComponent(plan.id)}&skin=${encodeURIComponent($("#skin").value)}`;
   const j = await api("/api/units/preview", {kind: "plans", item: plan, skin: $("#skin").value});
   if (j.error) { $("#pvinfo").textContent = j.error; return; }
-  $("#pvinfo").textContent = `${j.svgs.length}페이지 · 원고 ${LIB.sets.length}개를 넣은 모습` + ((j.warnings || []).length ? ` · 경고 ${j.warnings.length}: ${j.warnings[0]}` : "");
+  $("#pvinfo").textContent = `${j.svgs.length}페이지 · 레코드 ${LIB.sets.length}개를 넣은 모습` + ((j.warnings || []).length ? ` · 경고 ${j.warnings.length}: ${j.warnings[0]}` : "");
   for (const sh of j.svgs) { const d = document.createElement("div"); d.className = "sheet"; d.innerHTML = `<span class="lb">${esc(sh.label || "")} · ${sh.page_no}페이지</span>${sh.svg}`; strip(d); $("#pvbody").appendChild(d); }
 };
 $("#pvclose").onclick = () => { $("#pv").style.display = "none"; };
@@ -1500,7 +1500,7 @@ function armDraw(t) {
   if (drawTool) select([]);
   const hint = $("#thint");                                  // 도구 설명은 도구 상자 옆 (위 줄은 문서 일만)
   hint.style.display = drawTool ? "block" : "none";
-  if (drawTool) { hint.innerHTML = esc(`${ATOM_NM[drawTool]} — 지면에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소`)
+  if (drawTool) { hint.innerHTML = esc(`${ATOM_NM[drawTool]} — 페이지에서 끌면 그 크기로, 그냥 누르면 기본 크기 · Shift 정사각 · Esc 취소`)
       + (drawTool === "path" ? `<div class="shp">${Object.entries(SHAPES).map(([n, d]) => `<button data-shp="${esc(d)}" data-shpname="${esc(n)}" class="${(shapeD || ATOMS.find(x => x[0] === "path")[2].d) === d ? "on" : ""}">${esc(n)}</button>`).join("")}</div>` : "");
     hint.querySelectorAll("[data-shp]").forEach(b => b.onclick = (ev) => { ev.stopPropagation(); shapeD = b.dataset.shp; hint.querySelectorAll("[data-shp]").forEach(x => x.classList.toggle("on", x === b)); });
     const b = $("#trail").querySelector(`[data-tool="${drawTool}"]`); hint.style.top = (b ? b.offsetTop + $("#trail").offsetTop : 60) + "px"; }
@@ -1818,7 +1818,7 @@ function panel() {
       ellipse: '<svg width="36" height="22"><ellipse cx="18" cy="11" rx="10" ry="9" fill="none" stroke="#7d2ae8" stroke-width="1.5"/></svg>',
       image: '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="#eee" stroke="#999"/><path d="M6 17l8-8 6 6 4-3 6 5z" fill="#bbb"/></svg>',
       path: '<svg width="36" height="22"><path d="M3 7 L20 7 L20 2 L33 11 L20 20 L20 15 L3 15 Z" fill="#e9e0ff" stroke="#7d2ae8"/></svg>'};
-    for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.dataset.draw = t; b.title = nm + " — 누르고 지면에서 끌면 그 크기로 그려진다"; b.onclick = () => armDraw(t); palDrag(b, {k: "atom", id: t}); g0.appendChild(b); }
+    for (const [t, nm] of ATOMS) { const b = document.createElement("button"); b.innerHTML = (icons[t] || "") + nm; b.dataset.draw = t; b.title = nm + " — 누르고 페이지에서 끌면 그 크기로 그려진다"; b.onclick = () => armDraw(t); palDrag(b, {k: "atom", id: t}); g0.appendChild(b); }
     const tb = document.createElement("button"); tb.innerHTML = '<svg width="36" height="22"><rect x="2" y="2" width="32" height="18" fill="none" stroke="#7d2ae8"/><line x1="2" y1="8" x2="34" y2="8" stroke="#7d2ae8"/><line x1="2" y1="14" x2="34" y2="14" stroke="#7d2ae8"/><line x1="13" y1="2" x2="13" y2="20" stroke="#7d2ae8"/><line x1="24" y1="2" x2="24" y2="20" stroke="#7d2ae8"/></svg>표'; tb.onclick = makeTable; g0.appendChild(tb);
     body.appendChild(g0); foldWire(h0, g0, "_draw");
 
@@ -2017,11 +2017,11 @@ function panelSets(hd, body) {
       d.onclick = () => { curSet = s2.id; pageSvg = {}; render(); drawRail(); panel(); };
       d.querySelector(".x").onclick = async (e) => { e.stopPropagation(); await api("/api/units/sets", {id: s2.id}, "DELETE"); LIB.sets = LIB.sets.filter(x => x.id !== s2.id); if (curSet === s2.id) curSet = ""; pageSvg = {}; render(); drawRail(); panel(); };
       body.appendChild(d); }
-    body.insertAdjacentHTML("afterbegin", `<div class="row" style="margin-bottom:10px"><button class="btn sm" id="set-paste">📄 원고 붙여넣기</button><label class="btn sm sub" title="원고 형식(워크북 스텝 파일 여러 개 · 모의고사 회차 원고 …)은 파일을 한 번에 여러 개 고를 수 있다">📎 파일<input type="file" id="set-file" multiple accept=".docx,.hwpx,.txt,.md,.json" style="display:none"></label><button class="btn sm sub" id="set-new">＋ 자리별 입력</button></div><div id="setform"></div>
+    body.insertAdjacentHTML("afterbegin", `<div class="row" style="margin-bottom:10px"><button class="btn sm" id="set-paste">📄 원고 붙여넣기</button><label class="btn sm sub" title="원고 형식(워크북 스텝 파일 여러 개 · 모의고사 회차 원고 …)은 파일을 한 번에 여러 개 고를 수 있다">📎 파일<input type="file" id="set-file" multiple accept=".docx,.hwpx,.txt,.md,.json" style="display:none"></label><button class="btn sm sub" id="set-new">＋ 데이터 필드별 입력</button></div><div id="setform"></div>
 `);
     const gotSets = (j) => { if (j.error) { $("#st").textContent = j.error + ((j.log || []).length ? " · " + j.log[0] : ""); return; }
       for (const st of j.sets) LIB.sets = LIB.sets.filter(x => x.id !== st.id).concat([st]); curSet = j.sets[0].id; pageSvg = {}; render(); drawRail(); panel();
-      $("#st").textContent = `원고 ${j.sets.length}개 읽음` + (j.log.length ? ` · 못 맞춘 것 ${j.log.length}: ${j.log[0]}` : ""); };
+      $("#st").textContent = `레코드 ${j.sets.length}개 읽음` + (j.log.length ? ` · 못 맞춘 것 ${j.log.length}: ${j.log[0]}` : ""); };
     $("#set-paste").onclick = () => {
       $("#setform").innerHTML = `<textarea id="ms-text" rows="12" style="width:100%;font-size:12px" placeholder="# 21\nThe idea that cities … (영어 지문)\n윗글의 주제로 가장 적절한 것은?\n① … ② … ③ …\n답: ③\n빈칸\n1. Wide roads r_____ neighborhoods.\n넓은 도로가 동네를 대체했다.\n답: replaced\n본문 O/X\n(1) Cities were built around cars.\n답: X"></textarea>
         <div class="note">한 줄 = 한 단락. <b># 번호</b> 새 원고 · <b>이름:</b> 데이터 필드 지정(지문·발문·선지…) · <b>①②③</b> 선지 · <b>답:</b> 정답 · <b>빈칸 / 본문 O/X / 어법 O/X</b> 한 줄 뒤에 번호 줄 · 영어 긴 단락은 지문, 한글 물음은 발문</div>
@@ -2088,8 +2088,8 @@ const storyNext = (name, self) => Math.max(0, ...storyBoxes(name).filter(a => a 
 function storyNew() { const ns = new Set(storyNames()); let n = 1; while (ns.has("이야기" + n)) n++; return "이야기" + n; }
 function storyHtml(a) {
   return `<h3>텍스트 스레드 <span class="note" style="display:inline">인디자인 텍스트 스레드 — 넘친 줄이 다음 텍스트 프레임으로(단·페이지를 넘어도)</span></h3>
-    <div class="f"><span title="같은 스토리의 텍스트 프레임들이 글 하나를 순서대로 흘린다. 데이터 필드는 첫 상자 하나">이야기</span><span style="display:flex;gap:4px">
-      <select data-a="story"><option value="">잇지 않음</option>${storyNames().map(n => `<option value="${esc(n)}" ${a.story === n ? "selected" : ""}>${esc(n)}</option>`).join("")}<option value="__new">＋ 새 이야기</option></select>
+    <div class="f"><span title="같은 스토리의 텍스트 프레임들이 글 하나를 순서대로 흘린다. 데이터 필드는 첫 상자 하나">스토리</span><span style="display:flex;gap:4px">
+      <select data-a="story"><option value="">잇지 않음</option>${storyNames().map(n => `<option value="${esc(n)}" ${a.story === n ? "selected" : ""}>${esc(n)}</option>`).join("")}<option value="__new">＋ 새 스토리</option></select>
       ${a.story ? `<input type="number" data-a="story_seq" min="1" step="1" value="${a.story_seq || 1}" style="width:52px" title="순서 — 1 = 첫 상자(글·데이터 필드를 가진다), 2·3… = 이어지는 상자">` : ""}</span></div>
     <div class="f"><span></span><button class="btn sm${linkPick ? "" : " sub"}" id="s-link" title="누르고 이어 받을 텍스트 프레임을 누른다 — 다른 페이지의 텍스트 프레임은 그 페이지에서 이 스토리를 고르고 순서를 적는다">${linkPick ? "이어 받을 텍스트 프레임을 누르기… (Esc 취소)" : "＋ 다음 상자 잇기"}</button></div>`;
 }
@@ -2097,7 +2097,7 @@ function linkTo(i) {                                                       // �
   const src = page.items[(linkPick || {}).fi], dst = page.items[i]; linkPick = null;
   if (!src || !src.atom || !src.atom.story || !dst || !dst.atom || dst.atom.t !== "text" || dst === src) { say("텍스트 프레임을 눌러야 이어진다"); side(); return; }
   hist(); dst.atom.story = src.atom.story; dst.atom.story_seq = storyNext(src.atom.story, dst.atom);
-  save(); render(); select([i], i); say(`이야기 ${src.atom.story} — ${dst.atom.story_seq}번째 상자로 이었다`);
+  save(); render(); select([i], i); say(`스토리 ${src.atom.story} — ${dst.atom.story_seq}번째 상자로 이었다`);
 }
 function side() {
   const box = $("#side"); if (!page) { box.innerHTML = ""; return; }
@@ -2111,7 +2111,7 @@ function side() {
     if (u === "block") {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
       const flds = Object.keys(blk.fields || {});
-      h += `<div class="note">${flds.length ? `원고 자리: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (쪽번호·구간명)" : "장식")}</div>
+      h += `<div class="note">${flds.length ? `데이터 필드: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (페이지 번호·구간명)" : "장식")}</div>
         ${blk.source === "content" ? `<div class="f"><span>책에서</span><label title="정답지·어휘 목록처럼 레코드를 하나씩 아래로 쌓고, 페이지가 차면 다음 페이지에 이어 쌓는다"><input type="checkbox" id="s-flow" ${it.flow ? "checked" : ""} style="width:auto"> 레코드마다 아래로 쌓기</label></div>${it.flow ? `<div class="f"><span>쌓기 간격</span><input type="number" id="s-gap" step="0.5" value="${it.gap == null ? 2 : it.gap}"></div>` : ""}` : ""}
         ${(blk.variants || []).length > 1 ? `<div class="f"><span title="같은 유형의 다른 디자인. 고른 것은 지금 브랜드(옷)에 저장된다 — 이 책 전체가 그 모양을 쓴다">모양</span><select id="var">${(blk.variants || []).map(v => `<option value="${v.id}" ${v.id === cur ? "selected" : ""}>${esc(v.name || v.id)}</option>`).join("")}</select></div>` : ""}
         <div class="row"><button class="btn sm" id="s-edit" title="더블클릭과 같다">✎ 편집</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다">그룹 해제</button></div>`;
@@ -2123,10 +2123,10 @@ function side() {
       const a = it.atom;
       h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 블록으로 저장</button></div>${sels.size > 1 ? `` : ""}`;
       const sibs = editing && editing.part ? (page.items.map(x => x.atom).filter(x => x && x.bind && x !== a)) : [];   // 같은 요소 안의 글 자리들
-      if (sibs.length) h += `<div class="f"><span title="인디자인 앵커 개체 — 글이 길어지면 이 개체도 따라 밀린다. 실제 워크북의 O/X 상자가 이렇게 문장 끝에 붙는다">문장 끝에 붙이기</span><span style="display:flex;gap:4px">
+      if (sibs.length) h += `<div class="f"><span title="인디자인 고정 개체 — 글이 길어지면 이 개체도 따라 밀린다. 실제 워크북의 O/X 상자가 이렇게 문장 끝에 붙는다">문장 끝에 붙이기</span><span style="display:flex;gap:4px">
         <select data-a="anchor.after"><option value="">안 붙임 (위치 고정)</option>${sibs.map(x => `<option value="${esc(x.bind)}" ${(a.anchor || {}).after === x.bind ? "selected" : ""}>${esc((Object.fromEntries(allSlots()))[x.bind] || x.bind)} 끝에</option>`).join("")}</select>
         ${(a.anchor || {}).after ? `<input type="number" step="0.5" min="0" style="width:56px" data-a="anchor.gap" value="${a.anchor.gap == null ? 2 : a.anchor.gap}" title="글 끝과의 사이 mm">` : ""}</span></div>`;
-      if (a.t === "text") h += storyHtml(a) + (storyCont(a) ? `<div class="note">앞 상자에서 이어짐 — 이야기 <b>${esc(a.story)}</b>의 ${a.story_seq}번째 상자. 글·데이터 필드·글 모양은 첫 상자 것을 쓰고, 넘친 줄이 여기로 흘러 온다</div>
+      if (a.t === "text") h += storyHtml(a) + (storyCont(a) ? `<div class="note">앞 상자에서 이어짐 — 스토리 <b>${esc(a.story)}</b>의 ${a.story_seq}번째 상자. 글·데이터 필드·글 모양은 첫 상자 것을 쓰고, 넘친 줄이 여기로 흘러 온다</div>
         <h3>글자 <span class="note" style="display:inline">상자 여백·세로 정렬만 이 상자 것</span></h3>` : `<h3>원고 <span class="note" style="display:inline">이 상자에 무엇이 들어오나 — 우리 것(인디자인의 XML 태그에 해당)</span></h3>
         <div class="f"><span>데이터 필드</span><span style="display:flex;gap:4px">
           <select data-a="bindsel" title="이 텍스트 프레임에 원고의 무엇이 들어올지 고른다. 「고정 글」이면 원고와 상관없는 글">
@@ -2210,7 +2210,7 @@ function side() {
         <div class="m4"><label>하이픈<input type="checkbox" data-a="hyphenate" ${a.hyphenate ? "checked" : ""} style="width:auto"></label><label>양끝맞춤<select data-a="justify_mode"><option value="">낱말</option><option value="letter" ${a.justify_mode === "letter" ? "selected" : ""}>글자까지</option></select></label><label>낱말 사이 ‰<input type="number" data-a="word_spacing" step="10" value="${a.word_spacing || ""}" placeholder="0"></label><label>격자 맞춤<input type="checkbox" data-a="snap_baseline" ${a.snap_baseline ? "checked" : ""} style="width:auto" title="페이지의 기준선 격자에 글줄을 세운다"></label></div>
         <div class="f"><span title="양끝맞춤 줄의 낱말 간격 최소 — 강제 줄 바꿈(Shift+Enter)으로 꺾인 줄을 이만큼 좁혀 놓고 양끝까지 늘린다(인디자인 양끝맞춤 「낱말 간격 최소」). 음수">양끝 줄 낱말 최소 ‰</span><input type="number" data-a="word_min" step="10" max="0" value="${a.word_min || ""}" placeholder="0"></div>
         <div class="m4" title="인디자인 단락 「균등 배치」 — 양끝맞춤 단락이 줄마다 낱말 간격(공백 폭의 %)과 자간(‰ em)을 이 범위 안에서 바꾼다. 빈 칸 = 기본값"><label>낱말 최소 %<input type="number" data-a="jc.word_min" step="5" value="${(a.jc || {}).word_min ?? ""}" placeholder="80"></label><label>낱말 최대 %<input type="number" data-a="jc.word_max" step="5" value="${(a.jc || {}).word_max ?? ""}" placeholder="133"></label><label>자간 최소 ‰<input type="number" data-a="jc.letter_min" step="1" value="${(a.jc || {}).letter_min ?? ""}" placeholder="0"></label><label>자간 최대 ‰<input type="number" data-a="jc.letter_max" step="5" value="${(a.jc || {}).letter_max ?? ""}" placeholder="0"></label></div>
-        <div class="f"><span title="인디자인 앵커 개체 — 글에 붙어 같이 흐른다">앵커 개체</span><span style="display:flex;gap:4px"><select id="s-anc-part"><option value="">부품 고르기</option>${LIB.parts.map(pt => `<option value="${pt.id}">${esc(pt.name || pt.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-anc-add" title="글 끝에 그 부품을 끼운다(인디자인 앵커드 개체)">＋ 끼우기</button></span></div>
+        <div class="f"><span title="인디자인 고정 개체 — 글에 붙어 같이 흐른다">고정 개체</span><span style="display:flex;gap:4px"><select id="s-anc-part"><option value="">부품 고르기</option>${LIB.parts.map(pt => `<option value="${pt.id}">${esc(pt.name || pt.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-anc-add" title="글 끝에 그 부품을 끼운다(인디자인 고정 개체)">＋ 끼우기</button></span></div>
         <div class="m3"><label>취소선 pt<input type="number" data-a="strike.w" step="0.1" value="${(a.strike || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("strike.color", (a.strike || {}).color, true)}</label><label>모양<select data-a="strike.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.strike || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
         </details>`;
       else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span title="인디자인 획 두께">획 두께 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
@@ -2268,8 +2268,8 @@ function side() {
       <div class="f"><span title="비우면 모든 원고를 받는다. 「정답지」를 고르면 앞 구간 원고들의 정답을 모은 원고가 저절로 생긴다">받는 원고</span><select id="s-sets"><option value="" ${curK ? "" : "selected"}>모두</option>${kinds.map(k => `<option value="${esc(k)}" ${curK === k ? "selected" : ""}>${esc(k)}</option>`).join("")}<option value="answers" ${curK === "answers" ? "selected" : ""}>정답지 (answers)</option>${curK && curK !== "answers" && !kinds.includes(curK) ? `<option value="${esc(curK)}" selected>${esc(curK)}</option>` : ""}</select></div>
       ${page.items.some(it => it.flow) ? `<div class="note">쌓기 자리가 있다 — 그 자리엔 레코드를 하나씩 아래로 쌓고 페이지가 차면 다음 페이지로 넘긴다</div>` : ""}
       ${eachN >= 2 ? `<div class="f"><span title="같은 문서에 「단일 레코드」 페이지가 여럿일 때 — 유형별은 한 유형을 레코드 수만큼 몰아 찍고 다음 유형으로, 지문별은 레코드 하나에 유형 한 벌씩">묶는 순서</span><select id="s-order"><option value="by_page" ${(plan.order || "by_page") === "by_set" ? "" : "selected"}>유형별 — 같은 페이지를 레코드 수만큼 몰아서</option><option value="by_set" ${plan.order === "by_set" ? "selected" : ""}>지문별 — 레코드 하나에 페이지 한 벌씩</option></select></div>
-      <div class="note">지문마다 면 ${eachN} · 원고 ${nSet} → ${nSheets}장 · ${plan.order === "by_set" ? `지문1(페이지1~${eachN}) → 지문2(페이지1~${eachN}) …` : `페이지1(원고 ${perPg}개) → 페이지2(원고 ${perPg}개) …`}</div>` : ""}
-      <div class="note">지금 이 페이지는 <b>${pe.repeat === "each_set" ? (pe.per > 1 ? `원고 ${pe.per}개마다 1장` : "원고 1개마다 1장") : "1장"}</b> · 받는 원고 <b>${curK ? esc(curK) : "모두"}</b></div>`;
+      <div class="note">레코드마다 페이지 ${eachN} · 레코드 ${nSet} → ${nSheets}장 · ${plan.order === "by_set" ? `레코드1(페이지1~${eachN}) → 레코드2(페이지1~${eachN}) …` : `페이지1(레코드 ${perPg}개) → 페이지2(레코드 ${perPg}개) …`}</div>` : ""}
+      <div class="note">지금 이 페이지는 <b>${pe.repeat === "each_set" ? (pe.per > 1 ? `레코드 ${pe.per}개마다 1장` : "레코드 1개마다 1장") : "1장"}</b> · 받는 원고 <b>${curK ? esc(curK) : "모두"}</b></div>`;
     h += `<div class="f"><span>페이지 크기</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}<option value="__new">＋ 새 페이지 크기…</option></select></div>
       <div class="f"><span title="텍스트 프레임이 원고만큼 자라면 그 아래 것을 민다 — 켜면 가로 위치와 상관없이 아래 것 모두(한 단짜리 문제 페이지: 옆에 선 꼬리표·번호도 같이). 끄면 가로로 겹치는 것만">자라면 아래 모두 밀기</span><input id="s-pushrow" type="checkbox" ${page.push === "row" ? "checked" : ""} style="width:auto"></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 페이지는 머리말·페이지 번호가 뒤집힌다" style="width:auto"></div>
@@ -2299,7 +2299,7 @@ function side() {
       <div class="f"><span title="이 문서를 관리(라인업 폴더)의 템플릿으로 — 문서를 그린 PDF·미리 보기 그림·문서 묶음이 템플릿 폴더에 들어간다. 다시 누르면 같은 템플릿을 새로 그린다">템플릿 등록</span><span style="display:flex;gap:4px;align-items:center"><select id="s-reg-series" style="max-width:170px"><option value="">폴더(템플릿) 고르기</option>${(LIB.catalog || []).map(c => `<option value="${esc(c.series)}" ${c.series === regSeries() ? "selected" : ""}>${esc((c.dir_name ? c.dir_name + " · " : "") + c.name)}</option>`).join("")}</select><button class="btn sm" id="s-reg">등록</button></span></div>
       <div class="note" id="s-reg-st" style="margin:-2px 0 6px">${plan.catalog && plan.catalog.design ? `등록됨 — <a href="/design/${esc(plan.catalog.series)}/${esc(plan.catalog.design)}" target="_blank">관리에서 보기</a>` : ""}</div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
-      <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">자리 표시자 텍스트</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 자리별 입력">…</button></span></div>
+      <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">자리 표시자 텍스트</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 데이터 필드별 입력">…</button></span></div>
       <h3>데이터 병합 <span class="note" style="display:inline">템플릿 = 데이터 필드·자리 표시자 텍스트·스타일 · 원고 = {데이터 필드: 글 | [글…]}</span></h3>
       <div class="f"><span title="자리 표시자 텍스트 = 템플릿 그대로 · 원고 = 넣어 둔 원고가 데이터 필드마다 자리 표시자 텍스트 대신">보기</span><select id="s-view"><option value="">자리 표시자 텍스트</option><option value="content" ${viewContent ? "selected" : ""}>원고</option></select></div>
       <textarea id="s-content" rows="6" spellcheck="false" style="width:100%;font:11px ui-monospace,monospace" placeholder='{"지문": ["첫 지문", "둘째 지문"], "번호": ["01", "02"]}'>${esc(plan && plan.content ? JSON.stringify(plan.content, null, 1) : "")}</textarea>
@@ -2553,7 +2553,7 @@ function side() {
     const lj = await (await fetch("/api/units/library")).json(); for (const k of Object.keys(lj)) LIB[k] = lj[k];
     const r = j.report || {};
     openPlan(byId("plans")[j.plan]); pageSvg = {}; render(); drawRail();
-    say(`가져옴 — 페이지 ${r.pages}` + (Object.keys(r.stories_renamed || {}).length ? ` · 이야기 이름 바꿈 ${Object.entries(r.stories_renamed).map(([a, b]) => a + "→" + b).join(", ")}` : "") + ((r.skin_added || []).length ? ` · 브랜드에 보탬 ${r.skin_added.length}` : ""));
+    say(`가져옴 — 페이지 ${r.pages}` + (Object.keys(r.stories_renamed || {}).length ? ` · 스토리 이름 바꿈 ${Object.entries(r.stories_renamed).map(([a, b]) => a + "→" + b).join(", ")}` : "") + ((r.skin_added || []).length ? ` · 브랜드에 보탬 ${r.skin_added.length}` : ""));
   });
   on("#s-pstart", "change", async (e) => { const v = Math.max(1, Math.round(+e.target.value || 1)); if (v > 1) plan.page_start = v; else delete plan.page_start;
     pageSvg = {}; await savePlan(); render(); drawRail(); side(); });
@@ -2654,7 +2654,7 @@ function save() {
   clearTimeout(st); st = setTimeout(async () => { const ps = [...unsaved]; unsaved.clear(); let j = {};
     for (const p of ps) { const r = await api("/api/units/pages", p); if (r.error) j = r; }
     const w = $("#warn");
-    if (j.error) { $("#st").textContent = "저장 실패: " + j.error; w.style.display = ""; w.dataset.save = "1"; w.textContent = "저장 안 됨 — " + j.error + " (고칠 때까지 이 쪽의 바뀐 것이 저장되지 않는다)"; }
+    if (j.error) { $("#st").textContent = "저장 실패: " + j.error; w.style.display = ""; w.dataset.save = "1"; w.textContent = "저장 안 됨 — " + j.error + " (고칠 때까지 이 페이지의 바뀐 것이 저장되지 않는다)"; }
     else { if (w.dataset.save) { w.style.display = "none"; delete w.dataset.save; } if (Date.now() > stHold) $("#st").textContent = "저장됨"; } }, 500);
 }
 // 브랜드로 등록 — 먼저 직접 색·서체로 그리고, 다 만든 뒤 여기서 견본으로 (인디자인: 문서에서 쓴 색을 견본에 추가)

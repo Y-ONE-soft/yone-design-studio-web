@@ -109,7 +109,7 @@
 
   {% if folder %}
   <section id="designs">
-    <h2>틀 · 디자인 <span class="n">{{ designs|length }}개</span></h2>
+    <h2>틀 · 템플릿 <span class="n">{{ designs|length }}개</span></h2>
     {# 틀 관리 · PDF 판정 · 디자인 없는 틀(등록 단추)은 지금 작업 범위 밖이라 뺐다 — 주소로는 그대로 열린다 #}
     {% if filters %}<div class="flt" id="flt">
       {% for k, vs in filters.items() %}<div class="fg" data-k="{{ k }}"><span class="fk">{{ k }}</span><button class="on" data-v="">전체</button>{% for v in vs %}<button data-v="{{ v }}">{{ v }}</button>{% endfor %}</div>{% endfor %}
@@ -117,14 +117,14 @@
     {% if designs %}<div class="dsg">
       {% for d in designs %}<div class="d" data-series="{{ d.series }}" data-id="{{ d.id }}" data-name="{{ d.name }}" data-tags="{{ d.tags|tojson|forceescape }}">
         <div class="th">{% if d.img %}<img src="{{ d.img }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
-          <button class="x" title="디자인 삭제">×</button></div>
+          <button class="x" title="템플릿 삭제">×</button></div>
         <div class="tt">{{ d.name }}</div>
-        <div class="mt"><i class="dot {{ d.ready }}"></i>{{ d.tname }}{% if d.n %} · {{ d.n }}면{% endif %}{% if d.made %}<span class="mk {{ d.made }}">{{ "편집기 제작" if d.made == "editor" else "PDF 등록" }}</span>{% endif %}</div>
+        <div class="mt"><i class="dot {{ d.ready }}"></i>{{ d.tname }}{% if d.n %} · {{ d.n }}페이지{% endif %}{% if d.made %}<span class="mk {{ d.made }}">{{ "편집기 제작" if d.made == "editor" else "PDF 등록" }}</span>{% endif %}</div>
         {% if d.tags %}<div class="tags">{% for k, v in d.tags.items() %}<span>{{ v }}</span>{% endfor %}</div>{% endif %}
-        {% if d.made != "editor" %}<div class="acts">{% if d.manuscript %}<a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">원고 넣기</a>{% endif %}<a href="/design/{{ d.series }}/{{ d.id }}">지면 보기</a></div>{% endif %}
+        {% if d.made != "editor" %}<div class="acts">{% if d.manuscript %}<a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">데이터 병합</a>{% endif %}<a href="/design/{{ d.series }}/{{ d.id }}">페이지 보기</a></div>{% endif %}
       </div>{% endfor %}
     </div>
-    {% else %}<div class="empty" style="padding:24px 0"><b>이 라인업에 아직 디자인이 없어요</b></div>{% endif %}
+    {% else %}<div class="empty" style="padding:24px 0"><b>이 라인업에 아직 템플릿이 없어요</b></div>{% endif %}
   </section>
   {% endif %}
 
@@ -140,7 +140,7 @@
     <div class="folders" id="folder-list">
       {% for f in folders %}<a class="folder" href="/projects?dir={{ f.id }}" style="--c: {{ f.color }}" data-id="{{ f.id }}" data-name="{{ f.name }}" data-en="{{ f.en }}" data-desc="{{ f.desc }}"
          data-icon="{{ f.icon }}" data-color="{{ f.color }}" data-group="{{ f.group or '' }}" data-t="{{ f.t }}">
-        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '디자인 ' ~ f.dn ~ '개' if f.dn else ('틀 ' ~ f.t ~ '개 · 디자인 없음' if f.t else '비어 있음') }}</span></span>
+        <span class="fi">{{ f.icon }}</span><span><span class="fn">{{ f.name }}</span><br><span class="fc">{{ '템플릿 ' ~ f.dn ~ '개' if f.dn else ('틀 ' ~ f.t ~ '개 · 템플릿 없음' if f.t else '비어 있음') }}</span></span>
         <span class="acts"><button class="edit" title="수정">✎</button>{% if f.id != 'etc' %}<button class="del" title="삭제">×</button>{% endif %}</span>
       </a>{% endfor %}
     </div>
@@ -176,7 +176,7 @@
     b.addEventListener('click', function (e) {
       e.preventDefault(); e.stopPropagation();
       var a = b.closest('.d').dataset;
-      if (!confirm('디자인 “' + a.name + '” 을 지울까요?\n\n디자인 폴더(config · 페이지 틀 · 견본)가 삭제됩니다. 이 디자인으로 만든 책은 그대로 남습니다.')) return;
+      if (!confirm('템플릿 “' + a.name + '” 을 지울까요?\n\n템플릿 폴더(config · 상위 페이지 그림 · 미리 보기)가 삭제됩니다. 이 템플릿으로 만든 책은 그대로 남습니다.')) return;
       fetch('/api/catalog/design/' + a.series + '/' + a.id, { method: 'DELETE' }).then(function (r) { return r.json(); })
         .then(function (j) { if (j.error) alert(j.error); else location.reload(); });
     });

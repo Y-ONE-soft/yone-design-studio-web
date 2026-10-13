@@ -61,12 +61,12 @@
   <div class="crumb"><a href="/projects">모든 프로젝트</a> › <a href="/projects?dir={{ t.dir }}">{{ t.dir_name }}</a> › {{ t.name }}</div>
   <div>
     <h1>{{ d.name }}{% if d.draft %}<span class="draft">초안 · 확인 필요</span>{% endif %}</h1>
-    <div class="meta"><i class="dot {{ t.ready }}"></i>{{ t.name }} · {{ '기준 PDF ' ~ total ~ '면' if total else '지면 ' ~ pages|length ~ '면' }}{% if d.date %} · {{ d.date }}{% endif %}{% if d.desc %} · {{ d.desc }}{% endif %}</div>
+    <div class="meta"><i class="dot {{ t.ready }}"></i>{{ t.name }} · {{ (('템플릿 PDF ' if d.made == 'editor' else '원본 PDF ') ~ total ~ '페이지') if total else '페이지 그림 ' ~ pages|length ~ '장' }}{% if d.date %} · {{ d.date }}{% endif %}{% if d.desc %} · {{ d.desc }}{% endif %}</div>
   </div>
   <div class="acts">
     {% if total %}<a href="/catalog/pdf/{{ t.series }}/{{ d.id }}" target="pdfview">PDF 뷰어로 보기</a>{% endif %}
     {% if d.made == "editor" %}<a class="go" href="/units?design={{ t.series }}/{{ d.id }}" title="편집기에서 이 문서를 열어 고치거나 원고를 넣는다">편집기에서 편집</a>
-    {% elif t.manuscript %}<a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">원고 넣기 → 조판</a>{% endif %}
+    {% elif t.manuscript %}<a class="go" href="/catalog/{{ t.series }}/{{ d.id }}">데이터 병합 → 조판</a>{% endif %}
     {% if d.draft %}<button class="ok" id="confirm">확인 완료</button>{% endif %}
     <button class="del" id="del">삭제</button>
   </div>
@@ -75,18 +75,18 @@
 <div class="wrap">
   <div class="view">
     <div class="stage" id="stage">
-      {% if pages or total %}<img id="big" src="{{ pages[0].src if pages else '/catalog/page/' ~ t.series ~ '/' ~ d.id ~ '/1.png?dpi=96' }}" alt=""><span class="lbl" id="big-lbl">{{ (pages[0].kind ~ ' · ' ~ pages[0].label) if pages else '기준 PDF · p1' }}</span>
+      {% if pages or total %}<img id="big" src="{{ pages[0].src if pages else '/catalog/page/' ~ t.series ~ '/' ~ d.id ~ '/1.png?dpi=96' }}" alt=""><span class="lbl" id="big-lbl">{{ (pages[0].kind ~ ' · ' ~ pages[0].label) if pages else ('템플릿 PDF' if d.made == 'editor' else '원본 PDF') ~ ' · p1' }}</span>
       <span class="nav"><button id="prev">‹</button><span id="pos">1 / {{ pages|length + total }}</span><button id="next">›</button></span>
-      {% else %}<div class="none">아직 지면 그림이 없습니다<br><small>원고를 넣어 조판하면 견본이 생깁니다</small></div>{% endif %}
+      {% else %}<div class="none">아직 페이지 그림이 없습니다<br><small>데이터 병합으로 조판하면 미리 보기가 생깁니다</small></div>{% endif %}
     </div>
     <div class="info">
-      <div class="box"><h3>디자인</h3>
-        <dl><dt>틀</dt><dd>{{ t.name }} (<code>{{ t.series }}</code>)</dd><dt>폴더</dt><dd>{{ t.dir_name }}</dd><dt>판형</dt><dd>{{ t.page.width_mm ~ '×' ~ t.page.height_mm ~ 'mm' if t.page and t.page.width_mm else '틀 기본' }}</dd>
+      <div class="box"><h3>템플릿</h3>
+        <dl><dt>틀</dt><dd>{{ t.name }} (<code>{{ t.series }}</code>)</dd><dt>폴더</dt><dd>{{ t.dir_name }}</dd><dt>페이지 크기</dt><dd>{{ t.page.width_mm ~ '×' ~ t.page.height_mm ~ 'mm' if t.page and t.page.width_mm else '틀 기본' }}</dd>
         {% if d.source %}<dt>출처</dt><dd>{{ d.source }}</dd>{% endif %}
         {% for k, v in (d.tags or {}).items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}
         {% if d.pairs %}<dt>짝 내지</dt><dd><a href="/design/{{ d.pairs }}">{{ d.pairs }}</a></dd>{% endif %}</dl></div>
       {% if t.fonts_missing %}<div class="box" style="background:#fff4e5;color:#8a5a00"><h3 style="color:#8a5a00">서체 부족</h3>{{ t.fonts_missing|join(' · ') }}</div>{% endif %}
-      {% if d.draft %}<div class="box"><h3>초안</h3>PDF 에서 잰 색·판형으로 만든 초안입니다. 레이아웃은 틀 것이라 견본과 대조해 맞으면 <b>확인 완료</b>.</div>{% endif %}
+      {% if d.draft %}<div class="box"><h3>초안</h3>PDF 에서 잰 색·페이지 크기로 만든 초안입니다. 레이아웃은 틀 것이라 미리 보기와 대조해 맞으면 <b>확인 완료</b>.</div>{% endif %}
     </div>
   </div>
 
@@ -153,10 +153,10 @@
 
 {% block scripts %}
 <script>
-  var REP = {{ pages|tojson }}, TOTAL = {{ total }}, S = '{{ t.series }}', D = '{{ d.id }}';
-  // 큰 그림 목록 = (기준 PDF 없을 때만) 페이지 틀 · 견본 + 기준 PDF 전체 면. 전체 면은 96dpi 로 따로 그린다(목록은 30dpi).
+  var REP = {{ pages|tojson }}, TOTAL = {{ total }}, PDF_KIND = '{{ '템플릿 PDF' if d.made == 'editor' else '원본 PDF' }}', S = '{{ t.series }}', D = '{{ d.id }}';
+  // 큰 그림 목록 = (PDF 없을 때만) 상위 페이지 그림 · 미리 보기 + PDF 전체 페이지. 전체 면은 96dpi 로 따로 그린다(목록은 30dpi).
   var PAGES = REP.concat(Array.apply(null, Array(TOTAL)).map(function (_, k) {
-    return { src: '/catalog/page/' + S + '/' + D + '/' + (k + 1) + '.png?dpi=96', kind: '기준 PDF', label: 'p' + (k + 1), n: k + 1 };
+    return { src: '/catalog/page/' + S + '/' + D + '/' + (k + 1) + '.png?dpi=96', kind: PDF_KIND, label: 'p' + (k + 1), n: k + 1 };
   })), i = 0;
   function show(k) {
     if (!PAGES.length) return;
@@ -186,7 +186,7 @@
       .then(function (j) { if (j.error) { alert(j.error); up.disabled = false; up.textContent = '원본 PDF 붙이기'; } else location.reload(); });
   });
   document.getElementById('del').addEventListener('click', function () {
-    if (!confirm('디자인 “{{ d.name }}” 을 지울까요?\n\n디자인 폴더(config · 페이지 틀 · 견본)가 삭제됩니다. 이 디자인으로 만든 책은 그대로 남습니다.')) return;
+    if (!confirm('템플릿 “{{ d.name }}” 을 지울까요?\n\n템플릿 폴더(config · 상위 페이지 그림 · 미리 보기)가 삭제됩니다. 이 템플릿으로 만든 책은 그대로 남습니다.')) return;
     fetch('/api/catalog/design/' + S + '/' + D, { method: 'DELETE' }).then(function (r) { return r.json(); })
       .then(function (j) { if (j.error) alert(j.error); else location.href = '/projects?dir={{ t.dir }}'; });
   });
