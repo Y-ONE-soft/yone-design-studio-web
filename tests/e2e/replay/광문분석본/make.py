@@ -533,8 +533,7 @@ def spread(lp):
     st += text(23.0, vtop, 168.0, round(14 * 4.47, 2), "word\t뜻\nword\t뜻", 7.0, "#231f20", label="어휘 — 원고 자리 「어휘」 (3단 · 탭)", font=NOTO, leading=VL)
     st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700},
            {"clickif": {"at": "#side details.more > summary", "when": "!document.querySelector('#side details.more').open"}, "wait": 700},
-           F('#side input[data-a="tabspec"]', "28 left"), F('#side input[data-a="columns"]', 3, 900), F('#side input[data-a="gutter"]', 0, 700),
-           {"click": '#side input[data-a="col_seq"]', "wait": 700}]
+           F('#side input[data-a="tabspec"]', "28 left"), F('#side input[data-a="columns"]', 3, 900), F('#side input[data-a="gutter"]', 0, 700)]   # 첫 단부터 채우기는 인디자인 기본(「단 균형 맞추기」 끔) — 따로 안 누른다
     st += slot("어휘", label="자리 — 어휘(줄마다 「낱말<탭>뜻」)")
     # 꼬리 — 「7강  분석」 = 강+회차(오른쪽 맞춤) · 쪽 번호
     st += [S("꼬리 — 강+회차 · 쪽 번호", 1000)]

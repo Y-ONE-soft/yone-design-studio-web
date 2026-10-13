@@ -1196,7 +1196,7 @@ def _text_html(a, html, h, ctx=None):
         rule = ""
         if cr and cr.get("w"):
             rule = f";column-rule:{float(cr['w']) * PT:.3f}px solid {(ctx.color(cr.get('color'), '#000000') if ctx else (cr.get('color') or '#000000'))}"
-        fill = f"column-fill:auto;height:{max(h - it - ib, 1):.3f}px" if a.get("col_seq") else "column-fill:balance"   # 차례로 채우기 = 인디자인 기본(첫 단부터 상자 높이까지)
+        fill = "column-fill:balance" if a.get("col_balance") else f"column-fill:auto;height:{max(h - it - ib, 1):.3f}px"   # 인디자인 기본 = 첫 단부터 상자 높이까지, 「단 균형 맞추기」를 켜면 단마다 같은 양(옛 col_seq 는 기본과 같다)
         inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;{fill}{rule}">{inner}</div>'
     hs, vs = float(a.get("h_scale") or 100), float(a.get("v_scale") or 100)
     if hs != 100 or vs != 100:                                   # 장평 — 글자는 늘리고 상자 폭은 지킨다
