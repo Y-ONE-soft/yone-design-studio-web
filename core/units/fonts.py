@@ -208,7 +208,7 @@ def face_css(mode="url"):
     """시스템 서체 @font-face — 컴퓨터에 깔린 서체 대신 이 파일을 쓴다. mode url = 편집기(서버 주소) · file = PDF(파일 주소)"""
     css = []
     for f in system_fonts():
-        src = f"url('/api/units/fontfile/{f['file']}')" if mode == "url" else f"url('file://{f['path']}')"
+        src = f"url('/api/units/fontfile/{f['file']}')" if mode == "url" else f"url('file://{safe_path(f['path'])}')"
         fmt = "opentype" if f["file"].lower().endswith(".otf") else "truetype"
         css.append(f'@font-face{{font-family:"{f["family"]}";font-weight:{f["weight"]};font-style:{"italic" if f["italic"] else "normal"};'
                    f'src:{src} format("{fmt}");font-display:block}}')
@@ -217,7 +217,8 @@ def face_css(mode="url"):
 
 def font_file(name):
     """등록된 서체 파일의 경로 — 목록에 없는 이름은 None (아무 파일이나 내주지 않는다)"""
-    return next((f["path"] for f in system_fonts() if f["file"] == name), None)
+    p = next((f["path"] for f in system_fonts() if f["file"] == name), None)
+    return safe_path(p) if p else None                                  # 크롬 서체 검사(OTS)에 걸리는 곳을 고친 사본
 
 
 def _cff_ascii_names(data):
@@ -247,6 +248,63 @@ def _cff_ascii_names(data):
         return bytes(out)
     except (struct.error, IndexError, ValueError):
         return data
+
+
+def _kern_len_fix(data):
+    """옛 kern 표(버전 0 · 형식 0)의 부분 표 길이가 실제보다 크게 적힌 TTF — 크롬 서체 검사(OTS)가 파일째 거부한다
+    (12롯데마트드림Bold: 65530 · 실제 5120, 2026-10-14 — 맥은 설치 서체로 대신 그려 몰랐고 배포서버는 DejaVu 로 나왔다).
+    길이 칸만 14 + 쌍 수 × 6 으로 바로 적는다(커닝 값은 그대로). 고칠 것이 없으면 data 그대로."""
+    import struct
+    try:
+        n = struct.unpack(">H", data[4:6])[0]
+        rec = next((struct.unpack(">II", data[12 + 16 * i + 8:12 + 16 * i + 16]) for i in range(n)
+                    if data[12 + 16 * i:12 + 16 * i + 4] == b"kern"), None)
+        if not rec:
+            return data
+        off, size = rec
+        ver, cnt = struct.unpack(">HH", data[off:off + 4])
+        if ver != 0:
+            return data
+        out, p = bytearray(data), off + 4
+        for _ in range(cnt):
+            ln, cov = struct.unpack(">HH", data[p + 2:p + 6])
+            if cov >> 8 != 0:                                            # 형식 0 만
+                return data
+            need = 14 + struct.unpack(">H", data[p + 6:p + 8])[0] * 6
+            if ln != need and p + need <= off + size:
+                out[p + 2:p + 4] = struct.pack(">H", need)
+            p += need
+        return bytes(out)
+    except (struct.error, IndexError, ValueError):
+        return data
+
+
+_SAFE = {}
+
+
+def safe_path(path):
+    """그릴 때 쓰는 서체 파일 — 크롬 서체 검사(OTS)에 걸리는 곳을 고친 사본(임시 폴더), 고칠 것이 없으면 그 파일 그대로.
+    파일마다 한 번만 읽는다(경로 · 수정 시각이 같으면 앞 결과)"""
+    import hashlib
+    import tempfile
+    try:
+        key = (path, os.path.getmtime(path))
+    except OSError:
+        return path
+    if key in _SAFE and os.path.exists(_SAFE[key]):
+        return _SAFE[key]
+    data = open(path, "rb").read()
+    fixed = _kern_len_fix(_cff_ascii_names(data))
+    out = path
+    if fixed != data:
+        d = os.path.join(tempfile.gettempdir(), "yone-fonts-ots")
+        os.makedirs(d, exist_ok=True)
+        out = os.path.join(d, hashlib.sha1(fixed).hexdigest()[:12] + os.path.splitext(path)[1].lower())
+        if not os.path.exists(out):
+            with open(out, "wb") as fh:
+                fh.write(fixed)
+    _SAFE[key] = out
+    return out
 
 
 def register(filename, data):
