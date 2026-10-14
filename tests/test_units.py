@@ -1277,3 +1277,14 @@ def test_paragraph_style_override_one_paragraph(lib):
     html = render._text_content(ctx, a, {"번호": v}, {})[0]
     tops = _re.findall(r'margin-top:([\d.]+)px', render._paras_html(a, html, "", ctx))
     assert tops == ["2.600", "9.700"]                                   # 둘째 문단만 재정의 2.6 · 셋째는 스타일 9.7 그대로
+
+
+def test_ruby_font_size_offsets_one_ruby(lib):
+    """윗주 하나만 크기 · 오프셋 X · Y(인디자인 윗주 대화 상자) — 값이 없는 윗주는 글상자 윗주 설정 그대로"""
+    from core.units import render, store
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    a = {"t": "text", "w": 80, "h": 20, "size": 9}
+    one = render.ruby_html("directly", {"t": "(X)", "pos": "above", "size": 5, "ox": 0.5, "off": 1.2}, a, ctx)
+    plain = render.ruby_html("directly", {"t": "(X)", "pos": "above"}, a, ctx)
+    assert f"font-size:{5 * render.PT:.3f}px" in one and "left:0.500px" in one and "bottom:1.200px" in one
+    assert "font-size:60%" in plain and "left:0.000px" in plain and "bottom:0.400px" in plain

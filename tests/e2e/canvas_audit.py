@@ -407,17 +407,18 @@ try:
         kept = js(f"page.items[{TXT}].atom.text.filter(r => r && r.ps).length === 2")
         return (ok and row and plus and saved and one and gone and kept, f"편집={ok} 문단 줄={row} +={plus} 저장={saved} 한 문단만={one} 지우기={gone} 표시 남음={kept} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:120]}")
     step("G2b 단락 스타일 재정의 — 한 문단만 · 재정의 지우기", g2b)
-    def g2c():                                                    # 윗주 하나만 거리(오프셋) — 인디자인 윗주 대화 상자
+    def g2c():                                                    # 윗주 하나만 크기 · 오프셋 Y — 인디자인 윗주 대화 상자
         js(f"(() => {{ hist(); page.items[{TXT}].atom.text = ['앞 ', {{t: 'directly', ruby: {{t: '(X)', pos: 'above'}}}}, ' 뒤']; save(); render(); }})()")
         js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3)
         pos = "(() => { const t = document.querySelector('#tedit [data-rba]').firstChild; const r = document.createRange(); r.setStart(t, 2); r.setEnd(t, 3); const b = r.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()"
         click(*js(pos)); row = wait("document.querySelector('#rt-ruby').style.display !== 'none' && document.querySelector('#rt-ruby').textContent.includes('(X)')", 3)
-        ir = rect("#rt-ruby [data-rb='0:off']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="1.2"); key("Enter", code="Enter"); shot("G2c_윗주_줄")
+        ir = rect("#rt-ruby [data-rb='0:off']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="1.2"); key("Enter", code="Enter")
+        ir = rect("#rt-ruby [data-rb='0:size']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="5"); key("Enter", code="Enter"); shot("G2c_윗주_줄")
         click(*js(pos)); key("Enter", mods=CTRL, code="Enter")
-        saved = wait(f"JSON.stringify(page.items[{TXT}].atom.text).includes('\"off\":1.2')", 4)
+        saved = wait(f"JSON.stringify(page.items[{TXT}].atom.text).includes('\"off\":1.2') && JSON.stringify(page.items[{TXT}].atom.text).includes('\"size\":5')", 4)
         rest = js(f"(() => {{ const r = page.items[{TXT}].atom.text.find(x => x && x.ruby); return r && r.t === 'directly' && r.ruby.t === '(X)' && r.ruby.pos === 'above'; }})()")
         return (ok and row and saved and rest, f"편집={ok} 윗주 줄={row} 저장={saved} 글·위치 그대로={rest} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:120]}")
-    step("G2c 윗주 하나만 문자 스타일 · 거리", g2c)
+    step("G2c 윗주 하나만 크기 · 오프셋 Y", g2c)
     def g3():
         js("select([])"); r = grect(PAS); dbl(r[0] + 10, r[1] + 10)
         ok = wait("!!editing && document.querySelector('#editbar').style.display !== 'none'", 4)

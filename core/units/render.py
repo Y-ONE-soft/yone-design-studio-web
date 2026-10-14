@@ -410,7 +410,8 @@ def char_css(cs, ctx=None):
 def ruby_html(base, rb, a, ctx, plain=None):
     """윗주(인디자인 문자 패널의 윗주) — 본문 글 위나 아래에 작은 글. 본문 첫머리 기준선에 폭·높이 0 인 점(inline-block)을 찍고
     거기서 잰다: 줄 간격·줄 나눔이 그대로고(단락 컴포저는 inline-block 을 글자 하나로 센다) 본문과 함께 움직인다.
-    rb = {t, pos: above|below, cs?, off?, align?} — 없는 값은 글상자의 윗주 설정(a.ruby: cs · off_above · off_below · align)."""
+    rb = {t, pos: above|below, cs?, font?, size?, off?, ox?, align?} — 없는 값은 글상자의 윗주 설정(a.ruby: cs · off_above · off_below · align).
+    font · size(pt) · off(오프셋 Y mm) · ox(오프셋 X mm) = 인디자인 윗주 대화 상자의 「윗주 글꼴 및 크기」 · 「윗주 위치 및 간격」 — 그 윗주 하나만."""
     d = (a or {}).get("ruby") or {}
     pos = "below" if rb.get("pos") == "below" else "above"
     off = rb.get("off")
@@ -419,11 +420,16 @@ def ruby_html(base, rb, a, ctx, plain=None):
     off = float(off if off is not None else (0.6 if pos == "below" else 0.4))
     name = rb.get("cs") or d.get("cs")
     st = ((ctx.cstyle_css(name) if (ctx and name) else "") or "font-size:60%;").replace("line-height:0;", "")   # 윗주 글자 칸은 제 줄 높이 — 본문 조각의 줄 높이 0 을 빼야 자리가 안 뜬다
+    if rb.get("font"):
+        st += f"font-family:{esc(ctx.font(rb['font']) if ctx else rb['font'])};"
+    if rb.get("size"):
+        st += f"font-size:{float(rb['size']) * PT:.3f}px;"
+    ox = float(rb.get("ox") or 0)
     just = "center" if (rb.get("align") or d.get("align")) == "center" else "start"
     v = f"top:{off:.3f}px" if pos == "below" else f"bottom:{off:.3f}px"
     plain = plain if plain is not None else re.sub(r"<[^>]+>", "", base)
     return ('\u2060<span data-ruby="1" style="display:inline-block;width:0;height:0;position:relative;vertical-align:baseline">'
-            f'<span style="position:absolute;left:0;{v};display:grid;width:max-content;white-space:nowrap;line-height:1;text-indent:0;letter-spacing:0;word-spacing:0">'   # 칸 폭 = 본문 폭(폭 0 점 안이라 안 주면 윗주 폭으로 줄어 가운데가 안 걸린다)
+            f'<span style="position:absolute;left:{ox:.3f}px;{v};display:grid;width:max-content;white-space:nowrap;line-height:1;text-indent:0;letter-spacing:0;word-spacing:0">'   # 칸 폭 = 본문 폭(폭 0 점 안이라 안 주면 윗주 폭으로 줄어 가운데가 안 걸린다)
             f'<span style="grid-area:1/1;height:0;overflow:hidden;visibility:hidden">{plain}</span>'
             + (f'<span style="grid-area:1/1;justify-self:center;width:0;display:flex;justify-content:center;{st}"><span style="white-space:nowrap">{esc(rb.get("t", ""))}</span></span>'
                if just == "center" else                                   # 가운데 — 폭 0 칸을 본문 가운데에 두고 양옆으로(본문보다 긴 윗주는 옆 글자 위로)
