@@ -457,4 +457,18 @@ def to_content(data, sample=None):
             continue
         recs.append(record(d))
         report["sent"].append({"passage": i + 1, "label": (d.get("meta") or {}).get("source")})
-    return ({"분석 펼침면": recs} if recs else {}), report
+    content = {"분석 펼침면": recs} if recs else {}
+    content.update(divider(data))
+    return content, report
+
+
+def divider(data):
+    """간지(권 앞 한 면)의 책 머리 데이터 필드 — data.divider = {school: 「2026 광문고1」, volume: 「2」, lines: [{book: 교재명, lesson: 강제목}, …]}.
+    안 보냈으면 {} — 간지 면은 원고가 안 와 찍히지 않는다(예전 그대로). 보냈으면 세 칸 모두(빈 칸도) — 간지 면은 세 칸이 다 와야 골라진다(content.to_records)."""
+    dv = (data or {}).get("divider")
+    if not isinstance(dv, dict):
+        return {}
+    s = lambda v: str(v or "").strip()
+    lines = [{"교재명": s(x.get("book")), "강제목": s(x.get("lesson"))}
+             for x in dv.get("lines") or [] if isinstance(x, dict) and (s(x.get("book")) or s(x.get("lesson")))]
+    return {"학교": [s(dv.get("school"))], "권번호": [s(dv.get("volume"))], "교재명+강제목": lines or [{"교재명": "", "강제목": ""}]}
