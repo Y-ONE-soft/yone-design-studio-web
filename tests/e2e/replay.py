@@ -288,6 +288,8 @@ def deco_check(new_ids, state):
                 mine = b.get(t, []) + [o2 for k2, v2 in b.items() if k2 != t and t.replace(" ", "") in k2.replace(" ", "") for o2 in v2]   # 붙어 그려진 작은 글은 PDF 에서 한 덩어리로 읽힌다(「V 조」+「S」 → 「V 조S」) — 그 안에서도 찾는다
                 for i, o in enumerate(offs):
                     n += 1
+                    if f"p{rp}:{e['id']}:작은 글:{t}" in allow:                   # 그 작은 글만 — 원본 손 고침(사용자 확정)
+                        continue
                     if i >= len(mine):
                         deco_check.bad.append(f"p{rp}:{e['id']} 작은 글 「{t[:10]}」 빠짐 (원본 높이 {o:+.2f}mm)")
                     elif abs(mine[i] - o) > 0.3:
@@ -428,8 +430,18 @@ if base_unit not in LEGACY and not base_unit[:2].isdigit():
         sys.exit(f"구성 번호 {only} 가 구성표에 없다 — 있는 번호 {sorted(nums, key=int)}")
 
 state = json.load(open(os.path.join(udir, "상태.json"), encoding="utf-8"))
+
+
+def mine(s):
+    """대본이 쓴 상태(원본 쪽 목록 등)에 사용자 확정 예외는 단위 폴더 상태.json 것을 — 판 뒤에 적은 「허용」 · 「원본_손고침」도 판정에 든다"""
+    for k in ("허용", "원본_손고침"):
+        if state.get(k):
+            s[k] = dict(s.get(k) or {}, **state[k])
+    return s
+
+
 if cmd == "judge":                                                          # 판정만 다시 — 지난 판이 만든 결과(PDF·그림)로. 다시 만들지 않는다
-    state = json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8"))
+    state = mine(json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8")))
     log = open(os.path.join(out, "rec.log"), encoding="utf-8").read()
     ok = not [ln for ln in log.splitlines() if "ERR" in ln or "Traceback" in ln or ln.strip().startswith("!")]
     ids = [rp for rp in state["pages"] if os.path.exists(os.path.join(out, f"p{rp}_my.pdf"))]
@@ -451,7 +463,7 @@ try:
     before = set(page_ids())
     t0 = time.time()
     ok = run_steps(cmd != "rec", os.path.join(out, unit + ".mp4") if cmd == "rec" else os.path.join(out, "_fast.mp4"))
-    state = json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8"))  # 대본이 방금 쓴 상태(원본 쪽 목록) — 미리 읽은 것은 지난 판 것
+    state = mine(json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8")))  # 대본이 방금 쓴 상태(원본 쪽 목록) — 미리 읽은 것은 지난 판 것
     new_ids = [i for i in page_ids() if i not in before]
     print(f"{unit} {cmd} — {time.time() - t0:.0f}초 · 새 지면 {len(new_ids)}개")
     compare(new_ids, state)

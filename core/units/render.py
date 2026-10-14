@@ -286,9 +286,10 @@ def rich_html(v, ctx=None):
         if st:
             t = f'<span style="{st}">' + t + "</span>"
         rbs = v.get("ruby")                                                # 윗주 — 하나 또는 [위, 아래] 둘
+        plain = re.sub(r"<[^>]+>", "", t)                                  # 본문 글 폭 — 둘째 윗주도 첫째 윗주 글이 아니라 본문 글 가운데에
         for rb in (rbs if isinstance(rbs, list) else [rbs] if rbs else []):
             if isinstance(rb, dict) and rb.get("t"):
-                t = ruby_html(t, rb, a, ctx)
+                t = ruby_html(t, rb, a, ctx, plain)
         return t
     return esc(v)
 
@@ -405,7 +406,7 @@ def char_css(cs, ctx=None):
     return st
 
 
-def ruby_html(base, rb, a, ctx):
+def ruby_html(base, rb, a, ctx, plain=None):
     """윗주(인디자인 문자 패널의 윗주) — 본문 글 위나 아래에 작은 글. 본문 첫머리 기준선에 폭·높이 0 인 점(inline-block)을 찍고
     거기서 잰다: 줄 간격·줄 나눔이 그대로고(단락 컴포저는 inline-block 을 글자 하나로 센다) 본문과 함께 움직인다.
     rb = {t, pos: above|below, cs?, off?, align?} — 없는 값은 글상자의 윗주 설정(a.ruby: cs · off_above · off_below · align)."""
@@ -419,7 +420,7 @@ def ruby_html(base, rb, a, ctx):
     st = ((ctx.cstyle_css(name) if (ctx and name) else "") or "font-size:60%;").replace("line-height:0;", "")   # 윗주 글자 칸은 제 줄 높이 — 본문 조각의 줄 높이 0 을 빼야 자리가 안 뜬다
     just = "center" if (rb.get("align") or d.get("align")) == "center" else "start"
     v = f"top:{off:.3f}px" if pos == "below" else f"bottom:{off:.3f}px"
-    plain = re.sub(r"<[^>]+>", "", base)
+    plain = plain if plain is not None else re.sub(r"<[^>]+>", "", base)
     return ('\u2060<span data-ruby="1" style="display:inline-block;width:0;height:0;position:relative;vertical-align:baseline">'
             f'<span style="position:absolute;left:0;{v};display:grid;width:max-content;white-space:nowrap;line-height:1;text-indent:0;letter-spacing:0;word-spacing:0">'   # 칸 폭 = 본문 폭(폭 0 점 안이라 안 주면 윗주 폭으로 줄어 가운데가 안 걸린다)
             f'<span style="grid-area:1/1;height:0;overflow:hidden;visibility:hidden">{plain}</span>'
