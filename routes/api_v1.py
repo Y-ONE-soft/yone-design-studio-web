@@ -401,7 +401,7 @@ def _render_editor(series, design, body, book):
                      meta={"book_dir": d, "key": f"editor/{series}/{design}", "bid": "", "stem": stem,
                            "series": series, "design": design, "design_version": _version(series, design),
                            "steps": ["editor"], "source": "data", "callback": body.get("callback"), "via": "api_v1",
-                           "created_by": u.get("sub"), "report": rep})
+                           "created_by": u.get("sub"), "report": rep, "print": body.get("print") is True})
     job.meta["bid"] = job.id
     return jsonify({"job": job.id, "book": {"key": job.meta["key"], "bid": job.id},
                     "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
@@ -637,10 +637,18 @@ def _run_editor_render(job, log):
         content = json.load(f)["content"]
     lib, plan, skin = _editor_lib(job.meta, content)
     log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
-    svgs, rep, spec = fill_svgs(lib, plan, content, _ctx(lib, skin.get("id")), drop_empty=True)
+    ctx = _ctx(lib, skin.get("id"))
+    sp = next((s for s in lib["specs"] if s.get("id") == plan.get("spec")), None) or {}
+    if job.meta.get("print"):                                          # print: true — 종이 = 판형 + 도련(재단선 없음, RGB). 다른 조판 PDF 와 이어 붙일 때(contents 분석본 간지)
+        ctx.print = {"bleed": float(sp.get("bleed") or 3.0), "marks": False}
+    svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else ""))
     main = job.meta["stem"] + ".pdf"
-    _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"])
+    if job.meta.get("print"):
+        _pdf.to_print_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), bleed=ctx.print["bleed"], marks=False,
+                          cmyk=False, title=job.meta["stem"], log=log)
+    else:
+        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"])
     pages = None
     try:
         import fitz
