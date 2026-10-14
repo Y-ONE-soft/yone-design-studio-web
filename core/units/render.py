@@ -2423,7 +2423,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         tf = f"translate({x:.3f},{pl['y']:.3f})" + (f" scale({pl['s']:.4f})" if abs(pl["s"] - 1) > 1e-6 else "")
         chrome.append(f'<g transform="{tf}" data-fi="{pl["fi"]}" data-dy="{pl["dy"]:.2f}"{" data-lock=\"1\"" if it.get("lock") else ""}'
                       f' data-x="{x:.3f}" data-w="{pl["w"]:.3f}" data-y0="{float(it["y"]):.3f}" data-h0="{pl["h0"]:.3f}" data-hc="{pl["h"]:.3f}"'
-                      f' data-s="{pl["s"]:.4f}"{" data-fixed=\"1\"" if pl["fixed"] else ""}>{pl["frag"]}</g>')
+                      f' data-s="{pl["s"]:.4f}"{" data-fixed=\"1\"" if pl["fixed"] else ""}{" data-atom=\"1\"" if it.get("atom") else ""}>{pl["frag"]}</g>')
     ctx.sys = old
     guides = "" if not zones or page.get("_noguides") else "".join(
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
@@ -2519,7 +2519,7 @@ def place_items(ctx, page, W, H, mirror=False):
         placed.append({"fi": fi, "it": it, "frag": frag, "w": w * sc, "h": h * sc, "h0": float(part.get("h") or h) * sc, "s": sc,
                        "fixed": is_fixed(ctx, it, page, H), "grow": can_grow(it, part)})
     grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"] - p["s"] * below_tol((p["it"].get("atom") or {})), p["h"] - p["h0"])
-             for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
+             for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01 and not p["it"].get("atom")]   # 블록 · 부품만 아래를 민다 — 텍스트 프레임은 자라도 남을 안 민다(인디자인)
     for p in placed:
         it = p["it"]
         p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown

@@ -546,7 +546,7 @@
         if (Math.abs(dh) > 0.01) e.setAttribute("data-ah", (num(e, "data-ah") + dh).toFixed(3));
       }
       const it = pg.closest("g[data-fi]");
-      if (!it) return;
+      if (!it || it.hasAttribute("data-atom")) return;                 // 텍스트 프레임은 자라도 남을 안 민다(인디자인) — 블록 · 부품만
       const svg = it.closest("svg"), s = num(it, "data-s") || 1, iy = num(it, "data-y0");
       if (!pageRecs.has(svg)) pageRecs.set(svg, []);
       if (atoms.length === 1 && gr.length === 1) {                     // 글상자 하나 = 개체 하나 — 같은 규칙을 지면 자리로

@@ -1082,7 +1082,7 @@ def test_block_accepts_items(lib):
 
 
 def test_fixed_frames_do_not_push(lib):
-    """판에 그려 둔 글상자는 안 자란다 — 인디자인처럼. 원고가 들어오는 자리만 자라고 아래를 민다."""
+    """텍스트 프레임은 자라도 아래를 안 민다 — 인디자인처럼(2026-10-14 프레임 밀기 지움). 판에 그려 둔 글상자는 자라지도 않는다."""
     from core.units import render, store
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
     long = "긴 글이 들어가서 상자보다 훨씬 커진다. " * 12
@@ -1096,7 +1096,7 @@ def test_fixed_frames_do_not_push(lib):
     slot = dict(fixed, bind="sentence")                  # 같은 글상자에 원고 자리를 주면
     pg2 = dict(pg, items=[{"atom": slot, "x": 20, "y": 40}, {"atom": below, "x": 20, "y": 80}])
     placed2 = render.place_items(ctx, pg2, 210, 297)
-    assert placed2[1]["dy"] > 1                          # 자란 만큼 아래를 민다
+    assert placed2[0]["h"] > placed2[0]["h0"] + 1 and placed2[1]["dy"] == 0   # 원고 자리는 자라지만 아래는 안 민다
     pg3 = dict(pg, items=[{"atom": slot, "x": 20, "y": 40, "grow": False}, {"atom": below, "x": 20, "y": 80}])
     assert render.place_items(ctx, pg3, 210, 297)[1]["dy"] == 0   # grow:false 로 끌 수 있다
 
