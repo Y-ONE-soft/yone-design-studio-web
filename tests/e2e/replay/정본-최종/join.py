@@ -154,7 +154,7 @@ def judge(reg_pdf):
                 es.append(e)
             res = pagecmp.measure(os.path.join(REPO, STATE["ref"]), rp, pdf, es)
             for r, e in zip(res, es):
-                ok = r.get("my") is not None if e.get("원고") else r["ok"]
+                ok = (r.get("my") is not None if e.get("원고") else r["ok"]) or f"p{rp}:{r['id']}" in (STATE.get("허용") or {})   # 사용자 확정 예외(상태.json 「허용」) — 구성 검사와 같이
                 tot += 1
                 if not ok:
                     bad.append(f"구성 {g} · 원본 {rp}쪽(등록 {i + 1}쪽) {r['id']}")

@@ -1227,6 +1227,20 @@ def test_package_load_merges_cstyles(lib):
     assert got["cstyles"]["형광 시험"]["bg_band"] == 3.17
 
 
+def test_package_load_into_merges_styles_into_target_doc(lib):
+    """문서 끝에 붙이기 — 들여온 문서의 스타일(자기 스타일 id 가 달라도)이 붙일 문서의 스타일로 들어온다(2026-10-14 정본 잇기에서 빠졌다)"""
+    from core.units import package, store
+    plan = lib["plans"][0]
+    target_skin = dict(lib["skins"][0], id="doc_target", styles={"앞·지문": {"size": 9}})
+    store.put("skins", target_skin)
+    store.put("plans", dict(plan, skin="doc_target"))
+    pkg = package.export(lib, plan["id"])
+    pkg["skin"] = dict(lib["skins"][0], id="doc_other", styles={"뒤·발문": {"size": 7.5}, "앞·지문": {"size": 20}})
+    package.load(pkg, into=plan["id"])
+    got = store.by_id(store.library()["skins"])["doc_target"]["styles"]
+    assert got["뒤·발문"]["size"] == 7.5 and got["앞·지문"]["size"] == 9            # 없는 것만 보탠다 — 같은 이름은 이 문서 것
+
+
 def test_package_load_clashing_skin_kept_apart(lib):
     """새 문서로 들여오는데 같은 이름 스타일 정의가 이 편집기 것과 다르면 문서 브랜드를 따로 — 문서는 제 스타일을 쓴다(인디자인).
     이 편집기의 브랜드는 그대로(2026-10-12 배포서버에서 광문 분석본 형광이 서버 「기본」 것으로 바뀌었다)"""

@@ -169,6 +169,9 @@ def load(pkg, into=None, name=None):
             for kind in ("pages", "parts", "blocks"):
                 for x in pkg.get(kind) or []:
                     _walk(x, fix_img)
+        dest = store.by_id(lib["skins"]).get(target.get("skin")) if target and target.get("skin") else None
+        if dest is not None and dest.get("id") != skin["id"]:           # 문서 끝에 붙이기 — 들여온 스타일을 붙일 문서의 스타일에 보탠다(인디자인 스타일 불러오기 — 같은 이름은 이 문서 것)
+            have = dest
         clash = have and into is None and any(                           # 새 문서로 들여오는데 같은 이름 스타일 정의가 다르다 — 그 문서 브랜드를 따로(인디자인: 문서는 제 스타일을 쓴다)
             k in (have.get(sec) or {}) and have[sec][k] != v for sec in ("styles", "cstyles") for k, v in (skin.get(sec) or {}).items()) or have and into is None and any(
             k in ((have.get("tokens") or {}).get(grp) or {}) and have["tokens"][grp][k] != v for grp, vals in (skin.get("tokens") or {}).items() for k, v in (vals or {}).items())
