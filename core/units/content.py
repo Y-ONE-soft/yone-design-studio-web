@@ -418,7 +418,7 @@ def fill(pages, content, width_of=None):
             sf = (a.get("slot_fmt") or {}).get(nm) or {}
             if f and nm and "+" not in nm and (sf.get("style") or sf.get("anc")) and isinstance(f.get(nm), (str, list)) and not blank(f[nm]):
                 it["fields"] = {nm: story_value(nm, [{nm: f[nm]}], a.get("slot_fmt"))}
-    for pg in pages:                                                              # 빈 원고(""·[]) — 그 글상자는 접힌다(render.place_items: 접기 묶음째, 아래 것을 당긴다)
+    for pg in pages:                                                              # 빈 원고(""·[]) — 그 글상자는 비었다(_empty)
         for it in pg.get("items") or []:
             f = it.get("fields")
             if f and all(blank(v) for v in f.values()):

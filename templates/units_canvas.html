@@ -2164,11 +2164,11 @@ function side() {
         <div class="f"><span>굵게</span><input type="checkbox" data-a="grep.${k}.b" ${r.b ? "checked" : ""}></div><div class="f"><span>기울임</span><input type="checkbox" data-a="grep.${k}.i" ${r.i ? "checked" : ""}></div>
         <div class="f"><span>색</span>${colorSel(`grep.${k}.color`, r.color, true, true)}</div>
         <div class="m3"><label title="맞은 글자만 크기 — 비우면 텍스트 프레임 크기">크기 pt<input type="number" data-a="grep.${k}.size" step="0.5" value="${r.size || ""}"></label><label title="기준선 이동 pt — 양수면 위로, 음수면 아래로">기준선 pt<input type="number" data-a="grep.${k}.bshift" step="0.1" value="${r.bshift || ""}"></label><label>밑줄<input type="checkbox" data-a="grep.${k}.u" ${r.u ? "checked" : ""} style="width:auto"></label></div>
-        <div class="m3"><label title="칸으로 바꾸기 — 맞은 글(예: 원고의 ____ 빈칸) 대신 이 폭의 밑줄 칸. 비우면 글 그대로">칸 폭 mm<input type="number" data-a="grep.${k}.blank" step="0.1" value="${r.blank || ""}"></label><label title="칸 밑줄 굵기">선 mm<input type="number" data-a="grep.${k}.line" step="0.01" value="${r.line || ""}" placeholder="0.2"></label><label title="칸 밑줄을 기준선 아래로">내림 mm<input type="number" data-a="grep.${k}.line_off" step="0.05" value="${r.line_off || ""}" placeholder="0.4"></label></div>
+        <div class="m3"><label title="밑줄 굵기">선 mm<input type="number" data-a="grep.${k}.line" step="0.01" value="${r.line || ""}" placeholder="0.2"></label><label title="밑줄을 기준선 아래로">내림 mm<input type="number" data-a="grep.${k}.line_off" step="0.05" value="${r.line_off || ""}" placeholder="0.4"></label></div>
         <div class="f"><span title="맞은 글자만 서체 — 비우면 텍스트 프레임 서체 (인디자인 GREP 스타일의 문자 스타일 서체)">서체</span>${fontSel("data-a", `grep.${k}.font`, r.font, null, "텍스트 프레임 서체")}</div>
         <div class="m3"><label title="맞은 글자만 자간 — em 의 1/1000">자간 ‰<input type="number" data-a="grep.${k}.track" step="1" value="${r.track || ""}"></label><label title="줄바꿈 안 함 — 맞은 글은 줄 끝에서 갈라지지 않고 통째로 다음 줄로(인디자인 No Break). 예: 고르기 [ ⓐ … / ⓑ … ]">줄 바꿈 없음<input type="checkbox" data-a="grep.${k}.nobreak" ${r.nobreak ? "checked" : ""} style="width:auto"></label></div>
-        ${(r.blank || r.u) ? `<div class="f"><span title="칸 밑줄 · 밑줄 색 — 없으면 글자색">선 색</span>${colorSel(`grep.${k}.line_color`, r.line_color, true)}</div>` : ""}
-        <div class="m3"><label title="맞은 글자만 굵기 — 굵게(700)보다 먼저">굵기<select data-a="grep.${k}.weight"><option value="">기본</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}" ${+r.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label title="표시 감추기 — 패턴의 ( ) 묶음 1 의 글만 보이고 나머지(원고의 약속 표시, 예: {밑줄 칠 곳})는 지운다">표시 감추기<input type="checkbox" data-a="grep.${k}.hide" ${r.hide ? "checked" : ""} style="width:auto"></label></div>
+        ${r.u ? `<div class="f"><span title="밑줄 색 — 없으면 글자색">선 색</span>${colorSel(`grep.${k}.line_color`, r.line_color, true)}</div>` : ""}
+        <div class="m3"><label title="맞은 글자만 굵기 — 굵게(700)보다 먼저">굵기<select data-a="grep.${k}.weight"><option value="">기본</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}" ${+r.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
         <button class="btn sm sub grep-x" data-k="${k}">이 규칙 빼기</button></div>`).join("")}
         <button class="btn sm sub" id="s-grep-add">＋ GREP 규칙</button>
         <h3>윗주 <span class="note" style="display:inline">글자 위·아래 작은 글(인디자인 윗주) — 글을 두 번 눌러 단어를 고르고 「윗주」. 여기는 이 텍스트 프레임의 기본값</span></h3>
@@ -2232,7 +2232,6 @@ function side() {
         <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">(직접)</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">기본</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 개체의 채움·획·모서리·효과를 이름 붙여 옷에 저장한다">스타일로</button></label></div>
         <h3>변형 — 인디자인 변형 패널</h3>
         <div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}" title="채움 색의 색조(인디자인 Tint)"></label></div>
-        <div class="f"><span title="같은 이름을 준 개체끼리 한 묶음 — 묶음 안 데이터 필드를 원고가 비우면(빈 글·빈 목록) 묶음째 안 그리고, 그 자리만큼 아래 것을 끌어올린다(인디자인 데이터 병합 「빈 필드 줄 제거」). 문제 하나가 없는 원고 등">접기 묶음</span><input type="text" data-a="fold" value="${esc(a.fold || "")}" placeholder="없음" spellcheck="false"></div>
         <div class="m3"><label>뒤집기<select data-a="flip"><option value="">없음</option>${[["h", "좌우"], ["v", "상하"], ["hv", "둘 다"]].map(([v, n]) => `<option value="${v}" ${a.flip === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>기울이기 가로 °<input type="number" data-a="skewx" step="1" value="${(a.skew || [0, 0])[0] || 0}"></label><label>세로 °<input type="number" data-a="skewy" step="1" value="${(a.skew || [0, 0])[1] || 0}"></label></div>
         <div class="m3"><label>배율 가로 %<input type="number" data-a="scalex" step="5" min="1" value="${(a.scale || [100, 100])[0] || 100}"></label><label>세로 %<input type="number" data-a="scaley" step="5" min="1" value="${(a.scale || [100, 100])[1] || 100}"></label><label>혼합<select data-a="fx.blend">${[["", "보통"], ["multiply", "곱하기"], ["screen", "스크린"], ["overlay", "오버레이"], ["darken", "어둡게"], ["lighten", "밝게"], ["difference", "차이"]].map(([v, n]) => `<option value="${v}" ${((a.fx || {}).blend || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
         <h3>효과 — 인디자인 효과 패널</h3>
@@ -2265,7 +2264,6 @@ function side() {
       <div class="note">레코드마다 페이지 ${eachN} · 레코드 ${nSet} → ${nSheets}장 · ${plan.order === "by_set" ? `레코드1(페이지1~${eachN}) → 레코드2(페이지1~${eachN}) …` : `페이지1(레코드 ${perPg}개) → 페이지2(레코드 ${perPg}개) …`}</div>` : ""}
       <div class="note">지금 이 페이지는 <b>${pe.repeat === "each_set" ? (pe.per > 1 ? `레코드 ${pe.per}개마다 1장` : "레코드 1개마다 1장") : "1장"}</b> · 받는 원고 <b>${curK ? esc(curK) : "모두"}</b></div>`;
     h += `<div class="f"><span>페이지 크기</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}<option value="__new">＋ 새 페이지 크기…</option></select></div>
-      <div class="f"><span title="텍스트 프레임이 원고만큼 자라면 그 아래 것을 민다 — 켜면 가로 위치와 상관없이 아래 것 모두(한 단짜리 문제 페이지: 옆에 선 꼬리표·번호도 같이). 끄면 가로로 겹치는 것만">자라면 아래 모두 밀기</span><input id="s-pushrow" type="checkbox" ${page.push === "row" ? "checked" : ""} style="width:auto"></div>
       <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 페이지는 머리말·페이지 번호가 뒤집힌다" style="width:auto"></div>
       <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
       <div class="f"><span title="이 페이지에서 넘친 원고가 어느 페이지 모양으로 이어지나 — 첫 페이지(제목 있음) → 둘째 페이지(머리만) 처럼. 인디자인에서 다른 상위 페이지의 프레임으로 잇기(스마트 텍스트 리플로우)">스마트 텍스트 리플로우 — 이어 받을 페이지</span><select id="s-cont"><option value="">같은 페이지</option>${docPages().filter(p2 => p2.id !== page.id).map(p2 => `<option value="${esc(p2.id)}" ${page.cont === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></div>
@@ -2401,7 +2399,6 @@ function side() {
     else if (k === "story_seq") a.story_seq = Math.max(1, Math.round(+v || 1));
     else if (k === "style") { if (v) a.style = v; else delete a.style; }
     else if (k === "rotate") { if (v) a.rotate = v; else delete a.rotate; }
-    else if (k === "fold") { const g = String(v || "").trim(); if (g) a.fold = g; else delete a.fold; }      // 접기 묶음 이름
     else if (k === "opacity") { const o = Math.max(0, Math.min(100, v)) / 100; if (o < 1) a.opacity = o; else delete a.opacity; }
     else if (k === "fit") { if (v === "cover" || v === "fill") a.fit = v; else delete a.fit; }
     else if (k === "fit_at") { if (v && v !== "c") a.fit_at = v; else delete a.fit_at; }   // 맞춤 기준점(없으면 가운데)
@@ -2573,7 +2570,6 @@ function side() {
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-cont", "change", (e) => { hist(); if (e.target.value) page.cont = e.target.value; else delete page.cont; save(); side(); });
   on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
-  on("#s-pushrow", "change", (e) => { if (e.target.checked) page.push = "row"; else delete page.push; save(); pageSvg = {}; render(); });
   // 레이어 — 만들고 숨기고 잠그고 지운다(요소는 안 지운다)
   on("#s-lay-new", "click", () => {
     const nm = prompt("레이어 이름", "레이어 " + ((page.layers || []).length + 1)); if (nm == null || !nm.trim()) return;

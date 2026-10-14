@@ -666,14 +666,10 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
 
 
 def _bake(ctx, pg, H):
-    """원고를 넣은 쪽 하나 → 보통 쪽(인디자인 「병합된 문서」의 한 쪽). 원고가 든 자리는 그 글을 고정 글로 박고 자리 연결을 끊는다.
-    접힌 묶음(빈 원고)은 빼고 그 띠만큼 아래 것을 당겨 둔다(render.place_items 와 같은 규칙). 쪽 번호 등 sys 자리는 그대로."""
+    """원고를 넣은 쪽 하나 → 보통 쪽(인디자인 「병합된 문서」의 한 쪽). 원고가 든 자리는 그 글을 고정 글로 박고 자리 연결을 끊는다. 쪽 번호 등 sys 자리는 그대로."""
     import copy
-    folded, bands = render.fold_bands(pg)
     items = []
-    for fi, it in enumerate(pg.get("items") or []):
-        if fi in folded:
-            continue
+    for it in pg.get("items") or []:
         it = copy.deepcopy(it)
         a = it.get("atom")
         if a and a.get("bind") and not str(a["bind"]).startswith("sys."):
@@ -684,12 +680,6 @@ def _bake(ctx, pg, H):
             it.setdefault("grow", True)                                   # 원고 자리였던 상자 — 글 길이만큼 자라 아래를 미는 것은 그대로(조판 결과와 같은 배치)
         if a is not None:
             it.pop("fields", None)
-        if bands and not render.is_fixed(ctx, it, pg, H):
-            x = float(it.get("x") or 0)
-            w = float(it.get("w") or (a or {}).get("w") or 0)
-            dy = sum(d for _, x0, x1, gb, d in bands if float(it.get("y") or 0) >= gb - 0.01 and x < x1 - 0.01 and x + w > x0 + 0.01)
-            if dy:
-                it["y"] = round(float(it.get("y") or 0) + dy, 3)
         items.append({k: v for k, v in it.items() if not k.startswith("_")})
     out = {k: v for k, v in pg.items() if not k.startswith("_")}
     out["items"] = items

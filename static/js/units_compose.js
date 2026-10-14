@@ -559,9 +559,6 @@
     });
     pageRecs.forEach((gr, svg) => {
       const all = [...svg.querySelectorAll("g[data-fi]")].filter(g => g.hasAttribute("data-y0"));
-      const pr = svg.getAttribute("data-push") === "row" ? svg : svg.closest("[data-push]");
-      const row = !!pr && pr.getAttribute("data-push") === "row";
-      const [tx0, tx1] = ((pr && pr.getAttribute("data-tx")) || "0 9999").split(" ").map(Number);   // 본문 영역 — 여백 밖 장식(옆 탭)은 안 민다
       for (const e of all) {
         if (e.hasAttribute("data-fixed")) continue;
         const y = num(e, "data-y0"), x0 = num(e, "data-x"), x1 = x0 + num(e, "data-w");
@@ -569,8 +566,7 @@
         for (const g of gr) {
           if (g.it === e) continue;
           const gx0 = num(g.it, "data-x"), gx1 = gx0 + num(g.it, "data-w");
-          const inside = x0 < tx1 - 0.01 && x1 > tx0 + 0.01;
-          if (!(row && inside) && !(x0 < gx1 - 0.01 && x1 > gx0 + 0.01)) continue;   // 가로로 겹치는 것만 — 「모두 밀기」면 본문 영역 안 아래 것 전부
+          if (!(x0 < gx1 - 0.01 && x1 > gx0 + 0.01)) continue;                // 가로로 겹치는 것만
           dy += g.r ? pushOf(g.r, y) : (y >= g.b0 - 0.01 ? g.d : 0);
         }
         if (Math.abs(dy) > 0.01) { shiftY(e, dy); e.setAttribute("data-dy", (num(e, "data-dy") + dy).toFixed(2)); }

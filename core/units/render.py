@@ -500,7 +500,7 @@ def grep_html(html, rules, ctx=None):
             st = (ctx.cstyle_css(r["cs"]) if ctx else "") + st
         if r.get("nobreak"):                                               # 줄바꿈 안 함(인디자인 No Break) — 맞은 글은 한 줄에. 고르기 [ ⓐ … / ⓑ … ] 가 줄 끝에서 갈라지지 않게
             st += "white-space:nowrap;"
-        ul = r.get("u") and not r.get("blank") and (r.get("line") or r.get("line_off") or r.get("line_color"))
+        ul = r.get("u") and (r.get("line") or r.get("line_off") or r.get("line_color"))
         if ul:                                                             # 밑줄 굵기·내림·색 — 내림 = 기준선 → 밑줄 가운데 (mm)
             lw = float(r.get("line") or 0.18)
             lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else "currentColor"
@@ -509,14 +509,7 @@ def grep_html(html, rules, ctx=None):
         tags = [k for k in ("u", "i", "b") if r.get(k) and not (k == "u" and ul) and not (k == "b" and r.get("weight"))]
 
         def wrap(m):
-            if r.get("blank"):                                             # 칸으로 바꾸기 — 맞은 글(예: ____) 대신 정한 폭의 밑줄 칸
-                lw = float(r.get("line") or 0.2)
-                off = float(r.get("line_off") or 0.4)
-                lc = (ctx.color(r["line_color"]) if ctx else r["line_color"]) if r.get("line_color") else (col or "currentColor")
-                return (f'\u2060<span style="display:inline-block;width:{float(r["blank"]):.3f}px;height:0;'   # U+2060 — 앞 글자(빈칸 첫 글자)와 칸 사이에서 줄이 안 바뀌게
-                        f'border-bottom:{lw:.3f}px solid {lc};vertical-align:{-(off + lw / 2):.3f}px"></span>')
-            # 표시 감추기 — 원고의 약속 표시(예: {밑줄 칠 곳})는 지우고 묶음 1 의 글에만 서식
-            t = esc(m.group(1) if r.get("hide") and m.re.groups else m.group(0))
+            t = esc(m.group(0))
             for k in tags:
                 t = f"<{k}>{t}</{k}>"
             return f'<span style="{st}">{t}</span>' if st else t
@@ -2436,8 +2429,7 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "") \
-        + ((' data-push="row" data-tx="%.3f %.3f"' % text_area(page, W)) if page.get("push") == "row" else "")   # 본문 영역 — 크롬 쪽 밀기도 같게
+    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "")
     if ctx.print:
         # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
         b = float(ctx.print.get("bleed") or 0)
@@ -2513,9 +2505,8 @@ def place_items(ctx, page, W, H, mirror=False):
     canvas = bool(page.get("_canvas"))
     ctx.nums = {}                        # 번호 매기기는 면마다 다시 1부터 (시작 번호는 원자의 num_start)
     placed = []
-    folded, bands = fold_bands(page)     # 접기 묶음 — 원고가 비운 자리의 묶음은 안 그리고(번호도 안 센다) 그 띠만큼 아래 것을 당긴다
     for fi, it in enumerate(page.get("items") or []):
-        if it.get("hide") or fi in folded:
+        if it.get("hide"):
             continue
         blk = ctx.blocks.get(it.get("block")) if it.get("block") else None
         if not canvas and blk is not None and blk.get("source") == "content":
@@ -2529,14 +2520,10 @@ def place_items(ctx, page, W, H, mirror=False):
                        "fixed": is_fixed(ctx, it, page, H), "grow": can_grow(it, part)})
     grown = [(p["fi"], p["it"]["x"], p["it"]["x"] + p["w"], p["it"]["y"] + p["h0"] - p["s"] * below_tol((p["it"].get("atom") or {})), p["h"] - p["h0"])
              for p in placed if p["grow"] and p["h"] > p["h0"] + 0.01]
-    grown += bands
-    row = page.get("push") == "row"                                    # 쪽 설정 「자라면 아래 것 모두 밀기」 — 가로로 안 겹쳐도(옆 꼬리표·번호) 아래면 민다
-    tx0, tx1 = text_area(page, W)                                      # 단 본문 영역(좌우 여백 안)에 걸친 것만 — 여백 밖 장식(옆 탭)은 그대로
     for p in placed:
         it = p["it"]
-        inside = it["x"] < tx1 - 0.01 and it["x"] + p["w"] > tx0 + 0.01
         p["dy"] = 0.0 if p["fixed"] else sum(d for gi, gx0, gx1, gb, d in grown
-                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and ((row and inside) or (it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)))
+                                          if gi != p["fi"] and it["y"] >= gb - 0.01 and it["x"] < gx1 - 0.01 and it["x"] + p["w"] > gx0 + 0.01)
         p["y"] = it["y"] + p["dy"]
     return placed
 
@@ -2545,37 +2532,6 @@ def text_area(page, W):
     """본문 영역 가로(좌우 여백 안) — 쪽 「여백 및 단」, 없으면 20mm"""
     m = page.get("margins") or {}
     return float(m.get("left") or 20), float(W) - float(m.get("right") or 20)
-
-
-def fold_bands(page):
-    """접기 묶음(원자 fold = 묶음 이름) — 묶음 안 원고 자리 중 하나라도 원고가 비웠으면(_empty, content.fill) 묶음째 접는다.
-    → (접힌 요소 번호 set, 당기기 [(-1, x0, x1, 띠 아래 끝, -당길 양)]). 당길 양 = 묶음 높이 + (위 것과 떨어진 묶음이면 아래 틈까지)
-    — 떨어진 묶음(문제 하나)은 그 자리로 다음 것이 올라오고, 위 것에 붙은 묶음(지문 상자 밑 주석)은 제 높이만 걷혀 아래 틈이 남는다
-    (인디자인 데이터 병합 「빈 필드 줄 제거」를 묶음 단위로)."""
-    items = page.get("items") or []
-    groups = {}
-    for fi, it in enumerate(items):
-        g = (it.get("atom") or {}).get("fold")
-        if g:
-            groups.setdefault(g, []).append(fi)
-    folded, bands = set(), []
-    box = lambda it: (float(it.get("x") or 0), float(it.get("y") or 0), float((it.get("atom") or {}).get("w") or it.get("w") or 0),
-                      float((it.get("atom") or {}).get("h") or it.get("h") or 0))
-    for g, fis in groups.items():
-        if not any(items[fi].get("_empty") for fi in fis):
-            continue
-        folded.update(fis)
-        bx = [box(items[fi]) for fi in fis]
-        x0, x1 = min(b[0] for b in bx), max(b[0] + b[2] for b in bx)
-        top, bot = min(b[1] for b in bx), max(b[1] + b[3] for b in bx)
-        over = lambda b: b[0] < x1 - 0.01 and b[0] + b[2] > x0 + 0.01
-        below = [box(it)[1] for fi, it in enumerate(items) if fi not in folded and not it.get("hide") and box(it)[1] >= bot - 0.01 and over(box(it))]
-        above = [box(it)[1] + box(it)[3] for fi, it in enumerate(items) if fi not in folded and not it.get("hide")
-                 and box(it)[1] + box(it)[3] <= top + 0.01 and over(box(it))]
-        gap_below = (min(below) - bot) if below else 0.0
-        attached = bool(above) and top - max(above) < 0.5               # 위 것에 붙은 묶음(지문 상자 밑 주석) — 제 높이만. 떨어진 묶음(문제 하나) — 아래 틈까지
-        bands.append((-1, x0, x1, bot, -((bot - top) + (0.0 if attached else gap_below))))
-    return folded, bands
 
 
 def atom_part(atom):
