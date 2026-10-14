@@ -2469,6 +2469,26 @@ def s_reader():
     src = open(u14, encoding="utf-8").read().split("# ── 문서 ─")[0]
     src = src.replace('REF = os.path.join(REPO, STATE["ref"])', 'REF = os.path.join(REPO, ' + repr(STATE["ref"]) + ')')
     src = src.replace("PAGES = list(range(48, 57))", "PAGES = list(range(198, 273))")
+    old_opt = '''            elif dx < 0.3 and (t[:1] in CIRC or re.match(r"\\d\\)\\s", t)) and not (cur and cur["kind"] == "passage" and gap < 6):'''
+    assert old_opt in src
+    src = src.replace(old_opt, '''            elif cur and cur["kind"] == "prompt" and t[:1] in "㉠㉡㉢㉣㉤" and "\\t" in ln["text"]:   # 선지 표 머리(㉠ ㉡ ㉢ — 탭으로 칸) — 아래 선지 줄과 한 선지 묶음
+                cur = {"kind": "opts", "lines": [ln], "left": left}
+                gs.append(cur)
+                ln["para"] = True
+''' + old_opt)
+    old_cols = '''    return (21.5, 108.0) if pno % 2 else (20.0, 106.0)'''
+    assert old_cols in src
+    src = src.replace(old_cols, '''    p = REFDOC[pno - 1]                                                  # 이 책 — 쪽마다 단 왼쪽 = 8pt 글 줄 첫 글자 x 의 가장 왼쪽(다른 책의 상수 대신)
+    xs = {0: [], 1: []}
+    for b in p.get_text("rawdict")["blocks"]:
+        for l in b.get("lines", []):
+            s0 = l["spans"][0] if l["spans"] else None
+            if not s0 or not s0["chars"] or round(s0["size"], 1) != 8.0:
+                continue
+            x, y = (s0["chars"][0]["origin"][0] - p.trimbox.x0) * MM, (s0["origin"][1] - p.trimbox.y0) * MM
+            if 25 < y < 280:
+                xs[0 if x < 100 else 1].append(x)
+    return (round(min(xs[0]), 2) if xs[0] else 20.0, round(min(xs[1]), 2) if xs[1] else 108.0)''')
     src = src.replace('''                else:
                     cur["lines"].append(ln)
             elif r and r[0] == "bogi":''', '''                else:
