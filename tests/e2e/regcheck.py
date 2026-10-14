@@ -5,7 +5,7 @@
                                                           바뀐 카드에 판정을 적는다(그 책 원본과 맞대 본 결과)
 
 카드마다 문서 묶음(units.json)을 빈 편집기 데이터에 들여와 등록 때와 같은 함수(routes.units.fill_svgs → core.units.pdf.to_pdf)로
-① 이 체크아웃 코드 ② origin/main 코드 로 각각 그려 쪽마다 맞댄다 — 이 브랜치의 변경이 기존 책을 바꿨는가만 본다
+① 이 체크아웃 코드 + 템플릿 ② origin/main 코드 + main 의 템플릿 으로 각각 그려 쪽마다 맞댄다 — 이 브랜치의 변경이 기존 책을 바꿨는가만 본다
 (등록본과의 차이는 main 에 원래 있던 것일 수 있어 따로 적기만 한다). 원본 PDF(참고/원본.pdf)가 없는 카드는 오류 — 머지가 막힌다. 바뀐 쪽은 나란히 그림
 (~/Downloads/편집기재현/_regcheck/<틀>_<카드>/p<쪽>_side.png — 왼쪽 main · 오른쪽 이 브랜치)을 남긴다.
 
@@ -37,8 +37,8 @@ sys.path.insert(0, code)
 from core.units import package, store
 from core.units import pdf as _pdf
 from routes.units import fill_svgs, _ctx
-ddir = os.path.join(REPO, "catalog", series, "designs", did)
-pid, _ = package.load(json.load(open(os.path.join(ddir, "units.json"), encoding="utf-8")))
+upath = sys.argv[6] if len(sys.argv) > 6 else os.path.join(REPO, "catalog", series, "designs", did, "units.json")
+pid, _ = package.load(json.load(open(upath, encoding="utf-8")))
 lib = store.library()
 plan = store.by_id(lib["plans"])[pid]
 svgs, _, spec = fill_svgs(lib, plan, plan.get("content") or {}, _ctx(lib, plan.get("skin")))
@@ -60,10 +60,12 @@ def git(*a):
     return subprocess.run(["git", *a], cwd=REPO, capture_output=True, text=True).stdout.strip()
 
 
-def draw(series, did, code, pdf):
+def draw(series, did, code, pdf, units=None):
+    """units — 그릴 템플릿 파일(없으면 이 체크아웃의 카드 units.json)"""
     tmp = tempfile.mkdtemp(prefix="regcheck_")
     try:
-        r = subprocess.run([sys.executable, "-W", "ignore", "-c", DRAW, series, did, tmp, pdf, code], cwd=REPO, capture_output=True, text=True)
+        r = subprocess.run([sys.executable, "-W", "ignore", "-c", DRAW, series, did, tmp, pdf, code] + ([units] if units else []),
+                           cwd=REPO, capture_output=True, text=True)
         return None if r.returncode == 0 and os.path.exists(pdf) else ((r.stderr.strip().splitlines() or ["?"])[-1])
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -112,7 +114,11 @@ def run():
             shutil.rmtree(out, ignore_errors=True)
             work = tempfile.mkdtemp(prefix="regcheck_pdf_")
             new, old = os.path.join(work, "new.pdf"), os.path.join(work, "main.pdf")
-            err = draw(series, did, REPO, new) or draw(series, did, base_code, old)
+            main_units = os.path.join(work, "main_units.json")                # main 쪽은 main 의 템플릿으로 — 이 브랜치가 템플릿을 다시 등록하며
+            r = subprocess.run(["git", "show", f"origin/main:catalog/{series}/designs/{did}/units.json"], cwd=REPO, capture_output=True)   # 새 인디자인 값을 쓰면
+            if r.returncode == 0:                                             # main 코드가 그 템플릿을 못 읽는다(2026-10-15 포켓북 자동 크기 「너비만」)
+                open(main_units, "wb").write(r.stdout)
+            err = draw(series, did, REPO, new) or draw(series, did, base_code, old, main_units if r.returncode == 0 else None)
             if err:
                 res["cards"][key] = {"name": name, "error": err}
                 print(f"✗ {key} 「{name}」 — 다시 그리기 실패: {err}")
