@@ -243,7 +243,8 @@ def rich_html(v, ctx=None):
         if "ps" in v:                                                      # 한 줄기 글의 자리 표시(content.story_value) — 문단 첫머리 · 붙는 자리(번호)
             if v.get("inline"):
                 return f'<span data-psi="{esc(v["ps"])}">{esc(v.get("t", ""))}</span>'
-            return f'<span data-ps="{esc(v["ps"])}"></span>' + esc(v.get("t", ""))
+            ov = {k: v["ov"][k] for k in OV_KEYS if isinstance(v.get("ov"), dict) and v["ov"].get(k) is not None}   # 단락 스타일 재정의(인디자인 로컬 서식)
+            return (f'<span data-ps="{esc(v["ps"])}"' + (f' data-ov="{esc(json.dumps(ov))}"' if ov else "") + '></span>') + esc(v.get("t", ""))
         if "para" in v:                                                    # 단락 묶음 — 테두리 상자·들여쓰기 (자리마다 서식)
             return f'<div style="{para_css(v["para"], ctx)}">{rich_html(v.get("c"), ctx)}</div>'
         if v.get("anc"):
@@ -872,19 +873,19 @@ def story_h(ctx, a, v):
     paras, cur = [], None
     for x in v:
         if isinstance(x, dict) and "ps" in x and not x.get("inline"):
-            cur = [x["ps"], ""]
+            cur = [x["ps"], "", {k: float(x["ov"][k]) for k in OV_KEYS if isinstance(x.get("ov"), dict) and x["ov"].get(k) is not None}]   # 재정의
             paras.append(cur)
             continue
         if x == "\n":
             continue
         if cur is None:
-            cur = [None, ""]
+            cur = [None, "", {}]
             paras.append(cur)
         cur[1] += x.get("t", "") if isinstance(x, dict) and "ps" in x else rich_plain(x)
     it, ir, ib, il = insets(a)
-    h, prev = it + ib, None
-    for slot, t in paras:
-        st = slot_style(a, slot, ctx) if slot else {}
+    h, prev, pov = it + ib, None, {}
+    for slot, t, ov in paras:
+        st = dict(slot_style(a, slot, ctx) if slot else {}, **ov)
         aa = {k: v2 for k, v2 in a.items() if k not in ("inset", "space_before", "space_after", "table", "columns")}
         aa.update({k: st[k] for k in ("font", "weight", "size", "leading", "tracking", "indent", "indent_right", "indent_first", "tsume") if st.get(k) not in (None, "")})
         h += text_h(t, float(a["w"]) - il - ir, float(aa.get("size") or a["size"]), aa.get("leading"), aa)
@@ -892,8 +893,8 @@ def story_h(ctx, a, v):
             if prev == slot and st.get("space_same") is not None:
                 h += float(st["space_same"])
             else:
-                h += float(st.get("space_before") or 0) + float((slot_style(a, prev, ctx) if prev else {}).get("space_after") or 0)
-        prev = slot
+                h += float(st.get("space_before") or 0) + float(dict(slot_style(a, prev, ctx) if prev else {}, **pov).get("space_after") or 0)
+        prev, pov = slot, ov
     return h
 
 
@@ -1024,9 +1025,21 @@ def _tab_html(a, para, ctx=None):
     return out
 
 
-_PS_RE = re.compile(r'<span data-ps="([^"]*)"></span>')
+_PS_RE = re.compile(r'<span data-ps="([^"]*)"(?: data-ov="([^"]*)")?></span>')
+OV_KEYS = ("space_before", "space_after", "indent", "indent_first", "indent_right", "leading")   # 재정의 칸 — 단락 스타일의 같은 이름 값을 그 문단에서만 바꾼다
+
+
+def _ov_of(x):
+    """문단 html 첫머리 표시의 재정의 값 → dict (없으면 {})"""
+    m = _PS_RE.search(x or "")
+    if not (m and m.group(2)):
+        return {}
+    try:
+        return {k: float(v) for k, v in json.loads(_unescape(m.group(2))).items() if k in OV_KEYS}
+    except (ValueError, TypeError):
+        return {}
 _PSI_RE = re.compile(r'<span data-psi="([^"]*)">')
-_PS_LEAD_RE = re.compile(r'<span data-ps="[^"]*"></span>(?:<span data-psi="[^"]*"[^>]*>[^<]*</span>)*')   # 문단 첫머리 + 붙인 번호들
+_PS_LEAD_RE = re.compile(r'<span data-ps="[^"]*"(?: data-ov="[^"]*")?></span>(?:<span data-psi="[^"]*"[^>]*>[^<]*</span>)*')   # 문단 첫머리 + 붙인 번호들
 
 
 def slot_style(a, slot, ctx=None):
@@ -1064,10 +1077,10 @@ def _font_css(st, ctx):
     return css
 
 
-def _slot_para(a, x, slot, slots, k, ps, ctx):
+def _slot_para(a, x, slot, slots, k, ps, ctx, ovs=None):
     """한 줄기 글의 문단 하나 — 그 자리의 단락 스타일(서체·간격·들여쓰기·바탕·「다음 문단과 함께」「쪼개지 않기」)을 입힌 <p>.
     같은 자리의 잇닿은 문단에 바탕(shade)이 있으면 한 상자로 잇는다(인디자인 단락 음영·테두리 병합 — 조건·보기 상자)."""
-    st = slot_style(a, slot, ctx) if slot else {}
+    st = dict(slot_style(a, slot, ctx) if slot else {}, **_ov_of(x))     # 그 문단만 재정의한 값이 스타일 위에
     css = "margin:0;" + re.sub(r"margin-(top|bottom):[^;]*;", "", ps) + _font_css(st, ctx)   # 문단 간격은 자리 스타일로만(아래)
     if st.get("align"):
         css += f"text-align:{st['align']};"
@@ -1093,7 +1106,7 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
         css += f"text-indent:{float(st['indent_first']):.3f}px;"
     # 문단 사이 = 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」(인디자인은 더한다 — CSS 여백은 겹쳐 큰 것만 남아 위 끝에 margin-top 하나로)
     # 같은 자리끼리는 「같은 스타일 사이 간격」(space_same, 인디자인 「동일한 스타일 단락 사이 간격」)이 있으면 그것. 바탕 상자 안 문단 사이는 0
-    prev = slot_style(a, slots[k - 1], ctx) if k and slots[k - 1] else {}
+    prev = dict(slot_style(a, slots[k - 1], ctx), **((ovs or {}).get(k - 1) or {})) if k and slots[k - 1] else {}   # 앞 문단 재정의(뒤 간격)도
     if k and slots[k - 1] == slot and st.get("space_same") is not None:
         gap = float(st["space_same"])
     elif k and slots[k - 1] == slot and shade:
@@ -1197,7 +1210,8 @@ def _paras_html(a, html, ps, ctx=None):
     jc = (lambda x: f' data-jc="{spec}"' if spec and "\u2028" not in x else "")      # 손으로 친 줄 나눔이 있으면 나뉜 조각마다(soft_breaks)
     slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
     if any(slots):
-        return "".join(_slot_para(a, _default_tabs(x), s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
+        ovs = {k: _ov_of(x) for k, x in enumerate(paras)}
+        return "".join(_slot_para(a, _default_tabs(x), s, slots, k, ps, ctx, ovs) for k, (x, s) in enumerate(zip(paras, slots)))
     last = len(paras) - 1                                               # 상자 끝 문단은 뒤 간격 없이(인디자인 — 마지막 단락 뒤 간격은 상자 높이에 안 든다)
     return "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or _default_tabs(x), just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None, spec) or "&#160;"}</p>'
                    for k, x in enumerate(paras))

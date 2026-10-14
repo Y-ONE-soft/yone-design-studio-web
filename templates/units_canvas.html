@@ -286,6 +286,11 @@
   .rtbar { position: absolute; z-index: 31; display: flex; gap: 4px; align-items: center; background: #fff; border: 1px solid #d6d3e0; border-radius: 8px; padding: 3px 5px; box-shadow: 0 4px 14px rgba(0,0,0,.12); font-size: 12px; white-space: nowrap; }
   .rtbar button { font-size: 12px; padding: 2px 7px; border: 1px solid #d6d3e0; background: #faf9fd; border-radius: 5px; cursor: pointer; }
   .rtbar select { font-size: 12px; max-width: 130px; }
+  .rtbar { flex-wrap: wrap; }
+  .rtbar .rt-para { flex-basis: 100%; display: flex; gap: 4px; align-items: center; border-top: 1px solid #eee; padding-top: 3px; }
+  .rtbar .rt-para input { width: 42px; font-size: 12px; }
+  .rtbar .rt-para label { display: flex; gap: 2px; align-items: center; color: #555; }
+  .tedit.rt .rt-ps { display: inline; }
   /* 오른쪽 클릭 메뉴 · 레이어 */
   .cmenu { position: fixed; z-index: 100; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(30,20,60,.2); padding: 5px; min-width: 180px; display: none; }
   .cmenu button { display: flex; width: 100%; border: 0; background: transparent; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12.5px; text-align: left; color: #1f2330; }
@@ -383,7 +388,7 @@
         <div class="slots" id="slots"></div>
         <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
         <div id="tedit" class="tedit rt" contenteditable="true" spellcheck="false" style="display:none"></div>
-        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs"></select><button id="rt-rba" title="고른 글자 위에 작은 글(인디자인 윗주)">위 윗주</button><button id="rt-rbb" title="고른 글자 아래에 작은 글">아래 윗주</button><button id="rt-side" title="커서 위치에 고정 개체(인디자인 고정 개체) — 그 줄 높이의 옆 칸에 놓인다. 위치는 오른쪽 패널 「고정 개체」">고정 개체</button><button id="rt-clear" title="고른 글자의 꾸밈(문자 스타일 · 윗주 · 색 · 굵게 …)을 지운다">꾸밈 지우기</button></div>
+        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs"></select><button id="rt-rba" title="고른 글자 위에 작은 글(인디자인 윗주)">위 윗주</button><button id="rt-rbb" title="고른 글자 아래에 작은 글">아래 윗주</button><button id="rt-side" title="커서 위치에 고정 개체(인디자인 고정 개체) — 그 줄 높이의 옆 칸에 놓인다. 위치는 오른쪽 패널 「고정 개체」">고정 개체</button><button id="rt-clear" title="고른 글자의 꾸밈(문자 스타일 · 윗주 · 색 · 굵게 …)을 지운다">꾸밈 지우기</button><div class="rt-para" id="rt-para" style="display:none" title="단락 스타일 재정의(인디자인) — 커서가 있는 문단 하나만 스타일 값을 바꾼다. 스타일은 그대로, 이름 뒤 「+」"><span>¶ <b id="rt-psn"></b><b id="rt-psp" style="color:#7d2ae8"></b></span><label>단락 앞<input type="number" step="0.1" data-ov="space_before"></label><label>단락 뒤<input type="number" step="0.1" data-ov="space_after"></label><label>들여쓰기<input type="number" step="0.5" data-ov="indent"></label><label>첫 줄<input type="number" step="0.5" data-ov="indent_first"></label><label>오른쪽<input type="number" step="0.5" data-ov="indent_right"></label><label>행간 pt<input type="number" step="0.1" data-ov="leading"></label><button id="rt-ovx" title="이 문단의 재정의를 지우고 단락 스타일 값으로 (인디자인 「재정의 지우기」)">재정의 지우기</button></div></div>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
         <div class="tools" id="tools">
           <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 블록을 고치려면 풀어서 고친 뒤 다시 블록으로 저장">그룹 해제</button><button id="t-up" title="고른 것을 블록 패널에 저장한다. 텍스트 프레임의 「데이터 필드」가 원고가 들어올 자리가 된다">★ 블록으로 저장</button>
@@ -1141,12 +1146,13 @@ document.querySelectorAll("#tools [data-ms]").forEach(b => b.onclick = (e) => { 
 const rtKeys = (r) => { const o = Object.assign({}, r); delete o.t; return o; };
 const rtRuns = (t) => (Array.isArray(t) ? t : [t || ""]).map(r => typeof r === "string" ? {t: r} : Object.assign({}, r));
 const rtLen = (r) => r.side != null ? 1 : (r.t || "").length;
+const rtMark = (r) => r.ps != null && !r.inline;             // 문단 첫머리 표시 — 그 문단의 단락 스타일 · 재정의(ov). 글자로 세지 않는다
 function rtNorm(runs) {                                    // 같은 꾸밈끼리 잇고, 꾸밈이 하나도 없으면 그냥 글
   const out = [];
   for (const r of runs) {
-    if (r.side == null && !r.t) continue;
+    if (r.side == null && r.ps == null && !r.t) continue;      // 문단 첫머리 표시(ps)는 글이 없어도 남긴다
     const p = out[out.length - 1];
-    if (p && p.side == null && r.side == null && JSON.stringify(rtKeys(p)) === JSON.stringify(rtKeys(r))) p.t += r.t; else out.push(Object.assign({}, r));
+    if (p && p.side == null && r.side == null && !rtMark(p) && !rtMark(r) && JSON.stringify(rtKeys(p)) === JSON.stringify(rtKeys(r))) p.t += r.t; else out.push(Object.assign({}, r));
   }
   if (out.every(r => r.side == null && Object.keys(r).length === 1)) return out.map(r => r.t).join("");
   return out.map(r => (r.side == null && Object.keys(r).length === 1) ? r.t : r);
@@ -1165,6 +1171,7 @@ function rtDom(box, runs) {
   box.textContent = "";
   for (const r of runs) {
     if (r.side != null) { const c = document.createElement("span"); c.className = "rt-side"; c.contentEditable = "false"; c.dataset.run = JSON.stringify(r); c.title = "고정 개체 — 두 번 눌러 고치기 · 비우면 지운다"; c.textContent = "메모 " + r.side; box.appendChild(c); continue; }
+    if (rtMark(r)) { const c = document.createElement("span"); c.className = "rt-ps"; c.contentEditable = "false"; c.dataset.run = JSON.stringify(r); box.appendChild(c); continue; }
     const k = rtKeys(r);
     if (!Object.keys(k).length) { box.appendChild(document.createTextNode(r.t)); continue; }
     const sp = document.createElement("span"); sp.dataset.run = JSON.stringify(k);
@@ -1181,7 +1188,7 @@ function rtRead(box) {                                     // 화면 → 조각 
     for (const c of n.childNodes) {
       if (c.nodeType === 3) { out.push(Object.assign({}, props, {t: c.data})); continue; }
       if (c.nodeType !== 1) continue;
-      if (c.classList.contains("rt-side")) { out.push(JSON.parse(c.dataset.run)); continue; }
+      if (c.classList.contains("rt-side") || c.classList.contains("rt-ps")) { out.push(JSON.parse(c.dataset.run)); continue; }
       if (c.tagName === "BR") { if (!c.dataset.tail) out.push(Object.assign({}, props, {t: "\n"})); continue; }   // 끝 자리 표시(data-tail)는 글이 아니다
       if ((c.tagName === "DIV" || c.tagName === "P") && out.length) out.push(Object.assign({}, props, {t: "\n"}));
       walk(c, c.dataset.run ? Object.assign({}, props, JSON.parse(c.dataset.run)) : props);
@@ -1243,19 +1250,41 @@ function editTextInline(i) {
   fit(); ta.oninput = fit;
   const cs = (skin() || {}).cstyles || {};
   $("#rt-cs").innerHTML = `<option value="">문자 스타일…</option>${Object.keys(cs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__none">문자 스타일 빼기</option>`;
-  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"});
-  const above = b.y * scale - bar.offsetHeight - 4;                  // 위에 자리가 없으면(페이지 맨 위 글상자) 아래에 — 막대가 고치는 글을 덮지 않게
-  bar.style.top = (above >= 0 ? above : Math.max(b.h * scale + 6, ta.offsetHeight + 4) + b.y * scale) + "px";
+  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"}); $("#rt-para").style.display = "none";
+  const place = () => { const above = b.y * scale - bar.offsetHeight - 4;   // 위에 자리가 없으면(페이지 맨 위 글상자) 아래에 — 막대가 고치는 글을 덮지 않게
+    bar.style.top = (above >= 0 ? above : Math.max(b.h * scale + 6, ta.offsetHeight + 4) + b.y * scale) + "px"; };
+  place();
   ta.select = () => { const r = document.createRange(); r.selectNodeContents(ta); const g = getSelection(); g.removeAllRanges(); g.addRange(r); };
   ta.focus(); ta.select();
   let last = [0, rtRead(ta).reduce((k, x) => k + rtLen(x), 0)];
   const track = () => { const g = getSelection(); if (!g.rangeCount || !ta.contains(g.anchorNode)) return; const r = g.getRangeAt(0); last = [rtPos(ta, r.startContainer, r.startOffset), rtPos(ta, r.endContainer, r.endOffset)];
-    let k = 0; const at = rtRead(ta).find(x => (k += rtLen(x)) > last[0]); $("#rt-cs").value = (at && at.cs && cs[at.cs]) ? at.cs : ""; };   // 고른 글자의 문자 스타일을 막대에 보인다
+    let k = 0; const at = rtRead(ta).find(x => (k += rtLen(x)) > last[0]); $("#rt-cs").value = (at && at.cs && cs[at.cs]) ? at.cs : "";   // 고른 글자의 문자 스타일을 막대에 보인다
+    paraRow(); };
+  const paraMark = () => {                                 // 커서가 있는 문단의 첫머리 표시(.rt-ps) — 줄바꿈 뒤 표시가 없는 문단이면 null
+    let k = 0, n = -1, cur = -1;
+    for (const r of rtRead(ta)) {
+      if (rtMark(r)) { if (k <= last[0]) { n++; cur = n; } else break; continue; }
+      if (r.side == null) { const t = r.t || ""; for (let j = 0; j < t.length && k + j < last[0]; j++) if (t[j] === "\n") cur = -1; }
+      if (k >= last[0] && !rtMark(r)) break;
+      k += rtLen(r);
+    }
+    return cur < 0 ? null : ta.querySelectorAll(".rt-ps")[cur];
+  };
+  const paraRow = () => {                                  // 단락 재정의 줄 — 스타일 값은 흐린 글(자리 표시), 재정의 값은 칸 안에
+    const row = $("#rt-para"), m = paraMark(), was = row.style.display;
+    if (!m) { row.style.display = "none"; if (was !== "none") place(); return; }
+    const r = JSON.parse(m.dataset.run), sn = slotFmt(a, r.ps).style || r.ps, st = ((skin() || {}).styles || {})[sn] || {}, ov = r.ov || {};
+    $("#rt-psn").textContent = sn; $("#rt-psp").textContent = Object.keys(ov).length ? "+" : "";
+    row.querySelectorAll("[data-ov]").forEach(i => { const f = i.dataset.ov; if (document.activeElement !== i) i.value = ov[f] ?? ""; i.placeholder = st[f] ?? ""; });
+    row.style.display = ""; if (was === "none") place();
+  };
+  const setOv = (fn) => { const m = paraMark(); if (!m) return; const r = JSON.parse(m.dataset.run); const ov = Object.assign({}, r.ov || {}); fn(ov);
+    if (Object.keys(ov).length) r.ov = ov; else delete r.ov; m.dataset.run = JSON.stringify(r); paraRow(); };
   document.addEventListener("selectionchange", track);
   const op = (fn) => {                                     // 고른 글자에 꾸밈 — 조각을 나눠 고친 뒤 다시 그리고 고른 자리를 되살린다
     const runs = rtRead(ta), [s0, e0] = last;
     const x = rtSplit(runs, s0), y = rtSplit(runs, e0);
-    for (let k = x; k < y; k++) if (runs[k].side == null) fn(runs[k]);
+    for (let k = x; k < y; k++) if (runs[k].side == null && !rtMark(runs[k])) fn(runs[k]);
     rtDom(ta, rtRuns(rtNorm(runs))); ta.focus(); rtSel(ta, s0, e0);
   };
   const setRuby = (pos) => {
@@ -1267,9 +1296,12 @@ function editTextInline(i) {
   };
   const keep = (e) => e.preventDefault();                  // 막대를 눌러도 글 칸의 고른 자리가 남게
   bar.querySelectorAll("button").forEach(x => x.onmousedown = keep);
+  $("#rt-para").querySelectorAll("[data-ov]").forEach(i => { const put = () => setOv(ov => { const v = i.value.trim(); if (v === "" || isNaN(+v)) delete ov[i.dataset.ov]; else ov[i.dataset.ov] = +v; });
+    i.onchange = put; i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); put(); } }; });   // Enter 로도 바로
+  $("#rt-ovx").onclick = () => setOv(ov => { for (const k of Object.keys(ov)) delete ov[k]; });
   $("#rt-rba").onclick = () => setRuby("above");
   $("#rt-rbb").onclick = () => setRuby("below");
-  $("#rt-clear").onclick = () => op(r => { for (const k of Object.keys(r)) if (k !== "t") delete r[k]; });
+  $("#rt-clear").onclick = () => op(r => { for (const k of Object.keys(r)) if (!["t", "ps", "inline"].includes(k)) delete r[k]; });   // 붙인 번호(ps · inline)는 문단 구조라 남긴다
   $("#rt-side").onclick = () => {
     const t = prompt("고정 개체 글", ""); if (!t || !t.trim()) { ta.focus(); return; }
     const runs = rtRead(ta), at = last[1], k = rtSplit(runs, at);

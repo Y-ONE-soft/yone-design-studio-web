@@ -1256,3 +1256,18 @@ def test_package_load_clashing_skin_kept_apart(lib):
     p2 = store.by_id(lib2["plans"])[pid]
     assert p2["skin"] != sk["id"] and store.by_id(lib2["skins"])[p2["skin"]]["cstyles"][name]["bg"] == "#fff200"
     assert store.by_id(lib2["skins"])[sk["id"]]["cstyles"][name]["bg"] == "#000000"
+
+
+def test_paragraph_style_override_one_paragraph(lib):
+    """단락 스타일 재정의(인디자인 로컬 서식) — 문단 표시의 ov 가 그 문단에만 스타일 값 위에(앞 간격). 스타일은 그대로"""
+    import re as _re
+    from core.units import content, render, store
+    sk = dict(store.by_id(lib["skins"])["d2"], styles={"번호": {"size": 12, "space_before": 9.7}})
+    ctx = render.Ctx(sk, lib, {})
+    fmt = {"번호": {"style": "번호"}}
+    v = content.story_value("번호", [{"번호": "4"}, {"번호": "6"}, {"번호": "8"}], fmt)
+    v[[i for i, x in enumerate(v) if isinstance(x, dict) and x.get("ps")][1]]["ov"] = {"space_before": 2.6}
+    a = {"t": "text", "w": 80, "h": 40, "size": 9, "bind": "번호", "slot_fmt": fmt}
+    html = render._text_content(ctx, a, {"번호": v}, {})[0]
+    tops = _re.findall(r'margin-top:([\d.]+)px', render._paras_html(a, html, "", ctx))
+    assert tops == ["2.600", "9.700"]                                   # 둘째 문단만 재정의 2.6 · 셋째는 스타일 9.7 그대로

@@ -4,7 +4,7 @@
 
 실패는 스크린샷(tests/e2e/out/audit_<n>_<이름>.png)과 out/audit_result.json. 요소에 직접 dispatchEvent 하는 시험은
 "코드는 도는데 화면엔 안 보이는" 버그(display:none 위에 style.display="" 등)를 못 잡는다 — 여기선 elementFromPoint 로 마우스에 잡히는지까지 본다.
-새 기능을 넣으면 여기에 한 단계 더한다. 52단계: 시작 화면·페이지 띠·요소 넣기·선택/이동·손잡이·키보드·글 편집·오른쪽 클릭·자/확대/손·레이어/속성·저장·브랜드/원고/미리보기/검수/PDF·요소 저장.
+새 기능을 넣으면 여기에 한 단계 더한다. 53단계: 시작 화면·페이지 띠·요소 넣기·선택/이동·손잡이·키보드·글 편집·오른쪽 클릭·자/확대/손·레이어/속성·저장·브랜드/원고/미리보기/검수/PDF·요소 저장.
 """
 import base64, json, os, subprocess, sys, time, traceback, urllib.parse, urllib.request
 SP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "out")
@@ -390,6 +390,23 @@ try:
         js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3); key("Escape", code="Escape")
         return (ok and js("document.querySelector('#tedit').style.display === 'none'"), "")
     step("G2 Enter 로 편집 · Esc 취소", g2)
+    def g2b():                                                    # 병합된 문서의 글(문단 첫머리 표시 ps) — 커서 둔 문단 하나만 재정의 · 지우기
+        js(f"(() => {{ hist(); page.items[{TXT}].atom.text = [{{ps: '가', t: ''}}, '첫 문단', '\\n', {{ps: '나', t: ''}}, '둘째 문단']; save(); render(); }})()")
+        js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3)
+        pt = js("(() => { const t = [...document.querySelector('#tedit').childNodes].find(n => n.nodeType === 3 && n.data === '둘째 문단'); const r = document.createRange(); r.setStart(t, 1); r.setEnd(t, 2); const b = r.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()")
+        click(*pt); row = wait("document.querySelector('#rt-para').style.display !== 'none' && document.querySelector('#rt-psn').textContent === '나'", 3)
+        ir = rect("#rt-para [data-ov=space_before]"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="2.5"); key("Enter", code="Enter")
+        plus = wait("document.querySelector('#rt-psp').textContent === '+'", 2); shot("G2b_재정의_막대")
+        click(*pt); key("Enter", mods=CTRL, code="Enter"); saved = wait(f"JSON.stringify(page.items[{TXT}].atom.text).includes('\"ov\":{{\"space_before\":2.5}}')", 4)
+        one = js(f"page.items[{TXT}].atom.text.filter(r => r && r.ov).length === 1 && page.items[{TXT}].atom.text[0].ov === undefined")
+        js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); wait("document.querySelector('#tedit').style.display !== 'none'", 3)
+        pt = js("(() => { const t = [...document.querySelector('#tedit').childNodes].find(n => n.nodeType === 3 && n.data === '둘째 문단'); const r = document.createRange(); r.setStart(t, 1); r.setEnd(t, 2); const b = r.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()")
+        click(*pt); wait("document.querySelector('#rt-psp').textContent === '+'", 3)
+        br = rect("#rt-ovx"); click(br[0] + 5, br[1] + 5); key("Enter", mods=CTRL, code="Enter")
+        gone = wait(f"!JSON.stringify(page.items[{TXT}].atom.text).includes('ov')", 4)
+        kept = js(f"page.items[{TXT}].atom.text.filter(r => r && r.ps).length === 2")
+        return (ok and row and plus and saved and one and gone and kept, f"편집={ok} 문단 줄={row} +={plus} 저장={saved} 한 문단만={one} 지우기={gone} 표시 남음={kept} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:120]}")
+    step("G2b 단락 스타일 재정의 — 한 문단만 · 재정의 지우기", g2b)
     def g3():
         js("select([])"); r = grect(PAS); dbl(r[0] + 10, r[1] + 10)
         ok = wait("!!editing && document.querySelector('#editbar').style.display !== 'none'", 4)
