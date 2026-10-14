@@ -114,6 +114,7 @@ def api_put(kind):
     item = request.get_json(silent=True)
     err = store.validate(kind, item)
     if err:
+        print(f"■ 저장 거절 {kind} {str((item or {}).get('id', ''))[:40]} — {err[:200]}", flush=True)   # 화면에서 바꾼 값이 저장 안 되는 원인을 서버 기록에
         return jsonify({"error": err}), 400
     store.put(kind, item, after=request.args.get("after"))      # ?after=<id> 그 뒤로 · ?after= 맨 앞
     return jsonify({"ok": True, "item": item})
@@ -506,7 +507,7 @@ def api_fonts_add():
         ent = fonts.register(f.filename, f.read())
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    return jsonify({"ok": True, "font": ent, "families": fonts.families()})
+    return jsonify({"ok": True, "font": ent, "families": fonts.families(), "faces": fonts.faces()})
 
 
 @bp.route("/api/units/fontfile/<path:name>")

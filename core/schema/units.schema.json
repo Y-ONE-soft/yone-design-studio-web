@@ -94,14 +94,21 @@
                  "oneOf": [{"$ref": "#/definitions/ruby"}, {"type": "array", "maxItems": 2, "items": {"$ref": "#/definitions/ruby"}}]},
         "side": {"type": "string", "description": "옆 메모(인디자인 고정 개체) — 이 자리 줄 높이의 옆 칸에 놓는 글. 자리·모양은 글상자의 side 설정. t 는 빈 글"},
         "anc": {"type": "object", "description": "글 안에 고정한 개체(인디자인 앵커드) — 글 흐름 안에 부품을 끼운다",
-                "required": ["part"], "properties": {"part": {"$ref": "#/definitions/id"}, "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
-                                                     "align": {"enum": ["inline", "left", "right"], "description": "inline = 글줄 안(기본) · left/right = 그 쪽으로 띄워 글이 감싼다"}}}
+                "properties": {"part": {"$ref": "#/definitions/id"}, "text": {"type": "string", "description": "고정 개체 텍스트 프레임의 글(part 대신)"},
+                               "w": {"$ref": "#/definitions/mm"}, "h": {"$ref": "#/definitions/mm"},
+                               "pos": {"enum": ["inline", "above", "custom"], "description": "위치 — 인라인 · 줄 위 · 사용자 정의(인디자인 고정 개체 옵션)"},
+                               "at": {"enum": ["start", "end"]}, "x": {"$ref": "#/definitions/mm"}, "y": {"$ref": "#/definitions/mm"}, "space": {"type": "boolean"},
+                               "before": {"$ref": "#/definitions/mm"}, "after": {"$ref": "#/definitions/mm"}, "cs": {"type": "string"},
+                               "xref": {"enum": ["frame", "anchor"]}, "yref": {"enum": ["baseline", "leading"]},
+                               "align": {"enum": ["inline", "left", "center", "right"], "description": "줄 위 정렬 — 왼쪽 · 가운데 · 오른쪽"}}}
       }
     },
     "ruby": {"type": "object", "required": ["t"], "properties": {
       "t": {"type": "string"}, "pos": {"enum": ["above", "below"], "description": "위(기본) · 아래"},
       "cs": {"type": "string", "description": "윗주 글의 문자 스타일 — 없으면 글상자 ruby.cs"}, "off": {"$ref": "#/definitions/mm", "description": "기준선에서 거리 — 아래: 윗주 위 끝 · 위: 윗주 아래 끝"},
-      "align": {"enum": ["start", "center"], "description": "본문 첫머리(기본) · 본문 가운데"}}},
+      "align": {"enum": ["start", "left", "center", "right"], "description": "윗주 정렬 — 왼쪽(기본) · 가운데 · 오른쪽"},
+      "ox": {"$ref": "#/definitions/mm"}, "oy": {"$ref": "#/definitions/mm", "description": "오프셋 Y — 본문 글자 상자 끝에서 바깥이 +"},
+      "font": {"type": "string"}, "size": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}}},
     "rich": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/run"}]}},
 
     "atom": {
@@ -120,7 +127,7 @@
         "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"},
         "style": {"type": "string", "minLength": 1, "maxLength": 60, "description": "단락 스타일 이름(옷 styles 의 열쇠 — 한글 · 띄어쓰기 되는 인디자인 단락 스타일 이름) — 옷의 styles 에서 서체·크기·행간·색·정렬·자간·들여쓰기·간격을 가져온다(인디자인 단락 스타일). 스타일에 있는 값이 원자 값보다 우선"},
         "color": {"$ref": "#/definitions/token"}, "leading": {"$ref": "#/definitions/pt"},
-        "align": {"enum": ["left", "center", "right", "justify"]},
+        "align": {"enum": ["left", "center", "right", "justify", "justify_center", "justify_right", "justify_all"]},
         "text": {"oneOf": [{"type": "string"}, {"$ref": "#/definitions/rich"}], "description": "고정 글 또는 견본 글(bind 가 있으면 견본). 서식이 섞이면 조각 목록(rich). 줄바꿈(\\n) = 단락"},
         "bind": {"$ref": "#/definitions/bind"},
         "tracking": {"type": "number", "description": "자간 — 인디자인 단위(1/1000 em). 없으면 0"},
@@ -131,7 +138,7 @@
         "space_after": {"$ref": "#/definitions/mm", "description": "단락 뒤 간격"},
         "inset": {"oneOf": [{"$ref": "#/definitions/mm"}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/definitions/mm"}}],
                   "description": "글상자 안쪽 여백(인디자인 텍스트 프레임 옵션). 하나 또는 [위, 오른쪽, 아래, 왼쪽]"},
-        "valign": {"enum": ["top", "center", "bottom"], "description": "세로 정렬. 없으면 top"},
+        "valign": {"enum": ["top", "center", "bottom", "justify"], "description": "세로 균등 배치(인디자인) — 위쪽(기본) · 가운데 · 아래쪽 · 양쪽"},
         "columns": {"type": "integer", "minimum": 1, "maximum": 6, "description": "글상자 안 단 수. 없으면 1"},
         "gutter": {"$ref": "#/definitions/mm", "description": "단 사이 간격"},
         "table": {"type": "object", "additionalProperties": false, "required": ["cols"],
@@ -142,6 +149,7 @@
                     "inset": {"oneOf": [{"$ref": "#/definitions/mm"}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/definitions/mm"}}], "description": "칸 여백(인디자인 셀 인세트). 하나 또는 [위, 오른쪽, 아래, 왼쪽]"},
                     "gap_x": {"$ref": "#/definitions/mm", "description": "칸 사이 가로(인디자인에선 셀 테두리로 띄운다)"},
                     "gap_y": {"$ref": "#/definitions/mm", "description": "칸 사이 세로"},
+                    "stroke": {"type": "object", "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}}, "description": "셀 획(인디자인) — 두께 pt · 색상, 칸 경계 가운데"},
                     "row_h": {"$ref": "#/definitions/mm", "description": "줄 최소 높이(인디자인 행 높이 「최소」) — 넘으면 그 줄의 가장 긴 칸만큼"}}},
         "rule_above": {"$ref": "#/definitions/rule", "description": "단락 위 경계선"},
         "rule_below": {"$ref": "#/definitions/rule", "description": "단락 아래 경계선"},
@@ -169,7 +177,8 @@
         "word_min": {"type": "number", "maximum": 0, "description": "양끝맞춤 줄의 낱말 간격 최소 — em 의 1/1000(음수). 줄 나눔으로 꺾인 줄을 그만큼 좁혀 놓고 양끝까지 늘린다(인디자인 양끝맞춤의 낱말 간격 최소)"},
         "snap_baseline": {"type": "boolean", "description": "기준선 격자에 맞추기 — 지면의 baseline_grid 줄에 글줄을 세운다"},
         "first_baseline": {"$ref": "#/definitions/mm", "description": "첫 줄을 상자 위에서 이만큼 내린다(인디자인 첫 기준선)"},
-        "auto_size": {"oneOf": [{"type": "boolean"}, {"enum": ["height", "both", "off"]}], "description": "자동 크기 조정(인디자인 텍스트 프레임 옵션) — height(기본·true): 글이 길면 아래로 늘어난다 · both: 높이와 너비 — 한 줄 글은 글 폭 + 안쪽 여백만큼, 길면 상자 폭(w)까지 · off(false): 넘쳐도 상자 크기를 지킨다. 바탕(frame)이 있으면 바탕은 브라우저가 실제로 그린 글 크기 + 여백을 따른다"},
+        "auto_size": {"oneOf": [{"type": "boolean"}, {"enum": ["height", "width", "both", "off"]}], "description": "자동 크기 조정(인디자인 텍스트 프레임 옵션) — off(기본·false): 크기를 지킨다 · height: 높이만 · width: 너비만 · both: 높이 및 너비. 기준점은 auto_ref. 칠(frame)은 프레임을 따른다"},
+        "auto_ref": {"enum": ["tl", "t", "tr", "l", "c", "r", "bl", "b", "br"], "description": "자동 크기 조정 기준점 — 이 점은 그대로 두고 자란다"},
         "frame": {"type": "object", "additionalProperties": false, "description": "글상자 칠·획·모서리(인디자인 텍스트 프레임의 칠·획) — 안쪽 여백(inset)을 둘러 그린다. 자동 크기 조정이 켜져 있으면 글을 따라 자라고 줄어든다",
                   "properties": {"fill": {"$ref": "#/definitions/token", "description": "칠"}, "stroke": {"$ref": "#/definitions/stroke", "description": "획 — w·color 만 쓴다(가장자리 가운데)"}, "radius": {"$ref": "#/definitions/radius", "description": "모서리 반지름 mm — 하나 또는 [왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래]"}}},
         "h_scale": {"type": "number", "minimum": 1, "description": "장평 가로 % (인디자인 수평 비율). 없으면 100"},
@@ -180,7 +189,9 @@
         "tsume": {"type": "number", "minimum": 0, "maximum": 100, "description": "자간 축소 % (인디자인 문자 패널 「자간 축소」, Tsume) — 글자마다 양옆 빈 곳(글리프 폭 안, 잉크 밖)을 이만큼 줄인다. 공백은 그대로, 커닝·자간은 그 위에 더한다. 없으면 0"},
         "ruby": {"type": "object", "description": "윗주 기본 설정 — 조각의 윗주가 비운 값", "properties": {
           "cs": {"type": "string", "description": "윗주 글 문자 스타일"}, "off_above": {"$ref": "#/definitions/mm"}, "off_below": {"$ref": "#/definitions/mm"},
-          "align": {"enum": ["start", "center"]}}},
+          "font": {"type": "string"}, "size": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"},
+          "oy_above": {"$ref": "#/definitions/mm"}, "oy_below": {"$ref": "#/definitions/mm"},
+          "align": {"enum": ["start", "left", "center", "right"]}}},
         "side": {"type": "object", "description": "옆 메모(고정 개체) 자리·모양 — x·w 글상자 왼쪽 기준 mm, off 그 줄 기준선→메모 위 끝 mm(음수면 위로), cs 문자 스타일, lead 행간 pt",
           "properties": {"x": {"type": "number"}, "w": {"$ref": "#/definitions/mm"}, "off": {"type": "number"}, "cs": {"type": "string"}, "lead": {"$ref": "#/definitions/pt"}}},
         "markup": {"type": "boolean", "description": "원고 표시 읽기 — 원고 글의 {본문|아래 윗주} · {본문^위 윗주} · {본문^위|아래} · [[옆 메모]] 를 윗주·옆 메모로"},
@@ -510,7 +521,7 @@
         "styles": {"type": "object", "description": "단락 스타일 — 이름 → 글 속성. 글 원자의 style 이 가리킨다. 원고 docx 의 단락 스타일 이름과 같으면 파서가 자리를 맞춘다",
           "additionalProperties": {"type": "object", "properties": {
             "font": {"$ref": "#/definitions/token"}, "size": {"$ref": "#/definitions/pt"}, "leading": {"$ref": "#/definitions/pt"},
-            "color": {"$ref": "#/definitions/token"}, "align": {"enum": ["left", "center", "right", "justify"]},
+            "color": {"$ref": "#/definitions/token"}, "align": {"enum": ["left", "center", "right", "justify", "justify_center", "justify_right", "justify_all"]},
             "tracking": {"type": "number"}, "tsume": {"type": "number", "minimum": 0, "maximum": 100}, "indent": {"$ref": "#/definitions/mm"}, "indent_first": {"type": "number"}, "indent_right": {"$ref": "#/definitions/mm"},
             "space_before": {"$ref": "#/definitions/mm"}, "space_after": {"$ref": "#/definitions/mm"},
             "b": {"type": "boolean"}, "i": {"type": "boolean"}

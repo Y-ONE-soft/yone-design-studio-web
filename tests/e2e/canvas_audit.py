@@ -618,9 +618,9 @@ try:
         for k, v in (("poly.n", "5"), ("poly.star", "40")):
             b = center(f'#side [data-p="{k}"]')
             if b:
-                click(*b); key("End", code="End")
-                for _ in range(4):
-                    key("Backspace", code="Backspace")
+                click(*b)                                                   # 칸 글 모두 고르기(⌘A) → 새 값
+                c.call("Input.dispatchKeyEvent", type="keyDown", key="a", code="KeyA", modifiers=META, commands=["selectAll"])
+                c.call("Input.dispatchKeyEvent", type="keyUp", key="a", code="KeyA", modifiers=META)
                 c.call("Input.insertText", text=v); key("Enter", code="Enter")
         time.sleep(1.0)
         star = js("(() => { const a = page.items[page.items.length - 1].atom; return (a.d.match(/L/g) || []).length; })()")

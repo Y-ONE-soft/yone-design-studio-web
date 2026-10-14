@@ -330,6 +330,12 @@
   .m4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
   .m4 label { font-size: 10.5px; color: var(--mute); }
   .m4 input { width: 100%; padding: 4px 5px; }
+  .m3, .m4 { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); } .m4 { --n: 4; }   /* 칸이 패널 밖으로 밀려나지 않게 — 색 직접 고르기 칸은 칸 안에서 접힌다 */
+  .m3 > label, .m4 > label { min-width: 0; }
+  .m4 select, .m3 select { width: 100%; min-width: 0; }
+  .m3 label > span, .m4 label > span { flex-wrap: wrap; min-width: 0; }
+  .m3 label > span > *, .m4 label > span > * { min-width: 0; max-width: 100%; }
+  .m3 label > span > input[type=text], .m4 label > span > input[type=text] { width: 100% !important; }
 </style>
 
 <div class="cv" id="cv">
@@ -1436,6 +1442,9 @@ document.querySelectorAll("[data-rsz]").forEach(bar => {
 let sheetKind = "";
 function openSheet(kind) { sheetKind = kind; $("#sheetbg").classList.add("on"); fillSheet(); }
 function closeSheet() { sheetKind = ""; $("#sheetbg").classList.remove("on"); }
+document.addEventListener("keydown", (e) => {                       // 스타일 창 칸도 Enter = 확정(인디자인 대화 상자 칸) — 확정 안 된 칸은 다음 단추를 누를 때 창을 다시 그려 그 누름을 삼켰다
+  if (e.key === "Enter" && !e.shiftKey && e.target.matches && e.target.matches("#sbody input:not([type=checkbox])")) { e.preventDefault(); e.target.blur(); }
+});
 function fillSheet() {
   const hd = $("#shd"), body = $("#sbody"); body.innerHTML = "";
   if (sheetKind === "skins") panelSkins(hd, body); else if (sheetKind === "sets") panelSets(hd, body);
@@ -1829,12 +1838,12 @@ const FS_NAME = {100: "Thin", 200: "ExtraLight", 300: "Light", 350: "DemiLight",
 function fstyleSel(attr, key, fam, w, it) {                   // 글꼴 스타일 — 그 글꼴 모음에 있는 굵기 · 기울임꼴(인디자인 글꼴 스타일)
   const real = String(fam || "").startsWith("$") ? (((skin() || {}).tokens || {}).font || {})[String(fam).slice(1)] : fam;
   const cur = (w || it) ? `${w || 400}${it ? "i" : ""}` : "";
-  const faces = [...new Set(((LIB.font_faces || {})[real] || ["400", "700"]).concat(cur ? [cur] : []))];
+  const faces = [...new Set(((LIB.font_faces || {})[real] || (real ? ["400", "700"] : Object.keys(FS_NAME))).concat(cur ? [cur] : []))];   // 글꼴을 안 정한 문자 스타일 — 굵기 모두(인디자인도 글꼴 스타일만 정할 수 있다)
   return `<select ${attr}="${key}" data-kind="fstyle"><option value="">(기본)</option>${faces.map(f => `<option value="${f}" ${f === cur ? "selected" : ""}>${FS_NAME[parseInt(f)] || parseInt(f)}${f.endsWith("i") ? " Italic" : ""}</option>`).join("")}</select>`;
 }
 const ALIGNS = [["left", "왼쪽 정렬"], ["center", "가운데 정렬"], ["right", "오른쪽 정렬"], ["justify", "양쪽 정렬(마지막 줄 왼쪽)"], ["justify_center", "양쪽 정렬(마지막 줄 가운데)"], ["justify_right", "양쪽 정렬(마지막 줄 오른쪽)"], ["justify_all", "모두 정렬"]];
 const NUMF = [["1.", "1. 2. 3."], ["1)", "1) 2) 3)"], ["(1)", "(1) (2) (3)"], ["①", "① ② ③"], ["01", "01 02 03"], ["A.", "A. B. C."], ["a.", "a. b. c."], ["가.", "가. 나. 다."]];
-const AFTERS = [["\t", "탭 문자(^t)"], [" ", "공백"], ["none", "없음"]];
+const AFTERS = [["\t", "탭 문자(^t)"], [" ", "공백"], ["\u2002", "엔 공백(^>)"], ["\u2003", "엠 공백(^m)"], ["\u2009", "가는 공백(^<)"], ["\u200a", "아주 가는 공백(^|)"], ["none", "없음"]];
 const optList = (list, cur, blank) => (blank != null ? `<option value="">${blank}</option>` : "") + list.map(([v, n]) => `<option value="${esc(v)}" ${String(cur ?? "") === v ? "selected" : ""}>${n}</option>`).join("");
 const gp = (o, path) => path.split(".").reduce((x, k) => (x == null ? undefined : x[k]), o);
 function pathSet(o, path, v) {                                 // "a.b.c" 에 값 — 빈 값이면 지우고 빈 묶음도 지운다
@@ -1916,7 +1925,7 @@ async function uploadFont(file) {                                  // 서체 등
   const fd = new FormData(); fd.append("file", file);
   const j = await (await fetch("/api/units/fonts", {method: "POST", body: fd})).json();
   if (j.error) { say("서체 등록 실패 — " + j.error); return null; }
-  LIB.fonts = j.families;
+  LIB.fonts = j.families; if (j.faces) LIB.font_faces = j.faces;
   try { const ff = new FontFace(j.font.family, `url(/api/units/fontfile/${encodeURIComponent(j.font.file)})`, {weight: String(j.font.weight), style: j.font.italic ? "italic" : "normal"});
         document.fonts.add(await ff.load()); } catch (err) {}             // 이 화면에서 바로 쓴다(새로 열면 @font-face 로)
   say(`서체 등록 — ${j.font.family} ${j.font.weight}`); return j.font;
@@ -2228,8 +2237,14 @@ function storyNew() { const ns = new Set(storyNames()); let n = 1; while (ns.has
 function storyHtml(a) {
   const n = a.story ? storyBoxes(a.story).length : 0;
   return `<h3>텍스트 스레드 <span class="note" style="display:inline">넘친 글이 다음 텍스트 프레임으로(인디자인 텍스트 스레드 — 다른 페이지 프레임도)</span></h3>
+    <div class="f"><span title="스레드 — 다음 프레임에 연결(아래 단추)과 같다. 다른 페이지의 스레드 끝에 이 프레임을 이어 붙이거나 이 프레임부터 새 스레드를 시작한다">스레드</span><select data-a="story"><option value="">연결 안 함</option><option value="__new">＋ 이 프레임부터 새 스레드</option>${storyNames().map(nm => `<option value="${esc(nm)}" ${a.story === nm ? "selected" : ""}>${esc(threadLabel(nm))}${a.story === nm ? "" : " 끝에 연결"}</option>`).join("")}</select></div>
     ${a.story ? `<div class="note">이 스레드의 ${a.story_seq || 1}번째 프레임 · 모두 ${n}개${(a.story_seq || 1) === 1 ? " — 글 · 데이터 필드는 이 프레임 것" : ""}</div>` : ""}
     <div class="row"><button class="btn sm${linkPick ? "" : " sub"}" id="s-link" title="누른 뒤 이어 받을 텍스트 프레임을 누른다 — 다른 페이지로 가서 눌러도 된다">${linkPick ? "이어 받을 프레임 누르기… (Esc 취소)" : "＋ 다음 프레임에 연결"}</button>${a.story ? `<button class="btn sm sub" id="s-unlink" title="이 프레임을 스레드에서 뺀다 — 뒤 프레임들은 한 칸씩 당겨진다">스레드 끊기</button>` : ""}</div>`;
+}
+function threadLabel(nm) {                                                 // 스레드 이름 대신 — 「3페이지에서 시작한 스레드」
+  const dp = plan ? docPages() : [page];
+  const k = dp.findIndex(p2 => (p2.items || []).some(it => it.atom && it.atom.story === nm && (+it.atom.story_seq || 1) === 1));
+  return k >= 0 ? `${k + 1}페이지에서 시작한 스레드` : `스레드 ${nm}`;
 }
 function linkTo(i) {                                                       // 누른 프레임을 그 스레드의 다음 프레임으로(다른 페이지 프레임도)
   const pk = linkPick || {}; linkPick = null;
@@ -2271,7 +2286,8 @@ function side() {
             <div class="m3"><label title="이 데이터 필드 단락에 입힐 단락 스타일(인디자인 단락 스타일)">단락 스타일<select ${P(F("style"))}><option value="">(텍스트 프레임 값)</option>${Object.keys(sk.styles || {}).map(n => `<option value="${esc(n)}" ${d.style === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
               ${k < binds.length - 1 ? `<label title="템플릿 단락 「«이 필드»⇥«다음 필드»」 — 따로 단락을 만들지 않고 다음 필드 단락 첫머리에(문항 번호 + 발문)">다음 필드와 같은 단락<input type="checkbox" ${P(F("inline"))} ${d.inline ? "checked" : ""} style="width:auto"></label>` : "<label></label>"}
               ${d.inline ? `<label>필드 뒤<select ${P(F("sep"))} data-kind="keep">${optList(AFTERS, d.sep ?? "\t")}</select></label>` : "<label></label>"}</div>
-            ${d.inline ? `<div class="m3"><label title="이 필드 글자에 입힐 문자 스타일 — 자리는 다음 필드 단락 스타일의 탭 정지">문자 스타일${cstyleSel(F("cs"), d.cs, "data-p")}</label><label></label><label></label></div>` : ""}
+            ${d.inline ? `<div class="m3"><label title="이 필드 글자에 입힐 문자 스타일 — 자리는 다음 필드 단락 스타일의 탭 정지">문자 스타일${cstyleSel(F("cs"), d.cs, "data-p")}</label><label></label><label></label></div>
+              <div class="m4" title="이 필드를 인라인 고정 텍스트 프레임에 넣는다(칠 · 모퉁이 · 인세트) — 번호 배지"><label>프레임 칠${colorSel(F("frame.fill"), gp(d, "frame.fill"), true, false, "data-p")}</label>${pnum(F("frame.r"), "모퉁이 크기 mm")}${pnum(F("frame.inset"), "인세트 mm")}${pnum(F("frame.y"), "Y 오프셋 mm", 0.1, "기준선에서 위가 +")}</div>` : ""}
             <div class="m3"><label title="인디자인 고정 개체 — 템플릿 단락에서 데이터 필드 앞 · 뒤에 넣어 둔 그룹. 레코드마다 따라 나온다">고정 개체<select ${P(F("anc.part"))}><option value="">없음</option>${LIB.parts.map(p2 => `<option value="${esc(p2.id)}" ${an.part === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></label>
               ${an.part ? `<label>위치<select ${P(F("anc.pos"))}>${optList([["inline", "인라인"], ["above", "줄 위"], ["custom", "사용자 정의"]], pos)}</select></label><label title="템플릿 단락에서 개체가 데이터 필드 앞인가 뒤인가 — 레코드 값이 여러 단락이면 첫 · 끝 단락">필드<select ${P(F("anc.at"))}>${optList([["end", "필드 뒤"], ["start", "필드 앞"]], an.at || "end")}</select></label>` : "<label></label><label></label>"}</div>
             ${!an.part ? "" : pos === "inline" ? `<div class="m3">${pnum(F("anc.x"), "X 오프셋 mm", 0.1, "앞 글과 개체 사이")}${pnum(F("anc.y"), "Y 오프셋 mm", 0.1, "기준선에서 위가 +")}${pchk(F("anc.space"), "개체 앞 공백", "필드와 개체 사이 공백 문자 — 줄 끝이면 개체만 다음 줄로")}</div>`
@@ -2345,8 +2361,9 @@ function side() {
         <div class="m3"><label>획 두께 pt<input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></label><label>획 색상${colorSel("stroke.color", (a.stroke || {}).color)}</label><label>유형<select ${P("stroke.type")}>${optList([["dashed", "파선"], ["dotted", "점선"]], (a.stroke || {}).type || ((a.stroke || {}).dash ? "dashed" : ""), "실선")}</select></label></div>
         ${strokeMore(a, true)}`;
       else if (a.t === "rect" || a.t === "ellipse" || a.t === "path") h += `<div class="m3"><label>W<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>H<input type="number" data-a="h" step="0.5" value="${a.h}"></label>${a.t === "rect" ? `<label>모퉁이 크기<input type="number" data-a="radius" step="0.5" value="${Array.isArray(a.radius) ? a.radius[0] : (a.radius || 0)}"></label>` : "<label></label>"}</div>
-        ${a.t === "path" ? `<div class="m3">${pnum("poly.n", "면 수", 1, "다각형 도구 — 면 수", "")}${pnum("poly.star", "별모양 인세트 %", 5, "0 = 다각형", "0")}<label></label></div>` : ""}
-        <div class="m3"><label>칠${colorSel("fill", a.fill, true)}</label><label>획${colorSel("stroke.color", (a.stroke || {}).color, true)}</label><label>획 두께 pt<input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0}"></label></div>
+        ${a.t === "path" ? `<div class="m3">${pnum("poly.n", "면 수", 1, "다각형 도구 — 면 수", "")}${pnum("poly.star", "별모양 인세트 %", 5, "0 = 다각형", "0")}<label></label></div>
+          <div class="f"><span title="펜 도구로 찍은 기준점 — M · L · C · Z, 프레임 안 0~1 비율(직접 선택 도구로 옮기는 기준점과 같다)">기준점 경로</span><input type="text" data-a="d" value="${esc(a.d || "")}" spellcheck="false"></div>` : ""}
+        <div class="f"><span>칠</span>${colorSel("fill", a.fill, true)}</div><div class="f"><span>획</span>${colorSel("stroke.color", (a.stroke || {}).color, true)}</div><div class="f"><span>획 두께 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0}"></div>
         <div class="m3"><label>유형<select ${P("stroke.type")}>${optList([["dashed", "파선"], ["dotted", "점선"]], (a.stroke || {}).type || ((a.stroke || {}).dash ? "dashed" : ""), "실선")}</select></label><label>그레이디언트<input type="checkbox" data-a="grad" ${a.gradient ? "checked" : ""} style="width:auto"></label><label></label></div>
         ${a.gradient ? `<div class="m4"><label>유형<select data-a="grad.type"><option value="linear" ${a.gradient.type !== "radial" ? "selected" : ""}>선형</option><option value="radial" ${a.gradient.type === "radial" ? "selected" : ""}>방사형</option></select></label><label>시작 정지점${colorSel("grad.c0", a.gradient.stops[0].c)}</label><label>끝 정지점${colorSel("grad.c1", a.gradient.stops[a.gradient.stops.length - 1].c)}</label>${a.gradient.type === "radial" ? "<label></label>" : `<label>각도 °<input type="number" data-a="grad.angle" step="15" value="${a.gradient.angle || 0}"></label>`}</div>` : ""}
         ${a.t === "rect" ? `<div class="m3"><label>모퉁이 모양<select data-a="corner">${[["round", "둥글게"], ["inverse", "둥글게 반전"], ["bevel", "경사"], ["inset", "내부 사각형"], ["fancy", "팬시"]].map(([v, n]) => `<option value="${v}" ${(a.corner || "round") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label title="모퉁이 크기 하나씩 — 왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래">모퉁이 하나씩<input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위,오위,오아래,왼아래"></label><label></label></div>` : ""}
@@ -2375,7 +2392,8 @@ function side() {
         <div class="m3"><label>텍스트 감싸기<select data-a="wrap.mode"><option value="">감싸기 없음</option><option value="bbox" ${(a.wrap || {}).mode === "bbox" ? "selected" : ""}>경계 상자 감싸기</option></select></label><label>감싸기 옵션<select ${P("wrap.to")}>${optList([["right", "오른쪽"], ["left", "왼쪽"]], gp(a, "wrap.to"), "가장 큰 영역")}</select></label><label>인쇄 안 함<input type="checkbox" data-a="nonprint" ${a.nonprint ? "checked" : ""} style="width:auto"></label></div>
         ${(a.wrap || {}).mode === "bbox" ? `<div class="m4">${pnum("wrap.ot", "오프셋 위쪽", 0.5, "", V("wrap.offset") || "0")}${pnum("wrap.ob", "아래쪽", 0.5)}${pnum("wrap.ol", "왼쪽", 0.5)}${pnum("wrap.or", "오른쪽", 0.5)}</div>` : ""}</details>`;
     }
-    h += `<h3>변형</h3><div class="m3"><label>X<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>Y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>W<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
+    const tH = it.atom && it.atom.t === "text";                          // 텍스트 프레임 높이 H(인디자인 변형 패널) — 자동 크기 조정이 켜져 있으면 글이 바꾼다
+    h += `<h3>변형</h3><div class="${tH ? "m4" : "m3"}"><label>X<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>Y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>W<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label>${tH ? `<label>H<input data-a="h" type="number" step="0.5" value="${it.atom.h}"></label>` : ""}</div>
       ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="개체·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
       <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm sub" id="s-lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button><button class="btn sm danger" id="s-x">삭제</button></div>
       ${layersHtml()}`;
@@ -2540,7 +2558,7 @@ function side() {
     if (sel == null || !page.items[sel] || !page.items[sel].atom) return;
     hist(); const a = page.items[sel].atom, k = i.dataset.p;
     if (k.startsWith("stroke.") && !a.stroke) a.stroke = {w: 0.5, color: "$ink"};        // 획이 없던 개체 — 기본 획부터
-    setField(a, k, i);
+    if (i.value === "__raw") pathSet(a, k, "#231f20"); else setField(a, k, i);    // 색 직접 고르기 — 옆에 색 칸이 뜬다
     if (k.startsWith("poly.")) { const d = polyD(a.poly); if (d) a.d = d; }
     if (k.startsWith("slot_fmt.") && k.endsWith(".anc.part") && !gp(a, k)) pathSet(a, k.slice(0, -5), undefined);   // 개체를 「없음」으로 — 고정 개체 설정도 지운다
     save(); pageSvg = {}; render(); side();

@@ -84,34 +84,22 @@ def _brand_open():
 
 
 def need_pstyle(name, props, label=None):
-    """단락 스타일 — 브랜드 패널 「＋ 단락 스타일」 → 이름 → 칸마다. props: font·weight·size·leading·color·align·tracking·space_after …"""
+    """단락 스타일 — 스타일 · 색상 견본 창 「＋ 새 단락 스타일」 → 이름 → 칸마다(단락 스타일 옵션). props: font·weight·size·leading·color·align·tracking·space_after …"""
     if ("p", name) in _DONE:
         return []
     _DONE.add(("p", name))
-    sel = lambda k: f'#sbody [data-st="{name}:{k}"]'
     st = [S(label or f"단락 스타일 「{name}」", 1200)] + _brand_open() + [{"answer": name}, {"click": "#st-new", "wait": 1300}]
-    for k, v in props.items():
-        if k in ("font", "weight", "align"):
-            st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 700})
-        else:
-            st.append(F(sel(k), v, 800))
+    st += pstyle_fields(name, props)
     return st + [{"click": "#sheet-x", "wait": 1200}]
 
 
 def need_cstyle(name, props, label=None):
-    """문자 스타일 — 브랜드 패널 「＋ 문자 스타일」 → 이름 → 칸마다. 체크 칸(b·i·u)은 누른다"""
+    """문자 스타일 — 스타일 · 색상 견본 창 「＋ 새 문자 스타일」 → 이름 → 칸마다(문자 스타일 옵션)"""
     if ("c", name) in _DONE:
         return []
     _DONE.add(("c", name))
-    sel = lambda k: f'#sbody [data-cs="{name}:{k}"]'
     st = [S(label or f"문자 스타일 「{name}」", 1200)] + _brand_open() + [{"answer": name}, {"click": "#cs-new", "wait": 1300}]
-    for k, v in props.items():
-        if k in ("b", "i", "u"):
-            st.append({"click": sel(k), "wait": 800})
-        elif k in ("font", "weight", "u_style"):
-            st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 700})
-        else:
-            st.append(F(sel(k), v, 800))
+    st += cstyle_fields(name, props)
     return st + [{"click": "#sheet-x", "wait": 1200}]
 
 
@@ -149,10 +137,11 @@ def T(s, font, weight, label=None, slot_name=None, temp=None, align=None, cx=Non
         m["원고"] = True
     if measure:
         E(m)
-    st = text(round(x, 2), round(top, 2), bw, bh, temp if slot_name else s["text"], size, s["color"], label=label, font=font, weight=weight,
-              track=track or None, align=align, leading=leading, bind=bind)
-    if italic:
-        st.append({"click": '#side input[data-a="i"]', "wait": 500})
+    st = text(round(x, 2), round(top, 2), bw, bh, temp if slot_name else s["text"], size, s["color"], label=label, font=font,
+              weight=None if italic else weight, track=track or None, align=align, leading=leading, bind=bind,
+              first=(font, weight, size, leading or round(size * 1.45, 3)))
+    if italic:                                                           # 글꼴 스타일 「Bold Italic」 하나만 고른다(이 글꼴 모음엔 Bold 가 없다)
+        st.append(pick_p("fstyle", fstyle_of(weight, italic=True)))
     if slot_name:
         st += slot(slot_name)
     return st
@@ -280,7 +269,7 @@ if want(1):
     s = sp_of(1, "2026")
     s = dict(s, text="2026 광문고1", x1=sp_of(1, "광문고1")["x1"])
     st += T(s, GM, 500, label="학교 — 원고 자리 「학교」 (연도는 GREP → 「연도 굵게」)", slot_name="학교", temp="0000 학교 이름")
-    st += grep(0, r"^\d{4}", label="GREP — 앞 네 자리 연도", bold=False) + [{"pick": {"at": '#side select[data-a="grep.0.cs"]', "value": "연도 굵게"}, "wait": 700}]
+    st += grep(0, r"^\d{4}", "연도 굵게", label="GREP 스타일 — 앞 네 자리 연도에 「연도 굵게」")
     CONTENT["학교"] = ["2026 광문고1"]
     # STEP UP · 스텝업 분석본 — 원본은 글자 윤곽(도형)이라 그 윤곽을 그림 파일로 올린다(정본 로고와 같은 방법)
     E({"id": "stepup", "x": 22.1, "y": 58.3, "w": 39.4, "h": 3.9, "color": "#363c3f", "see": "#363c3f", "pad": 0.6, "ctol": 30})
@@ -319,7 +308,7 @@ if want(1):
                label="교재명 + 강제목 — 한 글상자에 번갈아 흐른다(쌍 수는 원고만큼)", font=GM, weight=700, align="center", leading=LP)
     st += slot("교재명+강제목", label="자리 — 교재명+강제목 (원고의 쌍 차례대로)")
     for n in ("교재명", "강제목"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{n}.style"]', "value": n}, "wait": 600})
+        st.append(slot_style(n, n))
     CONTENT["교재명+강제목"] = [{"교재명": "올림포스 영어독해 기본2", "강제목": "7강 학술문 내용 불일치"},
                               {"교재명": "올림포스 영어독해 기본2", "강제목": "8강 어법 정확성"}]
     st += [S("아래 색 막대 셋", 1000)]
@@ -328,12 +317,12 @@ if want(1):
     st += done("간지", "p1.png")
 
 # ── 구성 2 「분석 펼침면」 (원본 2~21쪽 = 펼침면 10벌 · 원고마다) — 견본 = 2·3쪽 ──
-# 원고 한 건(지문 하나) = 펼침면 한 벌. 왼쪽: 강 · 회차 · 지문제목 · 문장+해석(꾸밈 조각 · 옆 메모) / 오른쪽: 주제 · 요약 · 발문+문제지문+선지 · 답 · 어휘.
+# 원고 한 건(지문 하나) = 펼침면 한 벌. 왼쪽: 강 · 회차 · 지문제목 · 번호+문장+해석(꾸밈 조각 · 옆 메모) / 오른쪽: 주제 · 요약 · 발문+문제지문+선지 · 답 · 어휘.
 # 꼬리 「7강  분석」 = 강+회차(같은 레코드의 두 자리를 한 줄로).
 CS = {                                                                   # 문자 스타일 — 원본에서 잰 값
-    "번호 배지": {"font": JAL, "size": 9, "color": "#ffffff", "bg": "#426893", "bg_pad": 0.45, "bg_r": 0.5},
+    "번호 배지": {"font": JAL, "size": 9, "color": "#ffffff"},             # 남색 둥근 상자는 번호 필드의 인라인 고정 텍스트 프레임(칠 · 모퉁이 · 인세트)
     "파랑 글자": {"color": "#224e8e"}, "빨강 글자": {"color": "#d2232a"},
-    # 형광 = 글 뒤 가로 띠(원본은 굵은 밑줄 9pt = 3.17mm, 가운데가 기준선 위 1.05mm) — 문자 스타일 「바탕 · 띠 두께 · 띠 높이」
+    # 형광 = 굵은 밑줄(원본 인디자인 밑줄 9pt = 3.17mm, 가운데가 기준선 위 1.05mm) — 문자 스타일 밑줄 옵션 두께 · 오프셋 · 색상(mkpage.cstyle_id 가 바꿔 친다)
     "형광 민트": {"bg": "#ceeae0", "bg_band": 3.17, "bg_off": 1.05},
     "형광 노랑": {"bg": "#fef9c1", "bg_band": 3.17, "bg_off": 1.05},
     "형광 보라": {"bg": "#dbd4ea", "bg_band": 3.17, "bg_off": 1.05},
@@ -385,7 +374,8 @@ def spread(lp):
     st += recolor(gall, "POINT", "포인트 연한", label="POINT 만 연한 청록 — 고치기 창에서 골라 문자 스타일")
     vl = find(el, "line", 143.0, 31.4)
     st += vrule(vl["x"], vl["y"], vl["h"], vl["sw"], vl["stroke"], label="세로 구분선", ctol=6)
-    # 문장 + 해석 — 한 글상자에 번갈아. 번호 배지 = GREP → 문자 스타일, 표기 = 윗주, GRAMMAR POINT 메모 = 옆 메모(고정 개체)
+    # 번호 + 문장 + 해석 — 한 텍스트 프레임에 번갈아. 번호 = 문장 단락 첫머리(다음 필드와 같은 단락 · 인라인 고정 텍스트 프레임), 표기 = 윗주,
+    # GRAMMAR POINT 메모 = 옆 메모(고정 개체 사용자 정의 위치)
     rows = [s for s in sp if 8.8 <= s["size"] <= 9.0 and s["x"] < 140]
     b0 = min(s["base"] for s in rows)
     LEAD_S, LEAD_K = 24.1, round(4.3 / MM, 2)                            # 문장 행간 8.5mm · 해석 행간 4.3mm
@@ -399,8 +389,9 @@ def spread(lp):
     st += need_pstyle("분석 해석", {"font": NOTO, "weight": 400, "size": 6.3, "leading": LEAD_K, "color": "#6d6e71", "align": "justify", "tracking": -52, "space_after": sp2})   # 원본 −52.3‰
     ha, hd, _ = face("휴먼범석체", 400)
     sl = 7 * MM
-    off_a = round(2.64 - ((sl - (ha + hd) * sl) / 2 + hd * sl), 2)        # 위 표기 기준선 = 문장 기준선 위 2.64mm (원본 「단 S」)
-    off_b = round(3.36 - ((sl - (ha + hd) * sl) / 2 + ha * sl), 2)        # 아래 표기 기준선 = 문장 기준선 아래 3.36mm (원본 「동격」)
+    bs = 8.95 * MM                                                       # 윗주 오프셋 Y = 본문 글자 상자(기준선 위 0.88em · 아래 0.12em) 끝에서 윗주 글 상자까지
+    oy_a = round(2.64 - ((sl - (ha + hd) * sl) / 2 + hd * sl) - 0.88 * bs, 2)   # 위 표기 기준선 = 문장 기준선 위 2.64mm (원본 「단 S」)
+    oy_b = round(3.36 - ((sl - (ha + hd) * sl) / 2 + ha * sl) - 0.12 * bs, 2)   # 아래 표기 기준선 = 문장 기준선 아래 3.36mm (원본 「동격」)
     from fontTools.ttLib import TTFont                                  # SKYBORI 는 fontTools 가 글자표를 못 읽는다(글리프 이름) — 높이만 hhea 에서
     _hh = TTFont(os.path.join(FONTS, "SKYBORI.otf"))
     ka, kd = _hh["hhea"].ascent / _hh["head"].unitsPerEm, -_hh["hhea"].descent / _hh["head"].unitsPerEm
@@ -408,21 +399,20 @@ def spread(lp):
     off_m = round(-0.5 - ((klead - (ka + kd) * ks) / 2 + ka * ks), 2)    # 메모 첫 기준선 = 그 문장 첫 기준선 위 0.5mm
     top = round(top_of(b0, 8.95, NOTO, 400, LEAD_S), 2)
     body = [s for s in sp if s["x"] < 140 and 26 < s["base"] < 280 and s["size"] < 9.2]      # 문장 · 해석 · 표기 · 번호
-    Eslot(body, label="문장+해석")
+    Eslot(body, label="번호+문장+해석")
     memo = [s for s in sp if s["x"] > 145 and 30 < s["base"] < 280]
     if memo:
         Eslot(memo, label="옆 메모")
-    st += text(22.0, top, 115.0, round(277.0 - top, 1), "0 Temporary sentence for styling the analysis line.\n임시 해석이 이 줄에 들어온다.", 8.95, "#231f20",
-               label="문장 + 해석 — 한 글상자(원고만큼 번갈아)", font=NOTO, leading=LEAD_S, align="justify")
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
-    st += slot("문장+해석", label="자리 — 문장+해석")
-    st += [{"pick": {"at": '#side select[data-a="slotfmt.문장.style"]', "value": "분석 문장"}, "wait": 600},
-           {"pick": {"at": '#side select[data-a="slotfmt.해석.style"]', "value": "분석 해석"}, "wait": 600}]
-    st += grep(0, r"^\d{1,2}(?= )", bold=False, label="GREP — 문장 앞 번호는 「번호 배지」") + [{"pick": {"at": '#side select[data-a="grep.0.cs"]', "value": "번호 배지"}, "wait": 700}]
-    st += [S("윗주 기본값 — 「구문 표기」 · 위 · 아래 거리 · 본문 가운데", 1200),
-           {"pick": {"at": '#side select[data-a="ruby.cs"]', "value": "구문 표기"}, "wait": 700},
-           F('#side input[data-a="ruby.off_above"]', off_a), F('#side input[data-a="ruby.off_below"]', off_b),
-           {"pick": {"at": '#side select[data-a="ruby.align"]', "value": "center"}, "wait": 700},
+    st += text(22.0, top, 115.0, round(277.0 - top, 1), "Temporary sentence for styling the analysis line.\n임시 해석이 이 줄에 들어온다.", 8.95, "#231f20",
+               label="번호 + 문장 + 해석 — 한 텍스트 프레임(레코드만큼 번갈아)", font=NOTO, leading=LEAD_S, align="justify", auto="")
+    st += slot("번호+문장+해석", label="데이터 필드 — 번호+문장+해석")
+    st += [slot_style("문장", "분석 문장"), slot_style("해석", "분석 해석")]
+    st += [S("번호 — 다음 필드(문장)와 같은 단락 · 문자 스타일 「번호 배지」 · 인라인 고정 텍스트 프레임(남색 칠 · 모퉁이 0.5mm · 인세트 0.45mm)", 1300)]
+    st += slot_inline("번호", cs="번호 배지", sep=" ")
+    st += color_p("slot_fmt.번호.frame.fill", "#426893") + [P_("slot_fmt.번호.frame.r", 0.5), P_("slot_fmt.번호.frame.inset", 0.45)]
+    st += [S("윗주 기본값 — 글꼴 휴먼범석체 7pt 남색 · 위 · 아래 오프셋 Y · 가운데", 1200),
+           pick_p("ruby.font", "휴먼범석체"), P_("ruby.size", 7)] + color_p("ruby.color", "#132961") + [
+           P_("ruby.oy_above", oy_a), P_("ruby.oy_below", oy_b), pick_p("ruby.align", "center"),
            S("옆 메모 — GRAMMAR POINT 칸(x 125.3 · 폭 40.2mm) · 「메모」 · 행간 3.5mm", 1200),
            F('#side input[data-a="side.x"]', 125.3), F('#side input[data-a="side.w"]', 40.2), F('#side input[data-a="side.off"]', off_m),
            F('#side input[data-a="side.lead"]', round(klead / MM, 2)),
@@ -485,11 +475,10 @@ def spread(lp):
     Eslot([s for s in sp if 50 < s["base"] < 168 and s["x"] < 112 and 7.0 < s["size"] < 7.6], label="발문+문제지문+선지")
     qtop = round(top_of(min(s["base"] for s in qrows), 7.5, NOTO, 400, QL), 2)
     st += text(25.03, qtop, 85.9, round(168.5 - qtop, 1), "다음 글의 임시 발문은?\nTemporary passage text for styling.\n① choice one\n② choice two", 7.5, "#231f20",
-               label="문제 — 발문+문제지문+선지 한 글상자", font=NOTO, leading=QL)
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
-    st += slot("발문+문제지문+선지", label="자리 — 발문+문제지문+선지")
+               label="문제 — 발문+문제지문+선지 한 텍스트 프레임", font=NOTO, leading=QL, auto="")
+    st += slot("발문+문제지문+선지", label="데이터 필드 — 발문+문제지문+선지")
     for n, sty in (("발문", "문제 발문"), ("문제지문", "문제 지문"), ("선지", "문제 선지")):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{n}.style"]', "value": sty}, "wait": 600})
+        st.append(slot_style(n, sty))
     s_ans = next(s for s in sp if s["text"].startswith("답:"))
     st += T(s_ans, NOTO, 400, label="답 — 원고 자리 「답」 (오른쪽 맞춤)", slot_name="답", temp="답: ⑤", align="right", w=30)
     # 기출 포인트 — 이름표 · 꺾인 상자 · 그림자 선 · 체크 칸 10 · 이름 10
@@ -530,26 +519,23 @@ def spread(lp):
     vrows = [s for s in sp if abs(s["size"] - 7.0) < 0.05 and s["base"] > 210]
     Eslot(vrows, label="어휘")
     vtop = round(top_of(min(s["base"] for s in vrows), 7.0, NOTO, 400, VL), 2)
-    st += text(23.0, vtop, 168.0, round(14 * 4.47, 2), "word\t뜻\nword\t뜻", 7.0, "#231f20", label="어휘 — 원고 자리 「어휘」 (3단 · 탭)", font=NOTO, leading=VL)
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700},
-           {"clickif": {"at": "#side details.more > summary", "when": "!document.querySelector('#side details.more').open"}, "wait": 700},
-           F('#side input[data-a="tabspec"]', "28 left"), F('#side input[data-a="columns"]', 3, 900), F('#side input[data-a="gutter"]', 0, 700)]   # 첫 단부터 채우기는 인디자인 기본(「단 균형 맞추기」 끔) — 따로 안 누른다
-    st += slot("어휘", label="자리 — 어휘(줄마다 「낱말<탭>뜻」)")
+    st += text(23.0, vtop, 168.0, round(14 * 4.47, 2), "word\t뜻\nword\t뜻", 7.0, "#231f20", label="어휘 — 데이터 필드 「어휘」 (3단 · 탭 정지)", font=NOTO, leading=VL, auto="")
+    st += [{"js": "(() => { document.querySelectorAll('#side details.more').forEach(d => d.open = true); return '단락 칸 펼침'; })()"},
+           P_("tabs", "28 left"), P_("columns", 3, 900), P_("gutter", 0, 700)]   # 텍스트 프레임 옵션 단 개수 · 간격. 첫 단부터 채우기는 인디자인 기본(「단 균형 맞추기」 끔)
+    st += slot("어휘", label="데이터 필드 — 어휘(줄마다 「낱말<탭>뜻」)")
     # 꼬리 — 「7강  분석」 = 강+회차(오른쪽 맞춤) · 쪽 번호
     st += [S("꼬리 — 강+회차 · 쪽 번호", 1000)]
     st += need_pstyle("꼬리 글", {"font": EL, "weight": 700, "size": 6.0, "leading": 8.0, "color": "#231f20", "align": "right"})
     s_f = next(s for s in sp if s["base"] > 280 and "강" in s["text"])
-    gap = round(face(EL, 700)[2]("  ") * 6.0 * MM, 2)                    # 「7강」 뒤 빈칸 둘
     E({"id": f"f{len(ELEMS[len(PAGES)])}", "x": round(s_f["x"], 2), "y": round(s_f["base"] - 1.8, 2), "w": round(s_f["x1"] - s_f["x"], 2), "h": 2.2,
        "color": "#231f20", "see": "#231f20", "ctol": 24, "pad": 0.6, "search": 0.6, "text": s_f["text"], "size": 6.0, "원고": True})
     st += T(dict(s_f), EL, 700, label="꼬리 — 강+회차 한 줄(오른쪽 맞춤)", slot_name="강+회차", temp="00강  회차", align="right", w=40, leading=8.0, measure=False)
-    st += [{"pick": {"at": '#side select[data-a="slotfmt.강.style"]', "value": "꼬리 글"}, "wait": 600},
-           {"pick": {"at": '#side select[data-a="slotfmt.회차.style"]', "value": "꼬리 글"}, "wait": 600},
-           {"click": '#side input[data-a="slotfmt.강.inline"]', "wait": 700}, F('#side input[data-a="slotfmt.강.inline_gap"]', gap)]
+    st += [slot_style("강", "꼬리 글"), slot_style("회차", "꼬리 글")]
+    st += slot_inline("강", sep="\u2002")                                # 「7강」 뒤 엔 공백(^>) — 원본 빈칸 둘 폭
     st += T(next(s for s in sp if s["base"] > 280 and s["text"] == str(rp)), EL, 700, label="쪽 번호 — 시스템 자리(오른쪽 맞춤)", bind="sys.page_no", align="right")
     st += done("분석 펼침면 오른쪽", f"p{rp}.png")
     # 견본 원고 한 벌 — 원본 이 펼침면에서 읽은 것(바깥 시스템이 보낼 꼴)
-    rec = {"강": s_k["text"], "회차": s_r["text"], "지문제목": s_t["text"], "문장+해석": left(REF_PATH, lp)}
+    rec = {"강": s_k["text"], "회차": s_r["text"], "지문제목": s_t["text"], "번호+문장+해석": left(REF_PATH, lp)}
     rec.update(right(REF_PATH, rp))
     CONTENT.setdefault("분석 펼침면", []).append(rec)
     return st

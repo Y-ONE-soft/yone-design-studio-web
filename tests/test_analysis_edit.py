@@ -22,10 +22,10 @@ def test_render_and_doc_roundtrip(client):
     assert client.get(f"/analysis-edit?design={DESIGN}").status_code == 200
     assert client.get("/analysis-edit?design=nope").status_code == 400
     r = client.post("/analysis-edit/render", json={"design": DESIGN, "doc": doc}).get_json()
-    assert len(r["svgs"]) == 2 and r["rec"]["문장+해석"]
+    assert len(r["svgs"]) == 2 and r["rec"]["번호+문장+해석"]
     rec = r["rec"]
     d = client.post("/analysis-edit/doc", json={"rec": rec, "base": doc}).get_json()
     assert d == {"doc": doc, "changed": []}
-    rec["문장+해석"][0]["해석"] = "고친 해석"
+    rec["번호+문장+해석"][0]["해석"] = "고친 해석"
     d = client.post("/analysis-edit/doc", json={"rec": rec, "base": doc}).get_json()
     assert d["changed"] == [f"해석 {doc['sentences'][0]['no']}"] and d["doc"]["sentences"][0]["ko"] == "고친 해석"

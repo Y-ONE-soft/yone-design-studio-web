@@ -292,7 +292,7 @@ def test_text_atom_paragraph_and_frame_options(lib):
     assert store.validate("parts", part) is None
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib)
     frag, _h = render.part_svg(ctx, part)
-    assert "white-space:normal;letter-spacing:0.0500em" in frag
+    assert "letter-spacing:0.0500em" in frag and "clip-path:inset(" in frag            # 자간 · 넘친 글만 자르기(위로는 첫 줄 글자를 그린다)
     assert frag.count("<p ") == 2 and "padding-left:4.000px;padding-right:1.000px;text-indent:-4.000px;" in frag
     assert "margin-top:1.500px" in frag                                   # 단락 사이 = 앞 단락 뒤 공백 0.5 + 이 단락 앞 공백 1(인디자인은 더한다)
     assert "padding:1.000px 2.000px 1.000px 2.000px" in frag and "justify-content:center" in frag
@@ -1303,3 +1303,24 @@ def test_ruby_font_size_offsets_one_ruby(lib):
     S = 9 * render.PT
     assert f"font-size:{5 * render.PT:.3f}px" in one and "left:0.500px" in one and f"bottom:{1.2 + 0.88 * S:.3f}px" in one   # 오프셋 Y = 본문 글자 상자 위 끝에서
     assert "font-size:50%" in plain and "left:0.000px" in plain and f"bottom:{0.88 * S:.3f}px" in plain
+
+
+def test_indesign_values_pass_schema(lib):
+    """편집기의 인디자인 칸 값이 저장 검사(스키마)를 통과한다 — 막히면 화면에서 바꾼 값이 저장되지 않는다(2026-10-14 자동 크기 「너비만」 · 고정 개체 글 · 윗주 값)"""
+    from core.units import store
+    pg = dict(lib["pages"][0])
+    a = {"t": "text", "x": 0, "y": 0, "w": 50, "h": 10, "size": 9, "font": "$body", "bind": "번호+문장",
+         "align": "justify_all", "valign": "justify", "auto_size": "width", "auto_ref": "b",
+         "table": {"cols": 3, "stroke": {"w": 6, "color": "#ffffff"}},
+         "ruby": {"font": "휴먼범석체", "size": 7, "color": "#132961", "oy_above": -0.5, "oy_below": 0.9, "align": "right"},
+         "slot_fmt": {"번호": {"inline": True, "sep": " ", "cs": "번호", "frame": {"fill": "#426893", "r": 0.5, "inset": 0.45}}},
+         "fbo": {"type": "cap", "min": 1}, "tabs": [{"at": 30, "align": "right", "leader": "."}],
+         "list": {"type": "bullet", "char": "=", "after": " "},
+         "text": [{"t": "가", "anc": {"text": "메모", "pos": "custom", "x": 3, "y": -1, "xref": "frame", "yref": "baseline"}},
+                  {"t": "나", "ruby": {"t": "S", "pos": "below", "align": "center", "oy": 0.5, "font": "휴먼범석체", "size": 6, "color": "#d2232a"}},
+                  {"t": "다", "anc": {"part": "p1", "pos": "above", "align": "center", "before": 1, "after": 1}}]}
+    pg["items"] = [{"x": 10, "y": 10, "atom": a}]
+    assert store.validate("pages", pg) is None, store.validate("pages", pg)
+    sk = dict(lib["skins"][0])
+    sk["styles"] = dict(sk.get("styles") or {}, 시험={"align": "justify_center", "list": {"type": "number", "format": "①"}, "shade_ot": 1})
+    assert store.validate("skins", sk) is None, store.validate("skins", sk)

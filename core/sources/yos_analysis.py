@@ -201,9 +201,9 @@ def sentence_runs(tagged, marks, refs=None):
     return norm_runs(runs)
 
 
-def runs_sentence(runs):
+def runs_sentence(runs, lead_no=False):
     """꾸밈 조각(지면에서 고친 문장) → (태깅본, 역할 마크, 문법 포인트, 지칭어) — sentence_runs 의 반대.
-    번호(맨 앞 「3 」)와 옆 메모는 문장 밖으로 뗀다. 원래 정체 칸(raw · src · rl)이 글과 맞으면 그대로 살리고, 고친 곳은 새로 짓는다."""
+    옆 메모는 문장 밖으로 뗀다. lead_no = 옛 템플릿(번호가 문장 맨 앞 「3 」) — 그 번호도 뗀다. 원래 정체 칸(raw · src · rl)이 글과 맞으면 그대로 살리고, 고친 곳은 새로 짓는다."""
     gps, body = [], []
     for r in runs or []:
         r = {"t": r} if isinstance(r, str) else dict(r)
@@ -211,8 +211,8 @@ def runs_sentence(runs):
             gps += [re.sub(r"^\*\s?", "", ln).strip() for ln in str(r["side"]).split("\n") if ln.strip()]
             continue
         body.append(r)
-    lead = ""                                                            # 맨 앞 번호 떼기 — 꾸밈 없는 앞 글들에서
-    while body and set(body[0]) == {"t"} and len(lead) < 6:
+    lead = ""                                                            # 맨 앞 번호 떼기 — 꾸밈 없는 앞 글들에서(옛 템플릿)
+    while lead_no and body and set(body[0]) == {"t"} and len(lead) < 6:
         lead += body.pop(0)["t"]
     m = re.match(r"\s*\d+\s", lead)
     if m:
@@ -338,21 +338,24 @@ def _key_fields(kq):
     return [{"발문": _underlined(kq.get("q") or ""), "문제지문": _underlined(passage), "선지": _underlined(choices)}], ans
 
 
+ROWS = "번호+문장+해석"          # 문장 묶음 데이터 필드 — 번호는 따로(템플릿이 같은 단락 앞에 인라인 고정 텍스트 프레임으로)
+
+
 def record(doc):
     """조판 문서 하나 → 「분석 펼침면」 레코드"""
     meta, title = doc.get("meta") or {}, doc.get("title") or {}
     rows = []
     for s in doc.get("sentences") or []:
-        runs = [f"{s.get('no')} "] + sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs"))
+        runs = sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs"))
         gps = [g.strip() for g in s.get("gps") or [] if str(g).strip()]
         if gps:
             runs = [{"t": "", "side": "\n".join(("* " + g) if not g.startswith("*") else g for g in gps)}] + runs
         runs = norm_runs(runs)
-        rows.append({"문장": runs, "해석": s.get("ko") or "", "_h": _hash(runs)})
+        rows.append({"번호": str(s.get("no") or ""), "문장": runs, "해석": s.get("ko") or "", "_h": _hash(runs)})
     src, ko = meta.get("source") or "", title.get("ko") or meta.get("subject") or title.get("en") or ""
     rec = {"강": short_lesson(meta.get("title") or ""), "회차": "분석",
            "지문제목": " · ".join(x for x in (src, ko) if x),
-           "문장+해석": rows, "주제": doc.get("topic") or "", "요약": doc.get("summary") or ""}
+           ROWS: rows, "주제": doc.get("topic") or "", "요약": doc.get("summary") or ""}
     kq = doc.get("keyQuestion")
     if kq:
         rec["발문+문제지문+선지"], rec["답"] = _key_fields(kq)
@@ -382,7 +385,8 @@ def to_doc(rec, base):
     """지면에서 고친 「분석 펼침면」 레코드 → 조판 문서. base = 보냈던 원래 문서(지면에 없는 칸 — 쪽번호·머리글·그림·기출 포인트 … 은 그대로).
     → (문서, 고친 칸 이름 목록)"""
     doc, changed = copy.deepcopy(base), []
-    rows = rec.get("문장+해석") or []
+    old = ROWS not in rec and "문장+해석" in rec                       # 옛 템플릿(번호가 문장 안)
+    rows = rec.get(ROWS) or rec.get("문장+해석") or []
     sents = doc.get("sentences") or []
     for i, s in enumerate(sents):
         if i >= len(rows):
@@ -390,7 +394,7 @@ def to_doc(rec, base):
         row = rows[i]
         runs = norm_runs(row.get("문장") or [])
         if _hash(runs) != row.get("_h"):                                # 지문이 다르다 — 고쳤거나 편집기가 조각을 달리 나눴다
-            tagged, marks, gps, refs = runs_sentence(runs)
+            tagged, marks, gps, refs = runs_sentence(runs, lead_no=old)
             shown = _ref_words(sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs")))
             now = {(w, v) for w, v in _refs(refs)}
             orig = [r for r in s.get("refs") or [] if _refs([r])]         # 원래 지칭어 글은 그대로 — 지면에 안 걸렸던 것(낱말이 없거나 위 태그가 있음)도

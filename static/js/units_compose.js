@@ -153,12 +153,12 @@
     return side === "L" ? b.left - tsMargin(c, "L") * k : b.right + tsMargin(c, "R") * k;
   }
 
-  const shadeOf = (p) => [...p.children].find(e => e.dataset.shade) || null;   // 단락 음영(렌더러 _slot_para) — 글 뒤에 깔린 빈 칸, 줄 · 글자로 세지 않는다
+  const shadeOf = (p) => [...p.children].filter(e => e.dataset.shade);   // 단락 음영 · 단락 테두리(렌더러 _para) — 글 뒤에 깔린 빈 칸(둘 다 있으면 둘), 줄 · 글자로 세지 않는다
   const lineEls = (p) => [...p.children].filter(e => !e.dataset.shade);
   function compose(p) {
     const sh = shadeOf(p);
-    if (sh) sh.remove();
-    try { compose0(p); } finally { if (sh) p.insertBefore(sh, p.firstChild); }
+    sh.forEach(x => x.remove());
+    try { compose0(p); } finally { sh.reverse().forEach(x => p.insertBefore(x, p.firstChild)); }
   }
   function compose0(p) {
     if (p.dataset.jcDone) return;
@@ -415,13 +415,12 @@
       if (getComputedStyle(p).display === "list-item") p2.style.listStyleType = "none";
       if (p.style.borderBottomStyle) { p.style.borderBottom = "none"; p.style.paddingBottom = "0"; }   // 아래 경계선은 단락 끝(뒷부분)에만
       p2.dataset.storyCont = "1";
-      const sh = shadeOf(p);
-      if (sh) {                                                        // 단락 음영도 두 상자에 — 앞부분은 아래 오프셋 · 아래 선 없이, 뒷부분은 위 오프셋 · 위 선 없이
+      shadeOf(p).reverse().forEach(sh => {                              // 단락 음영 · 테두리도 두 상자에 — 앞부분은 아래 오프셋 · 아래 선 없이, 뒷부분은 위 오프셋 · 위 선 없이
         const s2 = sh.cloneNode(false);
         Object.assign(s2.style, {top: "0px", borderTop: "none", borderTopLeftRadius: "0px", borderTopRightRadius: "0px"});
         Object.assign(sh.style, {bottom: "0px", borderBottom: "none", borderBottomLeftRadius: "0px", borderBottomRightRadius: "0px"});
         p2.insertBefore(s2, p2.firstChild);
-      }
+      });
       return [p2, ...rest];
     }
     return rest.length ? rest : null;
@@ -445,7 +444,7 @@
         if (!p.dataset.jcDone) return;
         const lines = lineEls(p), sh = shadeOf(p);
         p.textContent = "";
-        if (sh) p.appendChild(sh);
+        sh.forEach(x => p.appendChild(x));
         lines.forEach((s, i) => { if (i) p.appendChild(document.createTextNode(" ")); while (s.firstChild) p.appendChild(s.firstChild); });
         delete p.dataset.jcDone;
         try { compose(p); } catch (e) { /* 브라우저 줄바꿈 */ }

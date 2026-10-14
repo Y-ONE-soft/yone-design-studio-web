@@ -429,6 +429,9 @@ def ruby_html(base, rb, a, ctx, plain=None):
     rb = {t, pos: above | below, align: left | center | right, ox, oy(mm), font, size(pt), color} — 없는 값은 텍스트 프레임의 윗주 기본값(a.ruby).
     오프셋 Y = 본문 글자 상자(전각 상자: 기준선 위 0.88em · 아래 0.12em) 바깥 끝에서 윗주까지, 바깥이 +."""
     d = (a or {}).get("ruby") or {}
+    if rb.get("cs") and ctx:                                            # 원고가 문자 스타일 이름을 준 윗주(서술형★) — 그 스타일의 글꼴 · 크기 · 색상을 이 윗주 값으로
+        cs = (ctx.skin.get("cstyles") or {}).get(rb["cs"]) or {}
+        rb = dict({k: cs[k] for k in ("font", "size", "color") if cs.get(k) is not None}, **rb)
     g = lambda k, dv=None: rb.get(k) if rb.get(k) is not None else d.get(k, dv)
     pos = "below" if rb.get("pos") == "below" else "above"
     bsz = float((a or {}).get("size") or 9) * PT
@@ -534,6 +537,18 @@ def grep_html(html, rules, ctx=None):
             out.append(esc(raw[k:]))
         html = "".join(out)
     return html
+
+
+FIXED_SPACES = {"\u2003": 1.0, "\u2002": 0.5, "\u2004": 1 / 3, "\u2005": 0.25, "\u2006": 1 / 6, "\u2009": 0.125, "\u200a": 1 / 24}   # 엠 · 엔 · 1/3 · 1/4 · 1/6 · 가는 · 아주 가는 공백
+
+
+def fixed_spaces(html):
+    """인디자인 고정 폭 공백 — 글꼴 글리프가 아니라 정해진 em 폭(엠 1 · 엔 1/2 · 가는 1/8 · 아주 가는 1/24 …)"""
+    if not any(c in html for c in FIXED_SPACES):
+        return html
+    return "".join(p if p.startswith("<") else re.sub("[" + "".join(FIXED_SPACES) + "]",
+                                                       lambda m: f'<span style="display:inline-block;width:{FIXED_SPACES[m.group(0)]:.4f}em"></span>', p)
+                   for p in _TAG.split(html))
 
 
 def keep_spaces(html):
@@ -988,7 +1003,7 @@ def _tab_html(stops, para, start=0.0, indent=None):
             open_ = [start, seg]
             continue
         if al == "left" and not leader:                           # 왼쪽 탭 — 글이 탭 자리에서 시작한다(인디자인). 앞 조각을 그 자리까지 넓힌다
-            out += f'<span style="display:inline-block;min-width:{max(at - open_[0], 0):.3f}px">{open_[1]}</span>'
+            out += f'<span style="display:inline-block;text-indent:0;min-width:{max(at - open_[0], 0):.3f}px">{open_[1]}</span>'   # 칸 안은 들여쓰기 없이(단락의 첫 줄 들여쓰기는 칸 자리에 이미 들었다)
             open_ = [at, seg]
             continue
         if open_ is not None:
@@ -1001,7 +1016,7 @@ def _tab_html(stops, para, start=0.0, indent=None):
         if leader:
             lead = (f'<span style="flex:1;overflow:hidden;white-space:nowrap">'
                     + (esc(leader) * 80) + "</span>")
-        out += (f'<span style="display:inline-flex;min-width:{w:.3f}px;justify-content:{just};align-items:baseline">'
+        out += (f'<span style="display:inline-flex;text-indent:0;min-width:{w:.3f}px;justify-content:{just};align-items:baseline">'
                 f'{lead}<span>{seg}</span></span>')
     if open_ is not None:                                         # 끝 조각
         out += f'<span>{open_[1]}</span>'
@@ -1255,7 +1270,7 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
     if spec and "\u2028" not in x:                                    # 강제 줄 바꿈이 있으면 나뉜 조각마다(soft_breaks)
         attrs += f' data-jc="{spec}"'
     fm = a.get("slot_fmt") or {}
-    x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="text-indent:0;{(ctx.cstyle_css(fm[m.group(1)]["cs"]) if (ctx and (fm.get(m.group(1)) or {}).get("cs")) else "")}">', x)
+    x = _PSI_RE.sub(lambda m: f'<span data-psi="{m.group(1)}" style="text-indent:0;{_psi_css(fm.get(m.group(1)) or {}, ctx)}">', x)
     lt = _list_text(st, ctx, a) if st.get("list") else ""
     if lt:                                                             # 글머리 기호 및 번호 매기기 — 같은 단락에 이어 쓰는 필드(번호) 뒤에
         m = _PS_LEAD_RE.search(x)
@@ -1273,7 +1288,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
                 if o:
                     al = {"center": "center", "right": "right"}.get(anc.get("align"), "left")
                     line = (f'<p style="margin:0;padding-top:{float(anc.get("before") or 0):.3f}px;padding-bottom:{float(anc.get("after") or 0):.3f}px;'
-                            f'line-height:0;text-align:{al};text-indent:0;padding-left:{float(anc["x"]) if anc.get("x") is not None else ind:.3f}px;padding-right:{ind_r:.3f}px">'
+                            f'line-height:0;{f"height:{o[2]:.3f}px;box-sizing:content-box;" if o[2] else ""}text-align:{al};text-indent:0;'   # 줄 높이 = 개체 높이(글자 받침 자리를 더하지 않는다)
+                            f'padding-left:{float(anc["x"]) if anc.get("x") is not None else ind:.3f}px;padding-right:{ind_r:.3f}px">'
                             f'<span style="display:inline-block">{o[0]}</span></p>')
                     if at_start:
                         before_p = line
@@ -1289,6 +1305,21 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
     if "\t" in x:                                                      # 탭 — 탭 정지(단락 값) · 숨은 정지(첫 줄 내어쓰기) · 기본 탭 정지
         x = _tab_html(st.get("tabs"), x, ind + indf, ind if indf < 0 else None) or x
     return before_p + f'<p style="{css}"{attrs}>{deco}{soft_breaks(x, just, spec) or "&#160;"}</p>' + after_p
+
+
+def _psi_css(f, ctx):
+    """같은 단락에 이어 쓰는 필드의 글자 — 문자 스타일, 고정 텍스트 프레임에 넣었으면(인디자인 인라인 고정 텍스트 프레임) 칠 · 모퉁이 크기 · 인세트"""
+    css = (ctx.cstyle_css(f["cs"]) if (ctx and f.get("cs")) else "")
+    fr = f.get("frame") or {}
+    if fr.get("fill") or fr.get("stroke"):
+        ins = [float(v) for v in (fr.get("inset") if isinstance(fr.get("inset"), list) else [fr.get("inset") or 0] * 4)]
+        css += (f"display:inline-block;line-height:1;padding:{ins[0]:.3f}px {ins[1]:.3f}px {ins[2]:.3f}px {ins[3]:.3f}px;"
+                f"background:{ctx.color(fr['fill']) if (ctx and fr.get('fill')) else fr.get('fill') or 'transparent'};")
+        if fr.get("r"):
+            css += f"border-radius:{float(fr['r']):.3f}px;"
+        if fr.get("y"):
+            css += f"vertical-align:{float(fr['y']):.3f}px;"           # 인라인 고정 개체 Y 오프셋 — 위가 +
+    return css
 
 
 def _paras_html(a, html, ctx=None):
@@ -1343,9 +1374,9 @@ def _text_html(a, html, h, ctx=None):
             start, step, top = a["_snap"]
             b0 = top + it + sh + nat
             sh += start + math.ceil((b0 - start) / step - 0.001) * step - b0
-    if abs(sh) > 0.0005:
-        inner = f'<div style="margin-top:{sh:.3f}px">{inner}</div>'
     cols = int(a.get("columns") or 1)
+    if abs(sh) > 0.0005 and cols <= 1:
+        inner = f'<div style="margin-top:{sh:.3f}px">{inner}</div>'     # 여러 단이면 단 묶음째 옮긴다(아래) — 단마다 첫 줄이 같은 기준선
     box = f"height:{h:.3f}px;box-sizing:border-box;padding:{it:.3f}px {ir:.3f}px {ib:.3f}px {il:.3f}px;display:flow-root;"
     fr, mode = a.get("frame") or {}, auto_size(a)
     if fr and mode != "off" and not a.get("story"):                   # 글 잇기 상자는 높이를 지킨다(넘친 줄을 다음 상자로)
@@ -1365,8 +1396,9 @@ def _text_html(a, html, h, ctx=None):
         rule = ""
         if cr and cr.get("w"):
             rule = f";column-rule:{float(cr['w']) * PT:.3f}px solid {(ctx.color(cr.get('color'), '#000000') if ctx else (cr.get('color') or '#000000'))}"
-        fill = "column-fill:balance" if a.get("col_balance") else f"column-fill:auto;height:{max(h - it - ib, 1):.3f}px"   # 인디자인 기본 = 첫 단부터 상자 높이까지, 「단 균형 맞추기」를 켜면 단마다 같은 양(옛 col_seq 는 기본과 같다)
-        inner = f'<div style="column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;{fill}{rule}">{inner}</div>'
+        mt = sh if abs(sh) > 0.0005 else 0.0
+        fill = "column-fill:balance" if a.get("col_balance") else f"column-fill:auto;height:{max(h - it - ib - mt, 1):.3f}px"   # 인디자인 기본 = 첫 단부터 상자 높이까지, 「단 균형 맞추기」를 켜면 단마다 같은 양(옛 col_seq 는 기본과 같다)
+        inner = f'<div style="{f"margin-top:{mt:.3f}px;" if mt else ""}column-count:{cols};column-gap:{float(a.get("gutter") or 0):.3f}px;{fill}{rule}">{inner}</div>'
     hs, vs = float(a.get("h_scale") or 100), float(a.get("v_scale") or 100)
     if hs != 100 or vs != 100:                                   # 장평 — 글자는 늘리고 상자 폭은 지킨다
         inner = (f'<div style="width:{float(a["w"]) * 100.0 / hs:.3f}px;transform:scale({hs / 100.0:.4f},{vs / 100.0:.4f});'
@@ -1396,7 +1428,7 @@ def _table_html(a, html, ctx=None):
         shadow = f"box-shadow:0 0 0 {sw / 2:.3f}px {sc};" if sw else ""
         cells.append(f'<div data-cell="{k}" style="{bg}{shadow}padding:{t:.3f}px {r:.3f}px {b:.3f}px {l:.3f}px;box-sizing:border-box;min-width:0;'
                      f'{f"min-height:{rh:.3f}px;" if rh else ""}">{body}</div>')
-    return (f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:{sw:.3f}px">'
+    return (f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:{sw:.3f}px{";clip-path:inset(0)" if sw else ""}">'   # 셀 사이 획만(표 바깥 테두리는 없다 — 바깥으로 나간 반쪽 획은 자른다)
             + "".join(cells) + "</div>")
 
 
@@ -1807,7 +1839,7 @@ def part_svg(ctx, part, values=None, types=None, width=None):
                 plains[i] = ""
                 continue
         html, plain = _text_content(ctx, a, values, types)
-        html = ko_glyphs(keep_spaces(grep_html(html, a.get("grep"), ctx)), a, ctx)
+        html = ko_glyphs(keep_spaces(fixed_spaces(grep_html(html, a.get("grep"), ctx))), a, ctx)
         content[i] = html
         plains[i] = plain
         if a.get("story"):                                             # 첫 상자 — 자라지 않는다(넘침은 이어지는 상자가 받는다)
@@ -1963,12 +1995,13 @@ def _atom_svg_raw(ctx, a, dy, h, html):
                 a = dict(a, leading=lead / PT, _snap=(start, step, off + a["y"] + dy))   # 첫 줄 기준선을 격자 줄에(_text_html)
         style = (f"margin:0;font-family:{esc(ctx.font(a.get('font')))};font-size:{a['size'] * PT:.3f}px;"
                  f"line-height:{lead:.3f}px;color:{ctx.color(a.get('color'))};{align_css(a.get('align') or 'left')}"
-                 f"overflow-x:visible;overflow-y:clip;word-break:break-word;white-space:normal")   # 옆으로는 상자 밖까지(줄 끝 공백 밑줄이 단 끝을 넘는다 — 인디자인), 아래로는 자른다
+                 f"word-break:break-word;white-space:normal")
         dm = 0.0                                                               # 단락 음영 · 테두리가 프레임 밖으로 나가는 만큼은 자르지 않는다(인디자인 — 「프레임에 클립」 꺼짐)
         for st_ in [a] + [slot_style(a, f, ctx) for f in (a.get("slot_fmt") or {})]:
             dm = max([dm] + [float(st_.get(k) or 0) for k in ("shade_ot", "shade_ob", "border_ot", "border_ob")])
-        if dm:
-            style += f";overflow-clip-margin:{dm + 0.5:.3f}px"
+        # 넘친 글만 자른다(아래 끝) — 위로는 첫 줄 글자가 프레임 위로 나와도 그린다(인디자인 — 첫 번째 기준선 「어센트」는 「d」 높이라 한글 · 대문자 윗부분이 위 끝을 넘는다),
+        # 옆으로는 상자 밖까지(줄 끝 공백 밑줄이 단 끝을 넘는다). 단락 음영 · 테두리가 프레임 밖으로 나가는 만큼은 아래도 자르지 않는다(「프레임에 클립」 꺼짐)
+        style += f";overflow:visible;clip-path:inset({-(a['size'] * PT + dm + 0.5):.3f}px -100000px {-(dm + 0.5) if dm else 0:.3f}px -100000px)"
         if a.get("tracking"):
             style += f";letter-spacing:{float(a['tracking']) / 1000.0:.4f}em"
             # 브라우저는 자간이 있으면 합자·문맥 대체 글자를 끈다 — 인디자인은 자간을 줘도 그대로 쓴다(fi 합자·영도체 이어지는 숫자)

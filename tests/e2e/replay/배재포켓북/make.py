@@ -99,34 +99,22 @@ def _brand_open():
 
 
 def need_pstyle(name, props, label=None):
-    """단락 스타일 — 브랜드 패널 「＋ 단락 스타일」 → 이름 → 칸마다"""
+    """단락 스타일 — 스타일 · 색상 견본 창 「＋ 새 단락 스타일」 → 이름 → 칸마다(단락 스타일 옵션)"""
     if ("p", name) in _DONE:
         return []
     _DONE.add(("p", name))
-    sel = lambda k: f'#sbody [data-st="{name}:{k}"]'
     st = [S(label or f"단락 스타일 「{name}」", 1200)] + _brand_open() + [{"answer": name}, {"click": "#st-new", "wait": 1300}]
-    for k, v in props.items():
-        if k in ("font", "weight", "align"):
-            st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 700})
-        else:
-            st.append(F(sel(k), v, 800))
+    st += pstyle_fields(name, props)
     return st + [{"click": "#sheet-x", "wait": 1200}]
 
 
 def need_cstyle(name, props, label=None):
-    """문자 스타일 — 브랜드 패널 「＋ 문자 스타일」 → 이름 → 칸마다. 체크 칸(b·i·u)은 누른다"""
+    """문자 스타일 — 스타일 · 색상 견본 창 「＋ 새 문자 스타일」 → 이름 → 칸마다(문자 스타일 옵션)"""
     if ("c", name) in _DONE:
         return []
     _DONE.add(("c", name))
-    sel = lambda k: f'#sbody [data-cs="{name}:{k}"]'
     st = [S(label or f"문자 스타일 「{name}」", 1200)] + _brand_open() + [{"answer": name}, {"click": "#cs-new", "wait": 1300}]
-    for k, v in props.items():
-        if k in ("b", "i", "u"):
-            st.append({"click": sel(k), "wait": 800})
-        elif k in ("font", "weight", "u_style"):
-            st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 700})
-        else:
-            st.append(F(sel(k), v, 800))
+    st += cstyle_fields(name, props)
     return st + [{"click": "#sheet-x", "wait": 1200}]
 
 
@@ -202,7 +190,7 @@ def first(kind, gubun):
 # ── 문자 스타일 — 원본에서 잰 값(원고_뽑기 의 cs 이름과 같다) ──
 CS = {
     "빨강 글자": {"color": "#d2232a"}, "파랑 글자": {"color": "#214e8e"},
-    # 형광 = 글 뒤 가로 띠 — 원본 띠: 기준선 위 2.55mm ~ 아래 0.63mm(두께 3.18 · 가운데가 기준선 위 0.96mm)
+    # 형광 = 굵은 밑줄 — 원본 띠: 기준선 위 2.55mm ~ 아래 0.63mm(두께 3.18 · 가운데가 기준선 위 0.96mm) → 밑줄 옵션 두께 · 오프셋 · 색상(mkpage.cstyle_id)
     "형광 노랑": {"bg": "#fffdee", "bg_band": 3.18, "bg_off": 0.96}, "형광 분홍": {"bg": "#faf7f9", "bg_band": 3.18, "bg_off": 0.96},
     "형광 주황": {"bg": "#fff7f3", "bg_band": 3.18, "bg_off": 0.96}, "형광 민트": {"bg": "#f1f8f6", "bg_band": 3.18, "bg_off": 0.96},
     # 분홍 물결 — 원본 선: 기준선 아래 0.74 ~ 1.16mm, 굵기 0.55pt(0.19mm)
@@ -234,9 +222,11 @@ def analysis(pno, gubun, cs_name, pic=False):
     lpad, rpad = round(s_src["x"] - tag["x"], 2), round(tag["x"] + tag["w"] - s_src["x1"], 2)
     st += T(dict(s_src, base=s_src["base"]), YD, 400, label="출처 — 원고 자리 「출처」 (꼬리표 = 글상자 칠 · 글 길이만큼)", slot_name="출처", temp="출처 이름",
             w=round(W_MM - 15 - tag["x"], 1), leading=TL, measure=False)
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "both"}, "wait": 700},
-           F('#side input[data-it="x"]', round(tag["x"], 2))]                # 칠은 상자 가장자리에 — 상자 = 꼬리표 왼쪽 끝, 글은 안쪽 여백만큼 안
-    st += _color("frame.fill", tag["fill"]) + [F('#side input[data-a="frame.radius"]', 1.0), F('#side input[data-a="inset4"]', f"0 {rpad} 0 {lpad}")]
+    from core.units import render as _render
+    tpad = round(s_src["base"] - tag["y"] - _render.font_metrics(YD, 400)["d"] * s_src["size"] * MM, 2)   # 첫 번째 기준선(어센트)이 원본 기준선에 오게 인세트 위쪽
+    st += [pick_p("auto_size", "width"), F('#side input[data-a="h"]', round(tag["h"], 2)),
+           F('#side input[data-it="x"]', round(tag["x"], 2)), F('#side input[data-it="y"]', round(tag["y"], 2))]   # 프레임 = 꼬리표(칠은 프레임 가장자리) · 글 길이만큼 너비만 자란다
+    st += _color("frame.fill", tag["fill"]) + [F('#side input[data-a="frame.radius"]', 1.0), F('#side input[data-a="inset4"]', f"{tpad} {rpad} 0 {lpad}")]
     # 지문 — 한 글상자. 단락 스타일 「분석 지문」(Noto Sans CJK KR 9pt · 양끝맞춤), 꾸밈은 조각의 문자 스타일, 문장 성분 · 서술형★ 은 윗주
     ln = next(e for e in el if e["k"] == "rect" and abs(e["w"] - 115) < 1 and e["h"] < 0.5 and e["y"] > 140)   # TRANSLATION 구분선(삽화 면은 더 위)
     lim = ln["y"] - 2
@@ -251,7 +241,7 @@ def analysis(pno, gubun, cs_name, pic=False):
     ptop = round(top_of(rows[0], 9.0, NOTO, 400, LEAD), 2)
     st += text(15.0, ptop, 115.0, round(lim - ptop, 1), "Temporary passage text for styling the analysis page.", 9.0, "#000000",
                label="지문 — 한 글상자(원고만큼)", font=NOTO, leading=LEAD, align="justify")
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+    st += [pick_p("auto_size", "")]
     st += slot("지문", label="자리 — 지문(꾸밈 조각)")
     st += [{"pick": {"at": '#side select[data-a="style"]', "value": "분석 지문"}, "wait": 700}]
     # 윗주 기본값 — 원본 회색 표기의 기준선이 지문 기준선에서 얼마나 떨어졌나(가운데 값)
@@ -261,12 +251,13 @@ def analysis(pno, gubun, cs_name, pic=False):
                    and not (any(r < m["base"] for r in rows) and m["base"] - max(r for r in rows if r < m["base"]) < 5))
     ha, hd, _ = face(HUM, 400)
     sl = 7 * MM
-    off_b = round(below[len(below) // 2] - ((sl - (ha + hd) * sl) / 2 + ha * sl), 2) if below else 0.6
-    off_a = round(above[len(above) // 2] - ((sl - (ha + hd) * sl) / 2 + hd * sl), 2) if above else 0.4
-    st += [S(f"윗주 기본값 — 「구문 표기」 · 위 {off_a} · 아래 {off_b}mm · 본문 가운데", 1200),
-           {"pick": {"at": '#side select[data-a="ruby.cs"]', "value": "구문 표기"}, "wait": 700},
-           F('#side input[data-a="ruby.off_above"]', off_a), F('#side input[data-a="ruby.off_below"]', off_b),
-           {"pick": {"at": '#side select[data-a="ruby.align"]', "value": "center"}, "wait": 700}]
+    bs = 9.0 * MM                                                        # 윗주 오프셋 Y = 본문 글자 상자(기준선 위 0.88em · 아래 0.12em) 끝에서 윗주 글 상자까지
+    oy_b = round((below[len(below) // 2] - ((sl - (ha + hd) * sl) / 2 + ha * sl) if below else 0.6) - 0.12 * bs, 2)
+    oy_a = round((above[len(above) // 2] - ((sl - (ha + hd) * sl) / 2 + hd * sl) if above else 0.4) - 0.88 * bs, 2)
+    rb = CS["구문 표기"]
+    st += [S(f"윗주 기본값 — 글꼴 {rb['font']} {rb['size']}pt · 위 {oy_a} · 아래 {oy_b}mm · 가운데", 1200),
+           pick_p("ruby.font", rb["font"]), P_("ruby.size", rb["size"])] + color_p("ruby.color", rb["color"]) + [
+           P_("ruby.oy_above", oy_a), P_("ruby.oy_below", oy_b), pick_p("ruby.align", "center")]
     # TRANSLATION — 구분선 · 꼬리표 칸 · 이름표(고정)
     st += [S("TRANSLATION — 구분선 · 꼬리표", 1000)]
     st += rbox(ln["x"], ln["y"], ln["w"], ln["h"], ln["fill"])
@@ -300,7 +291,7 @@ def analysis(pno, gubun, cs_name, pic=False):
     tx = round(min(s["x"] for s in tsp), 2)                             # 삽화 면은 그림 오른쪽(74mm)부터
     # 아래 끝 199mm(아래 띠 위) — 편집기는 한글을 어절에서만 줄 바꿈해(원본은 글자 단위) 같은 원고가 한 줄 길어질 수 있다(단락 컴포저 전까지)
     st += text(tx, ttop, round(130.0 - tx, 1), round(199.0 - ttop, 1), "임시 해석 글이 이 칸에 들어온다.", 5.9, "#4d4d4d", label="해석 — 한 글상자", font=PRE, leading=TLD, align="justify")
-    st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+    st += [pick_p("auto_size", "")]
     st += slot("해석", label="자리 — 해석")
     st += [{"pick": {"at": '#side select[data-a="style"]', "value": "분석 해석"}, "wait": 700}]
     # 꼬리 — 쪽 번호(남색 · 시스템 자리) · 책 이름(원고 자리 「책이름」)
@@ -377,19 +368,20 @@ def memorize(pno, gubun):
         LEAD = round(lead / MM, 2)
         last = line_of([s for s in sp if s["size"] == 9.0], rows[-1])
         st += need_pstyle("암기 지문", {"font": NOTO, "weight": 400, "size": 9.0, "leading": LEAD, "color": "#000000", "align": "justify",
-                                     "tracking": track_of(dict(last, size=9.0), NOTO, 400) if side == "정답" else 0})
+                                     "tracking": track_of(dict(last, size=9.0), NOTO, 400) if side == "정답" else 0,
+                                     # 균등 배치 — 이 출판사 책 공통 범위(단어 100 · 133%, 문자 −8 · 250‰). 원본 첫 줄은 문자 간격을 −7‰ 줄여 「has an」까지 넣었다(줄 자간 실측)
+                                     "jc": {"word_min": 100, "word_max": 133, "letter_min": -8, "letter_max": 250}})
         body = [s for s in sp if s["size"] in (9.0, 5.5) and 22 < s["base"] < 195]
         Eslot(body, "#000000", label="암기지문")
         x0 = min(s["x"] for s in body if s["size"] == 9.0)
         top = round(top_of(rows[0], 9.0, NOTO, 400, LEAD), 2)
         st += text(round(x0, 2), top, round(fr["x"] + fr["w"] - 4.0 - x0, 1), round(fr["y"] + fr["h"] - 2 - top, 1), "Temporary passage with 1[blank] answers.", 9.0, "#000000",
                    label=f"암기지문 — 한 글상자 ({side})", font=NOTO, leading=LEAD, align="justify")
-        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+        st += [pick_p("auto_size", "")]
         st += slot("암기지문", label="자리 — 암기지문(「번호[답]」)")
         st += [{"pick": {"at": '#side select[data-a="style"]', "value": "암기 지문"}, "wait": 700}]
-        st += grep(0, r"\d+(?=\[)", bold=False, label="GREP — 빈칸 앞 번호는 「빈칸 번호」") + [{"pick": {"at": '#side select[data-a="grep.0.cs"]', "value": "빈칸 번호"}, "wait": 700}]
-        st += grep(1, r"(?<=\[)[^\]]+(?=\])", bold=False, label=f"GREP — 대괄호 안 답은 「{'빈칸' if side == 'TEST' else '정답'}」") + \
-            [{"pick": {"at": '#side select[data-a="grep.1.cs"]', "value": "빈칸" if side == "TEST" else "정답"}, "wait": 700}]
+        st += grep(0, r"\d+(?=\[)", "빈칸 번호", label="GREP 스타일 — 빈칸 앞 번호에 「빈칸 번호」")
+        st += grep(1, r"(?<=\[)[^\]]+(?=\])", "빈칸" if side == "TEST" else "정답", label=f"GREP 스타일 — 대괄호 안 답에 「{'빈칸' if side == 'TEST' else '정답'}」")
         # 꼬리 — 왼쪽: 쪽 번호 · POCKET BOOK(고정) / 오른쪽: 옆 탭(구분) · 단원 · 쪽 번호
         st += [S("꼬리", 1000)]
         s_no = next(s for s in sp if s["base"] > 190 and s["text"] == str(rp))
@@ -472,7 +464,8 @@ def cover(pno, name):
         s0 = next(s for s in sp if s["text"].startswith(word.rstrip(".")))
         x1 = max(s["x1"] for s in sp if abs(s["base"] - s0["base"]) < 0.3 and s["size"] == s0["size"])
         st += T(dict(s0, size=34.0, text=word, x1=x1), BODONI, 400, label=f"{word} — Bodoni Moda 34pt · 광학 크기 24", opsz=24)
-        st += [F('#side input[data-a="opsz"]', 24, 800)]                 # 원본 글자 모양 = 광학 크기 24(겹침 0.90 — 브라우저 자동은 34)
+        st += [{"js": "(() => { document.querySelectorAll('#side details.more').forEach(d => d.open = true); return '칸 펼침'; })()"},
+               P_("opsz", 24, 800)]                                     # 원본 글자 모양 = 광학 크기 24(겹침 0.90 — 브라우저 자동은 34)
         ELEMS[len(PAGES)][-1].update(ctol=BODONI_CTOL)
     box = next(e for e in el if e["k"] == "path" and abs(e["y"] - 177.6) < 0.5)
     st += rframe(box, box["stroke"], 1.1, label="학교 칸 — 테두리 · 모서리 1.1mm")
@@ -582,6 +575,7 @@ def flownote(pno, gubun):
     n = len(cards)
     face_name = f"FLOWNOTE · {gubun} · {n}칸"
     st = pg_new(pno, f"③ {face_name} — 원본 {pno}쪽", name=face_name)
+    st += need_cstyle("주황 화살표", {"color": "#f39857"}) + need_cstyle("파랑 꼬리표", {"color": "#0067b4"})   # GREP 스타일이 쓴다
     if n == 4:                                                           # 2×2 — 흐름 칸 차례는 왼쪽 단 위 → 아래, 오른쪽 단(① ② / ③ ④)
         st += columns(2, 4.0, label="여백 및 단 — 2단(흐름 칸 넷을 왼쪽 단 위→아래, 다음 단 차례로 받는다)")
     band = BAND[gubun]
@@ -638,13 +632,13 @@ def flownote(pno, gubun):
         top = round(top_of(t_base, 7.0, JAL, 400, TLD), 2)
         top = round(top + (c["y"] - cards[0]["y"]), 2)
         st += text(x0, top, round(c["w"] - 4.2, 1), round(c["y"] + c["h"] - 1.0 - top, 1), "흐름 제목\n흐름 글 임시", 9.5, "#000000",
-                   label=f"흐름 칸 {k + 1} 글상자 — 자리 「흐름제목+흐름글」(칸마다 단계 하나)", font=KCC, weight=700, leading=BL)
-        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+                   label=f"흐름 칸 {k + 1} 텍스트 프레임 — 데이터 필드 「흐름제목+흐름글」(칸마다 단계 하나)", font=KCC, weight=700, leading=BL,
+                   first=(JAL, 400, 7.0, TLD))
+        st += [pick_p("auto_size", "")]
         st += slot("흐름제목+흐름글")
-        st += [{"pick": {"at": '#side select[data-a="slotfmt.흐름제목.style"]', "value": "흐름 제목"}, "wait": 700},
-               {"pick": {"at": '#side select[data-a="slotfmt.흐름글.style"]', "value": "흐름 글"}, "wait": 700}]
-        st += grep(0, r"^→", color="#f39857", bold=False, label="GREP — 줄 앞 「→」 주황")
-        st += grep(1, r"\[[^\]]*\]", color="#0067b4", bold=False, label="GREP — 「[꼬리표]」 파랑")
+        st += [slot_style("흐름제목", "흐름 제목"), slot_style("흐름글", "흐름 글")]
+        st += grep(0, r"^→", "주황 화살표", label="GREP 스타일 — 줄 앞 「→」에 「주황 화살표」")
+        st += grep(1, r"\[[^\]]*\]", "파랑 꼬리표", label="GREP 스타일 — 「[꼬리표]」에 「파랑 꼬리표」")
     # 칸 사이 화살표 — 원본 경로 그대로, 흐름 칸 위에(원본 차례)
     for d in [d for d in dr if d["fill"] == "#b9c1a6" and d["y"] > area["y"] and d["y"] < area["y"] + area["h"] and d["w"] < 12]:
         st += ref_shape(d, fill=d["fill"], label="화살표 — 원본 경로")
@@ -673,7 +667,7 @@ def flownote(pno, gubun):
     for nm, base, h in (("주제", srows[0], round(SL * MM * 1.05, 1)), ("요약문", srows[1], round(sbg["y"] + sbg["h"] - 0.5 - top_of(srows[1], 8.0, NOTO, 400, SL), 1))):
         y0 = round(top_of(base, 8.0, NOTO, 400, SL), 2)
         st += text(tx, y0, round(sbg["x"] + sbg["w"] - 2.0 - tx, 1), h, f"{nm} 임시 글", 8.0, "#000000", label=f"{nm} — 원고 자리 「{nm}」", font=NOTO, leading=SL, align="justify")
-        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "off"}, "wait": 700}]
+        st += [pick_p("auto_size", "")]
         st += slot(nm) + [{"pick": {"at": '#side select[data-a="style"]', "value": "노트 글"}, "wait": 700}]
     # 동반의어 — 둥근 테두리 · 머리(흰 바탕 · 주사위 아이콘 · 점 둘 · 글) · 카드 표(원고 수만큼 칸, 3열 · 열마다 색)
     st += [S("동반의어 — 테두리 · 머리", 1000)]
@@ -704,22 +698,25 @@ def flownote(pno, gubun):
     mean = min((s for s in vsp if s["color"] == "#000000" and abs(s["base"] - vrows[0]) < 0.2 and s["x"] > word["x1"]), key=lambda s: s["x"])
     il = round(word["x"] - vc[0]["x"], 2)
     it_ = round(top_of(vrows[0], 7.0, NOTO, 400, VL) - vc[0]["y"], 2)
-    st += need_pstyle("동반의어 동의어", {"font": NOTO, "weight": 400, "size": 7.0, "leading": VL, "color": "#214e8e"})
-    st += need_pstyle("동반의어 반의어", {"font": NOTO, "weight": 400, "size": 7.0, "leading": VL, "color": "#e14e6b"})
+    st += need_pstyle("동반의어 동의어", {"font": NOTO, "weight": 400, "size": 7.0, "leading": VL, "color": "#214e8e",
+                                     "list": {"type": "bullet", "char": "=", "after": " "}})      # 「= 」 — 글머리 기호 문자 · 텍스트 뒤 공백
+    st += need_pstyle("동반의어 반의어", {"font": NOTO, "weight": 400, "size": 7.0, "leading": VL, "color": "#e14e6b",
+                                     "list": {"type": "bullet", "char": "↔", "after": " "}})
     tw = round(vc[2]["x"] + vc[2]["w"] - vc[0]["x"], 2)
     st += text(vc[0]["x"], vc[0]["y"], tw, round(vc[0]["h"], 1), "낱말 뜻\n= 동의어\n↔ 반의어", 7.0, "#000000",
                label="동반의어 카드 — 표 글상자 · 자리 「낱말+뜻+동의어+반의어」(항목 하나가 한 칸)", font=NOTO, leading=VL)
+    st += [F('#side input[data-it="y"]', vc[0]["y"], 550)]               # 표 — 칸 글 자리는 셀 인세트로(프레임 = 첫 줄 칸 위 끝)
     st += slot("낱말+뜻+동의어+반의어")
-    st += [S(f"표 — 3열 · 칸 색 {', '.join(fills)} · 칸 사이 {gx}/{gy}mm · 칸 여백 · 줄 최소 {vc[0]['h']}mm", 1300),
-           F('#side input[data-a="table.cols"]', 3, 900), F('#side input[data-a="table.gap_x"]', gx, 700), F('#side input[data-a="table.gap_y"]', gy, 700),
+    sw = max(gx, gy)                                                     # 칸 사이 = 셀 획(흰색) 두께
+    st += [S(f"표 — 3열 · 열 칠 {', '.join(fills)} · 셀 획 흰색 {sw}mm · 셀 인세트 · 행 높이 최소 {vc[0]['h']}mm", 1300),
+           F('#side input[data-a="table.cols"]', 3, 900), P_("table.stroke.w", round(sw / MM, 3), 700)] + color_p("table.stroke.color", "#ffffff") + [
            F('#side input[data-a="table.inset"]', f"{it_},{il},0,{il}", 700), F('#side input[data-a="table.row_h"]', round(vc[0]["h"], 2), 700),
            F('#side input[data-a="table.fills"]', ", ".join(fills), 800)]
-    st += [{"click": '#side input[data-a="slotfmt.낱말.inline"]', "wait": 800},
-           F('#side input[data-a="slotfmt.낱말.inline_gap"]', round(mean["x"] - word["x1"], 2), 700),
-           {"pick": {"at": '#side select[data-a="slotfmt.동의어.style"]', "value": "동반의어 동의어"}, "wait": 700},
-           F('#side input[data-a="slotfmt.동의어.bullet_text"]', "= ", 700),
-           {"pick": {"at": '#side select[data-a="slotfmt.반의어.style"]', "value": "동반의어 반의어"}, "wait": 700},
-           F('#side input[data-a="slotfmt.반의어.bullet_text"]', "↔ ", 700)]
+    gap = mean["x"] - word["x1"]                                         # 낱말 뒤 — 원본 간격에 가장 가까운 공백 문자(인디자인 특수 문자)
+    em = 7.0 * MM
+    sep = min((("\u2003", 1.0), ("\u2002", 0.5), (" ", space_em(NOTO, 400)), ("\u2009", 0.125), ("\u200a", 1 / 24)), key=lambda c: abs(c[1] * em - gap))[0]
+    st += slot_inline("낱말", sep=sep)
+    st += [slot_style("동의어", "동반의어 동의어"), slot_style("반의어", "동반의어 반의어")]
     # 옆 탭 · 꼬리 — 암기 정답 면과 같은 꼴
     st += [S("옆 탭 · 꼬리", 1000)]
     stab = next(e for e in el if e["k"] == "path" and abs(e["x"] - 139.0) < 0.5 and e["w"] > 10)

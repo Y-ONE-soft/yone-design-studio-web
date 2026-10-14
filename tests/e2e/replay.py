@@ -266,7 +266,7 @@ def deco_check(new_ids, state):
                 continue
             gap = lambda b: (max(0, b["x0"] - s["x1"], s["x0"] - b["x1"]) ** 2 + max(0, b["y0"] - s["y1"], s["y0"] - b["y1"]) ** 2) ** 0.5
             o = min(bodys, key=lambda b: (round(gap(b), 1), abs(b["by"] - s["by"])), default=None)
-            over = [b for b in bodys if b["x0"] < s["x1"] and b["x1"] > s["x0"] and abs(b["by"] - s["by"]) <= 3.5]
+            over = [b for b in bodys if b["x0"] < s["x1"] + 0.05 and b["x1"] > s["x0"] - 0.05 and abs(b["by"] - s["by"]) <= 3.5]   # 맞닿음(틈 0)도 붙은 것 — 원본은 커닝으로 0.06mm 겹치고 결과는 딱 닿아 번호를 놓쳤다(2026-10-15 포켓북 암기)
             if o and over:                                                # 주인 글자에 붙은 작은 글만 — 바로 위아래(3.5mm 안)에 가로로 겹치는 본문 글이 있다(윗주 · 위첨자 번호 · 구문 표기).
                 d[s["t"]].append(s["by"] - o["by"])                       # 제 줄로 따로 선 작은 글(지문 끝 오른쪽 맞춤 주석)은 주인 글자가 없다 — 원고 판정(들어갔나)으로
         return d

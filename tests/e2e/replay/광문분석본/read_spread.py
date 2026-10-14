@@ -169,7 +169,7 @@ def left(pdf, pno):
                         if not any(r.get("cs") == "서술형" for r in ruby.get(w[0], [])):
                             ruby.setdefault(w[0], []).append({"t": "서술형★", "pos": "above", "cs": "서술형"})
         # 조각 — 낱말 표기가 있으면 그 낱말을 한 조각으로, 나머지는 꾸밈이 같은 글자끼리
-        runs = [s["no"] + " "] if s["no"] else []
+        runs = []                                                        # 번호는 따로 필드(번호)
         k = 0
         while k < len(chars):
             w = next((w for w in words if w[0] == k), None)
@@ -194,7 +194,7 @@ def left(pdf, pno):
                 runs.append({"t": c["c"], "cs": cs} if cs else c["c"])
             k += 1
         # 한 조각에 꾸밈이 둘 이상(색 + 형광)이면 첫 꾸밈만 남는다 — 형광을 밖으로: 색 글자는 그대로, 형광 띠 구간은 형광 문자 스타일로
-        out.append({"문장": runs, "해석": "", "_b0": lines_b[0], "_b1": lines_b[-1]})
+        out.append({"번호": s["no"], "문장": runs, "해석": "", "_b0": lines_b[0], "_b1": lines_b[-1]})
     # 해석 — 문장 사이 6.3pt 줄들
     trs = _lines(tr)
     for o_, nx in zip(out, out[1:] + [None]):
