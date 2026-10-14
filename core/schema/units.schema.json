@@ -464,10 +464,10 @@
       "properties": {
         "page_start": {"type": "integer", "minimum": 1, "description": "쪽 번호 시작 — 문서 첫 쪽의 쪽 번호(인디자인 페이지 번호 시작). 없으면 1"},
         "id": {"$ref": "#/definitions/id"}, "name": {"type": "string"},
-        "content": {"type": "object", "description": "넣어 둔 원고 — {자리 이름: 글 | [글…]}. 틀(자리·임시 글·스타일)에 넣으면 임시 글 대신 나온다 (core/units/content.py). 흐름 자리(「번호+발문+…」)는 [문항…] — 문항 = [[자리, 글], …] (문항 안 차례) 또는 {자리: 글}. 「원고마다」 묶음의 첫 쪽 이름은 [레코드…] — 레코드 = {자리: 글 | [글…] | [문항…]} 하나가 묶음 한 벌 (content.plan_pages)",
+        "content": {"type": "object", "description": "넣어 둔 원고 — {자리 이름: 글 | [글…]}. 틀(자리·임시 글·스타일)에 넣으면 임시 글 대신 나온다 (core/units/content.py). 흐름 자리(「번호+발문+…」)는 [문항…] — 문항 = [[자리, 글 또는 꾸밈 조각 목록], …] (문항 안 차례) 또는 {자리: 글}. 「원고마다」 묶음의 첫 쪽 이름은 [레코드…] — 레코드 = {자리: 글 | [글…] | [문항…]} 하나가 묶음 한 벌 (content.plan_pages)",
                     "additionalProperties": {"oneOf": [{"type": "string"}, {"type": "array", "items": {"oneOf": [
                       {"type": "string"},
-                      {"type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "string"}}},
+                      {"type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": ["string", "array"]}}},
                       {"type": "object", "additionalProperties": {"type": ["string", "array"]}}]}}]}},
         "map": {"type": "object", "additionalProperties": {"$ref": "#/definitions/id"},
                 "description": "원고 연결표 — {원고 유형 이름 또는 원고 쪽 블록 id: 이 문서에서 쓸 블록 id}. 코드에 박아 두던 매칭표를 문서에 둔다",

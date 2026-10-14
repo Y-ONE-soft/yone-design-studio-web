@@ -1,0 +1,11607 @@
+[
+{
+"say": "＋ 새 문서",
+"wait": 1300
+},
+{
+"answer": "광문 스텝업 분석본 (편집기 제작)"
+},
+{
+"click": "#pcards .pcard.new",
+"wait": 5000
+},
+{
+"until": "docPages().length > 0 && page",
+"wait": 500
+},
+{
+"clickif": {
+"at": "#tg-side",
+"when": "!document.querySelector('#side') || !document.querySelector('#side').offsetParent"
+},
+"wait": 1000
+},
+{
+"js": "(() => { const k = docPages().length; if (k !== 1) throw new Error('시작 쪽 수가 1 이 아니라 ' + k); return '시작 쪽 1 확인'; })()",
+"wait": 500
+},
+{
+"say": "① 간지 — 원본 1쪽",
+"wait": 1300
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 700
+},
+{
+"fill": {
+"at": "#side #s-pname",
+"value": "간지"
+},
+"wait": 900
+},
+{
+"say": "바탕 — 재단 여백까지",
+"wait": 1200
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 216
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 303
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": -3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": -3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#f9f7ed"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 216
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 303
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": -3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": -3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#f6f2e9"
+},
+"wait": 750
+},
+{
+"say": "왼쪽 위 대각 면 — 흰색 불투명 55%",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 0 L0 1 L1 0 Z"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 125.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 90.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": -3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": -3
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"opacity\"]",
+"value": 55
+},
+"wait": 420
+},
+{
+"say": "오른쪽 아래 대각 면 — 회색 불투명 60%",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L1 1 L1 0 Z"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 94.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 66.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 118.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 233.5
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#dfe1e3"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"opacity\"]",
+"value": 60
+},
+"wait": 420
+},
+{
+"say": "오른쪽 위 탭 — 왼쪽 둥근 띠",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+261.1
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 68.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 11.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 151.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 13.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#3e4c5a"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 5.55
+},
+"wait": 420
+},
+{
+"say": "문자 스타일 「연도 굵게」 — 학교 자리의 앞 연도만 굵게",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "연도 굵게"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-cs=\"연도 굵게:weight\"]",
+"value": "700"
+},
+"wait": 700
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "학교 — 원고 자리 「학교」 (연도는 GREP → 「연도 굵게」)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+163.8,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+141.9,
+254.5
+]
+},
+"value": "0000 학교 이름",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 13.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": 27
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 43.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 6.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 161.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 15.73
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "학교"
+},
+"wait": 800
+},
+{
+"say": "GREP — 앞 네 자리 연도",
+"wait": 1700
+},
+{
+"click": "#side #s-grep-add",
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"grep.0.re\"]",
+"value": "^\\d{4}"
+},
+"wait": 700
+},
+{
+"click": "#side input[data-a=\"grep.0.b\"]",
+"wait": 500
+},
+{
+"pick": {
+"at": "#side select[data-a=\"grep.0.cs\"]",
+"value": "연도 굵게"
+},
+"wait": 700
+},
+{
+"say": "STEP UP — 원본 윤곽 그림(step_up.svg)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "image",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+159.6,
+254.1
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 39.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 58.2
+},
+"wait": 420
+},
+{
+"upload": {
+"at": "#side #img-file",
+"path": "/Users/juwoongkim/work/y-one/y.os-design-ref/yone-design-studio-web/.claude/worktrees/pocketbook-editor-template/tests/e2e/replay/광문분석본/step_up.svg"
+},
+"wait": 2500
+},
+{
+"say": "스텝업 분석본 — 원본 윤곽 그림(stepup_ko.svg)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "image",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+142.9,
+253.9
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 22.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 70.5
+},
+"wait": 420
+},
+{
+"upload": {
+"at": "#side #img-file",
+"path": "/Users/juwoongkim/work/y-one/y.os-design-ref/yone-design-studio-web/.claude/worktrees/pocketbook-editor-template/tests/e2e/replay/광문분석본/stepup_ko.svg"
+},
+"wait": 2500
+},
+{
+"say": "제목 아래 선 — 가는 선",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+166.06,
+250.26
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 46.06
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.26
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 66.09
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#aca49a"
+},
+"wait": 750
+},
+{
+"say": "제목 아래 선 — 굵은 남색",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+134.03,
+251.32
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 14.03
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 1.32
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 66.09
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#3e4c5a"
+},
+"wait": 750
+},
+{
+"say": "권 번호 원 — 바깥(남색)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "ellipse",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+153.35,
+283.62
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 33.35
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 33.62
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 89.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 172.15
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#3e4c5a"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 1.5
+},
+"wait": 420
+},
+{
+"say": "권 번호 원 — 안(금색)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "ellipse",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+146.74,
+276.74
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 26.74
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 26.74
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 93.22
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 175.72
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#c59e71"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.74
+},
+"wait": 420
+},
+{
+"say": "서체 등록 — 글상자를 그려 고른 채 「＋ 서체」(MyriadPro-BoldIt.otf) → 등록 뒤 그 글상자는 지운다",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144.0,
+259.0
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "서체",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 9
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 24.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 9.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 20.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 3.0
+},
+"wait": 550
+},
+{
+"upload": {
+"at": "#side #font-file",
+"path": "/Users/juwoongkim/Library/Fonts/MyriadPro-BoldIt.otf"
+},
+"wait": 2500
+},
+{
+"click": "#side #s-x",
+"wait": 900
+},
+{
+"say": "권 번호 — 원고 자리 「권번호」 (Myriad Pro 굵은 기울임, 원 가운데)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+267.9
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+258.95
+]
+},
+"value": "0",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 34.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"align\"]",
+"value": "center"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Myriad Pro"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#5d667b"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 24
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 17.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 94.58
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 181.35
+},
+"wait": 550
+},
+{
+"click": "#side input[data-a=\"i\"]",
+"wait": 500
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "권번호"
+},
+"wait": 800
+},
+{
+"say": "단락 스타일 「교재명」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "교재명"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"교재명:font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"교재명:weight\"]",
+"value": "700"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"교재명:size\"]",
+"value": 16.0
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"교재명:leading\"]",
+"value": 24.98
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"교재명:color\"]",
+"value": "#3e4f66"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"교재명:align\"]",
+"value": "center"
+},
+"wait": 700
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "단락 스타일 「강제목」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "강제목"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"강제목:font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"강제목:weight\"]",
+"value": "500"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"강제목:size\"]",
+"value": 14.0
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"강제목:leading\"]",
+"value": 24.98
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"강제목:color\"]",
+"value": "#373d41"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"강제목:align\"]",
+"value": "center"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"강제목:space_after\"]",
+"value": 4.54
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "교재명 + 강제목 — 한 글상자에 번갈아 흐른다(쌍 수는 원고만큼)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+274
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+262.0
+]
+},
+"value": "교재 이름\n00강 강 제목",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 16.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 24.98
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"align\"]",
+"value": "center"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#3e4f66"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 120
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 59.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 46.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 210.42
+},
+"wait": 550
+},
+{
+"say": "자리 — 교재명+강제목 (원고의 쌍 차례대로)",
+"wait": 1700
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "교재명+강제목"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.교재명.style\"]",
+"value": "교재명"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.강제목.style\"]",
+"value": "강제목"
+},
+"wait": 600
+},
+{
+"say": "아래 색 막대 셋",
+"wait": 1000
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+127.15,
+252.38
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 7.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.38
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 280.24
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#80a2be"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+127.15,
+252.38
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 7.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.38
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 30.35
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 280.24
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#c59e71"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+127.15,
+252.38
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 7.15
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.38
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 38.56
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 280.24
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#b47a74"
+},
+"wait": 750
+},
+{
+"say": "간지 완성",
+"wait": 2000
+},
+{
+"js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+"wait": 300
+},
+{
+"js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"
+},
+{
+"shot": "p1.png",
+"wait": 700
+},
+{
+"hide": true,
+"wait": 500
+},
+{
+"say": "② 분석 펼침면 — 원본 2쪽 (왼쪽 · 문장 분석)",
+"wait": 1700
+},
+{
+"clickif": {
+"at": "#tg-strip",
+"when": "!view.strip"
+},
+"wait": 1100
+},
+{
+"click": "#rail .addpg",
+"wait": 900
+},
+{
+"click": "#rail .addpg .menu [data-new=\"blank\"]",
+"wait": 2800
+},
+{
+"js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"
+},
+{
+"say": "② 분석 펼침면 — 원본 2쪽 (왼쪽 · 문장 분석)",
+"wait": 1300
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 700
+},
+{
+"fill": {
+"at": "#side #s-pname",
+"value": "분석 펼침면"
+},
+"wait": 900
+},
+{
+"pick": {
+"at": "#side #s-rep",
+"value": "each_set"
+},
+"wait": 1200
+},
+{
+"say": "서체 등록 — 글상자를 그려 고른 채 「＋ 서체」(SKYBORI.otf) → 등록 뒤 그 글상자는 지운다",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144.0,
+259.0
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "서체",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 9
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 24.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 9.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 20.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 3.0
+},
+"wait": 550
+},
+{
+"upload": {
+"at": "#side #font-file",
+"path": "/Users/juwoongkim/Library/Fonts/SKYBORI.otf"
+},
+"wait": 2500
+},
+{
+"click": "#side #s-x",
+"wait": 900
+},
+{
+"say": "문자 스타일 「번호 배지」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "번호 배지"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-cs=\"번호 배지:font\"]",
+"value": "Jalnan OTF"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"번호 배지:size\"]",
+"value": 9
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"번호 배지:color\"]",
+"value": "#ffffff"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"번호 배지:bg\"]",
+"value": "#426893"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"번호 배지:bg_pad\"]",
+"value": 0.45
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"번호 배지:bg_r\"]",
+"value": 0.5
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「파랑 글자」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "파랑 글자"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"파랑 글자:color\"]",
+"value": "#224e8e"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「빨강 글자」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "빨강 글자"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"빨강 글자:color\"]",
+"value": "#d2232a"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「형광 민트」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "형광 민트"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 민트:bg\"]",
+"value": "#ceeae0"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 민트:bg_band\"]",
+"value": 3.17
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 민트:bg_off\"]",
+"value": 1.05
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「형광 노랑」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "형광 노랑"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 노랑:bg\"]",
+"value": "#fef9c1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 노랑:bg_band\"]",
+"value": 3.17
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 노랑:bg_off\"]",
+"value": 1.05
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「형광 보라」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "형광 보라"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 보라:bg\"]",
+"value": "#dbd4ea"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 보라:bg_band\"]",
+"value": 3.17
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"형광 보라:bg_off\"]",
+"value": 1.05
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「밑줄」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "밑줄"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"click": "#sbody [data-cs=\"밑줄:u\"]",
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"밑줄:line\"]",
+"value": 0.16
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"밑줄:line_off\"]",
+"value": 0.4
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「빨강 물결」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "빨강 물결"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"click": "#sbody [data-cs=\"빨강 물결:u\"]",
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-cs=\"빨강 물결:u_style\"]",
+"value": "wavy"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"빨강 물결:line\"]",
+"value": 0.18
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"빨강 물결:line_off\"]",
+"value": 0.9
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"빨강 물결:line_color\"]",
+"value": "#d2232a"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「구문 표기」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "구문 표기"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-cs=\"구문 표기:font\"]",
+"value": "휴먼범석체"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"구문 표기:size\"]",
+"value": 7
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"구문 표기:color\"]",
+"value": "#132961"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「서술형」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "서술형"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-cs=\"서술형:font\"]",
+"value": "휴먼범석체"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"서술형:size\"]",
+"value": 6
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"서술형:color\"]",
+"value": "#d2232a"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「메모」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "메모"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-cs=\"메모:font\"]",
+"value": "SKYBORI"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"메모:size\"]",
+"value": 6.96
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"메모:color\"]",
+"value": "#231f20"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「포인트 연한」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "포인트 연한"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"포인트 연한:color\"]",
+"value": "#a7bcbc"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문자 스타일 「기출문제 회색」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "기출문제 회색"
+},
+{
+"click": "#cs-new",
+"wait": 1300
+},
+{
+"fill": {
+"at": "#sbody [data-cs=\"기출문제 회색:color\"]",
+"value": "#7c8193"
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "머리 — 크림 띠 · 선",
+"wait": 1200
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+271.0
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 213.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 21.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": -3.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": -3.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#f9f7ed"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.21
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 213.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.21
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": -3.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 17.895
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"say": "남색 탭 — 위 두 모서리 둥글게(6.65mm)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+263.36
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 86.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 13.36
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 8.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 4.75
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#3e4f66"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius4\"]",
+"value": "6.65, 6.65, 0, 0"
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+120.18,
+255.6
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 5.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 52.19
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 9.01
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"say": "강 — 원고 자리 「강」",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259.7
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.85
+]
+},
+"value": "00강",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 18.32
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -24
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 20.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 9.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 26.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 7.18
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "강"
+},
+"wait": 800
+},
+{
+"say": "회차 — 원고 자리 「회차」",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "회차",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 12.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -25
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 15.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 6.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 56.28
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 8.65
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "회차"
+},
+"wait": 800
+},
+{
+"say": "지문 제목 — 원고 자리 「지문제목」",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+254.5
+]
+},
+"value": "지문 제목",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 8.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -43
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 100
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 97.17
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 10.53
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "지문제목"
+},
+"wait": 800
+},
+{
+"say": "GRAMMAR POINT 타원",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "ellipse",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+152.4,
+256.4
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 32.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 6.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 144.08
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 22.41
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#759b9b"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.709
+},
+"wait": 420
+},
+{
+"say": "GRAMMAR POINT — 한 글상자",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+157.3,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+138.65,
+254.5
+]
+},
+"value": "GRAMMAR POINT",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.58
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -22
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#759b9b"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 37.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 147.08
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 23.68
+},
+"wait": 550
+},
+{
+"say": "POINT 만 연한 청록 — 고치기 창에서 골라 문자 스타일",
+"wait": 1700
+},
+{
+"dbl": {
+"mm": [
+160.28,
+25.49
+]
+},
+"wait": 1200
+},
+{
+"select": {
+"text": "POINT"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#rt-cs",
+"value": "포인트 연한"
+},
+"wait": 900
+},
+{
+"click": {
+"mm": [
+205,
+294
+]
+},
+"wait": 1200
+},
+{
+"say": "세로 구분선",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+120.35,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 0.35
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 245.57
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 142.825
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 31.43
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#f9f7ed"
+},
+"wait": 750
+},
+{
+"say": "단락 스타일 「분석 문장」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "분석 문장"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"분석 문장:font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"분석 문장:weight\"]",
+"value": "400"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 문장:size\"]",
+"value": 8.95
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 문장:leading\"]",
+"value": 24.1
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 문장:color\"]",
+"value": "#231f20"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"분석 문장:align\"]",
+"value": "justify"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 문장:tracking\"]",
+"value": -13
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 문장:space_after\"]",
+"value": 1.99
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "단락 스타일 「분석 해석」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "분석 해석"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"분석 해석:font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"분석 해석:weight\"]",
+"value": "400"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 해석:size\"]",
+"value": 6.3
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 해석:leading\"]",
+"value": 12.19
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 해석:color\"]",
+"value": "#6d6e71"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"분석 해석:align\"]",
+"value": "justify"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 해석:tracking\"]",
+"value": -47
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"분석 해석:space_after\"]",
+"value": 2.01
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문장 + 해석 — 한 글상자(원고만큼 번갈아)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+274
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+262.0
+]
+},
+"value": "0 Temporary sentence for styling the analysis line.\n임시 해석이 이 줄에 들어온다.",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 8.95
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 24.1
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"align\"]",
+"value": "justify"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 115.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 248.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 28.64
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"auto_size\"]",
+"value": "off"
+},
+"wait": 700
+},
+{
+"say": "자리 — 문장+해석",
+"wait": 1700
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "문장+해석"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.문장.style\"]",
+"value": "분석 문장"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.해석.style\"]",
+"value": "분석 해석"
+},
+"wait": 600
+},
+{
+"say": "GREP — 문장 앞 번호는 「번호 배지」",
+"wait": 1700
+},
+{
+"click": "#side #s-grep-add",
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"grep.0.re\"]",
+"value": "^\\d{1,2}(?= )"
+},
+"wait": 700
+},
+{
+"click": "#side input[data-a=\"grep.0.b\"]",
+"wait": 500
+},
+{
+"pick": {
+"at": "#side select[data-a=\"grep.0.cs\"]",
+"value": "번호 배지"
+},
+"wait": 700
+},
+{
+"say": "윗주 기본값 — 「구문 표기」 · 위 · 아래 거리 · 본문 가운데",
+"wait": 1200
+},
+{
+"pick": {
+"at": "#side select[data-a=\"ruby.cs\"]",
+"value": "구문 표기"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"ruby.off_above\"]",
+"value": 2.26
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"ruby.off_below\"]",
+"value": 1.27
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"ruby.align\"]",
+"value": "center"
+},
+"wait": 700
+},
+{
+"say": "옆 메모 — GRAMMAR POINT 칸(x 125.3 · 폭 40.2mm) · 「메모」 · 행간 3.5mm",
+"wait": 1200
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.x\"]",
+"value": 125.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.w\"]",
+"value": 40.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.off\"]",
+"value": -3.23
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"side.lead\"]",
+"value": 9.92
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"side.cs\"]",
+"value": "메모"
+},
+"wait": 700
+},
+{
+"say": "꼬리 — 쪽 번호 · STEP UP",
+"wait": 1000
+},
+{
+"say": "쪽 번호 — 시스템 자리",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "2",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 4.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 15.23
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 283.47
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "sys.page_no"
+},
+"wait": 1000
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "STEP UP",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": 50
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 16.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 20.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 283.47
+},
+"wait": 550
+},
+{
+"say": "분석 펼침면 왼쪽 완성",
+"wait": 2000
+},
+{
+"js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+"wait": 300
+},
+{
+"js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"
+},
+{
+"shot": "p2.png",
+"wait": 700
+},
+{
+"hide": true,
+"wait": 500
+},
+{
+"say": "② 분석 펼침면 — 원본 3쪽 (오른쪽 · 문항 · VOCA)",
+"wait": 1700
+},
+{
+"clickif": {
+"at": "#tg-strip",
+"when": "!view.strip"
+},
+"wait": 1100
+},
+{
+"click": "#rail .addpg",
+"wait": 900
+},
+{
+"click": "#rail .addpg .menu [data-new=\"blank\"]",
+"wait": 2800
+},
+{
+"js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"
+},
+{
+"say": "② 분석 펼침면 — 원본 3쪽 (오른쪽 · 문항 · VOCA)",
+"wait": 1300
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 700
+},
+{
+"pick": {
+"at": "#side #s-rep",
+"value": "each_set"
+},
+"wait": 1200
+},
+{
+"say": "머리 — 크림 띠 · 선 · 꺾인 흰 면(폴더 탭)",
+"wait": 1300
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+271.0
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 216.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 21.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": -3.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": -3.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#f9f7ed"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.21
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 210.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.21
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 17.895
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"say": "꺾인 흰 면 — 원본 꼭짓점 · 테두리 0.21mm",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+260.4
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0.0206 0.0000 L0.0000 0.3846 L0.0000 1.0000 L1.0000 1.0000 L1.0000 0.0000 Z"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 194.62
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 10.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 18.51
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 14.24
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.595
+},
+"wait": 420
+},
+{
+"say": "흰 면 — 아래 테두리를 덮는다",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+258.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 194.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 8.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 18.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 18.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"say": "「주제」 둥근 이름표",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+129.5,
+253.88
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 9.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.88
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 20.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 1.4
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#7f82af"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "주제",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.88
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": 19
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 10.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 23.92
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 19.91
+},
+"wait": 550
+},
+{
+"say": "「요약」 둥근 이름표",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+129.5,
+253.88
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 9.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.88
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 25.47
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 1.4
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#cf9c75"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "요약",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.88
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": 19
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 10.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 23.95
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 25.38
+},
+"wait": 550
+},
+{
+"say": "주제 — 원고 자리 「주제」",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+254.5
+]
+},
+"value": "Topic of the passage",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 8.37
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -33
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 157.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 32.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 19.18
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "주제"
+},
+"wait": 800
+},
+{
+"say": "요약 — 원고 자리 「요약」 (길면 아래로)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+254.5
+]
+},
+"value": "Summary of the passage in one or two lines.",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 8.37
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 12.76
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -33
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 157.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 32.87
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 23.86
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "요약"
+},
+"wait": 800
+},
+{
+"say": "핵심기출문제 타원",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "ellipse",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+141.66,
+256.4
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 21.66
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 6.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 23.83
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 40.74
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#3e4f66"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.709
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "핵심기출문제",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.88
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -27
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#3e4f66"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 23.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 26.83
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 41.94
+},
+"wait": 550
+},
+{
+"say": "「기출문제」 만 회색",
+"wait": 1700
+},
+{
+"dbl": {
+"mm": [
+34.67,
+43.81
+]
+},
+"wait": 1200
+},
+{
+"select": {
+"text": "기출문제"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#rt-cs",
+"value": "기출문제 회색"
+},
+"wait": 900
+},
+{
+"click": {
+"mm": [
+205,
+294
+]
+},
+"wait": 1200
+},
+{
+"say": "NOTE 타원",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "ellipse",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144.31,
+256.4
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 24.31
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 6.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 119.17
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 40.74
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#cba56f"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.709
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "NOTE",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.58
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -26
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#cba56f"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 14.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 127.34
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 42.01
+},
+"wait": 550
+},
+{
+"say": "문제 상자 — 둥근 테",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 91.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 131.3
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 48.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 2.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"say": "NOTE 상자",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 72.49
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 131.35
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 117.42
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 48.19
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 2.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"say": "단락 스타일 「문제 발문」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "문제 발문"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 발문:font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 발문:weight\"]",
+"value": "400"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 발문:size\"]",
+"value": 7.5
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 발문:leading\"]",
+"value": 14.46
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 발문:color\"]",
+"value": "#231f20"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 발문:tracking\"]",
+"value": -32
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 발문:space_after\"]",
+"value": 5.1
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "단락 스타일 「문제 지문」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "문제 지문"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 지문:font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 지문:weight\"]",
+"value": "400"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 지문:size\"]",
+"value": 7.5
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 지문:leading\"]",
+"value": 14.46
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 지문:color\"]",
+"value": "#231f20"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 지문:align\"]",
+"value": "justify"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 지문:indent_first\"]",
+"value": 1.73
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 지문:tracking\"]",
+"value": -32
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 지문:space_after\"]",
+"value": 5.1
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "단락 스타일 「문제 선지」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "문제 선지"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 선지:font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"문제 선지:weight\"]",
+"value": "400"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 선지:size\"]",
+"value": 7.5
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 선지:leading\"]",
+"value": 14.46
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 선지:color\"]",
+"value": "#231f20"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"문제 선지:tracking\"]",
+"value": -32
+},
+"wait": 800
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "문제 — 발문+문제지문+선지 한 글상자",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+274
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+262.0
+]
+},
+"value": "다음 글의 임시 발문은?\nTemporary passage text for styling.\n① choice one\n② choice two",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 14.46
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 85.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 118.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 25.03
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 49.85
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"auto_size\"]",
+"value": "off"
+},
+"wait": 700
+},
+{
+"say": "자리 — 발문+문제지문+선지",
+"wait": 1700
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "발문+문제지문+선지"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.발문.style\"]",
+"value": "문제 발문"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.문제지문.style\"]",
+"value": "문제 지문"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.선지.style\"]",
+"value": "문제 선지"
+},
+"wait": 600
+},
+{
+"say": "답 — 원고 자리 「답」 (오른쪽 맞춤)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+150,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+135.0,
+254.5
+]
+},
+"value": "답: ⑤",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.35
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"align\"]",
+"value": "right"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -53
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "400"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 30
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 80.78
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 168.2
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "답"
+},
+"wait": 800
+},
+{
+"say": "기출 포인트 — 이름표 · 상자 · 체크 칸",
+"wait": 1300
+},
+{
+"say": "기출 포인트 이름표 — 오른쪽 위 비스듬히",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+139.7,
+253.4
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0.0000 0.0000 L0.0000 1.0000 L1.0000 1.0000 L1.0000 0.5000 L0.8985 0.0000 Z"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 19.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 21.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 182.7
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "기출 포인트",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": 200
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 19.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 24.64
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 182.85
+},
+"wait": 550
+},
+{
+"say": "기출 포인트 상자 — 오른쪽 위 꺾임",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+262.24
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0.0000 0.0000 L0.9880 0.0000 L0.9880 0.1332 L1.0000 0.1332 L1.0000 1.0000 L0.0000 1.0000 Z"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 167.25
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 12.24
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 185.96
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#fcf8ef"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"say": "그림자 선",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 167.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 23.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 199.01
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+120.18,
+261.2
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 11.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 189.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 187.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#b4aa9a"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 26.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 188.14
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 59.79
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 188.14
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 93.41
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 188.14
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 127.02
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 188.14
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 160.64
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 188.14
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 26.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.72
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 59.79
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.72
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 93.41
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.72
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 127.02
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.72
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+122.91,
+253.13
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 2.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 160.64
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.72
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0.6
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.51
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "주제,제목,요지",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -33
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 21.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 30.37
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 187.82
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+147.9,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+133.95,
+254.5
+]
+},
+"value": "빈칸/함축의미추론",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -35
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 27.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 30.37
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.53
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "서술형",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -41
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 11.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 63.99
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 187.82
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "어법",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -48
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 8.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 63.99
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.53
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "어휘",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -48
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 8.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 97.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 187.82
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "순서",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -48
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 8.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 97.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.53
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "삽입",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -48
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 8.7
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 131.22
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 187.82
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "지칭추론",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -38
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 14.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 131.22
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.53
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "요약문",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -41
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 11.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 164.83
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 187.82
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "내용일치",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.89
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -38
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 14.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 164.83
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 192.53
+},
+"wait": 550
+},
+{
+"say": "VOCA — 띠 · 머리 칸 · 줄",
+"wait": 1300
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+254.96
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 4.96
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 200.75
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#d1d3d4"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "V O C A",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -55
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 13.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 179.35
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 201.7
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+130.5,
+252.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L0 0.1786 Q0 0 0.0476 0 L0.9524 0 Q1 0 1 0.1786 L1 1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 10.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 23.05
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 206.79
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.283
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+126.52,
+252.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L0 0.1786 Q0 0 0.0767 0 L0.9233 0 Q1 0 1 0.1786 L1 1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 6.52
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 51.01
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 206.82
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.283
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+130.5,
+252.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L0 0.1786 Q0 0 0.0476 0 L0.9524 0 Q1 0 1 0.1786 L1 1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 10.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 78.97
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 206.82
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.283
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+126.52,
+252.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L0 0.1786 Q0 0 0.0767 0 L0.9233 0 Q1 0 1 0.1786 L1 1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 6.52
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 106.93
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 206.82
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.283
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+130.5,
+252.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L0 0.1786 Q0 0 0.0476 0 L0.9524 0 Q1 0 1 0.1786 L1 1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 10.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 134.88
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 206.82
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.283
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "path",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+126.52,
+252.8
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"d\"]",
+"value": "M0 1 L0 0.1786 Q0 0 0.0767 0 L0.9233 0 Q1 0 1 0.1786 L1 1"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 6.52
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.8
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 162.84
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 206.82
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": ""
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"stroke.color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"stroke.color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"stroke.w\"]",
+"value": 0.283
+},
+"wait": 420
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "중요어휘",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 5.91
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -39
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 12.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 24.41
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 207.02
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "의미",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 5.91
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -49
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 7.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 52.31
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 207.04
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "중요어휘",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 5.91
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -39
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 12.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 80.33
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 207.04
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "의미",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 5.91
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -49
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 7.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 108.23
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 207.04
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "중요어휘",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 5.91
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -39
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 12.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 136.24
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 207.04
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "의미",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 5.91
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Gmarket Sans"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": -49
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "500"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#939598"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 7.4
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.1
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 164.14
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 207.04
+},
+"wait": 550
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+280
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 62.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 210.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#ffffff"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 210.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 210.73
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 214.97
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 219.44
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 223.91
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 228.38
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 232.85
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 237.31
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 241.78
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 246.25
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 250.72
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 255.19
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 259.66
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 264.13
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 268.6
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"draw": {
+"tool": "rect",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+250.18
+]
+}
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-a=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 0.18
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 22.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 273.07
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"radius\"]",
+"value": 0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"fill\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"fill\"]",
+"value": "#e0e0f1"
+},
+"wait": 750
+},
+{
+"say": "어휘 — 원고 자리 「어휘」 (3단 · 탭)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+180,
+274
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+150.0,
+262.0
+]
+},
+"value": "word\t뜻\nword\t뜻",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 7.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 12.67
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Noto Sans CJK KR"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 168.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 62.58
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 23.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 210.49
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"auto_size\"]",
+"value": "off"
+},
+"wait": 700
+},
+{
+"clickif": {
+"at": "#side details.more > summary",
+"when": "!document.querySelector('#side details.more').open"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tabspec\"]",
+"value": "28 left"
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"columns\"]",
+"value": 3
+},
+"wait": 900
+},
+{
+"fill": {
+"at": "#side input[data-a=\"gutter\"]",
+"value": 0
+},
+"wait": 700
+},
+{
+"click": "#side input[data-a=\"col_seq\"]",
+"wait": 700
+},
+{
+"say": "자리 — 어휘(줄마다 「낱말<탭>뜻」)",
+"wait": 1700
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "어휘"
+},
+"wait": 800
+},
+{
+"say": "꼬리 — 강+회차 · 쪽 번호",
+"wait": 1000
+},
+{
+"say": "단락 스타일 「꼬리 글」",
+"wait": 1200
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 800
+},
+{
+"click": "#side #s-skin-edit",
+"wait": 1500
+},
+{
+"answer": "꼬리 글"
+},
+{
+"click": "#st-new",
+"wait": 1300
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"꼬리 글:font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 700
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"꼬리 글:weight\"]",
+"value": "700"
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"꼬리 글:size\"]",
+"value": 6.0
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"꼬리 글:leading\"]",
+"value": 8.0
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#sbody [data-st=\"꼬리 글:color\"]",
+"value": "#231f20"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#sbody [data-st=\"꼬리 글:align\"]",
+"value": "right"
+},
+"wait": 700
+},
+{
+"click": "#sheet-x",
+"wait": 1200
+},
+{
+"say": "꼬리 — 강+회차 한 줄(오른쪽 맞춤)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+160,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+140.0,
+254.5
+]
+},
+"value": "00강  회차",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.0
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"leading\"]",
+"value": 8.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"align\"]",
+"value": "right"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 600
+},
+{
+"fill": {
+"at": "#side input[data-a=\"tracking\"]",
+"value": 50
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 40
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 2.9
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 148.86
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 283.59
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "__other"
+},
+"wait": 800
+},
+{
+"fill": {
+"at": "#side input[data-a=\"bind\"]",
+"value": "강+회차"
+},
+"wait": 800
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.강.style\"]",
+"value": "꼬리 글"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"slotfmt.회차.style\"]",
+"value": "꼬리 글"
+},
+"wait": 600
+},
+{
+"click": "#side input[data-a=\"slotfmt.강.inline\"]",
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"slotfmt.강.inline_gap\"]",
+"value": 0.97
+},
+"wait": 420
+},
+{
+"say": "쪽 번호 — 시스템 자리(오른쪽 맞춤)",
+"wait": 1700
+},
+{
+"draw": {
+"tool": "text",
+"from": {
+"mm": [
+120,
+250
+]
+},
+"to": {
+"mm": [
+144,
+259
+]
+}
+},
+"wait": 750
+},
+{
+"write": {
+"at": {
+"mm": [
+132.0,
+254.5
+]
+},
+"value": "3",
+"away": {
+"mm": [
+205,
+294
+]
+}
+},
+"wait": 700
+},
+{
+"fill": {
+"at": "#side input[data-a=\"size\"]",
+"value": 6.0
+},
+"wait": 420
+},
+{
+"pick": {
+"at": "#side select[data-a=\"align\"]",
+"value": "right"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"font\"]",
+"value": "Elice DX Neolli OTF"
+},
+"wait": 600
+},
+{
+"pick": {
+"at": "#side select[data-a=\"weight\"]",
+"value": "700"
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"color\"]",
+"value": "__raw"
+},
+"wait": 650
+},
+{
+"fill": {
+"at": "#side input[type=\"text\"][data-a=\"color\"]",
+"value": "#231f20"
+},
+"wait": 750
+},
+{
+"fill": {
+"at": "#side input[data-it=\"w\"]",
+"value": 4.5
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-a=\"h\"]",
+"value": 3.2
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"x\"]",
+"value": 190.52
+},
+"wait": 420
+},
+{
+"fill": {
+"at": "#side input[data-it=\"y\"]",
+"value": 283.47
+},
+"wait": 550
+},
+{
+"pick": {
+"at": "#side select[data-a=\"bindsel\"]",
+"value": "sys.page_no"
+},
+"wait": 1000
+},
+{
+"say": "분석 펼침면 오른쪽 완성",
+"wait": 2000
+},
+{
+"js": "(() => { if (/^저장 실패/.test(document.querySelector('#st').textContent)) throw new Error(document.querySelector('#st').textContent); return '저장 확인'; })()",
+"wait": 300
+},
+{
+"js": "(() => { const bad = page.items.filter(i => (i.atom||{}).t === 'text' && /^글상자 —/.test((i.atom||{}).text || '')); return '요소 ' + page.items.length + '개 · 자리 ' + page.items.filter(i => (i.atom||{}).bind).length + '개 · 덜 쓴 글상자 ' + bad.length + '개'; })()"
+},
+{
+"shot": "p3.png",
+"wait": 700
+},
+{
+"hide": true,
+"wait": 500
+},
+{
+"say": "원고 넣기 — 바깥 시스템이 보내는 꼴(자리 이름 → 글)",
+"wait": 1800
+},
+{
+"key": "Escape",
+"wait": 500
+},
+{
+"key": "Escape",
+"wait": 900
+},
+{
+"fill": {
+"at": "#side #s-content",
+"value": "{\"학교\": [\"2026 광문고1\"], \"권번호\": [\"2\"], \"교재명+강제목\": [{\"교재명\": \"올림포스 영어독해 기본2\", \"강제목\": \"7강 학술문 내용 불일치\"}, {\"교재명\": \"올림포스 영어독해 기본2\", \"강제목\": \"8강 어법 정확성\"}], \"분석 펼침면\": [{\"강\": \"7강\", \"회차\": \"분석\", \"지문제목\": \"중국 고대 공놀이 Cuju\", \"문장+해석\": [{\"문장\": [\"1 \", {\"t\": \"Cuju,\", \"ruby\": {\"t\": \"단 S\", \"pos\": \"above\"}}, \" \", {\"t\": \"an\", \"ruby\": {\"t\": \"동격\", \"pos\": \"below\"}}, \" ancient Chinese ball game, \", {\"t\": \"holds\", \"ruby\": {\"t\": \"V 단\", \"pos\": \"below\"}, \"cs\": [\"파랑 글자\", \"형광 민트\"]}, {\"t\": \" a \", \"cs\": \"형광 민트\"}, {\"t\": \"significant\", \"cs\": [\"빨강 글자\", \"형광 민트\"]}, {\"t\": \" \", \"cs\": \"형광 민트\"}, {\"t\": \"place\", \"ruby\": {\"t\": \"O\", \"pos\": \"below\"}, \"cs\": \"형광 민트\"}, {\"t\": \" in sporting history\", \"cs\": \"형광 민트\"}, \".\"], \"해석\": \"고대 중국의 구기 경기인 축국은 스포츠 역사에서 중요한 위치를 차지한다.\"}, {\"문장\": [\"2 \", {\"t\": \"It\", \"ruby\": [{\"t\": \"Cuju\", \"pos\": \"above\"}, {\"t\": \"S\", \"pos\": \"below\"}]}, \" \", {\"t\": \"was\", \"ruby\": {\"t\": \"V\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, {\"t\": \" \", \"cs\": \"파랑 글자\"}, {\"t\": \"recognized\", \"ruby\": {\"t\": \"수동태\", \"pos\": \"below\"}, \"cs\": \"빨강 글자\"}, \" by FIFA \", {\"t\": \"as\", \"ruby\": {\"t\": \"전\", \"pos\": \"below\"}}, \" one of the \", {\"t\": \"earliest\", \"cs\": \"빨강 글자\"}, \" foot-based \", {\"t\": \"sports.\", \"ruby\": {\"t\": \"sport (X)\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}], \"해석\": \"그것은 국제 축구 연맹에 의해 발을 사용하는 최초의 스포츠 중 하나로 인정되었다.\"}, {\"문장\": [\"3 \", {\"t\": \"However\", \"cs\": \"형광 보라\"}, \", Cuju's \", {\"t\": \"influence\", \"ruby\": {\"t\": \"단 S\", \"pos\": \"below\"}}, \" on modern football \", {\"t\": \"was\", \"ruby\": {\"t\": \"V 단\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, \" not \", {\"t\": \"direct.\", \"ruby\": [{\"t\": \"directly (X)\", \"pos\": \"above\"}, {\"t\": \"C\", \"pos\": \"below\"}], \"cs\": \"빨강 글자\"}], \"해석\": \"그러나 축국이 현대 축구에 직접적인 영향을 주지 않았다.\"}, {\"문장\": [{\"t\": \"\", \"side\": \"* let이 사역동사로 쓰여 목적격 보어에 원형부정사인 touch가 쓰였어. to touch (X)\\n분사구문으로 쓰인 following은 의미상 주어인 players가 '따르는' 거니까 현재분사로 쓰였어. followed (X)\"}, \"4 In Cuju, \", {\"t\": \"players\", \"ruby\": [{\"t\": \"서술형★\", \"pos\": \"above\", \"cs\": \"서술형\"}, {\"t\": \"S\", \"pos\": \"below\"}], \"cs\": \"형광 노랑\"}, {\"t\": \" \", \"cs\": \"형광 노랑\"}, {\"t\": \"aimed\", \"ruby\": {\"t\": \"V\", \"pos\": \"below\"}, \"cs\": [\"빨강 글자\", \"형광 노랑\"]}, {\"t\": \" \", \"cs\": \"형광 노랑\"}, {\"t\": \"to\", \"ruby\": {\"t\": \"O\", \"pos\": \"below\"}, \"cs\": [\"파랑 글자\", \"형광 노랑\"]}, {\"t\": \" kick\", \"cs\": [\"파랑 글자\", \"형광 노랑\"]}, {\"t\": \" the ball through a central hoop \", \"cs\": \"형광 노랑\"}, {\"t\": \"without\", \"cs\": [\"빨강 글자\", \"형광 노랑\"]}, {\"t\": \" \", \"cs\": \"형광 노랑\"}, {\"t\": \"letting\", \"ruby\": {\"t\": \"전\", \"pos\": \"below\"}, \"cs\": [\"파랑 글자\", \"형광 노랑\"]}, {\"t\": \" \", \"cs\": \"형광 노랑\"}, {\"t\": \"it\", \"ruby\": {\"t\": \"the ball\", \"pos\": \"above\"}, \"cs\": [\"파랑 글자\", \"형광 노랑\"]}, \" \", {\"t\": \"touch\", \"cs\": [\"파랑 글자\", \"형광 노랑\"]}, {\"t\": \" the ground, all \", \"cs\": \"형광 노랑\"}, {\"t\": \"while\", \"ruby\": {\"t\": \"부접\", \"pos\": \"below\"}, \"cs\": \"형광 노랑\"}, {\"t\": \" \", \"cs\": \"형광 노랑\"}, {\"t\": \"following\", \"ruby\": {\"t\": \"분사구문\", \"pos\": \"below\"}, \"cs\": [\"빨강 글자\", \"형광 노랑\"]}, {\"t\": \" the rule of \", \"cs\": \"형광 노랑\"}, {\"t\": \"not\", \"cs\": [\"빨강 글자\", \"형광 노랑\"]}, {\"t\": \" \", \"cs\": \"형광 노랑\"}, {\"t\": \"using\", \"ruby\": {\"t\": \"동명사\", \"pos\": \"below\"}, \"cs\": [\"파랑 글자\", \"형광 노랑\"]}, {\"t\": \" their hands\", \"cs\": \"형광 노랑\"}, \".\"], \"해석\": \"축국에서 선수들은 손을 사용하지 않는다는 규칙을 내내 따르는 가운데, 공을 땅에 닿지 않게 하면서 공을 차서 중앙의 둥근 테를 통과시키는 것을 목표로 했다.\"}, {\"문장\": [\"5 Traditionally, the \", {\"t\": \"ball\", \"ruby\": {\"t\": \"S\", \"pos\": \"below\"}}, \" \", {\"t\": \"was\", \"ruby\": {\"t\": \"V\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, {\"t\": \" \", \"cs\": \"파랑 글자\"}, {\"t\": \"crafted\", \"ruby\": {\"t\": \"수동태\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, \" from leather, and \", {\"t\": \"matches\", \"ruby\": {\"t\": \"S\", \"pos\": \"below\"}}, \" \", {\"t\": \"took\", \"ruby\": {\"t\": \"V\", \"pos\": \"below\"}}, \" \", {\"t\": \"place\", \"ruby\": {\"t\": \"O\", \"pos\": \"below\"}}, \" on fields with two teams of equal size.\"], \"해석\": \"전통적으로, 공은 가죽으로 만들어졌으며, 경기는 같은 크기의 두 팀이 있는 경기장에서 열렸다.\"}, {\"문장\": [\"6 \", {\"t\": \"Players\", \"ruby\": {\"t\": \"S\", \"pos\": \"below\"}}, \" \", {\"t\": \"wore\", \"ruby\": {\"t\": \"V\", \"pos\": \"below\"}}, \" \", {\"t\": \"light\", \"cs\": [\"빨강 글자\", \"밑줄\"]}, {\"t\": \" \", \"cs\": \"밑줄\"}, {\"t\": \"and\", \"ruby\": {\"t\": \"O\", \"pos\": \"below\"}, \"cs\": \"밑줄\"}, {\"t\": \" \", \"cs\": \"밑줄\"}, {\"t\": \"flexible\", \"cs\": [\"빨강 글자\", \"밑줄\"]}, {\"t\": \" clothes\", \"cs\": \"밑줄\"}, \" \", {\"t\": \"to\", \"ruby\": {\"t\": \"목적\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, {\"t\": \" move\", \"cs\": \"파랑 글자\"}, \" \", {\"t\": \"easily\", \"ruby\": {\"t\": \"easy (X)\", \"pos\": \"below\"}, \"cs\": \"빨강 글자\"}, \" \", {\"t\": \"during\", \"ruby\": {\"t\": \"전\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, \" the game.\"], \"해석\": \"선수들은 경기 중에 쉽게 움직이기 위해 가볍고 신축성 있는 옷을 입었다.\"}, {\"문장\": [{\"t\": \"\", \"side\": \"* 분사구문으로 쓰인 included, highlighting은 의미상 주어인 Cuju가 '포함되'고 '강조하는' 거니까 각각 과거분사, 현재분사로 쓰였어. including, highlighted (X)\"}, \"7 \", {\"t\": \"Beyond\", \"cs\": \"빨강 글자\"}, \" \", {\"t\": \"its\", \"ruby\": {\"t\": \"Cuju's\", \"pos\": \"above\"}, \"cs\": \"파랑 글자\"}, \" sporting aspect, \", {\"t\": \"Cuju\", \"ruby\": {\"t\": \"S\", \"pos\": \"below\"}}, \" \", {\"t\": \"holds\", \"ruby\": {\"t\": \"V\", \"pos\": \"below\"}}, \" cultural \", {\"t\": \"significance\", \"ruby\": {\"t\": \"O\", \"pos\": \"below\"}, \"cs\": \"빨강 글자\"}, \" in China, often \", {\"t\": \"included\", \"ruby\": {\"t\": \"분사구문\", \"pos\": \"below\"}, \"cs\": \"파랑 글자\"}, \" in celebratory occasions and events, \", {\"t\": \"highlighting\", \"ruby\": {\"t\": \"분사구문\", \"pos\": \"below\"}, \"cs\": \"빨강 글자\"}, \" \", {\"t\": \"its\", \"cs\": \"파랑 글자\"}, \" deep-rooted history in the country's heritage.\"], \"해석\": \"스포츠적인 측면을 넘어서, 축국은 중국에서 문화적 중요성을 지니고 있으며, 축하 의식과 행사에 자주 포함되어 중국 유산의 뿌리 깊은 역사를 강조한다.\"}], \"주제\": \"Cuju’s historical and cultural significance in China\", \"요약\": \"Cuju was an early Chinese ball game that blended sport and tradition, later recognized for its historical importance.\", \"발문+문제지문+선지\": [{\"발문\": \"다음 글의 주제로 가장 적절한 것은?\", \"문제지문\": \"Cuju, an ancient Chinese ball game, holds a significant place in sporting history. It was recognized by FIFA as one of the earliest foot-based sports. However, Cuju’s influence on modern football was not direct. In Cuju, players aimed to kick the ball through a central hoop without letting it touch the ground, all while following the rule of not using their hands. Traditionally, the ball was crafted from leather, and matches took place on fields with two teams of equal size. Players wore light and flexible clothes to move easily during the game. Beyond its sporting aspect, Cuju holds cultural significance in China, often included in celebratory occasions and events, highlighting its deep-rooted history in the country’s heritage.\", \"선지\": \"① similarities between Cuju and modern football\\n② the importance of football in contemporary culture\\n③ the cultural importance of modern football in China\\n④ the reason football became the most popular sport in the world\\n⑤ a significance of Cuju in China and its indirect influence on modern football\"}], \"답\": \"답: ⑤\", \"어휘\": \"Cuju\\t축국\\nancient\\t고대의\\nhold\\t차지하다, 지니다\\nsignificant\\t중요한\\nrecognize\\t인정하다\\ninfluence\\t영향\\nmodern\\t현대의\\ndirect\\t직접적인\\naim\\t목표로 하다\\ncentral\\t중앙의\\nhoop\\t둥근 테\\ntraditionally\\t전통적으로\\ncraft\\t만들다\\nleather\\t가죽\\nmatch\\t경기\\ntake place\\t열리다\\nfield\\t경기장\\nequal\\t같은\\nlight\\t가벼운\\nflexible\\t신축성 있는\\naspect\\t측면\\ncultural\\t문화적인\\nsignificance\\t중요성\\ncelebratory\\t축하하는\\noccasion\\t행사\\nhighlight\\t강조하다\\nheritage\\t유산\"}]}"
+},
+"wait": 900
+},
+{
+"click": "#side #s-content-put",
+"wait": 2500
+},
+{
+"js": "(() => { const t = document.querySelector('#st').textContent; if (/저장 실패/.test(t)) throw new Error('원고 저장 실패 — ' + t); return '원고 저장 확인'; })()"
+},
+{
+"js": "(() => document.querySelector('#s-content-rep') ? document.querySelector('#s-content-rep').textContent : '보고 없음')()"
+}
+]

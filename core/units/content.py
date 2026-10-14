@@ -411,6 +411,13 @@ def fill(pages, content, width_of=None):
             filled += 1
         else:
             unfilled[name] = unfilled.get(name, 0) + 1
+    for pg in pages:                                                              # 데이터 필드 하나뿐인 프레임도 그 필드 서식(단락 스타일 · 고정 개체)을 입힌다 — 한 줄기와 같이
+        for it in pg.get("items") or []:
+            a, f = it.get("atom") or {}, it.get("fields")
+            nm = a.get("bind") or ""
+            sf = (a.get("slot_fmt") or {}).get(nm) or {}
+            if f and nm and "+" not in nm and (sf.get("style") or sf.get("anc")) and isinstance(f.get(nm), (str, list)) and not blank(f[nm]):
+                it["fields"] = {nm: story_value(nm, [{nm: f[nm]}], a.get("slot_fmt"))}
     for pg in pages:                                                              # 빈 원고(""·[]) — 그 글상자는 접힌다(render.place_items: 접기 묶음째, 아래 것을 당긴다)
         for it in pg.get("items") or []:
             f = it.get("fields")

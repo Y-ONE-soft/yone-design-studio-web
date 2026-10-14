@@ -638,14 +638,24 @@ def locl_html(html, family, lang):
     if not only:
         return html                                                       # 서체에 그 언어 글리프가 없다
     run = re.compile("[" + re.escape(only) + "]+")
-    span = lambda t: f'<span lang="{esc(lang)}">{t}</span>'
+    ul = []                                                               # 열린 span 마다 밑줄인가 — 밑줄 안 공백만의 조각은 크롬이 밑줄을 안 긋는다(공백을 지키면 긋는다 · 줄 바꿈은 바깥 그대로)
+    span = lambda t: (f'<span lang="{esc(lang)}" style="white-space-collapse:preserve">{t}</span>' if any(ul) and not t.replace("&#160;", "").strip()
+                      else f'<span lang="{esc(lang)}">{t}</span>')
 
     def wrap(m):
         t = m.group(0)
         if t.startswith("&"):                                             # &#160; &quot; &amp; … — 글자 하나로 보고
             return span(t) if _unescape(t) in only else t
         return run.sub(lambda k: span(k.group(0)), t)
-    return "".join(p if p.startswith("<") else _LOCL_RUN.sub(wrap, p) for p in _TAG.split(html))
+    out = []
+    for p in _TAG.split(html):
+        if p.startswith("</span"):
+            if ul:
+                ul.pop()
+        elif p.startswith("<span"):
+            ul.append("text-decoration:underline" in p)
+        out.append(p if p.startswith("<") else _LOCL_RUN.sub(wrap, p))
+    return "".join(out)
 
 
 def ko_glyphs(html, a, ctx):
@@ -1074,10 +1084,17 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
     g0 = grp(k)                                                       # 같은 바탕(색·테두리)이 잇닿으면 한 상자 — [조건] 머리줄과 조건 글
     first = not (g0 and grp(k - 1) == g0) if shade else not (k and slots[k - 1] == slot)
     last = not (g0 and grp(k + 1) == g0) if shade else not (k + 1 < len(slots) and slots[k + 1] == slot)
-    if st.get("indent") is not None or pad:
+    if shade and st.get("shade_fit") and st.get("indent"):           # 음영 너비 「텍스트」 — 음영은 왼쪽 들여쓰기 자리부터(인디자인), 여백만 안쪽
+        css += f"margin-left:{float(st['indent']):.3f}px;padding-left:{pad:.3f}px;"
+    elif st.get("indent") is not None or pad:
         css += f"padding-left:{float(st.get('indent') or 0) + pad:.3f}px;"
-    if st.get("indent_right") is not None or pad:
+    if shade and st.get("shade_fit") and st.get("indent_right"):     # 오른쪽도 — 음영은 오른쪽 들여쓰기 안에서 끝난다
+        css += f"margin-right:{float(st['indent_right']):.3f}px;padding-right:{pad:.3f}px;"
+    elif st.get("indent_right") is not None or pad:
         css += f"padding-right:{float(st.get('indent_right') or 0) + pad:.3f}px;"
+    ol, orr = float(st.get("shade_ol") or 0), float(st.get("shade_or") or 0)
+    if shade and not st.get("shade_fit") and (ol or orr):            # 음영 오프셋(너비 「열」) — 음영 가장자리를 밖(+) · 안(−)으로, 「여백」은 음영 가장자리부터
+        css += f"margin-left:{-ol:.3f}px;margin-right:{-orr:.3f}px;"
     if st.get("indent_first") is not None:
         css += f"text-indent:{float(st['indent_first']):.3f}px;"
     # 문단 사이 = 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」(인디자인은 더한다 — CSS 여백은 겹쳐 큰 것만 남아 위 끝에 margin-top 하나로)
@@ -1089,12 +1106,19 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
         gap = 0.0                                                     # 바탕 상자 안 같은 자리 문단 사이
     else:
         gap = float(st.get("space_before") or 0) + float(prev.get("space_after") or 0)
-    if k and gap:
+    if k and gap and not (shade and not first):
         css += f"margin-top:{gap:.3f}px;"
     if shade:
         css += f"background-color:{ctx.color(shade) if ctx else shade};"
-        css += (f"padding-top:{float(st.get('pad_top', pad)) if first else 0:.3f}px;"
+        css += (f"padding-top:{float(st.get('pad_top', pad)) if first else (gap if k else 0):.3f}px;"   # 한 상자 안 문단 사이 간격은 음영 안으로
                 f"padding-bottom:{float(st.get('pad_bottom', pad)) if last else 0:.3f}px;")
+        if st.get("shade_fit"):                                       # 음영 너비 「텍스트」(인디자인) — 글 폭만큼
+            mx = float(st.get("indent") or 0) + float(st.get("indent_right") or 0)   # 들여쓰기는 바깥 여백 — 컴포저가 줄 안 바꿈으로 잴 때도 그 안에서
+            css += f"width:fit-content;max-width:calc(100% - {mx:.3f}px);box-sizing:border-box;"
+        if st.get("shade_r"):                                         # 음영 모퉁이 — 잇닿은 상자는 위 끝 · 아래 끝만 둥글게
+            r_ = float(st["shade_r"])
+            css += (f"border-top-left-radius:{r_ if first else 0:.3f}px;border-top-right-radius:{r_ if first else 0:.3f}px;"
+                    f"border-bottom-left-radius:{r_ if last else 0:.3f}px;border-bottom-right-radius:{r_ if last else 0:.3f}px;")
         if st.get("border"):
             b = f"{float(st['border']) * PT:.3f}px solid {ctx.color(st.get('border_color') or '$ink') if ctx else st.get('border_color') or '#231f20'}"
             css += f"border-left:{b};border-right:{b};" + (f"border-top:{b};" if first else "") + (f"border-bottom:{b};" if last else "")
@@ -1117,7 +1141,40 @@ def _slot_para(a, x, slot, slots, k, ps, ctx):
     if st.get("bullet_text"):                                         # 글머리 글(인디자인 글머리 기호 사용자 정의 문자) — 원고 앞에 디자인이 붙이는 표시
         m = _PS_LEAD_RE.search(x)                                     # 붙인 번호(문항 번호)가 있으면 그 뒤에 — 「01 | 발문」
         x = (x[:m.end()] + esc(st["bullet_text"]) + x[m.end():]) if m else esc(st["bullet_text"]) + x
-    return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None, spec) or "&#160;"}</p>'
+    after = ""
+    anc = st.get("anc") or {}
+    part = (ctx.parts or {}).get(anc.get("part")) if (anc.get("part") and ctx is not None) else None
+    if anc.get("part") and ctx is not None and not part:
+        ctx.warn(f"자리 {slot} 고정 개체의 부품 없음 {anc.get('part')}")
+    if part and anc.get("first") and k and slots[k - 1] == slot:      # 첫 문단만 — 같은 필드 문단이 잇닿으면 첫 문단에만(꼬리표 하나 + 문장 여럿)
+        part = None
+    if part and anc.get("last") and k + 1 < len(slots) and slots[k + 1] == slot:   # 끝 문단만 — 필드 끝에 하나(보기 문장들 아래 답 쓰는 줄)
+        part = None
+    if part:                                                        # 이 필드 문단마다 붙는 고정 개체(인디자인 — 템플릿 문단에 넣어 둔 고정 개체가 레코드마다 따라온다)
+        z0 = getattr(ctx, "zoom_out", 1)
+        ctx.zoom_out = z0 * text_zoom(a, z0)                          # 부품 속 글은 바깥 글의 배율 안에서 그려진다(tail_html 과 같이)
+        try:
+            frag, ph = part_svg(ctx, part)
+        finally:
+            ctx.zoom_out = z0
+        pw, ph = float(part.get("w") or 10), float(ph or part.get("h") or 5)
+        svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {pw:.3f} {ph:.3f}" width="{pw:.3f}" height="{ph:.3f}" '
+               f'style="display:block;overflow:visible;width:{pw:.3f}px;height:{ph:.3f}px">{frag}</svg>')
+        ax, dy, gap = float(anc.get("x") or 0), float(anc.get("dy") or 0), float(anc.get("gap") or 0)
+        pos = anc.get("pos") or "end"
+        if pos == "end":                                              # 문단 끝 인라인 — 글 끝에 붙이기(tail_html)와 같다: 간격 · 내림(dy = 기준선 → 개체 아래 끝) · 띄어 붙이기
+            t = tail_html({"tail": {"part": anc["part"], "gap": gap, "drop": dy, "space": anc.get("space")}, "size": st.get("size") or a.get("size")}, ctx)
+            x += t[0] if t else ""
+        elif pos == "line":                                           # 다음 줄 — 그 문단 아래 제 줄(인디자인 「줄 위」), 가로 x mm(텍스트 프레임 안쪽 왼쪽부터)
+            after = (f'<p style="margin:0;margin-top:{gap:.3f}px;height:{ph:.3f}px;line-height:0;padding-left:{ax:.3f}px;text-indent:0">'
+                     f'{svg}</p>')
+        else:                                                         # 왼쪽 바깥 등 사용자 정의 위치 — 첫 줄 위 끝 기준, 글 흐름에 안 낀다
+            off = ax - float(st.get("indent") or 0) - pad - float(st.get("indent_first") or 0)
+            pin = (f'<span style="display:inline-block;width:0;height:0;position:relative;vertical-align:top">'
+                   f'<span style="position:absolute;left:{off:.3f}px;top:{dy:.3f}px;width:{pw:.3f}px;height:{ph:.3f}px">{svg}</span></span>')
+            m = _PS_RE.search(x)
+            x = (x[:m.end()] + pin + x[m.end():]) if m else pin + x
+    return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None, spec) or "&#160;"}</p>' + after
 
 
 def _inline_css(st, ctx):
@@ -1132,6 +1189,11 @@ def _inline_css(st, ctx):
     return css
 
 
+def _default_tabs(x):
+    """탭 정지를 안 둔 글의 탭 — 인디자인 기본 탭 정지(단락 시작에서 12.7mm = 0.5인치 마다). 탭만 공백을 지켜 크롬 탭 자리(tab-size)로"""
+    return x.replace("\t", '<span style="white-space-collapse:preserve;tab-size:12.7px">\t</span>') if "\t" in x else x
+
+
 def _paras_html(a, html, ps, ctx=None):
     """글 HTML → 문단(<p>)들. 한 줄기 여러 자리면 문단마다 그 자리의 단락 서식(_slot_para), 아니면 글상자 단락 서식(ps)"""
     paras = (html or "").split("<br/>")
@@ -1141,9 +1203,9 @@ def _paras_html(a, html, ps, ctx=None):
     jc = (lambda x: f' data-jc="{spec}"' if spec and "\u2028" not in x else "")      # 손으로 친 줄 나눔이 있으면 나뉜 조각마다(soft_breaks)
     slots = [(_PS_RE.search(x).group(1) if _PS_RE.search(x) else None) for x in paras]   # 한 줄기 여러 자리 — 문단마다 그 자리(content.story_value)
     if any(slots):
-        return "".join(_slot_para(a, x, s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
+        return "".join(_slot_para(a, _default_tabs(x), s, slots, k, ps, ctx) for k, (x, s) in enumerate(zip(paras, slots)))
     last = len(paras) - 1                                               # 상자 끝 문단은 뒤 간격 없이(인디자인 — 마지막 단락 뒤 간격은 상자 높이에 안 든다)
-    return "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or x, just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None, spec) or "&#160;"}</p>'
+    return "".join(f'<p style="margin:0;{ps}{"margin-bottom:0;" if k == last else ""}"{jc(x)}>{soft_breaks(_tab_html(a, x, ctx) or _default_tabs(x), just, (a.get("word_min") + base_word_spacing(a, ctx)) if a.get("word_min") else None, spec) or "&#160;"}</p>'
                    for k, x in enumerate(paras))
 
 

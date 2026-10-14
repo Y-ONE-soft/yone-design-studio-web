@@ -145,6 +145,22 @@ def _a_vocab(ps, sample, cap):
 
 def _a_ox(ps, sample, cap):
     """A본문OX — 지문마다 [객관식(일치하지 않는 것) · O/X] 두 문제 칸. contents 내용OX 영어는 O/X 진술만 → 객관식 칸은 비워 접는다"""
+    key = _flow_key(cap, "진술")
+    if key:                                                              # 흐름 틀(2026-10-14) — 지문마다 한 줄기: 지문 · O/X 문제(번호 · 발문) · 진술마다 번호 · 글
+        per = cap.get("지문번호") or cap.get(key) or 2
+        recs = []
+        for ch in _chunks(ps, per):
+            r = {"제목": _title(sample, "A본문OX"), "지문번호": [], key: []}
+            for no, text, g in ch:
+                qs = _qs(g.get("q:내용OX 영어"))
+                items = [[["지문", text or ""]]]
+                if qs:
+                    items.append([["문제번호", "01"], ["발문", _frags(_u(qs[0].get("prompt")))]])
+                items += [[["진술번호", f"{i:02d}"], ["진술", _frags(_u(q.get("passage") or ""))]] for i, q in enumerate(qs, 1)]
+                r["지문번호"].append(str(no))
+                r[key].append(items)
+            recs.append(r)
+        return recs
     per = cap.get("지문번호") or 2
     qn = max(1, (cap.get("문제번호") or 2 * per) // per)
     sn = max(1, (cap.get("진술") or 5 * per) // per)
@@ -169,6 +185,17 @@ def _a_ox(ps, sample, cap):
 def _flow_key(cap, need):
     """그 구성의 흐름 자리(인디자인 스토리 — 여러 자리 한 줄기) 가운데 need 자리가 든 것"""
     return next((k for k in cap if "+" in k and need in k.split("+")), None)
+
+
+def _put(r, key, cap, items):
+    """한 지문의 [자리, 값] 들을 레코드에 — 흐름 자리(key)에 든 것은 그 줄기로(빈 값은 문단이 안 생긴다),
+    아닌 것은 따로 선 텍스트 프레임의 자리로(인디자인: 위 프레임은 원고만큼, 아래 문제 프레임은 제자리)"""
+    names = key.split("+")
+    grp = [x for x in items if x[0] in names and x[1]]
+    r.setdefault(key, []).append([grp] if grp else [])
+    for f, v in items:
+        if f not in names and f in cap:
+            r.setdefault(f, []).append(v)
 
 
 def _frags(t):
@@ -239,9 +266,25 @@ def _split_order(q):
 def _c_order(ps, sample, cap):
     """C문장배열 — 지문마다 보기 문장 목록(순서배열 1단계 (A)~) + 문제 하나. 문제는 지문마다 삽입 → 순서 번갈아(원본 책),
     그 지문에 한쪽만 있으면 있는 것으로"""
-    per = cap.get("지문번호") or 2
+    key = _flow_key(cap, "주어진문장")
+    per = cap.get("지문번호") or (cap.get(key) if key else None) or 2
     recs = []
     for ch in _chunks(ps, per):
+        if key:                                                          # 흐름 틀(2026-10-14) — 지문마다 한 줄기: 보기 문장 · 발문 · 주어진 문장 · 지문
+            r = {"제목": _title(sample, "C문장배열"), "지문번호": [], key: []}
+            for k, (no, text, g) in enumerate(ch):
+                opts = (g.get("sentence-order") or {}).get("options") or []
+                ins, order = _qs(g.get("q:삽입")), _qs(g.get("q:순서배열"))
+                want = (ins, _split_insert) if k % 2 == 0 else (order, _split_order)
+                other = (order, _split_order) if k % 2 == 0 else (ins, _split_insert)
+                qs, split = want if want[0] else other
+                prompt, given, body = split(qs[0]) if qs else ("", "", "")
+                it = [["보기문장", "\n".join(f"({o.get('tag')}) {o.get('text') or ''}" for o in opts)], ["발문", _frags(prompt)],
+                      ["주어진문장", _frags(given)], ["지문", _frags(body)]]
+                r["지문번호"].append(str(no))
+                _put(r, key, cap, it)
+            recs.append(r)
+            continue
         r = {"제목": _title(sample, "C문장배열"), "지문번호": [], "보기문장": [], "발문": [], "주어진문장": [], "지문": []}
         for k, (no, text, g) in enumerate(ch):
             opts = (g.get("sentence-order") or {}).get("options") or []
@@ -260,11 +303,25 @@ def _c_order(ps, sample, cap):
 
 
 def _blank_rows(c, hint):
+    """빈칸 문항 — 「n[정답]」 → 빈칸 「__」(템플릿의 GREP 스타일이 문자 스타일 「빈칸」을 입힌다), 힌트는 꾸밈 조각(문자 스타일 「첫 글자」)"""
     rows = []
     for i, r in enumerate(c.get("rows") or [], 1):
         hints = {int(b.get("no")): (b.get("hint") or (b.get("answer") or "")[:1]) for b in r.get("blanks") or [] if b.get("no") is not None}
-        en = _BLANK.sub(lambda m: ("{" + (hints.get(int(m.group(1))) or m.group(2)[:1]) + "}__") if hint else "__", r.get("en") or "")
-        rows.append({"문항번호": f"{i:02d}.", "빈칸문장": en, "해석": r.get("ko") or ""})
+        en, out, k = r.get("en") or "", [], 0
+        for m in _BLANK.finditer(en):
+            out.append(en[k:m.start()])
+            if hint:
+                out.append({"t": hints.get(int(m.group(1))) or m.group(2)[:1], "cs": "첫 글자"})
+            out.append("__")
+            k = m.end()
+        out.append(en[k:])
+        runs = []
+        for x in out:                                                    # 잇닿은 글은 하나로
+            if isinstance(x, str) and runs and isinstance(runs[-1], str):
+                runs[-1] += x
+            elif x != "":
+                runs.append(x)
+        rows.append({"문항번호": f"{i:02d}.", "빈칸문장": runs[0] if len(runs) == 1 and isinstance(runs[0], str) else runs, "해석": r.get("ko") or ""})
     return rows
 
 
@@ -280,6 +337,17 @@ def _c_blank(name, src, hint):
 def _a_grammar(ps, sample, cap):
     """A어법선택 — 지문마다 [고르기 지문 · 「어법상 틀린 것」 객관식 지문] 두 칸 + 객관식 발문. contents 어법선택은 고르기만 → 객관식 칸은 비워 접는다.
     「1[a / b]」 → 「[a / b]」(번호는 원본 책에 없다)"""
+    key = _flow_key(cap, "문제지문")
+    if key:                                                              # 흐름 틀(2026-10-14) — 지문마다 한 줄기: 고르기 지문(객관식 발문 · 문제지문은 contents 에 없어 안 보낸다)
+        per = cap.get("지문번호") or cap.get(key) or 2
+        recs = []
+        for ch in _chunks(ps, per):
+            r = {"제목": _title(sample, "A어법선택"), "지문번호": []}
+            for no, _, g in ch:
+                r["지문번호"].append(str(no))
+                _put(r, key, cap, [["지문", re.sub(r"(?<![A-Za-z])\d+\[([^\[\]]+)\]", r"[\1]", (g.get("grammar-choice") or {}).get("text") or "")]])
+            recs.append(r)
+        return recs
     per = cap.get("지문번호") or 2
     tn = max(1, (cap.get("지문") or 2 * per) // per)
     pn = max(0, (cap.get("발문") or per) // per)
@@ -297,6 +365,18 @@ def _a_grammar(ps, sample, cap):
 
 def _b_grammar_ox(ps, sample, cap):
     """B어법OX — 지문마다 보기(예문) 칸 + 문장 목록. contents 어법OX 의 문제마다 「1.  문장」 → 문장번호 · 문장"""
+    key = _flow_key(cap, "문장")
+    if key:                                                              # 흐름 틀(2026-10-14) — 지문마다 한 줄기: 문장마다 번호 · 글(보기 예문은 없다)
+        per = cap.get("지문번호") or cap.get(key) or 2
+        recs = []
+        for ch in _chunks(ps, per):
+            r = {"제목": _title(sample, "B어법OX"), "지문번호": [], key: []}
+            for no, _, g in ch:
+                st = [re.sub(r"^\s*\d+\s*[.)]\s*", "", _u(q.get("passage") or "")).strip() for q in _qs(g.get("q:어법OX"))]
+                r["지문번호"].append(str(no))
+                r[key].append([[["문장번호", f"{i:02d}."], ["문장", _frags(t)]] for i, t in enumerate(st, 1)])
+            recs.append(r)
+        return recs
     per = cap.get("지문번호") or 2
     sn = max(1, (cap.get("문장") or 13 * per) // per)
     bn = max(0, (cap.get("보기") or per) // per)
@@ -314,6 +394,27 @@ def _b_grammar_ox(ps, sample, cap):
 
 
 def _c_writing(ps, sample, cap):
+    key = _flow_key(cap, "보기단어")
+    if key:                                                              # 흐름 틀(2026-10-14) — 쪽마다 한 줄기: 지문이 바뀌면 지문 번호 · 문항마다 번호 · 우리말 · 낱말
+        page = 5                                                         # 쪽당 문항(견본 원고에서 — 없으면 원본 책 5)
+        smp = (sample.get("C영작배열") or [{}])[0].get(key) if isinstance(sample.get("C영작배열"), list) else None
+        if smp:
+            page = max(sum(1 for it in pg if it and it[0][0] == "문항번호") for pg in smp) or page
+        rows = []
+        for no, _, g in ps:
+            for i, it in enumerate((g.get("writing-order") or {}).get("items") or []):
+                rows.append((str(no) if i == 0 else "", [["문항번호", f"{i + 1:02d}."], ["우리말", it.get("ko") or ""],
+                                                          ["보기단어", "( " + " / ".join(it.get("chunks") or []) + " )"]]))
+        pages = []
+        for ch in _chunks(rows, page):
+            out = []
+            for pno, item in ch:
+                if pno:
+                    out.append([["지문번호", pno]])
+                out.append(item)
+            pages.append(out)
+        n = cap.get(key) or 2                                            # 한 벌(펼침면)의 쪽 수
+        return [{"제목": _title(sample, "C영작배열"), key: pages[k:k + n]} for k in range(0, len(pages), n)]
     rows = []
     for no, _, g in ps:
         for i, it in enumerate((g.get("writing-order") or {}).get("items") or []):
@@ -330,10 +431,10 @@ def _s_exam(ps):
     for no, text, qs in ps:
         out.append([["지문번호", str(no)], ["지문", "다음 글을 읽고 물음에 답하시오.\n" + (text or "")]])
         for i, q in enumerate(qs, 1):
-            rec = [["번호", f"{i:02d}"], ["발문", _u(str(q.get("prompt") or "").strip())]]
+            rec = [["번호", f"{i:02d}"], ["발문", _frags(_u(str(q.get("prompt") or "").strip()))]]
             if q.get("passage"):
-                rec.append(["보기", _u(q["passage"].strip())])
-            rec.append(["선지", _choices(q.get("choices"))])
+                rec.append(["보기", _frags(_u(q["passage"].strip()))])
+            rec.append(["선지", _frags(_choices(q.get("choices")))])
             out.append(rec)
     return out
 

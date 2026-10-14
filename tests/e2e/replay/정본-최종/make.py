@@ -637,12 +637,75 @@ def passage_pair(pno):
 
 
 # ── 구성 5 「A본문OX」 (원본 24~43쪽 = 펼침면 10벌 · 원고마다) — 견본 = 24·25쪽 ──
-# 틀 하나로 통일(2026-10-10 사용자 결정): 원본은 쪽마다 문제 수·서체·크기가 섞여 있다 — 견본 쪽 모양 하나로, 문제가 하나뿐인 원고는 「접기 묶음」으로 문제 1을 접는다.
-# 세로: 지문·선지·진술 글상자는 최소 높이로 그리고(원고만큼 자란다) 그 아래 것은 견본 원고가 자랄 만큼 위에 그린다(shift) — 견본 원고를 넣으면 원본 자리.
+# 흐름 방식(2026-10-14 사용자 확정 — 인디자인처럼): 지문 · 문제 · 진술을 텍스트 프레임 하나에 흘린다(자리 A2_BIND). 원고에 없는 문제는 문단이 안 생긴다
+# — 접기 묶음 · 아래 모두 밀기를 쓰지 않는다. 진술 끝 O/X 칸 = 데이터 필드 「진술」의 고정 개체(문단 끝).
 from mkpage import _color                                               # noqa: E402
 LOTTE, ELB, LINK = "12LotteMartDreamBold", "Elice DigitalBaeum OTF", "#b5ac9c"
 ELICE = {"EliceDXNeolliOTF-Md": (EL, 500), "EliceDigitalBaeumOTF": (ELB, 400)}
 OXP = {}                                                                 # O/X 부품 — 문서에 한 번 만든다(부품 id)
+PARTN = [0]
+
+
+UL = {"line": 0.176, "line_off": 0.71, "line_color": "#231f20"}              # 원본 밑줄(굵기 · 기준선 → 가운데 · 색) — 문자 스타일 「밑줄」 · 「밑줄 보통」(한 권에 하나)
+
+
+def pst_steps(styles, label="단락 스타일"):
+    """단락 스타일 — 스타일 · 색상 견본 창 「＋ 단락 스타일」 → 이름 → 칸마다(체크 칸은 누른다)"""
+    st = [S(label + " — 스타일 · 색상 견본 창", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, v in styles:
+        q = lambda k: f'[data-st="{name}:{k}"]'
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
+        for k, val in v.items():
+            if k in ("font", "align", "weight"):
+                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
+            elif k in ("keep_next", "keep_together", "shade_fit"):
+                st.append({"click": "input" + q(k), "wait": 450})
+            elif val not in (None, 0, ""):
+                st.append(F("input" + q(k), val, 450))
+    return st + [{"click": "#sheet-x", "wait": 900}]
+
+
+def cs_steps(styles, label="문자 스타일"):
+    """문자 스타일 — 스타일 · 색상 견본 창 「＋ 문자 스타일」 → 이름 → 칸마다(체크 칸 b · i · u 는 누른다 — 밑줄 칸은 u 를 켜야 나온다)"""
+    st = [S(label + " — 스타일 · 색상 견본 창", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, props in styles:
+        sel = lambda k: f'#sbody [data-cs="{name}:{k}"]'
+        st += [S(f"문자 스타일 「{name}」", 800), {"answer": name}, {"click": "#cs-new", "wait": 1200}]
+        for k, v in props.items():
+            if k in ("b", "i", "u"):
+                st.append({"click": sel(k), "wait": 700})
+            elif k in ("weight", "u_style"):
+                st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 600})
+            else:
+                st.append(F(sel(k), v, 600))
+    return st + [{"click": "#sheet-x", "wait": 900}]
+
+
+ULF = {}                                                                 # 밑줄 문자 스타일을 이 문서에 만들었나(한 번만)
+UL_CS = [("밑줄", {"u": 1, "weight": 500, "line": UL["line"], "line_off": UL["line_off"], "line_color": UL["line_color"]}),
+         ("밑줄 보통", {"u": 1, "line": UL["line"], "line_off": UL["line_off"], "line_color": UL["line_color"]})]
+
+
+def marks_runs(t, hint_cs=None):
+    """원고 글의 약속 표시 → 꾸밈 조각(인디자인 태그 텍스트처럼 — 표시를 감추는 GREP 대신): {글} 밑줄(Medium) · _{글} 밑줄 ·
+    hint_cs 면 {첫 글자} 를 그 문자 스타일로(빈칸 힌트). 표시가 없으면 글 그대로"""
+    if "{" not in t:
+        return t
+    out, k = [], 0
+    for m in re.finditer(r"(_?)\{([^{}]*)\}", t):
+        if m.start() > k:
+            out.append(t[k:m.start()])
+        out.append({"t": m.group(2), "cs": hint_cs or ("밑줄 보통" if m.group(1) else "밑줄")})
+        k = m.end()
+    if k < len(t):
+        out.append(t[k:])
+    return out
+
+
+def new_part_id():
+    """이 대본이 만든 부품 차례 — 빈 문서에서 시작하므로 편집기가 p_1, p_2 … 로 붙인다"""
+    PARTN[0] += 1
+    return f"p_{PARTN[0]}"
 
 
 def spans_of(pno):
@@ -732,7 +795,7 @@ def make_ox_part(pno, X0=20.0, Y0=262.0):
            {"js": "(() => { const p = LIB.parts[LIB.parts.length - 1]; if (!p || p.atoms.length !== 4) throw new Error('부품 안 생김'); return '부품 ' + p.id + ' ' + p.w + '×' + p.h; })()"},
            S("지면의 그룹은 지운다 — 부품은 라이브러리에 남는다", 1100), {"key": "Delete", "wait": 900},
            {"clickif": {"at": "#tg-snap", "when": "!view.snap"}, "wait": 600}]
-    OXP["id"] = "p_1"                                                    # 문서의 첫 부품
+    OXP["id"] = new_part_id()
     return st
 
 
@@ -757,161 +820,193 @@ def ox_body(pno):
     return st
 
 
-def _ox_body(pno, sp, dr):
-    st = []
-    nb = numbers(pno)[0]
-    st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
-    # 지문 — 바탕 칠 글상자(안쪽 여백), 최소 높이 한 줄
+A2_BIND = "지문+문제번호+발문+선지+진술번호+진술"
+A2 = {}
+
+
+def a2_parts(pno):
+    """원본 쪽 — 지문 · 바탕 · 문제 머리들(번호 · 막대 · 발문) · 선지 줄 · 진술(번호 · 줄들 · O/X 칸)"""
+    sp, dr = spans_of(pno), drawings(pno)
     ps = passages(pno)[0]
     bgs = [d for d in dr if d["fill"] and d["fill"] != "#ffffff" and d["n"] == 1 and d["w"] > 100 and ps["top"] - 8 < d["y"] < ps["top"] + 2]
     outer, inner = max(bgs, key=lambda d: d["w"]), min(bgs, key=lambda d: d["w"])
-    lead_mm = (ps["base1"] - ps["base0"]) / (ps["lines"] - 1)
-    lead = round(lead_mm / MM, 2)
-    rows = [o for o in sp if o["size"] == BODY and abs(o["base"] - ps["base1"]) < 0.5]     # 끝 줄(양끝 안 맞춘 줄)에서 자간
-    trk = gaps_track([c for o in rows for c in o["ink"]], BODY)
-    w_text = ps["right"] - ps["x"] + trk / 1000 * BODY * MM
-    top_t = top_of(ps["base0"], BODY, NOTO, 400, lead)
-    il, it_ = ps["x"] - outer["x"], top_t - outer["y"]
-    ir = outer["w"] - il - w_text
-    ib = outer["y"] + outer["h"] - (top_t + ps["lines"] * lead_mm)
-    h0 = round(it_ + ib + lead_mm, 2)
-    grow = [(outer["y"] + outer["h"], outer["h"] - h0)]                 # (원본 아래 끝, 견본 원고가 자랄 양) — 그 아래 것은 그만큼 위에 그린다
-    shift = lambda y: sum(g for b, g in grow if y >= b - 0.3)
-    E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(outer)[k] for k in ("x", "y", "w", "h")}, "color": inner["fill"], "see": inner["fill"], "pad": 0.6, "ctol": 12, "원고": True})
-    E({"id": f"p{len(ELEMS[len(PAGES)])}", "x": round(ps["x"], 2), "y": round(ps["base0"] - 0.95 * BODY * MM, 2), "w": round(ps["right"] - ps["x"], 2),
-       "h": round(ps["base1"] - ps["base0"] + 1.25 * BODY * MM, 2), "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0,
-       "text": ps["text"][:30], "size": BODY, "원고": True, "shape_iou": 0.80})
-    st += text(round(outer["x"], 2), round(outer["y"], 2), round(outer["w"], 2), h0, temp_passage(len(ps["text"])), BODY, "#231f20",
-               label="지문 — 바탕 칠 글상자(안쪽 여백) · 원고만큼 자란다", leading=lead, align="justify", font=NOTO, track=trk)
-    st += _color("frame.fill", inner["fill"])                          # 글상자 칠 — 안쪽 여백까지, 글을 따라 자란다
-    st.append(F('#side input[data-a="inset4"]', " ".join(f"{round(v, 2):g}" for v in (it_, ir, ib, il))))   # 편집기가 적는 꼴 그대로(3.00 → 3)
-    st += slot("지문") + justify()
-    # 문제 머리
     qh = [o for o in sp if o["font"] == "EliceDXNeolliOTF-Bd" and o["size"] == 10.0]
-    nums = [o for o in sp if LOTTE in o["font"]]
-    right = max([o["x1"] for o in sp if o["font"].startswith("NotoSans") and o["base"] > qh[0]["base"] and o["x1"] > 180] or [188.0])
+    qs = []
     for k, q in enumerate(qh):
-        fold = "문제1" if len(qh) == 2 and k == 0 else None
-        d0, d1 = q["ink"][0], q["ink"][1]
-        bar = [c for c in q["ink"] if c[0] == "|"][0]
-        sh = shift(q["base"] - 3)
-        st += [S(f"문제 {k + 1} 머리 — 번호 | 발문" + (" (접기 묶음 「문제1」 — 원고가 문제 1을 비우면 접힌다)" if fold else ""), 1300)]
-        # 번호·막대 상자는 오른쪽 끝까지 넓게 — 위 지문·선지 상자와 가로로 겹쳐야 그 상자가 자랄 때 같이 밀린다(안 겹치면 제자리)
-        st += T(win_el(q, d0[0] + d1[0], d0[1], d1[2]), EL, 700, slot_name="문제번호", temp="00", shift=sh, fold=fold, w=round(right - d0[1], 1))
-        st += T(win_el(q, "|", bar[1], bar[2]), EL, 700, shift=sh, fold=fold, w=round(right - bar[1], 1))
         qt = min([o for o in sp if o["font"] in ELICE and abs(o["base"] - q["base"]) < 1.5], key=lambda o: abs(o["base"] - q["base"]))
-        fam, wt = ELICE[qt["font"]]
-        st += T(win_el(qt, qt["t"].strip(), qt["x"], qt["x1"]), fam, wt, slot_name="발문", temp="임시 발문 — 다음 물음에 답하시오.", shift=sh, fold=fold,
-                w=round(right - qt["x"], 1))
-        ul = [d for d in dr if d["h"] < 0.3 and d["stroke"] and abs(d["y"] - q["base"]) < 2 and qt["x"] <= d["x"] <= qt["x1"]]
-        if ul:                                                           # 발문의 부정어 밑줄(「않는」) — GREP 스타일(원본 선 굵기·자리)
-            u = ul[0]
-            st += grep(0, "않는|아닌|틀린|없는", bold=False, underline=True, line=round(u["sw"] * MM, 3), line_off=round(u["y"] - qt["base"], 2),
-                       line_color=u["stroke"], label="GREP — 발문의 부정어(않는·아닌·틀린·없는)에 밑줄")
-            E({"id": f"ul{len(ELEMS[len(PAGES)])}", "x": round(u["x"], 2), "y": round(u["y"] - 0.15, 2), "w": round(u["w"], 2), "h": 0.3,
-               "color": u["stroke"], "see": u["stroke"], "pad": 0.15, "ctol": 30, "원고": True})
-        if fold:                                                         # 선지 — 문단마다 ①…, 최소 높이 = 문단 수 × 행간
-            ln = [o for o in sp if o["font"].startswith("NotoSans") and q["base"] + 2 < o["base"] < qh[1]["base"] - 2]
-            paras = choice_paras(ln)
-            csz = ln[0]["size"]
-            cl_mm = min(b["base"] - a["base"] for a, b in zip(ln, ln[1:]))
-            cl = round(cl_mm / MM, 2)
-            ctrk = gaps_track([c for pa in paras for c in pa[-1]["ink"]], csz)            # 선지마다 끝 줄에서
-            ctop = top_of(ln[0]["base"], csz, NOTO, 400, cl)
-            ch0 = round(len(paras) * cl_mm, 2)
-            E({"id": f"c{len(ELEMS[len(PAGES)])}", "x": round(ln[0]["x"], 2), "y": round(ln[0]["base"] - 0.95 * csz * MM, 2),
-               "w": round(max(o["x1"] for o in ln) - ln[0]["x"], 2), "h": round(ln[-1]["base"] - ln[0]["base"] + 1.25 * csz * MM, 2),
-               "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "text": ln[0]["t"][:30], "size": csz, "원고": True, "shape_iou": 0.80})
-            st += text(round(ln[0]["x"], 2), round(ctop - shift(ln[0]["base"] - 3), 2), round(right - ln[0]["x"] + ctrk / 1000 * csz * MM, 2), ch0,
-                       "① 임시 선지 하나\n② 임시 선지 둘\n③ 임시 선지 셋\n④ 임시 선지 넷\n⑤ 임시 선지 다섯", csz, "#231f20",
-                       label="선지 — 원고 자리 「선지」(문단마다 ①…) · 원고만큼 자란다", leading=cl, align="justify", font=NOTO, track=ctrk)
-            st += slot("선지") + justify() + [F('#side input[data-a="fold"]', "문제1")]
-            grow.append((ln[-1]["base"] + 1, len(ln) * cl_mm - ch0))
-    # 진술 — 번호(넓은 상자: 위 글이 자라면 같이 밀린다) · 글(끝에 O/X 칸, 띄어 붙이기)
+        bar = [c for c in q["ink"] if c[0] == "|"][0]
+        ln = [o for o in sp if o["font"].startswith("NotoSans") and q["base"] + 2 < o["base"] < qh[k + 1]["base"] - 2] if k + 1 < len(qh) else []
+        qs.append({"q": q, "qt": qt, "bar": bar, "ln": ln})
+    nums = [o for o in sp if LOTTE in o["font"]]
     stext = [o for o in sp if o["font"].startswith("NotoSans") and o["base"] > qh[-1]["base"] + 2]
     oxs = [d for d in dr if d["n"] == 20 and d["fill"] == "#ffffff"]
-    bars = [d for d in dr if d["fill"] == LINK and d["w"] < 1]
-    _, _, adv = face(NOTO, 400)
-    last_lines = []                                                     # 자간은 문단 끝 줄에서만 — 양끝 맞춘 줄은 낱말·글자 사이가 늘어나 있다
-    for k, n in enumerate(nums):
-        nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
-        last_lines.append([o for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1][-1])
-    strk = line_track(last_lines, NOTO, 400)                            # 끝 줄을 크롬(편집기와 같은 서체 파일)으로 재어 — 낱말 사이 커닝까지
+    sts = []
     for k, n in enumerate(nums):
         nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
         ln = [o for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1]
-        ssz, first, cont = ln[0]["size"], ln[0], ln[1:]
-        cx = cont[0]["x"] if cont else n["x"] + 6.0
         bx = min([d for d in oxs if n["base"] - 6 < d["y"] < nxt - 3], key=lambda d: d["y"])
-        bbot = bx["y"] + bx["h"]
-        last = ln[-1]
-        same = abs(bbot - last["base"]) < 2.5                            # O/X 칸이 끝 줄 옆인가, 다음 줄로 넘어갔나
-        slead_mm = (cont[0]["base"] - first["base"]) if cont else 22 * MM
-        slead = round(slead_mm / MM, 2)
-        lines = len(ln) + (0 if same else 1)
-        sh = shift(n["base"] - 3)
-        st += [S(f"진술 {k + 1:02d} — 번호 · 글 · 끝에 O/X 칸", 1100)]
-        st += T(win_el(n, n["t"].strip(), n["x"], n["x1"]), LOTTE, 400, slot_name="진술번호", temp="00", shift=sh, w=round(right - n["x"], 1))
-        txt = " ".join(o["t"].strip() for o in ln)
-        stop = top_of(first["base"], ssz, NOTO, 400, slead)
-        E({"id": f"s{len(ELEMS[len(PAGES)])}", "x": round(min(cx, first["x"]), 2), "y": round(first["base"] - 0.95 * ssz * MM, 2),
-           "w": round(max(o["x1"] for o in ln) - min(cx, first["x"]), 2), "h": round(last["base"] - first["base"] + 1.25 * ssz * MM, 2),
-           "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 0.8, "search": 0.8, "text": txt[:30], "size": ssz, "원고": True, "shape_iou": 0.80})
+        sts.append({"n": n, "ln": ln, "bx": bx})
+    return sp, dr, ps, outer, inner, qs, sts
+
+
+def a2_style(pno):
+    """견본 쪽 — 단락 스타일 값(줄 상자 기준 문단 사이 · 음영 여백 · 진술 들여쓰기 · O/X 칸 자리)"""
+    sp, dr, ps, outer, inner, qs, sts = a2_parts(pno)
+    lead_mm = (ps["base1"] - ps["base0"]) / (ps["lines"] - 1)
+    lead = lead_mm / MM
+    rows = [o for o in sp if o["size"] == BODY and abs(o["base"] - ps["base1"]) < 0.5]
+    trk = gaps_track([c for o in rows for c in o["ink"]], BODY)
+    top_t = top_of(ps["base0"], BODY, NOTO, 400, lead)
+    below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
+    q0 = qs[0]
+    # 텍스트 프레임 = 문제 번호 왼쪽 ~ 선지 · 진술 줄 오른쪽 끝(양끝 맞춘 줄). 지문은 그 안에서 왼쪽 · 오른쪽 들여쓰기 + 음영(너비 「텍스트」)
+    x0 = min([q["q"]["x"] for q in qs] + [t["n"]["x"] for t in sts])
+    x1 = max(o["x1"] for o in [o for q in qs for o in q["ln"]] + [o for t in sts for o in t["ln"]])
+    qfam, qwt = ELICE[q0["qt"]["font"]]
+    qsz = q0["qt"]["size"]
+    qlead = 15.0
+    pass_bot = outer["y"] + outer["h"]
+    sb_q1 = top_of(q0["q"]["base"], qsz, qfam, qwt, qlead) - pass_bot
+    ln0 = q0["ln"]
+    csz = ln0[0]["size"]
+    cl = min(b["base"] - a["base"] for a, b in zip(ln0, ln0[1:])) / MM
+    ctrk = gaps_track([c for pa in choice_paras(ln0) for c in pa[-1]["ink"]], csz)
+    sb_c = top_of(ln0[0]["base"], csz, NOTO, 400, cl) - (q0["q"]["base"] + below(q0["q"]["base"], qsz, qfam, qwt, qlead))
+    lc = ln0[-1]
+    q1 = qs[1]
+    sb_q = top_of(q1["q"]["base"], qsz, qfam, qwt, qlead) - (lc["base"] + below(lc["base"], csz, NOTO, 400, cl))
+    # 진술 — 첫 진술의 둘째 줄(이어지는 줄) x 가 들여쓰기, 번호는 내어쓰기로 첫 줄 앞에 붙인다
+    s0 = next(t for t in sts if len(t["ln"]) > 1)
+    first, cont = s0["ln"][0], s0["ln"][1]
+    ssz = first["size"]
+    slead_mm = cont["base"] - first["base"]
+    slead = slead_mm / MM
+    last_lines = [t["ln"][-1] for t in sts]
+    strk = line_track(last_lines, NOTO, 400)
+    sb_s1 = top_of(sts[0]["ln"][0]["base"], ssz, NOTO, 400, slead) - (q1["q"]["base"] + below(q1["q"]["base"], qsz, qfam, qwt, qlead))
+    gaps = []
+    for a_, b_ in zip(sts, sts[1:]):                                     # 진술 사이 — O/X 칸이 제 줄로 넘어간 진술은 그 줄까지가 문단
+        same = abs(a_["bx"]["y"] + a_["bx"]["h"] - a_["ln"][-1]["base"]) < 2.5
+        lb = a_["ln"][-1]["base"] + (0 if same else slead_mm)
+        gaps.append(top_of(b_["ln"][0]["base"], ssz, NOTO, 400, slead) - (lb + below(lb, ssz, NOTO, 400, slead)))
+    import statistics
+    sb_s = statistics.median(gaps)
+    t_same = next(t for t in sts if abs(t["bx"]["y"] + t["bx"]["h"] - t["ln"][-1]["base"]) < 2.5)   # O/X 칸이 끝 줄 옆인 진술 — 칸 자리
+    _, _, adv = face(NOTO, 400)
+    lst = t_same["ln"][-1]
+    ox_gap = t_same["bx"]["x"] - lst["x1"] - adv(" ") * ssz * MM - 2 * strk / 1000 * ssz * MM
+    ox_drop = t_same["bx"]["y"] + t_same["bx"]["h"] - lst["base"]
+    A2.update(x=x0, ox=outer["x"], top=outer["y"], w=round(x1 - x0, 2), fill=inner["fill"], pad=round(ps["x"] - outer["x"], 2), pad_top=round(top_t - outer["y"], 2),
+              p_ind=round(outer["x"] - x0, 2), p_ind_r=round(x1 - outer["x"] - outer["w"], 2),
+              pad_bottom=round(pass_bot - (top_t + ps["lines"] * lead_mm), 2), lead=round(lead, 2), trk=trk,
+              qfam=qfam, qwt=qwt, qsz=qsz, qlead=qlead, q_ind=round(q0["q"]["x"] - x0, 2), num_color=q0["q"]["color"],
+              inline_w=round(q0["bar"][1] - q0["q"]["x"], 2), num_trk=gaps_track(q0["q"]["ink"][:2], 10, EL, 700) or 1,
+              csz=csz, cl=round(cl, 2), ctrk=ctrk, c_ind=round(ln0[0]["x"] - x0, 2), sb_c=round(sb_c, 2),
+              sb_q=round(sb_q, 2), after_p=round(sb_q1 - sb_q, 2),
+              ssz=ssz, slead=round(slead, 2), strk=strk, s_ind=round(cont["x"] - x0, 2), s_first=round(s0["n"]["x"] - cont["x"], 2),
+              s_inline_w=round(first["x"] - s0["n"]["x"], 2), s_num_color=s0["n"]["color"], s_num_size=s0["n"]["size"],
+              sb_s1=round(sb_s1, 2), sb_s=round(sb_s, 2), ox_gap=round(ox_gap, 3), ox_drop=round(ox_drop, 3))
+
+
+def a2_styles_steps():
+    G = A2
+    sty = [("OX·지문", {"font": NOTO, "size": BODY, "leading": G["lead"], "tracking": G["trk"], "color": "#231f20", "align": "justify",
+                      "indent": G["p_ind"], "indent_right": G["p_ind_r"], "shade_fit": True,
+                      "shade": G["fill"], "pad": G["pad"], "pad_top": G["pad_top"], "pad_bottom": G["pad_bottom"], "space_after": G["after_p"]}),
+           ("OX·문제번호", {"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]}),
+           ("OX·발문", {"font": G["qfam"], "weight": G["qwt"], "size": G["qsz"], "leading": G["qlead"], "color": "#231f20",
+                      "indent": G["q_ind"], "space_before": G["sb_q"], "keep_next": True}),
+           ("OX·선지", {"font": NOTO, "size": G["csz"], "leading": G["cl"], "tracking": G["ctrk"], "color": "#231f20", "align": "justify",
+                      "indent": G["c_ind"], "space_before": G["sb_c"], "space_same": 0.01, "keep_together": True}),
+           ("OX·진술번호", {"font": LOTTE, "size": G["s_num_size"], "color": G["s_num_color"], "tracking": 1}),
+           ("OX·진술", {"font": NOTO, "size": G["ssz"], "leading": G["slead"], "tracking": G["strk"], "color": "#231f20", "align": "justify",
+                      "indent": G["s_ind"], "indent_first": G["s_first"], "space_before": G["sb_s1"], "space_same": G["sb_s"], "keep_together": True})]
+    st = [S("단락 스타일 — 본문 O/X(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+          {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, v in sty:
+        q = lambda k: f'[data-st="{name}:{k}"]'
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
+        for k, val in v.items():
+            if k in ("font", "align", "weight"):
+                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
+            elif k in ("keep_next", "keep_together", "shade_fit"):
+                st.append({"click": "input" + q(k), "wait": 450})
+            elif val not in (None, 0, ""):
+                st.append(F("input" + q(k), val, 450))
+    st += [{"click": "#sheet-x", "wait": 900}]
+    return st
+
+
+def _ox_body(pno, sp, dr):
+    st = []
+    if "x" not in A2:
+        a2_style(pno)
+        st += a2_styles_steps()
+    G = A2
+    sp, dr, ps, outer, inner, qs, sts = a2_parts(pno)
+    nb = numbers(pno)[0]
+    st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
+    bot = 281.0
+    E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(outer)[k] for k in ("x", "y", "w", "h")}, "color": inner["fill"], "see": inner["fill"], "pad": 0.6, "ctol": 12, "원고": True})
+    fx = G["x"] + outer["x"] - G["ox"]                                    # 이 쪽의 프레임 왼쪽(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
+    right = max([fx + G["w"]] + [t["bx"]["x"] + t["bx"]["w"] + 0.5 for t in sts])   # 원고 창 = 본문 + 줄 끝 O/X 칸까지
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(right - fx, 2), "h": round(bot - G["top"], 2),
+       "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
+    bars = [d for d in dr if d["fill"] == LINK and d["w"] < 1]
+    for t in sts:                                                        # O/X 칸 — 진술 글을 따라 놓이는 원고 요소(줄 끝 · 다음 줄)
+        bx = t["bx"]
         ob = min(bars, key=lambda d: abs(d["x"] - bx["x"] - 10) + abs(d["y"] - bx["y"]))
         o = bx["sw"] * MM / 2
         E({"id": f"ox{len(ELEMS[len(PAGES)])}", "x": round(bx["x"] - o, 2), "y": round(bx["y"] - o, 2), "w": round(bx["w"] + 2 * o, 2), "h": round(bx["h"] + 2 * o, 2),
            "color": LINK, "see": LINK, "pad": 0.3, "ctol": 30, "원고": True})
         E({"id": f"oxb{len(ELEMS[len(PAGES)])}", "x": round(ob["x"], 2), "y": round(ob["y"], 2), "w": round(ob["w"], 2), "h": round(ob["h"], 2),
            "color": LINK, "see": LINK, "pad": 0.15, "ctol": 30, "원고": True})
-        # 칸 자리: 같은 줄이면 끝 글자 오른쪽 + 띄어쓰기 폭 + 자간(끝 글자 뒤 · 띄어쓰기 뒤) 다음, 기준선에서 칸 아래 끝까지 drop
-        if same:
-            gap = round(bx["x"] - last["x1"] - adv(" ") * ssz * MM - 2 * strk / 1000 * ssz * MM, 3)
-            drop = round(bbot - last["base"], 3)
-        else:                                                            # 다음 줄 첫머리 — 칸이 줄 시작에서 떨어진 만큼, 다음 줄 기준선 = 끝 줄 + 행간
-            gap = round(bx["x"] - cx, 3)
-            drop = round(bbot - (last["base"] + slead_mm), 3)
-        st += text(round(cx, 2), round(stop - sh, 2), round(right - cx + strk / 1000 * ssz * MM, 2), round(slead_mm, 2), "임시 진술 — 바깥에서 온 문장이 이 자리에 들어온다.",
-                   ssz, "#231f20", label="진술 — 원고 자리 「진술」 · 끝에 O/X 칸", leading=slead, align="justify", font=NOTO, track=strk)
-        indent1 = round(first["x"] - cx, 2)
-        if abs(indent1) > 0.05:
-            st.append(F('#side input[data-a="indent_first"]', indent1))
-        st += slot("진술") + justify()
-        st += [{"pick": {"at": '#side select[data-a="tail.part"]', "value": OXP["id"]}, "wait": 800},
-               F('#side input[data-a="tail.gap"]', gap), F('#side input[data-a="tail.drop"]', drop),
-               {"click": '#side input[data-a="tail.space"]', "wait": 600}]
-        grow.append((first["base"] + 1, (lines - 1) * slead_mm))
+    st += [S("본문 — 텍스트 프레임 하나(지문 · 문제 · 진술이 원고만큼 흐른다)", 1200)]
+    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2),
+               "임시 지문 — 원고가 오면 지문 · 문제 · 진술이 이 프레임 하나에 차례로 흐른다.", BODY, "#231f20",
+               label="본문 글상자 — 한 줄기(" + A2_BIND + ")", font=NOTO, leading=G["lead"])
+    st += slot(A2_BIND, label="자리 — " + A2_BIND + " (원고에 나온 차례대로 한 줄기)")
+    for nm in A2_BIND.split("+"):
+        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "OX·" + nm}, "wait": 450})
+    st += [S("문제번호 · 진술번호는 첫 줄 앞에 붙인다 — 번호 칸 폭 · 발문 글머리 「|」", 900),
+           {"click": '#side input[data-a="slotfmt.문제번호.inline"]', "wait": 600},
+           F('#side input[data-a="slotfmt.문제번호.inline_w"]', G["inline_w"], 600),
+           F('#side input[data-a="slotfmt.발문.bullet_text"]', "| ", 600),
+           {"click": '#side input[data-a="slotfmt.진술번호.inline"]', "wait": 600},
+           F('#side input[data-a="slotfmt.진술번호.inline_w"]', G["s_inline_w"], 600)]
+    st += [S("진술 끝에 O/X 칸 — 데이터 필드 「진술」의 고정 개체(문단 끝, 띄어 붙이기)", 1000),
+           {"pick": {"at": '#side select[data-a="slotfmt.진술.anc.part"]', "value": OXP["id"]}, "wait": 900},
+           F('#side input[data-a="slotfmt.진술.anc.gap"]', G["ox_gap"], 600), F('#side input[data-a="slotfmt.진술.anc.dy"]', G["ox_drop"], 600),
+           {"click": '#side input[data-a="slotfmt.진술.anc.space"]', "wait": 600}]
+    ul = [d for d in dr if d["h"] < 0.3 and d["stroke"] and any(abs(d["y"] - q["q"]["base"]) < 2 and q["qt"]["x"] <= d["x"] <= q["qt"]["x1"] for q in qs)]
+    if ul:                                                               # 발문의 부정어 밑줄(「않는」) — GREP 스타일(원본 선 굵기·자리)
+        u = ul[0]
+        qb = next(q for q in qs if abs(u["y"] - q["q"]["base"]) < 2)
+        st += grep(0, "않는|아닌|틀린|없는", bold=False, underline=True, line=round(u["sw"] * MM, 3), line_off=round(u["y"] - qb["qt"]["base"], 2),
+                   line_color=u["stroke"], label="GREP — 발문의 부정어(않는·아닌·틀린·없는)에 밑줄")
+    st += justify()
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]   # 큰 본문 프레임 고른 것을 풀고 다음 개체를 그린다
     return st
 
 
 def ox_record(lp, rp):
-    """본문 O/X 펼침면 하나의 원고 — 쪽마다: 지문 번호 · 지문 · 문제(1: 번호·발문·선지 — 없으면 비움, 2: 번호·발문) · 진술 번호·진술"""
-    rec = {"제목": None, "지문번호": [], "지문": [], "문제번호": [], "발문": [], "선지": [], "진술번호": [], "진술": []}
+    """본문 O/X 펼침면 하나의 원고 — 쪽마다 지문 번호 + 한 줄기(지문 · 문제마다 번호 · 발문 · 선지 · 진술마다 번호 · 글). 없는 문제는 안 보낸다"""
+    rec = {"제목": None, "지문번호": [], A2_BIND: []}
     for pno in (lp, rp):
-        sp = spans_of(pno)
+        sp, dr, ps, outer, inner, qs, sts = a2_parts(pno)
         if pno == lp:
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
         rec["지문번호"] += [e["text"] for e in numbers(pno)]
-        rec["지문"].append(passages(pno)[0]["text"])
-        qh = [o for o in sp if o["font"] == "EliceDXNeolliOTF-Bd" and o["size"] == 10.0]
-        qs = []
-        for q in qh:
-            qt = min([o for o in sp if o["font"] in ELICE and abs(o["base"] - q["base"]) < 1.5], key=lambda o: abs(o["base"] - q["base"]))
-            qs.append(("".join(c[0] for c in q["ink"][:2]), qt["t"].strip()))
-        if len(qh) == 2:
-            ln = [o for o in sp if o["font"].startswith("NotoSans") and qh[0]["base"] + 2 < o["base"] < qh[1]["base"] - 2]
-            rec["선지"].append("\n".join(" ".join(o["t"].strip() for o in pa) for pa in choice_paras(ln)))
-        else:
-            qs = [("", "")] + qs                                           # 문제 1 없음 — 비운다(접기 묶음째 접힌다)
-            rec["선지"].append("")
-        rec["문제번호"] += [a for a, _ in qs]
-        rec["발문"] += [b for _, b in qs]
-        nums = [o for o in sp if LOTTE in o["font"]]
-        stext = [o for o in sp if o["font"].startswith("NotoSans") and o["base"] > qh[-1]["base"] + 2]
-        for k, n in enumerate(nums):
-            nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
-            rec["진술번호"].append(n["t"].strip())
-            rec["진술"].append(" ".join(o["t"].strip() for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1))
+        items = [[["지문", ps["text"]]]]
+        for q in qs:
+            it = [["문제번호", "".join(c[0] for c in q["q"]["ink"][:2])], ["발문", q["qt"]["t"].strip()]]
+            if q["ln"]:
+                it.append(["선지", "\n".join(" ".join(o["t"].strip() for o in pa) for pa in choice_paras(q["ln"]))])
+            items.append(it)
+        for t in sts:
+            items.append([["진술번호", t["n"]["t"].strip()], ["진술", " ".join(o["t"].strip() for o in t["ln"])]])
+        rec[A2_BIND].append(items)
     return rec
 
 
@@ -924,8 +1019,8 @@ if want(5):
     CONTENT["A본문OX"] = [ox_record(l, l + 1) for l in range(24, 44, 2)]          # 펼침면 10벌 = 레코드 10
 
 # ── 구성 6 「B본문정리」 (원본 44~63쪽 = 펼침면 10벌 · 원고마다) — 견본 = 44·45쪽 ──
-# 쪽: 지문 번호 · 지문(바탕) · 꼬리표 「주제」 + 주제 문장들 · 꼬리표 「제목」 + 제목 문장들 · 체크 아이콘 + 발문 · 지문(바탕) · 주석(바탕, 없으면 접힌다) · 선지
-# 쪽 설정 「자라면 아래 모두 밀기」 — 꼬리표·아이콘은 지문 상자 왼쪽 밖이라 가로로 안 겹친다.
+# 흐름 방식(2026-10-14): 텍스트 프레임 하나에 지문(음영) · 주제 · 글제목 · 발문 · 문제지문(음영) · 주석(같은 음영, 오른쪽 맞춤) · 선지.
+# 꼬리표 「주제」 「제목」 · 체크 아이콘 = 그 필드 첫 문단의 고정 개체(사용자 정의 위치, 왼쪽 바깥). 주석이 없으면 문단이 안 생겨 상자가 줄어든다.
 TAGNAME = {"주제": "주제", "제목": "글제목"}                              # 꼬리표 글 → 원고 자리 이름(머리의 「제목」= 유형 이름과 겹치지 않게)
 FOOT = {}                                                                # 주석 상자 꼴 — 주석이 있는 쪽에서 재서 없는 쪽에도 같은 상자(접힌다)
 
@@ -961,137 +1056,227 @@ def passage_bg(dr, ps):
                 and d["y"] + d["h"] > ps["base0"]], key=lambda d: d["w"])
 
 
-def sum_body(pno):
-    with top_spot():
-        return _sum_body(pno)
+B1_TOP = "지문+주제+글제목"                                               # 위 프레임 — 원고만큼
+B1_BIND = "발문+문제지문+주석+선지"                                        # 아래 문제 프레임 — 제자리(원본 20쪽 모두 같은 높이)
+B1 = {}
+B1P = {}                                                                 # 부품 — 꼬리표 「주제」 · 「제목」 · 체크 아이콘
 
 
-def _sum_body(pno):
+def group_part(st, n, X0, Y0, w, h):
+    """빈 자리(X0, Y0)에 그린 개체 n 개를 범위로 골라 그룹 → 부품, 지면에서는 지운다(부품은 라이브러리에 남는다)"""
+    st += [S("자석 끄기 — 켜 두면 묶을 때 0.5mm 격자로 반올림된다", 1000), {"clickif": {"at": "#tg-snap", "when": "view.snap"}, "wait": 600},
+           S(f"범위로 {n}개를 골라 그룹 → 부품", 1200),
+           {"drag": {"from": {"mm": [X0 - 2, Y0 - 2]}, "to": {"mm": [X0 + w + 2, Y0 + h + 2]}}, "wait": 900},
+           {"js": f"(() => {{ if (sels.size !== {n}) throw new Error('고른 것 ' + sels.size + ' ({n} 이어야)'); return '고른 것 {n}'; }})()"},
+           {"click": "#side #s-group", "wait": 1500},
+           {"js": f"(() => {{ const p = LIB.parts[LIB.parts.length - 1]; if (!p || p.atoms.length !== {n}) throw new Error('부품 안 생김'); return '부품 ' + p.id; }})()"},
+           S("지면의 그룹은 지운다", 900), {"key": "Delete", "wait": 900},
+           {"clickif": {"at": "#tg-snap", "when": "!view.snap"}, "wait": 600}]
+    return new_part_id()
+
+
+def b1_parts(pno):
     sp, dr = spans_of(pno), drawings(pno)
-    st = [S("쪽 설정 — 자라면 아래 모두 밀기(옆 꼬리표·아이콘도 같이)", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
-          {"click": "#side #s-pushrow", "wait": 900}]
-    nb = numbers(pno)[0]
-    st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
-    grow = []
-    shift = lambda y: sum(g for b, g in grow if y >= b - 0.3)
-    # 지문 1 — 바탕(#f9f9f2) 글상자
     ps = passages(pno)[0]
     rows = [o for o in sp if o["size"] == BODY and ps["base0"] - 0.5 <= o["base"] <= ps["base1"] + 0.5 and o["font"].endswith("Regular")]
     rect = passage_bg(dr, ps)
-    lead_mm = (ps["base1"] - ps["base0"]) / (ps["lines"] - 1)
-    g = bg_box(st, rect, rows, BODY, lead_mm, "지문 — 바탕 칠 글상자 · 원고만큼 자란다", "지문", temp_passage(len(ps["text"])), 0, rect["fill"])
-    grow.append((rect["y"] + rect["h"], g))
-    # 꼬리표 둘 — 면 + (두꺼운 선) + 흰 글, 옆에 문장들(Noto Medium 9)
     tags = sorted([d for d in dr if d["n"] == 1 and d["fill"] and d["fill"] != "#ffffff" and 3 < d["h"] < 4 and 6 < d["w"] < 9], key=lambda d: d["y"])
     q_icon = [d for d in dr if d["n"] == 20 and d["stroke"] and d["w"] < 5][0]
-    for k, tg in enumerate(tags):
+    tg = []
+    for k, t in enumerate(tags):
         nxt = tags[k + 1]["y"] if k + 1 < len(tags) else q_icon["y"]
-        sh = shift(tg["y"])
-        tt = min([o for o in sp if o["font"].startswith("EliceDigitalBaeumOTF-B") and o["color"] == "#ffffff"], key=lambda o: abs(o["base"] - tg["y"] - tg["h"]))
-        name = TAGNAME.get(tt["t"].strip(), tt["t"].strip())
-        st += [S(f"꼬리표 「{tt['t'].strip()}」 — 면 · 글 · 옆 문장(원고 자리 「{name}」)", 1200)]
-        E({"id": f"tg{len(ELEMS[len(PAGES)])}", "x": round(tg["x"], 2), "y": round(tg["y"], 2), "w": round(tg["w"], 2), "h": round(tg["h"], 2),
-           "color": tg["fill"], "see": tg["fill"], "pad": 0.3, "ctol": 30})
-        st += box(round(tg["x"], 2), round(tg["y"] - sh, 2), round(tg["w"], 2), round(tg["h"], 2), tg["fill"])
-        for ln in [d for d in dr if d["n"] == 1 and d["stroke"] == tg["fill"] and d["h"] < 0.1 and abs(d["y"] - tg["y"] - tg["h"] / 2) < 1]:
-            t_ = ln["sw"] * MM                                           # 두꺼운 선(10pt) — 면과 거의 겹친다(위로 0.1mm 더). 얇은 면으로
-            st += box(round(ln["x"], 2), round(ln["y"] - t_ / 2 - sh, 3), round(ln["w"], 2), round(t_, 3), tg["fill"])
-        st += T(win_el(tt, tt["t"].strip(), tt["x"], tt["x1"]), ELB, 700, shift=sh, w=8, search=0.3)
-        ln = [o for o in sp if o["font"] == "NotoSansCJKkr-Medium" and tg["y"] - 1 < o["base"] < nxt - 1]
-        lmm = (ln[1]["base"] - ln[0]["base"]) if len(ln) > 1 else 6.75
-        trk = gaps_track([c for o in ln for c in o["ink"]], 9, NOTO, 500)
-        E({"id": f"tl{len(ELEMS[len(PAGES)])}", "x": round(min(o["x"] for o in ln), 2), "y": round(ln[0]["base"] - 0.95 * 9 * MM, 2),
-           "w": round(max(o["x1"] for o in ln) - min(o["x"] for o in ln), 2), "h": round(ln[-1]["base"] - ln[0]["base"] + 1.25 * 9 * MM, 2),
-           "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 0.8, "search": 0.8, "text": ln[0]["t"].strip()[:30], "size": 9.0, "원고": True, "shape_iou": 0.80})
-        x0 = min(o["x"] for o in ln)
-        st += text(round(x0, 2), round(top_of(ln[0]["base"], 9, NOTO, 500, round(lmm / MM, 2)) - sh, 2), round(185 - x0, 1), round(len(ln) * lmm, 2),
-                   "\n".join(f"임시 {tt['t'].strip()} 문장 {i + 1}" for i in range(len(ln))), 9, "#231f20", label=f"{tt['t'].strip()} 문장 — 원고 자리 「{name}」(문단마다 하나)",
-                   leading=round(lmm / MM, 2), font=NOTO, weight=500, track=trk or None)
-        st += slot(name)
-    # 체크 아이콘 + 발문
-    sh = shift(q_icon["y"])
-    o_ = q_icon["sw"] * MM / 2
-    E({"id": f"ic{len(ELEMS[len(PAGES)])}", "x": round(q_icon["x"] - o_, 2), "y": round(q_icon["y"] - o_, 2), "w": round(q_icon["w"] + 2 * o_, 2),
-       "h": round(q_icon["h"] + 2 * o_, 2), "color": q_icon["stroke"], "see": q_icon["stroke"], "pad": 0.3, "ctol": 30})
-    st += image(round(q_icon["x"] - 0.3, 2), round(q_icon["y"] - 0.3 - sh, 2), 4.15, 4.15, os.path.join(HERE, "check.svg"),
-                label="체크 아이콘 — 원본에서 내보낸 그림(check.svg)을 올린다")
+        tt = min([o for o in sp if o["font"].startswith("EliceDigitalBaeumOTF-B") and o["color"] == "#ffffff"], key=lambda o: abs(o["base"] - t["y"] - t["h"]))
+        thick = [d for d in dr if d["n"] == 1 and d["stroke"] == t["fill"] and d["h"] < 0.1 and abs(d["y"] - t["y"] - t["h"] / 2) < 1]
+        ln = [o for o in sp if o["font"] == "NotoSansCJKkr-Medium" and t["y"] - 1 < o["base"] < nxt - 1]
+        tg.append({"r": t, "tt": tt, "thick": thick, "ln": ln, "name": TAGNAME.get(tt["t"].strip(), tt["t"].strip())})
     qt = [o for o in sp if o["font"] == "EliceDigitalBaeumOTF" and abs(o["base"] - q_icon["y"] - q_icon["h"]) < 2][0]
-    st += T(win_el(qt, qt["t"].strip(), qt["x"], qt["x1"]), ELB, 400, slot_name="발문", temp="임시 발문 — 다음 물음에 답하시오.", shift=sh, w=round(185 - qt["x"], 1))
-    # 지문 2 — 바탕(#eaf0f7) 글상자 + 주석(접기 묶음)
     p2 = [g_ for g_ in passages(pno) if g_["base0"] > qt["base"]][0]
     rows2 = [o for o in sp if o["size"] == BODY and o["font"].endswith("Regular") and p2["base0"] - 0.5 <= o["base"] <= p2["base1"] + 0.5 and not o["t"].strip().startswith("*")]
     rects = sorted([d for d in dr if d["fill"] == "#eaf0f7" and d["n"] == 1 and d["w"] > 100 and d["y"] > qt["base"]], key=lambda d: d["y"])
-    r1 = rects[0]
-    sh = shift(r1["y"])
-    lead2 = (rows2[-1]["base"] - rows2[0]["base"]) / (len(rows2) - 1)
-    g = bg_box(st, r1, rows2, BODY, lead2, "지문(문제) — 바탕 칠 글상자", "지문", temp_passage(len(" ".join(o["t"] for o in rows2))), sh, r1["fill"])
-    grow.append((r1["y"] + r1["h"], g))
     foot = [o for o in sp if o["size"] == BODY and o["t"].strip().startswith("*")]
-    if foot:                                                             # 주석이 있는 쪽 — 꼴을 잰다(아래 바탕 면들 = 주석 자리)
+    cl = [o for o in sp if o["font"] == "NotoSansCJKkr-Regular" and o["size"] == 9.0 and o["base"] > rects[0]["y"] + rects[0]["h"]]
+    return sp, dr, ps, rows, rect, tg, q_icon, qt, p2, rows2, rects, foot, cl
+
+
+def b1_style(pno):
+    sp, dr, ps, rows, rect, tg, q_icon, qt, p2, rows2, rects, foot, cl = b1_parts(pno)
+    below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
+    # 텍스트 프레임 = 문제 지문 바탕 폭(가장 넓은 문단). 지문은 그 안에서 왼쪽 · 오른쪽 들여쓰기 + 음영(너비 「텍스트」), 꼬리표 · 체크는 프레임 왼쪽 바깥
+    x0 = rects[0]["x"]
+    x1 = max([rect["x"] + rect["w"]] + [d["x"] + d["w"] for d in rects])
+    lead_mm = (ps["base1"] - ps["base0"]) / (ps["lines"] - 1)
+    lead = lead_mm / MM
+    trk = gaps_track([c for c in rows[-1]["ink"]], BODY)
+    top_t = top_of(rows[0]["base"], BODY, NOTO, 400, lead)
+    G = dict(x=x0, ox=rect["x"], top=rect["y"], w=round(x1 - x0, 2), fill1=rect["fill"], pad1=round(rows[0]["x"] - rect["x"], 2), pad1_top=round(top_t - rect["y"], 2),
+             p_ind=round(rect["x"] - x0, 2), p_ind_r=round(x1 - rect["x"] - rect["w"], 2),
+             pad1_bottom=round(rect["y"] + rect["h"] - (top_t + ps["lines"] * lead_mm), 2), lead=round(lead, 2), trk=trk)
+    prev_bot = rect["y"] + rect["h"]                                     # 앞 문단 줄 상자 아래 끝
+    for t in tg:
+        ln = t["ln"]
+        lmm = (ln[1]["base"] - ln[0]["base"]) if len(ln) > 1 else 6.75
+        G[t["name"]] = dict(lead=round(lmm / MM, 2), trk=gaps_track([c for o in ln for c in o["ink"]], 9, NOTO, 500) or 1,
+                            ind=round(min(o["x"] for o in ln) - x0, 2), sb=round(top_of(ln[0]["base"], 9, NOTO, 500, lmm / MM) - prev_bot, 2),
+                            tag_x=round(t["r"]["x"] - x0, 2), tag_dy=round(t["r"]["y"] - top_of(ln[0]["base"], 9, NOTO, 500, lmm / MM), 2))
+        prev_bot = ln[-1]["base"] + below(ln[-1]["base"], 9, NOTO, 500, lmm / MM)
+    qsz = qt["size"]
+    qlead = 15.0
+    G["발문"] = dict(size=qsz, ind=round(qt["x"] - x0, 2), sb=round(top_of(qt["base"], qsz, ELB, 400, qlead) - prev_bot, 2), lead=qlead,
+                   ic_x=round(q_icon["x"] - 0.3 - x0, 2), ic_dy=round(q_icon["y"] - 0.3 - top_of(qt["base"], qsz, ELB, 400, qlead), 2))
+    r1 = rects[0]
+    lead2 = (rows2[-1]["base"] - rows2[0]["base"]) / (len(rows2) - 1)
+    trk2 = gaps_track([c for c in rows2[-1]["ink"]], BODY)
+    top2 = top_of(rows2[0]["base"], BODY, NOTO, 400, lead2 / MM)
+    G["문제지문"] = dict(fill=r1["fill"], lead=round(lead2 / MM, 2), trk=trk2, pad=round(rows2[0]["x"] - r1["x"], 2), pad_top=round(top2 - r1["y"], 2),
+                     pad_bottom=round(r1["y"] + r1["h"] - (top2 + len(rows2) * lead2), 2),
+                     sb=round(r1["y"] - (qt["base"] + below(qt["base"], qsz, ELB, 400, qlead)), 2))
+    box_bot = max(d["y"] + d["h"] for d in rects)
+    if foot:                                                             # 주석 — 같은 바탕 상자에 이어 붙인 오른쪽 맞춤 줄
         f = foot[0]
-        fb = max(d["y"] + d["h"] for d in rects)
-        FOOT.update(h=fb - (r1["y"] + r1["h"]), base=f["base"] - (r1["y"] + r1["h"]), right=r1["x"] + r1["w"] - f["x1"])
-    if FOOT:
-        top_f = r1["y"] + r1["h"]
-        sh = shift(top_f + 0.5)
-        ftrk = gaps_track(foot[0]["ink"], BODY) if foot else -40
-        ft = top_of(top_f + FOOT["base"], BODY, NOTO, 400, round(lead2 / MM, 2))
-        ins = (round(ft - top_f, 2), round(FOOT["right"] + ftrk / 1000 * BODY * MM, 2), round(FOOT["h"] - (ft - top_f) - lead2, 2), 3)
-        st += [S("주석 — 지문 바탕에 이어 붙인 오른쪽 맞춤 줄(원고 자리 「주석」 · 접기 묶음: 원고가 비우면 접힌다)", 1300)]
-        st += text(round(r1["x"], 2), round(top_f - sh, 2), round(r1["w"], 2), round(FOOT["h"], 2), "* 임시 주석: 낱말 풀이", BODY, "#231f20", align="right",
-                   leading=round(lead2 / MM, 2), font=NOTO, track=ftrk)
-        st += _color("frame.fill", r1["fill"])
-        st.append(F('#side input[data-a="inset4"]', " ".join(f"{v:g}" for v in ins)))
-        st += slot("주석") + [F('#side input[data-a="fold"]', "주석")]
-        if foot:
-            E({"id": f"ft{len(ELEMS[len(PAGES)])}", "x": round(foot[0]["x"], 2), "y": round(foot[0]["base"] - 0.95 * BODY * MM, 2), "w": round(foot[0]["x1"] - foot[0]["x"], 2),
-               "h": round(1.25 * BODY * MM, 2), "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 0.8, "search": 0.8, "text": foot[0]["t"].strip()[:30],
-               "size": BODY, "원고": True, "shape_iou": 0.80})
-            for d in rects[1:]:
-                E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(d)[k] for k in ("x", "y", "w", "h")}, "color": d["fill"], "see": d["fill"], "pad": 0.3, "ctol": 8, "원고": True})
-        else:
-            grow.append((top_f + 0.4, -FOOT["h"]))                       # 이 쪽 원고엔 주석이 없다 — 상자는 접히고 아래 것이 그만큼 올라온다(설계는 아래에)
-    # 선지
-    ln = [o for o in sp if o["font"] == "NotoSansCJKkr-Regular" and o["size"] == 9.0 and o["base"] > r1["y"] + r1["h"]]
-    paras = choice_paras(ln)
+        ftop = top_of(f["base"], BODY, NOTO, 400, lead2 / MM)
+        G["주석"] = dict(trk=gaps_track(f["ink"], BODY) or -40, right=round(r1["x"] + r1["w"] - f["x1"], 2),
+                       sb=round(ftop - (rows2[-1]["base"] + below(rows2[-1]["base"], BODY, NOTO, 400, lead2 / MM)), 2),
+                       pad_bottom=round(box_bot - (ftop + lead2), 2))
     csz = 9.0
-    cl_mm = min(b["base"] - a["base"] for a, b in zip(ln, ln[1:]))
-    cl = round(cl_mm / MM, 2)
-    ctrk = gaps_track([c for pa in paras for c in pa[-1]["ink"]], csz)
-    ch0 = round(len(paras) * cl_mm, 2)
-    sh = shift(ln[0]["base"] - 3)
-    E({"id": f"c{len(ELEMS[len(PAGES)])}", "x": round(ln[0]["x"], 2), "y": round(ln[0]["base"] - 0.95 * csz * MM, 2), "w": round(max(o["x1"] for o in ln) - ln[0]["x"], 2),
-       "h": round(ln[-1]["base"] - ln[0]["base"] + 1.25 * csz * MM, 2), "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0,
-       "text": ln[0]["t"][:30], "size": csz, "원고": True, "shape_iou": 0.80})
-    right = max(r["x"] + r["w"] for r in rects) - 3
-    st += text(round(ln[0]["x"], 2), round(top_of(ln[0]["base"], csz, NOTO, 400, cl) - sh, 2), round(right - ln[0]["x"] + ctrk / 1000 * csz * MM, 2), ch0,
-               "① 임시 선지 하나\n② 임시 선지 둘\n③ 임시 선지 셋\n④ 임시 선지 넷\n⑤ 임시 선지 다섯", csz, "#231f20",
-               label="선지 — 원고 자리 「선지」(문단마다 ①…)", leading=cl, align="justify", font=NOTO, track=ctrk)
-    st += slot("선지") + justify()
+    cl_mm = min(b["base"] - a["base"] for a, b in zip(cl, cl[1:]))
+    G["선지"] = dict(lead=round(cl_mm / MM, 2), trk=gaps_track([c for pa in choice_paras(cl) for c in pa[-1]["ink"]], csz), ind=round(cl[0]["x"] - x0, 2),
+                   sb=round(top_of(cl[0]["base"], csz, NOTO, 400, cl_mm / MM) - box_bot, 2))
+    B1.update(G)
+
+
+def b1_styles_steps():
+    G = B1
+    B_ = {"font": NOTO, "size": BODY, "color": "#231f20", "align": "justify"}
+    sty = [("정리·지문", dict(B_, leading=G["lead"], tracking=G["trk"], indent=G["p_ind"], indent_right=G["p_ind_r"], shade_fit=True,
+                          shade=G["fill1"], pad=G["pad1"], pad_top=G["pad1_top"], pad_bottom=G["pad1_bottom"])),
+           ("정리·주제", {"font": NOTO, "weight": 500, "size": 9, "color": "#231f20", "leading": G["주제"]["lead"], "tracking": G["주제"]["trk"],
+                       "indent": G["주제"]["ind"], "space_before": G["주제"]["sb"], "space_same": 0.01}),
+           ("정리·글제목", {"font": NOTO, "weight": 500, "size": 9, "color": "#231f20", "leading": G["글제목"]["lead"], "tracking": G["글제목"]["trk"],
+                        "indent": G["글제목"]["ind"], "space_before": G["글제목"]["sb"], "space_same": 0.01}),
+           ("정리·발문", {"font": ELB, "weight": 400, "size": G["발문"]["size"], "leading": G["발문"]["lead"], "color": "#231f20",
+                       "indent": G["발문"]["ind"], "space_before": G["발문"]["sb"], "keep_next": True}),
+           ("정리·문제지문", dict(B_, leading=G["문제지문"]["lead"], tracking=G["문제지문"]["trk"], shade=G["문제지문"]["fill"], pad=G["문제지문"]["pad"],
+                            pad_top=G["문제지문"]["pad_top"], pad_bottom=G["문제지문"]["pad_bottom"], space_before=G["문제지문"]["sb"])),
+           ("정리·주석", dict(B_, align="right", leading=G["문제지문"]["lead"], tracking=G["주석"]["trk"], shade=G["문제지문"]["fill"],
+                          pad=G["문제지문"]["pad"], pad_bottom=G["주석"]["pad_bottom"], space_before=G["주석"]["sb"])),
+           ("정리·선지", {"font": NOTO, "size": 9, "color": "#231f20", "align": "justify", "leading": G["선지"]["lead"], "tracking": G["선지"]["trk"],
+                       "indent": G["선지"]["ind"], "space_before": G["선지"]["sb"], "space_same": 0.01, "keep_together": True})]
+    st = [S("단락 스타일 — 본문 정리(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+          {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, v in sty:
+        q = lambda k: f'[data-st="{name}:{k}"]'
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
+        for k, val in v.items():
+            if k in ("font", "align", "weight"):
+                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
+            elif k in ("keep_next", "keep_together", "shade_fit"):
+                st.append({"click": "input" + q(k), "wait": 450})
+            elif val not in (None, 0, ""):
+                st.append(F("input" + q(k), val, 450))
+    st += [{"click": "#sheet-x", "wait": 900}]
+    return st
+
+
+def b1_make_parts(pno):
+    """부품 — 꼬리표 「주제」 · 「제목」(면 · 두꺼운 선 · 흰 글) · 체크 아이콘(원본에서 내보낸 그림 + 같은 크기 빈 면)을 빈 자리에 그려 묶는다"""
+    sp, dr, ps, rows, rect, tg, q_icon, qt, p2, rows2, rects, foot, cl = b1_parts(pno)
+    st = []
+    X0, Y0 = 20.0, 262.0
+    for t in tg:
+        r = t["r"]
+        dx, dy = X0 - r["x"], Y0 - r["y"]
+        st += [S(f"꼬리표 「{t['tt']['t'].strip()}」 부품 — 면 · 두꺼운 선 · 흰 글", 1200)]
+        st += box(round(X0, 2), round(Y0, 2), round(r["w"], 2), round(r["h"], 2), r["fill"])
+        n = 1
+        for ln in t["thick"]:
+            t_ = ln["sw"] * MM
+            st += box(round(ln["x"] + dx, 2), round(ln["y"] - t_ / 2 + dy, 3), round(ln["w"], 2), round(t_, 3), r["fill"])
+            n += 1
+        tt = t["tt"]                                                     # 흰 글 — 부품 속이라 잴 목록에 안 넣는다(지면 꼬리표는 원고 요소로 따로 잰다)
+        st += text(round(tt["x"] + dx, 2), round(top_of(tt["base"], tt["size"], ELB, 700, tt["size"]) + dy, 2), 8, round(tt["size"] * MM + 0.4, 1),
+                   tt["t"].strip(), tt["size"], "#ffffff", font=ELB, weight=700, leading=tt["size"])
+        n += 1
+        B1P[t["name"]] = group_part(st, n, X0, Y0, max(r["w"], 8) + 1, r["h"] + 1)
+    st += [S("체크 아이콘 부품 — 원본에서 내보낸 그림(check.svg) + 같은 크기 빈 면(그룹은 둘 이상)", 1200)]
+    st += image(X0, Y0, 4.15, 4.15, os.path.join(HERE, "check.svg"))
+    st += box(X0, Y0, 4.15, 4.15, "#ffffff", alpha=0)                  # 안 보이는 짝 — 그룹은 둘 이상이라
+    B1P["발문"] = group_part(st, 2, X0, Y0, 4.15, 4.15)
+    return st
+
+
+def sum_body(pno):
+    st = []
+    if "x" not in B1:
+        b1_style(pno)
+        st += b1_make_parts(pno)
+    with top_spot():
+        st += _sum_body(pno)
+    return st
+
+
+def _sum_body(pno):
+    st = []
+    if not B1.get("made"):
+        st += b1_styles_steps()
+        B1["made"] = True
+    G = B1
+    sp, dr, ps, rows, rect, tg, q_icon, qt, p2, rows2, rects, foot, cl = b1_parts(pno)
+    nb = numbers(pno)[0]
+    st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
+    bot = 281.0
+    E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(rect)[k] for k in ("x", "y", "w", "h")}, "color": rect["fill"], "see": rect["fill"], "pad": 0.6, "ctol": 8, "원고": True})
+    for d in rects:
+        E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(d)[k] for k in ("x", "y", "w", "h")}, "color": d["fill"], "see": d["fill"], "pad": 0.6, "ctol": 8, "원고": True})
+    for t in tg:                                                         # 꼬리표 — 주제 · 제목 문장을 따라 놓인다(원고 요소)
+        E({"id": f"tg{len(ELEMS[len(PAGES)])}", "x": round(t["r"]["x"], 2), "y": round(t["r"]["y"], 2), "w": round(t["r"]["w"], 2), "h": round(t["r"]["h"], 2),
+           "color": t["r"]["fill"], "see": t["r"]["fill"], "pad": 0.3, "ctol": 30, "원고": True})
+    o_ = q_icon["sw"] * MM / 2
+    E({"id": f"ic{len(ELEMS[len(PAGES)])}", "x": round(q_icon["x"] - o_, 2), "y": round(q_icon["y"] - o_, 2), "w": round(q_icon["w"] + 2 * o_, 2),
+       "h": round(q_icon["h"] + 2 * o_, 2), "color": q_icon["stroke"], "see": q_icon["stroke"], "pad": 0.3, "ctol": 30, "원고": True})
+    fx = rects[0]["x"]                                                    # 이 쪽의 프레임 왼쪽 = 이 쪽 문제 지문 바탕(지문 바탕은 쪽마다 폭이 다르다 — 45쪽은 7mm 안쪽)
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
+       "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
+    qtop = round(top_of(qt["base"], qt["size"], ELB, 400, G["발문"]["lead"]), 2)          # 문제 프레임 위 끝 — 원본 20쪽 모두 발문 기준선 157.2mm(제자리)
+    anc = lambda nm, x_, dy_: [S(f"「{nm}」 첫 문단 왼쪽 바깥에 고정 개체(사용자 정의 위치)", 1000),
+                               {"pick": {"at": f'#side select[data-a="slotfmt.{nm}.anc.part"]', "value": B1P[nm]}, "wait": 900},
+                               {"pick": {"at": f'#side select[data-a="slotfmt.{nm}.anc.pos"]', "value": "side"}, "wait": 800},
+                               F(f'#side input[data-a="slotfmt.{nm}.anc.x"]', x_, 600), F(f'#side input[data-a="slotfmt.{nm}.anc.dy"]', dy_, 600),
+                               {"click": f'#side input[data-a="slotfmt.{nm}.anc.first"]', "wait": 600}]
+    for bind, y0, y1, temp, what in ((B1_TOP, G["top"], qtop - 6.0, "임시 지문 — 원고가 오면 지문 · 주제 · 글제목이 이 프레임에 차례로 흐른다.", "위 — 지문 · 주제 · 글제목(원고만큼)"),
+                                     (B1_BIND, qtop, bot, "임시 발문 — 원고가 오면 발문 · 문제지문 · 주석 · 선지가 이 프레임에 차례로 흐른다.", "아래 — 문제(제자리 · 발문 · 문제지문 · 주석 · 선지)")):
+        st += [S(f"텍스트 프레임 {what}", 1200)]
+        st += text(round(fx, 2), round(y0, 2), round(G["w"], 2), round(y1 - y0, 2), temp, BODY, "#231f20",
+                   label="글상자 — 한 줄기(" + bind + ")", font=NOTO, leading=G["lead"])
+        st += slot(bind, label="자리 — " + bind + " (원고에 나온 차례대로 한 줄기)")
+        for nm in bind.split("+"):
+            st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "정리·" + nm}, "wait": 450})
+        if bind == B1_TOP:
+            st += anc("주제", G["주제"]["tag_x"], G["주제"]["tag_dy"]) + anc("글제목", G["글제목"]["tag_x"], G["글제목"]["tag_dy"])
+        else:
+            st += anc("발문", G["발문"]["ic_x"], G["발문"]["ic_dy"])
+        st += justify()
+        st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
 
 
 def sum_record(lp, rp):
-    """본문 정리 펼침면 하나의 원고 — 쪽마다: 지문 번호 · 지문(위) · 주제 · 글제목 · 발문 · 지문(문제) · 주석 · 선지"""
-    rec = {"제목": None, "지문번호": [], "지문": [], "주제": [], "글제목": [], "발문": [], "주석": [], "선지": []}
+    """본문 정리 펼침면 하나의 원고 — 쪽마다 지문 번호 + 한 줄기(지문 · 주제 문장들 · 글제목 문장들 · 발문 · 문제지문 · 주석 · 선지)"""
+    rec = {"제목": None, "지문번호": [], B1_TOP: [], B1_BIND: []}
     for pno in (lp, rp):
-        sp, dr = spans_of(pno), drawings(pno)
+        sp, dr, ps, rows, rect, tg, q_icon, qt, p2, rows2, rects, foot, cl = b1_parts(pno)
         if pno == lp:
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
         rec["지문번호"] += [e["text"] for e in numbers(pno)]
-        tags = sorted([o for o in sp if o["font"].startswith("EliceDigitalBaeumOTF-B") and o["color"] == "#ffffff"], key=lambda o: o["base"])
-        qt = [o for o in sp if o["font"] == "EliceDigitalBaeumOTF"][0]
-        for k, t_ in enumerate(tags):
-            nxt = tags[k + 1]["base"] if k + 1 < len(tags) else qt["base"]
-            rec[TAGNAME.get(t_["t"].strip(), t_["t"].strip())].append("\n".join(o["t"].strip() for o in sp if o["font"] == "NotoSansCJKkr-Medium" and t_["base"] - 1 < o["base"] < nxt - 3))
-        rec["발문"].append(qt["t"].strip())
-        pss = passages(pno)
-        rec["지문"] += [pss[0]["text"], [g_ for g_ in pss if g_["base0"] > qt["base"]][0]["text"].split(" *")[0].strip()]
-        foot = [o for o in sp if o["size"] == BODY and o["t"].strip().startswith("*")]
-        rec["주석"].append(foot[0]["t"].strip() if foot else "")
-        ln = [o for o in sp if o["font"] == "NotoSansCJKkr-Regular" and o["size"] == 9.0 and o["base"] > qt["base"]]
-        rec["선지"].append("\n".join(" ".join(o["t"].strip() for o in pa) for pa in choice_paras(ln)))
+        it = [["지문", ps["text"]]]
+        for t in tg:
+            it.append([t["name"], "\n".join(o["t"].strip() for o in t["ln"])])
+        rec[B1_TOP].append([it])
+        it = [["발문", qt["t"].strip()], ["문제지문", p2["text"].split(" *")[0].strip()]]
+        if foot:
+            it.append(["주석", foot[0]["t"].strip()])
+        it.append(["선지", "\n".join(" ".join(o["t"].strip() for o in pa) for pa in choice_paras(cl))])
+        rec[B1_BIND].append([it])
     return rec
 
 
@@ -1144,7 +1329,9 @@ def b2_style(pno):
     cl = min(b["base"] - a["base"] for a, b in zip(ln0, ln0[1:])) / MM
     ctrk = gaps_track([c for pa in choice_paras(ln0) for c in pa[-1]["ink"]], csz)
     below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))     # 줄 상자에서 기준선 아래
-    x0 = rect["x"]
+    # 텍스트 프레임 = 문제 번호 왼쪽 ~ 지문 바탕 · 선지 줄 오른쪽 끝. 지문은 그 안에서 왼쪽 · 오른쪽 들여쓰기 + 음영(너비 「텍스트」)
+    x0 = min(q["q"]["x"] for q in qs)
+    x1 = max([rect["x"] + rect["w"]] + [o["x1"] for q in qs for o in q["ln"]])
     pass_bot = rect["y"] + rect["h"]
     sb_q1 = top_of(q0["q"]["base"], qsz, qfam, qwt, qlead) - pass_bot                    # 지문 상자 아래 → 첫 발문 줄 상자
     q_last = q0["qts"][-1]
@@ -1154,8 +1341,9 @@ def b2_style(pno):
         sb_q = top_of(qs[1]["q"]["base"], qsz, qfam, qwt, qlead) - (lc["base"] + below(lc["base"], csz, NOTO, 400, cl))
     else:
         sb_q = sb_q1
-    B2.update(x=x0, top=rect["y"], w=rect["w"], fill=rect["fill"],
-              pad=round(rows[0]["x"] - x0, 2), pad_top=round(top_t - rect["y"], 2),
+    B2.update(x=x0, ox=rect["x"], top=rect["y"], w=round(x1 - x0, 2), fill=rect["fill"],
+              p_ind=round(rect["x"] - x0, 2), p_ind_r=round(x1 - rect["x"] - rect["w"], 2),
+              pad=round(rows[0]["x"] - rect["x"], 2), pad_top=round(top_t - rect["y"], 2),
               pad_bottom=round(pass_bot - (top_t + ps["lines"] * lead_mm), 2),
               lead=round(lead, 2), trk=trk, qfam=qfam, qwt=qwt, qsz=qsz, qlead=round(qlead, 2), q_ind=round(q0["q"]["x"] - x0, 2),
               num_color=q0["q"]["color"], inline_w=round(q0["bar"][1] - q0["q"]["x"], 2),
@@ -1167,6 +1355,7 @@ def b2_style(pno):
 def b2_styles_steps():
     G = B2
     sty = [("종합·지문", {"font": NOTO, "size": BODY, "leading": G["lead"], "tracking": G["trk"], "color": "#231f20", "align": "justify",
+                      "indent": G["p_ind"], "indent_right": G["p_ind_r"], "shade_fit": True,
                       "shade": G["fill"], "pad": G["pad"], "pad_top": G["pad_top"], "pad_bottom": G["pad_bottom"], "space_after": G["after_p"]}),
            ("종합·문제번호", {"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]}),
            ("종합·발문", {"font": G["qfam"], "weight": G["qwt"], "size": G["qsz"], "leading": G["qlead"], "color": "#231f20",
@@ -1181,7 +1370,7 @@ def b2_styles_steps():
         for k, val in v.items():
             if k in ("font", "align", "weight"):
                 st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together"):
+            elif k in ("keep_next", "keep_together", "shade_fit"):
                 st.append({"click": "input" + q(k), "wait": 450})
             elif val not in (None, 0, ""):
                 st.append(F("input" + q(k), val, 450))
@@ -1205,10 +1394,11 @@ def _mcq_body(pno):
     st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
     bot = 281.0
     E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(rect)[k] for k in ("x", "y", "w", "h")}, "color": rect["fill"], "see": rect["fill"], "pad": 0.6, "ctol": 8, "원고": True})
-    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(G["x"], 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
+    fx = G["x"] + rect["x"] - G["ox"]                                     # 이 쪽의 프레임 왼쪽(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
        "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
     st += [S("본문 — 텍스트 프레임 하나(지문 · 문제가 원고만큼 흐른다)", 1200)]
-    st += text(round(G["x"], 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2),
+    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2),
                "임시 지문 — 원고가 오면 지문 · 문제번호 · 발문 · 선지가 이 프레임 하나에 차례로 흐른다.", BODY, "#231f20",
                label="본문 글상자 — 한 줄기(" + B2_BIND + ")", font=NOTO, leading=G["lead"])
     st += slot(B2_BIND, label="자리 — " + B2_BIND + " (원고에 나온 차례대로 한 줄기)")
@@ -1245,7 +1435,8 @@ if want(7):
     CONTENT["B내용종합"] = [mcq_record(l, l + 1) for l in range(64, 84, 2)]
 
 # ── 구성 8 「C문장배열」 (원본 84~103쪽 = 펼침면 10벌 · 원고마다) — 견본 = 84·85쪽 ──
-# 쪽: 지문 번호 · 문장 (A)…(바탕, 이름표 GREP) · 답 줄(화살표 둘 · 선) · 체크 아이콘 + 발문 · 주어진 문장(바탕) · 지문(테두리 상자, 문단 여럿)
+# 흐름 방식(2026-10-14): 텍스트 프레임 하나에 보기 문장(음영, 이름표 GREP) · 발문 · 주어진 문장(음영) · 지문(테두리 = 단락 음영 + 테두리, 문단 여럿).
+# 답 쓰는 줄(화살표 둘 · 선) + 체크 아이콘 = 발문의 고정 개체(사용자 정의 위치). 아래 모두 밀기 없이 원고만큼 흐른다.
 
 
 def para_box(st, rect, rows, size, label, slot_name, temp, sh, fill=None, stroke=None, sw=None, align="justify", grep_label=None, measure=True):
@@ -1334,62 +1525,200 @@ def order_parts(pno):
     return sp, dr, qt, tb, top_rows, giv, giv_rows, frame, fr_rows
 
 
+C1_BIND = "발문+주어진문장+지문"                                          # 아래 문제 프레임 — 제자리(원본 20쪽 모두 발문 기준선 157.1mm). 위 보기 문장은 바탕 칠한 텍스트 프레임 「보기문장」
+C1 = {}
+
+
+def para_metrics(rows, size=BODY):
+    """문단 여럿인 줄들 → 행간 · 문단 사이 · 첫 줄 들여쓰기 · 이어지는 줄 x · 자간 · 오른쪽 끝 · 첫 기준선 · 줄 수 · 문단 수"""
+    rows = sorted(rows, key=lambda o: o["base"])
+    lines = []
+    for o in rows:
+        if lines and abs(lines[-1][0]["base"] - o["base"]) < 0.3:
+            lines[-1].append(o)
+        else:
+            lines.append([o])
+    bases = [ln[0]["base"] for ln in lines]
+    diffs = [b - a for a, b in zip(bases, bases[1:])]
+    lead_mm = min(diffs) if diffs else size * 1.45 * MM
+    paras = [[lines[0]]]
+    for d, ln in zip(diffs, lines[1:]):
+        if d > lead_mm * 1.25:
+            paras.append([ln])
+        else:
+            paras[-1].append(ln)
+    gap = (max(diffs) - lead_mm) if any(d > lead_mm * 1.25 for d in diffs) else 0.0
+    xs = lambda ln: min(o["x"] for o in ln)
+    cont = [xs(ln) for pa in paras for ln in pa[1:]]
+    x_t = min(cont) if cont else min(xs(pa[0]) for pa in paras)
+    ind1 = round(min(xs(pa[0]) for pa in paras) - x_t, 2) if cont else 0
+    trk = gaps_track([c for pa in paras for o in pa[-1] for c in o["ink"]], size)
+    return dict(lead_mm=lead_mm, gap=gap, x_t=x_t, ind1=ind1, trk=trk, right=max(o["x1"] for o in rows), base0=bases[0], base1=bases[-1], lines=len(lines),
+                text="\n".join(" ".join("".join(o["t"] for o in sorted(ln, key=lambda o: o["x"])).strip() for ln in pa) for pa in paras))
+
+
+def c1_style(pno):
+    sp, dr, qt, tb, top_rows, giv, giv_rows, frame, fr_rows = order_parts(pno)
+    below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
+    x0 = min(tb["x"], giv["x"], frame["x"])
+    mt, mg, mf = para_metrics(top_rows), para_metrics(giv_rows), para_metrics(fr_rows)
+    box_pads = lambda r, m: (round(m["x_t"] - r["x"], 2), round(top_of(m["base0"], BODY, NOTO, 400, m["lead_mm"] / MM) - r["y"], 2),
+                             round(r["y"] + r["h"] - (top_of(m["base0"], BODY, NOTO, 400, m["lead_mm"] / MM) + m["lines"] * m["lead_mm"]
+                                                      + (len(m["text"].split("\n")) - 1) * m["gap"]), 2))
+    labels = [o for o in top_rows if o["font"] == "NotoSansCJKkr-Bold"]
+    qsz, qlead = qt["size"], 15.0
+    q_top = top_of(qt["base"], qsz, ELB, 400, qlead)
+    sw_mm = frame["sw"] * MM
+    x1 = max(tb["x"] + tb["w"], giv["x"] + giv["w"], frame["x"] + frame["w"])
+    off = lambda r: (round(x0 - r["x"], 2), round(r["x"] + r["w"] - x1, 2))   # 음영 오프셋 왼쪽 · 오른쪽(− = 프레임보다 안쪽) — 바탕마다 폭이 다르다
+    C1.update(x=x0, ox=tb["x"], top=tb["y"], w=x1 - x0, offs={"t": off(tb), "g": off(giv), "f": off(frame)},
+              t=dict(m=mt, pad=box_pads(tb, mt), fill=tb["fill"], ind=round(tb["x"] - x0, 2)),
+              g=dict(m=mg, pad=box_pads(giv, mg), fill=giv["fill"], sb=round(giv["y"] - (qt["base"] + below(qt["base"], qsz, ELB, 400, qlead)), 2)),
+              f=dict(m=mf, pad=box_pads(frame, mf), stroke=frame["stroke"], sw=frame["sw"], sb=round(frame["y"] - sw_mm / 2 - (giv["y"] + giv["h"]), 2)),
+              q=dict(size=qsz, lead=qlead, ind=round(qt["x"] - x0, 2), sb=round(q_top - (tb["y"] + tb["h"]), 2)),
+              lab=dict(color=labels[0]["color"], size=labels[0]["size"]) if labels else None)
+
+
+def c1_styles_steps():
+    G = C1
+    B_ = {"font": NOTO, "size": BODY, "color": "#231f20", "align": "justify"}
+    t, g, f, q = G["t"], G["g"], G["f"], G["q"]
+    so = lambda k: {"shade_ol": G["offs"][k][0], "shade_or": G["offs"][k][1]}
+    sty = [("배열·보기문장", dict(B_, **so("t"), leading=round(t["m"]["lead_mm"] / MM, 2), tracking=t["m"]["trk"], shade=t["fill"], pad=t["pad"][0], pad_top=t["pad"][1],
+                              pad_bottom=t["pad"][2], indent_first=t["m"]["ind1"], space_same=round(t["m"]["gap"], 2) or 0.01)),
+           ("배열·발문", {"font": ELB, "weight": 400, "size": q["size"], "leading": q["lead"], "color": "#231f20", "indent": q["ind"], "space_before": q["sb"],
+                       "keep_next": True}),
+           ("배열·주어진문장", dict(B_, **so("g"), leading=round(g["m"]["lead_mm"] / MM, 2), tracking=g["m"]["trk"], shade=g["fill"], pad=g["pad"][0], pad_top=g["pad"][1],
+                               pad_bottom=g["pad"][2], indent_first=g["m"]["ind1"], space_before=g["sb"], space_same=round(g["m"]["gap"], 2) or 0.01)),
+           ("배열·지문", dict(B_, **so("f"), leading=round(f["m"]["lead_mm"] / MM, 2), tracking=f["m"]["trk"], shade="#ffffff", border=f["sw"], border_color=f["stroke"],
+                            pad=f["pad"][0], pad_top=f["pad"][1], pad_bottom=f["pad"][2], indent_first=f["m"]["ind1"], space_before=f["sb"],
+                            space_same=round(f["m"]["gap"], 2) or 0.01))]
+    st = [S("단락 스타일 — 문장 배열(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+          {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, v in sty:
+        qq = lambda k: f'[data-st="{name}:{k}"]'
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
+        for k, val in v.items():
+            if k in ("font", "align", "weight"):
+                st.append({"pick": {"at": "select" + qq(k), "value": str(val)}, "wait": 450})
+            elif k in ("keep_next", "keep_together"):
+                st.append({"click": "input" + qq(k), "wait": 450})
+            elif val not in (None, 0, ""):
+                st.append(F("input" + qq(k), val, 450))
+    st += [{"click": "#sheet-x", "wait": 900}]
+    return st
+
+
+def c1_make_part(pno):
+    """부품 둘 — 답 쓰는 줄(화살표 둘 · 선): 보기 문장 끝을 따라 내려간다(보기문장의 고정 개체 · 다음 줄 · 끝 문단만) /
+    체크 아이콘: 발문 왼쪽(발문의 고정 개체). 빈 자리에 그려 묶는다"""
+    sp, dr, qt, tb, top_rows, giv, giv_rows, frame, fr_rows = order_parts(pno)
+    arrows = [d for d in dr if d["n"] == 3 and d["fill"] and d["y"] > tb["y"] + tb["h"] and d["y"] < qt["base"] - 5]
+    lines = [d for d in dr if d["n"] == 1 and d["fill"] and d["h"] < 1 and d["w"] > 50 and tb["y"] + tb["h"] < d["y"] < qt["base"] - 5]
+    q_icon = [d for d in dr if d["n"] == 20 and d["stroke"] and d["w"] < 5][0]
+    ic = {"x": q_icon["x"] - 0.3, "y": q_icon["y"] - 0.3, "w": 4.15, "h": 4.15}
+    comps = arrows + lines
+    bx0, by0 = min(c["x"] for c in comps), min(c["y"] for c in comps)
+    bx1, by1 = max(c["x"] + c["w"] for c in comps), max(c["y"] + c["h"] for c in comps)
+    X0, Y0 = 20.0, 200.0
+    dx, dy = X0 - bx0, Y0 - by0
+    st = [S("답 쓰는 줄 부품 — 빈 자리에 그려 묶는다(보기 문장 끝의 고정 개체)", 1300)]
+    for d in arrows:
+        st += shape(round(d["x"] + dx, 2), round(d["y"] + dy, 2), round(d["w"], 2), round(d["h"], 2), d["fill"], d=poly_d(pno, {"x": d["x"], "y": d["y"]}))
+    for d in lines:
+        st += box(round(d["x"] + dx, 2), round(d["y"] + dy, 3), round(d["w"], 2), round(d["h"], 3), d["fill"])
+    pid = group_part(st, len(comps), X0, Y0, bx1 - bx0, by1 - by0)
+    st += [S("체크 아이콘 부품 — 원본에서 내보낸 그림 + 같은 크기 빈 면(그룹은 둘 이상)", 1200)]
+    st += image(X0, 262.0, 4.15, 4.15, os.path.join(HERE, "check.svg"))
+    st += box(X0, 262.0, 4.15, 4.15, "#ffffff", alpha=0)
+    icp = group_part(st, 2, X0, 262.0, 4.15, 4.15)
+    q_top = top_of(qt["base"], qt["size"], ELB, 400, 15.0)
+    C1.update(part=pid, line_x=round(bx0 - C1["x"], 2), line_gap=round(by0 - (tb["y"] + tb["h"]), 2),
+              icon=icp, anc_x=round(ic["x"] - C1["x"], 2), anc_dy=round(ic["y"] - q_top, 2))
+    return st, arrows, lines, q_icon
+
+
 def order_body(pno):
+    st = []
+    if "x" not in C1:
+        c1_style(pno)
+        s2, _, _, _ = c1_make_part(pno)
+        st += s2
     with top_spot():
-        return _order_body(pno)
+        st += _order_body(pno)
+    return st
 
 
 def _order_body(pno):
+    st = []
+    if not C1.get("made"):
+        st += c1_styles_steps()
+        C1["made"] = True
+    G = C1
     sp, dr, qt, tb, top_rows, giv, giv_rows, frame, fr_rows = order_parts(pno)
-    st = [S("쪽 설정 — 자라면 아래 모두 밀기", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-pushrow", "wait": 900}]
     nb = numbers(pno)[0]
     st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
-    grow = []
-    shift = lambda y: sum(g for b, g in grow if y >= b - 0.3)
-    labels = [o for o in top_rows if o["font"] == "NotoSansCJKkr-Bold"]
-    lab_size = labels[0]["size"] if labels else BODY
-    g, _ = para_box(st, tb, top_rows, BODY, "문장 묶음 — 바탕 칠 글상자(문단마다 (A)…) · 원고 자리 「보기문장」", "보기문장",
-                    "(A) 임시 문장 하나.\n(B) 임시 문장 둘.\n(C) 임시 문장 셋.", 0, fill=tb["fill"],
-                    grep_label={"re": r"^\([A-Z]\)", "color": labels[0]["color"], "size": lab_size} if labels else None)
-    grow.append((tb["y"] + tb["h"], g))
-    # 답 줄 — 화살표 둘 · 선 (원본 면 그대로, 위 글이 자라면 같이 밀린다). 높이가 회차마다 다르다(99~127mm · 위 상자와 5~10mm) — 원고를 따라 움직이는 것: 원고 쪽 판정
-    st += [S("답 쓰는 줄 — 화살표 둘 · 선", 1100)]
-    for d in [d for d in dr if d["n"] == 3 and d["fill"] and d["y"] > tb["y"] + tb["h"] and d["y"] < qt["base"] - 5]:
+    bot = 281.0
+    for r in (tb, giv):
+        E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(r)[k] for k in ("x", "y", "w", "h")}, "color": r["fill"], "see": r["fill"], "pad": 0.6, "ctol": 8, "원고": True})
+    o_ = frame["sw"] * MM / 2
+    E({"id": f"fr{len(ELEMS[len(PAGES)])}", "x": round(frame["x"] - o_, 2), "y": round(frame["y"] - o_, 2), "w": round(frame["w"] + 2 * o_, 2), "h": round(frame["h"] + 2 * o_, 2),
+       "color": frame["stroke"], "see": frame["stroke"], "pad": 0.3, "ctol": 30, "원고": True})
+    for d in [d for d in dr if (d["n"] == 3 and d["fill"] and d["y"] > tb["y"] + tb["h"] and d["y"] < qt["base"] - 5)
+              or (d["n"] == 1 and d["fill"] and d["h"] < 1 and d["w"] > 50 and tb["y"] + tb["h"] < d["y"] < qt["base"] - 5)]:
         E({"id": f"ar{len(ELEMS[len(PAGES)])}", "x": round(d["x"], 2), "y": round(d["y"], 2), "w": round(d["w"], 2), "h": round(d["h"], 2), "color": d["fill"],
            "see": d["fill"], "pad": 0.2, "ctol": 20, "원고": True})
-        st += shape(round(d["x"], 2), round(d["y"] - shift(d["y"]), 2), round(d["w"], 2), round(d["h"], 2), d["fill"], d=poly_d(pno, {"x": d["x"], "y": d["y"]}))
-    for d in [d for d in dr if d["n"] == 1 and d["fill"] and d["h"] < 1 and d["w"] > 50 and tb["y"] + tb["h"] < d["y"] < qt["base"] - 5]:
-        E({"id": f"ln{len(ELEMS[len(PAGES)])}", "x": round(d["x"], 2), "y": round(d["y"], 2), "w": round(d["w"], 2), "h": round(d["h"], 2), "color": d["fill"],
-           "see": d["fill"], "pad": 0.2, "ctol": 20, "원고": True})
-        st += box(round(d["x"], 2), round(d["y"] - shift(d["y"]), 3), round(d["w"], 2), round(d["h"], 3), d["fill"])
-    # 체크 아이콘 + 발문
     q_icon = [d for d in dr if d["n"] == 20 and d["stroke"] and d["w"] < 5][0]
-    sh = shift(q_icon["y"])
-    o_ = q_icon["sw"] * MM / 2
-    E({"id": f"ic{len(ELEMS[len(PAGES)])}", "x": round(q_icon["x"] - o_, 2), "y": round(q_icon["y"] - o_, 2), "w": round(q_icon["w"] + 2 * o_, 2),
-       "h": round(q_icon["h"] + 2 * o_, 2), "color": q_icon["stroke"], "see": q_icon["stroke"], "pad": 0.3, "ctol": 30, "원고": True})    # 발문을 따라 움직인다
-    st += image(round(q_icon["x"] - 0.3, 2), round(q_icon["y"] - 0.3 - sh, 2), 4.15, 4.15, os.path.join(HERE, "check.svg"), label="체크 아이콘")
-    st += T(win_el(qt, qt["t"].strip(), qt["x"], qt["x1"]), ELB, 400, slot_name="발문", temp="임시 발문 — 다음 물음에 답하시오.", shift=sh, w=round(185 - qt["x"], 1))
-    # 주어진 문장 · 지문
-    g, _ = para_box(st, giv, giv_rows, BODY, "주어진 문장 — 바탕 칠 글상자 · 원고 자리 「주어진문장」", "주어진문장", "임시 주어진 문장 — 바깥에서 온 문장.",
-                    shift(giv["y"]), fill=giv["fill"])
-    grow.append((giv["y"] + giv["h"], g))
-    g, _ = para_box(st, frame, fr_rows, BODY, "지문 — 테두리 상자 · 원고 자리 「지문」", "지문", temp_passage(400), shift(frame["y"]), stroke=frame["stroke"], sw=frame["sw"])
-    grow.append((frame["y"] + frame["h"], g))
+    oi = q_icon["sw"] * MM / 2
+    E({"id": f"ic{len(ELEMS[len(PAGES)])}", "x": round(q_icon["x"] - oi, 2), "y": round(q_icon["y"] - oi, 2), "w": round(q_icon["w"] + 2 * oi, 2),
+       "h": round(q_icon["h"] + 2 * oi, 2), "color": q_icon["stroke"], "see": q_icon["stroke"], "pad": 0.3, "ctol": 30, "원고": True})
+    fx = G["x"] + tb["x"] - G["ox"]                                       # 이 쪽의 프레임 왼쪽(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
+       "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
+    st += [S("보기 문장 — 위 텍스트 프레임(바탕 칠 · 인세트 · 원고만큼 자란다)", 1200)]
+    qtop = round(top_of(qt["base"], qt["size"], ELB, 400, G["q"]["lead"]), 2)
+    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(qtop - 6.0 - G["top"], 2),
+               "(A) 임시 문장 — 원고가 오면 보기 문장이 문단마다 들어온다.", BODY, "#231f20",
+               label="보기 문장 글상자 — 원고 자리 「보기문장」(문단마다 · 바탕은 단락 음영)", font=NOTO, leading=round(G["t"]["m"]["lead_mm"] / MM, 2))
+    st += slot("보기문장", label="자리 — 보기문장")
+    st += [{"pick": {"at": '#side select[data-a="slotfmt.보기문장.style"]', "value": "배열·보기문장"}, "wait": 450},
+           S("보기 문장 끝에 답 쓰는 줄 — 데이터 필드 「보기문장」의 고정 개체(다음 줄 · 끝 문단만)", 1000),
+           {"pick": {"at": '#side select[data-a="slotfmt.보기문장.anc.part"]', "value": G["part"]}, "wait": 900},
+           {"pick": {"at": '#side select[data-a="slotfmt.보기문장.anc.pos"]', "value": "line"}, "wait": 800},
+           F('#side input[data-a="slotfmt.보기문장.anc.x"]', G["line_x"], 600), F('#side input[data-a="slotfmt.보기문장.anc.gap"]', G["line_gap"], 600),
+           {"click": '#side input[data-a="slotfmt.보기문장.anc.last"]', "wait": 600}]
+    if G["lab"]:
+        st += grep(0, r"^\([A-Z]\)", G["lab"]["color"], size=G["lab"]["size"], label="GREP — 문장 이름표 (A)(B)… 굵은 파랑")
+    st += justify()
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
+    st += [S("문제 — 아래 텍스트 프레임(제자리 · 발문 · 주어진 문장 · 지문이 원고만큼 흐른다)", 1200)]
+    st += text(round(fx, 2), qtop, round(G["w"], 2), round(bot - qtop, 2),
+               "임시 발문 — 원고가 오면 발문 · 주어진 문장 · 지문이 이 프레임에 차례로 흐른다.", BODY, "#231f20",
+               label="문제 글상자 — 한 줄기(" + C1_BIND + ")", font=NOTO, leading=round(G["t"]["m"]["lead_mm"] / MM, 2))
+    st += slot(C1_BIND, label="자리 — " + C1_BIND + " (원고에 나온 차례대로 한 줄기)")
+    for nm in C1_BIND.split("+"):
+        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "배열·" + nm}, "wait": 450})
+    st += [S("발문의 고정 개체 — 체크 아이콘(사용자 정의 위치: 발문 왼쪽)", 1000),
+           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.part"]', "value": G["icon"]}, "wait": 900},
+           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.pos"]', "value": "side"}, "wait": 800},
+           F('#side input[data-a="slotfmt.발문.anc.x"]', G["anc_x"], 600), F('#side input[data-a="slotfmt.발문.anc.dy"]', G["anc_dy"], 600)]
+    st += justify()
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
 
 
 def order_record(lp, rp):
-    rec = {"제목": None, "지문번호": [], "보기문장": [], "발문": [], "주어진문장": [], "지문": []}
+    """문장 배열 펼침면 하나의 원고 — 쪽마다 지문 번호 + 한 줄기(보기 문장 · 발문 · 주어진 문장 · 지문)"""
+    rec = {"제목": None, "지문번호": [], "보기문장": [], C1_BIND: []}
     for pno in (lp, rp):
         sp, dr, qt, tb, top_rows, giv, giv_rows, frame, fr_rows = order_parts(pno)
         if pno == lp:
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
         rec["지문번호"] += [e["text"] for e in numbers(pno)]
-        rec["발문"].append(qt["t"].strip())
-        for key, rows in (("보기문장", top_rows), ("주어진문장", giv_rows), ("지문", fr_rows)):
-            rec[key].append(para_box([], {"x": 0, "y": 0, "w": 200, "h": 300}, rows, BODY, "", key, "", 0, measure=False)[1])
+        rec["보기문장"].append(para_metrics(top_rows)["text"])
+        rec[C1_BIND].append([[["발문", qt["t"].strip()],
+                              ["주어진문장", para_metrics(giv_rows)["text"]], ["지문", para_metrics(fr_rows)["text"]]]])
     return rec
 
 
@@ -1508,6 +1837,12 @@ def _c2_body(pno, G):
     st = []
     if not G.get("made"):
         st += c2_styles_steps(G)
+        _, _, adv = face(NOTO, 400)
+        trk = round((G["blank"] / (G.get("en_size", 8) * MM) - 2 * adv("_")) / 2 * 1000)    # 「__」 두 글자 + 자간 = 칸 폭(밑줄은 자간까지 긋는다)
+        cs = [("빈칸" + G["sfx"], {"u": 1, "color": "none", "track": trk, "line": G["line"], "line_off": G["line_off"], "line_color": "#231f20"})]
+        if G.get("pink"):
+            cs.insert(0, ("첫 글자", {"b": 1, "color": G["pink"]}))
+        st += cs_steps(cs, "빈칸 문자 스타일")
         G["made"] = True
     nb = numbers(pno)[0]
     st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
@@ -1530,12 +1865,8 @@ def _c2_body(pno, G):
         st.append({"pick": {"at": f'#side select[data-a="slotfmt.{n}.style"]', "value": n + G["sfx"]}, "wait": 500})
     st += [S("문항번호는 빈칸문장 첫 줄 앞에 붙인다 — 번호 칸 폭", 1000), {"click": '#side input[data-a="slotfmt.문항번호.inline"]', "wait": 600},
            F('#side input[data-a="slotfmt.문항번호.inline_w"]', G["inline_w"], 600)]
-    k = 0
-    if G.get("pink"):
-        st += grep(0, r"\{([A-Za-z]+)\}", G["pink"], hide=True, label="GREP — 원고의 {첫 글자} 는 분홍 굵게(표시 감추기)")
-        k = 1
-    st += grep(k, r"__", bold=False, blank=G["blank"], line=G["line"], line_off=G["line_off"], line_color="#231f20",
-               label=f"GREP — 원고의 __ 는 {G['blank']}mm 밑줄 칸")
+    st += grep(0, r"__", bold=False, label=f"GREP — 원고의 __ 는 문자 스타일 「빈칸{G['sfx']}」({G['blank']}mm 밑줄 칸 — 글자 색 [없음] · 밑줄 · 자간)")
+    st += [{"pick": {"at": '#side select[data-a="grep.0.cs"]', "value": "빈칸" + G["sfx"]}, "wait": 600}]
     return st
 
 
@@ -1547,7 +1878,7 @@ def c2_record(lp, rp, G=None):
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
         rec["지문번호"] += [e["text"] for e in numbers(pno)]
-        rec[G["bind"]].append([it["rec"] for it in c2_items(pno, G)])          # 쪽마다 제 몫의 문항 목록
+        rec[G["bind"]].append([dict(it["rec"], 빈칸문장=marks_runs(it["rec"]["빈칸문장"], "첫 글자")) for it in c2_items(pno, G)])   # 쪽마다 제 몫 — 힌트는 꾸밈 조각
     return rec
 
 
@@ -1561,7 +1892,8 @@ if want("3.2"):
     st += toc(125, "02")
 
 # ── 구성 10 「A어법선택」 (원본 126~145쪽 = 펼침면 10벌 · 원고마다) — 견본 = 126·127쪽 ──
-# 쪽: 지문 번호 · 지문([a / b] 굵은 파랑 — 어휘 선택과 같은 상자) · 체크 아이콘 + 발문(부정어 밑줄) · 테두리 상자 지문(밑줄 친 곳 = 원고 꼴 {…}, GREP 밑줄 + 굵기)
+# 흐름 방식(2026-10-14): 텍스트 프레임 하나에 지문([a / b] 굵은 파랑 GREP) · 발문(체크 아이콘 = 고정 개체) · 문제지문(테두리 = 단락 음영 + 테두리).
+# 밑줄 친 곳 = 꾸밈 조각(문자 스타일 「밑줄」) — 표시 감추기 GREP 없이. 원고에 문제가 없으면 발문 · 문제지문 문단이 안 생긴다.
 
 
 def check_icon(dr):
@@ -1584,10 +1916,11 @@ def underlined_text(pno, y0, y1, x0=0, x1=205):
                 if not (y0 < base < y1):
                     continue
                 sx = sp["chars"][0]["origin"][0] if sp["chars"] else 0
+                key = next((b_ for b_ in lines if abs(b_ - base) < 0.3), round(base, 1))   # 같은 줄 — 기준선이 0.1mm 안팎 다른 조각(굵은 밑줄 낱말)도 한 줄로
                 for k, c in enumerate(sp["chars"]):                    # 조각 안 글자 차례 그대로(합자 ff·fi 는 기준점이 겹쳐 x 로 늘어놓으면 섞인다)
                     cx = ((c["bbox"][0] + c["bbox"][2]) / 2 - t.x0) * MM
                     if x0 <= cx <= x1:
-                        lines.setdefault(round(base, 1), []).append(((sx, k), c["c"], cx, base))
+                        lines.setdefault(key, []).append(((sx, k), c["c"], cx, base))
     out = ""
     for b in sorted(lines):
         s, inside = "", False
@@ -1604,55 +1937,134 @@ def underlined_text(pno, y0, y1, x0=0, x1=205):
     return re.sub(r"\s+", " ", out).strip()
 
 
+A1G_BIND = "발문+문제지문"                                             # 아래 문제 프레임(제자리 — 원본 20쪽 모두 발문 기준선 157.2mm). 위 지문은 따로 선 프레임 「지문」
+A1G = {}
+
+
+def a1g_parts(pno):
+    sp, dr = spans_of(pno), drawings(pno)
+    ic, icon_file = check_icon(dr)
+    ps = [g for g in passages(pno) if g["base0"] < ic["y"]][0]
+    qt = [o for o in sp if o["font"] == "EliceDigitalBaeumOTF" and abs(o["base"] - ic["y"] - ic["h"]) < 2][0]
+    frame = [d for d in dr if d["stroke"] and not d["fill"] and d["w"] > 100 and d["h"] > 5][0]
+    rows = [o for o in sp if o["font"].startswith("NotoSans") and frame["y"] < o["base"] < frame["y"] + frame["h"]]
+    return sp, dr, ic, icon_file, ps, qt, frame, rows
+
+
+def a1g_style(pno):
+    sp, dr, ic, icon_file, ps, qt, frame, rows = a1g_parts(pno)
+    below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
+    x0 = frame["x"]
+    lead_mm = LEAD * MM
+    qsz, qlead = qt["size"], 15.0
+    q_top = top_of(qt["base"], qsz, ELB, 400, qlead)
+    m = para_metrics(rows)
+    t_top = top_of(m["base0"], BODY, NOTO, 400, m["lead_mm"] / MM)
+    A1G.update(x=x0, ox=frame["x"], top=round(q_top, 2), w=frame["w"],
+               q=dict(size=qsz, lead=qlead, ind=round(qt["x"] - x0, 2), sb=round(q_top - (ps["base1"] + below(ps["base1"], BODY, NOTO, 400, LEAD)), 2),
+                      ic_x=round(ic["x"] - 0.3 - x0, 2), ic_dy=round(ic["y"] - 0.3 - q_top, 2)),
+               f=dict(m=m, stroke=frame["stroke"], sw=frame["sw"], pad=round(m["x_t"] - frame["x"], 2), pad_top=round(t_top - frame["y"], 2),
+                      pad_bottom=round(frame["y"] + frame["h"] - (t_top + m["lines"] * m["lead_mm"] + (len(m["text"].split("\n")) - 1) * m["gap"]), 2),
+                      sb=round(frame["y"] - frame["sw"] * MM / 2 - (qt["base"] + below(qt["base"], qsz, ELB, 400, qlead)), 2)),
+               icon_file=icon_file)
+
+
+def a1g_styles_steps():
+    G = A1G
+    q, f = G["q"], G["f"]
+    B_ = {"font": NOTO, "size": BODY, "color": "#231f20", "align": "justify"}
+    sty = [("어법·발문", {"font": ELB, "weight": 400, "size": q["size"], "leading": q["lead"], "color": "#231f20", "indent": q["ind"], "space_before": q["sb"],
+                       "keep_next": True}),
+           ("어법·문제지문", dict(B_, leading=round(f["m"]["lead_mm"] / MM, 2), tracking=f["m"]["trk"], shade="#ffffff", border=f["sw"], border_color=f["stroke"],
+                              pad=f["pad"], pad_top=f["pad_top"], pad_bottom=f["pad_bottom"], indent_first=f["m"]["ind1"], space_before=f["sb"],
+                              space_same=round(f["m"]["gap"], 2) or 0.01))]
+    st = [S("단락 스타일 — 어법 선택(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+          {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, v in sty:
+        qq = lambda k: f'[data-st="{name}:{k}"]'
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
+        for k, val in v.items():
+            if k in ("font", "align", "weight"):
+                st.append({"pick": {"at": "select" + qq(k), "value": str(val)}, "wait": 450})
+            elif k in ("keep_next", "keep_together"):
+                st.append({"click": "input" + qq(k), "wait": 450})
+            elif val not in (None, 0, ""):
+                st.append(F("input" + qq(k), val, 450))
+    st += [{"click": "#sheet-x", "wait": 900}]
+    return st
+
+
 def gram_body(pno):
+    st = []
+    if "x" not in A1G:
+        a1g_style(pno)
+        X0, Y0 = 20.0, 262.0
+        st += [S("체크 아이콘 부품 — 원본에서 내보낸 그림 + 같은 크기 빈 면(그룹은 둘 이상)", 1200)]
+        st += image(X0, Y0, 4.15, 4.15, A1G["icon_file"])
+        st += box(X0, Y0, 4.15, 4.15, "#ffffff", alpha=0)
+        A1G["part"] = group_part(st, 2, X0, Y0, 4.15, 4.15)
     with top_spot():
-        return _gram_body(pno)
+        st += _gram_body(pno)
+    return st
 
 
 def _gram_body(pno):
-    sp, dr = spans_of(pno), drawings(pno)
     st = []
+    if not A1G.get("made"):
+        st += a1g_styles_steps()
+        if not ULF.get("done"):
+            st += cs_steps(UL_CS, "밑줄 문자 스타일")                     # 원고의 밑줄(꾸밈 조각) — 「밑줄」 · 「밑줄 보통」
+            ULF["done"] = True
+        A1G["made"] = True
+    G = A1G
+    sp, dr, ic, icon_file, ps, qt, frame, rows = a1g_parts(pno)
     nb = numbers(pno)[0]
     st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
-    ic, icon_file = check_icon(dr)
-    ps = [g for g in passages(pno) if g["base0"] < ic["y"]][0]
-    st += P(ps, round(ic["y"] - 3, 1), "지문 — 원고 자리 「지문」([a / b] 굵은 파랑)")
+    bot = 281.0
+    st += [S("지문 — 위 텍스트 프레임(원고만큼, 문제 프레임 바로 위까지)", 1200)]
+    st += P(ps, round(G["top"] - 6.0, 1), "지문 — 원고 자리 「지문」 (임시 글로 스타일)")
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     o_ = ic["sw"] * MM / 2
     E({"id": f"ic{len(ELEMS[len(PAGES)])}", "x": round(ic["x"] - o_, 2), "y": round(ic["y"] - o_, 2), "w": round(ic["w"] + 2 * o_, 2),
-       "h": round(ic["h"] + 2 * o_, 2), "color": ic["stroke"], "see": ic["stroke"], "pad": 0.3, "ctol": 30})
-    st += image(round(ic["x"] - 0.3, 2), round(ic["y"] - 0.3, 2), 4.15, 4.15, icon_file, label="체크 아이콘 — 원본에서 내보낸 그림")
-    qt = [o for o in sp if o["font"] == "EliceDigitalBaeumOTF" and abs(o["base"] - ic["y"] - ic["h"]) < 2][0]
-    st += T(win_el(qt, qt["t"].strip(), qt["x"], qt["x1"]), ELB, 400, slot_name="발문", temp="임시 발문 — 다음 물음에 답하시오.", w=round(188 - qt["x"], 1))
+       "h": round(ic["h"] + 2 * o_, 2), "color": ic["stroke"], "see": ic["stroke"], "pad": 0.3, "ctol": 30, "원고": True})
+    of = frame["sw"] * MM / 2
+    E({"id": f"fr{len(ELEMS[len(PAGES)])}", "x": round(frame["x"] - of, 2), "y": round(frame["y"] - of, 2), "w": round(frame["w"] + 2 * of, 2), "h": round(frame["h"] + 2 * of, 2),
+       "color": frame["stroke"], "see": frame["stroke"], "pad": 0.3, "ctol": 30, "원고": True})
+    fx = G["x"] + frame["x"] - G["ox"]                                    # 이 쪽의 프레임 왼쪽(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
+       "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
+    st += [S("문제 — 아래 텍스트 프레임(제자리 · 발문 · 문제지문이 원고만큼 흐른다)", 1200)]
+    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2), "임시 발문 — 원고가 오면 발문 · 문제 지문이 이 프레임에 흐른다.", BODY, "#231f20",
+               label="문제 글상자 — 한 줄기(" + A1G_BIND + ")", font=NOTO, leading=LEAD)
+    st += slot(A1G_BIND, label="자리 — " + A1G_BIND + " (원고에 나온 차례대로 한 줄기)")
+    for nm in A1G_BIND.split("+"):
+        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "어법·" + nm}, "wait": 450})
+    st += [S("발문의 고정 개체 — 체크 아이콘(사용자 정의 위치: 발문 왼쪽)", 1000),
+           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.part"]', "value": G["part"]}, "wait": 900},
+           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.pos"]', "value": "side"}, "wait": 800},
+           F('#side input[data-a="slotfmt.발문.anc.x"]', G["q"]["ic_x"], 600), F('#side input[data-a="slotfmt.발문.anc.dy"]', G["q"]["ic_dy"], 600)]
     ul = [d for d in dr if d["h"] < 0.1 and d["stroke"] == "#231f20" and abs(d["y"] - qt["base"]) < 2 and qt["x"] <= d["x"] <= qt["x1"]]
     if ul:
         u = ul[0]
         st += grep(0, "않는|아닌|틀린|없는", bold=False, underline=True, line=round(u["sw"] * MM, 3), line_off=round(u["y"] - qt["base"], 2),
                    line_color=u["stroke"], label="GREP — 발문의 부정어에 밑줄")
-    frame = [d for d in dr if d["stroke"] and not d["fill"] and d["w"] > 100 and d["h"] > 5][0]
-    rows = [o for o in sp if o["font"].startswith("NotoSans") and frame["y"] < o["base"] < frame["y"] + frame["h"]]
-    g, _ = para_box(st, frame, rows, BODY, "지문(문제) — 테두리 상자 · 원고 자리 「지문」(밑줄 칠 곳은 {…})", "지문", temp_passage(400), 0,
-                    stroke=frame["stroke"], sw=frame["sw"])
-    segs = [d for d in dr if d["stroke"] == "#231f20" and d["h"] < 0.1 and d["w"] > 1 and frame["y"] < d["y"] < frame["y"] + frame["h"]]
-    if segs:
-        base = min((o for o in rows), key=lambda o: abs(o["base"] - segs[0]["y"]))["base"]
-        st += grep(0, r"\{([^}]*)\}", bold=False, weight=500, underline=True, line=round(segs[0]["sw"] * MM, 3), line_off=round(segs[0]["y"] - base, 2),
-                   line_color="#231f20", hide=True, label="GREP — 원고의 {…} 는 밑줄 + Medium(표시 감추기)")
+    st += justify()
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
 
 
 def gram_record(lp, rp):
-    rec = {"제목": None, "지문번호": [], "지문": [], "발문": []}
+    """어법 선택 펼침면 하나의 원고 — 쪽마다 지문 번호 · 지문 + 문제 한 줄기(발문 · 문제지문 — 밑줄 친 곳은 문자 스타일 조각)"""
+    rec = {"제목": None, "지문번호": [], "지문": [], A1G_BIND: []}
     for pno in (lp, rp):
-        sp, dr = spans_of(pno), drawings(pno)
+        sp, dr, ic, icon_file, ps, qt, frame, rows = a1g_parts(pno)
         if pno == lp:
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
         rec["지문번호"] += [e["text"] for e in numbers(pno)]
-        ic, _ = check_icon(dr)
-        rec["지문"].append([g for g in passages(pno) if g["base0"] < ic["y"]][0]["text"])
-        rec["발문"].append([o for o in sp if o["font"] == "EliceDigitalBaeumOTF"][0]["t"].strip())
-        frame = [d for d in dr if d["stroke"] and not d["fill"] and d["w"] > 100 and d["h"] > 5][0]
-        rec["지문"].append(underlined_text(pno, frame["y"], frame["y"] + frame["h"]))
+        rec["지문"].append(ps["text"])
+        rec[A1G_BIND].append([[["발문", qt["t"].strip()],
+                               ["문제지문", marks_runs(underlined_text(pno, frame["y"], frame["y"] + frame["h"]))]]])
     return rec
 
 
@@ -1661,8 +2073,8 @@ if want(10):
     CONTENT["A어법선택"] = [gram_record(l, l + 1) for l in range(126, 146, 2)]
 
 # ── 구성 11 「B어법OX」 (원본 146~165쪽 = 펼침면 10벌 · 원고마다) — 견본 = 146·147쪽 ──
-# 쪽: (첫 회차만) 회색 보기 상자 — 보기 문장 둘 + O/X 칸 + 빨간 고침 표시(접기 묶음 「보기」: 원고가 보기를 비우면 접힌다) ·
-#     지문 번호 · 문장 목록(번호 「01.」 · 문장 · 끝에 O/X 칸 — 띄어 붙이기). 자라면 아래 모두 밀기.
+# 흐름 방식(2026-10-14): 지문 번호 · 텍스트 프레임 하나(문장마다 번호 「01.」 · 글 · 끝에 O/X 칸 = 데이터 필드 「문장」의 고정 개체).
+# 첫 회차(146쪽)의 회색 보기 예문 상자는 그 회차만의 시범이라 템플릿에 두지 않는다(contents 도 안 보낸다) — 견본 = 148·149쪽.
 
 
 def ox_rows(st, sp, dr, nums, stext, right, shift, grow, slot_no, slot_txt, fold=None, label="문장", nmax=0):
@@ -1738,108 +2150,118 @@ def ox_rows(st, sp, dr, nums, stext, right, shift, grow, slot_no, slot_txt, fold
     return st
 
 
-B11_MAX = 13                                                             # 쪽당 문장 가장 많은 수(원본 146~165쪽) — 그만큼 자리를 두고 없는 줄은 접는다
+B11_BIND = "문장번호+문장"
+B11 = {}
+
+
+def b11_parts(pno):
+    sp, dr = spans_of(pno), drawings(pno)
+    nb = numbers(pno)[0]
+    nums = [o for o in sp if LOTTE in o["font"]]
+    stext = [o for o in sp if o["font"].startswith("NotoSans") and o["base"] > nb["y"] + 3]
+    oxs = [d for d in dr if d["n"] == 20 and d["fill"] == "#ffffff" and d["stroke"] == LINK]
+    rows = []
+    for k, n in enumerate(nums):
+        nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
+        ln = [o for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1]
+        bx = min([d for d in oxs if n["base"] - 6 < d["y"] < nxt - 3], key=lambda d: d["y"])
+        rows.append({"n": n, "ln": ln, "bx": bx})
+    return sp, dr, nb, rows
+
+
+def b11_style(pno):
+    import statistics
+    sp, dr, nb, rows = b11_parts(pno)
+    below = lambda base, sz, pt: pt * MM - (base - top_of(base, sz, NOTO, 400, pt))
+    r0 = next(r for r in rows if len(r["ln"]) > 1)
+    first, cont = r0["ln"][0], r0["ln"][1]
+    ssz = first["size"]
+    slead_mm = cont["base"] - first["base"]
+    slead = slead_mm / MM
+    strk = line_track([r["ln"][-1] for r in rows], NOTO, 400)
+    x0 = min(r["n"]["x"] for r in rows)
+    gaps = []
+    for a_, b_ in zip(rows, rows[1:]):
+        same = abs(a_["bx"]["y"] + a_["bx"]["h"] - a_["ln"][-1]["base"]) < 2.5
+        lb = a_["ln"][-1]["base"] + (0 if same else slead_mm)
+        gaps.append(top_of(b_["ln"][0]["base"], ssz, NOTO, 400, slead) - (lb + below(lb, ssz, slead)))
+    t_same = next(r for r in rows if abs(r["bx"]["y"] + r["bx"]["h"] - r["ln"][-1]["base"]) < 2.5)
+    _, _, adv = face(NOTO, 400)
+    lst = t_same["ln"][-1]
+    B11.update(x=x0, top=round(top_of(rows[0]["ln"][0]["base"], ssz, NOTO, 400, slead), 2), w=round(max(o["x1"] for r in rows for o in r["ln"]) + 0.5 - x0, 2),
+               ssz=ssz, slead=round(slead, 2), strk=strk, ind=round(cont["x"] - x0, 2), first=round(r0["n"]["x"] - cont["x"], 2),
+               inline_w=round(first["x"] - r0["n"]["x"], 2), num_color=r0["n"]["color"], num_size=r0["n"]["size"], space=round(statistics.median(gaps), 2),
+               ox_gap=round(t_same["bx"]["x"] - lst["x1"] - adv(" ") * ssz * MM - 2 * strk / 1000 * ssz * MM, 3),
+               ox_drop=round(t_same["bx"]["y"] + t_same["bx"]["h"] - lst["base"], 3))
 
 
 def bgox_body(pno):
+    st = []
+    if not OXP.get("id"):
+        st += make_ox_part(pno)
+    if "x" not in B11:
+        b11_style(pno)
     with top_spot():
-        return _bgox_body(pno)
+        st += _bgox_body(pno)
+    return st
 
 
 def _bgox_body(pno):
-    sp, dr = spans_of(pno), drawings(pno)
-    st = [S("쪽 설정 — 자라면 아래 모두 밀기", 1000), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-pushrow", "wait": 900}]
-    if not OXP.get("id"):
-        st += make_ox_part(pno)
-    grow = []
-    shift = lambda y: sum(g for b, g in grow if y >= b - 0.3)
-    nb = numbers(pno)[0]
-    right = max([o["x1"] for o in sp if o["font"].startswith("NotoSans") and o["base"] > nb["y"]] + [185.0])
-    ex = [d for d in dr if d["fill"] == "#eff0f0" and d["w"] > 100]
-    if ex:                                                               # 보기 상자 — 첫 회차에만. 접기 묶음 「보기」
-        bx = ex[0]
-        st += [S("보기 상자 — 회색 면 · 보기 문장 둘(원고 자리 「보기」) · 빨간 고침 표시(접기 묶음 「보기」)", 1300)]
-        E({"id": f"ex{len(ELEMS[len(PAGES)])}", **{k: round(bx[k], 2) for k in ("x", "y", "w", "h")}, "color": bx["fill"], "see": bx["fill"], "pad": 0.3, "ctol": 6})
-        st += box(round(bx["x"], 2), round(bx["y"], 2), round(bx["w"], 2), round(bx["h"], 2), bx["fill"]) + [F('#side input[data-a="fold"]', "보기")]
-        exs = [o for o in sp if o["font"].startswith("NotoSans") and bx["y"] < o["base"] < bx["y"] + bx["h"]]
-        for o in exs:                                                    # 보기 문장 — 끝에 O/X 칸
-            ox = min([d for d in dr if d["n"] == 20 and d["fill"] == "#ffffff" and abs(d["y"] + d["h"] - o["base"]) < 3], key=lambda d: abs(d["y"] + d["h"] - o["base"]))
-            _, _, adv = face(NOTO, 400)
-            tr = line_track([o], NOTO, 400)
-            gap = round(ox["x"] - o["x1"] - adv(" ") * o["size"] * MM - 2 * tr / 1000 * o["size"] * MM, 3)
-            st += T(win_el(o, o["t"].strip(), o["x"], o["x1"]), NOTO, 400, slot_name="보기", temp="임시 보기 문장.", w=round(right - o["x"], 1), fold="보기")
-            st += [{"pick": {"at": '#side select[data-a="tail.part"]', "value": OXP["id"]}, "wait": 800},
-                   F('#side input[data-a="tail.gap"]', gap), F('#side input[data-a="tail.drop"]', round(ox["y"] + ox["h"] - o["base"], 3)),
-                   {"click": '#side input[data-a="tail.space"]', "wait": 600}]
-            E({"id": f"ox{len(ELEMS[len(PAGES)])}", "x": round(ox["x"] - 0.13, 2), "y": round(ox["y"] - 0.13, 2), "w": round(ox["w"] + 0.26, 2), "h": round(ox["h"] + 0.26, 2),
-               "color": LINK, "see": LINK, "pad": 0.3, "ctol": 30, "원고": True})
-        for d in [d for d in dr if d["fill"] == "#d2232a" and d["n"] == 14]:   # 빨간 동그라미(답 표시) — 원본 경로
-            E({"id": f"rc{len(ELEMS[len(PAGES)])}", **{k: round(d[k], 2) for k in ("x", "y", "w", "h")}, "color": "#d2232a", "see": "#d2232a", "pad": 0.3, "ctol": 30})
-            st += shape(round(d["x"], 2), round(d["y"], 2), round(d["w"], 2), round(d["h"], 2), "#d2232a", d=ring_d(pno, d)) + [F('#side input[data-a="fold"]', "보기")]
-        for d in [d for d in dr if d["stroke"] == "#d2232a" and d["h"] < 0.1]:   # 빨간 밑줄
-            y = round(d["y"] - d["sw"] * MM / 2, 3)
-            E({"id": f"rl{len(ELEMS[len(PAGES)])}", "x": round(d["x"], 2), "y": y, "w": round(d["w"], 2), "h": round(d["sw"] * MM, 3), "color": "#d2232a", "see": "#d2232a", "pad": 0.15, "ctol": 30})
-            st += box(round(d["x"], 2), y, round(d["w"], 2), round(d["sw"] * MM, 3), "#d2232a") + [F('#side input[data-a="fold"]', "보기")]
-        for o in [o for o in sp if o["color"] == "#d2232a"]:             # 빨간 고침 글(Cafe24 Supermagic)
-            st += T(win_el(o, o["t"].strip(), o["x"], o["x1"]), "Cafe24 Supermagic OTF", 700, fold="보기")
+    st = []
+    G = B11
+    if not G.get("made"):
+        st += pst_steps([("어법OX·문장번호", {"font": LOTTE, "size": G["num_size"], "color": G["num_color"], "tracking": 1}),
+                         ("어법OX·문장", {"font": NOTO, "size": G["ssz"], "leading": G["slead"], "tracking": G["strk"], "color": "#231f20", "align": "justify",
+                                       "indent": G["ind"], "indent_first": G["first"], "space_same": G["space"], "keep_together": True})], "단락 스타일 — 어법 O/X")
+        G["made"] = True
+    sp, dr, nb, rows = b11_parts(pno)
     st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
-    nums = [o for o in sp if LOTTE in o["font"]]
-    stext = [o for o in sp if o["font"].startswith("NotoSans") and o["base"] > nb["y"] + 3]
-    return ox_rows(st, sp, dr, nums, stext, right, shift, grow, "문장번호", "문장", nmax=B11_MAX)
-
-
-def ring_d(pno, d):
-    """원본 닫힌 곡선(빨간 동그라미 — 속 빈 고리) → 「경로 d」 (상자 0~1 비율). 곡선 c · 선 l 그대로"""
-    p, t = REF[pno - 1], REF[pno - 1].trimbox
-    for g in p.get_drawings():
-        r = g["rect"]
-        if abs((r.x0 - t.x0) * MM - d["x"]) < 0.05 and abs((r.y0 - t.y0) * MM - d["y"]) < 0.05 and len(g["items"]) == d["n"]:
-            fx = lambda v: (v.x - r.x0) / r.width
-            fy = lambda v: (v.y - r.y0) / r.height
-            out, cur = [], None
-            for it in g["items"]:
-                a = it[1]
-                if cur is None or abs(cur.x - a.x) > 1e-3 or abs(cur.y - a.y) > 1e-3:
-                    out.append(f"M{fx(a):.4f} {fy(a):.4f}")
-                if it[0] == "l":
-                    out.append(f"L{fx(it[2]):.4f} {fy(it[2]):.4f}"); cur = it[2]
-                elif it[0] == "c":
-                    out.append(f"C{fx(it[2]):.4f} {fy(it[2]):.4f} {fx(it[3]):.4f} {fy(it[3]):.4f} {fx(it[4]):.4f} {fy(it[4]):.4f}"); cur = it[4]
-            return " ".join(out) + " Z"
-    raise RuntimeError("곡선 못 찾음")
+    bot = 281.0
+    bars = [d for d in dr if d["fill"] == LINK and d["w"] < 1]
+    for r in rows:                                                       # O/X 칸 — 문장을 따라 놓이는 원고 요소
+        bx = r["bx"]
+        o = bx["sw"] * MM / 2
+        E({"id": f"ox{len(ELEMS[len(PAGES)])}", "x": round(bx["x"] - o, 2), "y": round(bx["y"] - o, 2), "w": round(bx["w"] + 2 * o, 2), "h": round(bx["h"] + 2 * o, 2),
+           "color": LINK, "see": LINK, "pad": 0.3, "ctol": 30, "원고": True})
+        ob = min(bars, key=lambda d: abs(d["x"] - bx["x"] - 10) + abs(d["y"] - bx["y"]))
+        E({"id": f"oxb{len(ELEMS[len(PAGES)])}", "x": round(ob["x"], 2), "y": round(ob["y"], 2), "w": round(ob["w"], 2), "h": round(ob["h"], 2),
+           "color": LINK, "see": LINK, "pad": 0.15, "ctol": 30, "원고": True})
+    fx = min(r["n"]["x"] for r in rows)                                   # 이 쪽의 프레임 왼쪽 = 이 쪽 문장 번호(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
+    right = max([fx + G["w"]] + [r["bx"]["x"] + r["bx"]["w"] + 0.5 for r in rows])
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(right - fx, 2), "h": round(bot - G["top"], 2),
+       "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
+    st += [S("본문 — 텍스트 프레임 하나(문장마다 번호 · 글 · 끝에 O/X 칸이 원고만큼 흐른다)", 1200)]
+    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2), "임시 문장 — 원고가 오면 문장마다 번호 · 글이 차례로 흐른다.",
+               G["ssz"], "#231f20", label="본문 글상자 — 한 줄기(" + B11_BIND + ")", font=NOTO, leading=G["slead"])
+    st += slot(B11_BIND, label="자리 — " + B11_BIND)
+    for nm in B11_BIND.split("+"):
+        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "어법OX·" + nm}, "wait": 450})
+    st += [{"click": '#side input[data-a="slotfmt.문장번호.inline"]', "wait": 600}, F('#side input[data-a="slotfmt.문장번호.inline_w"]', G["inline_w"], 600),
+           S("문장 끝에 O/X 칸 — 데이터 필드 「문장」의 고정 개체(문단 끝, 띄어 붙이기)", 1000),
+           {"pick": {"at": '#side select[data-a="slotfmt.문장.anc.part"]', "value": OXP["id"]}, "wait": 900},
+           F('#side input[data-a="slotfmt.문장.anc.gap"]', G["ox_gap"], 600), F('#side input[data-a="slotfmt.문장.anc.dy"]', G["ox_drop"], 600),
+           {"click": '#side input[data-a="slotfmt.문장.anc.space"]', "wait": 600}]
+    st += justify()
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
+    return st
 
 
 def bgox_record(lp, rp):
-    rec = {"제목": None, "보기": [], "지문번호": [], "문장번호": [], "문장": []}
+    """어법 O/X 펼침면 하나의 원고 — 쪽마다 지문 번호 + 한 줄기(문장마다 번호 · 글). 보기 예문(첫 회차 시범)은 템플릿에 두지 않는다 — contents 도 안 보낸다"""
+    rec = {"제목": None, "지문번호": [], B11_BIND: []}
     for pno in (lp, rp):
-        sp, dr = spans_of(pno), drawings(pno)
+        sp, dr, nb, rows = b11_parts(pno)
         if pno == lp:
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
-        ex = [d for d in dr if d["fill"] == "#eff0f0" and d["w"] > 100]
-        if ex:
-            rec["보기"] += [o["t"].strip() for o in sp if o["font"].startswith("NotoSans") and ex[0]["y"] < o["base"] < ex[0]["y"] + ex[0]["h"]]
-        nb = numbers(pno)[0]
         rec["지문번호"].append(nb["text"])
-        nums = [o for o in sp if LOTTE in o["font"]]
-        stext = [o for o in sp if o["font"].startswith("NotoSans") and o["base"] > nb["y"] + 3]
-        for k in range(B11_MAX):                                         # 쪽마다 B11_MAX 칸 — 없는 줄은 비운다(접힌다)
-            if k < len(nums):
-                n = nums[k]
-                nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
-                rec["문장번호"].append(n["t"].strip())
-                rec["문장"].append(" ".join(o["t"].strip() for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1))
-            else:
-                rec["문장번호"].append("")
-                rec["문장"].append("")
-    if not rec["보기"]:
-        rec["보기"] = ""                                                  # 보기 없는 회차 — 접힌다
+        rec[B11_BIND].append([[["문장번호", r["n"]["t"].strip()], ["문장", " ".join(o["t"].strip() for o in r["ln"])]] for r in rows])
     return rec
 
 
 if want(11):
-    st += body_pages(146, "B1", "어법 O/X", "B어법OX", "⑪ B어법OX", body=bgox_body)
-    CONTENT["B어법OX"] = [bgox_record(l, l + 1) for l in range(146, 166, 2)]
+    st += body_pages(148, "B1", "어법 O/X", "B어법OX", "⑪ B어법OX", body=bgox_body)      # 견본 = 148·149쪽 — 146쪽의 보기 예문(첫 회차 시범)은 템플릿에 두지 않는다
+    CONTENT["B어법OX"] = [bgox_record(l, l + 1) for l in list(range(148, 166, 2)) + [146]]   # 첫 원고 = 견본(148·149쪽) — 견본 쪽과 맞대고 관리 견본도 이것
 
 # ── 구성 12 「C빈칸어법」 (원본 166~185쪽 = 펼침면 10벌 · 원고마다) — 견본 = 166·167쪽 ──
 # 구성 9 와 같은 흐름(문항번호 + 빈칸문장 + 해석) — 빈칸은 글자 없는 밑줄(원고 꼴 「__」), 영어 9pt. 단락 스타일 이름은 「…·어법」
@@ -1850,8 +2272,8 @@ if want(12):
     CONTENT["C빈칸어법"] = [c2_record(l, l + 1, C3) for l in range(166, 186, 2)]
 
 # ── 구성 13 「C영작배열」 (원본 186~195쪽 = 펼침면 5벌 · 원고마다) — 견본 = 186·187쪽 ──
-# 쪽: 지문 번호 둘 · 문항마다(접기 묶음 「문항k」) 번호 「01.」 · 우리말 문장 · 연보라 둥근 바탕 안 뒤섞인 낱말 · 답 쓰는 곳(화살표 둘 · 줄 둘).
-# 자라면 아래 모두 밀기 — 우리말·낱말 상자는 한 줄 높이로 그리고 원고만큼 자란다.
+# 흐름 방식(2026-10-14): 텍스트 프레임 하나에 지문 번호 · 문항마다 번호(붙임) · 우리말 · 낱말(연보라 둥근 음영, 너비 「텍스트」).
+# 답 쓰는 곳(화살표 둘 · 줄 둘) = 데이터 필드 「보기단어」의 고정 개체(다음 줄). 문항이 없으면 문단이 안 생긴다.
 
 
 def corner_r(d):
@@ -1877,15 +2299,6 @@ def wo_parts(pno):
     return out
 
 
-def wo_body(pno):
-    with top_spot():
-        return _wo_body(pno)
-
-
-WO_MAX = 5                                                              # 쪽당 문항 가장 많은 수(원본 186~195쪽)
-WO = {}
-
-
 def wo_starts(pno, items):
     """문항마다 그 위에서 시작하는 지문 번호(없으면 None)"""
     pn = numbers(pno)
@@ -1896,85 +2309,138 @@ def wo_starts(pno, items):
     return out
 
 
-def _wo_body(pno):
-    sp, dr = spans_of(pno), drawings(pno)
-    st = [S("쪽 설정 — 자라면 아래 모두 밀기", 1000), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-pushrow", "wait": 900}]
-    grow = []
-    shift = lambda y: sum(g for b, g in grow if y >= b - 0.3)
+C13_BIND = "지문번호+문항번호+우리말+보기단어"
+C13 = {}
+
+
+def c13_style(pno):
+    import statistics
     items = wo_parts(pno)
     starts = wo_starts(pno, items)
-    right = max(o["x1"] for it in items for o in it["ko"] + it["wd"])
-    ref_p = next(pe for pe in starts if pe)                              # 지문 번호 ↔ 문항 번호 간격(견본의 지문 첫 문항에서)
-    ref_i = items[starts.index(ref_p)]["n"]
-    off_base = ref_i["base"] - (ref_p["y"] + 0.95 * 12 * MM)             # 지문 번호 기준선 → 문항 번호 기준선
-    pull = top_of(ref_i["base"], 9, LOTTE, 400) - top_of(ref_i["base"] - off_base, 12, YD, 400)   # 지문 번호가 접히면 당겨지는 양
-    for k, it in enumerate(items):
-        n = it["n"]
-        fold = f"문항{k + 1}"
-        pe = starts[k]
-        if pe:
-            st += T(pe, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00", shift=shift(pe["y"]), w=round(right - pe["x"], 1),
-                    fold=f"지문{k + 1}")
-        else:                                                            # 이 문항 위엔 견본에 지문 번호가 없다 — 자리는 두고(원고가 비우면 접힌다) 아래를 그만큼 내려 그린다
-            grow.append((n["base"] - off_base - 6, -pull))
-            pb = n["base"] - off_base
-            st += [S(f"지문 번호 자리 — 문항 {k + 1:02d} 위(이 원고엔 없어 접힌다)", 600)]
-            st += text(round(n["x"], 2), round(top_of(pb, 12, YD, 400) - shift(pb - 3), 2), round(right - n["x"], 1), round(12 * 1.45 * MM * 1.03, 1), "00", 12, "#af9d81",
-                       font=YD)
-            st += slot("지문번호") + [F('#side input[data-a="fold"]', f"지문{k + 1}")]
-        sh = shift(n["base"] - 3)
-        st += [S(f"문항 {k + 1:02d} — 번호 · 우리말 · 낱말 상자 · 답 쓰는 곳(접기 묶음 「{fold}」)", 1000)]
-        st += T(win_el(n, n["t"].strip(), n["x"], n["x1"]), LOTTE, 400, slot_name="문항번호", temp="00.", shift=sh, w=round(right - n["x"], 1), fold=fold)
-        ko = it["ko"]
-        kl = (ko[1]["base"] - ko[0]["base"]) if len(ko) > 1 else 4.59
-        ktrk = gaps_track([c for c in ko[-1]["ink"]], 8.5)
-        ktop = top_of(ko[0]["base"], 8.5, NOTO, 400, round(kl / MM, 2))
-        E({"id": f"k{len(ELEMS[len(PAGES)])}", "x": round(ko[0]["x"], 2), "y": round(ko[0]["base"] - 0.95 * 8.5 * MM, 2), "w": round(max(o["x1"] for o in ko) - ko[0]["x"], 2),
-           "h": round(ko[-1]["base"] - ko[0]["base"] + 1.25 * 8.5 * MM, 2), "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 0.8, "search": 0.8, "원고": True})
-        st += text(round(ko[0]["x"], 2), round(ktop - sh, 2), round(right - ko[0]["x"] + ktrk / 1000 * 8.5 * MM, 2), round(kl, 2), "임시 우리말 문장이 이 자리에 들어온다.", 8.5, "#231f20",
-                   label="우리말 — 원고 자리 「우리말」", leading=round(kl / MM, 2), align="justify", font=NOTO, track=ktrk or None)
-        st += slot("우리말") + justify() + [F('#side input[data-a="fold"]', fold)]
-        grow.append((ko[0]["base"] + 1, (len(ko) - 1) * kl))
-        bx, wd = it["box"], it["wd"]
-        sh = shift(bx["y"])
-        g, _ = para_box(st, bx, sorted(wd, key=lambda o: o["base"]), 8.5, "뒤섞인 낱말 — 연보라 둥근 바탕 글상자 · 원고 자리 「보기단어」", "보기단어",
-                        "( 임시 / 낱말 / 들이 / 이 자리에 )", sh, fill=bx["fill"], align="left")
-        st += [F('#side input[data-a="frame.radius"]', corner_r(bx)), F('#side input[data-a="fold"]', fold)]
-        if "boxw" not in WO:                                             # 낱말 상자 폭은 원고 길이를 따른다(원본 상자마다 다름) — 「높이와 너비」 자동 크기 + 최대 폭 = 원본에서 가장 넓은 상자
-            WO["boxw"] = round(max(it2["box"]["w"] for pg in range(186, 196) for it2 in wo_parts(pg)), 2)
-        st += [{"pick": {"at": '#side select[data-a="auto_size"]', "value": "both"}, "wait": 700}, F('#side input[data-it="w"]', WO["boxw"])]
-        grow.append((bx["y"] + bx["h"], g))
-        for d in it["deco"]:                                             # 답 쓰는 곳 — 화살표 둘(원본 꼭짓점) · 가는 줄 둘
-            y = d["y"] - shift(d["y"])
-            E({"id": f"d{len(ELEMS[len(PAGES)])}", **{q: round(d[q], 2) for q in ("x", "y", "w", "h")}, "color": d["fill"], "see": d["fill"], "pad": 0.2, "ctol": 20,
-               "원고": True})                                               # 위 낱말 상자를 따라 움직인다 — 원고 쪽 판정
-            if d["n"] == 3:
-                st += shape(round(d["x"], 2), round(y, 2), round(d["w"], 2), round(d["h"], 2), d["fill"], d=poly_d(pno, {"x": d["x"], "y": d["y"]}))
+    below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
+    x0 = min([it["n"]["x"] for it in items] + [pe["x"] for pe in starts if pe])
+    it0 = next(it for it in items if len(it["ko"]) > 1) if any(len(it["ko"]) > 1 for it in items) else items[0]
+    ko = it0["ko"]
+    kl_mm = (ko[1]["base"] - ko[0]["base"]) if len(ko) > 1 else 4.59
+    cont_x = ko[1]["x"] if len(ko) > 1 else ko[0]["x"]
+    bx, wd = it0["box"], sorted(it0["wd"], key=lambda o: o["base"])
+    m = para_metrics(wd, 8.5)
+    w_top = top_of(m["base0"], 8.5, NOTO, 500, m["lead_mm"] / MM)
+    deco = it0["deco"]
+    d_top, d_bot = min(d["y"] for d in deco), max(d["y"] + d["h"] for d in deco)
+    k_top = lambda it: top_of(it["ko"][0]["base"], 8.5, NOTO, 400, kl_mm / MM)
+    sb_k, sb_p = [], []
+    for pg_ in (pno, pno + 1):                                           # 견본 펼침면 두 쪽 모두 — 원본은 지문 번호 앞 간격이 쪽마다 다르다(9.9 · 2.2 · 5.3mm) → 가운데 값
+        its = items if pg_ == pno else wo_parts(pg_)
+        sts = starts if pg_ == pno else wo_starts(pg_, its)
+        for k, it in enumerate(its[1:], 1):                              # 앞 문항 답 줄 아래 → 이 문항 첫 줄(지문 번호가 있으면 지문 번호)
+            pd = max(d["y"] + d["h"] for d in its[k - 1]["deco"])
+            pe = sts[k]
+            if pe:
+                sb_p.append(top_of(pe["y"] + 0.95 * 12 * MM, 12, YD, 400) - pd)
             else:
-                st += box(round(d["x"], 2), round(y, 3), round(d["w"], 2), round(d["h"], 3), d["fill"])
-            st.append(F('#side input[data-a="fold"]', fold))
-    if len(items) < WO_MAX:
-        raise RuntimeError("견본 쪽 문항이 가장 많은 수보다 적다 — 더 둘 문항 자리를 만들어야 한다")
+                sb_k.append(k_top(it) - pd)
+    pe0 = next((pe, it) for pe, it in zip(starts, items) if pe)
+    pnb = pe0[0]["y"] + 0.95 * 12 * MM                                    # 지문 번호 기준선
+    k_sb = statistics.median(sb_k) if sb_k else 3.0
+    after_p = k_top(pe0[1]) - (pnb + below(pnb, 12, YD, 400, 12 * 1.45))   # 지문 번호 줄 아래 → 우리말 줄 위(원본)
+    # 인디자인은 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」을 더한다 — 우리말 앞 간격(k_sb)이 이 사이보다 크면 지문 번호 행간을 줄여 맞춘다(뒤 간격은 음수가 안 된다)
+    cut = max(0.0, k_sb - after_p)
+    p_lead = round(12 * 1.45 - 2 * cut / MM, 2)
+    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400) if starts[0] else k_top(items[0]), 2), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
+               kl=round(kl_mm / MM, 2), ktrk=gaps_track([c for c in ko[-1]["ink"]], 8.5) or 1, k_ind=round(cont_x - x0, 2), k_first=round(it0["n"]["x"] - cont_x, 2),
+               inline_w=round(ko[0]["x"] - it0["n"]["x"], 2), num_color=it0["n"]["color"], num_size=it0["n"]["size"],
+               k_sb=round(k_sb, 2), p_sb=round((statistics.median(sb_p) if sb_p else 3.0) + cut, 2), p_lead=p_lead,
+               k_after_p=round(max(0.0, after_p - k_sb), 2),
+               ww=dict(fill=bx["fill"], r=corner_r(bx), ind=round(bx["x"] - x0, 2), pad=round(m["x_t"] - bx["x"], 2), pad_top=round(w_top - bx["y"], 2),
+                      pad_bottom=round(bx["y"] + bx["h"] - (w_top + m["lines"] * m["lead_mm"]), 2), lead=round(m["lead_mm"] / MM, 2), trk=m["trk"] or 1,
+                      sb=round(bx["y"] - (ko[-1]["base"] + below(ko[-1]["base"], 8.5, NOTO, 400, kl_mm / MM)), 2)),
+               deco=dict(x=round(min(d["x"] for d in deco) - x0, 2), gap=round(d_top - (bx["y"] + bx["h"]), 2)))
+
+
+def c13_make_part(pno):
+    """부품 — 답 쓰는 곳(화살표 둘 · 가는 줄 둘): 낱말 상자 아래 제 줄. 빈 자리에 그려 묶는다"""
+    it0 = next(it for it in wo_parts(pno) if it["deco"])
+    deco = it0["deco"]
+    bx0, by0 = min(d["x"] for d in deco), min(d["y"] for d in deco)
+    bx1, by1 = max(d["x"] + d["w"] for d in deco), max(d["y"] + d["h"] for d in deco)
+    X0, Y0 = 15.0, 262.0
+    dx, dy = X0 - bx0, Y0 - by0
+    st = [S("답 쓰는 곳 부품 — 화살표 둘 · 줄 둘을 빈 자리에 그려 묶는다(낱말 상자의 고정 개체)", 1300)]
+    for d in deco:
+        if d["n"] == 3:
+            st += shape(round(d["x"] + dx, 2), round(d["y"] + dy, 2), round(d["w"], 2), round(d["h"], 2), d["fill"], d=poly_d(pno, {"x": d["x"], "y": d["y"]}))
+        else:
+            st += box(round(d["x"] + dx, 2), round(d["y"] + dy, 3), round(d["w"], 2), round(d["h"], 3), d["fill"])
+    C13["part"] = group_part(st, len(deco), X0, Y0, bx1 - bx0, by1 - by0)
+    return st
+
+
+def wo_body(pno):
+    st = []
+    if "x" not in C13:
+        c13_style(pno)
+        st += c13_make_part(pno)
+    with top_spot():
+        st += _wo_body(pno)
+    return st
+
+
+def _wo_body(pno):
+    st = []
+    G = C13
+    if not G.get("made"):
+        W = G["ww"]
+        st += pst_steps([("영작·지문번호", {"font": YD, "size": 12, "leading": G["p_lead"], "color": "#af9d81", "space_before": G["p_sb"], "space_after": G["k_after_p"], "keep_next": True}),
+                         ("영작·문항번호", {"font": LOTTE, "size": G["num_size"], "color": G["num_color"], "tracking": 1}),
+                         ("영작·우리말", {"font": NOTO, "size": 8.5, "leading": G["kl"], "tracking": G["ktrk"], "color": "#231f20", "align": "justify",
+                                       "indent": G["k_ind"], "indent_first": G["k_first"], "space_before": G["k_sb"], "keep_next": True}),
+                         ("영작·보기단어", {"font": NOTO, "weight": 500, "size": 8.5, "leading": W["lead"], "tracking": W["trk"], "color": "#231f20", "align": "left",
+                                         "indent": W["ind"], "shade": W["fill"], "shade_fit": True, "shade_r": W["r"], "pad": W["pad"], "pad_top": W["pad_top"],
+                                         "pad_bottom": W["pad_bottom"], "space_before": W["sb"], "keep_together": True})], "단락 스타일 — 영작 배열")
+        G["made"] = True
+    items = wo_parts(pno)
+    bot = 281.0
+    for it in items:                                                     # 낱말 상자 · 답 쓰는 곳 — 문항을 따라 놓이는 원고 요소
+        b = it["box"]
+        E({"id": f"bg{len(ELEMS[len(PAGES)])}", **{k: clip(b)[k] for k in ("x", "y", "w", "h")}, "color": b["fill"], "see": b["fill"], "pad": 0.6, "ctol": 8, "원고": True})
+        for d in it["deco"]:
+            E({"id": f"d{len(ELEMS[len(PAGES)])}", **{q: round(d[q], 2) for q in ("x", "y", "w", "h")}, "color": d["fill"], "see": d["fill"], "pad": 0.2, "ctol": 20, "원고": True})
+    fx = min([it["n"]["x"] for it in items] + [pe["x"] for pe in wo_starts(pno, items) if pe])   # 이 쪽의 프레임 왼쪽(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
+    right = max([fx + G["kw"]] + [d["x"] + d["w"] for it in items for d in it["deco"]])
+    E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(right - fx, 2), "h": round(bot - G["top"], 2),
+       "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
+    st += [S("본문 — 텍스트 프레임 하나(지문 번호 · 문항마다 번호 · 우리말 · 낱말 상자 · 답 쓰는 곳이 원고만큼 흐른다)", 1200)]
+    st += text(round(fx, 2), round(G["top"], 2), round(right - fx, 2), round(bot - G["top"], 2), "임시 우리말 — 원고가 오면 문항마다 차례로 흐른다.",
+               8.5, "#231f20", label="본문 글상자 — 한 줄기(" + C13_BIND + ")", font=NOTO, leading=G["kl"])
+    st += slot(C13_BIND, label="자리 — " + C13_BIND)
+    for nm in C13_BIND.split("+"):
+        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "영작·" + nm}, "wait": 450})
+    st += [{"click": '#side input[data-a="slotfmt.문항번호.inline"]', "wait": 600}, F('#side input[data-a="slotfmt.문항번호.inline_w"]', G["inline_w"], 600),
+           S("낱말 상자 아래 답 쓰는 곳 — 데이터 필드 「보기단어」의 고정 개체(다음 줄)", 1000),
+           {"pick": {"at": '#side select[data-a="slotfmt.보기단어.anc.part"]', "value": G["part"]}, "wait": 900},
+           {"pick": {"at": '#side select[data-a="slotfmt.보기단어.anc.pos"]', "value": "line"}, "wait": 800},
+           F('#side input[data-a="slotfmt.보기단어.anc.x"]', G["deco"]["x"], 600), F('#side input[data-a="slotfmt.보기단어.anc.gap"]', G["deco"]["gap"], 600)]
+    st += justify()
+    st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
 
 
 def wo_record(lp, rp):
-    """쪽마다 문항 WO_MAX 칸 — 문항마다 (그 위에서 시작하는 지문 번호 또는 빈칸) · 문항번호 · 우리말 · 보기단어. 없는 문항은 비운다(접힌다)"""
-    rec = {"제목": None, "지문번호": [], "문항번호": [], "우리말": [], "보기단어": []}
+    """영작 배열 펼침면 하나의 원고 — 쪽마다 한 줄기(지문이 바뀌면 지문 번호 · 문항마다 번호 · 우리말 · 낱말)"""
+    rec = {"제목": None, C13_BIND: []}
     for pno in (lp, rp):
         if pno == lp:
             rec["제목"] = next("".join(c["c"] for c in s_["chars"]).strip() for b in REF[pno - 1].get_text("rawdict")["blocks"]
                               for l in b.get("lines", []) for s_ in l["spans"] if round(s_["size"], 1) == 13.0)
         items = wo_parts(pno)
         starts = wo_starts(pno, items)
-        for k in range(WO_MAX):
-            if k < len(items):
-                rec["지문번호"].append(starts[k]["text"] if starts[k] else "")
-                for key in ("문항번호", "우리말", "보기단어"):
-                    rec[key].append(items[k]["rec"][key])
-            else:
-                for key in ("지문번호", "문항번호", "우리말", "보기단어"):
-                    rec[key].append("")
+        out = []
+        for pe, it in zip(starts, items):
+            if pe:
+                out.append([["지문번호", pe["text"]]])
+            out.append([["문항번호", it["rec"]["문항번호"]], ["우리말", it["rec"]["우리말"]], ["보기단어", it["rec"]["보기단어"]]])
+        rec[C13_BIND].append(out)
     return rec
 
 
@@ -2137,10 +2603,6 @@ def s_story(x, top, bot, head, w):
             st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "실전·" + nm}, "wait": 450})
         st += [S("번호는 발문 첫 줄 앞에 붙인다 — 번호 칸 폭", 900), {"click": '#side input[data-a="slotfmt.번호.inline"]', "wait": 600},
                F('#side input[data-a="slotfmt.번호.inline_w"]', SR["S_INLINE"], 600)]
-        st += grep(0, r"_\{([^}]*)\}", bold=False, underline=True, line=round(0.5 * MM, 3), line_off=0.71, line_color="#231f20", hide=True,
-                   label="GREP — 원고의 _{…} 는 밑줄만")
-        st += grep(1, r"\{([^}]*)\}", bold=False, weight=500, underline=True, line=round(0.5 * MM, 3), line_off=0.71, line_color="#231f20", hide=True,
-                   label="GREP — 원고의 {…} 는 Medium + 밑줄")
         st += [S("글 잇기 — 새 이야기(넘친 줄은 다음 단·쪽 상자로)", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
     else:
         st += [S("글 잇기 — 같은 이야기를 이어 받는다", 700), {"pick": {"at": '#side select[data-a="story"]', "value": "이야기1"}, "wait": 900}]
@@ -2161,6 +2623,9 @@ def _s_body(pno):
                   for c in [next(c for c in g["lines"][0]["chars"] if c["c"].strip() and c["c"] != "\t")]]
         SR["S_INLINE"] = round(statistics.median(firsts), 2)               # 번호 칸 폭 = 발문 첫 글자 - 단 왼쪽(중앙값)
         st += s_styles_steps()
+        if not ULF.get("done"):
+            st += cs_steps(UL_CS, "밑줄 문자 스타일")                     # 원고의 밑줄(꾸밈 조각) — 「밑줄」 · 「밑줄 보통」
+            ULF["done"] = True
     L, Rr = G_["cols_of"](pno)
     w = round(G_["COL_W"], 2)
     firsts = [min(l["base"] for g in G_["GROUPS"][pg][ci] for l in g["lines"]) for pg in G_["PAGES"] for ci in (0, 1) if G_["GROUPS"][pg][ci]]
@@ -2182,7 +2647,7 @@ def _s_body(pno):
 
 if want(14):
     st += body_pages(198, "S", "실전 문제", "S실전문제", "⑭ S실전문제", body=s_body, rep=None, cont=True, fixed_title=True)
-    CONTENT[S_BIND] = s_recs()
+    CONTENT[S_BIND] = [[[k, marks_runs(v)] for k, v in it] for it in s_recs()]
 
 
 # ── 구성 15 「MEMO」 (원본 273쪽) ── 흰 바탕 · 머리 크림 띠 · 막대 · 선 · MEMO · 점 무늬(원본에서 내보낸 그림 memo_dots.svg) · 아래 색 띠 셋

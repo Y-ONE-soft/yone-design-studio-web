@@ -44,7 +44,8 @@ def test_blanks_hint_and_plain():
     content, _ = yos_editor.to_content(_data([{"key": "vocab-blank", "label": "빈칸어휘 1단계", "content": dict(rows, kind="vocab-blank")},
                                               {"key": "grammar-blank", "label": "빈칸어법", "content": dict(rows, kind="grammar-blank")}]), SAMPLE, CAPS)
     k = "문항번호+빈칸문장+해석"
-    assert content["C빈칸어휘"][0][k] == [[{"문항번호": "01.", "빈칸문장": "much {c}__, but {c}__ it", "해석": "해석"}]]
+    cs = {"t": "c", "cs": "첫 글자"}                                     # 힌트 = 꾸밈 조각(문자 스타일 「첫 글자」), 빈칸 「__」은 템플릿 GREP 이 문자 스타일 「빈칸」으로
+    assert content["C빈칸어휘"][0][k] == [[{"문항번호": "01.", "빈칸문장": ["much ", cs, "__, but ", cs, "__ it"], "해석": "해석"}]]
     assert content["C빈칸어법"][0][k][0][0]["빈칸문장"] == "much __, but __ it"
 
 
@@ -70,6 +71,26 @@ def test_summary_flow_story_per_passage():
     first = r[k][0]
     assert first[0] == [["지문", "passage 0"]] and len(first) == 3                # 지문 + 문제 둘(빈 문제 칸 없음)
     assert first[1] == [["문제번호", "01"], ["발문", ["Which is ", {"t": "true", "cs": "밑줄"}, "?"]], ["선지", "① a\n② b"]]
+
+
+def test_ox_flow_story_per_passage():
+    """흐름 틀 A본문OX — 지문 · O/X 문제 01 · 진술마다 번호 · 글(빈 객관식 칸 · 빈 진술 칸 없음)"""
+    qs = [{"prompt": "다음 글의 내용과 일치하면 O", "passage": "It is <u>red</u>."}, {"prompt": "x", "passage": "It is blue."}]
+    item = {"key": "mock-exam", "label": "내용OX 영어", "content": {"kind": "mock-exam", "questions": qs}}
+    caps = dict(CAPS, A본문OX=Counter({"제목": 1, "지문번호": 2, "지문+문제번호+발문+선지+진술번호+진술": 2}))
+    content, _ = yos_editor.to_content(_data([item], 1), SAMPLE, caps)
+    items = content["A본문OX"][0]["지문+문제번호+발문+선지+진술번호+진술"][0]
+    assert items[0] == [["지문", "passage 0"]] and items[1] == [["문제번호", "01"], ["발문", "다음 글의 내용과 일치하면 O"]]
+    assert items[2] == [["진술번호", "01"], ["진술", ["It is ", {"t": "red", "cs": "밑줄"}, "."]]] and items[3] == [["진술번호", "02"], ["진술", "It is blue."]]
+
+
+def test_grammar_two_frames_passage_and_fixed_question():
+    """A어법선택 — 위 프레임 「지문」(따로 선 자리) + 아래 문제 프레임(발문+문제지문 — contents 에 문제가 없으면 빈 줄기)"""
+    item = {"key": "grammar-choice", "label": "어법선택", "content": {"kind": "grammar-choice", "text": "a 1[is / are] b"}}
+    caps = dict(CAPS, A어법선택=Counter({"제목": 1, "지문번호": 2, "지문": 2, "발문+문제지문": 2}))
+    content, _ = yos_editor.to_content(_data([item], 2), SAMPLE, caps)
+    r = content["A어법선택"][0]
+    assert r["지문"] == ["a [is / are] b"] * 2 and r["발문+문제지문"] == [[], []]
 
 
 def test_writing_order_rows_and_exam_story():
