@@ -10,6 +10,12 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEED = os.path.join(REPO, "tests", "fixtures", "units")
 
 
+def _t(svg):
+    """그린 글에서 한국어 공백 표시(<span lang="ko"> </span> — 한국어 꼴 공백 폭)를 걷어 글만 — 낱말 찾기용"""
+    import re as _re
+    return _re.sub(r'<span lang="ko">([^<]*)</span>', r"\1", svg)
+
+
 @pytest.fixture
 def lib(tmp_path, monkeypatch):
     """시험용 시드(tests/fixtures/units — 리포 catalog/_units 는 로컬 :5099 의 라이브라 화면에서 바뀐다)를 임시 카탈로그로 복사해 읽는다."""
@@ -172,7 +178,7 @@ def test_skin_variant_switch(lib):
     blk = store.by_id(lib["blocks"])["gram_ox"]
     d2 = render.block_standalone(render.Ctx(store.by_id(lib["skins"])["d2"], lib), blk)
     mono = render.block_standalone(render.Ctx(store.by_id(lib["skins"])["mono"], lib), blk)
-    assert "<ellipse" in d2 and "고쳐 쓰기" in mono                       # 옷이 모양(v2)을 고른다
+    assert "<ellipse" in d2 and "고쳐 쓰기" in _t(mono)                       # 옷이 모양(v2)을 고른다
 
 
 def test_decompose_pdf(tmp_path):
@@ -1013,7 +1019,7 @@ def test_manuscript_matches_block_by_name(lib):
           "items": [{"block": "p_9", "x": 20, "y": 40, "w": 170}]}
     st = {"kind": "passage", "id": "77", "blocks": [{"block": "passage", "fields": {"passage": "원고 본문 한 줄"}}]}
     svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
-    assert "원고 본문 한 줄" in svg
+    assert "원고 본문 한 줄" in _t(svg)
     ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})   # 이름이 다르면 안 꽂힌다(자리는 비고 검수에 뜬다)
     other = dict(seed, id="p_8", name="전혀 다른 것")
     lib3 = dict(lib2, blocks=lib["blocks"] + [other])
@@ -1068,11 +1074,11 @@ def test_block_accepts_items(lib):
           "items": [{"block": "p_20", "x": 20, "y": 40, "w": 170}]}
     st = {"kind": "passage", "id": "78", "blocks": [{"block": "grammar-ox", "fields": {"no": 1, "sentence": "He have finished it.", "answer": "X"}}]}
     svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC, sample_set=st)[0]["svg"]
-    assert "have finished" in svg                       # contents 의 key 로 꽂힌다
+    assert "have finished" in _t(svg)                       # contents 의 key 로 꽂힌다
     st2 = {"kind": "passage", "id": "79", "blocks": [{"block": "gram_ox", "fields": {"no": 2, "sentence": "She has lived here.", "answer": "O"}}]}
     ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib2, {})
     svg2 = render.page_canvas_svgs(ctx2, pg, render.DEFAULT_SPEC, sample_set=st2)[0]["svg"]
-    assert "has lived here" in svg2                     # 붙여넣은 원고(씨앗 블록 이름)로도 꽂힌다
+    assert "has lived here" in _t(svg2)                     # 붙여넣은 원고(씨앗 블록 이름)로도 꽂힌다
     other = dict(seed, id="p_21", name="딴것", accepts=["writing-order"])
     lib3 = dict(lib, blocks=lib["blocks"] + [other])
     ctx3 = render.Ctx(store.by_id(lib["skins"])["d2"], lib3, {})

@@ -8,6 +8,12 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SEED = os.path.join(REPO, "tests", "fixtures", "units")
 
 
+def _t(svg):
+    """그린 글에서 한국어 공백 표시(<span lang="ko"> </span> — 한국어 꼴 공백 폭)를 걷어 글만 — 낱말 찾기용"""
+    import re as _re
+    return _re.sub(r'<span lang="ko">([^<]*)</span>', r"\1", svg)
+
+
 @pytest.fixture
 def lib(tmp_path, monkeypatch):
     import shutil
@@ -160,7 +166,7 @@ def test_answers_page_once_collects_all(lib):
     plan = {"id": "p", "name": "p", "spec": "a4", "front": [], "back": [],
             "sections": [{"id": "s", "name": "본문", "pages": [{"page": "ans", "repeat": "once", "sets": ["answers"]}]}]}
     out = render.plan_svgs(_ctx(lib, lib2), plan, _sets(), lib2)
-    assert len(out) == 1 and "(1) fun" in out[0]["svg"] and "③" in out[0]["svg"]
+    assert len(out) == 1 and "(1) fun" in _t(out[0]["svg"]) and "③" in out[0]["svg"]
 
 
 def test_two_passages_per_page(lib):
@@ -179,7 +185,7 @@ def test_two_passages_per_page(lib):
         assert store.validate("plans", dict(plan, order="by_set")) is None
         out = render.plan_svgs(_ctx(lib, lib2), plan, sets, lib2)
         assert len(out) == 2, order                                               # 지문 셋 → 20·21 한 면, 22 한 면
-        assert "passage 20" in out[0]["svg"] and "passage 21" in out[0]["svg"] and "passage 22" in out[1]["svg"]
+        assert "passage 20" in _t(out[0]["svg"]) and "passage 21" in _t(out[0]["svg"]) and "passage 22" in _t(out[1]["svg"])
 
 
 def test_mirror_part_flips_inside():
@@ -262,9 +268,9 @@ def test_overflow_continues_on_other_page(lib):
             "sections": [{"id": "s", "name": "본문", "pages": [{"page": "f1", "repeat": "each_set"}]}]}
     out = render.plan_svgs(_ctx(lib, lib2), plan, [_mock_set()], lib2)
     assert len(out) >= 2
-    assert "FIRST TITLE" in out[0]["svg"] and "RUNNING HEAD" not in out[0]["svg"]
-    assert [("RUNNING HEAD" in o["svg"], "FIRST TITLE" in o["svg"]) for o in out[1:]] == [(True, False)] * (len(out) - 1), [o["label"] for o in out]
-    assert "윗글의 주제는" in out[-1]["svg"] or "② b" in out[-1]["svg"]
+    assert "FIRST TITLE" in _t(out[0]["svg"]) and "RUNNING HEAD" not in _t(out[0]["svg"])
+    assert [("RUNNING HEAD" in _t(o["svg"]), "FIRST TITLE" in _t(o["svg"])) for o in out[1:]] == [(True, False)] * (len(out) - 1), [o["label"] for o in out]
+    assert "윗글의 주제는" in _t(out[-1]["svg"]) or "② b" in _t(out[-1]["svg"])
     assert all("border:0.3px solid" in o["svg"] for o in out)                                # 나뉜 상자도 양쪽 모두 상자
     # 이어 갈 면이 문서에 들어 있어도 「찍지 않음」이면 따로 안 찍힌다 · 면마다 자기 판형
     first["spec"] = nxt["spec"] = "b4_exam"
