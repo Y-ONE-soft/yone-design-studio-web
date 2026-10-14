@@ -224,15 +224,30 @@ def deco_check(new_ids, state):
     elems = json.load(open(ep, encoding="utf-8"))
 
     def spans(page, ox, oy):
+        """낱말 목록 — 한 줄의 같은 크기 조각들을 이어 붙인 뒤 띄어쓰기로 나눈다. 결과 PDF 는 글 언어로 감싼 문장부호 · 한글이
+        글자마다 따로 조각이 되어(「인」「류」「학」「자」 · 「: 」) 원본 낱말(「인류학자」 · 「*anthropologist:」)과 짝이 안 지어졌다(2026-10-14 실전 문제 주석)"""
         res = []
         for b in page.get_text("rawdict")["blocks"]:
             for ln in b.get("lines", []):
+                runs = []                                                 # [(크기, 기준선, 글자들)] — 크기가 같고 잇닿은 조각은 하나로
                 for s in ln["spans"]:
-                    t = "".join(c["c"] for c in s["chars"])
-                    x0, y0, x1, y1 = s["bbox"]
-                    for w in t.split():                                   # 붙은 표시(「S V」)는 결과 PDF 가 한 덩어리로 낸다 — 낱말로
-                        res.append(dict(t=w, size=s["size"], by=(s["origin"][1] - oy) * mm, x0=(x0 - ox) * mm, x1=(x1 - ox) * mm,
-                                        y0=(y0 - oy) * mm, y1=(y1 - oy) * mm))
+                    if (runs and s["chars"] and runs[-1][2] and abs(runs[-1][0] - s["size"]) < 0.05 and abs(runs[-1][1] - s["origin"][1]) < 0.5
+                            and abs(s["chars"][0]["bbox"][0] - runs[-1][2][-1]["bbox"][2]) < 0.6):   # 잇닿은 조각만(떨어져 놓인 윗주 낱말끼리는 안 붙인다)
+                        runs[-1][2].extend(s["chars"])
+                    else:
+                        runs.append((s["size"], s["origin"][1], list(s["chars"])))
+                for size, base, chars in runs:
+                    word = []
+                    for c in chars + [{"c": " ", "bbox": (0, 0, 0, 0)}]:
+                        if c["c"].strip():
+                            word.append(c)
+                            continue
+                        if word:                                          # 붙은 표시(「S V」)는 결과 PDF 가 한 덩어리로 낸다 — 낱말로
+                            x0, y0 = min(k["bbox"][0] for k in word), min(k["bbox"][1] for k in word)
+                            x1, y1 = max(k["bbox"][2] for k in word), max(k["bbox"][3] for k in word)
+                            res.append(dict(t="".join(k["c"] for k in word), size=size, by=(base - oy) * mm, x0=(x0 - ox) * mm, x1=(x1 - ox) * mm,
+                                            y0=(y0 - oy) * mm, y1=(y1 - oy) * mm))
+                            word = []
         return res
 
     def decos(S, e, pad):
@@ -251,12 +266,13 @@ def deco_check(new_ids, state):
                 continue
             gap = lambda b: (max(0, b["x0"] - s["x1"], s["x0"] - b["x1"]) ** 2 + max(0, b["y0"] - s["y1"], s["y0"] - b["y1"]) ** 2) ** 0.5
             o = min(bodys, key=lambda b: (round(gap(b), 1), abs(b["by"] - s["by"])), default=None)
-            if o:
-                d[s["t"]].append(s["by"] - o["by"])
+            over = [b for b in bodys if b["x0"] < s["x1"] and b["x1"] > s["x0"] and abs(b["by"] - s["by"]) <= 3.5]
+            if o and over:                                                # 주인 글자에 붙은 작은 글만 — 바로 위아래(3.5mm 안)에 가로로 겹치는 본문 글이 있다(윗주 · 위첨자 번호 · 구문 표기).
+                d[s["t"]].append(s["by"] - o["by"])                       # 제 줄로 따로 선 작은 글(지문 끝 오른쪽 맞춤 주석)은 주인 글자가 없다 — 원고 판정(들어갔나)으로
         return d
 
     ref = pymupdf.open(os.path.join(REPO, state["ref"]))
-    allow = state.get("허용") or {}
+    allow = allowed(state)
     for k, rp in enumerate(state["pages"]):
         pdf = os.path.join(out, f"p{rp}_my.pdf")
         if k >= len(new_ids) or not os.path.exists(pdf):
@@ -319,10 +335,16 @@ def font_problems():
     return sorted(bad)
 
 
+def allowed(state):
+    """사용자 확정 예외 — 「허용」 + 「원본_손고침」(원본이 템플릿으로 찍은 뒤 사람이 손으로 고친 곳. 템플릿은 표준 값으로 두고
+    필요하면 사용자가 편집기에서 그 자리만 고친다 — 절차.md 「원본 손 고침」). 키 = "p쪽:요소" · "p쪽:요소:작은 글" → 이유"""
+    return {**(state.get("허용") or {}), **(state.get("원본_손고침") or {})}
+
+
 def verdict(state, new_ids, ok_steps):
     """판정 — 도구가 정한다(사람·클로드가 줄이지 못한다). 하나라도 걸리면 실패:
       ① 대본 오류  ② 원본 쪽마다 만든 지면이 있어야  ③ 맞댈 요소 목록(elems.json)이 있어야
-      ④ 요소 전부 기준 안 — 예외는 상태.json 「허용」 {"p쪽:요소": "사용자 확정 이유"} 만
+      ④ 요소 전부 기준 안 — 예외는 상태.json 「허용」 · 「원본_손고침」 {"p쪽:요소": "사용자 확정 이유"} 만
       ⑥ 원고 자리 작은 글(윗주 · 번호)의 높이가 원본과 0.3mm 안 — deco_check
       ⑤ 목록 밖 차이 없음 — 원본과 결과가 다른 화소가 어느 요소 상자에도 안 들면 「목록에 없는 요소」(빠진 장식 등)
     → (통과 여부, 이유 목록)"""
@@ -332,11 +354,14 @@ def verdict(state, new_ids, ok_steps):
         why.append("대본 오류")
     why += font_problems()
     why += getattr(deco_check, "bad", [])
+    hand = {k: v for k, v in (state.get("원본_손고침") or {}).items() if any(k.startswith(f"p{rp}:") for rp in state.get("pages") or [])}
+    if hand:                                                             # 판정에는 안 들지만 늘 보인다 — 템플릿은 표준 값, 사용자가 편집기에서 고칠 곳
+        print(f"  원본 손 고침(사용자 확정) {len(hand)}곳 — 템플릿은 표준 값으로 두었다: " + " · ".join(sorted(hand))[:300])
     if not state.get("pages"):
         return (not why), why
     if len(new_ids) < len(state["pages"]):
         why.append(f"만든 지면 {len(new_ids)} < 원본 쪽 {len(state['pages'])}")
-    allow = state.get("허용") or {}
+    allow = allowed(state)
     res = getattr(measure_units, "last", None)
     if not os.path.exists(os.path.join(wdir, "elems.json")) or res is None:
         why.append("맞댈 요소 목록 없음 — make.py 가 elems.json 을 써야 한다")
