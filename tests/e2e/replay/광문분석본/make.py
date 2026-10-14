@@ -395,8 +395,8 @@ def spread(lp):
     sp1 = round(8.0 - (LEAD_S * MM / 2 - r_ * s1 / 2 + LEAD_K * MM / 2 + r_ * s2 / 2), 2)   # 문장 끝 줄 → 해석 첫 줄 8.0mm
     sp2 = round(8.8 - (LEAD_K * MM / 2 - r_ * s2 / 2 + LEAD_S * MM / 2 + r_ * s1 / 2), 2)   # 해석 끝 줄 → 다음 문장 8.8mm
     # 자간 — 원본 문단 끝 줄(양끝맞춤 안 된 줄)의 첫~끝 글자 거리에서: 문장 −13‰ · 해석 −47‰
-    st += need_pstyle("분석 문장", {"font": NOTO, "weight": 400, "size": 8.95, "leading": LEAD_S, "color": "#231f20", "align": "justify", "tracking": -13, "space_after": sp1})
-    st += need_pstyle("분석 해석", {"font": NOTO, "weight": 400, "size": 6.3, "leading": LEAD_K, "color": "#6d6e71", "align": "justify", "tracking": -47, "space_after": sp2})
+    st += need_pstyle("분석 문장", {"font": NOTO, "weight": 400, "size": 8.95, "leading": LEAD_S, "color": "#231f20", "align": "justify", "tracking": -23, "space_after": sp1})   # 자간 = 원본 문단 끝 줄(양끝맞춤 없음) 글자 쌍 중앙값 −22.9‰(공백은 글 언어 한국어 0.280em 에서 따로) — 2026-10-14 다시 잼(옛 −13 은 공백을 라틴 폭으로 쳐서 잰 값)
+    st += need_pstyle("분석 해석", {"font": NOTO, "weight": 400, "size": 6.3, "leading": LEAD_K, "color": "#6d6e71", "align": "justify", "tracking": -52, "space_after": sp2})   # 원본 −52.3‰
     ha, hd, _ = face("휴먼범석체", 400)
     sl = 7 * MM
     off_a = round(2.64 - ((sl - (ha + hd) * sl) / 2 + hd * sl), 2)        # 위 표기 기준선 = 문장 기준선 위 2.64mm (원본 「단 S」)
@@ -477,10 +477,10 @@ def spread(lp):
     st += rbox(nb["x"], nb["y"], nb["w"], nb["h"], "#ffffff", stroke=LINE, sw=nb.get("sw") or 0.18, r=2.0, see=LINE, label="NOTE 상자")
     # 문제 — 발문+문제지문+선지 한 글상자(문단 사이 빈 줄 5.1mm) · 답(오른쪽 아래)
     QL = round(5.1 / MM, 2)
-    # 자간 −32‰ (원본 문단 끝 줄 셋에서 −32.1 ~ −32.7)
-    st += need_pstyle("문제 발문", {"font": NOTO, "weight": 400, "size": 7.5, "leading": QL, "color": "#231f20", "tracking": -32, "space_after": 5.1})
-    st += need_pstyle("문제 지문", {"font": NOTO, "weight": 400, "size": 7.5, "leading": QL, "color": "#231f20", "align": "justify", "indent_first": 1.73, "tracking": -32, "space_after": 5.1})
-    st += need_pstyle("문제 선지", {"font": NOTO, "weight": 400, "size": 7.5, "leading": QL, "color": "#231f20", "tracking": -32})
+    # 자간 −43‰ (원본 문단 끝 줄 글자 쌍 중앙값 −43.4 — 공백은 빼고. 옛 −32 는 공백을 라틴 폭으로 넣어 잰 값)
+    st += need_pstyle("문제 발문", {"font": NOTO, "weight": 400, "size": 7.5, "leading": QL, "color": "#231f20", "tracking": -43, "space_after": 5.1})
+    st += need_pstyle("문제 지문", {"font": NOTO, "weight": 400, "size": 7.5, "leading": QL, "color": "#231f20", "align": "justify", "indent_first": 1.73, "tracking": -43, "space_after": 5.1})
+    st += need_pstyle("문제 선지", {"font": NOTO, "weight": 400, "size": 7.5, "leading": QL, "color": "#231f20", "tracking": -43})   # 문제 셋 — 원본 −43.4‰
     qrows = [s for s in sp if abs(s["size"] - 7.5) < 0.1 and 50 < s["base"] < 168 and s["x"] < 112]
     Eslot([s for s in sp if 50 < s["base"] < 168 and s["x"] < 112 and 7.0 < s["size"] < 7.6], label="발문+문제지문+선지")
     qtop = round(top_of(min(s["base"] for s in qrows), 7.5, NOTO, 400, QL), 2)
