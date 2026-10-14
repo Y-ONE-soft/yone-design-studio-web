@@ -293,7 +293,8 @@ def test_text_atom_paragraph_and_frame_options(lib):
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib)
     frag, _h = render.part_svg(ctx, part)
     assert "white-space:normal;letter-spacing:0.0500em" in frag
-    assert frag.count("<p ") == 2 and "padding-left:4.000px;padding-right:1.000px;text-indent:-4.000px;margin-top:1.000px;margin-bottom:0.500px" in frag
+    assert frag.count("<p ") == 2 and "padding-left:4.000px;padding-right:1.000px;text-indent:-4.000px;" in frag
+    assert "margin-top:1.500px" in frag                                   # 단락 사이 = 앞 단락 뒤 공백 0.5 + 이 단락 앞 공백 1(인디자인은 더한다)
     assert "padding:1.000px 2.000px 1.000px 2.000px" in frag and "justify-content:center" in frag
     assert "column-count:2;column-gap:3.000px" in frag
     assert "<u>who</u>" in frag and "<s>gone</s>" in frag
@@ -691,24 +692,29 @@ def test_flip_skew_scale(lib):
 
 
 def test_paragraph_rules_shade_bullet_tab(lib):
-    """단락 경계선·음영·글머리·탭 — 인디자인 단락 패널."""
+    """단락 경계선 · 음영 · 글머리 기호 및 번호 매기기 · 탭 — 인디자인 단락 패널. 경계선 · 음영은 글을 밀지 않는다(문단 뒤에 깔린 칸)."""
     svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
                                "text": "한 줄", "rule_above": {"w": 1, "color": "$rule", "offset": 1},
                                "rule_below": {"w": 0.5, "color": "$rule"}, "shade": "$cream",
-                               "bullet": "decimal", "tab": 8})
-    assert "border-top:0.353px solid" in svg and "border-bottom:0.176px solid" in svg
-    assert "background-color:" in svg and "list-style-type:decimal" in svg
-    assert "tab-size:8.000px" in svg and "white-space:pre-wrap" in svg
+                               "list": {"type": "number", "format": "1.", "after": "\t"}, "tabs": [{"at": 8}]})
+    assert "height:0.353px;background:" in svg and "height:0.176px;background:" in svg and "padding-top" not in svg.split("<p ")[1][:200]
+    assert 'data-shade="1"' in svg and "background-color:" in svg
+    assert "1." in svg and "min-width:8.000px" in svg                     # 번호 + 탭 → 탭 정지 8mm
 
 
 def test_text_scale_baseline_kerning_first_baseline(lib):
-    """장평·기준선 이동·커닝·첫 기준선."""
-    svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
-                               "text": "가", "h_scale": 90, "v_scale": 110, "baseline": 2, "kerning": "none",
-                               "first_baseline": 3})
+    """가로 · 세로 비율 · 기준선 이동 · 커닝 · 첫 번째 기준선 오프셋(고정 3mm — 첫 줄 기준선이 인세트 위에서 3mm)."""
+    import re as _re
+    from core.units import render, store
+    a = {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
+         "text": "가", "h_scale": 90, "v_scale": 110, "baseline": 2, "kerning": "none", "fbo": {"type": "fixed", "min": 3}}
+    svg, _ = _canvas_svg(lib, a)
     assert "transform:scale(0.9000,1.1000)" in svg and "width:88.889px" in svg      # 폭은 되돌려 줄바꿈은 그대로
     assert "font-kerning:none" in svg and "top:-0.706px" in svg
-    assert "padding:3.000px" in svg
+    ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
+    nat = render._line_metrics(a, {}, ctx)[0]
+    m = float(_re.search(r'<div style="margin-top:(-?[\d.]+)px">', svg).group(1))
+    assert abs(m + nat - 3) < 0.01
 
 
 def test_run_bshift_hscale_tracking(lib):
@@ -728,7 +734,7 @@ def test_auto_size_off_keeps_box(lib):
     render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)
     assert any("자동 크기 조정 꺼짐" in w for w in ctx.warnings)
     pg2 = {"id": "t", "name": "t", "zones": [], "spec": "a4", "_canvas": True, "items": [
-        {"atom": {"t": "text", "x": 0, "y": 0, "w": 40, "h": 6, "font": "$body", "size": 9, "text": long}, "x": 10, "y": 10}]}
+        {"atom": {"t": "text", "x": 0, "y": 0, "w": 40, "h": 6, "font": "$body", "size": 9, "text": long, "auto_size": "height"}, "x": 10, "y": 10}]}
     ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
     render.page_canvas_svgs(ctx2, pg2, render.DEFAULT_SPEC)
     assert not any("자동 크기" in w for w in ctx2.warnings)
@@ -933,7 +939,11 @@ def test_baseline_grid_snap(lib):
                               "leading": 10, "text": "격자", "snap_baseline": True}, "x": 10, "y": 23}]}
     svg = render.page_canvas_svgs(ctx, pg, render.DEFAULT_SPEC)[0]["svg"]
     assert "line-height:6.000px" in svg                            # 10pt(3.53mm) → 6mm 한 칸
-    assert "padding:3.000px" in svg                                # 23mm → 다음 격자 줄 26mm
+    import re as _re
+    a = dict(pg["items"][0]["atom"], leading=6 / render.PT)
+    nat = render._line_metrics(a, {}, ctx)[0]
+    m = float(_re.search(r'<div style="margin-top:(-?[\d.]+)px">', svg).group(1))
+    assert abs(23 + m + nat - 26) < 0.01                           # 첫 줄 기준선 → 다음 격자 줄 26mm
 
 
 def test_tabs_with_align_and_leader(lib):
@@ -946,11 +956,13 @@ def test_tabs_with_align_and_leader(lib):
     assert "......" in svg                                          # 리더
 
 
-def test_hyphen_justify_wordspacing(lib):
-    """하이픈 · 양끝맞춤 세부 · 낱말 사이."""
+def test_hyphen_and_justify_modes(lib):
+    """하이픈 넣기 · 정렬 — 양쪽 정렬(마지막 줄 가운데) · 모두 정렬."""
     svg, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9,
-                               "text": "hyphenation test", "hyphenate": True, "justify_mode": "letter", "word_spacing": 120})
-    assert "hyphens:auto" in svg and "text-justify:inter-character" in svg and "word-spacing:0.1200em" in svg
+                               "text": "hyphenation test", "hyphenate": True, "align": "justify_center"})
+    assert "hyphens:auto" in svg and "text-align:justify;text-align-last:center" in svg
+    svg2, _ = _canvas_svg(lib, {"t": "text", "x": 0, "y": 0, "w": 80, "h": 6, "font": "$body", "size": 9, "text": "a b", "align": "justify_all"})
+    assert "text-align-last:justify" in svg2
 
 
 def test_image_clipping_path(lib):
@@ -975,7 +987,7 @@ def test_anchored_object_in_text(lib):
     assert "inline-block" in svg and "<svg" in svg and "앞" in svg and "뒤" in svg
     ctx2 = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
     render.rich_html([{"t": "", "anc": {"part": "없는부품"}}], ctx2)
-    assert any("글 안 개체의 부품 없음" in w for w in ctx2.warnings)
+    assert any("고정 개체의 그룹(부품) 없음" in w for w in ctx2.warnings)
 
 
 def test_satin_and_bevel(lib):
@@ -1092,7 +1104,7 @@ def test_fixed_frames_do_not_push(lib):
     from core.units import render, store
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
     long = "긴 글이 들어가서 상자보다 훨씬 커진다. " * 12
-    fixed = {"t": "text", "x": 0, "y": 0, "w": 80, "h": 4, "font": "$body", "size": 9, "color": "$ink", "text": long}
+    fixed = {"t": "text", "x": 0, "y": 0, "w": 80, "h": 4, "font": "$body", "size": 9, "color": "$ink", "text": long, "auto_size": "height"}
     below = {"t": "rect", "x": 0, "y": 0, "w": 40, "h": 5, "fill": "$sel"}
     pg = {"id": "t", "name": "t", "spec": "a4", "zones": [], "_canvas": True,
           "items": [{"atom": fixed, "x": 20, "y": 40}, {"atom": below, "x": 20, "y": 80}]}
@@ -1199,10 +1211,12 @@ def test_decompose_tokens_per_page(tmp_path):
 
 def test_grep_caret_only_at_paragraph_start():
     """GREP 「^」 는 문단 첫머리에서만 — 꾸밈 조각으로 글이 끊겨도 조각 첫머리에서 맞으면 안 된다(「as 12 young」 에 번호 배지)"""
-    from core.units.render import grep_html
-    rule = [{"re": r"^\d{1,2}(?= )", "b": True}]
-    out = grep_html('1 On <span style="color:red">as </span><span>12 young</span><br/>3 next', rule)
-    assert out.count("<b>") == 2 and "<b>1</b>" in out and "<b>3</b>" in out and "<b>12</b>" not in out
+    from core.units import render
+    ctx = render.Ctx({"id": "t", "tokens": {}, "cstyles": {"번호": {"weight": 700}}}, {})
+    rule = [{"re": r"^\d{1,2}(?= )", "cs": "번호"}]
+    out = render.grep_html('1 On <span style="color:red">as </span><span>12 young</span><br/>3 next', rule, ctx)
+    b = '<span style="font-weight:700;">'
+    assert out.count(b) == 2 and b + "1</span>" in out and b + "3</span>" in out and b + "12</span>" not in out
 
 
 def test_font_cff_name_made_ascii():
@@ -1275,7 +1289,7 @@ def test_paragraph_style_override_one_paragraph(lib):
     v[[i for i, x in enumerate(v) if isinstance(x, dict) and x.get("ps")][1]]["ov"] = {"space_before": 2.6}
     a = {"t": "text", "w": 80, "h": 40, "size": 9, "bind": "번호", "slot_fmt": fmt}
     html = render._text_content(ctx, a, {"번호": v}, {})[0]
-    tops = _re.findall(r'margin-top:([\d.]+)px', render._paras_html(a, html, "", ctx))
+    tops = _re.findall(r'margin-top:([\d.]+)px', render._paras_html(a, html, ctx))
     assert tops == ["2.600", "9.700"]                                   # 둘째 문단만 재정의 2.6 · 셋째는 스타일 9.7 그대로
 
 
@@ -1284,7 +1298,8 @@ def test_ruby_font_size_offsets_one_ruby(lib):
     from core.units import render, store
     ctx = render.Ctx(store.by_id(lib["skins"])["d2"], lib, {})
     a = {"t": "text", "w": 80, "h": 20, "size": 9}
-    one = render.ruby_html("directly", {"t": "(X)", "pos": "above", "size": 5, "ox": 0.5, "off": 1.2}, a, ctx)
+    one = render.ruby_html("directly", {"t": "(X)", "pos": "above", "size": 5, "ox": 0.5, "oy": 1.2}, a, ctx)
     plain = render.ruby_html("directly", {"t": "(X)", "pos": "above"}, a, ctx)
-    assert f"font-size:{5 * render.PT:.3f}px" in one and "left:0.500px" in one and "bottom:1.200px" in one
-    assert "font-size:60%" in plain and "left:0.000px" in plain and "bottom:0.400px" in plain
+    S = 9 * render.PT
+    assert f"font-size:{5 * render.PT:.3f}px" in one and "left:0.500px" in one and f"bottom:{1.2 + 0.88 * S:.3f}px" in one   # 오프셋 Y = 본문 글자 상자 위 끝에서
+    assert "font-size:50%" in plain and "left:0.000px" in plain and f"bottom:{0.88 * S:.3f}px" in plain

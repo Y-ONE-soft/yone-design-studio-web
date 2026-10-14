@@ -275,7 +275,8 @@
       setB(r, ln.last.b);
       frag.push(r.cloneContents());
     });
-    const isLast = (li) => li === lines.length - 1;
+    const allJ = getComputedStyle(p).textAlignLast === "justify";       // 모두 정렬(인디자인) — 끝 줄도 양끝까지
+    const isLast = (li) => !allJ && li === lines.length - 1;
     const lw0 = (li) => W - (li === 0 ? indent : 0);
     p.textContent = "";
     lines.forEach((ln, li) => {
@@ -533,12 +534,15 @@
       const k = (fixed ? box.getBoundingClientRect().height : fo.getBoundingClientRect().height) / hc;    // 화면 px / mm
       if (!(k > 0)) return;
       const natural = (el) => { const s = el.style.height; el.style.height = "auto"; const v = el.getBoundingClientRect().height / k; el.style.height = s; return v; };
+      if (div.dataset.mode === "width") return;                        // 너비만 — 높이는 그대로(인디자인 자동 크기 조정)
       const need = natural(box);                                       // 글이 실제로 차지하는 높이(여백 포함)
       const shown = fixed ? Math.max(h0, need) : need;                 // 보이는 높이 — 바탕 상자는 글 크기 그대로
       const z = num(fo, "height") / hc;                                // 글 배치 배율(TEXT_ZOOM)
       if (Math.abs(Math.max(shown, h0) - hc) > 0.05) fo.setAttribute("height", (Math.max(shown, h0) * z).toFixed(2));
       if (fixed && Math.abs(shown - hc) > 0.05) box.style.height = shown.toFixed(3) + "px";
       div.dataset.hcur = Math.max(h0, need).toFixed(3);
+      const ref = div.dataset.ref || "tl", f = ref[0] === "b" ? 1 : (ref[0] === "t" ? 0 : (ref === "l" || ref === "c" || ref === "r" ? 0.5 : 0));
+      if (f && fo.parentElement && Math.max(shown, h0) - h0 > 0.01) shiftY(fo.parentElement, -(Math.max(shown, h0) - h0) * f);   // 기준점이 아래 · 가운데면 위로도 자란다
       const ag = div.closest("g[data-ai]");
       if (ag) recs.push({ag, need, h0, hc, tol: +div.dataset.tol || 0, y0: num(ag, "data-ay"), x0: num(ag, "data-ax"), x1: num(ag, "data-ax") + num(ag, "data-aw")});
     });

@@ -350,10 +350,10 @@
       <button id="p-doc" title="이 문서 — 다른 문서 열기 · 새 문서 · 문서 지우기">…</button>
       <select id="skin" title="스타일 · 색상 견본" style="display:none"></select>
       <span class="sep"></span>
-      <button id="p-preview" title="원고를 넣은 책 전체">📖 미리보기</button>
-      <button id="p-check" title="원고 빠진 데이터 필드·안 실린 원고·넘침·없는 토큰을 찾는다">✓ 검수</button>
-      <button id="p-pdf" title="화면용 PDF (RGB)">⬇ PDF</button>
-      <button id="p-print" title="인쇄용 PDF — 도련 3mm·재단선·CMYK(무채색은 K 단색)·TrimBox">🖨 인쇄용</button>
+      <button id="p-preview" title="데이터 병합 결과 — 레코드를 모두 넣은 문서 전체를 미리 본다(인디자인 「병합된 문서 만들기」 결과 보기)">📖 병합 미리 보기</button>
+      <button id="p-check" title="인디자인 프리플라이트 — 넘침 · 없는 글꼴 · 없는 색상 견본, 그리고 데이터 병합 확인(빈 데이터 필드 · 안 실린 레코드)">✓ 프리플라이트</button>
+      <button id="p-pdf" title="Adobe PDF 내보내기 — 화면용(RGB)">⬇ PDF 내보내기</button>
+      <button id="p-print" title="Adobe PDF 내보내기 — 인쇄용: 도련 3mm · 재단선 표시 · CMYK(무채색은 K 단색) · TrimBox">🖨 PDF 내보내기(인쇄)</button>
       <input type="text" id="pname" placeholder="페이지 이름" style="display:none">
       <span class="sep" id="ctrl-sep" style="display:none"></span>
       <span class="ctrl" id="ctrl"></span>
@@ -366,15 +366,15 @@
       <button data-tool="select" class="on" title="선택 (V) — 클릭 · Shift+클릭 = 더 고르기 · 빈 곳 끌기 = 범위 · 끌어 옮기기"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.6L9.6 19z"/></svg>선택</button>
       <button data-tool="hand" title="손 (H · Space+끌기) — 화면 이동"><svg viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 013 0V11m0-1V4.5a1.5 1.5 0 013 0V11m0-.5a1.5 1.5 0 013 0V15a6 6 0 01-6 6h-1a6 6 0 01-6-6v-3a1.5 1.5 0 013 0"/></svg>손</button>
       <div class="sep"></div>
-      <button data-tool="text" data-draw="text" title="텍스트 프레임 (T) — 페이지에서 끌면 그 크기. 더블클릭 = 글 고치기"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg>텍스트 프레임</button>
-      <button data-tool="rect" data-draw="rect" title="사각형 (R) — 페이지에서 끌면 그 크기. Shift = 정사각"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/></svg>사각형</button>
-      <button data-tool="ellipse" data-draw="ellipse" title="원 (O) — 페이지에서 끌면 그 크기. Shift = 정원"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/></svg>원</button>
-      <button data-tool="line" data-draw="line" title="선 (L) — 페이지에서 끌면 그 길이. Shift = 수평·수직"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/></svg>선</button>
-      <button data-tool="path" data-draw="path" title="도형 (P) — 그린 뒤 오른쪽에서 모양(화살표·삼각형·별…)을 고른다"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 6 6.5.5-5 4.3 1.6 6.2L12 17.2 6.4 20.5 8 14.3 3 10l6.5-.5z"/></svg>도형</button>
-      <button data-tool="image" data-draw="image" title="그래픽 프레임 (I) — 그린 뒤 오른쪽에서 그림을 고른다"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 16l4.5-4.5 3.5 3.5 3-2.5L20 16"/><circle cx="9" cy="9.5" r="1.2"/></svg>그래픽 프레임</button>
+      <button data-tool="text" data-draw="text" title="문자 도구 (T) — 페이지에서 끌면 그 크기의 텍스트 프레임. 더블클릭 = 글 고치기"><svg viewBox="0 0 24 24"><path d="M5 6V4h14v2M12 4v16M9 20h6"/></svg>문자 도구</button>
+      <button data-tool="rect" data-draw="rect" title="사각형 도구 (M) — 페이지에서 끌면 그 크기. Shift = 정사각형"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/></svg>사각형 도구</button>
+      <button data-tool="ellipse" data-draw="ellipse" title="타원 도구 (L) — 페이지에서 끌면 그 크기. Shift = 정원"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/></svg>타원 도구</button>
+      <button data-tool="line" data-draw="line" title="선 도구 (\\) — 페이지에서 끌면 그 길이. Shift = 수평 · 수직 · 45°"><svg viewBox="0 0 24 24"><path d="M4 19L20 5"/></svg>선 도구</button>
+      <button data-tool="path" data-draw="path" title="다각형 도구 — 페이지에서 끌면 그 크기. 면 수 · 별모양 인세트는 오른쪽 패널"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 6 6.5.5-5 4.3 1.6 6.2L12 17.2 6.4 20.5 8 14.3 3 10l6.5-.5z"/></svg>도형</button>
+      <button data-tool="image" data-draw="image" title="사각형 프레임 도구 (F) — 그래픽 프레임을 그린 뒤 오른쪽에서 가져오기"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="M4 16l4.5-4.5 3.5 3.5 3-2.5L20 16"/><circle cx="9" cy="9.5" r="1.2"/></svg>사각형 프레임 도구</button>
       <div class="sep"></div>
-      <button id="t-undo" title="되돌리기 (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7H5V3M5.6 7a8 8 0 111.2 9.6"/></svg>되돌리기</button>
-      <button id="t-redo" title="다시 (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M15 7h4V3M18.4 7A8 8 0 1017.2 16.6"/></svg>다시</button>
+      <button id="t-undo" title="실행 취소 (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M9 7H5V3M5.6 7a8 8 0 111.2 9.6"/></svg>실행 취소</button>
+      <button id="t-redo" title="다시 실행 (Ctrl+Shift+Z)"><svg viewBox="0 0 24 24"><path d="M15 7h4V3M18.4 7A8 8 0 1017.2 16.6"/></svg>다시 실행</button>
     </div>
     <div class="start" id="start" style="display:none"></div>
     <div class="cmenu" id="cmenu"></div>
@@ -393,11 +393,11 @@
         <div class="tools" id="tools">
           <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 블록을 고치려면 풀어서 고친 뒤 다시 블록으로 저장">그룹 해제</button><button id="t-up" title="고른 것을 블록 패널에 저장한다. 텍스트 프레임의 「데이터 필드」가 원고가 들어올 자리가 된다">★ 블록으로 저장</button>
           <span class="sep"></span>
-          <button data-al="l" title="왼쪽 맞춤">⇤</button><button data-al="c" title="가로 가운데">⇹</button><button data-al="r" title="오른쪽 맞춤">⇥</button><button data-al="t" title="위 맞춤">⤒</button><button data-al="m" title="세로 가운데">⇳</button><button data-al="b" title="아래 맞춤">⤓</button><button data-ds="h" title="가로 간격 같게">↔</button><button data-ds="v" title="세로 간격 같게">↕</button><button data-ms="w" title="폭 같게">⊟</button><button data-ms="h" title="높이 같게">⊞</button>
+          <button data-al="l" title="왼쪽 가장자리 정렬">⇤</button><button data-al="c" title="수평 가운데 정렬">⇹</button><button data-al="r" title="오른쪽 가장자리 정렬">⇥</button><button data-al="t" title="위쪽 가장자리 정렬">⤒</button><button data-al="m" title="수직 가운데 정렬">⇳</button><button data-al="b" title="아래쪽 가장자리 정렬">⤓</button><button data-ds="h" title="수평 간격 분포">↔</button><button data-ds="v" title="수직 간격 분포">↕</button>
           <span class="sep"></span>
           <button id="t-lock" title="잠금 (Ctrl+L)">🔒</button>
           <span class="sep"></span>
-          <button id="t-front" title="맨 앞으로 (Ctrl+])">⬆</button><button id="t-back" title="맨 뒤로 (Ctrl+[)">⬇</button><button id="t-dup" title="복제 (Ctrl+D)">⧉</button><button id="t-x" class="x" title="지우기 (Delete)">✕</button>
+          <button id="t-front" title="맨 앞으로 가져오기 (Ctrl+Shift+])">⬆</button><button id="t-back" title="맨 뒤로 보내기 (Ctrl+Shift+[)">⬇</button><button id="t-dup" title="복제 (Ctrl+D)">⧉</button><button id="t-x" class="x" title="삭제 (Delete)">✕</button>
         </div>
       </div>
       </div>
@@ -408,11 +408,11 @@
         <span class="help" title="도구: V 선택 · H 손 · T 텍스트 프레임 · R 사각형 · O 원 · L 선 · P 도형 · I 그림 — 고르고 페이지에서 끌면 그 크기&#10;선택: 클릭 · Shift+클릭 · Alt+클릭 겹친 아래 것 · 빈 곳(페이지 밖도) 끌기 = 범위 · 개체 위에서 Ctrl+끌기 = 범위 · Ctrl+A · Tab 다음 · Esc&#10;편집: 더블클릭(블록 안 · 글 바로) · Enter · 손잡이 8방향(Shift 비율) · 회전 손잡이 · 화살표 0.5mm(Shift 5)&#10;Ctrl+Z/Y · Ctrl+X/C/V · Ctrl+D · Delete · Ctrl+G 그룹 · Ctrl+Shift+G 해제 · Ctrl+L 잠금&#10;순서: Ctrl+] / [ 한 단계 · Ctrl+Shift+] / [ 맨 앞·뒤 · 오른쪽 클릭 메뉴&#10;공간: F 넓게(Esc 되돌리기) · Ctrl+\\ 왼쪽 · Ctrl+Shift+\\ 오른쪽 · Ctrl+Alt+\\ 페이지 띠 · 고른 탭 다시 누르면 접기&#10;보기: Ctrl+휠 · Ctrl +/- · Ctrl+0 전체 맞춤 · Ctrl+1 폭 맞춤 · Space+끌기 이동 · Ctrl+R 자 · Ctrl+' 격자 · 자에서 끌어 안내선&#10;페이지: ＋ · 썸네일 끌어 순서 · ←/→">? 단축키</span>
         <button class="btn sm sub" id="f-cnt" title="페이지 띠 펴기·접기 (Ctrl+Alt+\\)"><span class="cnt" id="cnt"></span></button>
         <button class="btn sm sub" id="f-addpg" title="이 페이지 뒤에 새 본문 페이지">＋ 페이지</button>
-        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 블록 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 페이지 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="이어 보기 — 페이지를 세로로 이어 놓는다. 굴리면 다음 페이지로 넘어간다">연속</button><button class="btn sm sub" id="tg-spread" title="펼침면 — 인디자인의 「페이지 마주보기」. 2·3페이지가 한 장처럼 붙어 보이고 1페이지는 오른쪽에 선다. 펼침 보기에선 페이지 둘레 대지를 안 그린다">페이지 마주보기</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
+        <span class="vw"><button class="btn sm sub" id="tg-left" title="왼쪽 블록 패널 접기·펴기 (Ctrl+\\)">◧</button><button class="btn sm sub" id="tg-side" title="오른쪽 속성 패널 접기·펴기 (Ctrl+Shift+\\)">◨</button><button class="btn sm sub" id="tg-strip" title="아래 페이지 띠 접기·펴기 (Ctrl+Alt+\\)">▤</button><button class="btn sm sub" id="tg-flow" title="모든 페이지를 세로로 이어 보기(인디자인 대지처럼) — 끄면 한 페이지씩">모든 페이지</button><button class="btn sm sub" id="tg-spread" title="펼침면으로 보기 — 2·3페이지가 한 장처럼 붙어 보이고 1페이지는 오른쪽에 선다(문서 설정 「페이지 마주보기」와 같이 쓴다)">펼침면 보기</button><button class="btn sm sub" id="tg-zen" title="넓게 — 패널·띠·왼쪽 레일을 모두 접는다 (F · Esc 로 되돌리기)">⛶</button></span>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
-        <button class="btn sm sub" id="tg-rul" title="자 (Ctrl+R)">자</button><button class="btn sm sub" id="tg-grid" title="격자 5mm (Ctrl+')">격자</button><button class="btn sm sub" id="tg-mg" title="여백선">여백</button><button class="btn sm sub" id="tg-snap" title="자석 — 다른 개체·여백선에 붙는다 (Alt = 잠깐 끄기)">자석</button><button class="btn sm sub" id="tg-slots" title="데이터 필드 — 글이 들어올 칸에 이름표를 띄운다">데이터 필드</button>
+        <button class="btn sm sub" id="tg-rul" title="눈금자 표시 (Ctrl+R)">눈금자</button><button class="btn sm sub" id="tg-grid" title="문서 격자 표시 (Ctrl+')">문서 격자</button><button class="btn sm sub" id="tg-mg" title="여백 및 단 안내선 표시">여백 및 단</button><button class="btn sm sub" id="tg-snap" title="고급 안내선 · 안내선에 물리기 — 다른 개체 · 여백 및 단 안내선에 붙는다 (Alt = 잠깐 끄기)">고급 안내선</button><button class="btn sm sub" id="tg-slots" title="데이터 필드 표시 — 데이터 필드가 연결된 프레임에 필드 이름을 띄운다(데이터 병합)">데이터 필드</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
-        <select id="fitsel" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 페이지가 다 보이게"><option value="width">폭 맞춤</option><option value="page">전체 맞춤</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
+        <select id="fitsel" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 페이지가 다 보이게"><option value="width">페이지 너비를 창에 맞게</option><option value="page">페이지를 창에 맞게</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
       </div>
     </div>
   </div>
@@ -789,7 +789,7 @@ async function drawRail() {
   const rail = $("#rail"); rail.innerHTML = ""; const dp = docPages();
   dp.forEach((p, i) => {
     const d = document.createElement("div"); d.className = "pg" + (i === idx() ? " on" : ""); d.dataset.id = p.id; d.dataset.i = i; d.draggable = true; d.title = p.name || p.id;
-    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span>${(planPg(p.id) || {}).repeat === "each_set" ? `<span class="rep" title="레코드마다 이 페이지를 한 장씩">×원고</span>` : ""}<span class="pgact"><button data-pg-dup title="이 페이지 복제">⧉</button><button data-pg-del title="이 페이지 지우기">✕</button></span>`; strip(d);
+    d.innerHTML = `<div class="th">${pageSvg[p.id] || ""}</div><span class="no">${i + 1}</span>${(planPg(p.id) || {}).repeat === "each_set" ? `<span class="rep" title="레코드마다 이 페이지를 한 장씩">×원고</span>` : ""}<span class="pgact"><button data-pg-dup title="페이지 복제">⧉</button><button data-pg-del title="페이지 삭제">✕</button></span>`; strip(d);
     d.querySelector("[data-pg-del]").onclick = (e) => { e.stopPropagation(); deletePage(p); };
     d.querySelector("[data-pg-dup]").onclick = async (e) => { e.stopPropagation(); if (!page || page.id !== p.id) { openPage(p); await new Promise(r => setTimeout(r, 200)); } addPage("dup"); };
     d.draggable = false;
@@ -1479,11 +1479,11 @@ function cmenu(e) {
   e.preventDefault(); const m = $("#cmenu"); const hit = e.target.closest && e.target.closest("g[data-fi]");
   if (hit && !sels.has(+hit.dataset.fi)) select([+hit.dataset.fi]);
   const it = sel != null ? page.items[sel] : null;
-  const rows = it ? [["오려두기", "Ctrl+X", cutSel], ["복사", "Ctrl+C", copySel], ["붙여넣기", "Ctrl+V", paste], ["복제", "Ctrl+D", dupSel], null,
-    ...(sels.size > 1 ? [["그룹", "Ctrl+G", () => groupToPart()]] : []), ...(it.block || it.part ? [["편집 (안으로)", "더블클릭", () => enterEdit(sel)], ["그룹 해제", "Ctrl+Shift+G", ungroup]] : []), ["★ 블록으로 저장", "", saveAsElement], null,
-    ["맨 앞으로", "Ctrl+Shift+]", () => zorder(true)], ["앞으로", "Ctrl+]", () => zstep(true)], ["뒤로", "Ctrl+[", () => zstep(false)], ["맨 뒤로", "Ctrl+Shift+[", () => zorder(false)], null,
-    [it.lock ? "잠금 해제" : "잠금", "Ctrl+L", lockSel], ["숨기기", "", () => hideItem(sel)], ["지우기", "Delete", removeSel]]
-    : [["붙여넣기", "Ctrl+V", paste], ["전체 선택", "Ctrl+A", () => select(page.items.map((_, i) => i))], null, ["페이지 복제", "", () => addPage("dup")], ["페이지 지우기", "", () => deletePage()]];
+  const rows = it ? [["잘라내기", "Ctrl+X", cutSel], ["복사", "Ctrl+C", copySel], ["붙여넣기", "Ctrl+V", paste], ["복제", "Ctrl+D", dupSel], null,
+    ...(sels.size > 1 ? [["그룹", "Ctrl+G", () => groupToPart()]] : []), ...(it.block || it.part ? [[it.block ? "블록 편집" : "그룹 내부 선택", "더블클릭", () => enterEdit(sel)], ["그룹 해제", "Ctrl+Shift+G", ungroup]] : []), ["★ 블록으로 저장", "", saveAsElement], null,
+    ["맨 앞으로 가져오기", "Ctrl+Shift+]", () => zorder(true)], ["앞으로 가져오기", "Ctrl+]", () => zstep(true)], ["뒤로 보내기", "Ctrl+[", () => zstep(false)], ["맨 뒤로 보내기", "Ctrl+Shift+[", () => zorder(false)], null,
+    [it.lock ? "잠금 해제" : "잠금", "Ctrl+L", lockSel], ["숨기기", "Ctrl+3", () => hideItem(sel)], ["삭제", "Delete", removeSel]]
+    : [["붙여넣기", "Ctrl+V", paste], ["모두 선택", "Ctrl+A", () => select(page.items.map((_, i) => i))], null, ["페이지 복제", "", () => addPage("dup")], ["페이지 삭제", "", () => deletePage()]];
   m.innerHTML = rows.map(r => r ? `<button>${r[0]}<span>${r[1]}</span></button>` : "<hr>").join("");
   [...m.querySelectorAll("button")].forEach((b, k) => { const r = rows.filter(Boolean)[k]; b.onclick = (ev) => { ev.stopPropagation(); m.style.display = "none"; r[2](); }; });
   m.style.display = "block"; m.style.left = Math.min(e.clientX, innerWidth - 200) + "px"; m.style.top = Math.min(e.clientY, innerHeight - m.offsetHeight - 10) + "px";

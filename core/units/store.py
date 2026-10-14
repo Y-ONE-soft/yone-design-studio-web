@@ -57,7 +57,30 @@ def _read(p):
     raise RuntimeError(f"{os.path.basename(p)} 를 못 읽었다 ({last}) — 덮어쓰지 않는다")
 
 
+_MIGRATED = set()                                                       # 인디자인 맞춤 옮기기를 마친 저장소(udir)
+MIGRATE_KINDS = ("skins", "pages", "parts")
+
+
+def _migrate_once():
+    """옛 편집기 데이터를 인디자인 맞춤 꼴로(core/units/indesign.py) — 저장소마다 한 번. idv 없는 항목만 고쳐 저장한다"""
+    d = udir()
+    if d in _MIGRATED:
+        return
+    with _LOCK:
+        if d in _MIGRATED:
+            return
+        _MIGRATED.add(d)
+        raw = {k: (_read(_path(k)) or []) for k in KINDS}
+        if not any(isinstance(x, dict) and x.get("idv") is None for k in MIGRATE_KINDS for x in raw[k]):
+            return
+        from core.units import indesign
+        for k in indesign.migrate(raw):
+            save(k, raw[k])
+
+
 def load(kind):
+    if kind in MIGRATE_KINDS:
+        _migrate_once()
     v = _read(_path(kind))
     if v is None:
         return [dict(g) for g in DEFAULT_GROUPS] if kind == "groups" else []
@@ -120,6 +143,10 @@ def put(kind, item, after=None):
     """
     if kind == "pages":
         norm_page(item)
+    if kind in MIGRATE_KINDS and isinstance(item, dict):
+        _migrate_once()
+        from core.units.indesign import IDV
+        item["idv"] = IDV                                                 # 새로 저장하는 항목은 이미 인디자인 맞춤 꼴
     with _LOCK:
         return _put_locked(kind, item, after)
 
