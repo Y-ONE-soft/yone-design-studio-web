@@ -287,9 +287,9 @@
   .rtbar button { font-size: 12px; padding: 2px 7px; border: 1px solid #d6d3e0; background: #faf9fd; border-radius: 5px; cursor: pointer; }
   .rtbar select { font-size: 12px; max-width: 130px; }
   .rtbar { flex-wrap: wrap; }
-  .rtbar .rt-para { flex-basis: 100%; display: flex; gap: 4px; align-items: center; border-top: 1px solid #eee; padding-top: 3px; }
-  .rtbar .rt-para input { width: 42px; font-size: 12px; }
-  .rtbar .rt-para label { display: flex; gap: 2px; align-items: center; color: #555; }
+  .rtbar .rt-para, .rtbar .rt-ruby { flex-basis: 100%; display: flex; gap: 4px; align-items: center; border-top: 1px solid #eee; padding-top: 3px; }
+  .rtbar .rt-para input, .rtbar .rt-ruby input { width: 42px; font-size: 12px; }
+  .rtbar .rt-para label, .rtbar .rt-ruby label { display: flex; gap: 2px; align-items: center; color: #555; }
   .tedit.rt .rt-ps { display: inline; }
   /* 오른쪽 클릭 메뉴 · 레이어 */
   .cmenu { position: fixed; z-index: 100; background: #fff; border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgba(30,20,60,.2); padding: 5px; min-width: 180px; display: none; }
@@ -388,7 +388,7 @@
         <div class="slots" id="slots"></div>
         <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
         <div id="tedit" class="tedit rt" contenteditable="true" spellcheck="false" style="display:none"></div>
-        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs"></select><button id="rt-rba" title="고른 글자 위에 작은 글(인디자인 윗주)">위 윗주</button><button id="rt-rbb" title="고른 글자 아래에 작은 글">아래 윗주</button><button id="rt-side" title="커서 위치에 고정 개체(인디자인 고정 개체) — 그 줄 높이의 옆 칸에 놓인다. 위치는 오른쪽 패널 「고정 개체」">고정 개체</button><button id="rt-clear" title="고른 글자의 꾸밈(문자 스타일 · 윗주 · 색 · 굵게 …)을 지운다">꾸밈 지우기</button><div class="rt-para" id="rt-para" style="display:none" title="단락 스타일 재정의(인디자인) — 커서가 있는 문단 하나만 스타일 값을 바꾼다. 스타일은 그대로, 이름 뒤 「+」"><span>¶ <b id="rt-psn"></b><b id="rt-psp" style="color:#7d2ae8"></b></span><label>단락 앞<input type="number" step="0.1" data-ov="space_before"></label><label>단락 뒤<input type="number" step="0.1" data-ov="space_after"></label><label>들여쓰기<input type="number" step="0.5" data-ov="indent"></label><label>첫 줄<input type="number" step="0.5" data-ov="indent_first"></label><label>오른쪽<input type="number" step="0.5" data-ov="indent_right"></label><label>행간 pt<input type="number" step="0.1" data-ov="leading"></label><button id="rt-ovx" title="이 문단의 재정의를 지우고 단락 스타일 값으로 (인디자인 「재정의 지우기」)">재정의 지우기</button></div></div>
+        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs"></select><button id="rt-rba" title="고른 글자 위에 작은 글(인디자인 윗주)">위 윗주</button><button id="rt-rbb" title="고른 글자 아래에 작은 글">아래 윗주</button><button id="rt-side" title="커서 위치에 고정 개체(인디자인 고정 개체) — 그 줄 높이의 옆 칸에 놓인다. 위치는 오른쪽 패널 「고정 개체」">고정 개체</button><button id="rt-clear" title="고른 글자의 꾸밈(문자 스타일 · 윗주 · 색 · 굵게 …)을 지운다">꾸밈 지우기</button><div class="rt-para" id="rt-para" style="display:none" title="단락 스타일 재정의(인디자인) — 커서가 있는 문단 하나만 스타일 값을 바꾼다. 스타일은 그대로, 이름 뒤 「+」"><span>¶ <b id="rt-psn"></b><b id="rt-psp" style="color:#7d2ae8"></b></span><label>단락 앞<input type="number" step="0.1" data-ov="space_before"></label><label>단락 뒤<input type="number" step="0.1" data-ov="space_after"></label><label>들여쓰기<input type="number" step="0.5" data-ov="indent"></label><label>첫 줄<input type="number" step="0.5" data-ov="indent_first"></label><label>오른쪽<input type="number" step="0.5" data-ov="indent_right"></label><label>행간 pt<input type="number" step="0.1" data-ov="leading"></label><button id="rt-ovx" title="이 문단의 재정의를 지우고 단락 스타일 값으로 (인디자인 「재정의 지우기」)">재정의 지우기</button></div><div class="rt-ruby" id="rt-ruby" style="display:none" title="커서가 선 글자의 윗주 하나만 — 글꼴 · 크기(문자 스타일)와 본문에서의 거리(인디자인 윗주 대화 상자 「윗주 글꼴 및 크기」 · 오프셋). 비우면 텍스트 프레임의 윗주 설정"></div></div>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
         <div class="tools" id="tools">
           <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 블록을 고치려면 풀어서 고친 뒤 다시 블록으로 저장">그룹 해제</button><button id="t-up" title="고른 것을 블록 패널에 저장한다. 텍스트 프레임의 「데이터 필드」가 원고가 들어올 자리가 된다">★ 블록으로 저장</button>
@@ -1250,7 +1250,7 @@ function editTextInline(i) {
   fit(); ta.oninput = fit;
   const cs = (skin() || {}).cstyles || {};
   $("#rt-cs").innerHTML = `<option value="">문자 스타일…</option>${Object.keys(cs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__none">문자 스타일 빼기</option>`;
-  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"}); $("#rt-para").style.display = "none";
+  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"}); $("#rt-para").style.display = "none"; $("#rt-ruby").style.display = "none";
   const place = () => { const above = b.y * scale - bar.offsetHeight - 4;   // 위에 자리가 없으면(페이지 맨 위 글상자) 아래에 — 막대가 고치는 글을 덮지 않게
     bar.style.top = (above >= 0 ? above : Math.max(b.h * scale + 6, ta.offsetHeight + 4) + b.y * scale) + "px"; };
   place();
@@ -1259,7 +1259,7 @@ function editTextInline(i) {
   let last = [0, rtRead(ta).reduce((k, x) => k + rtLen(x), 0)];
   const track = () => { const g = getSelection(); if (!g.rangeCount || !ta.contains(g.anchorNode)) return; const r = g.getRangeAt(0); last = [rtPos(ta, r.startContainer, r.startOffset), rtPos(ta, r.endContainer, r.endOffset)];
     let k = 0; const at = rtRead(ta).find(x => (k += rtLen(x)) > last[0]); $("#rt-cs").value = (at && at.cs && cs[at.cs]) ? at.cs : "";   // 고른 글자의 문자 스타일을 막대에 보인다
-    paraRow(); };
+    paraRow(); rubyRow(); };
   const paraMark = () => {                                 // 커서가 있는 문단의 첫머리 표시(.rt-ps) — 줄바꿈 뒤 표시가 없는 문단이면 null
     let k = 0, n = -1, cur = -1;
     for (const r of rtRead(ta)) {
@@ -1280,6 +1280,23 @@ function editTextInline(i) {
   };
   const setOv = (fn) => { const m = paraMark(); if (!m) return; const r = JSON.parse(m.dataset.run); const ov = Object.assign({}, r.ov || {}); fn(ov);
     if (Object.keys(ov).length) r.ov = ov; else delete r.ov; m.dataset.run = JSON.stringify(r); paraRow(); };
+  const rubyEl = () => {                                   // 커서가 선 글자 조각(윗주가 붙은 span) — 고른 범위면 그 첫 글자
+    const [n] = rtLoc(ta, last[0] < last[1] ? last[0] + 1 : last[0]); const e = n && (n.nodeType === 3 ? n.parentElement : n);
+    const sp = e && e.closest && e.closest("[data-run]"); return sp && ta.contains(sp) && JSON.parse(sp.dataset.run).ruby ? sp : null;
+  };
+  const rubyRow = () => {                                  // 윗주 줄 — 윗주(위 · 아래)마다 문자 스타일 · 거리. 칸이 비면 텍스트 프레임 윗주 설정
+    const row = $("#rt-ruby"), sp = rubyEl(), was = row.style.display;
+    if (!sp) { row.style.display = "none"; if (was !== "none") place(); return; }
+    if (row.contains(document.activeElement)) return;      // 칸을 고치는 동안은 다시 그리지 않는다
+    const d = a.ruby || {}, rbs = [].concat(JSON.parse(sp.dataset.run).ruby);
+    row.innerHTML = rbs.map((x, j) => { const dn = x.pos === "below";
+      return `<span>${dn ? "아래" : "위"} 윗주 「${esc(x.t)}」</span><label>문자 스타일<select data-rb="${j}:cs"><option value="">(텍스트 프레임 것${d.cs ? " · " + esc(d.cs) : ""})</option>${Object.keys(cs).map(n => `<option value="${esc(n)}" ${x.cs === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>거리 mm<input type="number" step="0.1" data-rb="${j}:off" value="${x.off ?? ""}" placeholder="${d[dn ? "off_below" : "off_above"] ?? (dn ? 0.6 : 0.4)}"></label>`; }).join("");
+    row.querySelectorAll("[data-rb]").forEach(i => { const put = () => { const [j, f] = i.dataset.rb.split(":"), r = JSON.parse(sp.dataset.run), list = [].concat(r.ruby), x = Object.assign({}, list[+j]), v = i.value.trim();
+        if (v === "" || (f === "off" && isNaN(+v))) delete x[f]; else x[f] = f === "off" ? +v : v;
+        list[+j] = x; r.ruby = list.length === 1 ? list[0] : list; sp.dataset.run = JSON.stringify(r); };
+      i.onchange = put; i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); put(); } }; });
+    row.style.display = ""; if (was === "none") place();
+  };
   document.addEventListener("selectionchange", track);
   const op = (fn) => {                                     // 고른 글자에 꾸밈 — 조각을 나눠 고친 뒤 다시 그리고 고른 자리를 되살린다
     const runs = rtRead(ta), [s0, e0] = last;
@@ -1291,7 +1308,8 @@ function editTextInline(i) {
     if (last[0] === last[1]) { $("#st").textContent = "윗주 — 먼저 글자를 고르세요"; return; }
     const t = prompt(pos === "below" ? "아래 윗주 글 (비우면 지운다)" : "위 윗주 글 (비우면 지운다)", "");
     if (t == null) { ta.focus(); rtSel(ta, last[0], last[1]); return; }
-    op(r => { const rbs = [].concat(r.ruby || []).filter(x => (x.pos === "below") !== (pos === "below")); if (t.trim()) rbs.push(pos === "below" ? {t: t.trim(), pos: "below"} : {t: t.trim(), pos: "above"});
+    op(r => { const old = [].concat(r.ruby || []).find(x => (x.pos === "below") === (pos === "below")) || {};   // 글만 바꾸면 그 윗주의 문자 스타일 · 거리는 그대로
+      const rbs = [].concat(r.ruby || []).filter(x => (x.pos === "below") !== (pos === "below")); if (t.trim()) rbs.push(Object.assign({}, old, {t: t.trim(), pos: pos === "below" ? "below" : "above"}));
       if (!rbs.length) delete r.ruby; else r.ruby = rbs.length === 1 ? rbs[0] : rbs; });
   };
   const keep = (e) => e.preventDefault();                  // 막대를 눌러도 글 칸의 고른 자리가 남게
