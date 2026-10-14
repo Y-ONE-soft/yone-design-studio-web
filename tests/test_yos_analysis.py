@@ -148,3 +148,14 @@ def test_edits_come_back_as_contents_data():
     assert d["topic"] == "새 주제" and d["keyQuestion"]["answerIndex"] == 1
     assert [v["word"] for v in d["voca"]] == ["hi", "story"] and d["voca"][0]["ko"] == "안녕하세요"
     assert d["meta"] == doc["meta"] and d["images"] == doc["images"]           # 지면에 없는 칸은 그대로
+
+
+def test_divider_fields():
+    # 간지 — 보낸 것만 간지 칸으로(빈 줄은 빼고, 세 칸은 늘 함께), 안 보내면 간지 칸이 없다(간지 면 안 찍힘)
+    data = {"analyses": [], "divider": {"school": " 2026 이대부고1 ", "volume": 1,
+                                        "lines": [{"book": "공통영어2 YBM(김)", "lesson": "3과 Beyond Barriers"}, {"book": "", "lesson": ""}]}}
+    content, _ = ya.to_content(data)
+    assert content == {"학교": ["2026 이대부고1"], "권번호": ["1"], "교재명+강제목": [{"교재명": "공통영어2 YBM(김)", "강제목": "3과 Beyond Barriers"}]}
+    content, _ = ya.to_content({"analyses": [], "divider": {"school": "2026 광문고1"}})
+    assert content["권번호"] == [""] and content["교재명+강제목"] == [{"교재명": "", "강제목": ""}]
+    assert ya.to_content({"analyses": []})[0] == {}
