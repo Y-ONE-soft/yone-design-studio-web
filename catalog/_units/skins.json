@@ -36,7 +36,8 @@
    "prompt": {
     "font": "$disp",
     "size": 8.5,
-    "color": "$ink"
+    "color": "$ink",
+    "leading": 12.325
    },
    "choices": {
     "font": "$body",
@@ -47,17 +48,20 @@
    "sentence": {
     "font": "$body",
     "size": 8,
-    "color": "$ink"
+    "color": "$ink",
+    "leading": 11.6
    },
    "kr": {
     "font": "$body",
     "size": 7,
-    "color": "$mute"
+    "color": "$mute",
+    "leading": 10.15
    },
    "no": {
     "font": "$num",
     "size": 8.5,
-    "color": "$sel"
+    "color": "$sel",
+    "leading": 12.325
    }
   },
   "obj_styles": {
@@ -74,7 +78,8 @@
      }
     }
    }
-  }
+  },
+  "idv": 2
  },
  {
   "id": "mono",
@@ -115,7 +120,8 @@
    "prompt": {
     "font": "$disp",
     "size": 8.5,
-    "color": "$ink"
+    "color": "$ink",
+    "leading": 12.325
    },
    "choices": {
     "font": "$body",
@@ -126,19 +132,23 @@
    "sentence": {
     "font": "$body",
     "size": 8,
-    "color": "$ink"
+    "color": "$ink",
+    "leading": 11.6
    },
    "kr": {
     "font": "$body",
     "size": 7,
-    "color": "$mute"
+    "color": "$mute",
+    "leading": 10.15
    },
    "no": {
     "font": "$num",
     "size": 8.5,
-    "color": "$sel"
+    "color": "$sel",
+    "leading": 12.325
    }
-  }
+  },
+  "idv": 2
  },
  {
   "id": "wbd1_skin",
@@ -260,6 +270,7 @@
     "f55": "AppleSDGothicNeo-Regular",
     "f56": "Montserrat-ExtraBold"
    }
-  }
+  },
+  "idv": 2
  }
 ]

@@ -204,6 +204,14 @@ def families():
     return {k: sorted(v) for k, v in sorted(fams.items())}
 
 
+def faces():
+    """→ {집 이름: ["400", "400i", "700", …]} — 인디자인 글꼴 스타일 목록(굵기 + 기울임꼴)"""
+    out = {}
+    for f in system_fonts():
+        out.setdefault(f["family"], set()).add(f"{f['weight']}{'i' if f['italic'] else ''}")
+    return {k: sorted(v, key=lambda x: (int(x.rstrip("i")), x.endswith("i"))) for k, v in sorted(out.items())}
+
+
 def face_css(mode="url"):
     """시스템 서체 @font-face — 컴퓨터에 깔린 서체 대신 이 파일을 쓴다. mode url = 편집기(서버 주소) · file = PDF(파일 주소)"""
     css = []

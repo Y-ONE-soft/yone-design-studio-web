@@ -249,7 +249,7 @@ def rich_html(v, ctx=None):
             if v.get("inline"):                                            # 템플릿 단락 「«번호»⇥«발문»」 — 번호 뒤 글자(sep: 탭 · 공백 …)까지
                 a = getattr(ctx, "cur_atom", None) or {} if ctx else {}
                 sep = (((a.get("slot_fmt") or {}).get(v["ps"]) or {}).get("sep"))
-                return f'<span data-psi="{esc(v["ps"])}">{esc(v.get("t", ""))}</span>' + esc("\t" if sep is None else sep)
+                return f'<span data-psi="{esc(v["ps"])}">{esc(v.get("t", ""))}</span>' + esc(_after(sep))
             ov = {k: v["ov"][k] for k in OV_KEYS if isinstance(v.get("ov"), dict) and v["ov"].get(k) is not None}   # 단락 스타일 재정의(인디자인 로컬 서식)
             return (f'<span data-ps="{esc(v["ps"])}"' + (f' data-ov="{esc(json.dumps(ov))}"' if ov else "") + (' data-v0="1"' if v.get("v0") else "")
                     + '></span>') + esc(v.get("t", ""))
@@ -1080,11 +1080,16 @@ def font_metrics(family, weight=400):
     return _ASC[key]
 
 
+def _after(v):
+    """텍스트 뒤 · 필드 뒤 글자 — 없으면 탭(인디자인 기본 ^t), "none" 이면 없음"""
+    return "\t" if v is None else ("" if v == "none" else str(v))
+
+
 def _list_text(st, ctx, a):
     """글머리 기호 및 번호 매기기(인디자인) — 단락 앞에 붙는 글(기호 · 번호 + 텍스트 뒤). 번호는 같은 목록(단락 스타일)끼리 이어 센다"""
     ls = st.get("list") or {}
     if ls.get("type") == "bullet":
-        return esc(ls.get("char") or "•") + esc("\t" if ls.get("after") is None else ls["after"])
+        return esc(ls.get("char") or "•") + esc(_after(ls.get("after")))
     if ls.get("type") == "number":
         key = (id(a), ls.get("name") or "")
         nums = ctx.nums if ctx is not None else {}
@@ -1095,7 +1100,7 @@ def _list_text(st, ctx, a):
         core = num_text(n, f.rstrip(".)") or "1")
         lead_ = "(" if f.startswith("(") else ""
         trail = "." if f.endswith(".") else ")" if f.endswith(")") and not f.startswith("(") else ")" if f.startswith("(") else ""
-        return esc(lead_ + core + trail) + esc("\t" if ls.get("after") is None else ls["after"])
+        return esc(lead_ + core + trail) + esc(_after(ls.get("after")))
     return ""
 
 

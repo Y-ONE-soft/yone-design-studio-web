@@ -249,6 +249,8 @@
   .strip .foot #f-cnt { margin-left: auto; padding: 2px 7px; }
   .strip .foot .help { cursor: help; border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; background: #fff; }
   .strip .foot select { padding: 2px 4px; font-size: 11.5px; }
+  .strip .foot #zoom { width: 70px; flex: none; }
+  .strip .foot .btn.sm { padding-left: 6px; padding-right: 6px; }
   .strip .foot .btn.sub.on { background: var(--pp-bg); color: var(--pp); }
   /* 손잡이 8 + 회전 */
   .selbox .hd { position: absolute; width: 9px; height: 9px; background: #fff; border: 2px solid var(--pp); border-radius: 3px; pointer-events: auto; box-sizing: border-box; }
@@ -388,7 +390,7 @@
         <div class="slots" id="slots"></div>
         <div class="ruler rt" id="rt"></div><div class="ruler rl" id="rl"></div><div id="guides"></div><div class="margins" id="mg"></div>
         <div id="tedit" class="tedit rt" contenteditable="true" spellcheck="false" style="display:none"></div>
-        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs"></select><button id="rt-rba" title="고른 글자 위에 작은 글(인디자인 윗주)">위 윗주</button><button id="rt-rbb" title="고른 글자 아래에 작은 글">아래 윗주</button><button id="rt-side" title="커서 위치에 고정 개체(인디자인 고정 개체) — 그 줄 높이의 옆 칸에 놓인다. 위치는 오른쪽 패널 「고정 개체」">고정 개체</button><button id="rt-clear" title="고른 글자의 꾸밈(문자 스타일 · 윗주 · 색 · 굵게 …)을 지운다">꾸밈 지우기</button><div class="rt-para" id="rt-para" style="display:none" title="단락 스타일 재정의(인디자인) — 커서가 있는 문단 하나만 스타일 값을 바꾼다. 스타일은 그대로, 이름 뒤 「+」"><span>¶ <b id="rt-psn"></b><b id="rt-psp" style="color:#7d2ae8"></b></span><label>단락 앞 공백<input type="number" step="0.1" data-ov="space_before"></label><label>단락 뒤 공백<input type="number" step="0.1" data-ov="space_after"></label><label>왼쪽 들여쓰기<input type="number" step="0.5" data-ov="indent"></label><label>첫 줄 왼쪽 들여쓰기<input type="number" step="0.5" data-ov="indent_first"></label><label>오른쪽 들여쓰기<input type="number" step="0.5" data-ov="indent_right"></label><label>행간 pt<input type="number" step="0.1" data-ov="leading"></label><button id="rt-ovx" title="이 문단의 재정의를 지우고 단락 스타일 값으로 (인디자인 「재정의 지우기」)">재정의 지우기</button></div><div class="rt-ruby" id="rt-ruby" style="display:none" title="커서가 선 글자의 윗주 하나만 — 인디자인 윗주 대화 상자 「윗주 글꼴 및 크기」(글꼴 · 크기) · 「윗주 위치 및 간격」(오프셋 X · Y). 비우면 텍스트 프레임의 윗주 설정"></div></div>
+        <div id="rtbar" class="rtbar" style="display:none" title="글자를 골라 꾸미기 — 인디자인 문자 스타일 · 윗주 · 고정 개체"><select id="rt-cs" title="고른 글자에 문자 스타일"></select><button id="rt-rb" title="고른 글자에 윗주(인디자인 윗주) — 글자 하나에 하나, 위 · 아래는 윗주 줄에서">윗주</button><button id="rt-anc" title="커서 자리에 고정 개체(인디자인 고정 개체) — 글이나 그룹을 글에 붙인다. 옵션은 고정 개체 줄에서">고정 개체</button><button id="rt-clear" title="고른 글자의 재정의(문자 스타일 밖에서 바꾼 서식)를 지운다 — 문자 스타일 · 윗주 · 고정 개체는 그대로">재정의 지우기</button><div class="rt-para" id="rt-para" style="display:none" title="단락 스타일 재정의(인디자인) — 커서가 있는 문단 하나만 스타일 값을 바꾼다. 스타일은 그대로, 이름 뒤 「+」"><span>¶ <b id="rt-psn"></b><b id="rt-psp" style="color:#7d2ae8"></b></span><label>단락 앞 공백<input type="number" step="0.1" data-ov="space_before"></label><label>단락 뒤 공백<input type="number" step="0.1" data-ov="space_after"></label><label>왼쪽 들여쓰기<input type="number" step="0.5" data-ov="indent"></label><label>첫 줄 왼쪽 들여쓰기<input type="number" step="0.5" data-ov="indent_first"></label><label>오른쪽 들여쓰기<input type="number" step="0.5" data-ov="indent_right"></label><label>행간 pt<input type="number" step="0.1" data-ov="leading"></label><button id="rt-ovx" title="이 문단의 재정의를 지우고 단락 스타일 값으로 (인디자인 「재정의 지우기」)">재정의 지우기</button></div><div class="rt-ruby" id="rt-ancrow" style="display:none" title="고정 개체 옵션(인디자인) — 위치 인라인 · 사용자 정의, 오프셋, 기준점"></div><div class="rt-ruby" id="rt-ruby" style="display:none" title="커서가 선 글자의 윗주 하나만 — 인디자인 윗주 대화 상자 「윗주 글꼴 및 크기」(글꼴 · 크기) · 「윗주 위치 및 간격」(오프셋 X · Y). 비우면 텍스트 프레임의 윗주 설정"></div></div>
         <div class="marq" id="marq"></div><div class="gv" id="gv"></div><div class="gh" id="gh"></div>
         <div class="tools" id="tools">
           <button id="t-group" title="그룹 (Ctrl+G)">그룹</button><button id="t-down" title="그룹 해제 (Ctrl+Shift+G) — 블록을 고치려면 풀어서 고친 뒤 다시 블록으로 저장">그룹 해제</button><button id="t-up" title="고른 것을 블록 패널에 저장한다. 텍스트 프레임의 「데이터 필드」가 원고가 들어올 자리가 된다">★ 블록으로 저장</button>
@@ -412,7 +414,7 @@
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
         <button class="btn sm sub" id="tg-rul" title="눈금자 표시 (Ctrl+R)">눈금자</button><button class="btn sm sub" id="tg-grid" title="문서 격자 표시 (Ctrl+')">문서 격자</button><button class="btn sm sub" id="tg-mg" title="여백 및 단 안내선 표시">여백 및 단</button><button class="btn sm sub" id="tg-snap" title="고급 안내선 · 안내선에 물리기 — 다른 개체 · 여백 및 단 안내선에 붙는다 (Alt = 잠깐 끄기)">고급 안내선</button><button class="btn sm sub" id="tg-slots" title="데이터 필드 표시 — 데이터 필드가 연결된 프레임에 필드 이름을 띄운다(데이터 병합)">데이터 필드</button>
         <span class="sep" style="width:1px;height:16px;background:var(--line)"></span>
-        <select id="fitsel" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 페이지가 다 보이게"><option value="width">페이지 너비를 창에 맞게</option><option value="page">페이지를 창에 맞게</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
+        <select id="fitsel" style="max-width:118px" title="맞춤 — 폭은 좌우로 꽉 차게(세로는 스크롤), 전체는 한 페이지가 다 보이게"><option value="width">너비 맞추기</option><option value="page">창에 페이지 맞추기</option></select><input type="range" id="zoom" min="30" max="300" value="100" title="Ctrl+휠 · Ctrl +/-"><select id="zoomsel" title="확대"><option value="0.5">50%</option><option value="0.75">75%</option><option value="1" selected>100%</option><option value="1.5">150%</option><option value="2">200%</option><option value="3">300%</option></select><span id="zoomv" style="min-width:38px" title="눌러서 100%">100%</span>
       </div>
     </div>
   </div>
@@ -477,16 +479,17 @@ const ATOMS = [
   ["text", "텍스트 프레임", {t: "text", x: 0, y: 0, w: 80, h: 6, font: "$body", size: 9, color: "$ink", text: DEFAULT_TEXT}],
   ["line", "선", {t: "line", x1: 0, y1: 0, x2: 80, y2: 0, stroke: {w: 0.5, color: "$rule"}}],
   ["rect", "사각형", {t: "rect", x: 0, y: 0, w: 60, h: 20, fill: "$gray", radius: 1}],
-  ["ellipse", "원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$ink"}}],
+  ["ellipse", "타원", {t: "ellipse", x: 0, y: 0, w: 10, h: 10, stroke: {w: 0.5, color: "$ink"}}],
   ["image", "그래픽 프레임", {t: "image", x: 0, y: 0, w: 40, h: 30, src: "img1"}],
-  ["path", "도형", {t: "path", x: 0, y: 0, w: 12, h: 8, d: "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", fill: "$ink"}],
+  ["path", "다각형", {t: "path", x: 0, y: 0, w: 12, h: 12, poly: {n: 6}, d: polyD({n: 6}), fill: "$ink"}],
 ];
 const ATOM_NM = Object.fromEntries(ATOMS.map(a => [a[0], a[1]]));
-// 도형 견본 — 좌표는 0~1 비율. 인디자인 Polygon·펜 패스 대신 여기서 고르거나 d 를 직접 적는다
-const SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7 Z", "삼각형": "M0.5 0 L1 1 L0 1 Z", "체크": "M0.05 0.55 L0.35 0.9 L0.95 0.1",
-  "별": "M0.5 0 L0.62 0.38 L1 0.38 L0.69 0.6 L0.81 1 L0.5 0.76 L0.19 1 L0.31 0.6 L0 0.38 L0.38 0.38 Z", "말풍선": "M0.1 0 L0.9 0 C0.95 0 1 0.05 1 0.1 L1 0.65 C1 0.7 0.95 0.75 0.9 0.75 L0.35 0.75 L0.2 1 L0.22 0.75 L0.1 0.75 C0.05 0.75 0 0.7 0 0.65 L0 0.1 C0 0.05 0.05 0 0.1 0 Z",
-  "마름모": "M0.5 0 L1 0.5 L0.5 1 L0 0.5 Z", "육각형": "M0.25 0 L0.75 0 L1 0.5 L0.75 1 L0.25 1 L0 0.5 Z",
-  "평행사변형": "M0.12 0 L1 0 L1 1 L0 1 Z", "모서리 자른 띠": "M0 0 L1 0 L0.88 1 L0 1 Z"};
+function polyD(pl) {                                            // 다각형 도구(인디자인) — 면 수 · 별모양 인세트 % → 0~1 비율 경로
+  const n = Math.max(3, Math.round(+((pl || {}).n) || 0)); if (!pl || !pl.n) return undefined;
+  const st = Math.min(99, Math.max(0, +(pl.star || 0))) / 100, N = st ? n * 2 : n, pts = [];
+  for (let k = 0; k < N; k++) { const ang = -Math.PI / 2 + k * Math.PI * 2 / N, r = st && k % 2 ? 1 - st : 1; pts.push([0.5 + 0.5 * r * Math.cos(ang), 0.5 + 0.5 * r * Math.sin(ang)]); }
+  return "M" + pts.map(q => q.map(v => v.toFixed(4)).join(" ")).join(" L") + " Z";
+}
 const plainText = (t) => Array.isArray(t) ? t.map(r => typeof r === "string" ? r : (r.t || "")).join("") : (t || "");
 
 let plan = null, page = null, sel = null, sels = new Set(), scale = 3, zoom = 1, thumbs = {blocks: {}, parts: {}}, pageSvg = {}, curSet = "";
@@ -1145,24 +1148,25 @@ document.querySelectorAll("#tools [data-ms]").forEach(b => b.onclick = (e) => { 
 // 글은 조각 목록(rich — 글 · {t, cs, ruby, …} · {t: "", side})으로 오간다. 꾸밈이 없으면 그냥 글. 옆 메모는 글자 하나로 센다.
 const rtKeys = (r) => { const o = Object.assign({}, r); delete o.t; return o; };
 const rtRuns = (t) => (Array.isArray(t) ? t : [t || ""]).map(r => typeof r === "string" ? {t: r} : Object.assign({}, r));
-const rtLen = (r) => r.side != null ? 1 : (r.t || "").length;
+const rtObj = (r) => r.side != null || !!r.anc;              // 고정 개체 — 글자 하나로 센다
+const rtLen = (r) => rtObj(r) ? 1 : (r.t || "").length;
 const rtMark = (r) => r.ps != null && !r.inline;             // 문단 첫머리 표시 — 그 문단의 단락 스타일 · 재정의(ov). 글자로 세지 않는다
 function rtNorm(runs) {                                    // 같은 꾸밈끼리 잇고, 꾸밈이 하나도 없으면 그냥 글
   const out = [];
   for (const r of runs) {
-    if (r.side == null && r.ps == null && !r.t) continue;      // 문단 첫머리 표시(ps)는 글이 없어도 남긴다
+    if (!rtObj(r) && r.ps == null && !r.t) continue;          // 문단 첫머리 표시(ps) · 고정 개체는 글이 없어도 남긴다
     const p = out[out.length - 1];
-    if (p && p.side == null && r.side == null && !rtMark(p) && !rtMark(r) && JSON.stringify(rtKeys(p)) === JSON.stringify(rtKeys(r))) p.t += r.t; else out.push(Object.assign({}, r));
+    if (p && !rtObj(p) && !rtObj(r) && !rtMark(p) && !rtMark(r) && JSON.stringify(rtKeys(p)) === JSON.stringify(rtKeys(r))) p.t += r.t; else out.push(Object.assign({}, r));
   }
-  if (out.every(r => r.side == null && Object.keys(r).length === 1)) return out.map(r => r.t).join("");
-  return out.map(r => (r.side == null && Object.keys(r).length === 1) ? r.t : r);
+  if (out.every(r => !rtObj(r) && Object.keys(r).length === 1)) return out.map(r => r.t).join("");
+  return out.map(r => (!rtObj(r) && Object.keys(r).length === 1) ? r.t : r);
 }
 function rtSplit(runs, at) {                               // 글자 자리 at 에서 조각을 나눈다 → at 뒤 첫 조각 번호
   let k = 0;
   for (let i = 0; i < runs.length; i++) {
     const n = rtLen(runs[i]);
     if (at === k) return i;
-    if (at < k + n && runs[i].side == null) { const r = runs[i]; runs.splice(i, 1, Object.assign({}, r, {t: r.t.slice(0, at - k)}), Object.assign({}, r, {t: r.t.slice(at - k)})); return i + 1; }
+    if (at < k + n && !rtObj(runs[i])) { const r = runs[i]; runs.splice(i, 1, Object.assign({}, r, {t: r.t.slice(0, at - k)}), Object.assign({}, r, {t: r.t.slice(at - k)})); return i + 1; }
     k += n;
   }
   return runs.length;
@@ -1170,15 +1174,15 @@ function rtSplit(runs, at) {                               // 글자 자리 at �
 function rtDom(box, runs) {
   box.textContent = "";
   for (const r of runs) {
-    if (r.side != null) { const c = document.createElement("span"); c.className = "rt-side"; c.contentEditable = "false"; c.dataset.run = JSON.stringify(r); c.title = "고정 개체 — 두 번 눌러 고치기 · 비우면 지운다"; c.textContent = "메모 " + r.side; box.appendChild(c); continue; }
+    if (rtObj(r)) { const c = document.createElement("span"); c.className = "rt-side"; c.contentEditable = "false"; c.dataset.run = JSON.stringify(r); c.title = "고정 개체 — 눌러서 옵션";
+      c.textContent = "⚓ " + (r.anc ? (r.anc.text != null ? r.anc.text : "그룹") : r.side); box.appendChild(c); continue; }
     if (rtMark(r)) { const c = document.createElement("span"); c.className = "rt-ps"; c.contentEditable = "false"; c.dataset.run = JSON.stringify(r); box.appendChild(c); continue; }
     const k = rtKeys(r);
     if (!Object.keys(k).length) { box.appendChild(document.createTextNode(r.t)); continue; }
     const sp = document.createElement("span"); sp.dataset.run = JSON.stringify(k);
     if (r.cs) { sp.dataset.cs = r.cs; sp.title = "문자 스타일 " + r.cs; }
-    const rbs = [].concat(r.ruby || []), up = rbs.find(x => x.pos !== "below"), dn = rbs.find(x => x.pos === "below");
-    if (up) sp.dataset.rba = up.t;
-    if (dn) sp.dataset.rbb = dn.t;
+    const rb = [].concat(r.ruby || [])[0];
+    if (rb && rb.pos === "below") sp.dataset.rbb = rb.t; else if (rb) sp.dataset.rba = rb.t;
     sp.textContent = r.t; box.appendChild(sp);
   }
 }
@@ -1249,8 +1253,8 @@ function editTextInline(i) {
   const fit = () => { ta.style.height = "auto"; ta.style.height = Math.max(24, b.h * scale + 6, ta.scrollHeight + 4) + "px"; };   // 넘친 줄이 가려지지 않게 글만큼 늘린다
   fit(); ta.oninput = fit;
   const cs = (skin() || {}).cstyles || {};
-  $("#rt-cs").innerHTML = `<option value="">문자 스타일…</option>${Object.keys(cs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}<option value="__none">문자 스타일 빼기</option>`;
-  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"}); $("#rt-para").style.display = "none"; $("#rt-ruby").style.display = "none";
+  $("#rt-cs").innerHTML = `<option value="">문자 스타일</option><option value="__none">[없음]</option>${Object.keys(cs).map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")}`;
+  Object.assign(bar.style, {display: "", left: (b.x * scale) + "px"}); $("#rt-para").style.display = "none"; $("#rt-ruby").style.display = "none"; $("#rt-ancrow").style.display = "none";
   const place = () => { const above = b.y * scale - bar.offsetHeight - 4;   // 위에 자리가 없으면(페이지 맨 위 글상자) 아래에 — 막대가 고치는 글을 덮지 않게
     bar.style.top = (above >= 0 ? above : Math.max(b.h * scale + 6, ta.offsetHeight + 4) + b.y * scale) + "px"; };
   place();
@@ -1264,7 +1268,7 @@ function editTextInline(i) {
     let k = 0, n = -1, cur = -1;
     for (const r of rtRead(ta)) {
       if (rtMark(r)) { if (k <= last[0]) { n++; cur = n; } else break; continue; }
-      if (r.side == null) { const t = r.t || ""; for (let j = 0; j < t.length && k + j < last[0]; j++) if (t[j] === "\n") cur = -1; }
+      if (!rtObj(r)) { const t = r.t || ""; for (let j = 0; j < t.length && k + j < last[0]; j++) if (t[j] === "\n") cur = -1; }
       if (k >= last[0] && !rtMark(r)) break;
       k += rtLen(r);
     }
@@ -1284,54 +1288,79 @@ function editTextInline(i) {
     const [n] = rtLoc(ta, last[0] < last[1] ? last[0] + 1 : last[0]); const e = n && (n.nodeType === 3 ? n.parentElement : n);
     const sp = e && e.closest && e.closest("[data-run]"); return sp && ta.contains(sp) && JSON.parse(sp.dataset.run).ruby ? sp : null;
   };
-  const rubyRow = () => {                                  // 윗주 줄 — 윗주(위 · 아래)마다 문자 스타일 · 거리. 칸이 비면 텍스트 프레임 윗주 설정
+  const rubyRow = () => {                                  // 윗주 줄 — 인디자인 윗주 대화 상자: 윗주 글 · 위치 · 정렬 · 글꼴 · 크기 · 오프셋 X · Y. 칸이 비면 텍스트 프레임 윗주 기본값
     const row = $("#rt-ruby"), sp = rubyEl(), was = row.style.display;
     if (!sp) { row.style.display = "none"; if (was !== "none") place(); return; }
     if (row.contains(document.activeElement)) return;      // 칸을 고치는 동안은 다시 그리지 않는다
-    const d = a.ruby || {}, rbs = [].concat(JSON.parse(sp.dataset.run).ruby);
-    row.innerHTML = rbs.map((x, j) => { const dn = x.pos === "below";
-      return `<span>${dn ? "아래" : "위"} 윗주 「${esc(x.t)}」</span><label>글꼴${fontSel("data-rb", j + ":font", x.font, ((skin() || {}).tokens || {}).font, "(텍스트 프레임 것)")}</label><label>크기 pt<input type="number" step="0.1" min="0" data-rb="${j}:size" value="${x.size ?? ""}"></label><label title="윗주를 옆으로(인디자인 윗주 「오프셋 X」)">오프셋 X mm<input type="number" step="0.1" data-rb="${j}:ox" value="${x.ox ?? ""}" placeholder="0"></label><label title="본문 기준선에서 윗주까지(인디자인 윗주 「오프셋 Y」)">오프셋 Y mm<input type="number" step="0.1" data-rb="${j}:off" value="${x.off ?? ""}" placeholder="${d[dn ? "off_below" : "off_above"] ?? (dn ? 0.6 : 0.4)}"></label>`; }).join("");
-    row.querySelectorAll("[data-rb]").forEach(i => { const put = () => { const [j, f] = i.dataset.rb.split(":"), r = JSON.parse(sp.dataset.run), list = [].concat(r.ruby), x = Object.assign({}, list[+j]), v = i.value.trim();
-        const num = f !== "font"; if (v === "" || (num && isNaN(+v))) delete x[f]; else x[f] = num ? +v : v;
-        list[+j] = x; r.ruby = list.length === 1 ? list[0] : list; sp.dataset.run = JSON.stringify(r); };
-      i.onchange = put; i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); put(); } }; });
+    const d = a.ruby || {}, x = [].concat(JSON.parse(sp.dataset.run).ruby)[0] || {}, dn = x.pos === "below";
+    row.innerHTML = `<label>윗주<input type="text" data-rb="t" value="${esc(x.t || "")}" style="width:70px"></label><label>위치<select data-rb="pos">${optList([["above", "위"], ["below", "아래"]], dn ? "below" : "above")}</select></label><label>정렬<select data-rb="align">${optList([["center", "가운데"], ["right", "오른쪽"]], x.align, "왼쪽")}</select></label>
+      <label>글꼴${fontSel("data-rb", "font", x.font, ((skin() || {}).tokens || {}).font, "(기본값)")}</label><label>크기 pt<input type="number" step="0.1" min="0" data-rb="size" value="${x.size ?? ""}" placeholder="${d.size ?? ""}"></label>
+      <label title="윗주를 옆으로">오프셋 X mm<input type="number" step="0.1" data-rb="ox" value="${x.ox ?? ""}" placeholder="0"></label><label title="본문 글자 상자 바깥 끝에서 윗주까지">오프셋 Y mm<input type="number" step="0.1" data-rb="oy" value="${x.oy ?? ""}" placeholder="${d[dn ? "oy_below" : "oy_above"] ?? 0}"></label><button id="rt-rbx" type="button">윗주 삭제</button>`;
+    const put = (i) => { const f = i.dataset.rb, r = JSON.parse(sp.dataset.run), list = [].concat(r.ruby), y = Object.assign({}, list[0]), v = String(i.value).trim();
+      const num = ["size", "ox", "oy"].includes(f); if (v === "" || (num && isNaN(+v))) { if (f !== "t") delete y[f]; } else y[f] = num ? +v : v;
+      if (f === "pos" && v === "above") delete y.pos;
+      list[0] = y; r.ruby = list.length === 1 ? list[0] : list; sp.dataset.run = JSON.stringify(r); if (f === "t" || f === "pos") { delete sp.dataset.rba; delete sp.dataset.rbb; sp.dataset[y.pos === "below" ? "rbb" : "rba"] = y.t; } };
+    row.querySelectorAll("[data-rb]").forEach(i => { i.onchange = () => put(i); i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); put(i); } }; });
+    row.querySelector("#rt-rbx").onmousedown = (e) => e.preventDefault();
+    row.querySelector("#rt-rbx").onclick = () => { const r = JSON.parse(sp.dataset.run); delete r.ruby; sp.dataset.run = JSON.stringify(r); delete sp.dataset.rba; delete sp.dataset.rbb; rubyRow(); };
+    row.style.display = ""; if (was === "none") place();
+  };
+  let chip = null;                                           // 고른 고정 개체(글 안 ⚓)
+  const ancRow = () => {                                   // 고정 개체 줄 — 인디자인 고정 개체 옵션: 내용 · 위치(인라인 · 사용자 정의) · 오프셋 · 기준점
+    const row = $("#rt-ancrow"), was = row.style.display;
+    if (!chip || !ta.contains(chip)) { row.style.display = "none"; if (was !== "none") place(); return; }
+    let r = JSON.parse(chip.dataset.run);
+    if (r.side != null && !r.anc) {                         // 원고 옆 메모 — 고치면 고정 개체(사용자 정의)로
+      const sd = a.side || {}; r = {t: "", anc: {text: r.side, pos: "custom", xref: "frame", yref: "baseline", x: sd.x || 0, y: sd.off || 0, w: sd.w || 30, leading: sd.lead, cs: sd.cs}};
+      chip.dataset.run = JSON.stringify(r); }
+    const an = r.anc, pos = an.pos || "inline", txt = an.part == null;
+    row.innerHTML = `<span>⚓ 고정 개체</span><label>내용<select data-an="kind">${optList([["text", "글"], ["part", "그룹"]], txt ? "text" : "part")}</select></label>
+      ${txt ? `<label>글<input type="text" data-an="text" value="${esc(an.text || "")}" style="width:90px"></label><label>폭 mm<input type="number" step="0.5" data-an="w" value="${an.w ?? ""}" placeholder="글 폭"></label><label>문자 스타일${cstyleSel("cs", an.cs, "data-an")}</label>`
+        : `<label>그룹<select data-an="part">${(LIB.parts || []).map(p2 => `<option value="${esc(p2.id)}" ${an.part === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></label>`}
+      <label>위치<select data-an="pos">${optList([["inline", "인라인"], ["custom", "사용자 정의"]], pos)}</select></label>
+      ${pos === "custom" ? `<label>X 기준<select data-an="xref">${optList([["anchor", "앵커 표시자"], ["frame", "텍스트 프레임 가장자리"]], an.xref || "frame")}</select></label><label>Y 기준<select data-an="yref">${optList([["baseline", "라인(기준선)"], ["leading", "라인(행간 위쪽)"]], an.yref || "baseline")}</select></label>` : `<label title="개체 앞 공백 문자 — 줄 끝이면 개체만 다음 줄로">개체 앞 공백<input type="checkbox" data-an="space" ${an.space ? "checked" : ""} style="width:auto"></label>`}
+      <label>X 오프셋 mm<input type="number" step="0.1" data-an="x" value="${an.x ?? ""}" placeholder="0"></label><label title="${pos === "custom" ? "아래가 +" : "기준선에서 위가 +"}">Y 오프셋 mm<input type="number" step="0.1" data-an="y" value="${an.y ?? ""}" placeholder="0"></label><button id="rt-ancx" type="button">개체 삭제</button>`;
+    const put = (i) => { const f = i.dataset.an, r2 = JSON.parse(chip.dataset.run), o = Object.assign({}, r2.anc);
+      if (f === "kind") { if (i.value === "part") { delete o.text; o.part = (LIB.parts[0] || {}).id; } else { delete o.part; o.text = "글"; } }
+      else if (i.type === "checkbox") { if (i.checked) o[f] = true; else delete o[f]; }
+      else { const v = String(i.value).trim(), num = ["x", "y", "w"].includes(f); if (v === "" && f !== "text") delete o[f]; else o[f] = num ? +v : v; }
+      r2.anc = o; chip.dataset.run = JSON.stringify(r2); chip.textContent = "⚓ " + (o.text != null ? o.text : "그룹"); if (["kind", "pos"].includes(f)) ancRow(); };
+    row.querySelectorAll("[data-an]").forEach(i => { i.onchange = () => put(i); i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); put(i); } }; });
+    row.querySelector("#rt-ancx").onmousedown = (e) => e.preventDefault();
+    row.querySelector("#rt-ancx").onclick = () => { chip.remove(); chip = null; ancRow(); };
     row.style.display = ""; if (was === "none") place();
   };
   document.addEventListener("selectionchange", track);
   const op = (fn) => {                                     // 고른 글자에 꾸밈 — 조각을 나눠 고친 뒤 다시 그리고 고른 자리를 되살린다
     const runs = rtRead(ta), [s0, e0] = last;
     const x = rtSplit(runs, s0), y = rtSplit(runs, e0);
-    for (let k = x; k < y; k++) if (runs[k].side == null && !rtMark(runs[k])) fn(runs[k]);
+    for (let k = x; k < y; k++) if (!rtObj(runs[k]) && !rtMark(runs[k])) fn(runs[k]);
     rtDom(ta, rtRuns(rtNorm(runs))); ta.focus(); rtSel(ta, s0, e0);
   };
-  const setRuby = (pos) => {
+  const setRuby = () => {                                  // 윗주 — 고른 글자에 하나(이미 있으면 윗주 줄에서 고친다)
     if (last[0] === last[1]) { $("#st").textContent = "윗주 — 먼저 글자를 고르세요"; return; }
-    const t = prompt(pos === "below" ? "아래 윗주 글 (비우면 지운다)" : "위 윗주 글 (비우면 지운다)", "");
-    if (t == null) { ta.focus(); rtSel(ta, last[0], last[1]); return; }
-    op(r => { const old = [].concat(r.ruby || []).find(x => (x.pos === "below") === (pos === "below")) || {};   // 글만 바꾸면 그 윗주의 문자 스타일 · 거리는 그대로
-      const rbs = [].concat(r.ruby || []).filter(x => (x.pos === "below") !== (pos === "below")); if (t.trim()) rbs.push(Object.assign({}, old, {t: t.trim(), pos: pos === "below" ? "below" : "above"}));
-      if (!rbs.length) delete r.ruby; else r.ruby = rbs.length === 1 ? rbs[0] : rbs; });
+    if (rubyEl()) { rubyRow(); return; }
+    const t = prompt("윗주 글", ""); if (!t || !t.trim()) { ta.focus(); rtSel(ta, last[0], last[1]); return; }
+    op(r => { r.ruby = {t: t.trim()}; });
+    rubyRow();
   };
   const keep = (e) => e.preventDefault();                  // 막대를 눌러도 글 칸의 고른 자리가 남게
   bar.querySelectorAll("button").forEach(x => x.onmousedown = keep);
   $("#rt-para").querySelectorAll("[data-ov]").forEach(i => { const put = () => setOv(ov => { const v = i.value.trim(); if (v === "" || isNaN(+v)) delete ov[i.dataset.ov]; else ov[i.dataset.ov] = +v; });
     i.onchange = put; i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); put(); } }; });   // Enter 로도 바로
   $("#rt-ovx").onclick = () => setOv(ov => { for (const k of Object.keys(ov)) delete ov[k]; });
-  $("#rt-rba").onclick = () => setRuby("above");
-  $("#rt-rbb").onclick = () => setRuby("below");
-  $("#rt-clear").onclick = () => op(r => { for (const k of Object.keys(r)) if (!["t", "ps", "inline"].includes(k)) delete r[k]; });   // 붙인 번호(ps · inline)는 문단 구조라 남긴다
-  $("#rt-side").onclick = () => {
-    const t = prompt("고정 개체 글", ""); if (!t || !t.trim()) { ta.focus(); return; }
+  $("#rt-rb").onclick = () => setRuby();
+  $("#rt-clear").onclick = () => op(r => { for (const k of Object.keys(r)) if (!["t", "ps", "inline", "cs", "ruby", "anc", "side", "ov"].includes(k)) delete r[k]; });   // 재정의 지우기 — 문자 스타일 밖에서 바꾼 서식만
+  $("#rt-anc").onclick = () => {                           // 고정 개체 삽입 — 글(사용자 정의, 앵커 표시자 · 기준선) · 옵션은 고정 개체 줄
     const runs = rtRead(ta), at = last[1], k = rtSplit(runs, at);
-    runs.splice(k, 0, {t: "", side: t.trim()});
+    runs.splice(k, 0, {t: "", anc: {text: "글", pos: "custom", xref: "anchor", yref: "baseline"}});
     rtDom(ta, rtRuns(rtNorm(runs))); ta.focus(); rtSel(ta, at + 1, at + 1);
+    chip = ta.querySelectorAll(".rt-side")[[...rtRead(ta)].slice(0, k + 1).filter(rtObj).length - 1] || null; ancRow();
   };
   $("#rt-cs").onchange = () => { const v = $("#rt-cs").value; if (!v) return;
     if (last[0] === last[1]) { $("#st").textContent = "문자 스타일 — 먼저 글자를 고르세요"; ta.focus(); return; }
     op(r => { if (v === "__none") delete r.cs; else r.cs = v; }); $("#rt-cs").value = v; };
-  ta.ondblclick = (e) => { const c = e.target.closest && e.target.closest(".rt-side"); if (!c) return; e.preventDefault();
-    const r = JSON.parse(c.dataset.run); const t = prompt("고정 개체 글 (비우면 지운다)", r.side); if (t == null) return;
-    if (t.trim()) { r.side = t.trim(); c.dataset.run = JSON.stringify(r); c.textContent = "메모 " + r.side; } else c.remove(); };
+  ta.onclick = (e) => { const c = e.target.closest && e.target.closest(".rt-side"); chip = c || null; ancRow(); };   // ⚓ 를 누르면 고정 개체 옵션
   let closed = false;
   const outside = (e) => {                                 // 창 밖을 누르면 저장하고 닫는다 — 개체를 누르면 편집기가 누르기를 가로채 글 칸이 포커스를 잃지 않는다(도형 위 확정)
     if (ta.contains(e.target) || bar.contains(e.target) || (e.target.closest && e.target.closest(".selmenu"))) return;
@@ -1787,13 +1816,95 @@ function palDrag(el, payload) {
 }
 // 획 더보기 — 정렬·점선 패턴·연결·화살촉 (인디자인 획 패널)
 function strokeMore(a, arrows) {
-  const st = a.stroke || {};
+  const st = a.stroke || {}, typ = st.type || (st.dash ? "dashed" : "");
   return `<h3>획 — 인디자인 획 패널</h3>
-    <div class="m3"><label>정렬<select data-a="stroke.align">${[["center", "가운데"], ["inside", "안쪽"], ["outside", "바깥쪽"]].map(([v, n]) => `<option value="${v}" ${(st.align || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>연결<select data-a="stroke.join">${[["miter", "각지게"], ["round", "둥글게"], ["bevel", "깎기"]].map(([v, n]) => `<option value="${v}" ${(st.join || "miter") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>색조 %<input type="number" data-a="stroke.tint" min="0" max="100" step="5" value="${st.tint == null ? 100 : st.tint}"></label></div>
-    <div class="m3"><label>점선 패턴<input type="text" data-a="dashpat" value="${(st.dash || []).join(", ")}" placeholder="2, 1"></label><label>간격 색${colorSel2("stroke.gap_color", st.gap_color, true)}</label><label></label></div>
-    ${arrows ? `<div class="m3"><label>시작 촉<select data-a="stroke.start">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.start || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>끝 촉<select data-a="stroke.end">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.end || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>마이터<input type="number" data-a="stroke.miter" step="1" min="1" value="${st.miter || 4}"></label></div>
-    <div class="m3"><label title="인디자인 획 — 끝모양 (열린 경로의 양 끝)">끝모양<select data-a="stroke.cap">${[["butt", "자름"], ["round", "둥글게"], ["square", "네모"]].map(([v, n]) => `<option value="${v}" ${(st.cap || "butt") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label></label><label></label></div>` : ""}`;
+    <div class="m3"><label>획 정렬<select data-a="stroke.align">${[["center", "중앙"], ["inside", "안쪽"], ["outside", "바깥쪽"]].map(([v, n]) => `<option value="${v}" ${(st.align || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>연결<select data-a="stroke.join">${[["miter", "마이터 연결"], ["round", "원형 연결"], ["bevel", "경사 연결"]].map(([v, n]) => `<option value="${v}" ${(st.join || "miter") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>색조 %<input type="number" data-a="stroke.tint" min="0" max="100" step="5" value="${st.tint == null ? 100 : st.tint}"></label></div>
+    ${typ === "dashed" ? `<div class="m3"><label title="파선 — 대시 · 간격 pt 를 차례로">대시 · 간격 pt<input type="text" data-a="dashpat" value="${(st.dash || []).join(", ")}" placeholder="4, 2"></label><label>간격 색상${colorSel2("stroke.gap_color", st.gap_color, true)}</label><label></label></div>` : ""}
+    ${typ === "dotted" ? `<div class="m3"><label title="점선 — 점 사이 pt">점 간격 pt<input type="number" step="0.1" data-p="stroke.gap" value="${st.gap ?? ""}" placeholder="두께의 2배"></label><label></label><label></label></div>` : ""}
+    ${arrows ? `<div class="m3"><label>시작<select data-a="stroke.start">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.start || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>끝<select data-a="stroke.end">${ARROWS.map(([v, n]) => `<option value="${v}" ${(st.end || "none") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>마이터 한도<input type="number" data-a="stroke.miter" step="1" min="1" value="${st.miter || 4}"></label></div>
+    <div class="m3"><label title="열린 경로의 양 끝">끝모양<select data-a="stroke.cap">${[["butt", "평평한 끝모양"], ["round", "둥근 끝모양"], ["square", "돌출 끝모양"]].map(([v, n]) => `<option value="${v}" ${(st.cap || "butt") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label></label><label></label></div>` : ""}`;
 }
+// ── 칸 도우미(인디자인 이름 · 단위) — 글 패널 · 스타일 창이 같이 쓴다 ──
+const FS_NAME = {100: "Thin", 200: "ExtraLight", 300: "Light", 350: "DemiLight", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black"};
+function fstyleSel(attr, key, fam, w, it) {                   // 글꼴 스타일 — 그 글꼴 모음에 있는 굵기 · 기울임꼴(인디자인 글꼴 스타일)
+  const real = String(fam || "").startsWith("$") ? (((skin() || {}).tokens || {}).font || {})[String(fam).slice(1)] : fam;
+  const cur = (w || it) ? `${w || 400}${it ? "i" : ""}` : "";
+  const faces = [...new Set(((LIB.font_faces || {})[real] || ["400", "700"]).concat(cur ? [cur] : []))];
+  return `<select ${attr}="${key}" data-kind="fstyle"><option value="">(기본)</option>${faces.map(f => `<option value="${f}" ${f === cur ? "selected" : ""}>${FS_NAME[parseInt(f)] || parseInt(f)}${f.endsWith("i") ? " Italic" : ""}</option>`).join("")}</select>`;
+}
+const ALIGNS = [["left", "왼쪽 정렬"], ["center", "가운데 정렬"], ["right", "오른쪽 정렬"], ["justify", "양쪽 정렬(마지막 줄 왼쪽)"], ["justify_center", "양쪽 정렬(마지막 줄 가운데)"], ["justify_right", "양쪽 정렬(마지막 줄 오른쪽)"], ["justify_all", "모두 정렬"]];
+const NUMF = [["1.", "1. 2. 3."], ["1)", "1) 2) 3)"], ["(1)", "(1) (2) (3)"], ["①", "① ② ③"], ["01", "01 02 03"], ["A.", "A. B. C."], ["a.", "a. b. c."], ["가.", "가. 나. 다."]];
+const AFTERS = [["\t", "탭 문자(^t)"], [" ", "공백"], ["none", "없음"]];
+const optList = (list, cur, blank) => (blank != null ? `<option value="">${blank}</option>` : "") + list.map(([v, n]) => `<option value="${esc(v)}" ${String(cur ?? "") === v ? "selected" : ""}>${n}</option>`).join("");
+const gp = (o, path) => path.split(".").reduce((x, k) => (x == null ? undefined : x[k]), o);
+function pathSet(o, path, v) {                                 // "a.b.c" 에 값 — 빈 값이면 지우고 빈 묶음도 지운다
+  const ks = path.split("."), stack = [o]; let cur = o;
+  for (const k of ks.slice(0, -1)) { if (!cur[k] || typeof cur[k] !== "object" || Array.isArray(cur[k])) cur[k] = {}; cur = cur[k]; stack.push(cur); }
+  const last = ks[ks.length - 1];
+  if (v === undefined || v === null || v === "" || v === false) delete cur[last]; else cur[last] = v;
+  for (let i = ks.length - 2; i >= 0; i--) { const par = stack[i], k = ks[i]; if (par[k] && typeof par[k] === "object" && !Array.isArray(par[k]) && !Object.keys(par[k]).length) delete par[k]; }
+}
+function tabsOf(v) {                                            // 「30 right ., 60 center」 → 탭 정지(X mm · 정렬 · 채움 문자)
+  const ts = String(v).split(",").map(x => x.trim()).filter(Boolean).map(x => { const [at, al, ld] = x.split(/\s+/); const t = {at: +at};
+    if (["left", "center", "right", "decimal"].includes(al)) t.align = al; if (ld) t.leader = ld.slice(0, 4); return t; }).filter(t => t.at > 0);
+  return ts.length ? ts : undefined;
+}
+const tabsTxt = (ts) => (ts || []).map(t => [t.at, t.align || "left", t.leader || ""].filter(x => x !== "").join(" ")).join(", ");
+function inVal(i) {                                             // 칸 값 → 데이터 값(data-kind: 단위 · 꼴)
+  const kind = i.dataset.kind || "";
+  if (i.type === "checkbox") return i.checked || undefined;
+  if (i.value === "" && kind !== "keep") return undefined;
+  if (kind === "bshift") return Math.round(-(+i.value) * 0.352778 * 1000) / 1000;   // 기준선 이동 pt(위가 +) → 데이터는 내림 mm
+  if (kind === "tabs") return tabsOf(i.value);
+  if (kind === "num" || (i.type === "number")) return +i.value;
+  if (kind === "bool") return i.value === "1" || undefined;
+  return i.value;
+}
+function setField(o, path, i) {                                  // 글꼴 스타일은 굵기 + 기울임꼴 둘을, 나머지는 그 자리 하나를
+  if (i.dataset.kind === "fstyle") { const v = i.value; const base = path.includes(".") ? gp(o, path.slice(0, path.lastIndexOf("."))) || o : o;
+    if (!v) { delete base.weight; delete base.i; } else { base.weight = parseInt(v); if (v.endsWith("i")) base.i = true; else delete base.i; } delete base.b; return; }
+  pathSet(o, path, inVal(i));
+}
+const bshiftOf = (drop) => drop != null ? Math.round(-drop / 0.352778 * 100) / 100 : "";
+
+// 단락 스타일 옵션(인디자인) — 기본 문자 형식 · 들여쓰기 및 간격 · 탭 · 단락 경계선 · 단락 테두리 · 단락 음영 · 분리 금지 옵션 · 균등 배치 · 글머리 기호 및 번호 매기기
+function pstyleHtml(at, st, toks) {
+  const q = (k) => `${at}="${esc(st.__n)}:${k}"`, v = (k) => gp(st, k) ?? "";
+  const num = (k, label, step = 0.1, tip = "") => `<label${tip ? ` title="${tip}"` : ""}>${label}<input type="number" step="${step}" ${q(k)} value="${v(k)}"></label>`;
+  const col = (k, label) => `<label>${label}<input type="text" list="tok-col" ${q(k)} value="${esc(v(k))}" placeholder="없음"></label>`;
+  return `<details class="ps"><summary>기본 문자 형식 · 들여쓰기 및 간격</summary>
+    <div class="m3"><label>글꼴${fontSel(at, `${st.__n}:font`, st.font, toks, "-")}</label><label>글꼴 스타일${fstyleSel(at, `${st.__n}:fstyle`, st.font, st.weight, st.i)}</label>${num("size", "크기 pt", 0.5)}</div>
+    <div class="m3">${num("leading", "행간 pt", 0.5)}${num("tracking", "자간", 10, "1/1000 em")}${col("color", "문자 색상")}</div>
+    <div class="m3"><label>정렬<select ${q("align")}>${optList(ALIGNS, st.align, "-")}</select></label>${num("tsume", "자간 축소 %", 5)}<label title="인디자인 기준선 이동 — 위가 +">기준선 이동 pt<input type="number" step="0.1" ${q("drop")} data-kind="bshift" value="${bshiftOf(st.drop)}"></label></div>
+    <div class="m3">${num("indent", "왼쪽 들여쓰기 mm", 0.5)}${num("indent_first", "첫 줄 왼쪽 들여쓰기 mm", 0.5)}${num("indent_right", "오른쪽 들여쓰기 mm", 0.5)}</div>
+    <div class="m3">${num("space_before", "단락 앞 공백 mm", 0.5)}${num("space_after", "단락 뒤 공백 mm", 0.5)}${num("space_same", "동일한 스타일 단락 사이 간격 mm", 0.5)}</div></details>
+  <details class="ps"><summary>탭 · 글머리 기호 및 번호 매기기</summary>
+    <div class="f"><span title="탭 정지 — X(텍스트 프레임 안쪽 왼쪽에서 mm) 정렬(left · center · right · decimal) 채움 문자. 마지막 정지 뒤는 기본 탭 정지(12.7mm 마다)">탭 정지</span><input type="text" ${q("tabs")} data-kind="tabs" value="${esc(tabsTxt(st.tabs))}" placeholder="예: 30 right ., 60 center"></div>
+    <div class="m3"><label>목록 유형<select ${q("list.type")}>${optList([["bullet", "글머리 기호"], ["number", "번호"]], gp(st, "list.type"), "없음")}</select></label>
+      <label>글머리 기호 문자<input type="text" ${q("list.char")} value="${esc(v("list.char"))}" placeholder="•"></label><label>번호 형식<select ${q("list.format")}>${optList(NUMF, gp(st, "list.format"), "-")}</select></label></div>
+    <div class="m3">${num("list.start", "시작 번호", 1)}<label>텍스트 뒤<select ${q("list.after")} data-kind="keep">${optList(AFTERS, gp(st, "list.after") ?? "\t")}</select></label><label></label></div></details>
+  <details class="ps"><summary>단락 음영 · 단락 테두리 · 단락 경계선</summary>
+    <div class="m4">${col("shade", "단락 음영")}<label>너비<select ${q("shade_fit")} data-kind="bool">${optList([["", "열"], ["1", "텍스트"]], st.shade_fit ? "1" : "")}</select></label>${num("shade_r", "모퉁이 크기 mm")}<label></label></div>
+    <div class="m4" title="음영 오프셋 mm — 글에서 음영 가장자리까지 밖(+) · 안(−). 음영은 글 자리를 바꾸지 않는다">${num("shade_ot", "오프셋 위쪽")}${num("shade_ob", "오프셋 아래쪽")}${num("shade_ol", "오프셋 왼쪽")}${num("shade_or", "오프셋 오른쪽")}</div>
+    <div class="m4">${num("border", "단락 테두리 pt")}${col("border_color", "테두리 색상")}<label>너비<select ${q("border_fit")} data-kind="bool">${optList([["", "열"], ["1", "텍스트"]], st.border_fit ? "1" : "")}</select></label>${num("border_r", "모퉁이 크기 mm")}</div>
+    <div class="m4" title="테두리 오프셋 mm">${num("border_ot", "오프셋 위쪽")}${num("border_ob", "오프셋 아래쪽")}${num("border_ol", "오프셋 왼쪽")}${num("border_or", "오프셋 오른쪽")}</div>
+    <div class="m4">${num("rule_above.w", "위 경계선 pt")}${col("rule_above.color", "색상")}${num("rule_above.offset", "오프셋 mm", 0.1, "첫 줄 기준선에서 경계선 아래 끝까지")}<label>너비<select ${q("rule_above.width")}>${optList([["", "열"], ["text", "텍스트"]], gp(st, "rule_above.width"))}</select></label></div>
+    <div class="m4">${num("rule_below.w", "아래 경계선 pt")}${col("rule_below.color", "색상")}${num("rule_below.offset", "오프셋 mm", 0.1, "끝 줄 기준선에서 경계선 위 끝까지")}<label>너비<select ${q("rule_below.width")}>${optList([["", "열"], ["text", "텍스트"]], gp(st, "rule_below.width"))}</select></label></div></details>
+  <details class="ps"><summary>분리 금지 옵션 · 균등 배치</summary>
+    <div class="m4"><label title="단 · 페이지 끝에 혼자 남지 않게 다음 단락과 함께">다음 행과 함께 유지<input type="checkbox" ${q("keep_next")} ${st.keep_next ? "checked" : ""} style="width:auto"></label><label title="단락의 모든 행">행 분리 금지<input type="checkbox" ${q("keep_together")} ${st.keep_together ? "checked" : ""} style="width:auto"></label>${num("keep_first", "시작 N행", 1)}${num("keep_last", "끝 N행", 1)}</div>
+    <div class="m4" title="인디자인 균등 배치 — 양쪽 정렬 단락의 단어 간격 · 문자 간격(공백 폭의 %). 비우면 텍스트 프레임 값">${num("jc.word_min", "단어 간격 최소 %", 5)}${num("jc.word_max", "단어 간격 최대 %", 5)}${num("jc.letter_min", "문자 간격 최소 %", 1)}${num("jc.letter_max", "문자 간격 최대 %", 1)}</div></details>`;
+}
+
+// 문자 스타일 옵션(인디자인) — 기본 문자 형식 · 고급 문자 형식 · 문자 색상 · 밑줄 옵션
+function cstyleHtml(at, c, n, toks) {
+  const q = (k) => `${at}="${esc(n)}:${k}"`, v = (k) => gp(c, k) ?? "";
+  const num = (k, label, step = 0.1, tip = "") => `<label${tip ? ` title="${tip}"` : ""}>${label}<input type="number" step="${step}" ${q(k)} value="${v(k)}"></label>`;
+  return `<div class="m3"><label>글꼴${fontSel(at, `${n}:font`, c.font, toks, "-")}</label><label>글꼴 스타일${fstyleSel(at, `${n}:fstyle`, c.font, c.weight, c.i)}</label>${num("size", "크기 pt", 0.5)}</div>
+    <div class="m3"><label>문자 색상<input type="text" list="tok-col" ${q("color")} value="${esc(c.color || "")}" placeholder="텍스트 프레임 색"></label>${num("track", "자간", 10, "1/1000 em")}${num("bshift", "기준선 이동 pt", 0.1, "위가 +")}</div>
+    <div class="m3"><label>대소문자<select ${q("case")}>${optList([["upper", "모두 대문자"], ["small", "작은 대문자"]], c.case, "보통")}</select></label><label title="이 글자들은 줄 끝에서 나뉘지 않는다">줄 바꿈 없음<input type="checkbox" ${q("nobreak")} ${c.nobreak ? "checked" : ""} style="width:auto"></label><label>밑줄<input type="checkbox" ${q("u")} data-re="1" ${c.u ? "checked" : ""} style="width:auto"></label></div>
+    ${c.u ? `<div class="m4" title="밑줄 옵션 — 오프셋은 기준선에서 밑줄 위 끝까지(아래가 +). 굵게 올리면 형광 띠">${num("u_w", "두께 pt")}${num("u_off", "오프셋 pt")}<label>유형<select ${q("u_style")}>${optList([["wavy", "물결"], ["dotted", "점선"], ["dashed", "파선"], ["double", "이중"]], c.u_style, "실선")}</select></label><label>색상<input type="text" list="tok-col" ${q("u_color")} value="${esc(c.u_color || "")}" placeholder="문자 색상"></label></div>` : ""}`;
+}
+
 function fontSel(attr, key, cur, toks, blank) {                  // 서체 고르기 — 옷 견본($…) + 시스템 서체(LIB.fonts). 「직접 입력」 없음 — 없는 서체는 「＋ 서체」로 등록
   const fams = Object.keys(LIB.fonts || {});
   const tokOpts = Object.entries(toks || {}).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} — ${esc(v)}</option>`).join("");
@@ -1812,7 +1923,7 @@ async function uploadFont(file) {                                  // 서체 등
 }
 function cstyleSel(k, cur, attr = "data-a") {             // 문자 스타일 고르기 — 지금 브랜드의 문자 스타일(인디자인 문자 스타일). 새로 만들기는 브랜드 패널
   const cs = (skin() || {}).cstyles || {};
-  return `<select ${attr}="${k}"><option value="">없음</option>${Object.keys(cs).map(n => `<option value="${esc(n)}" ${cur === n ? "selected" : ""}>${esc(n)}</option>`).join("")}${cur && !cs[cur] ? `<option value="${esc(cur)}" selected>${esc(cur)} (이 문서에 없음)</option>` : ""}</select>`;
+  return `<select ${attr}="${k}"><option value="">[없음]</option>${Object.keys(cs).map(n => `<option value="${esc(n)}" ${cur === n ? "selected" : ""}>${esc(n)}</option>`).join("")}${cur && !cs[cur] ? `<option value="${esc(cur)}" selected>${esc(cur)} (이 문서에 없음)</option>` : ""}</select>`;
 }
 function colorSel2(k, cur, none) {                            // strokeMore 는 side() 밖이라 옷 토큰을 여기서 읽는다
   const sk2 = skin() || {tokens: {}};
@@ -2012,46 +2123,29 @@ function panelMap(hd, body) {
 function panelSkins(hd, body) {
     const sk = skin();
     hd.innerHTML = `<b>스타일 · 색상 견본</b>`;
+    const toks = Object.fromEntries(Object.keys(sk.tokens.font || {}).map(f => [f, (sk.tokens.font || {})[f]]));
     body.insertAdjacentHTML("beforeend", `<h3>색상 견본</h3><div class="colors">${Object.entries((sk.tokens || {}).color || {}).map(([k, v]) => `<label><input type="color" data-col="${k}" value="${v}">${k}</label>`).join("")}</div>
-      <h3>단락 스타일 <span class="note" style="display:inline">텍스트 프레임의 「스타일」이 가리킨다 · 원고 docx 의 단락 스타일 이름과 같으면 데이터 필드도 맞춰진다</span></h3>
-      ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${n}" title="지우기">✕</span>
-        <div class="m3"><label>서체${fontSel("data-st", `${n}:font`, st.font, Object.fromEntries(Object.keys(sk.tokens.font || {}).map(f => [f, (sk.tokens.font || {})[f]])), "-")}</label><label>크기 pt<input type="number" step="0.5" data-st="${n}:size" value="${st.size == null ? "" : st.size}"></label><label>행간 pt<input type="number" step="0.5" data-st="${n}:leading" value="${st.leading == null ? "" : st.leading}" placeholder="자동"></label></div>
-        <datalist id="tok-col"><option value="none" label="[없음]">${Object.keys(sk.tokens.color || {}).map(c => `<option value="$${c}">`).join("")}</datalist>
-        <div class="m3"><label title="견본 이름($ink) 또는 #색번호">색<input type="text" list="tok-col" data-st="${n}:color" value="${esc(st.color || "")}" placeholder="$ink"></label><label>정렬<select data-st="${n}:align"><option value="">-</option>${["left", "center", "right", "justify"].map(v => `<option ${st.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></label><label>자간 ‰<input type="number" step="10" data-st="${n}:tracking" value="${st.tracking || ""}"></label></div>
-        <div class="m3"><label>첫 줄 왼쪽 들여쓰기 mm<input type="number" step="0.5" data-st="${n}:indent_first" value="${st.indent_first || ""}"></label><label>단락 앞 공백<input type="number" step="0.5" data-st="${n}:space_before" value="${st.space_before || ""}"></label><label>굵게<input type="checkbox" data-st="${n}:b" ${st.b ? "checked" : ""} style="width:auto"></label></div>
-        <div class="m3"><label>굵기<select data-st="${n}:weight"><option value="">-</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option ${+st.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label><label>단락 뒤 공백<input type="number" step="0.5" data-st="${n}:space_after" value="${st.space_after ?? ""}"></label></div>
-        <div class="m4"><label>왼쪽 들여쓰기 mm<input type="number" step="0.5" data-st="${n}:indent" value="${st.indent ?? ""}"></label><label>오른쪽 들여쓰기 mm<input type="number" step="0.5" data-st="${n}:indent_right" value="${st.indent_right ?? ""}"></label><label title="인디자인 자간 축소 — 글자 양옆 빈 곳을 % 줄인다">자간 축소 %<input type="number" step="5" min="0" max="100" data-st="${n}:tsume" value="${st.tsume ?? ""}"></label><label title="단·페이지 끝에 혼자 남지 않게 다음 문단과 같이 넘긴다(번호·발문)">다음 행과 함께 유지<input type="checkbox" data-st="${n}:keep_next" ${st.keep_next ? "checked" : ""} style="width:auto"></label></div>
-        <div class="m4"><label title="인디자인 단락 음영 — 색상(견본 이름 또는 #색번호). 잇닿은 같은 음영 문단은 한 상자. 음영은 글 자리를 바꾸지 않는다">단락 음영<input type="text" list="tok-col" data-st="${n}:shade" value="${esc(st.shade || "")}" placeholder="없음"></label><label title="인디자인 단락 음영 너비 — 열(프레임 폭) · 텍스트(글 폭)">너비<select data-st="${n}:shade_fit"><option value="">열</option><option value="1" ${st.shade_fit ? "selected" : ""}>텍스트</option></select></label><label title="인디자인 단락 음영 모퉁이 크기 mm(둥글게)">모퉁이 크기 mm<input type="number" step="0.1" min="0" data-st="${n}:shade_r" value="${st.shade_r ?? ""}"></label><label title="문단을 단·페이지에서 쪼개지 않는다(선지 묶음)">행 분리 금지<input type="checkbox" data-st="${n}:keep_together" ${st.keep_together ? "checked" : ""} style="width:auto"></label></div>
-        <div class="m4" title="인디자인 단락 음영 오프셋 mm — 글(줄 상자)에서 음영 가장자리까지 밖(+) · 안(−)으로. 너비 「열」이면 왼쪽 · 오른쪽은 프레임 가장자리에서"><label>오프셋 위쪽<input type="number" step="0.1" data-st="${n}:shade_ot" value="${st.shade_ot ?? ""}"></label><label>오프셋 아래쪽<input type="number" step="0.1" data-st="${n}:shade_ob" value="${st.shade_ob ?? ""}"></label><label>오프셋 왼쪽<input type="number" step="0.1" data-st="${n}:shade_ol" value="${st.shade_ol ?? ""}"></label><label>오프셋 오른쪽<input type="number" step="0.1" data-st="${n}:shade_or" value="${st.shade_or ?? ""}"></label></div>
-        <div class="m4"><label title="인디자인 단락 테두리 — 획 두께 pt(음영과 같은 자리)">단락 테두리 pt<input type="number" step="0.1" min="0" data-st="${n}:border" value="${st.border ?? ""}"></label><label title="단락 테두리 색상 — 견본 이름 또는 #색번호">테두리 색상<input type="text" list="tok-col" data-st="${n}:border_color" value="${esc(st.border_color || "")}"></label><label title="인디자인 기준선 이동 — 글자를 기준선에서 위(+) · 아래(−)로 pt (앞에 붙인 번호 — 발문보다 조금 아래면 −)">기준선 이동 pt<input type="number" step="0.1" data-st="${n}:drop" value="${st.drop != null ? Math.round(-st.drop / 0.352778 * 100) / 100 : ""}"></label></div>
-        <div class="m4" title="양끝 정렬 균등 배치 — 낱말 최소·최대 % · 자간 최소·최대 ‰ (인디자인 균등 배치). 비우면 텍스트 프레임 것"><label>단어 간격 최소<input type="number" step="5" data-st="${n}:jc.word_min" value="${(st.jc || {}).word_min ?? ""}"></label><label>단어 간격 최대<input type="number" step="5" data-st="${n}:jc.word_max" value="${(st.jc || {}).word_max ?? ""}"></label><label>자간 최소<input type="number" step="1" data-st="${n}:jc.letter_min" value="${(st.jc || {}).letter_min ?? ""}"></label><label>자간 최대<input type="number" step="5" data-st="${n}:jc.letter_max" value="${(st.jc || {}).letter_max ?? ""}"></label></div>
-        <div class="m3"><label title="인디자인 행 유지 — 단·페이지 끝에 이 문단이 처음 몇 줄 이상 남을 때만 나눈다">시작 N행<input type="number" step="1" min="0" data-st="${n}:keep_first" value="${st.keep_first ?? ""}"></label><label title="다음 단·페이지로 마지막 몇 줄 이상 넘길 때만 나눈다">끝 N행<input type="number" step="1" min="0" data-st="${n}:keep_last" value="${st.keep_last ?? ""}"></label><label title="같은 스타일 문단 사이 간격 mm(인디자인 「동일한 스타일 단락 사이 간격」) — 선지끼리">동일한 스타일 단락 사이<input type="number" step="0.5" data-st="${n}:space_same" value="${st.space_same ?? ""}"></label></div></div>`).join("")}
-      <div class="row"><button class="btn sm sub" id="st-new">＋ 단락 스타일</button></div>
-      <h3>문자 스타일 <span class="note" style="display:inline">글자 일부의 꾸밈(인디자인 문자 스타일) — 글에서 고른 글자 · GREP 규칙 · 윗주 · 고정 개체가 가리킨다</span></h3>
-      ${Object.entries(sk.cstyles || {}).map(([n, c]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-csx="${esc(n)}" title="지우기">✕</span>
-        <div class="m3"><label>서체${fontSel("data-cs", `${n}:font`, c.font, Object.fromEntries(Object.keys(sk.tokens.font || {}).map(f => [f, (sk.tokens.font || {})[f]])), "-")}</label><label>크기 pt<input type="number" step="0.5" data-cs="${esc(n)}:size" value="${c.size ?? ""}"></label><label>굵기<select data-cs="${esc(n)}:weight"><option value="">-</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option ${+c.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
-        <div class="m3"><label title="견본 이름($ink) 또는 #색번호">색<input type="text" list="tok-col" data-cs="${esc(n)}:color" value="${esc(c.color || "")}" placeholder="텍스트 프레임 색"></label><label>자간 ‰<input type="number" step="10" data-cs="${esc(n)}:track" value="${c.track ?? ""}"></label><label title="기준선 이동 pt — 양수면 위로">기준선 pt<input type="number" step="0.1" data-cs="${esc(n)}:bshift" value="${c.bshift ?? ""}"></label></div>
-        <div class="m3"><label>굵게<input type="checkbox" data-cs="${esc(n)}:b" ${c.b ? "checked" : ""} style="width:auto"></label><label>기울임<input type="checkbox" data-cs="${esc(n)}:i" ${c.i ? "checked" : ""} style="width:auto"></label><label>밑줄<input type="checkbox" data-cs="${esc(n)}:u" ${c.u ? "checked" : ""} style="width:auto"></label></div>
-        ${c.u ? `<div class="m4"><label>모양<select data-cs="${esc(n)}:u_style">${[["", "실선"], ["wavy", "물결"], ["dotted", "점선"], ["dashed", "파선"], ["double", "겹선"]].map(([v, m]) => `<option value="${v}" ${(c.u_style || "") === v ? "selected" : ""}>${m}</option>`).join("")}</select></label><label>굵기 mm<input type="number" step="0.01" data-cs="${esc(n)}:line" value="${c.line ?? ""}" placeholder="0.18"></label><label title="기준선 → 밑줄 가운데">내림 mm<input type="number" step="0.05" data-cs="${esc(n)}:line_off" value="${c.line_off ?? ""}" placeholder="0.4"></label><label>선 색<input type="text" list="tok-col" data-cs="${esc(n)}:line_color" value="${esc(c.line_color || "")}" placeholder="글자색"></label></div>` : ""}
-        <div class="m3"><label title="글 뒤 색 면 — 형광 · 번호 배지">바탕<input type="text" list="tok-col" data-cs="${esc(n)}:bg" value="${esc(c.bg || "")}" placeholder="없음"></label><label title="바탕을 글 밖으로 넓히는 양 — 글 자리는 그대로">바탕 여백 mm<input type="number" step="0.1" data-cs="${esc(n)}:bg_pad" value="${c.bg_pad ?? ""}"></label><label>바탕 모서리 mm<input type="number" step="0.1" data-cs="${esc(n)}:bg_r" value="${c.bg_r ?? ""}"></label></div>
-        <div class="m3" title="띠 — 바탕을 글 높이 전체가 아니라 가로 띠로(형광펜). 비우면 글 높이 전체"><label>띠 두께 mm<input type="number" step="0.05" data-cs="${esc(n)}:bg_band" value="${c.bg_band ?? ""}"></label><label title="기준선에서 띠 가운데까지 위로">띠 높이 mm<input type="number" step="0.05" data-cs="${esc(n)}:bg_off" value="${c.bg_off ?? ""}"></label><label></label></div></div>`).join("")}
-      <div class="row"><button class="btn sm sub" id="cs-new">＋ 문자 스타일</button></div>
+      <datalist id="tok-col"><option value="none" label="[없음]">${Object.keys(sk.tokens.color || {}).map(c => `<option value="$${c}">`).join("")}</datalist>
+      <h3>단락 스타일 <span class="note" style="display:inline">인디자인 단락 스타일 옵션 — 데이터 필드마다 고른다</span></h3>
+      ${Object.entries(sk.styles || {}).map(([n, st]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-stx="${esc(n)}" title="삭제">✕</span>${pstyleHtml("data-st", Object.assign({__n: n}, st), toks)}</div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="st-new">＋ 새 단락 스타일</button></div>
+      <h3>문자 스타일 <span class="note" style="display:inline">인디자인 문자 스타일 옵션 — 고른 글자 · GREP 스타일 · 같은 단락에 이어 쓰는 필드(번호)가 가리킨다</span></h3>
+      ${Object.entries(sk.cstyles || {}).map(([n, c]) => `<div class="li" style="cursor:default"><b>${esc(n)}</b><span class="x" data-csx="${esc(n)}" title="삭제">✕</span>${cstyleHtml("data-cs", c, n, toks)}</div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="cs-new">＋ 새 문자 스타일</button></div>
 `);
     body.querySelectorAll("[data-col]").forEach(i => i.oninput = () => { sk.tokens.color[i.dataset.col] = i.value; saveSkin(); render(); });
-    body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = i.dataset.st.split(":"); const st = sk.styles[n]; const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
-      if (k === "font" && i.type === "text" && v === "" && String(st[k] || "").startsWith("$")) return;     // 「서체 직접」을 비워도 토큰 서체는 그대로
-      if (k === "drop") { if (v == null) delete st.drop; else st.drop = Math.round(-v * 0.352778 * 1000) / 1000; }   // 칸은 인디자인 기준선 이동(pt, 위가 +) · 데이터는 내림 mm
-      else if (k.startsWith("jc.")) { const kk = k.slice(3); st.jc = Object.assign({}, st.jc); if (v === "" || v == null) delete st.jc[kk]; else st.jc[kk] = v; if (!Object.keys(st.jc).length) delete st.jc; }
-      else if (v === "" || v == null || v === false) delete st[k]; else st[k] = (k === "weight" ? +v : v);
+    const keyOf = (s2) => { const at = s2.lastIndexOf(":"); return [s2.slice(0, at), s2.slice(at + 1)]; };
+    body.querySelectorAll("[data-st]").forEach(i => i.onchange = () => { const [n, k] = keyOf(i.dataset.st); const st = sk.styles[n]; if (!st) return;
+      if (k === "font" && i.type === "text" && i.value === "" && String(st[k] || "").startsWith("$")) return;     // 「서체 직접」을 비워도 토큰 서체는 그대로
+      setField(st, k === "fstyle" ? "fstyle" : k, i);
       saveSkin(); pageSvg = {}; render(); });
-    body.querySelectorAll("[data-cs]").forEach(i => i.onchange = () => { const at = i.dataset.cs.lastIndexOf(":"); const n = i.dataset.cs.slice(0, at), k = i.dataset.cs.slice(at + 1); const c = sk.cstyles[n];
-      const v = i.type === "checkbox" ? i.checked : (i.type === "number" ? (i.value === "" ? null : +i.value) : i.value);
-      if (v === "" || v == null || v === false) delete c[k]; else c[k] = (k === "weight" ? +v : v);
-      saveSkin(); pageSvg = {}; render(); if (k === "u") panel(); });
-    body.querySelectorAll("[data-csx]").forEach(i => i.onclick = () => { if (!confirm(`문자 스타일 ${i.dataset.csx} 을 지울까요? 이 스타일을 쓰는 글자는 꾸밈이 빠진다`)) return; delete sk.cstyles[i.dataset.csx]; saveSkin(); pageSvg = {}; render(); panel(); });
-    $("#cs-new").onclick = () => { const n = prompt("문자 스타일 이름 (예: 형광 민트 · 분석 표기)", ""); if (!n || !n.trim() || /["<>:]/.test(n)) return; sk.cstyles = sk.cstyles || {}; if (!sk.cstyles[n.trim()]) sk.cstyles[n.trim()] = {}; saveSkin(); panel(); };
-    body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 지울까요? 이 스타일을 쓰는 텍스트 프레임은 자기 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
-    $("#st-new").onclick = () => { const n = prompt("단락 스타일 이름 (한글 가능 · 원고 docx 스타일 이름과 맞추려면 데이터 필드 이름과 같게)", ""); if (!n || !n.trim() || /["<>]/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
+    body.querySelectorAll("[data-cs]").forEach(i => i.onchange = () => { const [n, k] = keyOf(i.dataset.cs); const c = sk.cstyles[n]; if (!c) return;
+      setField(c, k, i);
+      saveSkin(); pageSvg = {}; render(); if (i.dataset.re) panel(); });
+    body.querySelectorAll("[data-csx]").forEach(i => i.onclick = () => { if (!confirm(`문자 스타일 ${i.dataset.csx} 을 삭제할까요? 이 스타일을 쓰는 글자는 서식이 빠진다`)) return; delete sk.cstyles[i.dataset.csx]; saveSkin(); pageSvg = {}; render(); panel(); });
+    $("#cs-new").onclick = () => { const n = prompt("새 문자 스타일 이름", ""); if (!n || !n.trim() || /["<>:]/.test(n)) return; sk.cstyles = sk.cstyles || {}; if (!sk.cstyles[n.trim()]) sk.cstyles[n.trim()] = {}; saveSkin(); panel(); };
+    body.querySelectorAll("[data-stx]").forEach(i => i.onclick = () => { if (!confirm(`단락 스타일 ${i.dataset.stx} 을 삭제할까요? 이 스타일을 쓰는 데이터 필드는 텍스트 프레임 값으로 돌아간다`)) return; delete sk.styles[i.dataset.stx]; saveSkin(); pageSvg = {}; render(); panel(); });
+    $("#st-new").onclick = () => { const n = prompt("새 단락 스타일 이름 (원고 docx 의 단락 스타일 이름과 같게 하면 데이터 필드도 맞춰진다)", ""); if (!n || !n.trim() || /["<>:]/.test(n)) return; sk.styles = sk.styles || {}; sk.styles[n] = {font: "$body", size: 8, color: "$ink"}; saveSkin(); panel(); };
 }
 
 function panelSets(hd, body) {
@@ -2122,7 +2216,7 @@ async function makeByPrompt() {
 // ── 오른쪽: 고른 것의 단위 사슬 ──
 // ── 글 잇기 (인디자인 텍스트 스레드) — 같은 이야기(story)의 글상자들이 글 하나를 story_seq 차례로 흘린다 ──
 //  1 = 첫 상자(글·원고 자리·글 모양), 2·3… = 이어지는 상자(빈 그릇). 넘친 줄은 단락 컴포저 스크립트(units_compose.js)가 넘긴다
-let linkPick = null;                                                       // 「다음 상자 잇기」 — 누르기를 기다리는 첫 상자 {fi}
+let linkPick = null;                                                       // 「다음 프레임에 연결」 — 누르기를 기다리는 프레임 {fi, pid} (다른 페이지로 가서 눌러도 된다)
 const storyCont = (a) => !!(a && a.story) && (+a.story_seq || 1) > 1;
 function storyBoxes(name) {                                                // 문서(없으면 이 쪽)에서 그 이야기의 글상자 원자들
   const out = []; for (const p of (plan ? docPages() : [page])) for (const it of p.items || []) if (it.atom && it.atom.t === "text" && it.atom.story && (name == null || it.atom.story === name)) out.push(it.atom);
@@ -2132,24 +2226,25 @@ const storyNames = () => [...new Set(storyBoxes().map(a => a.story))];
 const storyNext = (name, self) => Math.max(0, ...storyBoxes(name).filter(a => a !== self).map(a => +a.story_seq || 1)) + 1;
 function storyNew() { const ns = new Set(storyNames()); let n = 1; while (ns.has("이야기" + n)) n++; return "이야기" + n; }
 function storyHtml(a) {
-  return `<h3>텍스트 스레드 <span class="note" style="display:inline">인디자인 텍스트 스레드 — 넘친 줄이 다음 텍스트 프레임으로(단·페이지를 넘어도)</span></h3>
-    <div class="f"><span title="같은 스토리의 텍스트 프레임들이 글 하나를 순서대로 흘린다. 데이터 필드는 첫 상자 하나">스토리</span><span style="display:flex;gap:4px">
-      <select data-a="story"><option value="">잇지 않음</option>${storyNames().map(n => `<option value="${esc(n)}" ${a.story === n ? "selected" : ""}>${esc(n)}</option>`).join("")}<option value="__new">＋ 새 스토리</option></select>
-      ${a.story ? `<input type="number" data-a="story_seq" min="1" step="1" value="${a.story_seq || 1}" style="width:52px" title="순서 — 1 = 첫 상자(글·데이터 필드를 가진다), 2·3… = 이어지는 상자">` : ""}</span></div>
-    <div class="f"><span></span><button class="btn sm${linkPick ? "" : " sub"}" id="s-link" title="누르고 이어 받을 텍스트 프레임을 누른다 — 다른 페이지의 텍스트 프레임은 그 페이지에서 이 스토리를 고르고 순서를 적는다">${linkPick ? "이어 받을 텍스트 프레임을 누르기… (Esc 취소)" : "＋ 다음 상자 잇기"}</button></div>`;
+  const n = a.story ? storyBoxes(a.story).length : 0;
+  return `<h3>텍스트 스레드 <span class="note" style="display:inline">넘친 글이 다음 텍스트 프레임으로(인디자인 텍스트 스레드 — 다른 페이지 프레임도)</span></h3>
+    ${a.story ? `<div class="note">이 스레드의 ${a.story_seq || 1}번째 프레임 · 모두 ${n}개${(a.story_seq || 1) === 1 ? " — 글 · 데이터 필드는 이 프레임 것" : ""}</div>` : ""}
+    <div class="row"><button class="btn sm${linkPick ? "" : " sub"}" id="s-link" title="누른 뒤 이어 받을 텍스트 프레임을 누른다 — 다른 페이지로 가서 눌러도 된다">${linkPick ? "이어 받을 프레임 누르기… (Esc 취소)" : "＋ 다음 프레임에 연결"}</button>${a.story ? `<button class="btn sm sub" id="s-unlink" title="이 프레임을 스레드에서 뺀다 — 뒤 프레임들은 한 칸씩 당겨진다">스레드 끊기</button>` : ""}</div>`;
 }
-function linkTo(i) {                                                       // 누른 글상자를 이 이야기의 다음 상자로
-  const src = page.items[(linkPick || {}).fi], dst = page.items[i]; linkPick = null;
+function linkTo(i) {                                                       // 누른 프레임을 그 스레드의 다음 프레임으로(다른 페이지 프레임도)
+  const pk = linkPick || {}; linkPick = null;
+  const sp = pk.pid && pk.pid !== page.id ? byId("pages")[pk.pid] : page;
+  const src = sp && (sp.items || [])[pk.fi], dst = page.items[i];
   if (!src || !src.atom || !src.atom.story || !dst || !dst.atom || dst.atom.t !== "text" || dst === src) { say("텍스트 프레임을 눌러야 이어진다"); side(); return; }
   hist(); dst.atom.story = src.atom.story; dst.atom.story_seq = storyNext(src.atom.story, dst.atom);
-  save(); render(); select([i], i); say(`스토리 ${src.atom.story} — ${dst.atom.story_seq}번째 상자로 이었다`);
+  save(); render(); select([i], i); say(`텍스트 스레드 — ${dst.atom.story_seq}번째 프레임으로 이었다`);
 }
 function side() {
   const box = $("#side"); if (!page) { box.innerHTML = ""; return; }
   let h = steps(); const sk = skin();
   // 색 — 견본(브랜드 + 기본) 또는 직접 고르기. 새 디자인은 직접 색으로 그리고, 다 만든 뒤 「브랜드로 등록」하면 견본이 된다
-  const colorSel = (k, cur, none, clear) => { const toks = Object.assign({}, DEFAULT_SKIN.tokens.color, sk.tokens.color || {}); const raw = !!cur && cur !== "none" && !String(cur).startsWith("$");   // clear = 색상 견본 [없음](투명 — 인디자인)
-    return `<span style="display:flex;gap:4px;align-items:center"><select data-a="${k}">${none ? `<option value="">없음</option>` : ""}${clear ? `<option value="none" ${cur === "none" ? "selected" : ""}>[없음]</option>` : ""}${Object.entries(toks).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}<option value="__raw" ${raw ? "selected" : ""}>직접 고르기…</option></select>${raw ? `<input type="color" data-a="${k}" value="${esc(cur)}" title="직접 색"><input type="text" data-a="${k}" value="${esc(cur)}" maxlength="7" style="width:74px" title="색 번호로 — #f9f7ed" spellcheck="false">` : ""}</span>`; };
+  const colorSel = (k, cur, none, clear, attr = "data-a") => { const toks = Object.assign({}, DEFAULT_SKIN.tokens.color, sk.tokens.color || {}); const raw = !!cur && cur !== "none" && !String(cur).startsWith("$");   // clear = 색상 견본 [없음](투명 — 인디자인)
+    return `<span style="display:flex;gap:4px;align-items:center"><select ${attr}="${k}">${none ? `<option value="">없음</option>` : ""}${clear ? `<option value="none" ${cur === "none" ? "selected" : ""}>[없음]</option>` : ""}${Object.entries(toks).map(([n, v]) => `<option value="$${n}" ${cur === "$" + n ? "selected" : ""}>${n} ${v}</option>`).join("")}<option value="__raw" ${raw ? "selected" : ""}>직접 고르기…</option></select>${raw ? `<input type="color" ${attr}="${k}" value="${esc(cur)}" title="직접 색"><input type="text" ${attr}="${k}" value="${esc(cur)}" maxlength="7" style="width:74px" title="색 번호로 — #f9f7ed" spellcheck="false">` : ""}</span>`; };
   if (sel != null && page.items[sel]) {
     const it = page.items[sel]; const u = unitOf(it);
     $("#stitle").textContent = nameOf(it);
@@ -2157,7 +2252,6 @@ function side() {
       const blk = byId("blocks")[it.block] || {variants: []}; const part = partOfBlock(it.block); const cur = (sk.variants || {})[it.block] || (blk.variants[0] || {}).id;
       const flds = Object.keys(blk.fields || {});
       h += `<div class="note">${flds.length ? `데이터 필드: <b>${flds.join(", ")}</b>` : (blk.source === "system" ? "자동 (페이지 번호·구간명)" : "장식")}</div>
-        ${blk.source === "content" ? `<div class="f"><span>책에서</span><label title="정답지·어휘 목록처럼 레코드를 하나씩 아래로 쌓고, 페이지가 차면 다음 페이지에 이어 쌓는다"><input type="checkbox" id="s-flow" ${it.flow ? "checked" : ""} style="width:auto"> 레코드마다 아래로 쌓기</label></div>${it.flow ? `<div class="f"><span>쌓기 간격</span><input type="number" id="s-gap" step="0.5" value="${it.gap == null ? 2 : it.gap}"></div>` : ""}` : ""}
         <div class="row"><button class="btn sm" id="s-edit" title="더블클릭과 같다">✎ 편집</button><button class="btn sm sub" id="s-down" title="이 페이지에서만 낱개로 푼다">그룹 해제</button></div>`;
     } else if (u === "part") {
       const part = byId("parts")[it.part] || {atoms: []};
@@ -2166,136 +2260,124 @@ function side() {
     } else {
       const a = it.atom;
       h += `<div class="row">${sels.size > 1 ? `<button class="btn sm sub" id="s-group">그룹 (Ctrl+G)</button>` : ""}<button class="btn sm" id="s-toblock2">★ 블록으로 저장</button></div>${sels.size > 1 ? `` : ""}`;
-      const sibs = editing && editing.part ? (page.items.map(x => x.atom).filter(x => x && x.bind && x !== a)) : [];   // 같은 요소 안의 글 자리들
-      if (sibs.length) h += `<div class="f"><span title="인디자인 고정 개체 — 글이 길어지면 이 개체도 따라 밀린다. 실제 워크북의 O/X 상자가 이렇게 문장 끝에 붙는다">인라인 고정 개체</span><span style="display:flex;gap:4px">
-        <select data-a="anchor.after"><option value="">안 붙임 (위치 고정)</option>${sibs.map(x => `<option value="${esc(x.bind)}" ${(a.anchor || {}).after === x.bind ? "selected" : ""}>${esc((Object.fromEntries(allSlots()))[x.bind] || x.bind)} 끝에</option>`).join("")}</select>
-        ${(a.anchor || {}).after ? `<input type="number" step="0.5" min="0" style="width:56px" data-a="anchor.gap" value="${a.anchor.gap == null ? 2 : a.anchor.gap}" title="글 끝과의 사이 mm">` : ""}</span></div>`;
-      if (a.t === "text") h += storyHtml(a) + (storyCont(a) ? `<div class="note">앞 상자에서 이어짐 — 스토리 <b>${esc(a.story)}</b>의 ${a.story_seq}번째 상자. 글·데이터 필드·글 모양은 첫 상자 것을 쓰고, 넘친 줄이 여기로 흘러 온다</div>
-        <h3>문자 · 단락 <span class="note" style="display:inline">상자 여백·세로 정렬만 이 상자 것</span></h3>` : `<h3>원고 <span class="note" style="display:inline">이 상자에 무엇이 들어오나 — 우리 것(인디자인의 XML 태그에 해당)</span></h3>
-        <div class="f"><span>데이터 필드</span><span style="display:flex;gap:4px">
-          <select data-a="bindsel" title="이 텍스트 프레임에 원고의 무엇이 들어올지 고른다. 「고정 글」이면 원고와 상관없는 글">
-            <option value="">고정 글 (원고 안 들어옴)</option>
-            ${allSlots().map(([v, n2]) => `<option value="${v}" ${(a.bind || "").split("+")[0] === v ? "selected" : ""}>${esc(n2)}</option>`).join("")}
-            <option value="__other" ${a.bind != null && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? "selected" : ""}>직접 적기…</option>
-          </select>
-          ${a.bind != null && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px" placeholder="데이터 필드" title="새 데이터 필드 — 원고가 이 이름으로 글을 보낸다">` : ""}
-        </span></div>
-        ${a.bind && !a.bind.startsWith("sys.") ? `<div class="f"><span title="한 텍스트 프레임에 데이터 필드를 여럿 — 원고에 나온 순서대로 섞여 흐른다(발문 다음 선지, 문장 다음 해석). 인디자인의 한 스토리 여러 단락 스타일">데이터 필드 더하기</span><select data-a="bindadd"><option value="">＋ 같이 흘릴 데이터 필드…</option>${allSlots().filter(([v]) => !v.startsWith("sys.") && !a.bind.split("+").includes(v)).map(([v, n2]) => `<option value="${v}">${esc(n2)}</option>`).join("")}</select></div>` : ""}
-        ${a.bind && !a.bind.startsWith("sys.") ? a.bind.split("+").map(f => { const d = slotFmt(a, f); return `<div class="f"><span title="데이터 필드마다 서식 — 한 흐름 안에서 이 데이터 필드 단락만 (인디자인 단락 스타일)">${esc((Object.fromEntries(allSlots()))[f] || f)}</span><span style="display:flex;gap:8px"><label><input type="checkbox" data-a="slotfmt.${f}.b" ${d.b ? "checked" : ""}> 굵게</label><label><input type="checkbox" data-a="slotfmt.${f}.i" ${d.i ? "checked" : ""}> 기울임</label><label title="이 데이터 필드 단락을 테두리 상자로 — 잇닿은 단락은 한 상자"><input type="checkbox" data-a="slotfmt.${f}.box" ${d.box ? "checked" : ""}> 상자</label></span></div>
-          <div class="f"><span></span><span style="display:flex;gap:6px"><label title="이 데이터 필드 문단에 입힐 단락 스타일(스타일 · 색상 견본) — 서체·크기·간격·바탕·「다음 문단과 함께」「쪼개지 않기」까지">스타일 <select data-a="slotfmt.${f}.style"><option value="">(텍스트 프레임 것)</option>${Object.keys(sk.styles || {}).map(n => `<option value="${esc(n)}" ${d.style === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label title="따로 문단을 만들지 않고 다음 문단 첫머리에 붙인다 — 문항 번호를 발문 첫 줄 앞에"><input type="checkbox" data-a="slotfmt.${f}.inline" ${d.inline ? "checked" : ""}> 앞에 붙이기</label>${d.inline ? `<label title="붙인 글이 차지하는 폭 mm(번호 칸) — 비우면 글 폭만큼">폭 <input type="number" step="0.5" min="0" style="width:44px" data-a="slotfmt.${f}.inline_w" value="${d.inline_w || ""}"></label><label title="붙인 글 뒤 간격 mm — 뒤 글과 띄운다(인디자인 번호 뒤 간격). 폭을 정했으면 쓰지 않는다">뒤 <input type="number" step="0.1" min="0" style="width:44px" data-a="slotfmt.${f}.inline_gap" value="${d.inline_gap || ""}"></label>` : ""}</span></div>
-          <div class="f"><span></span><span style="display:flex;gap:6px"><label title="왼쪽 들여쓰기 mm">왼쪽 들여쓰기 <input type="number" step="0.5" min="0" style="width:48px" data-a="slotfmt.${f}.indent" value="${d.indent || ""}"></label><label title="단락 앞 공백 mm">단락 앞 공백 <input type="number" step="0.5" min="0" style="width:48px" data-a="slotfmt.${f}.space" value="${d.space || ""}"></label><label title="글머리 글 — 이 데이터 필드 문단 앞에 붙일 글(예: 「= 」 「↔ 」). 원고는 낱말만, 앞 표시는 템플릿이(인디자인 글머리 기호 사용자 정의 문자)">글머리 <input type="text" style="width:44px" data-a="slotfmt.${f}.bullet_text" value="${esc(d.bullet_text || "")}"></label></span></div>
-          <div class="f"><span></span><span style="display:flex;gap:6px;flex-wrap:wrap"><label title="이 데이터 필드 문단마다 붙는 고정 개체(부품) — 인디자인 고정 개체: 문단 끝(인라인) · 다음 줄(줄 위) · 사용자 정의 위치(왼쪽 바깥 꼬리표 등)">고정 개체 <select data-a="slotfmt.${f}.anc.part"><option value="">없음</option>${LIB.parts.map(p => `<option value="${esc(p.id)}" ${(d.anc || {}).part === p.id ? "selected" : ""}>${esc(p.name || p.id)}</option>`).join("")}</select></label>${(d.anc || {}).part ? `<label>위치 <select data-a="slotfmt.${f}.anc.pos">${[["end", "문단 끝"], ["line", "다음 줄"], ["side", "사용자 정의"]].map(([v, n]) => `<option value="${v}" ${((d.anc || {}).pos || "end") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label title="가로 mm — 다음 줄 · 사용자 정의: 텍스트 프레임 안쪽 왼쪽부터">가로 <input type="number" step="0.1" style="width:48px" data-a="slotfmt.${f}.anc.x" value="${(d.anc || {}).x ?? ""}"></label><label title="세로 mm — 사용자 정의: 첫 줄 위 끝부터 · 문단 끝: 위아래로 옮김">세로 <input type="number" step="0.1" style="width:48px" data-a="slotfmt.${f}.anc.dy" value="${(d.anc || {}).dy ?? ""}"></label><label title="간격 mm — 문단 끝: 글과 사이 · 다음 줄: 문단과 사이">간격 <input type="number" step="0.1" style="width:48px" data-a="slotfmt.${f}.anc.gap" value="${(d.anc || {}).gap ?? ""}"></label>${((d.anc || {}).pos || "end") === "end" ? `<label title="켜면 글 끝과 개체 사이가 띄어쓰기 — 줄 끝에 자리가 없으면 개체만 다음 줄로(낱말은 남는다)"><input type="checkbox" data-a="slotfmt.${f}.anc.space" ${(d.anc || {}).space ? "checked" : ""}> 띄어 붙이기</label>` : ""}<label title="같은 데이터 필드 문단이 잇닿으면 첫 문단에만 붙인다(꼬리표 하나 + 문장 여럿)"><input type="checkbox" data-a="slotfmt.${f}.anc.first" ${(d.anc || {}).first ? "checked" : ""}> 첫 문단만</label><label title="같은 데이터 필드 문단이 잇닿으면 끝 문단에만 붙인다(필드 끝에 하나 — 보기 문장들 아래 답 쓰는 줄)"><input type="checkbox" data-a="slotfmt.${f}.anc.last" ${(d.anc || {}).last ? "checked" : ""}> 끝 문단만</label>` : ""}</span></div>`; }).join("") : ""}
-        ${a.bind ? `<div class="note">이 상자 = 원고의 <b>${esc(a.bind.split("+").map(b => (Object.fromEntries(allSlots()))[b] || b).join(" + "))}</b> — ${a.bind.includes("+") ? "원고에 나온 순서대로 섞여 흐른다" : "같은 데이터 필드의 텍스트 프레임이 여럿이면 위에서부터 1번째·2번째 … 값, 하나뿐이면 전부 흘러 들어간다"}</div>`
-                 : `<div class="note">원고와 상관없이 늘 같은 글이면 <b>고정 글</b> 그대로 둔다</div>`}
-        <div class="f"><span title="인디자인 글머리 기호 및 번호 매기기 — 원고가 번호를 안 줘도 저절로 1,2,3… 매긴다. 페이지마다 다시 1부터">번호 매기기</span><span style="display:flex;gap:4px">
-          <select data-a="num"><option value="">없음</option>${NUMS.map(v => `<option value="${v}" ${a.num === v ? "selected" : ""}>${v}</option>`).join("")}</select>
-          ${a.num ? `<input type="number" data-a="num_start" min="1" step="1" value="${a.num_start || 1}" style="width:56px" title="시작 번호">` : ""}</span></div>
-        ${a.num ? `<div class="note">번호는 저절로 매겨진다 — 원고가 번호를 주면 그 번호를 쓰고, 그다음부터 이어 센다</div>` : ""}
-        <div class="f"><span title="${a.bind ? "임시 글 — 스타일을 매길 때 보는 글. 원고를 넣으면 원고 글로 바뀐다" : "이 상자에 늘 찍힐 글"}">${a.bind ? "자리 표시자 텍스트" : "글"}</span><textarea data-a="text" rows="2">${esc(plainText(a.text))}</textarea></div>
-        ${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글(굵게·기울임·다른 색). 여기서 고치면 서식은 사라진다.</div>` : ""}
-        <h3>문자 · 단락 <span class="note" style="display:inline">인디자인 문자·단락 패널과 같다</span></h3>`) + `
-        <div class="f"><span title="인디자인 단락 스타일 — 이 문서의 「스타일 · 색상 견본」에 모아 둔다">단락 스타일</span><select data-a="style"><option value="">(없음)</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
-        ${a.style && (sk.styles || {})[a.style] ? `<div class="note">단락 스타일 <b>${esc(a.style)}</b> 이 서체·크기·색·행간을 정한다 — 「스타일 · 색상 견본」에서 고치면 이 스타일을 쓰는 글이 다 바뀐다</div>` : ""}
-        <div class="f"><span title="인디자인 글꼴 — 시스템 서체에서 고른다. 없으면 「＋ 서체」로 등록">글꼴</span><span style="display:flex;gap:4px;align-items:center">${fontSel("data-a", "font", a.font, Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {}))}<label class="btn sm sub" title="서체 파일(OTF·TTF)을 올려 시스템 서체로 등록">＋ 서체<input type="file" id="font-file" accept=".otf,.ttf" style="display:none"></label></span></div>
-        <div class="f"><span>크기 pt</span><input type="number" data-a="size" step="0.5" value="${a.size}"></div>
-        <div class="f"><span title="글 전체를 굵게 — 로고·코드 배지">굵게</span><input type="checkbox" data-a="b" ${a.b ? "checked" : ""}></div><div class="f"><span title="글 전체를 기울임 — 서체에 기울임 파일이 있어야 한다(없으면 「＋ 서체」로 올린다)">기울임</span><input type="checkbox" data-a="i" ${a.i ? "checked" : ""}></div>
-        <div class="f"><span title="글꼴 굵기 — 서체 집에 그 굵기 파일이 있어야 한다 (예: Montserrat SemiBold = 600)">굵기</span><select data-a="weight"><option value="">기본</option>${(() => { const nm = {100: "Thin", 200: "ExtraLight", 300: "Light", 350: "DemiLight", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black"};   // 서체 집에 있는 굵기(350 DemiLight 등)까지 — 인디자인 글꼴 스타일 목록처럼
-          const ws = [...new Set([100, 200, 300, 400, 500, 600, 700, 800, 900].concat(((LIB.fonts || {})[a.font] || []).map(Number)))].sort((x, y) => x - y);
-          return ws.map(v => `<option value="${v}" ${+a.weight === v ? "selected" : ""}>${v} ${nm[v] || ""}</option>`).join(""); })()}</select></div>
-        <div class="f"><span>색</span>${colorSel("color", a.color)}</div>
-        <div class="f"><span title="인디자인 문자 패널의 언어 — 공백·문장부호를 서체의 그 언어 글리프로(Noto CJK + 한국어: 공백 0.280em·따옴표·괄호·줄표 한국어 꼴). 글자는 늘 영어로 그려 라틴 합자(fi·ff)를 지킨다">언어</span><select data-a="lang">${[["ko", "한국어"], ["en", "영어"], ["ja", "일본어"], ["zh-Hans", "중국어 간체"]].map(([v, n]) => `<option value="${v}" ${(a.lang || "ko") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
-        <h3>상자 <span class="note" style="display:inline">칠·획·모서리 · 자동 크기 — 인디자인 텍스트 프레임</span></h3>
-        <div class="f"><span title="텍스트 프레임 칠 — 안쪽 여백까지 둘러 그린다. 자동 크기면 글을 따라 자라고 줄어든다">칠</span>${colorSel("frame.fill", (a.frame || {}).fill, true)}</div>
-        <div class="f"><span title="텍스트 프레임 획 — 가장자리 가운데">획</span>${colorSel("frame.stroke.color", ((a.frame || {}).stroke || {}).color, true)}</div>
-        <div class="m3"><label>획 두께 pt<input type="number" data-a="frame.stroke.w" step="0.1" min="0" value="${((a.frame || {}).stroke || {}).w || ""}" placeholder="0"></label><label>모서리 mm<input type="number" data-a="frame.radius" step="0.1" min="0" value="${[].concat((a.frame || {}).radius || "")[0]}" placeholder="0"></label><label title="인디자인 자동 크기 조정 — 높이만: 글이 길면 아래로 · 높이와 너비: 한 줄 글은 글 폭 + 여백만큼(최대 상자 폭) · 끔: 상자 그대로(넘침은 검수에 뜬다)">자동 크기<select data-a="auto_size">${[["height", "높이만"], ["both", "높이와 너비"], ["off", "끔"]].map(([v, n]) => `<option value="${v}" ${({false: "off", both: "both", off: "off"}[String(a.auto_size)] || "height") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <div class="f"><span title="안쪽 여백을 변마다 — 위 오른쪽 아래 왼쪽 mm (인디자인 텍스트 프레임 옵션의 인세트). 하나만 적으면 네 변 같게">인세트 간격 mm</span><input type="text" data-a="inset4" value="${[].concat(a.inset == null ? [] : a.inset).join(" ")}" placeholder="위 오른쪽 아래 왼쪽" spellcheck="false"></div>
-        <h3>GREP 스타일 <span class="note" style="display:inline">패턴에 맞는 글자만 서식 — 인디자인 GREP 스타일 · 원고 글에도</span></h3>
-        ${(a.grep || []).map((r, k) => `<div class="grep-rule"><div class="f"><span title="정규식 — 예: \\[[^\\]]*\\] = 대괄호 [ ] 와 그 안">패턴</span><input type="text" data-a="grep.${k}.re" value="${esc(r.re || "")}" spellcheck="false" placeholder="\\[[^\\]]*\\]"></div>
-        <div class="f"><span title="맞은 글자에 입힐 문자 스타일 — 인디자인 GREP 스타일. 아래 칸 값은 그 위에 더한다">문자 스타일</span>${cstyleSel(`grep.${k}.cs`, r.cs)}</div>
-        <div class="f"><span>굵게</span><input type="checkbox" data-a="grep.${k}.b" ${r.b ? "checked" : ""}></div><div class="f"><span>기울임</span><input type="checkbox" data-a="grep.${k}.i" ${r.i ? "checked" : ""}></div>
-        <div class="f"><span>색</span>${colorSel(`grep.${k}.color`, r.color, true, true)}</div>
-        <div class="m3"><label title="맞은 글자만 크기 — 비우면 텍스트 프레임 크기">크기 pt<input type="number" data-a="grep.${k}.size" step="0.5" value="${r.size || ""}"></label><label title="기준선 이동 pt — 양수면 위로, 음수면 아래로">기준선 pt<input type="number" data-a="grep.${k}.bshift" step="0.1" value="${r.bshift || ""}"></label><label>밑줄<input type="checkbox" data-a="grep.${k}.u" ${r.u ? "checked" : ""} style="width:auto"></label></div>
-        <div class="m3"><label title="밑줄 굵기">선 mm<input type="number" data-a="grep.${k}.line" step="0.01" value="${r.line || ""}" placeholder="0.2"></label><label title="밑줄을 기준선 아래로">내림 mm<input type="number" data-a="grep.${k}.line_off" step="0.05" value="${r.line_off || ""}" placeholder="0.4"></label></div>
-        <div class="f"><span title="맞은 글자만 서체 — 비우면 텍스트 프레임 서체 (인디자인 GREP 스타일의 문자 스타일 서체)">서체</span>${fontSel("data-a", `grep.${k}.font`, r.font, null, "텍스트 프레임 서체")}</div>
-        <div class="m3"><label title="맞은 글자만 자간 — em 의 1/1000">자간 ‰<input type="number" data-a="grep.${k}.track" step="1" value="${r.track || ""}"></label><label title="줄바꿈 안 함 — 맞은 글은 줄 끝에서 갈라지지 않고 통째로 다음 줄로(인디자인 No Break). 예: 고르기 [ ⓐ … / ⓑ … ]">줄 바꿈 없음<input type="checkbox" data-a="grep.${k}.nobreak" ${r.nobreak ? "checked" : ""} style="width:auto"></label></div>
-        ${r.u ? `<div class="f"><span title="밑줄 색 — 없으면 글자색">선 색</span>${colorSel(`grep.${k}.line_color`, r.line_color, true)}</div>` : ""}
-        <div class="m3"><label title="맞은 글자만 굵기 — 굵게(700)보다 먼저">굵기<select data-a="grep.${k}.weight"><option value="">기본</option>${[100, 200, 300, 400, 500, 600, 700, 800, 900].map(w => `<option value="${w}" ${+r.weight === w ? "selected" : ""}>${w}</option>`).join("")}</select></label></div>
-        <button class="btn sm sub grep-x" data-k="${k}">이 규칙 빼기</button></div>`).join("")}
-        <button class="btn sm sub" id="s-grep-add">＋ GREP 규칙</button>
-        <h3>윗주 <span class="note" style="display:inline">글자 위·아래 작은 글(인디자인 윗주) — 글을 두 번 눌러 단어를 고르고 「윗주」. 여기는 이 텍스트 프레임의 기본값</span></h3>
-        <div class="f"><span title="윗주 글의 모양 — 이 문서의 문자 스타일">문자 스타일</span>${cstyleSel("ruby.cs", (a.ruby || {}).cs)}</div>
-        <div class="m3"><label title="위 윗주 — 본문 기준선에서 윗주 아래 끝까지">위 거리 mm<input type="number" data-a="ruby.off_above" step="0.1" value="${(a.ruby || {}).off_above ?? ""}" placeholder="0.4"></label><label title="아래 윗주 — 본문 기준선에서 윗주 위 끝까지">아래 거리 mm<input type="number" data-a="ruby.off_below" step="0.1" value="${(a.ruby || {}).off_below ?? ""}" placeholder="0.6"></label><label>맞춤<select data-a="ruby.align">${[["", "본문 첫머리"], ["center", "본문 가운데"]].map(([v, n]) => `<option value="${v}" ${((a.ruby || {}).align || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <h3>고정 개체 <span class="note" style="display:inline">글에 붙어 다니는 메모(인디자인 고정 개체) — 메모가 든 줄 높이의 옆 칸에. 글을 두 번 눌러 「고정 개체」로 넣는다</span></h3>
-        <div class="m4"><label title="텍스트 프레임 왼쪽에서 메모 칸 왼쪽까지">x mm<input type="number" data-a="side.x" step="0.1" value="${(a.side || {}).x ?? ""}"></label><label>폭 mm<input type="number" data-a="side.w" step="0.1" value="${(a.side || {}).w ?? ""}" placeholder="30"></label><label title="그 줄 기준선에서 메모 위 끝까지 — 음수면 위로">위아래 mm<input type="number" data-a="side.off" step="0.1" value="${(a.side || {}).off ?? ""}" placeholder="0"></label><label>행간 pt<input type="number" data-a="side.lead" step="0.1" value="${(a.side || {}).lead ?? ""}" placeholder="자동"></label></div>
-        <div class="f"><span>문자 스타일</span>${cstyleSel("side.cs", (a.side || {}).cs)}</div>
-        <div class="f"><span title="원고(바깥 시스템이 보낸 글)의 약속 표시를 윗주·고정 개체로 — {본문|아래 윗주} · {본문^위 윗주} · {본문^위|아래} · [[고정 개체]]">원고 표시 읽기</span><input type="checkbox" data-a="markup" ${a.markup ? "checked" : ""}></div>
-        <h3>인라인 고정 개체 <span class="note" style="display:inline">부품을 글 끝에 글자처럼 — 줄에 자리가 모자라면 마지막 낱말과 함께 다음 줄로(인디자인 인라인 고정 개체)</span></h3>
-        <div class="f"><span>부품</span><select data-a="tail.part"><option value="">없음</option>${(LIB.parts || []).map(p2 => `<option value="${esc(p2.id)}" ${(a.tail || {}).part === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></div>
-        ${a.tail ? `<div class="m3"><label title="마지막 글자와 개체 사이">간격 mm<input type="number" data-a="tail.gap" step="0.1" value="${a.tail.gap || ""}" placeholder="0"></label><label title="기준선에서 개체 아래 끝까지 — 음수면 위로">아래로 mm<input type="number" data-a="tail.drop" step="0.1" value="${a.tail.drop || ""}" placeholder="0"></label><label title="켜면 글 끝과 개체 사이가 띄어쓰기 — 줄 끝에 자리가 없으면 개체만 다음 줄로(낱말은 남는다). 끄면 마지막 낱말과 붙어 함께 넘어간다"><input type="checkbox" data-a="tail.space" ${a.tail.space ? "checked" : ""} style="width:auto"> 띄어 붙이기</label></div>` : ""}
-        <details class="more" ${view.adv ? "open" : ""}><summary>글자 더 보기 — 정렬 · 행간 · 자간 · 들여쓰기 · 단락 · 탭</summary>
-        <div class="f"><span>정렬</span><select data-a="align">${["left", "center", "right", "justify"].map(v => `<option ${a.align === v ? "selected" : ""}>${v}</option>`).join("")}</select></div>
-        <div class="m3"><label>높이 mm<input type="number" data-a="h" step="0.5" value="${a.h}"></label><label>행간 pt<input type="number" data-a="leading" step="0.5" value="${a.leading || ""}" placeholder="자동"></label><label>자간 ‰<input type="number" data-a="tracking" step="10" value="${a.tracking || 0}"></label></div>
-        <div class="m3"><label>왼쪽 들여쓰기<input type="number" data-a="indent" step="0.5" value="${a.indent || 0}"></label><label>첫 줄 왼쪽 들여쓰기<input type="number" data-a="indent_first" step="0.5" value="${a.indent_first || 0}" title="음수 = 내어쓰기"></label><label>오른쪽 들여쓰기<input type="number" data-a="indent_right" step="0.5" value="${a.indent_right || 0}"></label></div>
-        <div class="m3"><label>단락 앞 공백<input type="number" data-a="space_before" step="0.5" value="${a.space_before || 0}"></label><label>단락 뒤 공백<input type="number" data-a="space_after" step="0.5" value="${a.space_after || 0}"></label><label title="텍스트 프레임 옵션 — 프레임 가장자리에서 글까지">인세트 간격<input type="number" data-a="inset" step="0.5" value="${Array.isArray(a.inset) ? a.inset[0] : (a.inset || 0)}"></label></div>
-        <div class="m3"><label>세로 정렬<select data-a="valign">${[["top", "위"], ["center", "가운데"], ["bottom", "아래"]].map(([v, n]) => `<option value="${v}" ${(a.valign || "top") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>단 수<input type="number" data-a="columns" min="1" max="6" step="1" value="${a.columns || 1}"></label><label>단 간격<input type="number" data-a="gutter" step="0.5" value="${a.gutter || 0}"></label></div>${(a.columns || 1) > 1 ? `<div class="f"><span title="인디자인 텍스트 프레임 옵션 「단 균형 맞추기」 — 켜면 단마다 같은 양. 끄면(기본) 첫 단을 상자 높이만큼 다 채운 뒤 다음 단으로">단 균형 맞추기</span><input type="checkbox" data-a="col_balance" ${a.col_balance ? "checked" : ""}></div>` : ""}
-        <h3>표 <span class="note" style="display:inline">원고가 칸을 왼쪽→오른쪽 · 위→아래로 채우고 원고 수만큼 줄이 는다(인디자인 텍스트 프레임 안 표) — 원고 목록 하나가 한 칸, 글이면 빈 줄로 칸을 나눈다</span></h3>
-        <div class="m3"><label>열 수<input type="number" data-a="table.cols" min="0" max="12" step="1" value="${(a.table || {}).cols || ""}" placeholder="표 없음"></label>${a.table ? `<label>칸 사이 가로<input type="number" data-a="table.gap_x" step="0.1" value="${a.table.gap_x || ""}" placeholder="0"></label><label>세로<input type="number" data-a="table.gap_y" step="0.1" value="${a.table.gap_y || ""}" placeholder="0"></label>` : ""}</div>
-        ${a.table ? `<div class="m3"><label title="인디자인 셀 인세트 — 하나 또는 위,오른쪽,아래,왼쪽">셀 인세트<input type="text" data-a="table.inset" value="${Array.isArray(a.table.inset) ? a.table.inset.join(",") : (a.table.inset || "")}" placeholder="0"></label><label title="인디자인 행 높이 「최소」 — 넘으면 그 줄의 가장 긴 칸만큼">행 높이 최소<input type="number" data-a="table.row_h" step="0.5" value="${a.table.row_h || ""}" placeholder="자동"></label></div>
-        <div class="f"><span title="첫 열부터, 모자라면 되풀이 — 인디자인 열 칠하기">열 칠</span><input type="text" data-a="table.fills" value="${esc((a.table.fills || []).join(", "))}" placeholder="#f7f2db, #e7d9e5"></div>` : ""}
-        <h3>단락 — 인디자인 단락 패널</h3>
-        <div class="m3"><label>글머리 기호<select data-a="bullet"><option value="">없음</option>${[["disc", "● 점"], ["circle", "○ 원"], ["square", "■ 네모"], ["decimal", "1. 숫자"], ["decimal-paren", "1) 숫자"], ["upper-alpha", "A. 대문자"], ["lower-alpha", "a. 소문자"]].map(([v, n]) => `<option value="${v}" ${a.bullet === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>탭 mm<input type="number" data-a="tab" step="1" value="${a.tab || ""}" placeholder="없음" title="글 안의 탭 문자가 이 간격으로 선다"></label><label>음영${colorSel("shade", a.shade, true)}</label></div>
-        <div class="m3"><label>위 선 pt<input type="number" data-a="rule_above.w" step="0.1" value="${(a.rule_above || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("rule_above.color", (a.rule_above || {}).color, true)}</label><label>거리 mm<input type="number" data-a="rule_above.offset" step="0.5" value="${(a.rule_above || {}).offset || ""}"></label></div>
-        <div class="m3"><label>아래 선 pt<input type="number" data-a="rule_below.w" step="0.1" value="${(a.rule_below || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("rule_below.color", (a.rule_below || {}).color, true)}</label><label>거리 mm<input type="number" data-a="rule_below.offset" step="0.5" value="${(a.rule_below || {}).offset || ""}"></label></div>
-        <div class="m3"><label>첫 기준선 mm<input type="number" data-a="first_baseline" step="0.5" value="${a.first_baseline || ""}" placeholder="0" title="첫 줄을 상자 위에서 이만큼 내린다"></label><label>기준선 이동 pt<input type="number" data-a="baseline" step="0.5" value="${a.baseline || ""}" placeholder="0"></label><label>커닝<select data-a="kerning"><option value="">켬</option><option value="none" ${a.kerning === "none" ? "selected" : ""}>끔</option></select></label></div>
-        <div class="m3"><label title="광학 크기 — 가변 서체(opsz 축)의 글자 모양을 이 크기용으로. 비우면 글 크기로 자동(인디자인 문자 패널의 가변 서체 축)">광학 크기<input type="number" data-a="opsz" step="1" min="1" value="${a.opsz || ""}" placeholder="자동"></label><label>장평 가로 %<input type="number" data-a="h_scale" step="5" min="10" value="${a.h_scale || 100}"></label><label>세로 %<input type="number" data-a="v_scale" step="5" min="10" value="${a.v_scale || 100}"></label><label title="인디자인 문자 패널 「자간 축소」 — 글자마다 양옆 빈 곳(잉크 밖)을 이만큼 줄인다. 공백은 그대로">자간 축소 %<input type="number" data-a="tsume" step="5" min="0" max="100" value="${a.tsume || ""}" placeholder="0"></label></div>
-        <div class="m3"><label>드롭캡 줄<input type="number" data-a="drop_cap.lines" min="0" max="8" step="1" value="${(a.drop_cap || {}).lines || ""}" placeholder="없음" title="첫 글자를 몇 줄 높이로"></label><label>글자 수<input type="number" data-a="drop_cap.chars" min="1" max="4" step="1" value="${(a.drop_cap || {}).chars || 1}"></label><label>대소문자<select data-a="case"><option value="">그대로</option>${[["upper", "대문자"], ["lower", "소문자"], ["small", "작은대문자"]].map(([v, n]) => `<option value="${v}" ${a.case === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <div class="m3"><label>단 사이 선 pt<input type="number" data-a="column_rule.w" step="0.1" value="${(a.column_rule || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("column_rule.color", (a.column_rule || {}).color, true)}</label><label></label></div>
-        <div class="m4"><label>밑줄 pt<input type="number" data-a="underline.w" step="0.1" value="${(a.underline || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("underline.color", (a.underline || {}).color, true)}</label><label>내림 pt<input type="number" data-a="underline.offset" step="0.5" value="${(a.underline || {}).offset || ""}"></label><label>모양<select data-a="underline.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.underline || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <div class="f"><span>탭 위치</span><input type="text" data-a="tabspec" value="${(a.tabs || []).map(t => [t.at, t.align || "left", t.leader || ""].filter(x => x !== "").join(" ")).join(", ")}" placeholder="예: 30 right ., 60 center — 위치mm 정렬 리더" title="인디자인 탭 패널. 글 안의 탭 문자가 이 위치에 선다"></div>
-        <div class="m4"><label>하이픈<input type="checkbox" data-a="hyphenate" ${a.hyphenate ? "checked" : ""} style="width:auto"></label><label>양끝맞춤<select data-a="justify_mode"><option value="">낱말</option><option value="letter" ${a.justify_mode === "letter" ? "selected" : ""}>글자까지</option></select></label><label>낱말 사이 ‰<input type="number" data-a="word_spacing" step="10" value="${a.word_spacing || ""}" placeholder="0"></label><label>격자 맞춤<input type="checkbox" data-a="snap_baseline" ${a.snap_baseline ? "checked" : ""} style="width:auto" title="페이지의 기준선 격자에 글줄을 세운다"></label></div>
-        <div class="f"><span title="양끝맞춤 줄의 낱말 간격 최소 — 강제 줄 바꿈(Shift+Enter)으로 꺾인 줄을 이만큼 좁혀 놓고 양끝까지 늘린다(인디자인 양끝맞춤 「낱말 간격 최소」). 음수">양끝 줄 낱말 최소 ‰</span><input type="number" data-a="word_min" step="10" max="0" value="${a.word_min || ""}" placeholder="0"></div>
-        <div class="m4" title="인디자인 단락 「균등 배치」 — 양끝맞춤 단락이 줄마다 낱말 간격(공백 폭의 %)과 자간(‰ em)을 이 범위 안에서 바꾼다. 빈 칸 = 기본값"><label>낱말 최소 %<input type="number" data-a="jc.word_min" step="5" value="${(a.jc || {}).word_min ?? ""}" placeholder="80"></label><label>낱말 최대 %<input type="number" data-a="jc.word_max" step="5" value="${(a.jc || {}).word_max ?? ""}" placeholder="133"></label><label>자간 최소 ‰<input type="number" data-a="jc.letter_min" step="1" value="${(a.jc || {}).letter_min ?? ""}" placeholder="0"></label><label>자간 최대 ‰<input type="number" data-a="jc.letter_max" step="5" value="${(a.jc || {}).letter_max ?? ""}" placeholder="0"></label></div>
-        <div class="f"><span title="인디자인 고정 개체 — 글에 붙어 같이 흐른다">고정 개체</span><span style="display:flex;gap:4px"><select id="s-anc-part"><option value="">부품 고르기</option>${LIB.parts.map(pt => `<option value="${pt.id}">${esc(pt.name || pt.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-anc-add" title="글 끝에 그 부품을 끼운다(인디자인 고정 개체)">＋ 끼우기</button></span></div>
-        <div class="m3"><label>취소선 pt<input type="number" data-a="strike.w" step="0.1" value="${(a.strike || {}).w || ""}" placeholder="없음"></label><label>색${colorSel("strike.color", (a.strike || {}).color, true)}</label><label>모양<select data-a="strike.style">${[["solid", "실선"], ["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "겹선"]].map(([v, n]) => `<option value="${v}" ${((a.strike || {}).style || "solid") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        </details>`;
-      else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div><div class="f"><span title="인디자인 획 두께">획 두께 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></div>
-        <div class="f"><span>색</span>${colorSel("stroke.color", (a.stroke || {}).color)}</div><div class="f"><span>점선</span><input type="checkbox" data-a="dash" ${(a.stroke || {}).dash ? "checked" : ""}></div>
-        <div class="f"><span title="인디자인 획 — 끝모양">끝모양</span><select data-a="stroke.cap">${["butt", "round", "square"].map(v => `<option value="${v}" ${((a.stroke || {}).cap || "butt") === v ? "selected" : ""}>${({butt: "자름", round: "둥글게", square: "네모"})[v]}</option>`).join("")}</select></div>
+      const P = (path) => `data-p="${path}"`, V = (path) => gp(a, path) ?? "";
+      const pnum = (path, label, step = 0.1, tip = "", ph = "") => `<label${tip ? ` title="${tip}"` : ""}>${label}<input type="number" step="${step}" ${P(path)} value="${V(path)}"${ph ? ` placeholder="${ph}"` : ""}></label>`;
+      const pchk = (path, label, tip = "") => `<label${tip ? ` title="${tip}"` : ""}>${label}<input type="checkbox" ${P(path)} ${V(path) ? "checked" : ""} style="width:auto"></label>`;
+      if (a.t === "text") {
+        const fname = (f) => (Object.fromEntries(allSlots()))[f] || f;
+        const binds = (a.bind || "").split("+").filter(Boolean);
+        const fieldRow = (f, k) => { const d = slotFmt(a, f), an = d.anc || {}, F = (x) => `slot_fmt.${f}.${x}`, pos = an.pos || "inline";
+          return `<div class="fld" style="border-top:1px dashed var(--line);padding-top:4px;margin-top:4px"><b style="font-size:12px">${esc(fname(f))}</b>
+            <div class="m3"><label title="이 데이터 필드 단락에 입힐 단락 스타일(인디자인 단락 스타일)">단락 스타일<select ${P(F("style"))}><option value="">(텍스트 프레임 값)</option>${Object.keys(sk.styles || {}).map(n => `<option value="${esc(n)}" ${d.style === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label>
+              ${k < binds.length - 1 ? `<label title="템플릿 단락 「«이 필드»⇥«다음 필드»」 — 따로 단락을 만들지 않고 다음 필드 단락 첫머리에(문항 번호 + 발문)">다음 필드와 같은 단락<input type="checkbox" ${P(F("inline"))} ${d.inline ? "checked" : ""} style="width:auto"></label>` : "<label></label>"}
+              ${d.inline ? `<label>필드 뒤<select ${P(F("sep"))} data-kind="keep">${optList(AFTERS, d.sep ?? "\t")}</select></label>` : "<label></label>"}</div>
+            ${d.inline ? `<div class="m3"><label title="이 필드 글자에 입힐 문자 스타일 — 자리는 다음 필드 단락 스타일의 탭 정지">문자 스타일${cstyleSel(F("cs"), d.cs, "data-p")}</label><label></label><label></label></div>` : ""}
+            <div class="m3"><label title="인디자인 고정 개체 — 템플릿 단락에서 데이터 필드 앞 · 뒤에 넣어 둔 그룹. 레코드마다 따라 나온다">고정 개체<select ${P(F("anc.part"))}><option value="">없음</option>${LIB.parts.map(p2 => `<option value="${esc(p2.id)}" ${an.part === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></label>
+              ${an.part ? `<label>위치<select ${P(F("anc.pos"))}>${optList([["inline", "인라인"], ["above", "줄 위"], ["custom", "사용자 정의"]], pos)}</select></label><label title="템플릿 단락에서 개체가 데이터 필드 앞인가 뒤인가 — 레코드 값이 여러 단락이면 첫 · 끝 단락">필드<select ${P(F("anc.at"))}>${optList([["end", "필드 뒤"], ["start", "필드 앞"]], an.at || "end")}</select></label>` : "<label></label><label></label>"}</div>
+            ${!an.part ? "" : pos === "inline" ? `<div class="m3">${pnum(F("anc.x"), "X 오프셋 mm", 0.1, "앞 글과 개체 사이")}${pnum(F("anc.y"), "Y 오프셋 mm", 0.1, "기준선에서 위가 +")}${pchk(F("anc.space"), "개체 앞 공백", "필드와 개체 사이 공백 문자 — 줄 끝이면 개체만 다음 줄로")}</div>`
+              : pos === "above" ? `<div class="m4"><label>정렬<select ${P(F("anc.align"))}>${optList([["left", "왼쪽"], ["center", "가운데"], ["right", "오른쪽"]], an.align || "left")}</select></label>${pnum(F("anc.before"), "앞 공백 mm")}${pnum(F("anc.after"), "뒤 공백 mm")}${pnum(F("anc.x"), "개체 단락 왼쪽 들여쓰기 mm", 0.1, "비우면 필드 단락의 왼쪽 들여쓰기")}</div>`
+              : `<div class="m4"><label title="X 기준점">X 기준<select ${P(F("anc.xref"))}>${optList([["frame", "텍스트 프레임 가장자리"], ["anchor", "앵커 표시자"]], an.xref || "frame")}</select></label><label title="Y 기준점">Y 기준<select ${P(F("anc.yref"))}>${optList([["baseline", "라인(기준선)"], ["leading", "라인(행간 위쪽)"]], an.yref || "baseline")}</select></label>${pnum(F("anc.x"), "X 오프셋 mm")}${pnum(F("anc.y"), "Y 오프셋 mm", 0.1, "아래가 +")}</div>`}</div>`; };
+        h += storyHtml(a) + (storyCont(a) ? `<div class="note">앞 프레임에서 이어짐 — 이 텍스트 스레드의 ${a.story_seq}번째 프레임. 글 · 데이터 필드 · 서식은 첫 프레임 것을 쓰고, 넘친 글이 여기로 흘러 온다</div>
+          <h3>텍스트 프레임 옵션 <span class="note" style="display:inline">인세트 간격 · 세로 균등 배치만 이 프레임 것</span></h3>` : `<h3>데이터 병합 <span class="note" style="display:inline">이 프레임에 들어오는 데이터 필드(인디자인 데이터 병합 필드)</span></h3>
+          <div class="f"><span>데이터 필드</span><span style="display:flex;gap:4px">
+            <select data-a="bindsel" title="이 텍스트 프레임에 들어올 데이터 필드. 「없음」이면 템플릿 글 그대로">
+              <option value="">없음 (템플릿 글)</option>
+              ${allSlots().map(([v, n2]) => `<option value="${v}" ${(a.bind || "").split("+")[0] === v ? "selected" : ""}>${esc(n2)}</option>`).join("")}
+              <option value="__other" ${a.bind != null && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? "selected" : ""}>직접 적기…</option>
+            </select>
+            ${a.bind != null && !allSlots().some(([v]) => v === a.bind.split("+")[0]) ? `<input type="text" data-a="bind" value="${esc(a.bind)}" style="width:90px" placeholder="데이터 필드" title="새 데이터 필드 — 원고가 이 이름으로 글을 보낸다">` : ""}
+          </span></div>
+          ${a.bind && !a.bind.startsWith("sys.") ? `<div class="f"><span title="한 텍스트 프레임 · 한 스토리에 데이터 필드를 여럿 — 원고에 나온 차례대로 단락이 된다(발문 다음 선지, 문장 다음 해석)">필드 더하기</span><select data-a="bindadd"><option value="">＋ 이 스토리에 이어 넣을 필드…</option>${allSlots().filter(([v]) => !v.startsWith("sys.") && !a.bind.split("+").includes(v)).map(([v, n2]) => `<option value="${v}">${esc(n2)}</option>`).join("")}</select></div>` : ""}
+          ${a.bind && !a.bind.startsWith("sys.") ? binds.map(fieldRow).join("") : ""}
+          ${a.bind ? `<div class="f"><span title="데이터 필드가 비었을 때 1, 2, 3 … 을 대신 넣는다 — 원고가 번호를 주면 그 번호, 그다음부터 이어 센다(페이지마다 1부터)">빈 필드 자동 번호</span><span style="display:flex;gap:4px"><select data-a="num"><option value="">없음</option>${NUMS.map(v => `<option value="${v}" ${a.num === v ? "selected" : ""}>${v}</option>`).join("")}</select>${a.num ? `<input type="number" data-a="num_start" min="1" step="1" value="${a.num_start || 1}" style="width:56px" title="시작 번호">` : ""}</span></div>` : ""}
+          <div class="f"><span title="${a.bind ? "자리 표시자 텍스트 — 레코드가 없을 때 보이는 글(스타일을 매길 때 본다)" : "이 프레임에 늘 찍힐 글"}">${a.bind ? "자리 표시자 텍스트" : "글"}</span><textarea data-a="text" rows="2">${esc(plainText(a.text))}</textarea></div>
+          ${Array.isArray(a.text) ? `<div class="note">서식이 섞인 글 — 여기서 고치면 서식은 빠진다. 글을 두 번 눌러 고치면 서식이 남는다</div>` : ""}`) + `
+        <h3>단락 스타일 · 문자 <span class="note" style="display:inline">인디자인 단락 스타일 · 문자 패널 — 이 프레임 모든 글</span></h3>
+        <div class="f"><span>단락 스타일</span><select data-a="style"><option value="">[기본 단락]</option>${Object.keys(sk.styles || {}).map(n => `<option ${a.style === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <div class="f"><span>글꼴</span><span style="display:flex;gap:4px;align-items:center">${fontSel("data-a", "font", a.font, Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {}))}<label class="btn sm sub" title="글꼴 파일(OTF · TTF)을 올려 글꼴 목록에 넣는다">＋ 글꼴<input type="file" id="font-file" accept=".otf,.ttf" style="display:none"></label></span></div>
+        <div class="m3"><label>글꼴 스타일${fstyleSel("data-p", "fstyle", a.font, a.weight || (a.b ? 700 : 0), a.i)}</label><label>크기 pt<input type="number" data-a="size" step="0.5" value="${a.size}"></label>${pnum("leading", "행간 pt", 0.5, "비우면 자동(크기의 120%)", "자동")}</div>
+        <div class="m3"><label>커닝<select ${P("kerning")}>${optList([["none", "0"]], a.kerning, "메트릭")}</select></label>${pnum("tracking", "자간", 10, "1/1000 em")}${pnum("baseline", "기준선 이동 pt", 0.1, "위가 +")}</div>
+        <div class="m3">${pnum("h_scale", "가로 비율 %", 1, "", "100")}${pnum("v_scale", "세로 비율 %", 1, "", "100")}<label>대소문자<select ${P("case")}>${optList([["upper", "모두 대문자"], ["small", "작은 대문자"]], a.case, "보통")}</select></label></div>
+        <div class="f"><span>문자 색상</span>${colorSel("color", a.color)}</div>
+        <div class="f"><span title="인디자인 문자 패널의 언어 — 공백 · 문장 부호를 그 언어 글리프로">언어</span><select data-a="lang">${[["ko", "한국어"], ["en", "영어: 미국"], ["ja", "일본어"], ["zh-Hans", "중국어 간체"]].map(([v, n]) => `<option value="${v}" ${(a.lang || "ko") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <details class="more" ${view.adv ? "open" : ""}><summary>밑줄 · 취소선 · 광학 크기</summary>
+        <div class="m4">${pnum("underline.w", "밑줄 두께 pt")}${pnum("underline.offset", "오프셋 pt", 0.1, "기준선에서 아래가 +")}<label>유형<select ${P("underline.style")}>${optList([["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "이중"]], gp(a, "underline.style"), "실선")}</select></label><label>색상${colorSel("underline.color", gp(a, "underline.color"), true, false, "data-p")}</label></div>
+        <div class="m4">${pnum("strike.w", "취소선 두께 pt")}<label>유형<select ${P("strike.style")}>${optList([["dotted", "점선"], ["dashed", "파선"], ["wavy", "물결"], ["double", "이중"]], gp(a, "strike.style"), "실선")}</select></label><label>색상${colorSel("strike.color", gp(a, "strike.color"), true, false, "data-p")}</label>${pnum("opsz", "광학 크기", 1, "가변 글꼴의 opsz 축 — 비우면 자동", "자동")}</div></details>
+        <h3>단락 <span class="note" style="display:inline">인디자인 단락 패널 — 이 프레임 모든 단락(단락 스타일이 그 위에)</span></h3>
+        <div class="f"><span>정렬</span><select ${P("align")}>${optList(ALIGNS, a.align || "left")}</select></div>
+        <div class="m3">${pnum("indent", "왼쪽 들여쓰기", 0.5)}${pnum("indent_first", "첫 줄 왼쪽 들여쓰기", 0.5, "음수 = 내어쓰기")}${pnum("indent_right", "오른쪽 들여쓰기", 0.5)}</div>
+        <div class="m3">${pnum("space_before", "단락 앞 공백", 0.5)}${pnum("space_after", "단락 뒤 공백", 0.5)}${pnum("space_same", "동일한 스타일 단락 사이", 0.5)}</div>
+        <details class="more" ${view.adv ? "open" : ""}><summary>드롭 캡 · 하이픈 · 격자 · 탭 · 글머리 기호 · 음영 · 테두리 · 경계선 · 균등 배치</summary>
+        <div class="m4">${pnum("drop_cap.lines", "드롭 캡 줄 수", 1)}${pnum("drop_cap.chars", "드롭 캡 문자 수", 1)}<label>하이픈 넣기<input type="checkbox" data-a="hyphenate" ${a.hyphenate ? "checked" : ""} style="width:auto"></label><label title="페이지 기준선 격자에 글줄을 맞춘다">기준선 격자에 정렬<input type="checkbox" data-a="snap_baseline" ${a.snap_baseline ? "checked" : ""} style="width:auto"></label></div>
+        <div class="f"><span title="탭 정지 — X(텍스트 프레임 안쪽 왼쪽에서 mm) 정렬 채움 문자. 마지막 정지 뒤는 기본 탭 정지(12.7mm 마다)">탭 정지</span><input type="text" ${P("tabs")} data-kind="tabs" value="${esc(tabsTxt(a.tabs))}" placeholder="예: 30 right ., 60 center"></div>
+        <div class="m4"><label>목록 유형<select ${P("list.type")}>${optList([["bullet", "글머리 기호"], ["number", "번호"]], gp(a, "list.type"), "없음")}</select></label><label>글머리 기호 문자<input type="text" ${P("list.char")} value="${esc(V("list.char"))}" placeholder="•"></label><label>번호 형식<select ${P("list.format")}>${optList(NUMF, gp(a, "list.format"), "-")}</select></label><label>텍스트 뒤<select ${P("list.after")} data-kind="keep">${optList(AFTERS, gp(a, "list.after") ?? "\t")}</select></label></div>
+        <div class="m4"><label>단락 음영${colorSel("shade", a.shade, true, false, "data-p")}</label><label>너비<select ${P("shade_fit")} data-kind="bool">${optList([["", "열"], ["1", "텍스트"]], a.shade_fit ? "1" : "")}</select></label>${pnum("shade_r", "모퉁이 크기")}<label></label></div>
+        <div class="m4" title="음영 오프셋 mm — 글에서 밖(+)">${pnum("shade_ot", "오프셋 위쪽")}${pnum("shade_ob", "아래쪽")}${pnum("shade_ol", "왼쪽")}${pnum("shade_or", "오른쪽")}</div>
+        <div class="m4">${pnum("border", "단락 테두리 pt")}<label>색상${colorSel("border_color", a.border_color, true, false, "data-p")}</label><label>너비<select ${P("border_fit")} data-kind="bool">${optList([["", "열"], ["1", "텍스트"]], a.border_fit ? "1" : "")}</select></label>${pnum("border_r", "모퉁이 크기")}</div>
+        <div class="m4" title="테두리 오프셋 mm">${pnum("border_ot", "오프셋 위쪽")}${pnum("border_ob", "아래쪽")}${pnum("border_ol", "왼쪽")}${pnum("border_or", "오른쪽")}</div>
+        <div class="m4">${pnum("rule_above.w", "위 경계선 pt")}<label>색상${colorSel("rule_above.color", gp(a, "rule_above.color"), true, false, "data-p")}</label>${pnum("rule_above.offset", "오프셋 mm", 0.1, "첫 줄 기준선에서")}<label>너비<select ${P("rule_above.width")}>${optList([["text", "텍스트"]], gp(a, "rule_above.width"), "열")}</select></label></div>
+        <div class="m4">${pnum("rule_below.w", "아래 경계선 pt")}<label>색상${colorSel("rule_below.color", gp(a, "rule_below.color"), true, false, "data-p")}</label>${pnum("rule_below.offset", "오프셋 mm", 0.1, "끝 줄 기준선에서")}<label>너비<select ${P("rule_below.width")}>${optList([["text", "텍스트"]], gp(a, "rule_below.width"), "열")}</select></label></div>
+        <div class="m4" title="인디자인 균등 배치 — 양쪽 정렬 단락의 단어 간격 · 문자 간격(공백 폭의 %)">${pnum("jc.word_min", "단어 간격 최소 %", 5, "", "80")}${pnum("jc.word_max", "단어 간격 최대 %", 5, "", "133")}${pnum("jc.letter_min", "문자 간격 최소 %", 1, "", "0")}${pnum("jc.letter_max", "문자 간격 최대 %", 1, "", "0")}</div>
+        <div class="m3">${pnum("tsume", "자간 축소 %", 5, "글자 양옆 빈 곳을 줄인다", "0")}<label></label><label></label></div></details>
+        <h3>텍스트 프레임 옵션</h3>
+        <div class="m4">${pnum("columns", "단 개수", 1, "", "1")}${pnum("gutter", "간격 mm", 0.5)}<label title="단마다 같은 양">단 균형 맞추기<input type="checkbox" data-a="col_balance" ${a.col_balance ? "checked" : ""} style="width:auto"></label>${pnum("column_rule.w", "단 경계선 pt")}</div>
+        <div class="f"><span title="인세트 간격 — 위 오른쪽 아래 왼쪽 mm. 하나만 적으면 네 변 같게">인세트 간격 mm</span><input type="text" data-a="inset4" value="${[].concat(a.inset == null ? [] : a.inset).join(" ")}" placeholder="위 오른쪽 아래 왼쪽" spellcheck="false"></div>
+        <div class="m3"><label>세로 균등 배치<select ${P("valign")}>${optList([["center", "가운데"], ["bottom", "아래쪽"], ["justify", "양쪽"]], a.valign, "위쪽")}</select></label><label title="첫 줄 기준선 자리">첫 번째 기준선 오프셋<select ${P("fbo.type")}>${optList([["cap", "대문자 높이"], ["leading", "행간"], ["x", "x 높이"], ["fixed", "고정"]], gp(a, "fbo.type"), "어센트")}</select></label>${pnum("fbo.min", "최소 mm")}</div>
+        <div class="m3"><label title="글 길이에 따라 프레임 크기를 바꾼다">자동 크기 조정<select ${P("auto_size")}>${optList([["height", "높이만"], ["width", "너비만"], ["both", "높이 및 너비"]], ["height", "width", "both"].includes(a.auto_size) ? a.auto_size : "", "끔")}</select></label><label title="이 점은 그대로 두고 자란다">기준점<select ${P("auto_ref")}>${optList([["tl", "왼쪽 위"], ["t", "위 가운데"], ["tr", "오른쪽 위"], ["l", "왼쪽 가운데"], ["c", "가운데"], ["r", "오른쪽 가운데"], ["bl", "왼쪽 아래"], ["b", "아래 가운데"], ["br", "오른쪽 아래"]], a.auto_ref || "tl")}</select></label><label></label></div>
+        <div class="m4"><label>칠${colorSel("frame.fill", (a.frame || {}).fill, true)}</label><label>획${colorSel("frame.stroke.color", ((a.frame || {}).stroke || {}).color, true)}</label><label>획 두께 pt<input type="number" data-a="frame.stroke.w" step="0.1" min="0" value="${((a.frame || {}).stroke || {}).w || ""}" placeholder="0"></label><label>모퉁이 크기 mm<input type="number" data-a="frame.radius" step="0.1" min="0" value="${[].concat((a.frame || {}).radius || "")[0]}" placeholder="0"></label></div>
+        <h3>GREP 스타일 <span class="note" style="display:inline">대상 텍스트(정규식)에 문자 스타일 적용 — 원고 글에도</span></h3>
+        ${(a.grep || []).map((r, k) => `<div class="grep-rule"><div class="f"><span title="정규식 — 예: \\[[^\\]]*\\] = 대괄호 [ ] 와 그 안">대상 텍스트</span><input type="text" data-a="grep.${k}.re" value="${esc(r.re || "")}" spellcheck="false" placeholder="\\[[^\\]]*\\]"></div>
+        <div class="f"><span>스타일 적용</span>${cstyleSel(`grep.${k}.cs`, r.cs)}</div>
+        <button class="btn sm sub grep-x" data-k="${k}">삭제</button></div>`).join("")}
+        <button class="btn sm sub" id="s-grep-add">＋ 새 GREP 스타일</button>
+        <h3>표 <span class="note" style="display:inline">인디자인 표 — 레코드만큼 행이 는다(데이터 병합). 열 0 = 표 없음</span></h3>
+        <div class="m3"><label>열<input type="number" data-a="table.cols" min="0" max="12" step="1" value="${(a.table || {}).cols || ""}" placeholder="표 없음"></label>${a.table ? `<label title="셀 인세트 — 하나 또는 위,오른쪽,아래,왼쪽">셀 인세트<input type="text" data-a="table.inset" value="${Array.isArray(a.table.inset) ? a.table.inset.join(",") : (a.table.inset || "")}" placeholder="0"></label><label title="행 높이 최소">행 높이 최소<input type="number" data-a="table.row_h" step="0.5" value="${a.table.row_h || ""}" placeholder="자동"></label>` : ""}</div>
+        ${a.table ? `<div class="m3">${pnum("table.stroke.w", "셀 획 두께 pt")}<label>셀 획 색상${colorSel("table.stroke.color", gp(a, "table.stroke.color"), true, false, "data-p")}</label><label title="칠 교대 패턴 — 열마다 첫 열부터, 모자라면 되풀이">열 칠<input type="text" data-a="table.fills" value="${esc((a.table.fills || []).join(", "))}" placeholder="#f7f2db, #e7d9e5"></label></div>` : ""}
+        <h3>윗주 기본값 <span class="note" style="display:inline">원고 · 이 프레임 윗주에 쓰는 값(인디자인 윗주 대화 상자) — 윗주 하나만 바꾸려면 글을 두 번 눌러 고른다</span></h3>
+        <div class="m3"><label>글꼴${fontSel("data-p", "ruby.font", gp(a, "ruby.font"), Object.assign({}, DEFAULT_SKIN.tokens.font, sk.tokens.font || {}), "(본문)")}</label>${pnum("ruby.size", "크기 pt", 0.1, "", "본문 50%")}<label>색상${colorSel("ruby.color", gp(a, "ruby.color"), true, false, "data-p")}</label></div>
+        <div class="m3">${pnum("ruby.oy_above", "위 윗주 오프셋 Y mm", 0.1, "본문 글자 상자 위 끝에서 위가 +")}${pnum("ruby.oy_below", "아래 윗주 오프셋 Y mm", 0.1, "본문 글자 상자 아래 끝에서 아래가 +")}<label>정렬<select ${P("ruby.align")}>${optList([["center", "가운데"], ["right", "오른쪽"]], gp(a, "ruby.align"), "왼쪽")}</select></label></div>
+        <h3>원고 표시 읽기 <span class="note" style="display:inline">우리 원고 약속 — {본문^위 윗주|아래 윗주} · [[고정 개체 글]]</span></h3>
+        <div class="f"><span title="원고 글의 약속 표시를 윗주 · 고정 개체로 바꾼다">원고 표시 읽기</span><input type="checkbox" data-a="markup" ${a.markup ? "checked" : ""}></div>
+        <div class="m4" title="원고의 [[ ]] 와 옆 메모가 되는 고정 개체(사용자 정의 위치 — X 기준 텍스트 프레임 가장자리, Y 기준 라인(기준선))"><label>X 오프셋 mm<input type="number" data-a="side.x" step="0.1" value="${(a.side || {}).x ?? ""}"></label><label>폭 mm<input type="number" data-a="side.w" step="0.1" value="${(a.side || {}).w ?? ""}" placeholder="30"></label><label>Y 오프셋 mm<input type="number" data-a="side.off" step="0.1" value="${(a.side || {}).off ?? ""}" placeholder="0"></label><label>행간 pt<input type="number" data-a="side.lead" step="0.1" value="${(a.side || {}).lead ?? ""}" placeholder="자동"></label></div>
+        <div class="f"><span>문자 스타일</span>${cstyleSel("side.cs", (a.side || {}).cs)}</div>`;
+      }
+      else if (a.t === "line") h += `<div class="f"><span>길이 mm</span><input type="number" data-a="x2" step="0.5" value="${a.x2}"></div>
+        <div class="m3"><label>획 두께 pt<input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0.5}"></label><label>획 색상${colorSel("stroke.color", (a.stroke || {}).color)}</label><label>유형<select ${P("stroke.type")}>${optList([["dashed", "파선"], ["dotted", "점선"]], (a.stroke || {}).type || ((a.stroke || {}).dash ? "dashed" : ""), "실선")}</select></label></div>
         ${strokeMore(a, true)}`;
-      else if (a.t === "rect" || a.t === "ellipse" || a.t === "path") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label>${a.t === "rect" ? `<label>모서리<input type="number" data-a="radius" step="0.5" value="${a.radius || 0}"></label>` : ""}</div>
-        ${a.t === "path" ? `<div class="f"><span>모양</span><select data-a="d"><option value="">직접</option>${Object.entries(SHAPES).map(([n, d]) => `<option value="${d}" ${a.d === d ? "selected" : ""}>${n}</option>`).join("")}</select></div><div class="f"><span>경로 d</span><input type="text" data-a="d" value="${esc(a.d || "")}" placeholder="M L C Q Z · 0~1 비율"></div>` : ""}
-        <div class="f"><span title="인디자인 칠(Fill)">칠</span>${colorSel("fill", a.fill, true)}</div><div class="f"><span title="인디자인 획(Stroke)">획</span>${colorSel("stroke.color", (a.stroke || {}).color, true)}</div><div class="f"><span title="인디자인 획 두께">획 두께 pt</span><input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0}"></div>
-        <div class="f"><span>그라디언트</span><label><input type="checkbox" data-a="grad" ${a.gradient ? "checked" : ""}> 쓰기</label></div>
-        ${a.gradient ? `<div class="m3"><label>시작${colorSel("grad.c0", a.gradient.stops[0].c)}</label><label>끝${colorSel("grad.c1", a.gradient.stops[a.gradient.stops.length - 1].c)}</label><label>${a.gradient.type === "radial" ? "원형" : "각도 °"}<input type="number" data-a="grad.angle" step="15" value="${a.gradient.angle || 0}"></label></div><div class="f"><span>모양</span><select data-a="grad.type"><option value="linear" ${a.gradient.type !== "radial" ? "selected" : ""}>선형</option><option value="radial" ${a.gradient.type === "radial" ? "selected" : ""}>원형</option></select></div>` : ""}
-        ${a.t === "rect" ? `<div class="m3"><label>모서리 모양<select data-a="corner">${[["round", "둥글게"], ["inverse", "역둥글게"], ["bevel", "경사"], ["inset", "빗면"], ["fancy", "팬시"]].map(([v, n]) => `<option value="${v}" ${(a.corner || "round") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>모서리 따로<input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위,오위,오아래,왼아래"></label><label></label></div>` : ""}
+      else if (a.t === "rect" || a.t === "ellipse" || a.t === "path") h += `<div class="m3"><label>W<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>H<input type="number" data-a="h" step="0.5" value="${a.h}"></label>${a.t === "rect" ? `<label>모퉁이 크기<input type="number" data-a="radius" step="0.5" value="${Array.isArray(a.radius) ? a.radius[0] : (a.radius || 0)}"></label>` : "<label></label>"}</div>
+        ${a.t === "path" ? `<div class="m3">${pnum("poly.n", "면 수", 1, "다각형 도구 — 면 수", "")}${pnum("poly.star", "별모양 인세트 %", 5, "0 = 다각형", "0")}<label></label></div>` : ""}
+        <div class="m3"><label>칠${colorSel("fill", a.fill, true)}</label><label>획${colorSel("stroke.color", (a.stroke || {}).color, true)}</label><label>획 두께 pt<input type="number" data-a="stroke.w" step="0.1" value="${(a.stroke || {}).w || 0}"></label></div>
+        <div class="m3"><label>유형<select ${P("stroke.type")}>${optList([["dashed", "파선"], ["dotted", "점선"]], (a.stroke || {}).type || ((a.stroke || {}).dash ? "dashed" : ""), "실선")}</select></label><label>그레이디언트<input type="checkbox" data-a="grad" ${a.gradient ? "checked" : ""} style="width:auto"></label><label></label></div>
+        ${a.gradient ? `<div class="m4"><label>유형<select data-a="grad.type"><option value="linear" ${a.gradient.type !== "radial" ? "selected" : ""}>선형</option><option value="radial" ${a.gradient.type === "radial" ? "selected" : ""}>방사형</option></select></label><label>시작 정지점${colorSel("grad.c0", a.gradient.stops[0].c)}</label><label>끝 정지점${colorSel("grad.c1", a.gradient.stops[a.gradient.stops.length - 1].c)}</label>${a.gradient.type === "radial" ? "<label></label>" : `<label>각도 °<input type="number" data-a="grad.angle" step="15" value="${a.gradient.angle || 0}"></label>`}</div>` : ""}
+        ${a.t === "rect" ? `<div class="m3"><label>모퉁이 모양<select data-a="corner">${[["round", "둥글게"], ["inverse", "둥글게 반전"], ["bevel", "경사"], ["inset", "내부 사각형"], ["fancy", "팬시"]].map(([v, n]) => `<option value="${v}" ${(a.corner || "round") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label title="모퉁이 크기 하나씩 — 왼쪽 위, 오른쪽 위, 오른쪽 아래, 왼쪽 아래">모퉁이 하나씩<input type="text" data-a="radius4" value="${Array.isArray(a.radius) ? a.radius.join(", ") : ""}" placeholder="왼위,오위,오아래,왼아래"></label><label></label></div>` : ""}
         ${strokeMore(a, a.t === "path")}`;
-      else if (a.t === "image") h += `<div class="m3"><label>폭<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>높이<input type="number" data-a="h" step="0.5" value="${a.h}"></label></div><div class="f"><span>그림</span><span style="display:flex;gap:4px;align-items:center">
-        <label class="btn sm sub" title="그림 파일을 골라 바로 넣는다 (PNG·JPG·WEBP·SVG). 로고처럼 또렷해야 하면 SVG">📎 파일<input type="file" id="img-file" accept=".png,.jpg,.jpeg,.webp,.svg" style="display:none"></label>
-        <select data-a="src" title="이 문서에 등록된 그림"><option value="">없음</option>${Object.keys((sk.images || {})).map(k => `<option value="${esc(k)}" ${a.src === k ? "selected" : ""}>${esc(k)}</option>`).join("")}</select></span></div>
-        <div class="f"><span>클리핑 패스</span><input type="text" data-a="clip" value="${esc(a.clip || "")}" placeholder="M L C Q Z · 0~1 비율 — 이 모양으로 오려 낸다"></div>
-        <div class="f"><span>맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" ? "selected" : ""}>비율에 맞게 내용 맞추기</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>비율에 맞게 프레임 채우기</option><option value="fill" ${a.fit === "fill" ? "selected" : ""}>내용을 프레임에 맞추기</option></select></div>
-        <div class="f"><span title="데이터 필드 — 원고가 이 이름으로 그림(주소 · data:)을 보내면 이 칸에 들어간다(인디자인 데이터 병합 이미지 필드). 비우면 고른 그림 그대로">데이터 필드</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="없음 — 고른 그림" spellcheck="false"></div>
-        <div class="f"><span title="인디자인 프레임 맞춤 옵션의 기준점 — 비율대로 맞춘 그림을 프레임의 어디에 붙이나">기준점</span><select data-a="fit_at">${[["tl", "왼쪽 위"], ["t", "위 가운데"], ["tr", "오른쪽 위"], ["l", "왼쪽 가운데"], ["c", "가운데"], ["r", "오른쪽 가운데"], ["bl", "왼쪽 아래"], ["b", "아래 가운데"], ["br", "오른쪽 아래"]].map(([v, n]) => `<option value="${v}" ${(a.fit_at || "c") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
-        <div class="m4"><label>그림 x<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="프레임"></label><label>y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>폭<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>높이<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
+      else if (a.t === "image") h += `<div class="m3"><label>W<input type="number" data-a="w" step="0.5" value="${a.w}"></label><label>H<input type="number" data-a="h" step="0.5" value="${a.h}"></label><label></label></div><div class="f"><span>그림</span><span style="display:flex;gap:4px;align-items:center">
+        <label class="btn sm sub" title="그림 파일 가져오기 (PNG · JPG · WEBP · SVG)">가져오기<input type="file" id="img-file" accept=".png,.jpg,.jpeg,.webp,.svg" style="display:none"></label>
+        <select data-a="src" title="이 문서에 가져온 그림"><option value="">없음</option>${Object.keys((sk.images || {})).map(k => `<option value="${esc(k)}" ${a.src === k ? "selected" : ""}>${esc(k)}</option>`).join("")}</select></span></div>
+        <div class="f"><span>프레임 맞춤</span><select data-a="fit"><option value="contain" ${a.fit !== "cover" && a.fit !== "fill" ? "selected" : ""}>내용을 비율에 맞게 맞추기</option><option value="cover" ${a.fit === "cover" ? "selected" : ""}>프레임을 비율에 맞게 채우기</option><option value="fill" ${a.fit === "fill" ? "selected" : ""}>내용을 프레임에 맞추기</option></select></div>
+        <div class="f"><span title="프레임 맞춤 옵션 — 정렬 시작(참조점)">정렬 시작</span><select data-a="fit_at">${[["tl", "왼쪽 위"], ["t", "위 가운데"], ["tr", "오른쪽 위"], ["l", "왼쪽 가운데"], ["c", "가운데"], ["r", "오른쪽 가운데"], ["bl", "왼쪽 아래"], ["b", "아래 가운데"], ["br", "오른쪽 아래"]].map(([v, n]) => `<option value="${v}" ${(a.fit_at || "c") === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <div class="f"><span title="데이터 병합 이미지 필드 — 원고가 이 이름으로 그림(주소 · data:)을 보내면 이 프레임에. 비우면 가져온 그림 그대로">데이터 필드</span><input type="text" data-a="bind" value="${esc(a.bind || "")}" placeholder="없음" spellcheck="false"></div>
+        <div class="m4"><label>그림 X<input type="number" data-a="img.x" step="0.5" value="${a.img ? a.img.x : ""}" placeholder="프레임"></label><label>Y<input type="number" data-a="img.y" step="0.5" value="${a.img ? a.img.y : ""}"></label><label>W<input type="number" data-a="img.w" step="0.5" value="${a.img ? a.img.w : ""}"></label><label>H<input type="number" data-a="img.h" step="0.5" value="${a.img ? a.img.h : ""}"></label></div>
 `;
-      h += `<details class="more" ${view.adv ? "open" : ""}><summary>모양 더 보기 — 개체 스타일 · 회전 · 불투명 · 그림자 · 감싸기</summary>
+      h += `<details class="more" ${view.adv ? "open" : ""}><summary>변형 · 효과 · 텍스트 감싸기 · 개체 스타일</summary>
         <h3 style="border-top:0;margin-top:4px;padding-top:0">개체 스타일 · 레이어</h3>
-        <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">(직접)</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">기본</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 개체의 채움·획·모서리·효과를 이름 붙여 옷에 저장한다">스타일로</button></label></div>
-        <h3>변형 — 인디자인 변형 패널</h3>
-        <div class="m3"><label>회전 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>불투명 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}" title="채움 색의 색조(인디자인 Tint)"></label></div>
-        <div class="m3"><label>뒤집기<select data-a="flip"><option value="">없음</option>${[["h", "좌우"], ["v", "상하"], ["hv", "둘 다"]].map(([v, n]) => `<option value="${v}" ${a.flip === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>기울이기 가로 °<input type="number" data-a="skewx" step="1" value="${(a.skew || [0, 0])[0] || 0}"></label><label>세로 °<input type="number" data-a="skewy" step="1" value="${(a.skew || [0, 0])[1] || 0}"></label></div>
-        <div class="m3"><label>배율 가로 %<input type="number" data-a="scalex" step="5" min="1" value="${(a.scale || [100, 100])[0] || 100}"></label><label>세로 %<input type="number" data-a="scaley" step="5" min="1" value="${(a.scale || [100, 100])[1] || 100}"></label><label>혼합<select data-a="fx.blend">${[["", "보통"], ["multiply", "곱하기"], ["screen", "스크린"], ["overlay", "오버레이"], ["darken", "어둡게"], ["lighten", "밝게"], ["difference", "차이"]].map(([v, n]) => `<option value="${v}" ${((a.fx || {}).blend || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <h3>효과 — 인디자인 효과 패널</h3>
-        <div class="m4"><label>그림자 x<input type="number" data-a="fx.shadow.x" step="0.5" value="${((a.fx || {}).shadow || {}).x ?? ""}" placeholder="없음"></label><label>y<input type="number" data-a="fx.shadow.y" step="0.5" value="${((a.fx || {}).shadow || {}).y ?? ""}"></label><label>번짐<input type="number" data-a="fx.shadow.blur" step="0.5" value="${((a.fx || {}).shadow || {}).blur ?? ""}"></label><label>안쪽<input type="checkbox" data-a="fx.shadow.inner" ${((a.fx || {}).shadow || {}).inner ? "checked" : ""} style="width:auto"></label></div>
-        ${(a.fx || {}).shadow ? `<div class="m3"><label>그림자 색${colorSel("fx.shadow.color", ((a.fx || {}).shadow || {}).color, true)}</label><label>진하기 %<input type="number" data-a="fx.shadow.opacity" min="0" max="100" step="5" value="${Math.round((((a.fx || {}).shadow || {}).opacity ?? 1) * 100)}"></label><label></label></div>` : ""}
-        <div class="m3"><label>기준점<select data-a="origin">${[["center", "가운데"], ["tl", "왼위"], ["tr", "오른위"], ["bl", "왼아래"], ["br", "오른아래"]].map(([v, n]) => `<option value="${v}" ${(a.origin || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label><label>비인쇄<input type="checkbox" data-a="nonprint" ${a.nonprint ? "checked" : ""} style="width:auto" title="화면에만 보이고 PDF·인쇄엔 안 나온다"></label><label>중복인쇄<input type="checkbox" data-a="overprint" ${a.overprint ? "checked" : ""} style="width:auto" title="인쇄 분판에서 밑색을 파지 않는다(값만 보관)"></label></div>
-        <div class="m3"><label>텍스트 감싸기<select data-a="wrap.mode"><option value="">안 함</option><option value="bbox" ${(a.wrap || {}).mode === "bbox" ? "selected" : ""}>상자 둘레로</option></select></label><label>띄우기 mm<input type="number" data-a="wrap.offset" step="0.5" value="${(a.wrap || {}).offset || ""}"></label><label>흐를 페이지<select data-a="wrap.side">${[["auto", "자동"], ["left", "왼쪽"], ["right", "오른쪽"]].map(([v, n]) => `<option value="${v}" ${((a.wrap || {}).side || "auto") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
-        <div class="m4"><label>광선 번짐<input type="number" data-a="fx.glow.blur" step="0.5" value="${((a.fx || {}).glow || {}).blur ?? ""}" placeholder="없음"></label><label>색${colorSel("fx.glow.color", ((a.fx || {}).glow || {}).color, true)}</label><label>안쪽<input type="checkbox" data-a="fx.glow.inner" ${((a.fx || {}).glow || {}).inner ? "checked" : ""} style="width:auto"></label><label>페더 mm<input type="number" data-a="fx.feather" step="0.5" value="${(a.fx || {}).feather ?? ""}" placeholder="없음" title="가장자리를 흐리게"></label></div>
-        <div class="m4"><label>엠보스 크기<input type="number" data-a="fx.bevel.size" step="0.2" value="${((a.fx || {}).bevel || {}).size ?? ""}" placeholder="없음" title="경사와 엠보스"></label><label>깊이<input type="number" data-a="fx.bevel.depth" step="0.5" value="${((a.fx || {}).bevel || {}).depth ?? ""}"></label><label>빛 °<input type="number" data-a="fx.bevel.angle" step="15" value="${((a.fx || {}).bevel || {}).angle ?? ""}"></label><label>새틴 번짐<input type="number" data-a="fx.satin.blur" step="0.5" value="${((a.fx || {}).satin || {}).blur ?? ""}" placeholder="없음"></label></div></details>`;
+        <div class="m3"><label>개체 스타일<select data-a="ostyle"><option value="">[없음]</option>${Object.keys(sk.obj_styles || {}).map(n => `<option ${a.ostyle === n ? "selected" : ""}>${esc(n)}</option>`).join("")}</select></label><label>레이어<select data-a="layer"><option value="">레이어 1</option>${(page.layers || []).map(l => `<option value="${l.id}" ${a.layer === l.id ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label><label><button class="btn sm sub" id="s-ostyle-new" title="지금 이 개체의 칠 · 획 · 모퉁이 · 효과로 새 개체 스타일">새 개체 스타일</button></label></div>
+        <h3>변형</h3>
+        <div class="m3"><label>회전 각도 °<input type="number" data-a="rotate" step="1" value="${a.rotate || 0}"></label><label>기울이기 각도 °<input type="number" data-a="skewx" step="1" value="${(a.skew || [0, 0])[0] || 0}"></label><label>뒤집기<select data-a="flip"><option value="">없음</option>${[["h", "가로로"], ["v", "세로로"], ["hv", "가로 · 세로"]].map(([v, n]) => `<option value="${v}" ${a.flip === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+        <div class="m3"><label>X 비율 %<input type="number" data-a="scalex" step="5" min="1" value="${(a.scale || [100, 100])[0] || 100}"></label><label>Y 비율 %<input type="number" data-a="scaley" step="5" min="1" value="${(a.scale || [100, 100])[1] || 100}"></label><label>참조점<select data-a="origin">${[["center", "가운데"], ["tl", "왼쪽 위"], ["tr", "오른쪽 위"], ["bl", "왼쪽 아래"], ["br", "오른쪽 아래"]].map(([v, n]) => `<option value="${v}" ${(a.origin || "center") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+        <h3>효과</h3>
+        <div class="m3"><label>불투명도 %<input type="number" data-a="opacity" min="0" max="100" step="5" value="${Math.round((a.opacity == null ? 1 : a.opacity) * 100)}"></label><label>색조 %<input type="number" data-a="tint" min="0" max="100" step="5" value="${a.tint == null ? 100 : a.tint}"></label><label>혼합 모드<select data-a="fx.blend">${[["", "표준"], ["multiply", "곱하기"], ["screen", "스크린"], ["overlay", "오버레이"], ["darken", "어둡게 하기"], ["lighten", "밝게 하기"], ["difference", "차이"]].map(([v, n]) => `<option value="${v}" ${((a.fx || {}).blend || "") === v ? "selected" : ""}>${n}</option>`).join("")}</select></label></div>
+        <div class="m4"><label>그림자 X 오프셋<input type="number" data-a="fx.shadow.x" step="0.5" value="${((a.fx || {}).shadow || {}).x ?? ""}" placeholder="없음"></label><label>Y 오프셋<input type="number" data-a="fx.shadow.y" step="0.5" value="${((a.fx || {}).shadow || {}).y ?? ""}"></label><label>크기<input type="number" data-a="fx.shadow.blur" step="0.5" value="${((a.fx || {}).shadow || {}).blur ?? ""}"></label><label>내부 그림자<input type="checkbox" data-a="fx.shadow.inner" ${((a.fx || {}).shadow || {}).inner ? "checked" : ""} style="width:auto"></label></div>
+        ${(a.fx || {}).shadow ? `<div class="m3"><label>색상${colorSel("fx.shadow.color", ((a.fx || {}).shadow || {}).color, true)}</label><label>불투명도 %<input type="number" data-a="fx.shadow.opacity" min="0" max="100" step="5" value="${Math.round((((a.fx || {}).shadow || {}).opacity ?? 1) * 100)}"></label><label></label></div>` : ""}
+        <div class="m4"><label>광선 크기<input type="number" data-a="fx.glow.blur" step="0.5" value="${((a.fx || {}).glow || {}).blur ?? ""}" placeholder="없음"></label><label>색상${colorSel("fx.glow.color", ((a.fx || {}).glow || {}).color, true)}</label><label>내부 광선<input type="checkbox" data-a="fx.glow.inner" ${((a.fx || {}).glow || {}).inner ? "checked" : ""} style="width:auto"></label><label title="기본 페더">페더 폭 mm<input type="number" data-a="fx.feather" step="0.5" value="${(a.fx || {}).feather ?? ""}" placeholder="없음"></label></div>
+        <div class="m4"><label title="경사와 엠보스">경사와 엠보스 크기<input type="number" data-a="fx.bevel.size" step="0.2" value="${((a.fx || {}).bevel || {}).size ?? ""}" placeholder="없음"></label><label>깊이<input type="number" data-a="fx.bevel.depth" step="0.5" value="${((a.fx || {}).bevel || {}).depth ?? ""}"></label><label>음영 각도 °<input type="number" data-a="fx.bevel.angle" step="15" value="${((a.fx || {}).bevel || {}).angle ?? ""}"></label><label>새틴 크기<input type="number" data-a="fx.satin.blur" step="0.5" value="${((a.fx || {}).satin || {}).blur ?? ""}" placeholder="없음"></label></div>
+        <h3>텍스트 감싸기 · 특성</h3>
+        <div class="m3"><label>텍스트 감싸기<select data-a="wrap.mode"><option value="">감싸기 없음</option><option value="bbox" ${(a.wrap || {}).mode === "bbox" ? "selected" : ""}>경계 상자 감싸기</option></select></label><label>감싸기 옵션<select ${P("wrap.to")}>${optList([["right", "오른쪽"], ["left", "왼쪽"]], gp(a, "wrap.to"), "가장 큰 영역")}</select></label><label>인쇄 안 함<input type="checkbox" data-a="nonprint" ${a.nonprint ? "checked" : ""} style="width:auto"></label></div>
+        ${(a.wrap || {}).mode === "bbox" ? `<div class="m4">${pnum("wrap.ot", "오프셋 위쪽", 0.5, "", V("wrap.offset") || "0")}${pnum("wrap.ob", "아래쪽", 0.5)}${pnum("wrap.ol", "왼쪽", 0.5)}${pnum("wrap.or", "오른쪽", 0.5)}</div>` : ""}</details>`;
     }
-    h += `<h3>데이터 필드</h3><div class="m3"><label>x<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>폭<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
+    h += `<h3>변형</h3><div class="m3"><label>X<input data-it="x" type="number" step="0.5" value="${it.x}"></label><label>Y<input data-it="y" type="number" step="0.5" value="${it.y}"></label><label>W<input data-it="w" type="number" step="0.5" value="${it.w || ""}" placeholder="그대로"></label></div>
       ${it.atom ? "" : `<div class="f"><span>배율 %</span><input data-it="s" type="number" step="5" min="10" value="${Math.round((it.s || 1) * 100)}" title="개체·그룹 전체를 글자까지 균일하게 — 모서리 손잡이로도"></div>`}
-      <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm sub" id="s-lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button><button class="btn sm danger" id="s-x">지우기</button></div>
+      <div class="row"><button class="btn sm sub" id="s-dup">⧉ 복제</button><button class="btn sm sub" id="s-lock">${it.lock ? "🔓 잠금 해제" : "🔒 잠금"}</button><button class="btn sm danger" id="s-x">삭제</button></div>
       ${layersHtml()}`;
   } else {
     $("#stitle").textContent = `페이지 ${idx() + 1} / ${docPages().length}`;
@@ -2315,23 +2397,23 @@ function side() {
       <div class="note">레코드마다 페이지 ${eachN} · 레코드 ${nSet} → ${nSheets}장 · ${plan.order === "by_set" ? `레코드1(페이지1~${eachN}) → 레코드2(페이지1~${eachN}) …` : `페이지1(레코드 ${perPg}개) → 페이지2(레코드 ${perPg}개) …`}</div>` : ""}
       <div class="note">지금 이 페이지는 <b>${pe.repeat === "each_set" ? (pe.per > 1 ? `레코드 ${pe.per}개마다 1장` : "레코드 1개마다 1장") : "1장"}</b> · 받는 원고 <b>${curK ? esc(curK) : "모두"}</b></div>`;
     h += `<div class="f"><span>페이지 크기</span><select id="s-spec">${LIB.specs.map(s => `<option value="${s.id}" ${s.id === (page.spec || "a4") ? "selected" : ""}>${s.id} ${s.w}×${s.h}</option>`).join("")}<option value="__new">＋ 새 페이지 크기…</option></select></div>
-      <div class="f"><span>좌우 반전</span><input id="s-mirror" type="checkbox" ${page.mirror ? "checked" : ""} title="책에서 오른쪽 페이지는 머리말·페이지 번호가 뒤집힌다" style="width:auto"></div>
-      <div class="f"><span>이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
-      <div class="f"><span title="이 페이지에서 넘친 원고가 어느 페이지 모양으로 이어지나 — 첫 페이지(제목 있음) → 둘째 페이지(머리만) 처럼. 인디자인에서 다른 상위 페이지의 프레임으로 잇기(스마트 텍스트 리플로우)">스마트 텍스트 리플로우 — 이어 받을 페이지</span><select id="s-cont"><option value="">같은 페이지</option>${docPages().filter(p2 => p2.id !== page.id).map(p2 => `<option value="${esc(p2.id)}" ${page.cont === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></div>
+      <div class="f"><span title="레코드 옵션 · 원고 연결이 이 이름으로 페이지를 찾는다(우리 데이터 병합 확장)">페이지 이름</span><input type="text" id="s-pname" value="${esc(page.name || "")}"></div>
+      <div class="f"><span title="스마트 텍스트 리플로우 — 넘친 글을 받을 페이지를 더할 때 쓸 페이지 모양(인디자인은 스토리 끝 페이지의 상위 페이지). 첫 페이지(제목) → 둘째 페이지(머리말만)처럼">스마트 텍스트 리플로우 — 더할 페이지</span><select id="s-cont"><option value="">같은 페이지</option>${docPages().filter(p2 => p2.id !== page.id).map(p2 => `<option value="${esc(p2.id)}" ${page.cont === p2.id ? "selected" : ""}>${esc(p2.name || p2.id)}</option>`).join("")}</select></div>
       <h3>여백 및 단 <span class="note" style="display:inline">인디자인 여백 및 단 — 노란 안내선. 인쇄엔 안 나온다</span></h3>
       ${facing() ? `<div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label title="제본쪽 — 풀칠에 글이 안 먹히게 보통 더 준다">안쪽<input type="number" id="s-mg-inside" step="1" value="${(page.margins || {}).inside ?? marg(page).left}"></label><label>바깥쪽<input type="number" id="s-mg-outside" step="1" value="${(page.margins || {}).outside ?? marg(page).right}"></label></div>
       <div class="note">이 페이지는 펼쳤을 때 <b>${rightHand(page) ? "오른쪽" : "왼쪽"}</b> — 안쪽이 ${rightHand(page) ? "왼" : "오른"}쪽에 온다</div>`
       : `<div class="m4"><label>위<input type="number" id="s-mg-top" step="1" value="${marg(page).top}"></label><label>아래<input type="number" id="s-mg-bottom" step="1" value="${marg(page).bottom}"></label><label>왼쪽<input type="number" id="s-mg-left" step="1" value="${marg(page).left}"></label><label>오른쪽<input type="number" id="s-mg-right" step="1" value="${marg(page).right}"></label></div>`}
       <div class="m3"><label title="인디자인 여백 및 단 — 판면을 이만큼 단으로 나눈 보라 안내선. 원고는 단 순서로 들어간다(왼쪽 단 위→아래, 다음 단)">단 수<input type="number" id="s-col-n" min="1" max="6" step="1" value="${(page.columns || {}).n || 1}"></label><label title="단 사이 간격">단 간격 mm<input type="number" id="s-col-g" step="0.5" min="0" value="${(page.columns || {}).gutter ?? 5}"></label><label></label></div>
-      <div class="row"><button class="btn sm sub" id="s-mg-fit" title="이 페이지에 놓인 것들이 실제로 차지한 자리를 재서 여백을 맞춘다">개체에 맞추기</button>${page.margins ? `<button class="btn sm sub" id="s-mg-clr">기본값으로</button>` : ""}</div>
-      <div class="m3"><label>기준선 격자 시작 mm<input type="number" id="s-grid-start" step="0.5" value="${(page.baseline_grid || {}).start ?? ""}" placeholder="없음"></label><label>줄 간격 mm<input type="number" id="s-grid-step" step="0.5" value="${(page.baseline_grid || {}).step ?? ""}"></label><label></label></div>
-      <h3>레이어 <span class="note" style="display:inline">개체를 층으로 — 숨기기·잠금·비인쇄</span></h3>
+      ${page.margins ? `<div class="row"><button class="btn sm sub" id="s-mg-clr">문서 기본 여백으로</button></div>` : ""}
+      <h3>기준선 격자 <span class="note" style="display:inline">환경 설정 · 격자 — 문서 전체</span></h3>
+      <div class="m3"><label>시작 mm<input type="number" id="s-grid-start" step="0.5" value="${(page.baseline_grid || {}).start ?? ""}" placeholder="없음"></label><label>증가 간격 mm<input type="number" id="s-grid-step" step="0.5" value="${(page.baseline_grid || {}).step ?? ""}"></label><label></label></div>
+      <h3>레이어 <span class="note" style="display:inline">인디자인 레이어 패널 — 문서 전체</span></h3>
       ${(page.layers || []).map(l => `<div class="f"><span>${esc(l.name)}</span><span style="display:flex;gap:6px;align-items:center">
-        <label title="숨기기"><input type="checkbox" data-lay="${l.id}:hide" ${l.hide ? "checked" : ""} style="width:auto">숨김</label>
-        <label title="잠금"><input type="checkbox" data-lay="${l.id}:lock" ${l.lock ? "checked" : ""} style="width:auto">잠금</label>
-        <label title="인쇄 안 함"><input type="checkbox" data-lay="${l.id}:nonprint" ${l.nonprint ? "checked" : ""} style="width:auto">비인쇄</label>
-        <button class="btn sm sub" data-layx="${l.id}" title="레이어 지우기(개체는 기본 레이어로)">✕</button></span></div>`).join("")}
-      <div class="row"><button class="btn sm sub" id="s-lay-new">＋ 레이어</button></div>
+        <label title="레이어 숨기기"><input type="checkbox" data-lay="${l.id}:hide" ${l.hide ? "checked" : ""} style="width:auto">숨기기</label>
+        <label title="레이어 잠그기"><input type="checkbox" data-lay="${l.id}:lock" ${l.lock ? "checked" : ""} style="width:auto">잠그기</label>
+        <label title="레이어 옵션 — 레이어 인쇄 끄기"><input type="checkbox" data-lay="${l.id}:nonprint" ${l.nonprint ? "checked" : ""} style="width:auto">인쇄 안 함</label>
+        <button class="btn sm sub" data-layx="${l.id}" title="레이어 삭제(개체는 레이어 1로)">✕</button></span></div>`).join("")}
+      <div class="row"><button class="btn sm sub" id="s-lay-new">＋ 새 레이어</button></div>
       <h3>문서</h3>
       <div class="f"><span>페이지 마주보기</span><input id="s-facing" type="checkbox" ${facing() ? "checked" : ""} title="인디자인 「파일 > 문서 설정 > 페이지 마주보기」 — 켜면 2·3페이지가 한 장(펼침면)이 되고 1페이지는 오른쪽에 선다. 문서마다 저장된다" style="width:auto"></div>
       <div class="f"><span title="인디자인 「번호 매기기 및 섹션 옵션 → 페이지 번호 시작」 — 문서 첫 페이지의 페이지 번호. 페이지 번호 표시(책이 채움)가 이 수부터 센다">페이지 번호 시작</span><input type="number" id="s-pstart" min="1" step="1" value="${plan.page_start || 1}" style="width:70px"></div>
@@ -2342,11 +2424,11 @@ function side() {
       <div class="note" id="s-reg-st" style="margin:-2px 0 6px">${plan.catalog && plan.catalog.design ? `등록됨 — <a href="/design/${esc(plan.catalog.series)}/${esc(plan.catalog.design)}" target="_blank">관리에서 보기</a>` : ""}</div>
       <div class="f"><span>원고 연결</span><span style="display:flex;gap:4px"><button class="btn sm sub" id="s-map" title="원고의 유형을 이 문서의 어느 블록에 넣을지 잇는다 — 코드에 박아 두던 표를 여기서 고친다">유형 잇기…</button></span></div>
       <div class="f"><span>원고</span><span style="display:flex;gap:4px"><select id="s-set"><option value="">자리 표시자 텍스트</option>${LIB.sets.map(t2 => `<option value="${t2.id}" ${t2.id === curSet ? "selected" : ""}>${esc(t2.kind)} ${esc(t2.id)}</option>`).join("")}</select><button class="btn sm sub" id="s-set-edit" title="원고 붙여넣기 · 파일 읽기 · 데이터 필드별 입력">…</button></span></div>
-      <h3>데이터 병합 <span class="note" style="display:inline">템플릿 = 데이터 필드·자리 표시자 텍스트·스타일 · 원고 = {데이터 필드: 글 | [글…]}</span></h3>
-      <div class="f"><span title="자리 표시자 텍스트 = 템플릿 그대로 · 원고 = 넣어 둔 원고가 데이터 필드마다 자리 표시자 텍스트 대신">보기</span><select id="s-view"><option value="">자리 표시자 텍스트</option><option value="content" ${viewContent ? "selected" : ""}>원고</option></select></div>
+      <h3>데이터 병합 <span class="note" style="display:inline">인디자인 데이터 병합 패널 — 데이터 소스 = 원고 {데이터 필드: 글 | [글…]}</span></h3>
+      <div class="f"><span title="레코드 미리 보기 — 자리 표시자 텍스트 대신 넣어 둔 원고로 본다">레코드 미리 보기</span><input type="checkbox" id="s-view" ${viewContent ? "checked" : ""} style="width:auto"></div>
       <textarea id="s-content" rows="6" spellcheck="false" style="width:100%;font:11px ui-monospace,monospace" placeholder='{"지문": ["첫 지문", "둘째 지문"], "번호": ["01", "02"]}'>${esc(plan && plan.content ? JSON.stringify(plan.content, null, 1) : "")}</textarea>
-      <div class="f"><span></span><span style="display:flex;gap:6px;align-items:center"><button class="btn sm" id="s-content-put" title="원고를 문서에 넣고 원고 보기로 — 같은 데이터 필드가 여러 번이면 페이지 순서 → 위에서 아래 → 왼쪽에서 오른쪽">데이터 병합</button><button class="btn sm sub" id="s-slot-names" title="데이터 필드 텍스트 프레임의 글을 모두 「«데이터 필드»」로 — 템플릿에는 책 글을 두지 않는다(인디자인 데이터 병합 필드 표시). 레코드 미리 보기는 「보기: 원고」로 본다">자리 표시자 텍스트 → «데이터 필드»</button><span id="s-content-rep" class="note" style="display:inline"></span></span></div>
-      <h3>책에서 <span class="note" style="display:inline">이 페이지를 몇 장 찍고, 어느 원고를 받을지</span></h3>
+      <div class="f"><span></span><span style="display:flex;gap:6px;align-items:center"><button class="btn sm" id="s-content-put" title="이 원고를 데이터 소스로 넣고 레코드 미리 보기로 — 같은 데이터 필드가 여러 번이면 페이지 순서 → 위에서 아래 → 왼쪽에서 오른쪽">데이터 소스 넣기</button><button class="btn sm" id="s-merge" title="레코드를 모두 넣은 새 문서(데이터 필드가 끊긴 보통 페이지) — 책에서 손볼 곳(재정의 · 윗주 · 고정 개체)은 그 문서에서 고친다. 템플릿은 그대로">병합된 문서 만들기</button><button class="btn sm sub" id="s-slot-names" title="데이터 필드 텍스트 프레임의 글을 모두 「«데이터 필드»」로 — 템플릿에는 책 글을 두지 않는다(인디자인 데이터 병합 필드 표시). 레코드 미리 보기는 「보기: 원고」로 본다">자리 표시자 텍스트 → «데이터 필드»</button><span id="s-content-rep" class="note" style="display:inline"></span></span></div>
+      <h3>레코드 옵션 <span class="note" style="display:inline">이 페이지를 레코드마다 몇 장 · 어느 원고를 받을지(우리 데이터 병합 확장)</span></h3>
       ${bookRow}
       ${layersHtml()}`;
   }
@@ -2358,12 +2440,8 @@ function side() {
   box.querySelectorAll("[data-a]").forEach(i => i.addEventListener(i.tagName === "TEXTAREA" || i.type === "text" ? "change" : "change", () => {
     hist(); const a = page.items[sel].atom; const k = i.dataset.a; let v = i.type === "checkbox" ? i.checked : (i.type === "number" ? +i.value : i.value);
     if (v === "__raw") v = "#231f20";                                        // 색 직접 고르기 — 옆에 색 고르기 칸이 뜬다 (서체는 시스템 서체 목록에서만)
-    if (k.startsWith("tail.")) { const kk = k.slice(5);                         // 글 끝에 붙이기
-      if (kk === "part") { if (v) a.tail = Object.assign({}, a.tail, {part: v}); else delete a.tail; }
-      else if (a.tail) { if (v === "" || v === 0 || v === false) delete a.tail[kk]; else a.tail[kk] = typeof v === "boolean" ? v : +v; } }
-    else if (k.startsWith("grep.")) { const [, n, kk] = k.split("."); const r = (a.grep || [])[+n];     // GREP 스타일 규칙 하나의 칸
+    if (k.startsWith("grep.")) { const [, n, kk] = k.split("."); const r = (a.grep || [])[+n];     // GREP 스타일 규칙 하나의 칸
       if (r) { if (kk === "re") r.re = v; else if (v === "" || v === false) delete r[kk]; else r[kk] = kk === "weight" ? +v : v; } }
-    else if (k === "dash") { a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (v) a.stroke.dash = [1, 1]; else delete a.stroke.dash; }
     else if (k.startsWith("stroke.")) { const kk = k.slice(7); if (kk === "color" && !v) delete a.stroke; else { a.stroke = a.stroke || {w: 0.5, color: "$ink"};
       const dflt = {cap: "butt", join: "miter", align: "center", start: "none", end: "none", tint: 100, miter: 4};
       if (v === "" || v === dflt[kk]) delete a.stroke[kk]; else a.stroke[kk] = v; } }
@@ -2371,7 +2449,7 @@ function side() {
       a.stroke = a.stroke || {w: 0.5, color: "$rule"}; if (d.length) a.stroke.dash = d; else delete a.stroke.dash; }
     else if (k === "flip") { if (v) a.flip = v; else delete a.flip; }
     else if (k === "weight") { if (v) a.weight = +v; else delete a.weight; }        // 굵기 — 같은 서체 집의 중간 굵기(500·600 …)
-    else if (k === "skewx" || k === "skewy") { const sk2 = (a.skew || [0, 0]).slice(); sk2[k === "skewx" ? 0 : 1] = v || 0;
+    else if (k === "skewx") { const sk2 = (a.skew || [0, 0]).slice(); sk2[0] = v || 0;
       if (sk2[0] || sk2[1]) a.skew = sk2; else delete a.skew; }
     else if (k === "scalex" || k === "scaley") { const sc = (a.scale || [100, 100]).slice(); sc[k === "scalex" ? 0 : 1] = v || 100;
       if (sc[0] !== 100 || sc[1] !== 100) a.scale = sc; else delete a.scale; }
@@ -2406,26 +2484,18 @@ function side() {
       if (ts.length) a.tabs = ts; else delete a.tabs; }
     else if (k === "ostyle") { if (v) a.ostyle = v; else delete a.ostyle; }
     else if (k === "layer") { if (v) a.layer = v; else delete a.layer; }
-    else if (k === "clip") { if (v) a.clip = v; else delete a.clip; }
     else if (k.startsWith("ruby.") || k.startsWith("side.")) { const [g2, kk] = k.split(".");      // 윗주 기본값 · 옆 메모 자리 — 빈 칸이면 지운다
       const o = Object.assign({}, a[g2]); if (i.value === "" || v === "") delete o[kk]; else o[kk] = i.type === "number" ? +i.value : v;
       if (Object.keys(o).length) a[g2] = o; else delete a[g2]; }
     else if (k === "markup") { if (v) a.markup = true; else delete a.markup; }
     else if (k === "hyphenate" || k === "snap_baseline" || k === "col_balance") { if (v) a[k] = true; else delete a[k]; }
-    else if (k === "justify_mode") { if (v) a.justify_mode = v; else delete a.justify_mode; }
-    else if (k === "word_spacing") { if (v) a.word_spacing = +v; else delete a.word_spacing; }
-    else if (k === "word_min") { if (v && +v < 0) a.word_min = +v; else delete a.word_min; }
     else if (k.startsWith("jc.")) { const kk = k.slice(3);                // 양끝 정렬 — 빈 칸이면 기본값
       if (i.value === "") { if (a.jc) { delete a.jc[kk]; if (!Object.keys(a.jc).length) delete a.jc; } } else { a.jc = a.jc || {}; a.jc[kk] = +i.value; } }
     else if (k === "corner") { if (v && v !== "round") a.corner = v; else delete a.corner; }
     else if (k === "origin") { if (v && v !== "center") a.origin = v; else delete a.origin; }
-    else if (k === "case") { if (v) a.case = v; else delete a.case; }
-    else if (k === "nonprint" || k === "overprint") { if (v) a[k] = true; else delete a[k]; }
-    else if (k === "bullet" || k === "kerning") { if (v) a[k] = v; else delete a[k]; }
-    else if (["tab", "first_baseline", "baseline"].includes(k)) { if (v) a[k] = v; else delete a[k]; }
+    else if (k === "nonprint") { if (v) a[k] = true; else delete a[k]; }
     else if (k === "h_scale" || k === "v_scale") { if (v && +v !== 100) a[k] = +v; else delete a[k]; }
     else if (k === "opsz") { if (v && +v > 0) a.opsz = +v; else delete a.opsz; }                 // 광학 크기 — 비우면 자동
-    else if (k === "auto_size") { if (v === "off") a.auto_size = false; else if (v === "both") a.auto_size = "both"; else delete a.auto_size; }   // 높이만(기본) · 높이와 너비 · 끔
     else if (k === "lang") { if (v && v !== "ko") a.lang = v; else delete a.lang; }                       // 글 언어 — 한국어가 기본
     else if (k.startsWith("frame.")) { const [kk, sub] = k.slice(6).split(".");                          // 글상자 칠·획·모서리
       a.frame = Object.assign({}, a.frame);
@@ -2436,12 +2506,6 @@ function side() {
     else if (k === "inset4") { const r = String(v).split(/[,\s]+/).filter(Boolean).map(Number);              // 안쪽 여백 위 오른쪽 아래 왼쪽
       if (r.length === 4 && r.every(x => x >= 0)) a.inset = r.every(x => x === r[0]) ? r[0] : r; else if (r.length === 1 && r[0] > 0) a.inset = r[0]; else if (!r.length) delete a.inset; }
     else if (k === "fill" && !v) delete a.fill;
-    else if (k.startsWith("slotfmt.") && k.split(".").length === 4) {     // 필드 고정 개체 — slot_fmt[필드].anc = {part, pos, x, dy, gap}
-      const [, f, prop, sub] = k.split("."); a.slot_fmt = a.slot_fmt || {}; const fm = Object.assign({}, a.slot_fmt[f]); const o = Object.assign({}, fm[prop]);
-      if (sub === "part" || sub === "pos") { if (v) o[sub] = String(v); else delete o[sub]; } else if (typeof v === "boolean") { if (v) o[sub] = true; else delete o[sub]; } else if (i.value === "") delete o[sub]; else o[sub] = +v || 0;
-      if (o.part) fm[prop] = o; else delete fm[prop];
-      a.slot_fmt[f] = fm; }
-    else if (k.startsWith("slotfmt.")) { const [, f, prop] = k.split("."); a.slot_fmt = a.slot_fmt || {}; a.slot_fmt[f] = Object.assign({}, a.slot_fmt[f], {[prop]: typeof v === "boolean" ? v : (prop === "style" || prop === "bullet_text" ? String(i.value || "") : (+v || 0))}); }
     else if (k === "bindadd") { if (v && a.bind) a.bind = a.bind + "+" + v; }
     else if (k === "bindsel") { if (v === "__other") { a.bind = (a.bind && !allSlots().some(([x]) => x === a.bind)) ? a.bind : "자리"; } else if (v) a.bind = v; else delete a.bind;   // 직접 적기 — 빈 이름은 저장이 안 되니 「자리」로 시작 · 목록 자리는 그 이름 · 고정 글은 자리 없음
       if (a.bind && (a.text === DEFAULT_TEXT || a.text === OLD_DEFAULT_TEXT)) delete a.text; }        // 그릴 때 들어간 기본 문구는 지운다 — 원고 전엔 데이터 필드 이름이 회색으로 보인다(용어 바꾸기 전 문서의 기본 문구도)
@@ -2457,9 +2521,6 @@ function side() {
     else if (k === "grad") { if (v) a.gradient = {type: "linear", angle: 90, stops: [{c: a.fill || "$s1"}, {c: "$white"}]}; else delete a.gradient; }
     else if (k.startsWith("grad.")) { const g = a.gradient; if (!g) return; const kk = k.slice(5); if (kk === "c0") g.stops[0].c = v || "$ink"; else if (kk === "c1") g.stops[g.stops.length - 1].c = v || "$white"; else if (kk === "angle") g.angle = v; else if (kk === "type") { g.type = v; if (v === "radial") delete g.angle; } }
     else if (k === "radius4") { const r = String(v).split(/[,\s]+/).filter(Boolean).map(Number); if (r.length === 4 && r.every(x => x >= 0)) a.radius = r.every(x => x === r[0]) ? r[0] : r; else if (!v) { if (Array.isArray(a.radius)) delete a.radius; } }
-    else if (k.startsWith("anchor.")) { const kk = k.slice(7);          // 문장 끝에 붙이기 (앵커 개체)
-      if (kk === "after") { if (v) a.anchor = Object.assign({}, a.anchor, {after: v}); else delete a.anchor; }
-      else if (a.anchor) a.anchor.gap = v; }
     else if (k.startsWith("img.")) { const kk = k.slice(4); if (i.value === "") { delete a.img; } else { a.img = a.img || {x: 0, y: 0, w: a.w, h: a.h}; a.img[kk] = v; } }
     else if (["tracking", "tsume", "indent", "indent_first", "indent_right", "space_before", "space_after", "inset", "gutter", "leading"].includes(k)) { if (v) a[k] = v; else delete a[k]; }
     else if (k === "num") { if (v) a.num = v; else { delete a.num; delete a.num_start; } }
@@ -2475,26 +2536,32 @@ function side() {
     else a[k] = v;
     save(); render(); side();
   }));
+  box.querySelectorAll("[data-p]").forEach(i => i.addEventListener("change", () => {     // 인디자인 칸(경로) — 단락 · 문자 · 프레임 옵션 · 데이터 필드 고정 개체 …
+    if (sel == null || !page.items[sel] || !page.items[sel].atom) return;
+    hist(); const a = page.items[sel].atom, k = i.dataset.p;
+    if (k.startsWith("stroke.") && !a.stroke) a.stroke = {w: 0.5, color: "$ink"};        // 획이 없던 개체 — 기본 획부터
+    setField(a, k, i);
+    if (k.startsWith("poly.")) { const d = polyD(a.poly); if (d) a.d = d; }
+    if (k.startsWith("slot_fmt.") && k.endsWith(".anc.part") && !gp(a, k)) pathSet(a, k.slice(0, -5), undefined);   // 개체를 「없음」으로 — 고정 개체 설정도 지운다
+    save(); pageSvg = {}; render(); side();
+  }));
   on("#s-link", "click", () => {                                    // 다음 상자 잇기 — 아직 이야기가 없으면 이 상자가 첫 상자
     if (linkPick) { linkPick = null; side(); return; }
     const a = page.items[sel].atom; if (!a.story) { hist(); a.story = storyNew(); a.story_seq = 1; save(); render(); }
-    linkPick = {fi: sel}; side(); say("이어 받을 텍스트 프레임을 누른다 (Esc 취소)"); });
+    linkPick = {fi: sel, pid: page.id}; side(); say("이어 받을 텍스트 프레임을 누른다 — 다른 페이지도 된다 (Esc 취소)"); });
+  on("#s-unlink", "click", () => {                                  // 스레드 끊기 — 이 프레임을 빼고 뒤 프레임 순서를 당긴다
+    const a = page.items[sel].atom; if (!a.story) return; hist();
+    const name = a.story, n0 = +a.story_seq || 1;
+    for (const b of storyBoxes(name)) if (b !== a && (+b.story_seq || 1) > n0) b.story_seq = (+b.story_seq || 1) - 1;
+    delete a.story; delete a.story_seq;
+    for (const p2 of docPages()) if (p2 !== page && (p2.items || []).some(x => x.atom && x.atom.story === name)) unsaved.add(p2);
+    save(); render(); side(); });
   on("#s-edit", "click", () => enterEdit(sel)); on("#s-toblock", "click", () => partToBlock(sel)); on("#s-toblock2", "click", saveAsElement);
  on("#s-down", "click", ungroup); on("#s-group", "click", () => groupToPart());
   ["top", "bottom", "left", "right", "inside", "outside"].forEach(k => on("#s-mg-" + k, "change", (e) => {
     hist(); const m = Object.assign({}, page.margins || marg(page), {[k]: +e.target.value || 0});
     if (k === "inside" || k === "outside") { delete m.left; delete m.right; }     // 안쪽·바깥쪽을 쓰면 좌우는 그때그때 편다
     page.margins = m; save(); applyView(); side(); }));
-  on("#s-mg-fit", "click", () => {                              // 놓인 것들이 실제로 차지한 자리로
-    const S = specOf(); const bs = page.items.map((_, i) => bboxOf(i)).filter(Boolean)
-      .filter(b => b.w * b.h < S.w * S.h * 0.6);                // 전면 바탕은 빼고
-    if (!bs.length) { say("잴 개체가 없다"); return; }
-    hist();
-    page.margins = {left: Math.round(Math.min(...bs.map(b => b.x))), top: Math.round(Math.min(...bs.map(b => b.y))),
-                    right: Math.round(S.w - Math.max(...bs.map(b => b.x + b.w))), bottom: Math.round(S.h - Math.max(...bs.map(b => b.y + b.h)))};
-    for (const k of ["left", "top", "right", "bottom"]) page.margins[k] = Math.max(0, page.margins[k]);
-    save(); applyView(); side(); say(`여백을 개체에 맞췄다 — 위 ${page.margins.top} · 아래 ${page.margins.bottom} · 좌 ${page.margins.left} · 우 ${page.margins.right}mm`);
-  });
   on("#s-mg-clr", "click", () => { hist(); delete page.margins; save(); applyView(); side(); });
   ["n", "g"].forEach(k => on("#s-col-" + k, "change", () => {       // 단 — 원고 읽는 순서(content.slots)와 안내선
     hist(); const n = Math.max(1, Math.min(6, Math.round(+$("#s-col-n").value || 1))), g = Math.max(0, +$("#s-col-g").value || 0);
@@ -2532,7 +2599,7 @@ function side() {
     if (v > 1) q.per = v; else delete q.per; await savePlan(); side(); });
   on("#s-sets", "change", async (e) => { const q = planPg(page.id); if (!q) return; if (e.target.value) q.sets = [e.target.value]; else delete q.sets; await savePlan(); pageSvg = {}; render(); drawRail(); side(); });   // 받는 원고가 바뀌면 캔버스도 그 유형 원고로
   on("#s-order", "change", async (e) => { if (e.target.value === "by_page") delete plan.order; else plan.order = e.target.value; await savePlan(); side(); });
-  on("#s-grep-add", "click", () => { hist(); const a = page.items[sel].atom; (a.grep = a.grep || []).push({re: "", b: true}); save(); side(); });
+  on("#s-grep-add", "click", () => { hist(); const a = page.items[sel].atom; (a.grep = a.grep || []).push({re: ""}); save(); side(); });
   box.querySelectorAll(".grep-x").forEach(b => b.addEventListener("click", () => { hist(); const a = page.items[sel].atom;
     a.grep.splice(+b.dataset.k, 1); if (!a.grep.length) delete a.grep; save(); pageSvg = {}; render(); side(); }));
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
@@ -2540,10 +2607,13 @@ function side() {
     view.adv = d.open; localStorage.setItem("units.view3", JSON.stringify(view));
     box.querySelectorAll("details.more").forEach(o => { o.open = d.open; });
   }));
-  on("#s-flow", "change", (e) => { hist(); const it = page.items[sel]; if (e.target.checked) it.flow = true; else { delete it.flow; delete it.gap; } save(); side(); });
-  on("#s-gap", "change", (e) => { hist(); page.items[sel].gap = +e.target.value; save(); });
   wireLayers(box);
-  on("#s-view", "change", (e) => { viewContent = e.target.value === "content"; pageSvg = {}; render(); drawRail(); });
+  on("#s-view", "change", (e) => { viewContent = e.target.checked; pageSvg = {}; render(); drawRail(); });
+  on("#s-merge", "click", async () => {                                 // 병합된 문서 만들기 — 새 문서로 연다
+    say("병합된 문서 만드는 중 — 레코드를 모두 넣는다…");
+    const j = await api("/api/units/merge", {plan: plan.id});
+    if (j.error) { say("병합된 문서 — " + j.error); return; }
+    say("병합된 문서를 만들었다 — 새 문서로 연다"); location.href = j.url; });
   on("#s-slot-names", "click", async () => {                            // 원고 자리 글 → 「«자리 이름»」 — 틀 하나로 여러 책: 틀에 특정 책 글이 남으면 빠진 자리에 찍혀 나간다
     let n = 0;
     for (const p of docPages()) {
@@ -2620,28 +2690,30 @@ function side() {
     page.spec = e.target.value; save(); layout(); render(); });
   on("#s-pname", "input", (e) => { $("#pname").value = e.target.value; $("#pname").oninput(); });
   on("#s-cont", "change", (e) => { hist(); if (e.target.value) page.cont = e.target.value; else delete page.cont; save(); side(); });
-  on("#s-mirror", "change", (e) => { page.mirror = e.target.checked; save(); });
   // 레이어 — 만들고 숨기고 잠그고 지운다(요소는 안 지운다)
   on("#s-lay-new", "click", () => {
     const nm = prompt("레이어 이름", "레이어 " + ((page.layers || []).length + 1)); if (nm == null || !nm.trim()) return;
     let n = 1; while ((page.layers || []).some(l => l.id === "l" + n)) n++;
-    page.layers = (page.layers || []).concat([{id: "l" + n, name: nm.trim()}]); save(); side();
+    const lay = (page.layers || []).concat([{id: "l" + n, name: nm.trim()}]);
+    for (const p2 of docPages()) { p2.layers = JSON.parse(JSON.stringify(lay)); if (p2 !== page) unsaved.add(p2); }   // 레이어 — 문서 전체(인디자인)
+    save(); side();
   });
   box.querySelectorAll("[data-lay]").forEach(i => i.onchange = () => {
     const [lid, key] = i.dataset.lay.split(":"); const l = (page.layers || []).find(x => x.id === lid); if (!l) return;
     if (i.checked) l[key] = true; else delete l[key];
+    for (const p2 of docPages()) { if (p2 === page) continue; p2.layers = JSON.parse(JSON.stringify(page.layers)); unsaved.add(p2); }
     save(); render(); side();
   });
   box.querySelectorAll("[data-layx]").forEach(b => b.onclick = () => {
     const lid = b.dataset.layx; const l = (page.layers || []).find(x => x.id === lid); if (!l) return;
-    if (!confirm(`레이어 「${l.name}」 을 지울까? 그 안의 개체는 기본 레이어로 간다(개체는 안 지운다).`)) return;
-    page.layers = (page.layers || []).filter(x => x.id !== lid);
-    page.items.forEach(it => { if (it.atom && it.atom.layer === lid) delete it.atom.layer; });
+    if (!confirm(`레이어 「${l.name}」 을 삭제할까? 그 안의 개체는 레이어 1로 간다(개체는 안 지운다).`)) return;
+    for (const p2 of docPages()) { p2.layers = (p2.layers || []).filter(x => x.id !== lid); (p2.items || []).forEach(it => { if (it.atom && it.atom.layer === lid) delete it.atom.layer; }); if (p2 !== page) unsaved.add(p2); }
     save(); render(); side();
   });
   // 기준선 격자
-  const grid = () => { const st = +($("#s-grid-start") || {}).value || 0, sp = +($("#s-grid-step") || {}).value || 0;
-    if (sp > 0) page.baseline_grid = {start: st, step: sp}; else delete page.baseline_grid; save(); render(); };
+  const grid = () => { const st = +($("#s-grid-start") || {}).value || 0, sp = +($("#s-grid-step") || {}).value || 0;   // 기준선 격자 — 문서 전체(인디자인 환경 설정)
+    for (const p2 of docPages()) { if (sp > 0) p2.baseline_grid = {start: st, step: sp}; else delete p2.baseline_grid; if (p2 !== page) unsaved.add(p2); }
+    save(); render(); };
   on("#s-grid-start", "change", grid); on("#s-grid-step", "change", grid);
   // 개체 스타일로 저장 — 지금 요소의 모양만 뽑아 옷에 넣는다
   on("#s-ostyle-new", "click", async () => {
@@ -2655,14 +2727,6 @@ function side() {
     it.atom.ostyle = nm.trim(); save(); render(); side(); $("#st").textContent = `개체 스타일 「${nm.trim()}」 저장`;
   });
   // 글 안에 개체 끼우기(앵커드)
-  on("#s-anc-add", "click", () => {
-    const pid = ($("#s-anc-part") || {}).value; if (!pid) { $("#st").textContent = "부품을 고르세요"; return; }
-    const it = page.items[sel]; const a2 = it && it.atom; if (!a2 || a2.t !== "text") return;
-    const pt = byId("parts")[pid] || {};
-    hist(); const rich = Array.isArray(a2.text) ? a2.text.slice() : [String(a2.text || "")];
-    rich.push({t: "", anc: {part: pid, w: pt.w || 20, h: pt.h || 10, align: "inline"}});
-    a2.text = rich; save(); render(); side(); $("#st").textContent = `글 안에 「${esc(pt.name || pid)}」 끼움`;
-  });
   on("#s-facing", "change", async (e) => {                        // 문서 설정 — 켜야 펼침면이 생긴다 (인디자인과 같게)
     if (!plan) return; plan.facing = e.target.checked; await savePlan();
     applyView(); layout(); drawPages(); layout(); render(); scrollToActive(); side();

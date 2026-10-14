@@ -411,12 +411,12 @@ try:
         js(f"(() => {{ hist(); page.items[{TXT}].atom.text = ['앞 ', {{t: 'directly', ruby: {{t: '(X)', pos: 'above'}}}}, ' 뒤']; save(); render(); }})()")
         js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3)
         pos = "(() => { const t = document.querySelector('#tedit [data-rba]').firstChild; const r = document.createRange(); r.setStart(t, 2); r.setEnd(t, 3); const b = r.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()"
-        click(*js(pos)); row = wait("document.querySelector('#rt-ruby').style.display !== 'none' && document.querySelector('#rt-ruby').textContent.includes('(X)')", 3)
-        ir = rect("#rt-ruby [data-rb='0:off']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="1.2"); key("Enter", code="Enter")
-        ir = rect("#rt-ruby [data-rb='0:size']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="5"); key("Enter", code="Enter"); shot("G2c_윗주_줄")
+        click(*js(pos)); row = wait("document.querySelector('#rt-ruby').style.display !== 'none' && (document.querySelector('#rt-ruby [data-rb=t]') || {}).value === '(X)'", 3)
+        ir = rect("#rt-ruby [data-rb='oy']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="1.2"); key("Enter", code="Enter")
+        ir = rect("#rt-ruby [data-rb='size']"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="5"); key("Enter", code="Enter"); shot("G2c_윗주_줄")
         click(*js(pos)); key("Enter", mods=CTRL, code="Enter")
-        saved = wait(f"JSON.stringify(page.items[{TXT}].atom.text).includes('\"off\":1.2') && JSON.stringify(page.items[{TXT}].atom.text).includes('\"size\":5')", 4)
-        rest = js(f"(() => {{ const r = page.items[{TXT}].atom.text.find(x => x && x.ruby); return r && r.t === 'directly' && r.ruby.t === '(X)' && r.ruby.pos === 'above'; }})()")
+        saved = wait(f"JSON.stringify(page.items[{TXT}].atom.text).includes('\"oy\":1.2') && JSON.stringify(page.items[{TXT}].atom.text).includes('\"size\":5')", 4)
+        rest = js(f"(() => {{ const r = page.items[{TXT}].atom.text.find(x => x && x.ruby); return r && r.t === 'directly' && r.ruby.t === '(X)' && r.ruby.pos !== 'below'; }})()")
         return (ok and row and saved and rest, f"편집={ok} 윗주 줄={row} 저장={saved} 글·위치 그대로={rest} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:120]}")
     step("G2c 윗주 하나만 크기 · 오프셋 Y", g2c)
     def g3():
@@ -608,19 +608,25 @@ try:
     step("N3 연속 껐다 켜기", n3)
     def n4():
         click(*center('#trail [data-tool="path"]')); time.sleep(0.5)
-        btns = js("[...document.querySelectorAll('#thint [data-shp]')].map(b => b.textContent)")
-        if not btns: return (False, "모양 고르개가 안 나온다")
-        b = center('#thint [data-shp]:nth-child(4)')                      # 별
-        nm = js("(document.querySelector('#thint [data-shp]:nth-child(4)') || {}).textContent")
-        click(*b); time.sleep(0.2)
         n0 = n_items(); pr = rect("#paper"); sc = js("scale")
         js("(() => { const a = document.querySelector('#area'); if (a) a.scrollTop = 0; })()"); time.sleep(0.3)
         drag(pr[0] + 40 * sc, pr[1] + 210 * sc, pr[0] + 70 * sc, pr[1] + 235 * sc, steps=8)   # 빈 자리에서 — 다른 요소 위에서 끌면 그 요소가 잡힌다
         ok = wait(f"page.items.length === {n0 + 1}", 6)
-        d = js("(() => { const it = page.items[page.items.length - 1]; return it && it.atom ? it.atom.d || '' : ''; })()")
-        star = js("(() => { const it = page.items[page.items.length - 1]; return !!(it && it.atom && it.atom.t === 'path'); })()")
-        return (ok and star and d.startswith("M0.5 0 L0.62"), f"모양 {len(btns)}개 · 고른 것={nm} · 그린 것 d={d[:22]}")
-    step("N4 도형 — 모양 고르고 그리면 그 모양", n4)
+        hexa = js("(() => { const it = page.items[page.items.length - 1]; return it && it.atom && it.atom.t === 'path' ? (it.atom.d.match(/L/g) || []).length : -1; })()")
+        js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.6)
+        miss = [k for k in ("poly.n", "poly.star") if not js(f"!!document.querySelector('#side [data-p=\"{k}\"]')")]
+        for k, v in (("poly.n", "5"), ("poly.star", "40")):
+            b = center(f'#side [data-p="{k}"]')
+            if b:
+                click(*b); key("End", code="End")
+                for _ in range(4):
+                    key("Backspace", code="Backspace")
+                c.call("Input.insertText", text=v); key("Enter", code="Enter")
+        time.sleep(1.0)
+        star = js("(() => { const a = page.items[page.items.length - 1].atom; return (a.d.match(/L/g) || []).length; })()")
+        js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(0.8)
+        return (ok and hexa == 5 and star == 9 and not miss, f"그림={ok} 육각형 꼭짓점 {hexa + 1} · 별 꼭짓점 {star + 1} · 없는 칸 {miss or '없음'}")
+    step("N4 다각형 도구 — 그리면 육각형 · 면 수 · 별모양 인세트", n4)
 
     def n5():
         while js("docPages().length") < 3:
@@ -745,12 +751,19 @@ try:
 
     # ───────── P. 인디자인 개체 속성 (오른쪽 패널에 다 있나) ─────────
     WANT_SHAPE = ["w", "h", "fill", "stroke.color", "stroke.w", "stroke.align", "stroke.join", "stroke.tint", "dashpat",
-                  "grad", "rotate", "opacity", "tint", "flip", "skewx", "skewy", "scalex", "scaley",
+                  "grad", "rotate", "opacity", "tint", "flip", "skewx", "scalex", "scaley",
                   "fx.blend", "fx.shadow.x", "fx.shadow.y", "fx.shadow.blur", "fx.shadow.inner", "fx.glow.blur", "fx.glow.inner", "fx.feather"]
-    WANT_TEXT = ["text", "bindsel", "style", "font", "size", "color", "align", "leading", "tracking", "indent", "indent_first",
-                 "indent_right", "space_before", "space_after", "inset", "valign", "columns", "gutter",
-                 "bullet", "tab", "shade", "rule_above.w", "rule_above.color", "rule_above.offset", "rule_below.w",
-                 "first_baseline", "baseline", "kerning", "h_scale", "v_scale", "auto_size"]
+    WANT_TEXT = ["text", "bindsel", "style", "font", "size", "color", "inset4", "align", "leading", "tracking", "indent", "indent_first",
+                 "indent_right", "space_before", "space_after", "valign", "columns", "gutter",
+                 "list.type", "tabs", "shade", "rule_above.w", "rule_above.color", "rule_above.offset", "rule_below.w",
+                 "fbo.type", "fbo.min", "baseline", "kerning", "h_scale", "v_scale", "auto_size", "auto_ref"]
+    have_all = "[...document.querySelectorAll('#side [data-a], #side [data-p]')].map(x => x.dataset.a || x.dataset.p)"
+
+    def setp(k, v):
+        return js(f"""(() => {{ const el = document.querySelector('#side [data-p="{k}"]'); if (!el) return '{k}';
+            if (el.type === 'checkbox') el.checked = {str(bool(v)).lower() if isinstance(v, bool) else 'true'};
+            else el.value = {json.dumps(v)};
+            el.dispatchEvent(new Event('change')); return ''; }})()""")
 
     def setf(k, v):
         return js(f"""(() => {{ const el = document.querySelector('#side [data-a="{k}"]'); if (!el) return '{k}';
@@ -762,7 +775,8 @@ try:
     def p1():
         js("addAtom('rect', {x: 30, y: 200})"); time.sleep(1.2)
         js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
-        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        setp("stroke.type", "dashed"); time.sleep(0.8)
+        have = js(have_all)
         miss = [k for k in WANT_SHAPE if k not in have]
         for k, v in [("stroke.align", "inside"), ("dashpat", "2, 1"), ("stroke.join", "round"), ("stroke.tint", "60"),
                      ("tint", "50"), ("flip", "h"), ("skewx", "10"), ("scalex", "120"), ("fx.blend", "multiply"),
@@ -780,16 +794,15 @@ try:
     def p2():
         js("addAtom('text', {x: 30, y: 210})"); time.sleep(1.2)
         js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
-        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        have = js(have_all)
         miss = [k for k in WANT_TEXT if k not in have]
-        for k, v in [("bullet", "decimal"), ("tab", "8"), ("rule_above.w", "0.8"), ("rule_below.w", "0.4"),
-                     ("first_baseline", "2"), ("baseline", "1"), ("kerning", "none"), ("h_scale", "90"), ("v_scale", "105")]:
-            setf(k, v)
-        js("(() => { const el = document.querySelector('#side [data-a=\"auto_size\"]'); el.value = 'off'; el.dispatchEvent(new Event('change')); })()")
+        for k, v in [("list.type", "number"), ("tabs", "8"), ("rule_above.w", "0.8"), ("rule_below.w", "0.4"),
+                     ("fbo.type", "fixed"), ("fbo.min", "2"), ("baseline", "1"), ("kerning", "none"), ("h_scale", "90"), ("v_scale", "105"), ("auto_size", "height")]:
+            setp(k, v); time.sleep(0.3)
         time.sleep(2.0)
         svg = js("document.querySelector('#svgwrap svg').innerHTML")
-        drawn = {"글머리": "list-item" in svg, "단락선": "border-top" in svg, "탭": "tab-size" in svg,
-                 "커닝": "font-kerning" in svg, "장평": "transform:scale" in svg}
+        drawn = {"번호": "1.<span" in svg or "1.\t" in svg or ">1." in svg, "단락 경계선": "height:0.282px" in svg, "탭": "min-width:" in svg,
+                 "커닝": "font-kerning" in svg, "가로 비율": "transform:scale" in svg, "첫 기준선": '<div style="margin-top:' in svg}
         at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
         js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
         return (not miss and all(drawn.values()), f"없는 칸 {miss or '없음'} · 그려짐 {drawn} · 원자 {at[:120]}")
@@ -798,11 +811,14 @@ try:
     def p3():
         js("addAtom('rect', {x: 20, y: 120})"); time.sleep(1.2)
         js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
-        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
-        want = ["corner", "stroke.gap_color", "origin", "nonprint", "overprint", "wrap.mode", "wrap.offset", "wrap.side"]
+        setp("stroke.type", "dashed"); time.sleep(0.6)
+        setf("wrap.mode", "bbox"); time.sleep(0.6)
+        have = js(have_all)
+        want = ["corner", "stroke.gap_color", "origin", "nonprint", "wrap.mode", "wrap.to", "wrap.ot", "wrap.ob", "wrap.ol", "wrap.or"]
         miss = [k for k in want if k not in have]
-        for k, v in [("corner", "bevel"), ("origin", "tl"), ("wrap.mode", "bbox"), ("wrap.offset", "2"), ("dashpat", "3, 2")]:
+        for k, v in [("corner", "bevel"), ("origin", "tl"), ("dashpat", "3, 2")]:
             setf(k, v)
+        setp("wrap.ot", "2"); setp("wrap.to", "right")
         time.sleep(1.6)
         at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
         svg = js("document.querySelector('#svgwrap svg').innerHTML")
@@ -814,12 +830,12 @@ try:
     def p4():
         js("addAtom('text', {x: 20, y: 150})"); time.sleep(1.2)
         js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
-        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
+        have = js(have_all)
         want = ["drop_cap.lines", "drop_cap.chars", "case", "column_rule.w", "underline.w", "underline.style", "strike.w"]
         miss = [k for k in want if k not in have]
         for k, v in [("drop_cap.lines", "3"), ("case", "small"), ("columns", "2"), ("column_rule.w", "0.5"),
                      ("underline.w", "0.6"), ("underline.style", "wavy")]:
-            setf(k, v)
+            setp(k, v); time.sleep(0.3)
         time.sleep(1.8)
         svg = js("document.querySelector('#svgwrap svg').innerHTML")
         drawn = {"드롭캡": "float:left" in svg, "작은대문자": "small-caps" in svg,
@@ -880,24 +896,31 @@ try:
     def p7():
         js("addAtom('text', {x: 20, y: 150})"); time.sleep(1.2)
         js("(() => { const i = page.items.length - 1; select([i], i); })()"); time.sleep(0.8)
-        have = js("[...document.querySelectorAll('#side [data-a]')].map(x => x.dataset.a)")
-        want = ["tabspec", "hyphenate", "justify_mode", "word_spacing", "snap_baseline", "clip"]
-        miss = [k for k in want if k not in have and k != "clip"]          # clip 은 그림 원자에만
-        setf("text", "가\t나\t다")                                        # 탭 자리를 보려면 글에 탭이 있어야 한다
-        for k, v in [("tabspec", "30 right ., 60 center"), ("justify_mode", "letter"), ("word_spacing", "120")]:
-            setf(k, v)
+        have = js(have_all)
+        want = ["tabs", "hyphenate", "snap_baseline", "jc.word_min", "jc.letter_max"]
+        miss = [k for k in want if k not in have]
+        setf("text", "가\t나\t다")                                       # 탭 정지를 보려면 글에 탭이 있어야 한다
+        setp("tabs", "30 right ., 60 center")
         js("(() => { const h = document.querySelector('#side [data-a=\"hyphenate\"]'); h.checked = true; h.dispatchEvent(new Event('change')); })()")
         time.sleep(1.8)
         at = js("JSON.stringify(page.items[page.items.length - 1].atom)")
         svg = js("document.querySelector('#svgwrap svg').innerHTML")
-        drawn = {"탭 자리": "min-width:30.000px" in svg, "리더": "......" in svg, "하이픈": "hyphens:auto" in svg}
-        anc = js("(() => { const s = document.querySelector('#s-anc-part'); if (!s || !LIB.parts.length) return false; s.value = LIB.parts[0].id; document.querySelector('#s-anc-add').click(); return true; })()")
-        time.sleep(2.0)
+        drawn = {"탭 정지": "min-width:30.000px" in svg, "채움 문자": "......" in svg, "하이픈": "hyphens:auto" in svg}
+        i = js("page.items.length - 1")
+        js(f"select([{i}], {i})"); key("Enter", code="Enter"); wait("document.querySelector('#tedit').style.display !== 'none'", 3)
+        b = center("#rt-anc")
+        if b:
+            click(*b); time.sleep(0.6)
+        row = js("document.querySelector('#rt-ancrow').style.display !== 'none'")
+        tb = rect("#tedit")
+        if tb:
+            click(tb[0] + tb[2] - 4, tb[1] + 6)
+        key("Enter", mods=CTRL, code="Enter"); time.sleep(1.0)
         has_anc = js("(() => { const a = page.items[page.items.length - 1].atom; return Array.isArray(a.text) && a.text.some(r => r && r.anc); })()")
         js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(1.0)
-        return (not miss and all(drawn.values()) and anc and has_anc,
-                f"없는 칸 {miss or '없음'} · {drawn} · 글 안 개체={has_anc} · 원자 {at[:90]}")
-    step("P7 글 — 탭 자리·리더·하이픈·양끝맞춤·글 안 개체", p7)
+        return (not miss and all(drawn.values()) and row and has_anc,
+                f"없는 칸 {miss or '없음'} · {drawn} · 고정 개체 줄={row} · 글 안 고정 개체={has_anc} · 원자 {at[:90]}")
+    step("P7 글 — 탭 정지 · 채움 문자 · 하이픈 넣기 · 고정 개체 삽입", p7)
 
     # ───────── Q. 유형 하나 · 모양 여럿 ─────────
     def mkrow(y):
@@ -950,7 +973,7 @@ try:
         js("view.adv = true; side();"); time.sleep(0.8)
         open_ = js("[...document.querySelectorAll('#side .f > span:first-child, #side h3')].filter(x => x.offsetParent).length")
         js("(() => { page.items.pop(); select([]); save(); render(); })()"); time.sleep(0.8)
-        return (shut < open_ and len(sums) == 2, f"접으면 {shut}칸 · 펴면 {open_}칸 · 더 보기 {sums}")
+        return (shut < open_ and len(sums) == 3, f"접으면 {shut}칸 · 펴면 {open_}칸 · 더 보기 {sums}")
     step("R2 오른쪽 패널 — 기본만 보이고 나머지는 접힌다", r2)
 
     def r3():

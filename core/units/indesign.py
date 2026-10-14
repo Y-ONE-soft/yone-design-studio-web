@@ -233,7 +233,7 @@ def text_atom(a, skin, ctx=None, notes=None):
             x["anc"] = _anc(x["anc"])
         bt = x.pop("bullet_text", None)
         if bt:
-            x["list"] = {"type": "bullet", "char": bt.rstrip(), "after": bt[len(bt.rstrip()):]}
+            x["list"] = {"type": "bullet", "char": bt.rstrip(), "after": bt[len(bt.rstrip()):] or "none"}
         if x.get("inline") and any(k in x for k in ("inline_w", "inline_gap", "drop")) or (x.get("inline") and x.get("style") and not x.get("cs")):
             src = dict(styles.get(x.get("style")) or {}, **{k: x[k] for k in ("font", "size", "color", "weight", "tracking", "drop") if k in x})
             cs = {k2: src[k] for k, k2 in (("font", "font"), ("size", "size"), ("color", "color"), ("weight", "weight"), ("tracking", "track")) if src.get(k) not in (None, "")}
