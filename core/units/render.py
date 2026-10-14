@@ -1090,24 +1090,20 @@ def _slot_para(a, x, slot, slots, k, ps, ctx, ovs=None):
     css = "margin:0;" + re.sub(r"margin-(top|bottom):[^;]*;", "", ps) + _font_css(st, ctx)   # 문단 간격은 자리 스타일로만(아래)
     if st.get("align"):
         css += f"text-align:{st['align']};"
-    pad = float(st.get("pad") or 0)
     shade = st.get("shade")
     grp = lambda j: ((lambda s: (s.get("shade"), s.get("border"), s.get("border_color")) if s.get("shade") else None)(slot_style(a, slots[j], ctx))
                      if 0 <= j < len(slots) and slots[j] else None)
     g0 = grp(k)                                                       # 같은 바탕(색·테두리)이 잇닿으면 한 상자 — [조건] 머리줄과 조건 글
     first = not (g0 and grp(k - 1) == g0) if shade else not (k and slots[k - 1] == slot)
     last = not (g0 and grp(k + 1) == g0) if shade else not (k + 1 < len(slots) and slots[k + 1] == slot)
-    if shade and st.get("shade_fit") and st.get("indent"):           # 음영 너비 「텍스트」 — 음영은 왼쪽 들여쓰기 자리부터(인디자인), 여백만 안쪽
-        css += f"margin-left:{float(st['indent']):.3f}px;padding-left:{pad:.3f}px;"
-    elif st.get("indent") is not None or pad:
-        css += f"padding-left:{float(st.get('indent') or 0) + pad:.3f}px;"
-    if shade and st.get("shade_fit") and st.get("indent_right"):     # 오른쪽도 — 음영은 오른쪽 들여쓰기 안에서 끝난다
-        css += f"margin-right:{float(st['indent_right']):.3f}px;padding-right:{pad:.3f}px;"
-    elif st.get("indent_right") is not None or pad:
-        css += f"padding-right:{float(st.get('indent_right') or 0) + pad:.3f}px;"
-    ol, orr = float(st.get("shade_ol") or 0), float(st.get("shade_or") or 0)
-    if shade and not st.get("shade_fit") and (ol or orr):            # 음영 오프셋(너비 「열」) — 음영 가장자리를 밖(+) · 안(−)으로, 「여백」은 음영 가장자리부터
-        css += f"margin-left:{-ol:.3f}px;margin-right:{-orr:.3f}px;"
+    ind, ind_r = float(st.get("indent") or 0), float(st.get("indent_right") or 0)
+    if shade and st.get("shade_fit"):                                 # 음영 너비 「텍스트」 — 문단 상자를 글 폭으로(들여쓰기는 바깥 여백)
+        css += f"margin-left:{ind:.3f}px;margin-right:{ind_r:.3f}px;"
+    else:
+        if st.get("indent") is not None:
+            css += f"padding-left:{ind:.3f}px;"
+        if st.get("indent_right") is not None:
+            css += f"padding-right:{ind_r:.3f}px;"
     if st.get("indent_first") is not None:
         css += f"text-indent:{float(st['indent_first']):.3f}px;"
     # 문단 사이 = 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」(인디자인은 더한다 — CSS 여백은 겹쳐 큰 것만 남아 위 끝에 margin-top 하나로)
@@ -1119,22 +1115,31 @@ def _slot_para(a, x, slot, slots, k, ps, ctx, ovs=None):
         gap = 0.0                                                     # 바탕 상자 안 같은 자리 문단 사이
     else:
         gap = float(st.get("space_before") or 0) + float(prev.get("space_after") or 0)
-    if k and gap and not (shade and not first):
+    if k and gap:
         css += f"margin-top:{gap:.3f}px;"
+    shade_bg = ""
     if shade:
-        css += f"background-color:{ctx.color(shade) if ctx else shade};"
-        css += (f"padding-top:{float(st.get('pad_top', pad)) if first else (gap if k else 0):.3f}px;"   # 한 상자 안 문단 사이 간격은 음영 안으로
-                f"padding-bottom:{float(st.get('pad_bottom', pad)) if last else 0:.3f}px;")
-        if st.get("shade_fit"):                                       # 음영 너비 「텍스트」(인디자인) — 글 폭만큼
-            mx = float(st.get("indent") or 0) + float(st.get("indent_right") or 0)   # 들여쓰기는 바깥 여백 — 컴포저가 줄 안 바꿈으로 잴 때도 그 안에서
-            css += f"width:fit-content;max-width:calc(100% - {mx:.3f}px);box-sizing:border-box;"
+        # 단락 음영(인디자인) — 음영은 글 뒤에 깔릴 뿐 글 자리를 바꾸지 않는다. 글 상자(줄 상자)에서 오프셋 위 · 아래 · 왼쪽 · 오른쪽만큼 밖(+) · 안(−)으로.
+        # 너비 「열」 = 프레임(단) 폭 기준, 「텍스트」 = 글 폭 기준. 잇닿은 같은 음영 문단은 한 상자(위 오프셋은 첫 문단 · 아래는 끝 문단, 사이 간격도 칠한다)
+        ot, ob = float(st.get("shade_ot") or 0), float(st.get("shade_ob") or 0)
+        ol, orr = float(st.get("shade_ol") or 0), float(st.get("shade_or") or 0)
+        top = ot if first else (gap if k else 0)
+        bot = ob if last else 0
+        css += "position:relative;z-index:0;"
+        if st.get("shade_fit"):
+            css += f"width:fit-content;max-width:calc(100% - {ind + ind_r:.3f}px);box-sizing:border-box;"
+            left, right = -ol, -orr
+        else:
+            left, right = -ol, -orr                                   # 너비 「열」 — 문단 상자 = 단 폭(들여쓰기는 안쪽 여백)
+        sc = f"position:absolute;z-index:-1;left:{left:.3f}px;right:{right:.3f}px;top:{-top:.3f}px;bottom:{-bot:.3f}px;background-color:{ctx.color(shade) if ctx else shade};"
         if st.get("shade_r"):                                         # 음영 모퉁이 — 잇닿은 상자는 위 끝 · 아래 끝만 둥글게
             r_ = float(st["shade_r"])
-            css += (f"border-top-left-radius:{r_ if first else 0:.3f}px;border-top-right-radius:{r_ if first else 0:.3f}px;"
-                    f"border-bottom-left-radius:{r_ if last else 0:.3f}px;border-bottom-right-radius:{r_ if last else 0:.3f}px;")
-        if st.get("border"):
+            sc += (f"border-top-left-radius:{r_ if first else 0:.3f}px;border-top-right-radius:{r_ if first else 0:.3f}px;"
+                   f"border-bottom-left-radius:{r_ if last else 0:.3f}px;border-bottom-right-radius:{r_ if last else 0:.3f}px;")
+        if st.get("border"):                                          # 단락 테두리(음영과 같은 자리)
             b = f"{float(st['border']) * PT:.3f}px solid {ctx.color(st.get('border_color') or '$ink') if ctx else st.get('border_color') or '#231f20'}"
-            css += f"border-left:{b};border-right:{b};" + (f"border-top:{b};" if first else "") + (f"border-bottom:{b};" if last else "")
+            sc += "box-sizing:border-box;" + f"border-left:{b};border-right:{b};" + (f"border-top:{b};" if first else "") + (f"border-bottom:{b};" if last else "")
+        shade_bg = f'<span data-shade="1" style="{sc}"></span>'
     attrs = f' data-slot="{esc(slot)}"' if slot else ""
     if st.get("keep_next"):
         attrs += ' data-keep-next="1"'                                # 다음 문단과 함께 — 단·쪽 끝에 혼자 남지 않는다(units_compose.js thread)
@@ -1182,12 +1187,12 @@ def _slot_para(a, x, slot, slots, k, ps, ctx, ovs=None):
             after = (f'<p style="margin:0;margin-top:{gap:.3f}px;height:{ph:.3f}px;line-height:0;padding-left:{ax:.3f}px;text-indent:0">'
                      f'{svg}</p>')
         else:                                                         # 왼쪽 바깥 등 사용자 정의 위치 — 첫 줄 위 끝 기준, 글 흐름에 안 낀다
-            off = ax - float(st.get("indent") or 0) - pad - float(st.get("indent_first") or 0)
+            off = ax - float(st.get("indent") or 0) - float(st.get("indent_first") or 0)
             pin = (f'<span style="display:inline-block;width:0;height:0;position:relative;vertical-align:top">'
                    f'<span style="position:absolute;left:{off:.3f}px;top:{dy:.3f}px;width:{pw:.3f}px;height:{ph:.3f}px">{svg}</span></span>')
             m = _PS_RE.search(x)
             x = (x[:m.end()] + pin + x[m.end():]) if m else pin + x
-    return f'<p style="{css}"{attrs}>{soft_breaks(x, just, None, spec) or "&#160;"}</p>' + after
+    return f'<p style="{css}"{attrs}>{shade_bg}{soft_breaks(x, just, None, spec) or "&#160;"}</p>' + after
 
 
 def _inline_css(st, ctx):
