@@ -3,8 +3,10 @@
 
 contents 는 지문마다 이것을 보낸다(가공하지 않은 분석본 조판 문서 + 고른 면):
     {"doc": TypesetDoc, "faces": ["passage", "flow", "memo", "answer"], "illust": bool,
-     "flow": [{"제목", "글"}] | null, "책이름": str, (고칠 때만) "출처" · "단원" · "구분": "교과서" | "모의고사"}
-출처 · 단원 · 구분은 안 보내면 조판 문서 머리에서 짓는다(_heads).
+     "flow": [{"제목", "글"}] | null, "주제": str, "요약문": str, "동반의어": [{"w", "ko", "syn": [], "ant": []}],
+     "책이름": str, (고칠 때만) "출처" · "단원" · "구분": "교과서" | "모의고사"}
+출처 · 단원 · 구분은 안 보내면 조판 문서 머리에서 짓는다(_heads). 오른쪽 면(흐름 · 주제 · 요약문 · 동반의어)은 contents 가
+포켓북 제작 표준(관리자 › 포켓북 프리셋 관리)으로 만든 것 — 주제 · 요약문 · 동반의어가 없으면(옛 데이터) 분석본 값을 쓴다.
 
 틀은 레코드의 칸으로 면을 고른다(자동 상위 페이지 적용 — docs/편집기_재현/용어.md):
     지문 레코드   출처 · 지문 · 해석 (· 그림 → 삽화 면)          → 「passage」
@@ -109,13 +111,18 @@ def to_content(src):
         if not flow:
             report["skipped"].append("흐름이 아직 없다 — FLOWNOTE 면을 그리지 않았다")
         else:
-            voca = [v for v in doc.get("voca") or [] if v.get("word")]
-            voca = sorted(voca, key=lambda v: not (v.get("synonym") or v.get("antonym")))[:VOCA_MAX]   # 동의어·반의어 있는 낱말 먼저(차례는 그 안에서 그대로)
+            cards = src.get("동반의어")
+            if isinstance(cards, list):                                   # contents 가 포켓북 제작 표준으로 만든 카드
+                cards = [{"낱말": c.get("w") or "", "뜻": c.get("ko") or "", "동의어": ", ".join(c.get("syn") or []),
+                          "반의어": ", ".join(c.get("ant") or [])} for c in cards if isinstance(c, dict) and c.get("w")][:VOCA_MAX]
+            else:                                                         # 없으면(옛 데이터) 분석본 어휘표에서
+                voca = [v for v in doc.get("voca") or [] if v.get("word")]
+                voca = sorted(voca, key=lambda v: not (v.get("synonym") or v.get("antonym")))[:VOCA_MAX]   # 동의어·반의어 있는 낱말 먼저(차례는 그 안에서 그대로)
+                cards = [{"낱말": v["word"], "뜻": v.get("ko") or "", "동의어": v.get("synonym") or "",
+                          "반의어": v.get("antonym") or ""} for v in voca]
             recs.append({"흐름제목+흐름글": [[{"흐름제목": f.get("제목") or "", "흐름글": f.get("글") or ""}] for f in flow],
-                         "주제": doc.get("topic") or "", "요약문": doc.get("summary") or "",
-                         "낱말+뜻+동의어+반의어": [[{"낱말": v["word"], "뜻": v.get("ko") or "", "동의어": v.get("synonym") or "",
-                                                  "반의어": v.get("antonym") or ""} for v in voca]],
-                         "단원": unit, "구분": gubun})
+                         "주제": src.get("주제") or doc.get("topic") or "", "요약문": src.get("요약문") or doc.get("summary") or "",
+                         "낱말+뜻+동의어+반의어": [cards], "단원": unit, "구분": gubun})
             faces.append(["flow"])
     if "memo" in want or "answer" in want:
         text, n = memo_text(doc)
