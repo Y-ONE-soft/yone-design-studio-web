@@ -514,13 +514,18 @@ try:
 
     # ───────── L. 색상 견본·원고·미리보기·검수·PDF ─────────
     def l1():
-        click(*center("#s-skin-edit")); time.sleep(0.6); r = rect('input[data-col="cream"]')
-        if not r: return (False, "색 입력 없음 (스타일 · 색상 견본 창)")
-        js("(() => { const i = document.querySelector('input[data-col=\"cream\"]'); i.value = '#ff0000'; i.dispatchEvent(new Event('input')); })()")
+        click(*center("#s-skin-edit")); time.sleep(0.6)
+        col = js("(() => { const u = document.querySelector('#svgwrap svg').innerHTML.toLowerCase(); const i = [...document.querySelectorAll('input[data-col]')].find(i => i.value && u.includes(i.value.toLowerCase())); return i ? i.dataset.col : ''; })()")
+        if not col:                                                      # 캔버스에 쓰인 색상 견본 하나(데이터마다 이름이 다르다 — 시드 cream · 실데이터 ink …)
+            click(*center("#sheet-x")); time.sleep(0.3)                   # 창을 닫고 끝낸다 — 열어 둔 채 끝내면 다음 단계가 줄줄이 실패했다
+            return (False, "캔버스에 쓰인 색상 견본 없음 (스타일 · 색상 견본 창)")
+        q = f'input[data-col=\\"{col}\\"]'
+        old = js(f"document.querySelector('{q}').value")
+        js(f"(() => {{ const i = document.querySelector('{q}'); i.value = '#ff0000'; i.dispatchEvent(new Event('input')); }})()")
         ok = wait("document.querySelector('#svgwrap svg').innerHTML.includes('#ff0000')", 6)
-        js("(() => { const i = document.querySelector('input[data-col=\"cream\"]'); i.value = '#f6f1e6'; i.dispatchEvent(new Event('input')); })()"); time.sleep(1)
+        js(f"(() => {{ const i = document.querySelector('{q}'); i.value = '{old}'; i.dispatchEvent(new Event('input')); }})()"); time.sleep(1)
         click(*center("#sheet-x")); time.sleep(0.3)
-        return (ok and not visible(".sheet-bg.on"), "창 열고 색 → 캔버스 → 닫기")
+        return (ok and not visible(".sheet-bg.on"), f"창 열고 색({col}) → 캔버스 → 닫기")
     step("L1 색상 견본 색 바꾸면 캔버스에 바로", l1)
     def l2():
         click(*center("#s-set-edit")); time.sleep(0.8)
@@ -880,9 +885,9 @@ try:
         js("(() => { const gs = document.querySelector('#s-grid-start'), gp = document.querySelector('#s-grid-step'); gs.value = 20; gs.dispatchEvent(new Event('change')); gp.value = 6; gp.dispatchEvent(new Event('change')); })()")
         ok2 = wait("!!(page.baseline_grid && page.baseline_grid.step === 6)", 8)
         js("addAtom('rect', {x: 20, y: 120})"); time.sleep(1.2)
-        js("(() => { const i = page.items.length - 1; select([i], i); page.items[i].atom.fill = '$sel'; const el = document.querySelector('#side [data-a=\"layer\"]'); el.value = page.layers[0].id; el.dispatchEvent(new Event('change')); })()")
+        js("(() => { const i = page.items.length - 1; select([i], i); page.items[i].atom.fill = '#ab12cd'; const el = document.querySelector('#side [data-a=\"layer\"]'); el.value = page.layers[0].id; el.dispatchEvent(new Event('change')); })()")
         time.sleep(1.8)
-        col = js("skin().tokens.color.sel")
+        col = "#ab12cd"                                                  # 직접 색 — 브랜드 색 이름(sel)은 데이터마다 없을 수 있다
         seen = js(f"document.querySelector('#svgwrap svg').innerHTML.includes({json.dumps(col)})")
         js("select([])"); time.sleep(0.6)
         js("(() => { const c = document.querySelector('#side [data-lay$=\":hide\"]'); c.checked = true; c.dispatchEvent(new Event('change')); })()")
