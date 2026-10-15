@@ -1087,8 +1087,8 @@ def font_metrics(family, weight=400):
                 if sp:
                     m["space"] = t["hmtx"][sp][0] / upm                 # 공백 폭 — 균등 배치 문자 간격 % 의 기준
                 os2 = t["OS/2"] if "OS/2" in t else None
-                m["cap"] = (getattr(os2, "sCapHeight", 0) or 0) / upm or top("H") or m["cap"]
-                m["x"] = (getattr(os2, "sxHeight", 0) or 0) / upm or top("x") or m["x"]
+                m["cap"] = max(0, getattr(os2, "sCapHeight", 0) or 0) / upm or top("H") or m["cap"]   # −1 은 「모름」(하늘보리체) — 글자에서 잰다
+                m["x"] = max(0, getattr(os2, "sxHeight", 0) or 0) / upm or top("x") or m["x"]
         except Exception:
             pass
         _ASC[key] = m

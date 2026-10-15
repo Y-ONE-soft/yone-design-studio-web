@@ -1235,6 +1235,27 @@ def test_font_cff_name_made_ascii():
     assert _cff_ascii_names(ok) == ok                                 # 영문 이름은 그대로
 
 
+def test_font_typo_bit_off_when_typo_differs_from_hhea():
+    """USE_TYPO_METRICS 가 켜지고 typo ≠ hhea 면 비트를 끈다(리눅스 크롬이 typo 로 줄 상자를 잡아 배포서버만 글줄이 떴다) — 같으면 그대로"""
+    import struct
+    from core.units.fonts import _typo_bit_fix
+    os2 = bytearray(78)
+    os2[62:64] = struct.pack(">H", 0x80 | 0x40)                       # USE_TYPO_METRICS + REGULAR
+    os2[68:72] = struct.pack(">hh", 800, -200)
+    hhea = bytearray(36)
+    hhea[4:8] = struct.pack(">hh", 1000, -200)
+    head = b"OTTO" + struct.pack(">HHHH", 2, 32, 1, 0)
+    o_off, h_off = 12 + 32, 12 + 32 + len(os2)
+    recs = b"OS/2" + struct.pack(">III", 0, o_off, len(os2)) + b"hhea" + struct.pack(">III", 0, h_off, len(hhea))
+    font = head + recs + bytes(os2) + bytes(hhea)
+    out = _typo_bit_fix(font)
+    assert len(out) == len(font)
+    assert struct.unpack(">H", out[o_off + 62:o_off + 64])[0] == 0x40   # 7번 비트만 꺼짐
+    same = bytearray(font)
+    same[o_off + 68:o_off + 72] = struct.pack(">hh", 1000, -200)
+    assert _typo_bit_fix(bytes(same)) == bytes(same)
+
+
 def test_package_load_merges_cstyles(lib):
     """문서 묶음을 들여올 때 같은 브랜드가 이미 있으면 빈 칸만 채운다 — 문자 스타일도(빼먹어 색·형광·배지가 빠졌다 2026-10-11)"""
     from core.units import package, store

@@ -287,11 +287,34 @@ def _kern_len_fix(data):
         return data
 
 
+def _typo_bit_fix(data):
+    """OS/2 USE_TYPO_METRICS(fsSelection 7번 비트)가 켜지고 typo 높이가 hhea 와 다른 서체 — 리눅스 크롬은 이 비트를 보고 typo 로,
+    맥 크롬은 hhea 로 줄 상자를 잡아 글줄이 서버마다 다른 높이에 섰다(하늘보리체: hhea 1.0/0.2 · typo 0.8/0.2 → 분석본 옆 메모가
+    배포서버에서 0.25mm 위, 2026-10-15). 그리기 계산(render.font_metrics)은 hhea 라 비트를 끈다. 고칠 것이 없으면 data 그대로."""
+    import struct
+    try:
+        n = struct.unpack(">H", data[4:6])[0]
+        tabs = {data[12 + 16 * i:12 + 16 * i + 4]: struct.unpack(">II", data[12 + 16 * i + 8:12 + 16 * i + 16]) for i in range(n)}
+        if b"OS/2" not in tabs or b"hhea" not in tabs:
+            return data
+        o, h = tabs[b"OS/2"][0], tabs[b"hhea"][0]
+        sel = struct.unpack(">H", data[o + 62:o + 64])[0]
+        typo = struct.unpack(">hh", data[o + 68:o + 72])
+        hhea = struct.unpack(">hh", data[h + 4:h + 8])
+        if not sel & 0x80 or typo == hhea:
+            return data
+        out = bytearray(data)
+        out[o + 62:o + 64] = struct.pack(">H", sel & ~0x80)
+        return bytes(out)
+    except (struct.error, IndexError, ValueError):
+        return data
+
+
 _SAFE = {}
 
 
 def safe_path(path):
-    """그릴 때 쓰는 서체 파일 — 크롬 서체 검사(OTS)에 걸리는 곳을 고친 사본(임시 폴더), 고칠 것이 없으면 그 파일 그대로.
+    """그릴 때 쓰는 서체 파일 — 크롬 서체 검사(OTS)에 걸리는 곳 · 맥과 리눅스 줄 높이가 갈리는 곳을 고친 사본(임시 폴더), 고칠 것이 없으면 그 파일 그대로.
     파일마다 한 번만 읽는다(경로 · 수정 시각이 같으면 앞 결과)"""
     import hashlib
     import tempfile
@@ -302,7 +325,7 @@ def safe_path(path):
     if key in _SAFE and os.path.exists(_SAFE[key]):
         return _SAFE[key]
     data = open(path, "rb").read()
-    fixed = _kern_len_fix(_cff_ascii_names(data))
+    fixed = _typo_bit_fix(_kern_len_fix(_cff_ascii_names(data)))
     out = path
     if fixed != data:
         d = os.path.join(tempfile.gettempdir(), "yone-fonts-ots")
