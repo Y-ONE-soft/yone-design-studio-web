@@ -462,17 +462,24 @@ def to_content(data, sample=None):
         recs.append(record(d))
         report["sent"].append({"passage": i + 1, "label": (d.get("meta") or {}).get("source")})
     content = {"분석 펼침면": recs} if recs else {}
-    content.update(divider(data))
+    dv = divider(data)
+    if dv and not recs:                                                  # 간지만 — 레코드 차례로(간지 면 둘 중 분류로 고른다)
+        return {"원고": [dv]}, report
     return content, report
 
 
 def divider(data):
-    """간지(권 앞 한 면)의 책 머리 데이터 필드 — data.divider = {school: 「2026 광문고1」, volume: 「2」, lines: [{book: 교재명, lesson: 강제목}, …]}.
-    안 보냈으면 {} — 간지 면은 원고가 안 와 찍히지 않는다(예전 그대로). 보냈으면 세 칸 모두(빈 칸도) — 간지 면은 세 칸이 다 와야 골라진다(content.to_records)."""
+    """간지(권 앞 한 면) 레코드 — data.divider = {school: 「2026 광문고1」, volume: 「2」, lines: [{book: 교재명, lesson: 강제목}, …], guide: 참/거짓}.
+    → {학교, 권번호, 교재명+강제목[, 구분: 「학습 가이드」]} — 세 칸 모두(빈 칸도). 안 보냈으면 {}.
+    템플릿의 간지는 「레코드마다」 상위 페이지 둘(「간지」 · 분류 「학습 가이드」의 「간지 학습 가이드」) — guide 면 분류로 가이드 카드가 든 쪽이 골라진다
+    (자동 상위 페이지 적용, content._faces_by_chunk). 간지만 따로 찍는다(contents 가 인쇄 PDF 맨 앞에 붙인다)."""
     dv = (data or {}).get("divider")
     if not isinstance(dv, dict):
         return {}
     s = lambda v: str(v or "").strip()
     lines = [{"교재명": s(x.get("book")), "강제목": s(x.get("lesson"))}
              for x in dv.get("lines") or [] if isinstance(x, dict) and (s(x.get("book")) or s(x.get("lesson")))]
-    return {"학교": [s(dv.get("school"))], "권번호": [s(dv.get("volume"))], "교재명+강제목": lines or [{"교재명": "", "강제목": ""}]}
+    rec = {"학교": s(dv.get("school")), "권번호": s(dv.get("volume")), "교재명+강제목": lines or [{"교재명": "", "강제목": ""}]}
+    if dv.get("guide") is True:
+        rec["구분"] = "학습 가이드"
+    return rec
