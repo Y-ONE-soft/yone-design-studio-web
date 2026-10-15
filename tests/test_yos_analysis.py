@@ -151,11 +151,12 @@ def test_edits_come_back_as_contents_data():
 
 
 def test_divider_fields():
-    # 간지 — 보낸 것만 간지 칸으로(빈 줄은 빼고, 세 칸은 늘 함께), 안 보내면 간지 칸이 없다(간지 면 안 찍힘)
-    data = {"analyses": [], "divider": {"school": " 2026 이대부고1 ", "volume": 1,
-                                        "lines": [{"book": "공통영어2 YBM(김)", "lesson": "3과 Beyond Barriers"}, {"book": "", "lesson": ""}]}}
+    # 간지만 보내면 레코드 하나(레코드 차례) — 빈 줄은 빼고, 세 칸은 늘 함께, guide 면 분류 「학습 가이드」. 안 보내면 간지 없음
+    data = {"analyses": [], "divider": {"school": " 2026 이대부고1 ", "volume": 1, "guide": True,
+                                        "lines": [{"book": "공통영어2 YBM(김) 3과", "lesson": "Beyond Barriers"}, {"book": "", "lesson": ""}]}}
     content, _ = ya.to_content(data)
-    assert content == {"학교": ["2026 이대부고1"], "권번호": ["1"], "교재명+강제목": [{"교재명": "공통영어2 YBM(김)", "강제목": "3과 Beyond Barriers"}]}
-    content, _ = ya.to_content({"analyses": [], "divider": {"school": "2026 광문고1"}})
-    assert content["권번호"] == [""] and content["교재명+강제목"] == [{"교재명": "", "강제목": ""}]
+    assert content == {"원고": [{"학교": "2026 이대부고1", "권번호": "1", "교재명+강제목": [{"교재명": "공통영어2 YBM(김) 3과", "강제목": "Beyond Barriers"}],
+                                 "구분": "학습 가이드"}]}
+    rec = ya.to_content({"analyses": [], "divider": {"school": "2026 광문고1"}})[0]["원고"][0]
+    assert rec["권번호"] == "" and rec["교재명+강제목"] == [{"교재명": "", "강제목": ""}] and "구분" not in rec
     assert ya.to_content({"analyses": []})[0] == {}
