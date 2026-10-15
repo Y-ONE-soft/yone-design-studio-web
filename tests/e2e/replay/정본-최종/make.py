@@ -1311,12 +1311,12 @@ def b2_style(pno):
     x0 = min(q["q"]["x"] for q in qs)
     x1 = max([rect["x"] + rect["w"]] + [o["x1"] for q in qs for o in q["ln"]])
     pass_bot = rect["y"] + rect["h"]
-    sb_q1 = top_of(q0["q"]["base"], qsz, qfam, qwt, qlead) - pass_bot                    # 지문 상자 아래 → 첫 발문 줄 상자
+    sb_q1 = top_of(qt["base"], qsz, qfam, qwt, qlead) - pass_bot                         # 지문 상자 아래 → 첫 발문 줄 상자(줄 기준선 = 발문 — 번호는 0.7mm 내려 앉았다)
     q_last = q0["qts"][-1]
     sb_c = top_of(ln0[0]["base"], csz, NOTO, 400, cl) - (q_last["base"] + below(q_last["base"], qsz, qfam, qwt, qlead))
     if len(qs) > 1:
         lc = qs[0]["ln"][-1]
-        sb_q = top_of(qs[1]["q"]["base"], qsz, qfam, qwt, qlead) - (lc["base"] + below(lc["base"], csz, NOTO, 400, cl))
+        sb_q = top_of(qs[1]["qts"][0]["base"], qsz, qfam, qwt, qlead) - (lc["base"] + below(lc["base"], csz, NOTO, 400, cl))
     else:
         sb_q = sb_q1
     B2.update(x=x0, ox=rect["x"], top=rect["y"], w=round(x1 - x0, 2), fill=rect["fill"],
@@ -1324,7 +1324,7 @@ def b2_style(pno):
               pad=round(rows[0]["x"] - rect["x"], 2), pad_top=round(top_t - rect["y"], 2),
               pad_bottom=round(pass_bot - (top_t + ps["lines"] * lead_mm), 2),
               lead=round(lead, 2), trk=trk, qfam=qfam, qwt=qwt, qsz=qsz, qlead=round(qlead, 2), q_ind=round(q0["q"]["x"] - x0, 2),
-              num_color=q0["q"]["color"], inline_w=round(q0["bar"][1] - q0["q"]["x"], 2),
+              num_color=q0["q"]["color"], inline_w=round(q0["bar"][1] - q0["q"]["x"], 2), num_drop=round(q0["q"]["base"] - qt["base"], 2),   # 번호 기준선 이동(원본 번호가 발문보다 아래)
               num_trk=gaps_track(q0["q"]["ink"][:2], 10, EL, 700) or 1,                           # 자간 0 이면 이 글꼴이 「02」를 동그라미 숫자로 묶는다(합자)
               csz=csz, cl=round(cl, 2), ctrk=ctrk, c_ind=round(ln0[0]["x"] - x0, 2),
               sb_q=round(sb_q, 2), after_p=round(sb_q1 - sb_q, 2), sb_c=round(sb_c, 2))
@@ -1339,7 +1339,7 @@ def b2_styles_steps():
                       "indent": G["q_ind"], "space_before": G["sb_q"], "keep_next": True, "list": {"type": "bullet", "char": "|", "after": " "}}, G["inline_w"])),
            ("종합·선지", {"font": NOTO, "size": G["csz"], "leading": G["cl"], "tracking": G["ctrk"], "color": "#231f20", "align": "justify",
                       "indent": G["c_ind"], "space_before": G["sb_c"], "space_same": 0.01, "keep_together": True})]
-    st = cs_once([("종합·문제번호", num_cs({"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]}))], "번호 문자 스타일 — 본문 종합")
+    st = cs_once([("종합·문제번호", num_cs({"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"], "drop": G["num_drop"]}))], "번호 문자 스타일 — 본문 종합")
     st += [S("단락 스타일 — 내용 종합(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
@@ -1531,6 +1531,18 @@ def c1_style(pno):
     below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
     x0 = min(tb["x"], giv["x"], frame["x"])
     mt, mg, mf = para_metrics(top_rows), para_metrics(giv_rows), para_metrics(fr_rows)
+    if not mf["gap"]:                                                    # 견본 지문(삽입 문항)은 문단 하나 — 문단 사이는 같은 구성의 여러 문단 지문(순서 문항 (A)(B)(C))에서,
+        import statistics                                                # 견본과 행간이 같은 쪽만(원본은 몇 쪽만 행간 5.6mm 로 줄였다 — 85 · 98 · 102쪽)
+        gs = []
+        for p_ in range(84, 104):
+            try:
+                m2 = para_metrics(order_parts(p_)[8])
+            except (IndexError, ValueError, KeyError):
+                continue
+            if m2["gap"] and abs(m2["lead_mm"] - mf["lead_mm"]) < 0.15:
+                gs.append(m2["gap"])
+        if gs:
+            mf["gap"] = statistics.median(gs)
     box_pads = lambda r, m: (round(m["x_t"] - r["x"], 2), round(top_of(m["base0"], BODY, NOTO, 400, m["lead_mm"] / MM) - r["y"], 2),
                              round(r["y"] + r["h"] - (top_of(m["base0"], BODY, NOTO, 400, m["lead_mm"] / MM) + m["lines"] * m["lead_mm"]
                                                       + (len(m["text"].split("\n")) - 1) * m["gap"]), 2))
@@ -1554,7 +1566,8 @@ def c1_styles_steps():
     t, g, f, q = G["t"], G["g"], G["f"], G["q"]
     so = lambda k: {"shade_ol": G["offs"][k][0], "shade_or": G["offs"][k][1]}
     sty = [("배열·보기문장", dict(B_, **so("t"), leading=round(t["m"]["lead_mm"] / MM, 2), tracking=t["m"]["trk"], shade=t["fill"], pad=t["pad"][0], pad_top=t["pad"][1],
-                              pad_bottom=t["pad"][2], indent_first=t["m"]["ind1"], space_same=round(t["m"]["gap"], 2) or 0.01)),
+                              pad_bottom=t["pad"][2], indent_first=t["m"]["ind1"], space_same=round(t["m"]["gap"], 2) or 0.01,
+                              space_after=-t["pad"][2])),                # 음영 아래 오프셋은 답 줄(줄 위 고정 개체) 앞 공백에 든다
            ("배열·발문", {"font": ELB, "weight": 400, "size": q["size"], "leading": q["lead"], "color": "#231f20", "indent": q["ind"], "space_before": q["sb"],
                        "keep_next": True}),
            ("배열·주어진문장", dict(B_, **so("g"), leading=round(g["m"]["lead_mm"] / MM, 2), tracking=g["m"]["trk"], shade=g["fill"], pad=g["pad"][0], pad_top=g["pad"][1],
@@ -1645,7 +1658,7 @@ def _order_body(pno):
     st += slot("보기문장", label="자리 — 보기문장")
     st += [slot_style("보기문장", "배열·보기문장", 450),
            S("보기 문장 끝에 답 쓰는 줄 — 데이터 필드 「보기문장」 뒤 줄 위 고정 개체", 1000)]
-    st += slot_anchor("보기문장", G["part"], "above", "end", x=G["line_x"], before=round(G["line_gap"], 2))          # 음영 아래 오프셋은 단락 뒤 공백에 이미 들었다(shade_offsets)
+    st += slot_anchor("보기문장", G["part"], "above", "end", x=G["line_x"], before=round(G["line_gap"] + G["t"]["pad"][2], 2))   # 줄 위 개체는 끝 줄 바로 아래 — 음영 아래 오프셋 + 상자 → 답 줄
     if G["lab"]:
         st += grep(0, r"^\([A-Z]\)", "배열·이름표", label="GREP — 문장 이름표 (A)(B)… 문자 스타일 「배열·이름표」")
     st += justify()
@@ -2213,7 +2226,7 @@ def c13_style(pno):
     # 인디자인은 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」을 더한다 — 우리말 앞 간격(k_sb)이 이 사이보다 크면 지문 번호 행간을 줄여 맞춘다(뒤 간격은 음수가 안 된다)
     cut = max(0.0, k_sb - after_p)
     p_lead = round(12 * 1.45 - 2 * cut / MM, 2)
-    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400) if starts[0] else k_top(items[0]), 2), first=(YD, 400, 12, p_lead) if starts[0] else (NOTO, 400, 8.5, round(kl_mm / MM, 2)), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
+    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400, p_lead) if starts[0] else k_top(items[0]), 2),   # 첫 줄 = 지문 번호(줄인 행간 p_lead 그대로 — 기본 145% 로 재면 1.46mm 위로 떴다) first=(YD, 400, 12, p_lead) if starts[0] else (NOTO, 400, 8.5, round(kl_mm / MM, 2)), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
                kl=round(kl_mm / MM, 2), ktrk=gaps_track([c for c in ko[-1]["ink"]], 8.5) or 1, k_ind=round(cont_x - x0, 2), k_first=round(it0["n"]["x"] - cont_x, 2),
                inline_w=round(ko[0]["x"] - it0["n"]["x"], 2), num_color=it0["n"]["color"], num_size=it0["n"]["size"],
                k_sb=round(k_sb, 2), p_sb=round((statistics.median(sb_p) if sb_p else 3.0) + cut, 2), p_lead=p_lead,
@@ -2263,7 +2276,8 @@ def _wo_body(pno):
                                        "indent": G["k_ind"], "indent_first": G["k_first"], "space_before": G["k_sb"], "keep_next": True}, G["inline_w"])),
                          ("영작·보기단어", {"font": NOTO, "weight": 500, "size": 8.5, "leading": W["lead"], "tracking": W["trk"], "color": "#231f20", "align": "left",
                                          "indent": W["ind"], "shade": W["fill"], "shade_fit": True, "shade_r": W["r"], "pad": W["pad"], "pad_top": W["pad_top"],
-                                         "pad_bottom": W["pad_bottom"], "space_before": W["sb"], "keep_together": True})], "단락 스타일 — 영작 배열")
+                                         "pad_bottom": W["pad_bottom"], "space_before": W["sb"], "keep_together": True,
+                                         "space_after": -W["pad_bottom"]})], "단락 스타일 — 영작 배열")   # 음영 아래 오프셋은 뒤 공백으로 안 보낸다 — 답 줄(줄 위 고정 개체) 앞 공백에 든다
         G["made"] = True
     items = wo_parts(pno)
     bot = 281.0
@@ -2285,7 +2299,7 @@ def _wo_body(pno):
             st.append(slot_style(nm, "영작·" + nm, 450))
     st += slot_inline("문항번호", "영작·문항번호")
     st += [S("낱말 상자 아래 답 쓰는 곳 — 데이터 필드 「보기단어」 뒤 줄 위 고정 개체", 1000)]
-    st += slot_anchor("보기단어", G["part"], "above", "end", x=G["deco"]["x"], before=round(G["deco"]["gap"], 2))   # 음영 아래 오프셋은 단락 뒤 공백에 이미 들었다(shade_offsets)
+    st += slot_anchor("보기단어", G["part"], "above", "end", x=G["deco"]["x"], before=round(G["deco"]["gap"] + G["ww"]["pad_bottom"], 2))   # 줄 위 개체는 끝 줄 바로 아래에 선다 — 음영 아래 오프셋 + 상자 → 답 줄(원본 5.97mm, 2026-10-15 흐름 간격 검사)
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
@@ -2510,7 +2524,7 @@ def _s_body(pno):
     firsts = [min(l["base"] for g in G_["GROUPS"][pg][ci] for l in g["lines"]) for pg in G_["PAGES"] for ci in (0, 1) if G_["GROUPS"][pg][ci]]
     lasts = [max(l["base"] for g in G_["GROUPS"][pg][ci] for l in g["lines"]) for pg in G_["PAGES"] for ci in (0, 1) if G_["GROUPS"][pg][ci]]
     p0 = G_["PAGES"][0]                                                    # 단 위 끝 = 견본 첫 쪽 왼쪽 단 첫 줄(지문 번호 12pt)의 줄 상자 위
-    top = round(top_of(min(l["base"] for g in G_["GROUPS"][p0][0] for l in g["lines"]), 12, YD, 400) - 0.3, 2)
+    top = round(top_of(min(l["base"] for g in G_["GROUPS"][p0][0] for l in g["lines"]), 12, YD, 400, SR["first"][3]), 2)   # 첫 단락(지문 번호)의 행간 그대로 — 기본 145% − 0.3 으로 재면 0.83mm 위로 떴다
     bot = round(max(lasts) + 1.5, 2)                                       # 단 아래 끝 = 가장 아래 끝 줄 기준선 + 내림
     for ci, x in ((0, L), (1, Rr)):                                        # 원고 판정 창 = 단 글상자 전체(원고가 흘러 줄 자리가 쪽마다 다르다)
         if G_["GROUPS"][pno][ci]:

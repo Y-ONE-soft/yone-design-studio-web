@@ -1235,6 +1235,16 @@ def test_font_cff_name_made_ascii():
     assert _cff_ascii_names(ok) == ok                                 # 영문 이름은 그대로
 
 
+def test_table_row_stroke_separate_from_column_stroke():
+    """표 옵션 > 행 획 · 열 획 — 행 사이(row_w)와 열 사이(w) 획 두께가 다르면 격자 간격도 따로(포켓북 동반의어 카드 세로 2.16 · 가로 2.66mm)"""
+    from core.units import render
+    a = {"table": {"cols": 3, "stroke": {"w": 2, "row_w": 1, "color": "#ffffff"}}}
+    h = render._table_html(a, "가")
+    assert f"gap:{1 * render.PT:.3f}px {2 * render.PT:.3f}px" in h
+    same = render._table_html({"table": {"cols": 3, "stroke": {"w": 2, "color": "#ffffff"}}}, "가")
+    assert f"gap:{2 * render.PT:.3f}px {2 * render.PT:.3f}px" in same and "box-shadow:0 0 0" in same   # 행 획이 없으면 셀 획 하나
+
+
 def test_font_typo_bit_off_when_typo_differs_from_hhea():
     """USE_TYPO_METRICS 가 켜지고 typo ≠ hhea 면 비트를 끈다(리눅스 크롬이 typo 로 줄 상자를 잡아 배포서버만 글줄이 떴다) — 같으면 그대로"""
     import struct

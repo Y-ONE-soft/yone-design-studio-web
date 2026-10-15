@@ -306,9 +306,10 @@ def flow_check(new_ids, state):
     """원고 흐름 간격 — 위아래로 이웃한 두 줄(글줄 · 원고 상자 · 장식)의 사이가 원본과 0.3mm 안.
     원고 글의 줄 끝 · 쪽마다 달라지는 자리는 맞대지 않지만, 레코드마다 되풀이되는 간격(행간 · 단락 앞뒤 공백 · 상자 → 답 줄)은
     템플릿 값이라 원고가 바뀌어도 그대로다(2026-10-15 정본 영작 배열: 보기 상자 → ▶▶ 원본 5.97 · 결과 3.43mm 가 「들어감」만 봐서 통과했다).
-    견본 원고(원본 글 그대로)를 넣은 판에서만. 짝 = 원본에서 바로 아래 이웃(가로로 겹침 · 20mm 안)이고 결과에서도 그 둘이 바로 이웃일 때 —
+    견본 원고(원본 글 그대로)를 넣은 판에서만. 판정은 견본 쪽(state pages 첫 쪽 — 템플릿 값을 잰 쪽)만, 나머지 쪽은 원본이 쪽마다 손으로
+    줄인 곳(정본 25쪽 선지 행간 등)이 있어 적기만 한다(원본 쪽별 차이는 따라 하지 않는다 — 2026-10-10 사용자 확정). 짝 =원본에서 바로 아래 이웃(가로로 겹침 · 20mm 안)이고 결과에서도 그 둘이 바로 이웃일 때 —
     줄 바뀜이 달라 사이에 다른 줄이 끼면 맞대지 않는다. 예외 키 "p쪽:간격:<아래 것>" (상태.json 「원본_손고침」)."""
-    flow_check.bad = []
+    flow_check.bad, flow_check.note = [], []
     if not state.get("fill") or getattr(measure_units, "last", None) is None:
         return
     import pymupdf
@@ -332,18 +333,14 @@ def flow_check(new_ids, state):
                 o["x1"], o["t"] = max(o["x1"], x1), o["t"] + t
             else:
                 out.append({"x0": x0, "x1": x1, "by": by, "t": t})
-        items = {}
-        for o in out:
-            k = "".join(o["t"].split())[:24]
-            if len(k) >= 3:
-                items.setdefault("줄:" + k, []).append({"x0": o["x0"], "x1": o["x1"], "top": o["by"], "bot": o["by"]})
-        return items
+        return [{"k": "줄:" + "".join(o["t"].split())[:24], "x0": o["x0"], "x1": o["x1"], "top": o["by"], "bot": o["by"]} for o in out]
 
     def below(items, a):
-        """a 바로 아래 이웃 — 가로로 겹치고 a 아래 끝보다 아래에 위 끝이 있는 것 중 가장 가까운 것(20mm 안)"""
-        c = [(k, b) for k, b in items.items() if b is not a and b["x0"] < a["x1"] and b["x1"] > a["x0"] and b["top"] > a["bot"] + 0.05]
-        k, b = min(c, key=lambda kb: kb[1]["top"], default=(None, None))
-        return (k, b) if b and b["top"] - a["bot"] < 20 else (None, None)
+        """a 바로 아래 이웃 — 가로로 겹치고 a 아래 끝보다 아래에 위 끝이 있는 것 중 가장 가까운 것(20mm 안). 짝 못 지은 줄(짧은 줄 · 같은 글 여럿)도
+        이웃으로 친다 — 그 줄이 끼면 짝이 안 된다(빼면 사이 줄을 건너뛰어 줄 수가 다른 곳까지 맞댔다)"""
+        c = [b for b in items if b is not a and b["x0"] < a["x1"] and b["x1"] > a["x0"] and b["top"] > a["bot"] + 0.05]
+        b = min(c, key=lambda b: b["top"], default=None)
+        return b if b and b["top"] - a["bot"] < 20 else None
 
     for k, rp in enumerate(state["pages"]):
         pdf = os.path.join(out, f"p{rp}_my.pdf")
@@ -352,25 +349,37 @@ def flow_check(new_ids, state):
             continue
         rpg = ref[rp - 1]
         R, M = lines(rpg, rpg.trimbox.x0, rpg.trimbox.y0), lines(pymupdf.open(pdf)[0], 0, 0)
-        R = {kk: v[0] for kk, v in R.items() if len(v) == 1 and len(M.get(kk, [])) == 1}          # 원본 · 결과에 한 번씩만 나오는 줄만 짝짓는다
-        M = {kk: M[kk][0] for kk in R}
+        import collections as _c
+        cr, cm = _c.Counter(o["k"] for o in R), _c.Counter(o["k"] for o in M)
+        ok = {kk for kk in cr if cr[kk] == 1 and cm.get(kk) == 1 and len(kk) >= 3}        # 원본 · 결과에 한 번씩만 나오는 줄만 짝짓는다(지문 번호 「2」처럼 한 글자도 — 쪽에 하나뿐이면)
+        for o in R + M:
+            o["m"] = o["k"] in ok
+        decl = {e["id"]: e for e in json.load(open(os.path.join(wdir, "elems.json"), encoding="utf-8")).get(str(k + 1), [])}
         for r in res:                                                     # 원고 상자 · 장식(글 단 전체는 뺀다)
+            e = decl.get(r["id"]) or {}
+            if e and r.get("ref") and max(abs(r["ref"][0] - e["x"]), abs(r["ref"][1] - e["y"]), abs(r["ref"][2] - e["w"]), abs(r["ref"][3] - e["h"])) > 0.3:
+                continue                                                  # 원본에서 잰 상자가 요소 목록과 다르다 — 둘레 8mm 찾기가 이웃(같은 색 · 번호)까지 잡았다, 그 짝은 못 믿는다
             if r.get("원고") and r.get("ref") and r.get("my") and not r["id"].startswith(("col", "t")):
                 for D, b in ((R, r["ref"]), (M, r["my"])):
-                    D[r["id"]] = {"x0": b[0], "x1": b[0] + b[2], "top": b[1], "bot": b[1] + b[3]}
+                    D.append({"k": r["id"], "m": True, "x0": b[0], "x1": b[0] + b[2], "top": b[1], "bot": b[1] + b[3]})
+        Mk = {o["k"]: o for o in M if o["m"]}
         n = 0
-        for ka, a in R.items():
-            kb, b = below(R, a)
-            if not kb or kb not in M:
+        for a in R:
+            b = below(R, a) if a["m"] else None
+            if not b or not b["m"]:
                 continue
-            km, _ = below(M, M[ka])
-            if km != kb:                                                  # 결과에서 사이에 다른 것이 끼었다 — 줄 바뀜 차이, 맞대지 않는다
+            ka, kb = a["k"], b["k"]
+            bm = below(M, Mk[ka])
+            if not bm or bm["k"] != kb or not bm["m"]:                   # 결과에서 사이에 다른 것이 끼었다 — 줄 바뀜 차이, 맞대지 않는다
                 continue
             n += 1
-            g_ref, g_my = b["top"] - a["bot"], M[kb]["top"] - M[ka]["bot"]
+            g_ref, g_my = b["top"] - a["bot"], Mk[kb]["top"] - Mk[ka]["bot"]
             if abs(g_my - g_ref) > 0.3 and f"p{rp}:간격:{kb}" not in allow:
-                flow_check.bad.append(f"p{rp} 간격 「{ka[:14]}」→「{kb[:14]}」 원본 {g_ref:.2f} · 결과 {g_my:.2f}mm")
-        print(f"  원본 p{rp}: 원고 흐름 간격 {n}곳 맞대기")
+                w = f"p{rp} 간격 「{ka[:14]}」→「{kb[:14]}」 원본 {g_ref:.2f} · 결과 {g_my:.2f}mm"
+                (flow_check.bad if k == 0 else flow_check.note).append(w)
+        print(f"  원본 p{rp}: 원고 흐름 간격 {n}곳 맞대기" + ("" if k == 0 else " (견본 쪽이 아니다 — 원본 쪽별 차이일 수 있어 판정에 안 넣고 적기만)"))
+    for w in flow_check.note[:12]:
+        print("  · 참고", w)
     for w in flow_check.bad[:20]:
         print("  ✗", w)
     if len(flow_check.bad) > 20:

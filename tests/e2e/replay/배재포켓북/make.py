@@ -707,9 +707,10 @@ def flownote(pno, gubun):
                label="동반의어 카드 — 표 글상자 · 자리 「낱말+뜻+동의어+반의어」(항목 하나가 한 칸)", font=NOTO, leading=VL)
     st += [F('#side input[data-it="y"]', vc[0]["y"], 550)]               # 표 — 칸 글 자리는 셀 인세트로(프레임 = 첫 줄 칸 위 끝)
     st += slot("낱말+뜻+동의어+반의어")
-    sw = max(gx, gy)                                                     # 칸 사이 = 셀 획(흰색) 두께
-    st += [S(f"표 — 3열 · 열 칠 {', '.join(fills)} · 셀 획 흰색 {sw}mm · 셀 인세트 · 행 높이 최소 {vc[0]['h']}mm", 1300),
-           F('#side input[data-a="table.cols"]', 3, 900), P_("table.stroke.w", round(sw / MM, 3), 700)] + color_p("table.stroke.color", "#ffffff") + [
+    sw = gx                                                              # 칸 사이 = 셀 획(흰색) 두께 — 열 사이 · 행 사이가 다르다(가로 2.66 · 세로 2.16mm) → 행 획 따로
+    st += [S(f"표 — 3열 · 열 칠 {', '.join(fills)} · 셀 획 흰색 {sw}mm · 행 획 {gy}mm · 셀 인세트 · 행 높이 최소 {vc[0]['h']}mm", 1300),
+           F('#side input[data-a="table.cols"]', 3, 900), P_("table.stroke.w", round(sw / MM, 3), 700),
+           P_("table.stroke.row_w", round(gy / MM, 3), 700)] + color_p("table.stroke.color", "#ffffff") + [
            F('#side input[data-a="table.inset"]', f"{it_},{il},0,{il}", 700), F('#side input[data-a="table.row_h"]', round(vc[0]["h"], 2), 700),
            F('#side input[data-a="table.fills"]', ", ".join(fills), 800)]
     gap = mean["x"] - word["x1"]                                         # 낱말 뒤 — 원본 간격에 가장 가까운 공백 문자(인디자인 특수 문자)

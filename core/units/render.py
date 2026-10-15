@@ -1419,16 +1419,21 @@ def _table_html(a, html, ctx=None):
     rh = float(tb.get("row_h") or 0)
     sk = tb.get("stroke") or {}
     sw = float(sk.get("w") or 0) * PT
-    sc = (ctx.color(sk.get("color"), "#000000") if ctx else (sk.get("color") or "#000000")) if sw else ""
+    rw = float(sk["row_w"]) * PT if sk.get("row_w") not in (None, "") else sw    # 행 획(행 사이) — 인디자인 표 옵션 > 행 획 · 열 획
+    sc = (ctx.color(sk.get("color"), "#000000") if ctx else (sk.get("color") or "#000000")) if (sw or rw) else ""
     cells = []
     for k, c in enumerate((html or "").split(CELL)):
         body = _paras_html(a, c, ctx)                                  # 칸 안 단락 — 데이터 필드마다 단락 스타일
         f = fills[(k % cols) % len(fills)] if fills else None
         bg = f"background:{ctx.color(f) if ctx else f};" if f else ""
-        shadow = f"box-shadow:0 0 0 {sw / 2:.3f}px {sc};" if sw else ""
+        if sw == rw:
+            shadow = f"box-shadow:0 0 0 {sw / 2:.3f}px {sc};" if sw else ""
+        else:                                                          # 행 · 열 획 두께가 다르면 칸 모양 그림자를 반 획씩 여덟 방향으로(번짐 하나로는 같은 두께뿐)
+            hx, hy = sw / 2, rw / 2
+            shadow = "box-shadow:" + ",".join(f"{dx:.3f}px {dy:.3f}px 0 0 {sc}" for dx in (-hx, 0, hx) for dy in (-hy, 0, hy) if dx or dy) + ";"
         cells.append(f'<div data-cell="{k}" style="{bg}{shadow}padding:{t:.3f}px {r:.3f}px {b:.3f}px {l:.3f}px;box-sizing:border-box;min-width:0;'
                      f'{f"min-height:{rh:.3f}px;" if rh else ""}">{body}</div>')
-    return (f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:{sw:.3f}px{";clip-path:inset(0)" if sw else ""}">'   # 셀 사이 획만(표 바깥 테두리는 없다 — 바깥으로 나간 반쪽 획은 자른다)
+    return (f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:{rw:.3f}px {sw:.3f}px{";clip-path:inset(0)" if (sw or rw) else ""}">'   # 셀 사이 획만(표 바깥 테두리는 없다 — 바깥으로 나간 반쪽 획은 자른다)
             + "".join(cells) + "</div>")
 
 
