@@ -311,8 +311,14 @@ try:
 
     def fill_in(spot, value):
         """칸을 눌러 고르고, 다 지우고, 쳐 넣고, 확정 — 사람이 하는 그대로."""
-        for tryn in range(2):
+        got = None
+        for tryn in range(3):
             click(spot, 2)
+            if isinstance(spot, str) and not c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return !!e && document.activeElement === e; })()"):
+                print(f"  ~ {spot} 칸이 안 골라졌다 — 지우기(Backspace) 없이 다시", flush=True)   # 다른 데가 눌렸는데 지우면 고른 개체가 지워진다 · 「~」= 다시 해서 된 것(끝내 안 되면 아래 「!」)
+                c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (e) e.scrollIntoView({block: 'center'}); })()")
+                time.sleep(0.3)
+                continue
             n = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return e ? String(e.value).length : 0; })()") if isinstance(spot, str) else 0
             if (n or 0) > 200:                           # 긴 글이 든 칸 — 전체 선택(Ctrl/⌘+A) 뒤 지우기
                 c.call("Input.dispatchKeyEvent", type="rawKeyDown", windowsVirtualKeyCode=65, key="a", code="KeyA", modifiers=4 if sys.platform == "darwin" else 2, commands=["selectAll"])
@@ -399,6 +405,10 @@ try:
             if "move" in st:
                 x, y = at(st["move"]); move(x, y)
             if "click" in st:
+                if isinstance(st["click"], str):                   # 창이 늦게 뜨면(스타일 창 등) 단추가 나올 때까지 잠깐(최대 5초) 기다린다 — 사람도 창이 뜬 걸 보고 누른다
+                    t_end = time.time() + 5
+                    while time.time() < t_end and not c.js("!!document.querySelector(" + json.dumps(st["click"]) + ")"):
+                        time.sleep(0.2)
                 click(st["click"], mod=8 if st.get("shift") else 0)
             if "clickif" in st:                                   # 조건이 맞을 때만 누른다 (토글 버튼)
                 if c.js("!!(" + st["clickif"]["when"] + ")"):
@@ -417,7 +427,9 @@ try:
                     time.sleep(0.4 / SPEED)
                     if c.js("page.items.length") > n0:
                         break
-                    print(f"  ! {d['tool']} 안 그려짐 — 다시", flush=True)
+                    print(f"  ~ {d['tool']} 안 그려짐 — 다시", flush=True)            # 「~」= 다시 해서 된 것
+                else:
+                    print(f"  ! {d['tool']} 두 번 끌어도 안 그려짐", flush=True)
             if "answer" in st:                                 # 다음 누르기가 여는 묻는 창에 칠 글(새 단락 스타일 이름 등)
                 c.answer = str(st["answer"])
             if "type" in st:

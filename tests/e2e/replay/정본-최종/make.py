@@ -131,7 +131,7 @@ def search_of(pno, e, most=1.5):
     return max(gap, 0.2)
 
 
-def T(e, font, weight, label=None, alpha=None, search=None, ctol=24, align=None, slot_name=None, temp=None, rot=0, s=None, leading=None, bind=None, shift=0, w=None, fold=None):
+def T(e, font, weight, label=None, alpha=None, search=None, ctol=24, align=None, slot_name=None, temp=None, rot=0, s=None, leading=None, bind=None, shift=0, w=None):
     """원본 글 하나 — 원본 글자 상자 · 크기 · 색 · 서체 · 굵기. 기준선·첫 글자 자리 = 원본 글자 기준점(origin), 자간은 원본 글자 자리에서.
     align="right" — 오른쪽 끝 = 끝 글자 기준점 + 그 글자 폭 + 자간(브라우저 letter-spacing 은 끝 글자 뒤에도 붙는다).
     slot_name — 원고 자리: 임시 글(temp)을 치고 자리 이름을 단다(원고자리_규약.md). 원본 글은 원고 넣기로 들어온다.
@@ -159,8 +159,9 @@ def T(e, font, weight, label=None, alpha=None, search=None, ctol=24, align=None,
     length = (e["h"] if rot else e["w"])
     bw = w or round(length * 1.25 + size * 0.35, 1)
     bh = round((leading or size * 1.45) * MM * 1.03, 1)                     # 한 줄 높이(행간)보다 조금 크게 — 면 밖으로 처지지 않게
+    fbs = fb_shift(font, weight, size, leading or round(size * 1.45, 3))
     if rot:                                                              # 회전 전 상자에서 기준선까지 b — 돌린 뒤 첫 글자 기준점이 원본 기준점에 오게 가운데를 푼다
-        b = oy - top_of(oy, size, font, weight, leading)
+        b = oy - top_of(oy, size, font, weight, leading) - fbs          # 첫 번째 기준선 오프셋(어센트) — 프레임 위에서 「d」 높이
         cx, cy = (ox + b - bh / 2, oy + bw / 2) if rot == 90 else (ox - b + bh / 2, oy - bw / 2)
         x, top = cx - bw / 2, cy - bh / 2
     else:
@@ -168,14 +169,14 @@ def T(e, font, weight, label=None, alpha=None, search=None, ctol=24, align=None,
         if align == "right":
             right = ox + chrome_extent(font, weight, size, s) + len(s) * track / 1000 * size * MM + face(font, weight)[2](s[-1]) * size * MM
             x = right - bw
+    if rot:                                                              # 회전 축 = 프레임 가운데 — 프레임을 옮기지 않고(text 가 첫 기준선만큼 내리는 것을 미리 빼 둔다) 자동 크기도 끈다
+        top, bh = top - fbs, bh + fbs
     st = text(round(x, 2), round(top - shift, 2), bw, bh, temp if slot_name else s, size, e["color"], label=label, font=font, weight=weight,
-              track=track or None, alpha=alpha, align=align, leading=leading, bind=bind)
+              track=track or None, alpha=alpha, align=align, leading=leading, bind=bind, auto="" if rot else "height")
     if rot:
         st.append(F('#side input[data-a="rotate"]', rot))
     if slot_name:
         st += slot(slot_name)
-    if fold:
-        st.append(F('#side input[data-a="fold"]', fold))
     return st
 
 
@@ -247,6 +248,32 @@ def poly_d(pno, e):
             fy = lambda v: (v.y - r.y0) / r.height
             return "M" + " L".join(f"{fx(v):.4f} {fy(v):.4f}" for v in pts[:-1]) + " Z"
     raise RuntimeError("다각형 못 찾음")
+
+
+pst_steps, cs_steps = pstyle_steps, cstyle_steps                       # 스타일 창(인디자인 단락 · 문자 스타일 옵션) — mkpage
+CS_MADE = set()                                                          # 이 문서에 만든 문자 스타일(한 번만)
+
+
+def cs_once(styles, label="문자 스타일"):
+    """문자 스타일 — 이 문서에 아직 없는 것만 만든다(스타일 창). 텍스트 프레임을 그리기 전에 부른다(창을 열면 고른 것이 풀린다)"""
+    new = [(n, c) for n, c in styles if n not in CS_MADE]
+    CS_MADE.update(n for n, _ in new)
+    return cstyle_steps(new, label) if new else []
+
+
+def num_cs(v):
+    """같은 단락에 이어 쓰는 번호 필드의 글자 모양(옛 번호 단락 스타일 값) → 문자 스타일 값"""
+    out = {k2: v[k] for k, k2 in (("font", "font"), ("weight", "weight"), ("size", "size"), ("color", "color"), ("tracking", "track")) if v.get(k) not in (None, "")}
+    if v.get("drop"):
+        out["bshift"] = round(-float(v["drop"]) / MM, 2)
+    return out
+
+
+def with_tab(v, width):
+    """번호 뒤 탭 정지 — 단락 첫 줄 시작(왼쪽 들여쓰기 + 첫 줄 들여쓰기)에서 번호 칸 폭만큼(인디자인 탭 정지는 프레임 안쪽 왼쪽에서 잰다)"""
+    v = dict(v)
+    v["tabs"] = [{"at": round(float(v.get("indent") or 0) + float(v.get("indent_first") or 0) + float(width), 3)}]
+    return v
 
 
 st = open_doc(NAME)
@@ -416,11 +443,12 @@ def P(ps, limit, label):
            "color": col, "see": col, "ctol": 40, "pad": 1.0, "search": 1.0, "text": ps["text"][:30], "size": BODY, "원고": True,
            "shape_iou": 0.80})                                           # 문단은 양끝맞춤에서 낱말이 0.2mm 안팎 다르게 놓인다
     top = round(top_of(ps["base0"], BODY, NOTO, 400, LEAD), 2)
-    st = text(x, top, w, round(limit - top, 1), temp_passage(len(ps["text"])), BODY, "#231f20", label=label, leading=LEAD, align="justify",
+    st = cs_once([("굵은 파랑", {"weight": 700, "color": BLUE_B})], "문자 스타일 — 지문 [ ⓐ … ] 굵은 파랑")
+    st += text(x, top, w, round(limit - top, 1), temp_passage(len(ps["text"])), BODY, "#231f20", label=label, leading=LEAD, align="justify",
               font=NOTO, track=TRACK_BODY)
     st += slot("지문", label="자리 이름 「지문」")
     st += justify()                                                      # 균등 배치 — 낱말 100·133%, 자간 −8·250‰ (이 출판사 인디자인 설정)
-    st += grep(0, r"\[[^\]]*\]", BLUE_B, label="GREP 스타일 — 대괄호 [ ] 안은 굵은 파랑")
+    st += grep(0, r"\[[^\]]*\]", "굵은 파랑", label="GREP 스타일 — 대괄호 [ ] 안은 문자 스타일 「굵은 파랑」")
     return st
 
 
@@ -482,8 +510,9 @@ def header_left(pno, title_slot, code="A1", fixed_title=False):
     num = step_no(pno)                                                   # 이 쪽의 STEP 번호(01·02·03)
     stp = dict(span_el(pno, "STEP"), text="STEP " + num)
     stp["w"] = round(span_el(pno, num, size=8.0)["x"] + span_el(pno, num, size=8.0)["w"] - stp["x"], 2)
+    st += cs_once([("굵게", {"weight": 700})], "문자 스타일 — 굵게")
     st += T(stp, NOTO, 400, label="STEP 01 — 숫자만 굵게(GREP 스타일)")
-    st += grep(0, r"\d+")
+    st += grep(0, r"\d+", "굵게")
     st += T(span_el(pno, stage_name(pno), size=8.0), NOTO, 700)        # 단계 이름(FRAME · BUILD UP · TEST)
     st += T(span_el(pno, code, size=25.0), MAMA, 400, label=f"코드 {code} — TTMamablock")
     tt = span_el(pno, title_slot)
@@ -647,38 +676,6 @@ PARTN = [0]
 
 
 UL = {"line": 0.176, "line_off": 0.71, "line_color": "#231f20"}              # 원본 밑줄(굵기 · 기준선 → 가운데 · 색) — 문자 스타일 「밑줄」 · 「밑줄 보통」(한 권에 하나)
-
-
-def pst_steps(styles, label="단락 스타일"):
-    """단락 스타일 — 스타일 · 색상 견본 창 「＋ 단락 스타일」 → 이름 → 칸마다(체크 칸은 누른다)"""
-    st = [S(label + " — 스타일 · 색상 견본 창", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-skin-edit", "wait": 1200}]
-    for name, v in styles:
-        q = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together", "shade_fit"):
-                st.append({"click": "input" + q(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + q(k), val, 450))
-    return st + [{"click": "#sheet-x", "wait": 900}]
-
-
-def cs_steps(styles, label="문자 스타일"):
-    """문자 스타일 — 스타일 · 색상 견본 창 「＋ 문자 스타일」 → 이름 → 칸마다(체크 칸 b · i · u 는 누른다 — 밑줄 칸은 u 를 켜야 나온다)"""
-    st = [S(label + " — 스타일 · 색상 견본 창", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-skin-edit", "wait": 1200}]
-    for name, props in styles:
-        sel = lambda k: f'#sbody [data-cs="{name}:{k}"]'
-        st += [S(f"문자 스타일 「{name}」", 800), {"answer": name}, {"click": "#cs-new", "wait": 1200}]
-        for k, v in props.items():
-            if k in ("b", "i", "u"):
-                st.append({"click": sel(k), "wait": 700})
-            elif k in ("weight", "u_style"):
-                st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 600})
-            else:
-                st.append(F(sel(k), v, 600))
-    return st + [{"click": "#sheet-x", "wait": 900}]
 
 
 ULF = {}                                                                 # 밑줄 문자 스타일을 이 문서에 만들었나(한 번만)
@@ -913,26 +910,20 @@ def a2_styles_steps():
     sty = [("OX·지문", {"font": NOTO, "size": BODY, "leading": G["lead"], "tracking": G["trk"], "color": "#231f20", "align": "justify",
                       "indent": G["p_ind"], "indent_right": G["p_ind_r"], "shade_fit": True,
                       "shade": G["fill"], "pad": G["pad"], "pad_top": G["pad_top"], "pad_bottom": G["pad_bottom"], "space_after": G["after_p"]}),
-           ("OX·문제번호", {"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]}),
-           ("OX·발문", {"font": G["qfam"], "weight": G["qwt"], "size": G["qsz"], "leading": G["qlead"], "color": "#231f20",
-                      "indent": G["q_ind"], "space_before": G["sb_q"], "keep_next": True}),
+           ("OX·발문", with_tab({"font": G["qfam"], "weight": G["qwt"], "size": G["qsz"], "leading": G["qlead"], "color": "#231f20",
+                      "indent": G["q_ind"], "space_before": G["sb_q"], "keep_next": True, "list": {"type": "bullet", "char": "|", "after": " "}}, G["inline_w"])),
            ("OX·선지", {"font": NOTO, "size": G["csz"], "leading": G["cl"], "tracking": G["ctrk"], "color": "#231f20", "align": "justify",
                       "indent": G["c_ind"], "space_before": G["sb_c"], "space_same": 0.01, "keep_together": True}),
-           ("OX·진술번호", {"font": LOTTE, "size": G["s_num_size"], "color": G["s_num_color"], "tracking": 1}),
+
            ("OX·진술", {"font": NOTO, "size": G["ssz"], "leading": G["slead"], "tracking": G["strk"], "color": "#231f20", "align": "justify",
                       "indent": G["s_ind"], "indent_first": G["s_first"], "space_before": G["sb_s1"], "space_same": G["sb_s"], "keep_together": True})]
-    st = [S("단락 스타일 — 본문 O/X(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+    sty = [(n, with_tab(v, G["s_inline_w"]) if n == "OX·진술" else v) for n, v in sty]
+    st = cs_once([("OX·문제번호", num_cs({"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]})),
+                  ("OX·진술번호", num_cs({"font": LOTTE, "size": G["s_num_size"], "color": G["s_num_color"], "tracking": 1}))], "번호 문자 스타일 — 본문 O/X")
+    st += [S("단락 스타일 — 본문 O/X(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
-        q = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together", "shade_fit"):
-                st.append({"click": "input" + q(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + q(k), val, 450))
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -961,29 +952,25 @@ def _ox_body(pno, sp, dr):
            "color": LINK, "see": LINK, "pad": 0.3, "ctol": 30, "원고": True})
         E({"id": f"oxb{len(ELEMS[len(PAGES)])}", "x": round(ob["x"], 2), "y": round(ob["y"], 2), "w": round(ob["w"], 2), "h": round(ob["h"], 2),
            "color": LINK, "see": LINK, "pad": 0.15, "ctol": 30, "원고": True})
+    ul = [d for d in dr if d["h"] < 0.3 and d["stroke"] and any(abs(d["y"] - q["q"]["base"]) < 2 and q["qt"]["x"] <= d["x"] <= q["qt"]["x1"] for q in qs)]
+    if ul:                                                               # 발문의 부정어 밑줄(「않는」) — 문자 스타일(원본 선 굵기 · 자리) → GREP 스타일
+        u = ul[0]
+        qb = next(q for q in qs if abs(u["y"] - q["q"]["base"]) < 2)
+        st += cs_once([("부정어 밑줄", {"u": 1, "line": round(u["sw"] * MM, 3), "line_off": round(u["y"] - qb["qt"]["base"], 2), "line_color": u["stroke"]})], "부정어 밑줄 문자 스타일")
     st += [S("본문 — 텍스트 프레임 하나(지문 · 문제 · 진술이 원고만큼 흐른다)", 1200)]
-    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2),
+    st += text(round(fx, 2), round(G["top"] + G["pad_top"], 2), round(G["w"], 2), round(bot - G["top"] - G["pad_top"], 2),
                "임시 지문 — 원고가 오면 지문 · 문제 · 진술이 이 프레임 하나에 차례로 흐른다.", BODY, "#231f20",
                label="본문 글상자 — 한 줄기(" + A2_BIND + ")", font=NOTO, leading=G["lead"])
     st += slot(A2_BIND, label="자리 — " + A2_BIND + " (원고에 나온 차례대로 한 줄기)")
     for nm in A2_BIND.split("+"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "OX·" + nm}, "wait": 450})
-    st += [S("문제번호 · 진술번호는 첫 줄 앞에 붙인다 — 번호 칸 폭 · 발문 글머리 「|」", 900),
-           {"click": '#side input[data-a="slotfmt.문제번호.inline"]', "wait": 600},
-           F('#side input[data-a="slotfmt.문제번호.inline_w"]', G["inline_w"], 600),
-           F('#side input[data-a="slotfmt.발문.bullet_text"]', "| ", 600),
-           {"click": '#side input[data-a="slotfmt.진술번호.inline"]', "wait": 600},
-           F('#side input[data-a="slotfmt.진술번호.inline_w"]', G["s_inline_w"], 600)]
-    st += [S("진술 끝에 O/X 칸 — 데이터 필드 「진술」의 고정 개체(문단 끝, 띄어 붙이기)", 1000),
-           {"pick": {"at": '#side select[data-a="slotfmt.진술.anc.part"]', "value": OXP["id"]}, "wait": 900},
-           F('#side input[data-a="slotfmt.진술.anc.gap"]', G["ox_gap"], 600), F('#side input[data-a="slotfmt.진술.anc.dy"]', G["ox_drop"], 600),
-           {"click": '#side input[data-a="slotfmt.진술.anc.space"]', "wait": 600}]
-    ul = [d for d in dr if d["h"] < 0.3 and d["stroke"] and any(abs(d["y"] - q["q"]["base"]) < 2 and q["qt"]["x"] <= d["x"] <= q["qt"]["x1"] for q in qs)]
-    if ul:                                                               # 발문의 부정어 밑줄(「않는」) — GREP 스타일(원본 선 굵기·자리)
-        u = ul[0]
-        qb = next(q for q in qs if abs(u["y"] - q["q"]["base"]) < 2)
-        st += grep(0, "않는|아닌|틀린|없는", bold=False, underline=True, line=round(u["sw"] * MM, 3), line_off=round(u["y"] - qb["qt"]["base"], 2),
-                   line_color=u["stroke"], label="GREP — 발문의 부정어(않는·아닌·틀린·없는)에 밑줄")
+        if nm not in ("문제번호", "진술번호"):
+            st.append(slot_style(nm, "OX·" + nm, 450))
+    st += [S("문제번호 · 진술번호는 다음 필드와 같은 단락 — 번호 뒤 탭(탭 정지는 단락 스타일) · 번호는 문자 스타일", 900)]
+    st += slot_inline("문제번호", "OX·문제번호") + slot_inline("진술번호", "OX·진술번호")
+    st += [S("진술 끝에 O/X 칸 — 데이터 필드 「진술」 뒤 인라인 고정 개체(개체 앞 공백)", 1000)]
+    st += slot_anchor("진술", OXP["id"], "inline", "end", x=G["ox_gap"], y=round(-G["ox_drop"], 3), space=True)
+    if ul:
+        st += grep(0, "않는|아닌|틀린|없는", "부정어 밑줄", label="GREP — 발문의 부정어(않는·아닌·틀린·없는)에 문자 스타일 「부정어 밑줄」")
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]   # 큰 본문 프레임 고른 것을 풀고 다음 개체를 그린다
     return st
@@ -1158,21 +1145,14 @@ def b1_styles_steps():
            ("정리·문제지문", dict(B_, leading=G["문제지문"]["lead"], tracking=G["문제지문"]["trk"], shade=G["문제지문"]["fill"], pad=G["문제지문"]["pad"],
                             pad_top=G["문제지문"]["pad_top"], pad_bottom=G["문제지문"]["pad_bottom"], space_before=G["문제지문"]["sb"])),
            ("정리·주석", dict(B_, align="right", leading=G["문제지문"]["lead"], tracking=G["주석"]["trk"], shade=G["문제지문"]["fill"],
-                          pad=G["문제지문"]["pad"], pad_bottom=G["주석"]["pad_bottom"], space_before=G["주석"]["sb"])),
+                          pad=G["문제지문"]["pad"], pad_bottom=G["주석"]["pad_bottom"], space_before=G["주석"]["sb"],
+                          _after=G["문제지문"]["pad_bottom"])),
            ("정리·선지", {"font": NOTO, "size": 9, "color": "#231f20", "align": "justify", "leading": G["선지"]["lead"], "tracking": G["선지"]["trk"],
                        "indent": G["선지"]["ind"], "space_before": G["선지"]["sb"], "space_same": 0.01, "keep_together": True})]
     st = [S("단락 스타일 — 본문 정리(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
-        q = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together", "shade_fit"):
-                st.append({"click": "input" + q(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + q(k), val, 450))
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -1237,19 +1217,17 @@ def _sum_body(pno):
     E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
        "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
     qtop = round(top_of(qt["base"], qt["size"], ELB, 400, G["발문"]["lead"]), 2)          # 문제 프레임 위 끝 — 원본 20쪽 모두 발문 기준선 157.2mm(제자리)
-    anc = lambda nm, x_, dy_: [S(f"「{nm}」 첫 문단 왼쪽 바깥에 고정 개체(사용자 정의 위치)", 1000),
-                               {"pick": {"at": f'#side select[data-a="slotfmt.{nm}.anc.part"]', "value": B1P[nm]}, "wait": 900},
-                               {"pick": {"at": f'#side select[data-a="slotfmt.{nm}.anc.pos"]', "value": "side"}, "wait": 800},
-                               F(f'#side input[data-a="slotfmt.{nm}.anc.x"]', x_, 600), F(f'#side input[data-a="slotfmt.{nm}.anc.dy"]', dy_, 600),
-                               {"click": f'#side input[data-a="slotfmt.{nm}.anc.first"]', "wait": 600}]
-    for bind, y0, y1, temp, what in ((B1_TOP, G["top"], qtop - 6.0, "임시 지문 — 원고가 오면 지문 · 주제 · 글제목이 이 프레임에 차례로 흐른다.", "위 — 지문 · 주제 · 글제목(원고만큼)"),
+    anc = lambda nm, x_, dy_: [S(f"「{nm}」 필드 앞 고정 개체(사용자 정의 — 텍스트 프레임 가장자리 · 라인(행간 위쪽))", 1000)] + \
+        slot_anchor(nm, B1P[nm], "custom", "start", xref="frame", yref="leading", x=x_, y=dy_)
+    for bind, y0, y1, temp, what in ((B1_TOP, G["top"] + G["pad1_top"], qtop - 6.0, "임시 지문 — 원고가 오면 지문 · 주제 · 글제목이 이 프레임에 차례로 흐른다.", "위 — 지문 · 주제 · 글제목(원고만큼)"),
                                      (B1_BIND, qtop, bot, "임시 발문 — 원고가 오면 발문 · 문제지문 · 주석 · 선지가 이 프레임에 차례로 흐른다.", "아래 — 문제(제자리 · 발문 · 문제지문 · 주석 · 선지)")):
         st += [S(f"텍스트 프레임 {what}", 1200)]
         st += text(round(fx, 2), round(y0, 2), round(G["w"], 2), round(y1 - y0, 2), temp, BODY, "#231f20",
-                   label="글상자 — 한 줄기(" + bind + ")", font=NOTO, leading=G["lead"])
+                   label="글상자 — 한 줄기(" + bind + ")", font=NOTO, leading=G["lead"],
+                   first=None if bind == B1_TOP else (ELB, 400, qt["size"], G["발문"]["lead"]))
         st += slot(bind, label="자리 — " + bind + " (원고에 나온 차례대로 한 줄기)")
         for nm in bind.split("+"):
-            st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "정리·" + nm}, "wait": 450})
+            st.append(slot_style(nm, "정리·" + nm, 450))
         if bind == B1_TOP:
             st += anc("주제", G["주제"]["tag_x"], G["주제"]["tag_dy"]) + anc("글제목", G["글제목"]["tag_x"], G["글제목"]["tag_dy"])
         else:
@@ -1357,23 +1335,15 @@ def b2_styles_steps():
     sty = [("종합·지문", {"font": NOTO, "size": BODY, "leading": G["lead"], "tracking": G["trk"], "color": "#231f20", "align": "justify",
                       "indent": G["p_ind"], "indent_right": G["p_ind_r"], "shade_fit": True,
                       "shade": G["fill"], "pad": G["pad"], "pad_top": G["pad_top"], "pad_bottom": G["pad_bottom"], "space_after": G["after_p"]}),
-           ("종합·문제번호", {"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]}),
-           ("종합·발문", {"font": G["qfam"], "weight": G["qwt"], "size": G["qsz"], "leading": G["qlead"], "color": "#231f20",
-                      "indent": G["q_ind"], "space_before": G["sb_q"], "keep_next": True}),
+           ("종합·발문", with_tab({"font": G["qfam"], "weight": G["qwt"], "size": G["qsz"], "leading": G["qlead"], "color": "#231f20",
+                      "indent": G["q_ind"], "space_before": G["sb_q"], "keep_next": True, "list": {"type": "bullet", "char": "|", "after": " "}}, G["inline_w"])),
            ("종합·선지", {"font": NOTO, "size": G["csz"], "leading": G["cl"], "tracking": G["ctrk"], "color": "#231f20", "align": "justify",
                       "indent": G["c_ind"], "space_before": G["sb_c"], "space_same": 0.01, "keep_together": True})]
-    st = [S("단락 스타일 — 내용 종합(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+    st = cs_once([("종합·문제번호", num_cs({"font": EL, "weight": 700, "size": 10, "color": G["num_color"], "tracking": G["num_trk"]}))], "번호 문자 스타일 — 본문 종합")
+    st += [S("단락 스타일 — 내용 종합(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
-        q = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together", "shade_fit"):
-                st.append({"click": "input" + q(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + q(k), val, 450))
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -1398,16 +1368,14 @@ def _mcq_body(pno):
     E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
        "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
     st += [S("본문 — 텍스트 프레임 하나(지문 · 문제가 원고만큼 흐른다)", 1200)]
-    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2),
+    st += text(round(fx, 2), round(G["top"] + G["pad_top"], 2), round(G["w"], 2), round(bot - G["top"] - G["pad_top"], 2),
                "임시 지문 — 원고가 오면 지문 · 문제번호 · 발문 · 선지가 이 프레임 하나에 차례로 흐른다.", BODY, "#231f20",
                label="본문 글상자 — 한 줄기(" + B2_BIND + ")", font=NOTO, leading=G["lead"])
     st += slot(B2_BIND, label="자리 — " + B2_BIND + " (원고에 나온 차례대로 한 줄기)")
     for nm in B2_BIND.split("+"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "종합·" + nm}, "wait": 450})
-    st += [S("문제번호는 발문 첫 줄 앞에 붙인다 — 번호 칸 폭 · 발문 글머리 「|」", 900),
-           {"click": '#side input[data-a="slotfmt.문제번호.inline"]', "wait": 600},
-           F('#side input[data-a="slotfmt.문제번호.inline_w"]', G["inline_w"], 600),
-           F('#side input[data-a="slotfmt.발문.bullet_text"]', "| ", 600)]
+        if nm != "문제번호":
+            st.append(slot_style(nm, "종합·" + nm, 450))
+    st += [S("문제번호는 발문과 같은 단락 — 번호 뒤 탭 · 문자 스타일", 900)] + slot_inline("문제번호", "종합·문제번호")
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]   # 큰 본문 프레임 고른 것을 풀고 다음 개체를 그린다
     return st
@@ -1485,8 +1453,9 @@ def para_box(st, rect, rows, size, label, slot_name, temp, sh, fill=None, stroke
     E({"id": f"p{len(ELEMS[len(PAGES)])}", "x": round(x0, 2), "y": round(bases[0] - 0.95 * size * MM, 2), "w": round(right - x0, 2),
        "h": round(bases[-1] - bases[0] + 1.25 * size * MM, 2), "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0,
        "text": txt[:30], "size": size, "원고": True, "shape_iou": 0.80})
+    it_ = round(it_ + fb_shift(NOTO, 400, size, lead), 3)                 # 첫 번째 기준선 오프셋(어센트) — 프레임(칠 · 획)은 그 자리, 첫 줄은 인세트로
     st += text(round(rect["x"], 2), round(rect["y"] - sh, 2), round(rect["w"], 2), h0, temp, size, "#231f20", label=label, leading=lead, align=align,
-               font=NOTO, track=trk or None)
+               font=NOTO, track=trk or None, first=(NOTO, 400, size, 0.0001), auto=None)
     if fill:
         st += _color("frame.fill", fill)
     if stroke:
@@ -1494,14 +1463,14 @@ def para_box(st, rect, rows, size, label, slot_name, temp, sh, fill=None, stroke
         st.append(F('#side input[data-a="frame.stroke.w"]', round(sw, 2)))
     st.append(F('#side input[data-a="inset4"]', " ".join(f"{round(v, 2):g}" for v in (it_, ir, ib, il))))
     if ind1:
-        st.append(F('#side input[data-a="indent_first"]', ind1))
+        st.append(P_("indent_first", ind1))
     if gap:
-        st.append(F('#side input[data-a="space_after"]', round(gap, 2)))
+        st.append(P_("space_after", round(gap, 2)))
     st += slot(slot_name)
     if align == "justify":
         st += justify()
     if grep_label:
-        st += grep(0, grep_label["re"], grep_label["color"], size=grep_label["size"], label="GREP — 문장 이름표 (A)(B)… 굵은 파랑")
+        st += grep(0, grep_label["re"], grep_label["cs"], label="GREP — 문장 이름표 (A)(B)…")
     return rect["h"] - h0, txt
 
 
@@ -1529,7 +1498,7 @@ C1_BIND = "발문+주어진문장+지문"                                       
 C1 = {}
 
 
-def para_metrics(rows, size=BODY):
+def para_metrics(rows, size=BODY, fam=NOTO, weight=400):
     """문단 여럿인 줄들 → 행간 · 문단 사이 · 첫 줄 들여쓰기 · 이어지는 줄 x · 자간 · 오른쪽 끝 · 첫 기준선 · 줄 수 · 문단 수"""
     rows = sorted(rows, key=lambda o: o["base"])
     lines = []
@@ -1552,7 +1521,7 @@ def para_metrics(rows, size=BODY):
     cont = [xs(ln) for pa in paras for ln in pa[1:]]
     x_t = min(cont) if cont else min(xs(pa[0]) for pa in paras)
     ind1 = round(min(xs(pa[0]) for pa in paras) - x_t, 2) if cont else 0
-    trk = gaps_track([c for pa in paras for o in pa[-1] for c in o["ink"]], size)
+    trk = gaps_track([c for pa in paras for o in pa[-1] for c in o["ink"]], size, fam, weight)   # 그 굵기 글자 폭으로(Medium 을 Regular 폭으로 재면 자간이 16‰ 크다)
     return dict(lead_mm=lead_mm, gap=gap, x_t=x_t, ind1=ind1, trk=trk, right=max(o["x1"] for o in rows), base0=bases[0], base1=bases[-1], lines=len(lines),
                 text="\n".join(" ".join("".join(o["t"] for o in sorted(ln, key=lambda o: o["x"])).strip() for ln in pa) for pa in paras))
 
@@ -1593,18 +1562,11 @@ def c1_styles_steps():
            ("배열·지문", dict(B_, **so("f"), leading=round(f["m"]["lead_mm"] / MM, 2), tracking=f["m"]["trk"], shade="#ffffff", border=f["sw"], border_color=f["stroke"],
                             pad=f["pad"][0], pad_top=f["pad"][1], pad_bottom=f["pad"][2], indent_first=f["m"]["ind1"], space_before=f["sb"],
                             space_same=round(f["m"]["gap"], 2) or 0.01))]
-    st = [S("단락 스타일 — 문장 배열(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+    st = cs_once([("배열·이름표", {"weight": 700, "color": G["lab"]["color"], "size": G["lab"]["size"]})], "이름표 문자 스타일 — (A)(B)…") if G["lab"] else []
+    st += [S("단락 스타일 — 문장 배열(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
-        qq = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + qq(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together"):
-                st.append({"click": "input" + qq(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + qq(k), val, 450))
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -1677,31 +1639,27 @@ def _order_body(pno):
        "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
     st += [S("보기 문장 — 위 텍스트 프레임(바탕 칠 · 인세트 · 원고만큼 자란다)", 1200)]
     qtop = round(top_of(qt["base"], qt["size"], ELB, 400, G["q"]["lead"]), 2)
-    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(qtop - 6.0 - G["top"], 2),
+    st += text(round(fx, 2), round(G["top"] + G["t"]["pad"][1], 2), round(G["w"], 2), round(qtop - 6.0 - G["top"] - G["t"]["pad"][1], 2),
                "(A) 임시 문장 — 원고가 오면 보기 문장이 문단마다 들어온다.", BODY, "#231f20",
                label="보기 문장 글상자 — 원고 자리 「보기문장」(문단마다 · 바탕은 단락 음영)", font=NOTO, leading=round(G["t"]["m"]["lead_mm"] / MM, 2))
     st += slot("보기문장", label="자리 — 보기문장")
-    st += [{"pick": {"at": '#side select[data-a="slotfmt.보기문장.style"]', "value": "배열·보기문장"}, "wait": 450},
-           S("보기 문장 끝에 답 쓰는 줄 — 데이터 필드 「보기문장」의 고정 개체(다음 줄 · 끝 문단만)", 1000),
-           {"pick": {"at": '#side select[data-a="slotfmt.보기문장.anc.part"]', "value": G["part"]}, "wait": 900},
-           {"pick": {"at": '#side select[data-a="slotfmt.보기문장.anc.pos"]', "value": "line"}, "wait": 800},
-           F('#side input[data-a="slotfmt.보기문장.anc.x"]', G["line_x"], 600), F('#side input[data-a="slotfmt.보기문장.anc.gap"]', G["line_gap"], 600),
-           {"click": '#side input[data-a="slotfmt.보기문장.anc.last"]', "wait": 600}]
+    st += [slot_style("보기문장", "배열·보기문장", 450),
+           S("보기 문장 끝에 답 쓰는 줄 — 데이터 필드 「보기문장」 뒤 줄 위 고정 개체", 1000)]
+    st += slot_anchor("보기문장", G["part"], "above", "end", x=G["line_x"], before=round(G["line_gap"], 2))          # 음영 아래 오프셋은 단락 뒤 공백에 이미 들었다(shade_offsets)
     if G["lab"]:
-        st += grep(0, r"^\([A-Z]\)", G["lab"]["color"], size=G["lab"]["size"], label="GREP — 문장 이름표 (A)(B)… 굵은 파랑")
+        st += grep(0, r"^\([A-Z]\)", "배열·이름표", label="GREP — 문장 이름표 (A)(B)… 문자 스타일 「배열·이름표」")
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     st += [S("문제 — 아래 텍스트 프레임(제자리 · 발문 · 주어진 문장 · 지문이 원고만큼 흐른다)", 1200)]
     st += text(round(fx, 2), qtop, round(G["w"], 2), round(bot - qtop, 2),
                "임시 발문 — 원고가 오면 발문 · 주어진 문장 · 지문이 이 프레임에 차례로 흐른다.", BODY, "#231f20",
-               label="문제 글상자 — 한 줄기(" + C1_BIND + ")", font=NOTO, leading=round(G["t"]["m"]["lead_mm"] / MM, 2))
+               label="문제 글상자 — 한 줄기(" + C1_BIND + ")", font=NOTO, leading=round(G["t"]["m"]["lead_mm"] / MM, 2),
+               first=(ELB, 400, qt["size"], G["q"]["lead"]))
     st += slot(C1_BIND, label="자리 — " + C1_BIND + " (원고에 나온 차례대로 한 줄기)")
     for nm in C1_BIND.split("+"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "배열·" + nm}, "wait": 450})
-    st += [S("발문의 고정 개체 — 체크 아이콘(사용자 정의 위치: 발문 왼쪽)", 1000),
-           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.part"]', "value": G["icon"]}, "wait": 900},
-           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.pos"]', "value": "side"}, "wait": 800},
-           F('#side input[data-a="slotfmt.발문.anc.x"]', G["anc_x"], 600), F('#side input[data-a="slotfmt.발문.anc.dy"]', G["anc_dy"], 600)]
+        st.append(slot_style(nm, "배열·" + nm, 450))
+    st += [S("발문의 고정 개체 — 체크 아이콘(필드 앞 · 사용자 정의: 텍스트 프레임 가장자리 · 라인(행간 위쪽))", 1000)]
+    st += slot_anchor("발문", G["icon"], "custom", "start", xref="frame", yref="leading", x=G["anc_x"], y=G["anc_dy"])
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
@@ -1808,20 +1766,13 @@ def c2_styles_steps(G=None):
     G = G or C2
     """브랜드 창 「＋ 단락 스타일」 → 이름(뜨는 창에 친다) → 칸마다 — 빈칸문장 · 해석 · 문항번호"""
     sty = [("빈칸문장" + G["sfx"], {"font": NOTO, "size": G.get("en_size", 8), "leading": G["en_pt"], "tracking": G["en_trk"], "color": "#231f20", "align": "justify",
-                      "indent": G["indent"], "indent_first": -G["indent"]}),
+                      "indent": G["indent"], "indent_first": -G["indent"], "tabs": [{"at": G["inline_w"]}]}),
            ("해석" + G["sfx"], {"font": NOTO, "weight": 500, "size": 8, "leading": G["ko_pt"], "tracking": G["ko_trk"], "color": "#58595b",
-                    "indent": G["indent"], "space_before": G["ko_before"], "space_after": G["ko_after"]}),
-           ("문항번호" + G["sfx"], {"font": LOTTE, "size": 9, "color": G["num_color"]})]
+                    "indent": G["indent"], "space_before": G["ko_before"], "space_after": G["ko_after"]})]
     st = [S("단락 스타일 셋 — 브랜드 창에서(빈칸문장 · 해석 · 문항번호)", 1500), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
-        q = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 1000), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + q(k), val, 450))
+        st += [S(f"단락 스타일 「{name}」", 1000), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -1839,7 +1790,8 @@ def _c2_body(pno, G):
         st += c2_styles_steps(G)
         _, _, adv = face(NOTO, 400)
         trk = round((G["blank"] / (G.get("en_size", 8) * MM) - 2 * adv("_")) / 2 * 1000)    # 「__」 두 글자 + 자간 = 칸 폭(밑줄은 자간까지 긋는다)
-        cs = [("빈칸" + G["sfx"], {"u": 1, "color": "none", "track": trk, "line": G["line"], "line_off": G["line_off"], "line_color": "#231f20"})]
+        cs = [("빈칸" + G["sfx"], {"u": 1, "color": "none", "track": trk, "line": G["line"], "line_off": G["line_off"], "line_color": "#231f20"}),
+              ("문항번호" + G["sfx"], {"font": LOTTE, "size": 9, "color": G["num_color"]})]
         if G.get("pink"):
             cs.insert(0, ("첫 글자", {"b": 1, "color": G["pink"]}))
         st += cs_steps(cs, "빈칸 문자 스타일")
@@ -1859,14 +1811,13 @@ def _c2_body(pno, G):
                "w": round(max(o["x1"] for o in os_) - min(o["x"] for o in os_), 2), "h": round(max(o["base"] for o in os_) - min(o["base"] for o in os_) + 4, 2),
                "color": col, "see": col, "ctol": 30, "pad": 1.0, "search": 1.0, "원고": True})
     st += text(round(x0, 2), round(top, 2), w, round(281 - top, 1), "01. 임시 빈칸 {a}__ 문장이 이 자리에 흐른다.\n임시 해석이 이 줄에 들어온다.", 8, "#231f20",
-               label="문항 글상자 — 한 줄기(문항번호 + 빈칸문장 + 해석, 원고만큼 흐른다)", font=NOTO, leading=G["en_pt"])
+               label="문항 글상자 — 한 줄기(문항번호 + 빈칸문장 + 해석, 원고만큼 흐른다)", font=NOTO, leading=G["en_pt"],
+               first=(NOTO, 400, G.get("en_size", 8), G["en_pt"]))
     st += slot(G["bind"], label=f"자리 — {G["bind"]} (원고에 나온 차례대로 한 줄기)")
-    for n in ("문항번호", "빈칸문장", "해석"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{n}.style"]', "value": n + G["sfx"]}, "wait": 500})
-    st += [S("문항번호는 빈칸문장 첫 줄 앞에 붙인다 — 번호 칸 폭", 1000), {"click": '#side input[data-a="slotfmt.문항번호.inline"]', "wait": 600},
-           F('#side input[data-a="slotfmt.문항번호.inline_w"]', G["inline_w"], 600)]
-    st += grep(0, r"__", bold=False, label=f"GREP — 원고의 __ 는 문자 스타일 「빈칸{G['sfx']}」({G['blank']}mm 밑줄 칸 — 글자 색 [없음] · 밑줄 · 자간)")
-    st += [{"pick": {"at": '#side select[data-a="grep.0.cs"]', "value": "빈칸" + G["sfx"]}, "wait": 600}]
+    for n in ("빈칸문장", "해석"):
+        st.append(slot_style(n, n + G["sfx"], 500))
+    st += [S("문항번호는 빈칸문장과 같은 단락 — 번호 뒤 탭 · 문자 스타일", 1000)] + slot_inline("문항번호", "문항번호" + G["sfx"])
+    st += grep(0, r"__", "빈칸" + G["sfx"], label=f"GREP — 원고의 __ 는 문자 스타일 「빈칸{G['sfx']}」({G['blank']}mm 밑줄 칸 — 글자 색 [없음] · 밑줄 · 자간)")
     return st
 
 
@@ -1981,15 +1932,7 @@ def a1g_styles_steps():
     st = [S("단락 스타일 — 어법 선택(자리마다 하나, 스타일 · 색상 견본 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
-        qq = lambda k: f'[data-st="{name}:{k}"]'
-        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + qq(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together"):
-                st.append({"click": "input" + qq(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + qq(k), val, 450))
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -2033,21 +1976,20 @@ def _gram_body(pno):
     fx = G["x"] + frame["x"] - G["ox"]                                    # 이 쪽의 프레임 왼쪽(오른쪽 면은 펼침면 여백만큼 옮겨 있다)
     E({"id": f"col{len(ELEMS[len(PAGES)])}", "x": round(fx, 2), "y": round(G["top"], 2), "w": round(G["w"], 2), "h": round(bot - G["top"], 2),
        "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
-    st += [S("문제 — 아래 텍스트 프레임(제자리 · 발문 · 문제지문이 원고만큼 흐른다)", 1200)]
-    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2), "임시 발문 — 원고가 오면 발문 · 문제 지문이 이 프레임에 흐른다.", BODY, "#231f20",
-               label="문제 글상자 — 한 줄기(" + A1G_BIND + ")", font=NOTO, leading=LEAD)
-    st += slot(A1G_BIND, label="자리 — " + A1G_BIND + " (원고에 나온 차례대로 한 줄기)")
-    for nm in A1G_BIND.split("+"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "어법·" + nm}, "wait": 450})
-    st += [S("발문의 고정 개체 — 체크 아이콘(사용자 정의 위치: 발문 왼쪽)", 1000),
-           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.part"]', "value": G["part"]}, "wait": 900},
-           {"pick": {"at": '#side select[data-a="slotfmt.발문.anc.pos"]', "value": "side"}, "wait": 800},
-           F('#side input[data-a="slotfmt.발문.anc.x"]', G["q"]["ic_x"], 600), F('#side input[data-a="slotfmt.발문.anc.dy"]', G["q"]["ic_dy"], 600)]
     ul = [d for d in dr if d["h"] < 0.1 and d["stroke"] == "#231f20" and abs(d["y"] - qt["base"]) < 2 and qt["x"] <= d["x"] <= qt["x1"]]
     if ul:
         u = ul[0]
-        st += grep(0, "않는|아닌|틀린|없는", bold=False, underline=True, line=round(u["sw"] * MM, 3), line_off=round(u["y"] - qt["base"], 2),
-                   line_color=u["stroke"], label="GREP — 발문의 부정어에 밑줄")
+        st += cs_once([("부정어 밑줄", {"u": 1, "line": round(u["sw"] * MM, 3), "line_off": round(u["y"] - qt["base"], 2), "line_color": u["stroke"]})], "부정어 밑줄 문자 스타일")
+    st += [S("문제 — 아래 텍스트 프레임(제자리 · 발문 · 문제지문이 원고만큼 흐른다)", 1200)]
+    st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2), "임시 발문 — 원고가 오면 발문 · 문제 지문이 이 프레임에 흐른다.", BODY, "#231f20",
+               label="문제 글상자 — 한 줄기(" + A1G_BIND + ")", font=NOTO, leading=LEAD, first=(ELB, 400, G["q"]["size"], G["q"]["lead"]))
+    st += slot(A1G_BIND, label="자리 — " + A1G_BIND + " (원고에 나온 차례대로 한 줄기)")
+    for nm in A1G_BIND.split("+"):
+        st.append(slot_style(nm, "어법·" + nm, 450))
+    st += [S("발문의 고정 개체 — 체크 아이콘(필드 앞 · 사용자 정의: 텍스트 프레임 가장자리 · 라인(행간 위쪽))", 1000)]
+    st += slot_anchor("발문", G["part"], "custom", "start", xref="frame", yref="leading", x=G["q"]["ic_x"], y=G["q"]["ic_dy"])
+    if ul:
+        st += grep(0, "않는|아닌|틀린|없는", "부정어 밑줄", label="GREP — 발문의 부정어에 문자 스타일 「부정어 밑줄」")
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
@@ -2075,79 +2017,6 @@ if want(10):
 # ── 구성 11 「B어법OX」 (원본 146~165쪽 = 펼침면 10벌 · 원고마다) — 견본 = 146·147쪽 ──
 # 흐름 방식(2026-10-14): 지문 번호 · 텍스트 프레임 하나(문장마다 번호 「01.」 · 글 · 끝에 O/X 칸 = 데이터 필드 「문장」의 고정 개체).
 # 첫 회차(146쪽)의 회색 보기 예문 상자는 그 회차만의 시범이라 템플릿에 두지 않는다(contents 도 안 보낸다) — 견본 = 148·149쪽.
-
-
-def ox_rows(st, sp, dr, nums, stext, right, shift, grow, slot_no, slot_txt, fold=None, label="문장", nmax=0):
-    """번호 + 문장(끝에 O/X 칸) 줄들 — 번호 상자는 넓게(위 글이 자라면 같이 밀린다), 문장 상자는 한 줄 높이로(원고만큼 자란다)"""
-    oxs = [d for d in dr if d["n"] == 20 and d["fill"] == "#ffffff" and d["stroke"] == LINK]
-    bars = [d for d in dr if d["fill"] == LINK and d["w"] < 1]
-    _, _, adv = face(NOTO, 400)
-    last_lines = []
-    for k, n in enumerate(nums):
-        nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
-        ln = [o for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1]
-        if ln:
-            last_lines.append(ln[-1])
-    strk = line_track(last_lines, NOTO, 400) if last_lines else -40
-    for k, n in enumerate(nums):
-        nxt = nums[k + 1]["base"] if k + 1 < len(nums) else 280
-        ln = [o for o in stext if n["base"] - 0.5 < o["base"] < nxt - 1]
-        ssz, first, cont, last = ln[0]["size"], ln[0], ln[1:], ln[-1]
-        cx = cont[0]["x"] if cont else first["x"]
-        bx = min([d for d in oxs if n["base"] - 6 < d["y"] < nxt - 3], key=lambda d: d["y"])
-        bbot = bx["y"] + bx["h"]
-        same = abs(bbot - last["base"]) < 2.5
-        slead_mm = (cont[0]["base"] - first["base"]) if cont else 6.79
-        lines = len(ln) + (0 if same else 1)
-        sh = shift(n["base"] - 3)
-        st += [S(f"{label} {k + 1:02d} — 번호 · 글 · 끝에 O/X 칸", 900)]
-        fold = f"{label}{k + 1}" if nmax else fold                       # 줄마다 접기 묶음 — 원고에 그 줄이 없으면 접힌다
-        st += T(win_el(n, n["t"].strip(), n["x"], n["x1"]), LOTTE, 400, slot_name=slot_no, temp="00.", shift=sh, w=round(right - n["x"], 1), fold=fold)
-        stop = top_of(first["base"], ssz, NOTO, 400, round(slead_mm / MM, 2))
-        E({"id": f"s{len(ELEMS[len(PAGES)])}", "x": round(min(cx, first["x"]), 2), "y": round(first["base"] - 0.95 * ssz * MM, 2),
-           "w": round(max(o["x1"] for o in ln) - min(cx, first["x"]), 2), "h": round(last["base"] - first["base"] + 1.25 * ssz * MM, 2),
-           "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 0.8, "search": 0.8, "text": first["t"].strip()[:30], "size": ssz, "원고": True, "shape_iou": 0.80})
-        o = bx["sw"] * MM / 2
-        E({"id": f"ox{len(ELEMS[len(PAGES)])}", "x": round(bx["x"] - o, 2), "y": round(bx["y"] - o, 2), "w": round(bx["w"] + 2 * o, 2), "h": round(bx["h"] + 2 * o, 2),
-           "color": LINK, "see": LINK, "pad": 0.3, "ctol": 30, "원고": True})
-        if same:
-            gap = round(bx["x"] - last["x1"] - adv(" ") * ssz * MM - 2 * strk / 1000 * ssz * MM, 3)
-            drop = round(bbot - last["base"], 3)
-        else:
-            gap = round(bx["x"] - cx, 3)
-            drop = round(bbot - (last["base"] + slead_mm), 3)
-        st += text(round(cx, 2), round(stop - sh, 2), round(right - cx + strk / 1000 * ssz * MM, 2), round(slead_mm, 2), "임시 문장 — 바깥에서 온 문장이 이 자리에 들어온다.",
-                   ssz, "#231f20", label=f"{label} — 원고 자리 「{slot_txt}」 · 끝에 O/X 칸", leading=round(slead_mm / MM, 2), align="justify", font=NOTO, track=strk)
-        ind = round(first["x"] - cx, 2)
-        if abs(ind) > 0.05:
-            st.append(F('#side input[data-a="indent_first"]', ind))
-        st += slot(slot_txt) + justify()
-        st += [{"pick": {"at": '#side select[data-a="tail.part"]', "value": OXP["id"]}, "wait": 800},
-               F('#side input[data-a="tail.gap"]', gap), F('#side input[data-a="tail.drop"]', drop),
-               {"click": '#side input[data-a="tail.space"]', "wait": 600}]
-        if fold:
-            st.append(F('#side input[data-a="fold"]', fold))
-        grow.append((first["base"] + 1, (lines - 1) * slead_mm))
-    if nmax > len(nums) and nums:                                        # 더 둘 줄 — 견본 끝 줄 다음부터 한 줄 문장 간격으로(원고에 있으면 들어가고, 없으면 접힌다)
-        pitch = min([b["base"] - a["base"] for a, b in zip(nums, nums[1:])] or [10.0])
-        n0 = nums[-1]
-        ssz = stext[-1]["size"] if stext else 8.0
-        cx = min(o["x"] for o in stext if abs(o["base"] - n0["base"]) > 1) if any(abs(o["base"] - n0["base"]) > 1 for o in stext) else n0["x"] + 6.0
-        for k in range(len(nums), nmax):
-            base = n0["base"] + (k - len(nums) + 1) * pitch
-            sh = shift(base - 3)
-            fold = f"{label}{k + 1}"
-            st += [S(f"{label} {k + 1:02d} — 더 둘 줄(접기 묶음 「{fold}」)", 600)]
-            st += text(round(n0["x"], 2), round(top_of(base, 9, LOTTE, 400) - sh, 2), round(right - n0["x"], 1), round(9 * 1.45 * MM * 1.03, 1), "00.", 9, n0["color"],
-                       font=LOTTE)
-            st += slot(slot_no) + [F('#side input[data-a="fold"]', fold)]
-            st += text(round(cx, 2), round(top_of(base, ssz, NOTO, 400, 19.25) - sh, 2), round(right - cx, 2), round(19.25 * MM, 2), "임시 문장.", ssz, "#231f20",
-                       leading=19.25, align="justify", font=NOTO, track=strk)
-            st += slot(slot_txt) + justify()
-            st += [{"pick": {"at": '#side select[data-a="tail.part"]', "value": OXP["id"]}, "wait": 800},
-                   F('#side input[data-a="tail.gap"]', 1.0), F('#side input[data-a="tail.drop"]', 1.0),
-                   {"click": '#side input[data-a="tail.space"]', "wait": 600}, F('#side input[data-a="fold"]', fold)]
-    return st
 
 
 B11_BIND = "문장번호+문장"
@@ -2210,9 +2079,9 @@ def _bgox_body(pno):
     st = []
     G = B11
     if not G.get("made"):
-        st += pst_steps([("어법OX·문장번호", {"font": LOTTE, "size": G["num_size"], "color": G["num_color"], "tracking": 1}),
-                         ("어법OX·문장", {"font": NOTO, "size": G["ssz"], "leading": G["slead"], "tracking": G["strk"], "color": "#231f20", "align": "justify",
-                                       "indent": G["ind"], "indent_first": G["first"], "space_same": G["space"], "keep_together": True})], "단락 스타일 — 어법 O/X")
+        st += cs_once([("어법OX·문장번호", num_cs({"font": LOTTE, "size": G["num_size"], "color": G["num_color"], "tracking": 1}))], "번호 문자 스타일 — 어법 O/X")
+        st += pst_steps([("어법OX·문장", with_tab({"font": NOTO, "size": G["ssz"], "leading": G["slead"], "tracking": G["strk"], "color": "#231f20", "align": "justify",
+                                       "indent": G["ind"], "indent_first": G["first"], "space_same": G["space"], "keep_together": True}, G["inline_w"]))], "단락 스타일 — 어법 O/X")
         G["made"] = True
     sp, dr, nb, rows = b11_parts(pno)
     st += T(nb, YD, 400, label="지문 번호 — 원고 자리 「지문번호」", slot_name="지문번호", temp="00")
@@ -2234,13 +2103,10 @@ def _bgox_body(pno):
     st += text(round(fx, 2), round(G["top"], 2), round(G["w"], 2), round(bot - G["top"], 2), "임시 문장 — 원고가 오면 문장마다 번호 · 글이 차례로 흐른다.",
                G["ssz"], "#231f20", label="본문 글상자 — 한 줄기(" + B11_BIND + ")", font=NOTO, leading=G["slead"])
     st += slot(B11_BIND, label="자리 — " + B11_BIND)
-    for nm in B11_BIND.split("+"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "어법OX·" + nm}, "wait": 450})
-    st += [{"click": '#side input[data-a="slotfmt.문장번호.inline"]', "wait": 600}, F('#side input[data-a="slotfmt.문장번호.inline_w"]', G["inline_w"], 600),
-           S("문장 끝에 O/X 칸 — 데이터 필드 「문장」의 고정 개체(문단 끝, 띄어 붙이기)", 1000),
-           {"pick": {"at": '#side select[data-a="slotfmt.문장.anc.part"]', "value": OXP["id"]}, "wait": 900},
-           F('#side input[data-a="slotfmt.문장.anc.gap"]', G["ox_gap"], 600), F('#side input[data-a="slotfmt.문장.anc.dy"]', G["ox_drop"], 600),
-           {"click": '#side input[data-a="slotfmt.문장.anc.space"]', "wait": 600}]
+    st.append(slot_style("문장", "어법OX·문장", 450))
+    st += slot_inline("문장번호", "어법OX·문장번호")
+    st += [S("문장 끝에 O/X 칸 — 데이터 필드 「문장」 뒤 인라인 고정 개체(개체 앞 공백)", 1000)]
+    st += slot_anchor("문장", OXP["id"], "inline", "end", x=G["ox_gap"], y=round(-G["ox_drop"], 3), space=True)
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
@@ -2324,7 +2190,7 @@ def c13_style(pno):
     kl_mm = (ko[1]["base"] - ko[0]["base"]) if len(ko) > 1 else 4.59
     cont_x = ko[1]["x"] if len(ko) > 1 else ko[0]["x"]
     bx, wd = it0["box"], sorted(it0["wd"], key=lambda o: o["base"])
-    m = para_metrics(wd, 8.5)
+    m = para_metrics(wd, 8.5, NOTO, 500)                                 # 보기단어 = Noto Sans CJK KR Medium(원본 글꼴 이름)
     w_top = top_of(m["base0"], 8.5, NOTO, 500, m["lead_mm"] / MM)
     deco = it0["deco"]
     d_top, d_bot = min(d["y"] for d in deco), max(d["y"] + d["h"] for d in deco)
@@ -2347,7 +2213,7 @@ def c13_style(pno):
     # 인디자인은 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」을 더한다 — 우리말 앞 간격(k_sb)이 이 사이보다 크면 지문 번호 행간을 줄여 맞춘다(뒤 간격은 음수가 안 된다)
     cut = max(0.0, k_sb - after_p)
     p_lead = round(12 * 1.45 - 2 * cut / MM, 2)
-    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400) if starts[0] else k_top(items[0]), 2), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
+    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400) if starts[0] else k_top(items[0]), 2), first=(YD, 400, 12, p_lead) if starts[0] else (NOTO, 400, 8.5, round(kl_mm / MM, 2)), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
                kl=round(kl_mm / MM, 2), ktrk=gaps_track([c for c in ko[-1]["ink"]], 8.5) or 1, k_ind=round(cont_x - x0, 2), k_first=round(it0["n"]["x"] - cont_x, 2),
                inline_w=round(ko[0]["x"] - it0["n"]["x"], 2), num_color=it0["n"]["color"], num_size=it0["n"]["size"],
                k_sb=round(k_sb, 2), p_sb=round((statistics.median(sb_p) if sb_p else 3.0) + cut, 2), p_lead=p_lead,
@@ -2391,10 +2257,10 @@ def _wo_body(pno):
     G = C13
     if not G.get("made"):
         W = G["ww"]
+        st += cs_once([("영작·문항번호", num_cs({"font": LOTTE, "size": G["num_size"], "color": G["num_color"], "tracking": 1}))], "번호 문자 스타일 — 영작 배열")
         st += pst_steps([("영작·지문번호", {"font": YD, "size": 12, "leading": G["p_lead"], "color": "#af9d81", "space_before": G["p_sb"], "space_after": G["k_after_p"], "keep_next": True}),
-                         ("영작·문항번호", {"font": LOTTE, "size": G["num_size"], "color": G["num_color"], "tracking": 1}),
-                         ("영작·우리말", {"font": NOTO, "size": 8.5, "leading": G["kl"], "tracking": G["ktrk"], "color": "#231f20", "align": "justify",
-                                       "indent": G["k_ind"], "indent_first": G["k_first"], "space_before": G["k_sb"], "keep_next": True}),
+                         ("영작·우리말", with_tab({"font": NOTO, "size": 8.5, "leading": G["kl"], "tracking": G["ktrk"], "color": "#231f20", "align": "justify",
+                                       "indent": G["k_ind"], "indent_first": G["k_first"], "space_before": G["k_sb"], "keep_next": True}, G["inline_w"])),
                          ("영작·보기단어", {"font": NOTO, "weight": 500, "size": 8.5, "leading": W["lead"], "tracking": W["trk"], "color": "#231f20", "align": "left",
                                          "indent": W["ind"], "shade": W["fill"], "shade_fit": True, "shade_r": W["r"], "pad": W["pad"], "pad_top": W["pad_top"],
                                          "pad_bottom": W["pad_bottom"], "space_before": W["sb"], "keep_together": True})], "단락 스타일 — 영작 배열")
@@ -2412,15 +2278,14 @@ def _wo_body(pno):
        "color": "#231f20", "see": "#231f20", "ctol": 40, "pad": 1.0, "search": 1.0, "원고": True})
     st += [S("본문 — 텍스트 프레임 하나(지문 번호 · 문항마다 번호 · 우리말 · 낱말 상자 · 답 쓰는 곳이 원고만큼 흐른다)", 1200)]
     st += text(round(fx, 2), round(G["top"], 2), round(right - fx, 2), round(bot - G["top"], 2), "임시 우리말 — 원고가 오면 문항마다 차례로 흐른다.",
-               8.5, "#231f20", label="본문 글상자 — 한 줄기(" + C13_BIND + ")", font=NOTO, leading=G["kl"])
+               8.5, "#231f20", label="본문 글상자 — 한 줄기(" + C13_BIND + ")", font=NOTO, leading=G["kl"], first=G["first"])
     st += slot(C13_BIND, label="자리 — " + C13_BIND)
     for nm in C13_BIND.split("+"):
-        st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "영작·" + nm}, "wait": 450})
-    st += [{"click": '#side input[data-a="slotfmt.문항번호.inline"]', "wait": 600}, F('#side input[data-a="slotfmt.문항번호.inline_w"]', G["inline_w"], 600),
-           S("낱말 상자 아래 답 쓰는 곳 — 데이터 필드 「보기단어」의 고정 개체(다음 줄)", 1000),
-           {"pick": {"at": '#side select[data-a="slotfmt.보기단어.anc.part"]', "value": G["part"]}, "wait": 900},
-           {"pick": {"at": '#side select[data-a="slotfmt.보기단어.anc.pos"]', "value": "line"}, "wait": 800},
-           F('#side input[data-a="slotfmt.보기단어.anc.x"]', G["deco"]["x"], 600), F('#side input[data-a="slotfmt.보기단어.anc.gap"]', G["deco"]["gap"], 600)]
+        if nm != "문항번호":
+            st.append(slot_style(nm, "영작·" + nm, 450))
+    st += slot_inline("문항번호", "영작·문항번호")
+    st += [S("낱말 상자 아래 답 쓰는 곳 — 데이터 필드 「보기단어」 뒤 줄 위 고정 개체", 1000)]
+    st += slot_anchor("보기단어", G["part"], "above", "end", x=G["deco"]["x"], before=round(G["deco"]["gap"], 2))   # 음영 아래 오프셋은 단락 뒤 공백에 이미 들었다(shade_offsets)
     st += justify()
     st += [{"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}]
     return st
@@ -2586,9 +2451,9 @@ def s_styles_steps():
     G_ = s_reader()
     B_ = {"font": NOTO, "size": 8, "align": "justify", "tracking": -50, "color": "#231f20"}
     shade_b, shade_c, line_c = G_["BOGIF"], G_["CONDF"], G_["CONDS"]
+    SR["first"] = (YD, 400, 12, pt("지문번호"))
     sty = [("지문번호", {"font": YD, "size": 12, "color": "#af9d81", "leading": pt("지문번호"), "space_before": sb.get("지문번호"), "keep_next": True}),
-           ("번호", {"font": EL, "weight": 700, "size": 12, "color": "#00559f", "drop": 0.55}),
-           ("발문", dict(B_, leading=pt("발문", 5.15), tracking=-40, space_before=sb.get("발문"), keep_next=True, keep_together=True)),
+           ("발문", dict(B_, leading=pt("발문", 5.15), tracking=-40, space_before=sb.get("발문"), keep_next=True, keep_together=True, tabs=[{"at": SR["S_INLINE"]}])),
            ("지문", dict(B_, leading=pt("지문"), space_before=sb.get("지문"), keep_first=3, keep_last=2)),
            ("보기", dict(B_, leading=pt("보기"), shade=shade_b, pad=3, space_before=sb.get("보기"))),
            ("요약문", dict(B_, leading=pt("요약문"), shade=shade_b, pad=3, space_before=sb.get("요약문"))),
@@ -2596,19 +2461,12 @@ def s_styles_steps():
                         space_same=1.0, keep_together=True)),                # 선지 행간 12pt + 선지끼리 1mm = 잰 줄 간격
            ("조건", dict(B_, leading=pt("조건"), shade=shade_c, border=0.5, border_color=line_c, pad=3, space_before=sb.get("조건"))),
            ("주석", {"font": NOTO, "size": 6, "color": "#58595b", "align": "right", "space_before": 1.0})]
-    st = [S("단락 스타일 — 실전 문제(자리마다 하나, 브랜드 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
+    st = cs_once([("실전·번호", num_cs({"font": EL, "weight": 700, "size": 12, "color": "#00559f", "drop": 0.55}))], "번호 문자 스타일 — 실전 문제")
+    st += [S("단락 스타일 — 실전 문제(자리마다 하나, 브랜드 창)", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800},
           {"click": "#side #s-skin-edit", "wait": 1200}]
     for name, v in sty:
         n = "실전·" + name
-        q = lambda k: f'[data-st="{n}:{k}"]'
-        st += [S(f"단락 스타일 「{n}」", 800), {"answer": n}, {"click": "#st-new", "wait": 900}]
-        for k, val in v.items():
-            if k in ("font", "align", "weight"):
-                st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
-            elif k in ("keep_next", "keep_together"):
-                st.append({"click": "input" + q(k), "wait": 450})
-            elif val not in (None, 0, ""):
-                st.append(F("input" + q(k), val, 450))
+        st += [S(f"단락 스타일 「{n}」", 800), {"answer": n}, {"click": "#st-new", "wait": 900}] + pstyle_fields(n, v)
     st += [{"click": "#sheet-x", "wait": 900}]
     return st
 
@@ -2616,13 +2474,14 @@ def s_styles_steps():
 def s_story(x, top, bot, head, w):
     """단 글상자 — 첫 상자(head)는 자리 · 자리마다 스타일 · 번호 붙이기 · 밑줄 GREP · 새 이야기, 나머지는 같은 이야기를 이어 받는다"""
     st = text(round(x, 2), round(top, 2), w, round(bot - top, 2), "임시 문항 — 번호·발문·지문·선지가 이 글상자 하나에 흘러 들어온다." if head else "이어 받는 상자",
-              8, "#231f20", font=NOTO, label="문항 글상자 — 한 줄기(자리 여럿)" if head else "이어 받는 글상자 — 같은 이야기")
+              8, "#231f20", font=NOTO, label="문항 글상자 — 한 줄기(자리 여럿)" if head else "이어 받는 글상자 — 같은 이야기",
+              first=SR.get("first") if head else None)                     # 첫 프레임 첫 단락 = 지문 번호(영도 12pt)
     if head:
         st += slot(S_BIND, label="자리 — " + S_BIND + " (원고에 나온 차례대로 한 줄기)")
         for nm in S_BIND.split("+"):
-            st.append({"pick": {"at": f'#side select[data-a="slotfmt.{nm}.style"]', "value": "실전·" + nm}, "wait": 450})
-        st += [S("번호는 발문 첫 줄 앞에 붙인다 — 번호 칸 폭", 900), {"click": '#side input[data-a="slotfmt.번호.inline"]', "wait": 600},
-               F('#side input[data-a="slotfmt.번호.inline_w"]', SR["S_INLINE"], 600)]
+            if nm != "번호":
+                st.append(slot_style(nm, "실전·" + nm, 450))
+        st += [S("번호는 발문과 같은 단락 — 번호 뒤 탭 · 문자 스타일", 900)] + slot_inline("번호", "실전·번호")
         st += [S("글 잇기 — 새 이야기(넘친 줄은 다음 단·쪽 상자로)", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
     else:
         st += [S("글 잇기 — 같은 이야기를 이어 받는다", 700), {"pick": {"at": '#side select[data-a="story"]', "value": "이야기1"}, "wait": 900}]

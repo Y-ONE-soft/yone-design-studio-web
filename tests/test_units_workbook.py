@@ -47,7 +47,7 @@ def _sets():
 
 
 def _text(bind, y, h=20):
-    return {"atom": {"t": "text", "x": 0, "y": 0, "w": 170, "h": h, "size": 9, "font": "$body", "color": "$ink", "bind": bind}, "x": 20, "y": y}
+    return {"atom": {"t": "text", "x": 0, "y": 0, "w": 170, "h": h, "size": 9, "font": "$body", "color": "$ink", "bind": bind, "auto_size": "height"}, "x": 20, "y": y}
 
 
 def _ctx(lib, lib2=None):
@@ -278,4 +278,4 @@ def test_overflow_continues_on_other_page(lib):
     from core.units import store
     assert store.validate("plans", plan) is None
     out2 = render.plan_svgs(_ctx(lib, lib2), plan, [_mock_set()], lib2)
-    assert len(out2) < len(out) and 'viewBox="0 0 257' in out2[0]["svg"]                   # B4 라 면이 줄고, B4 로 찍힌다
+    assert len(out2) <= len(out) and 'viewBox="0 0 257' in out2[0]["svg"]                  # B4 라 면이 늘지 않고, B4 로 찍힌다

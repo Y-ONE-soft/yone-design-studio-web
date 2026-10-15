@@ -153,7 +153,14 @@
     return side === "L" ? b.left - tsMargin(c, "L") * k : b.right + tsMargin(c, "R") * k;
   }
 
+  const shadeOf = (p) => [...p.children].filter(e => e.dataset.shade);   // 단락 음영 · 단락 테두리(렌더러 _para) — 글 뒤에 깔린 빈 칸(둘 다 있으면 둘), 줄 · 글자로 세지 않는다
+  const lineEls = (p) => [...p.children].filter(e => !e.dataset.shade);
   function compose(p) {
+    const sh = shadeOf(p);
+    sh.forEach(x => x.remove());
+    try { compose0(p); } finally { sh.reverse().forEach(x => p.insertBefore(x, p.firstChild)); }
+  }
+  function compose0(p) {
     if (p.dataset.jcDone) return;
     const OK = new Set(["span", "b", "i", "u", "s", "sup", "sub"]);        // 글 안 표·떠 있는 그림 등은 건드리지 않는다 — inline-block 개체 속(SVG)은 괜찮다
     if ([...p.querySelectorAll("*")].some(e => !OK.has(e.tagName.toLowerCase()) && !(e.parentElement && e.parentElement.closest("span[style*='inline-block']")))) return;
@@ -268,7 +275,8 @@
       setB(r, ln.last.b);
       frag.push(r.cloneContents());
     });
-    const isLast = (li) => li === lines.length - 1;
+    const allJ = getComputedStyle(p).textAlignLast === "justify";       // 모두 정렬(인디자인) — 끝 줄도 양끝까지
+    const isLast = (li) => !allJ && li === lines.length - 1;
     const lw0 = (li) => W - (li === 0 ? indent : 0);
     p.textContent = "";
     lines.forEach((ln, li) => {
@@ -348,10 +356,13 @@
   }
 
   function inkBottom(e) {                                              // 실제 글자까지의 아래 끝 — 줄 상자보다 글자(②·큰 번호·대체 서체)가 더 내려가면 그 끝
+    const sh = [...e.querySelectorAll("[data-shade]")];                // 단락 음영은 글이 아니다(인디자인 — 음영 오프셋은 넘침에 안 든다)
+    sh.forEach(x => { x.style.display = "none"; });
     let b = e.getBoundingClientRect().bottom;
     const r = document.createRange();
     r.selectNodeContents(e);
     for (const x of r.getClientRects()) if (x.height > 0.5 && x.bottom > b) b = x.bottom;
+    sh.forEach(x => { x.style.display = ""; });
     return b;
   }
 
@@ -363,14 +374,14 @@
     let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
     if (whole) { /* 자르지 않는다 */ }
     else if (p.dataset.jcDone) {                                       // 컴포저 단락 — 줄마다 span
-      const lines = [...p.children];
+      const lines = lineEls(p);
       let k = lines.findIndex(s => inkBottom(s) > L);
       // 행 유지(인디자인 「처음 N행 · 마지막 N행」) — 상자 끝에 처음 몇 줄만, 다음 상자에 마지막 몇 줄만 남지 않게
       const kf = +p.dataset.keepFirst || 0, kl = +p.dataset.keepLast || 0;
       if (k > 0 && kl && lines.length - k < kl) k = lines.length - kl;   // 넘어갈 줄이 모자라면 더 넘긴다
       if (k > 0 && kf && k < kf && i > 0) k = 0;                       // 남을 줄이 모자라면 통째로
       if (k === 0) whole = true;
-      else if (k > 0) { p2 = p.cloneNode(false); [...p.children].slice(k).forEach(s => p2.appendChild(s)); }
+      else if (k > 0) { p2 = p.cloneNode(false); lines.slice(k).forEach(s => p2.appendChild(s)); }
     } else {                                                           // 브라우저가 꺾은 단락 — 넘는 줄의 첫 글자에서 자른다
       const cs = charsOf(p), j = firstOver(cs, L);
       if (j < cs.length) {
@@ -383,6 +394,7 @@
           r.setEnd(p, p.childNodes.length);
           p2 = p.cloneNode(false);
           p2.appendChild(r.extractContents());
+          p2.querySelectorAll("[data-shade]").forEach(x => x.remove());
           if (getComputedStyle(p).textAlign === "justify") p.style.textAlignLast = "justify";   // 앞 상자 끝 줄은 단락 끝이 아니다 — 양끝 그대로
         }
       }
@@ -403,6 +415,12 @@
       if (getComputedStyle(p).display === "list-item") p2.style.listStyleType = "none";
       if (p.style.borderBottomStyle) { p.style.borderBottom = "none"; p.style.paddingBottom = "0"; }   // 아래 경계선은 단락 끝(뒷부분)에만
       p2.dataset.storyCont = "1";
+      shadeOf(p).reverse().forEach(sh => {                              // 단락 음영 · 테두리도 두 상자에 — 앞부분은 아래 오프셋 · 아래 선 없이, 뒷부분은 위 오프셋 · 위 선 없이
+        const s2 = sh.cloneNode(false);
+        Object.assign(s2.style, {top: "0px", borderTop: "none", borderTopLeftRadius: "0px", borderTopRightRadius: "0px"});
+        Object.assign(sh.style, {bottom: "0px", borderBottom: "none", borderBottomLeftRadius: "0px", borderBottomRightRadius: "0px"});
+        p2.insertBefore(s2, p2.firstChild);
+      });
       return [p2, ...rest];
     }
     return rest.length ? rest : null;
@@ -424,8 +442,9 @@
     if (Math.abs(h.offsetWidth - from.offsetWidth) > 0.5) {           // 폭이 다른 상자 — 옮긴 컴포저 단락은 새 폭으로 다시 고른다
       nodes.forEach(p => {
         if (!p.dataset.jcDone) return;
-        const lines = [...p.children];
+        const lines = lineEls(p), sh = shadeOf(p);
         p.textContent = "";
+        sh.forEach(x => p.appendChild(x));
         lines.forEach((s, i) => { if (i) p.appendChild(document.createTextNode(" ")); while (s.firstChild) p.appendChild(s.firstChild); });
         delete p.dataset.jcDone;
         try { compose(p); } catch (e) { /* 브라우저 줄바꿈 */ }
@@ -514,12 +533,15 @@
       const k = (fixed ? box.getBoundingClientRect().height : fo.getBoundingClientRect().height) / hc;    // 화면 px / mm
       if (!(k > 0)) return;
       const natural = (el) => { const s = el.style.height; el.style.height = "auto"; const v = el.getBoundingClientRect().height / k; el.style.height = s; return v; };
+      if (div.dataset.mode === "width") return;                        // 너비만 — 높이는 그대로(인디자인 자동 크기 조정)
       const need = natural(box);                                       // 글이 실제로 차지하는 높이(여백 포함)
       const shown = fixed ? Math.max(h0, need) : need;                 // 보이는 높이 — 바탕 상자는 글 크기 그대로
       const z = num(fo, "height") / hc;                                // 글 배치 배율(TEXT_ZOOM)
       if (Math.abs(Math.max(shown, h0) - hc) > 0.05) fo.setAttribute("height", (Math.max(shown, h0) * z).toFixed(2));
       if (fixed && Math.abs(shown - hc) > 0.05) box.style.height = shown.toFixed(3) + "px";
       div.dataset.hcur = Math.max(h0, need).toFixed(3);
+      const ref = div.dataset.ref || "tl", f = ref[0] === "b" ? 1 : (ref[0] === "t" ? 0 : (ref === "l" || ref === "c" || ref === "r" ? 0.5 : 0));
+      if (f && fo.parentElement && Math.max(shown, h0) - h0 > 0.01) shiftY(fo.parentElement, -(Math.max(shown, h0) - h0) * f);   // 기준점이 아래 · 가운데면 위로도 자란다
       const ag = div.closest("g[data-ai]");
       if (ag) recs.push({ag, need, h0, hc, tol: +div.dataset.tol || 0, y0: num(ag, "data-ay"), x0: num(ag, "data-ax"), x1: num(ag, "data-ax") + num(ag, "data-aw")});
     });

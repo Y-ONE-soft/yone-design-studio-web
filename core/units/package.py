@@ -91,6 +91,8 @@ def load(pkg, into=None, name=None):
         raise ValueError("문서 묶음 파일이 아니다(kind: yone-units-doc)")
     lib = store.library()
     pkg = copy.deepcopy(pkg)
+    from core.units import indesign
+    indesign.migrate(pkg)                                                 # 옛 문서 묶음 — 인디자인 맞춤 꼴로(idv 없는 항목만)
     taken = {x.get("id") for k in ("pages", "parts", "blocks", "plans") for x in lib[k]}
     pmap = {p["id"]: _new_id("page", taken) for p in pkg.get("pages") or []}
     rmap = {"part": {p["id"]: _new_id("part", taken) for p in pkg.get("parts") or []},

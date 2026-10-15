@@ -307,11 +307,11 @@ def story_value(bind, records, slot_fmt=None):
     parts = [p for p in bind.split("+") if p]
     out, carry = [], []
 
-    def para(slot, line):
+    def para(slot, line, v0=False):
         nonlocal carry
         if out:
             out.append("\n")
-        out.append({"ps": slot, "t": ""})
+        out.append(dict({"ps": slot, "t": ""}, **({"v0": True} if v0 else {})))   # v0 = 레코드 값 하나의 첫 단락(고정 개체 「필드 앞 · 뒤」가 본다)
         out.extend(carry)
         carry = []
         if line:
@@ -327,8 +327,8 @@ def story_value(bind, records, slot_fmt=None):
             if (fmt.get(s) or {}).get("inline"):
                 carry.append({"ps": s, "inline": True, "t": str(v)})
                 continue
-            if isinstance(v, (list, dict)):                             # 꾸밈 조각(문자 스타일 · 윗주 · 옆 메모) — 조각 그대로, 글 조각의 \n 에서 문단을 나눈다
-                para(s, "")
+            if isinstance(v, (list, dict)):                             # 꾸밈 조각(문자 스타일 · 윗주 · 고정 개체) — 조각 그대로, 글 조각의 \n 에서 문단을 나눈다
+                para(s, "", True)
                 for r in (v if isinstance(v, list) else [v]):
                     if isinstance(r, str) and "\n" in r:
                         first, *rest = r.split("\n")
@@ -339,8 +339,8 @@ def story_value(bind, records, slot_fmt=None):
                     else:
                         out.append(r)
                 continue
-            for line in str(v).split("\n"):
-                para(s, line)
+            for j, line in enumerate(str(v).split("\n")):
+                para(s, line, j == 0)
     if carry:                                                           # 붙을 문단이 없으면 제 문단으로
         para(carry[0]["ps"], "")
     return out

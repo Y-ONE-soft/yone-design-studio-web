@@ -8,6 +8,7 @@ PURPLE, SKY, GRAYBOX, WHITE = "#8d7cba", "#e5f2f9", "#f5f4ef", "#ffffff"
 SPOT = {"mm": [120, 250]}        # 임시로 끌어 그리는 빈 자리 (면 아래 오른쪽)
 AWAY = {"mm": [205, 294]}        # 글 확정용 빈 구석
 MM = 25.4 / 72                   # 1pt = mm
+BODY_FAMILY = "Noto Sans CJK KR"       # 문서 기본 본문 글꼴($body)
 _STYLE = {100: "Thin", 200: "ExtraLight", 300: "Light", 400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold", 800: "ExtraBold", 900: "Black"}
 _FACES = {}
 
@@ -128,6 +129,12 @@ def _color(key, v):
             F(f'#side input[type="text"][data-a="{key}"]', v, 750)]
 
 
+def color_p(path, v):
+    """인디자인 칸(data-p)의 색 — 「직접 고르기…」 → 색 번호"""
+    return [{"pick": {"at": f'#side select[data-p="{path}"]', "value": "__raw"}, "wait": 650},
+            F(f'#side input[type="text"][data-p="{path}"]', v, 750)]
+
+
 def opacity(v):
     """불투명 % — 100 이면 아무것도 안 한다"""
     return [F('#side input[data-a="opacity"]', v)] if v is not None and v < 100 else []
@@ -143,29 +150,62 @@ def box(x, y, w, h, fill=None, label=None, radius=0, alpha=None):
     return st + opacity(alpha)
 
 
-def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None, weight=None, alpha=None, tsume=None):
+def fb_shift(family, weight, size, leading):
+    """첫 번째 기준선 오프셋 「어센트」(인디자인 기본) — 크롬 줄 상자의 첫 줄 기준선(위 끝 + 반 행간 + 윗높이)과
+    인디자인 어센트(「d」 높이) 차이 mm. 원본 첫 줄 위(top_of)에 놓던 프레임을 이만큼 내리면 첫 줄 기준선이 그대로다"""
+    import os, sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from core.units import render
+    m = render.font_metrics(family or BODY_FAMILY, int(weight or 400))
+    S_, L = size * MM, (leading or size * 1.45) * MM
+    return (L - (m["asc"] + m["desc"]) * S_) / 2 + m["asc"] * S_ - m["d"] * S_
+
+
+def P_(path, v, w=420):
+    """오른쪽 패널의 인디자인 칸(data-p) 하나 — 숫자 · 글 칸"""
+    return F(f'#side input[data-p="{path}"]', v, w)
+
+
+def pick_p(path, value, w=550):
+    return {"pick": {"at": f'#side select[data-p="{path}"]', "value": str(value)}, "wait": w}
+
+
+def fstyle_of(weight=None, italic=False, bold=False):
+    """글꼴 스타일 칸 값 — 굵기(+ i = 기울임꼴)"""
+    w = int(weight or (700 if bold else 400))
+    return f"{w}{'i' if italic else ''}"
+
+
+def text(x, y, w, h, s, size, color, label=None, bind=None, leading=None, align=None, bold=False, font=None, track=None, weight=None, alpha=None, tsume=None,
+         auto="height", first=None):
+    """텍스트 프레임 — 문자 도구로 그리고 글 · 글꼴 · 크기 · 행간 · 정렬 · 자간 · 색 · 자리. y · h = 원본 첫 줄 위(top_of) 기준 —
+    첫 번째 기준선 오프셋(어센트)만큼 프레임을 내린다(first = 첫 단락 (글꼴, 굵기, 크기, 행간)이 프레임 글과 다를 때).
+    auto = 자동 크기 조정(height 높이만 · width 너비만 · both 높이 및 너비 · "" 끔) — 예전 편집기 기본(높이만)을 적어 둔다.
+    leading 이 없으면 예전 자동 행간(크기의 145%)을 적어 둔다 — 지금 자동은 120%(인디자인)"""
+    lead = leading or round(size * 1.45, 3)
+    fam, wt, sz, ld = first or (font or BODY_FAMILY, weight or (700 if bold else 400), size, lead)
+    sh = round(fb_shift(fam, wt, sz, ld), 3)
+    y, h = round(y + sh, 3), round(h - sh, 3)
     st = ([S(label)] if label else [])
     tw, th = max(min(w, 60), 24), max(min(h, 24), 9)         # 임시 상자는 글을 치기 쉽게 넉넉히
     st += [{"draw": {"tool": "text", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + tw, SPOT["mm"][1] + th]}}, "wait": 750},
            {"write": {"at": {"mm": [SPOT["mm"][0] + tw / 2, SPOT["mm"][1] + th / 2]}, "value": s, "away": AWAY}, "wait": 700},
-           F('#side input[data-a="size"]', size)]
-    if leading:
-        st.append(F('#side input[data-a="leading"]', leading))
+           F('#side input[data-a="size"]', size), P_("leading", lead)]
     if align:
-        st.append({"pick": {"at": '#side select[data-a="align"]', "value": align}, "wait": 550})
-    if font:                                                                   # 글꼴 — 시스템 서체 목록에서 고른다(없으면 register_font 로 먼저 등록)
+        st.append(pick_p("align", align))
+    if font:                                                                   # 글꼴 — 시스템 글꼴 목록에서 고른다(없으면 register_font 로 먼저 등록)
         st.append({"pick": {"at": '#side select[data-a="font"]', "value": font}, "wait": 600})
     if track:
-        st.append(F('#side input[data-a="tracking"]', track))
+        st.append(P_("tracking", track))
     if tsume:                                                                  # 자간 축소 % (인디자인 문자 패널)
-        st.append(F('#side input[data-a="tsume"]', tsume))
-    if bold:
-        st.append({"click": '#side input[data-a="b"]', "wait": 500})           # 굵게
-    if weight:                                                                 # 굵기 — 「굵기」 칸에서 고른다 (500·600 …)
-        st.append({"pick": {"at": '#side select[data-a="weight"]', "value": str(weight)}, "wait": 550})
+        st.append(P_("tsume", tsume))
+    if bold or weight:                                                         # 글꼴 스타일 — 굵기(인디자인 글꼴 스타일)
+        st.append(pick_p("fstyle", fstyle_of(weight, bold=bold)))
     st += _color("color", color)
     st += [F('#side input[data-it="w"]', w), F('#side input[data-a="h"]', h),
            F('#side input[data-it="x"]', x), F('#side input[data-it="y"]', y, 550)]
+    if auto:
+        st.append(pick_p("auto_size", auto))
     if bind:
         st.append({"pick": {"at": '#side select[data-a="bindsel"]', "value": bind}, "wait": 1000})
     return st + opacity(alpha)
@@ -183,11 +223,194 @@ def register_font(path, label=None):
     return ([S(label)] if label else []) + [{"upload": {"at": "#side #font-file", "path": path}, "wait": 2500}]
 
 
-def justify(word_min=100, word_max=133, letter_min=-8, letter_max=250):
-    """고른 양끝맞춤 글상자의 「균등 배치」 네 칸(낱말 최소·최대 % · 자간 최소·최대 ‰) — 패널 숫자칸을 누르고 친다. None 인 칸은 안 건드린다.
-    기본값 = 이 출판사 책(인디자인 원본 5권 실측): 낱말 100·133%, 자간 최소 −8‰, 자간 늘림 250‰. 편집기 기본은 인디자인 공장 기본(80·133%, 0·0)."""
-    return [F(f'#side input[data-a="jc.{k}"]', v, 600)
-            for k, v in (("word_min", word_min), ("word_max", word_max), ("letter_min", letter_min), ("letter_max", letter_max)) if v is not None]
+def justify(word_min=100, word_max=133, letter_min=-8, letter_max=250, family=None, weight=400):
+    """고른 텍스트 프레임의 균등 배치(인디자인) — 단어 간격 최소 · 최대 %, 문자 간격 최소 · 최대(원본에서 잰 ‰ em 을 공백 폭 % 로 바꿔 친다).
+    기본값 = 이 출판사 책(인디자인 원본 5권 실측): 단어 100·133%, 문자 최소 −8‰, 늘림 250‰. 편집기 기본은 인디자인 공장 기본(80·133%, 0·0)."""
+    sp = space_em(family or BODY_FAMILY, weight)
+    out = []
+    for k, v in (("word_min", word_min), ("word_max", word_max), ("letter_min", letter_min), ("letter_max", letter_max)):
+        if v is None:
+            continue
+        out.append(P_(f"jc.{k}", round(v / sp / 10, 2) if k.startswith("letter") else v, 600))
+    return out
+
+
+def space_em(family, weight=400):
+    """공백 폭(em) — 균등 배치 문자 간격 % 의 기준"""
+    import os, sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+    from core.units import render
+    return render.font_metrics(family or BODY_FAMILY, int(weight or 400))["space"]
+
+
+# ── 스타일 · 데이터 필드(인디자인 칸 · 단위) ──
+def shade_offsets(v):
+    """원본에서 잰 음영 상자 값 → 인디자인 단락 음영 · 테두리. 원본 잼: pad = 글 왼쪽 − 상자 왼쪽, pad_top = 첫 줄 위 − 상자 위,
+    pad_bottom = 상자 아래 − 끝 줄 아래, space_before = 앞 글 아래 → 상자 위(상자끼리 잰 간격), shade_ol · or = 너비 「열」의 단 가장자리 → 상자.
+    인디자인 음영은 글을 밀지 않는다 — 음영은 오프셋 위쪽 · 아래쪽 · 왼쪽 · 오른쪽으로 넓히고, 글 자리는 들여쓰기 · 단락 앞뒤 공백으로 옮긴다.
+    음영과 같이 그린 테두리는 같은 자리(단락 테두리 오프셋 = 음영 오프셋). _after = 같은 음영 상자 안에서 앞 단락을 잇는 단락"""
+    if not any(k in v for k in ("pad", "pad_top", "pad_bottom")):
+        return v
+    v = dict(v)
+    pad = float(v.pop("pad", 0) or 0)
+    pt, pb = float(v.pop("pad_top", pad) or 0), float(v.pop("pad_bottom", pad) or 0)
+    after = v.pop("_after", None)
+    ol, orr = float(v.get("shade_ol") or 0), float(v.get("shade_or") or 0)
+    if v.get("shade_fit"):
+        v["indent"] = round(float(v.get("indent") or 0) + pad, 3)
+        if "indent_right" in v:                                        # 오른쪽 상자 끝을 잰 단락만 — 안 잰 단락은 글 너비가 열 끝까지(음영은 글을 밀지 않는다, 상자가 열 밖으로 나간다 — 정본 영작 보기단어)
+            v["indent_right"] = round(float(v.get("indent_right") or 0) + pad, 3)
+        v["shade_ol"] = v["shade_or"] = round(pad, 3)
+    else:
+        v["indent"] = round(float(v.get("indent") or 0) + pad - ol, 3)
+        v["indent_right"] = round(float(v.get("indent_right") or 0) + pad - orr, 3)
+    v["shade_ot"], v["shade_ob"] = round(pt, 3), round(pb, 3)
+    if after is None:
+        v["space_before"] = round(float(v.get("space_before") or 0) + pt, 3)
+    else:
+        v["space_before"] = round(float(v.get("space_before") or 0) - float(after), 3)
+    v["space_after"] = round(float(v.get("space_after") or 0) + pb, 3)
+    v.setdefault("space_same", 0)                                      # 같은 필드 음영 단락끼리는 붙인다(동일한 스타일 단락 사이 간격 0)
+    if v.get("border"):
+        for k in ("ot", "ob", "ol", "or"):
+            v["border_" + k] = v["shade_" + k] if v.get("shade_" + k) is not None else 0
+        if v.get("shade_fit"):
+            v["border_fit"] = True
+        if v.get("shade_r"):
+            v["border_r"] = v["shade_r"]
+    return v
+
+
+def pstyle_fields(name, v):
+    """스타일 창이 열린 채 단락 스타일 하나의 칸들 — 옛 꼴 값(굵게 · 굵기 · 음영 여백 · 내림 mm · 문자 간격 ‰)은 인디자인 값으로 바꿔 친다"""
+    v = shade_offsets(v)
+    q = lambda k: f'[data-st="{name}:{k}"]'
+    st = []
+    fam = v.get("font") or BODY_FAMILY
+    if v.get("font"):
+        st.append({"pick": {"at": "select" + q("font"), "value": str(v["font"])}, "wait": 450})
+    if v.get("weight") or v.get("b") or v.get("i"):
+        st.append({"pick": {"at": "select" + q("fstyle"), "value": fstyle_of(v.get("weight"), v.get("i"), v.get("b"))}, "wait": 450})
+    for k, val in v.items():
+        if k in ("font", "weight", "b", "i", "__n"):
+            continue
+        if k == "align":
+            st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
+        elif k in ("shade_fit", "border_fit"):
+            if val:
+                st.append({"pick": {"at": "select" + q(k), "value": "1"}, "wait": 450})
+        elif k in ("keep_next", "keep_together"):
+            if val:
+                st.append({"click": "input" + q(k), "wait": 450})
+        elif k == "drop":                                               # 기준선 이동 pt(위가 +) — 원본 잼은 내림 mm
+            st.append(F("input" + q(k), round(-float(val) / MM, 2), 450))
+        elif k == "tabs":
+            st.append(F("input" + q(k), ", ".join(" ".join(str(x) for x in (f"{float(t['at']):g}", t.get("align") or "left", t.get("leader") or "") if x != "") for t in val), 450))
+        elif k == "jc":
+            sp = space_em(fam, v.get("weight") or 400)
+            for kk, vv in val.items():
+                st.append(F("input" + q(f"jc.{kk}"), round(vv / sp / 10, 2) if kk.startswith("letter") else vv, 450))
+        elif k == "list":
+            for kk, vv in val.items():
+                if kk in ("type", "format", "after"):
+                    st.append({"pick": {"at": "select" + q(f"list.{kk}"), "value": {"\t": "\t", "": "none"}.get(vv, vv)}, "wait": 450})
+                else:
+                    st.append(F("input" + q(f"list.{kk}"), vv, 450))
+        elif k in ("rule_above", "rule_below"):
+            for kk, vv in val.items():
+                st.append({"pick": {"at": "select" + q(f"{k}.{kk}"), "value": vv}, "wait": 450} if kk == "width" else F("input" + q(f"{k}.{kk}"), vv, 450))
+        elif val is not None and val != "":
+            st.append(F("input" + q(k), val, 450))
+    return st
+
+
+def pstyle_steps(styles, label="단락 스타일"):
+    """단락 스타일 — 스타일 · 색상 견본 창 「＋ 새 단락 스타일」 → 이름 → 칸마다"""
+    st = [S(label + " — 스타일 · 색상 견본 창", 1300), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, v in styles:
+        st += [S(f"단락 스타일 「{name}」", 800), {"answer": name}, {"click": "#st-new", "wait": 900}] + pstyle_fields(name, v)
+    return st + [{"click": "#sheet-x", "wait": 900}]
+
+
+def cstyle_id(c):
+    """문자 스타일 옛 꼴(밑줄 굵기 · 내림 mm · 바탕 띠) → 인디자인 밑줄 옵션(두께 · 오프셋 pt)"""
+    c = dict(c)
+    if c.get("u") and any(k in c for k in ("line", "line_off", "line_color")):
+        lw = float(c.pop("line", 0.18) or 0.18)
+        c["u_w"] = round(lw / MM, 3)
+        c["u_off"] = round((float(c.pop("line_off", 0.4) or 0.4) - lw / 2) / MM, 3)
+        if c.get("line_color"):
+            c["u_color"] = c.pop("line_color")
+    if c.get("bg") and c.get("bg_band"):
+        band, off = float(c.pop("bg_band")), float(c.pop("bg_off", 0) or 0)
+        c.update(u=True, u_w=round(band / MM, 3), u_off=round(-(off + band / 2) / MM, 3), u_color=c.pop("bg"))
+    if c.get("bg"):
+        raise ValueError("문자 스타일 바탕 상자는 인디자인에 없다 — 밑줄(띠)이나 고정 개체로")
+    return c
+
+
+def cstyle_fields(name, c):
+    c = cstyle_id(c)
+    sel = lambda k: f'#sbody [data-cs="{name}:{k}"]'
+    st = []
+    if c.get("font"):
+        st.append({"pick": {"at": sel("font"), "value": str(c["font"])}, "wait": 600})
+    if c.get("weight") or c.get("b") or c.get("i"):
+        st.append({"pick": {"at": sel("fstyle"), "value": fstyle_of(c.get("weight"), c.get("i"), c.get("b"))}, "wait": 600})
+    if c.get("u"):
+        st.append({"click": sel("u"), "wait": 900})                     # 밑줄을 켜야 밑줄 칸이 나온다
+    for k, v in c.items():
+        if k in ("font", "weight", "b", "i", "u"):
+            continue
+        if k in ("u_style", "case"):
+            st.append({"pick": {"at": sel(k), "value": str(v)}, "wait": 600})
+        elif k == "nobreak":
+            if v:
+                st.append({"click": sel(k), "wait": 600})
+        elif v is not None and v != "":
+            st.append(F(sel(k), v, 600))
+    return st
+
+
+def cstyle_steps(styles, label="문자 스타일"):
+    """문자 스타일 — 스타일 · 색상 견본 창 「＋ 새 문자 스타일」 → 이름 → 칸마다"""
+    st = [S(label + " — 스타일 · 색상 견본 창", 1200), {"key": "Escape", "wait": 500}, {"key": "Escape", "wait": 800}, {"click": "#side #s-skin-edit", "wait": 1200}]
+    for name, props in styles:
+        st += [S(f"문자 스타일 「{name}」", 800), {"answer": name}, {"click": "#cs-new", "wait": 1200}] + cstyle_fields(name, props)
+    return st + [{"click": "#sheet-x", "wait": 900}]
+
+
+def slot_style(field, style, w=450):
+    """데이터 필드 단락 스타일 — 고른 텍스트 프레임의 데이터 병합 칸"""
+    return {"pick": {"at": f'#side select[data-p="slot_fmt.{field}.style"]', "value": style}, "wait": w}
+
+
+def slot_inline(field, cs=None, sep="\t"):
+    """「다음 필드와 같은 단락」 — 템플릿 단락 「«이 필드»⇥«다음 필드»」. 필드 뒤 글자(탭 · 공백 · 없음) · 문자 스타일"""
+    st = [{"click": f'#side input[data-p="slot_fmt.{field}.inline"]', "wait": 800}]
+    st.append({"pick": {"at": f'#side select[data-p="slot_fmt.{field}.sep"]', "value": {"\t": "\t", "": "none"}.get(sep, sep)}, "wait": 600})
+    if cs:
+        st.append({"pick": {"at": f'#side select[data-p="slot_fmt.{field}.cs"]', "value": cs}, "wait": 600})
+    return st
+
+
+def slot_anchor(field, part, pos="inline", at="end", **o):
+    """데이터 필드 고정 개체(인디자인) — 그룹 · 위치(inline 인라인 · above 줄 위 · custom 사용자 정의) · 필드 앞(start) · 뒤(end) · 옵션(x · y · space · align · before · after · xref · yref)"""
+    F_ = lambda k: f"slot_fmt.{field}.anc.{k}"
+    st = [{"pick": {"at": f'#side select[data-p="{F_("part")}"]', "value": part}, "wait": 900},
+          {"pick": {"at": f'#side select[data-p="{F_("pos")}"]', "value": pos}, "wait": 800},
+          {"pick": {"at": f'#side select[data-p="{F_("at")}"]', "value": at}, "wait": 600}]
+    for k, v in o.items():
+        if v is None:
+            continue
+        if k in ("xref", "yref", "align"):
+            st.append({"pick": {"at": f'#side select[data-p="{F_(k)}"]', "value": v}, "wait": 600})
+        elif k == "space":
+            if v:
+                st.append({"click": f'#side input[data-p="{F_(k)}"]', "wait": 600})
+        else:
+            st.append(F(f'#side input[data-p="{F_(k)}"]', v, 600))
+    return st
 
 
 def slot(name, label=None):
@@ -215,28 +438,12 @@ def columns(n, gutter, label=None):
             {"js": f"(() => {{ const c = page.columns || {{}}; if (c.n !== {n} || c.gutter !== {gutter}) throw new Error('단 지정 실패 ' + JSON.stringify(c)); return '단 ' + c.n + ' · ' + c.gutter + 'mm'; }})()"}]
 
 
-def grep(n, pattern, color=None, bold=True, label=None, size=None, bshift=None, underline=False,
-         blank=None, line=None, line_off=None, line_color=None, weight=None, hide=False):
-    """GREP 스타일 규칙 하나 — 고른 글상자의 「＋ GREP 규칙」 → 패턴 · 굵게 · 색 · 크기 · 기준선 · 밑줄 · 칸으로 바꾸기.
-    n = 이 글상자의 몇 번째 규칙(0부터). blank = 맞은 글 대신 이 폭(mm)의 밑줄 칸(원고의 ____ 빈칸) — line·line_off·line_color 로 선"""
+def grep(n, pattern, cs, label=None):
+    """GREP 스타일 하나(인디자인) — 고른 텍스트 프레임의 「＋ 새 GREP 스타일」 → 대상 텍스트 · 스타일 적용(문자 스타일).
+    n = 이 프레임의 몇 번째(0부터). 문자 스타일은 미리 만들어 둔다(cstyle_steps)"""
     st = ([S(label)] if label else [])
-    st += [{"click": "#side #s-grep-add", "wait": 700}, F(f'#side input[data-a="grep.{n}.re"]', pattern, 700)]
-    if not bold:                                                               # 새 규칙은 굵게가 켜진 채로 생긴다
-        st.append({"click": f'#side input[data-a="grep.{n}.b"]', "wait": 500})
-    if color:
-        st += _color(f"grep.{n}.color", color)
-    for key, v in (("size", size), ("bshift", bshift), ("blank", blank), ("line", line), ("line_off", line_off)):
-        if v is not None:
-            st.append(F(f'#side input[data-a="grep.{n}.{key}"]', v, 600))
-    if underline:                                                              # 밑줄 — line·line_off·line_color 로 굵기·내림(기준선→가운데)·색
-        st.append({"click": f'#side input[data-a="grep.{n}.u"]', "wait": 500})
-    if weight:                                                                 # 굵기 100~900 (굵게보다 먼저)
-        st.append({"pick": {"at": f'#side select[data-a="grep.{n}.weight"]', "value": str(weight)}, "wait": 550})
-    if hide:                                                                   # 표시 감추기 — 원고의 {…} 같은 약속 표시는 지우고 묶음 1 만
-        st.append({"click": f'#side input[data-a="grep.{n}.hide"]', "wait": 500})
-    if line_color:
-        st += _color(f"grep.{n}.line_color", line_color)
-    return st
+    return st + [{"click": "#side #s-grep-add", "wait": 700}, F(f'#side input[data-a="grep.{n}.re"]', pattern, 700),
+                 {"pick": {"at": f'#side select[data-a="grep.{n}.cs"]', "value": cs}, "wait": 700}]
 
 
 def ref_image(doc, xref, path):
@@ -276,10 +483,10 @@ SHAPES = {"화살표 →": "M0 0.3 L0.6 0.3 L0.6 0 L1 0.5 L0.6 1 L0.6 0.7 L0 0.7
 
 
 def shape(x, y, w, h, fill, name="평행사변형", label=None, d=None):
-    """도형 — 「도형」 도구로 그린 뒤 오른쪽 「모양」 칸에서 고른다. d 를 주면 「경로 d」 칸에 원본 꼭짓점 그대로 친다"""
+    """모양 — 다각형 도구로 그린 뒤 「기준점 경로」(펜 도구로 찍는 기준점 — 0~1 비율)에 원본 꼭짓점을 친다"""
     st = ([S(label)] if label else [])
     st += [{"draw": {"tool": "path", "from": SPOT, "to": {"mm": [SPOT["mm"][0] + min(w, 60), SPOT["mm"][1] + min(h, 30)]}}, "wait": 750},
-           F('#side input[data-a="d"]', d, 800) if d else {"pick": {"at": '#side select[data-a="d"]', "value": SHAPES[name]}, "wait": 800}]
+           F('#side input[data-a="d"]', d or SHAPES[name], 800)]
     st += _place(x, y, w, h)
     st += _color("fill", fill)
     return st
@@ -321,9 +528,11 @@ def expect_pages(n):
 def add_page(label):
     return [S(label),
             {"clickif": {"at": "#tg-strip", "when": "!view.strip"}, "wait": 1100},
+            {"js": "(() => { window.__np = docPages().length; return '쪽 ' + window.__np; })()"},
             {"click": "#rail .addpg", "wait": 900},
             {"click": '#rail .addpg .menu [data-new="blank"]', "wait": 2800},
-            {"js": "(() => '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1))()"}]
+            {"until": "docPages().length === window.__np + 1 && page && !(page.items || []).length"},   # 새 빈 쪽이 열릴 때까지 — 서버가 바쁘면 늦게 열려 앞 쪽에 그렸다(2026-10-15)
+            {"js": "(() => { if (docPages().length !== window.__np + 1 || (page.items || []).length) throw new Error('새 쪽이 안 열림 — 지금 ' + (idx() + 1) + '/' + docPages().length); return '쪽 ' + docPages().length + ' · 지금 ' + (idx()+1); })()"}]
 
 
 def head(code, title, step=1):

@@ -72,7 +72,7 @@ def test_record_and_short_lesson():
     c, rep = ya.to_content({"format": "yos-analysis-v1", "analyses": [doc, dict(doc, layoutType="short")]})
     r = c["분석 펼침면"][0]
     assert (r["강"], r["회차"], r["지문제목"]) == ("1과", "분석", "A Listen and Answer 1 (p.12) · 노래 봉사")
-    assert r["문장+해석"][0]["문장"][0] == {"t": "", "side": "* hi 는 감탄사"}
+    assert r["번호+문장+해석"][0]["문장"][0] == {"t": "", "side": "* hi 는 감탄사"}
     assert r["발문+문제지문+선지"][0]["선지"] == ["① x\n② ", {"t": "y", "cs": "밑줄"}]
     assert r["답"] == "답: ②" and r["어휘"] == "hi\t안녕"
     assert len(c["분석 펼침면"]) == 1 and rep["skipped"][0]["why"].startswith("짤지문형")
@@ -88,12 +88,12 @@ def test_roundtrip_real_docs():
         rec = ya.record(doc)
         assert ya.to_doc(rec, doc) == (doc, [])
         r2 = copy.deepcopy(rec)
-        for row in r2["문장+해석"]:
+        for row in r2["번호+문장+해석"]:
             row.pop("_h")
         assert ya.to_doc(r2, doc) == (doc, [])
-        for s, row in zip(doc["sentences"], rec["문장+해석"]):
+        for s, row in zip(doc["sentences"], rec["번호+문장+해석"]):
             t, m, g, rf = ya.runs_sentence(_strip(row["문장"]))
-            back = ([{"t": "", "side": "\n".join("* " + y for y in g)}] if g else []) + [f"{s['no']} "] + ya.sentence_runs(t, m, rf)
+            back = ([{"t": "", "side": "\n".join("* " + y for y in g)}] if g else []) + ya.sentence_runs(t, m, rf)
             assert _visible(back) == _visible(row["문장"]), (s["no"], s["tagged"])
 
 
@@ -109,7 +109,7 @@ def test_edits_come_back_as_contents_data():
                  "marks": [_span(t, "story", "antecedent"), _span(t, "written", "grammar")]}])
 
     def runs(rec):
-        return rec["문장+해석"][0]["문장"]
+        return rec["번호+문장+해석"][0]["문장"]
 
     def find(rec, word):
         return next(r for r in runs(rec) if isinstance(r, dict) and r.get("t") == word)
@@ -138,7 +138,7 @@ def test_edits_come_back_as_contents_data():
     # 문법 포인트(옆 메모) · 해석 · 주제 · 어휘 · 답
     def misc(rec):
         runs(rec)[0]["side"] = "* like 는 전치사\n* read 는 자동사"
-        rec["문장+해석"][0]["해석"] = "그건 이야기처럼 읽혔다."
+        rec["번호+문장+해석"][0]["해석"] = "그건 이야기처럼 읽혔다."
         rec["주제"] = "새 주제"
         rec["어휘"] = "hi\t안녕하세요\nstory\t이야기"
         rec["답"] = "답: ①"

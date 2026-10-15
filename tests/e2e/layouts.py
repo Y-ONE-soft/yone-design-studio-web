@@ -44,6 +44,8 @@ def check(unit):
         return False, f"구성.json 없음 — 먼저 python3 tests/e2e/layouts.py <틀>/<카드> {unit}"
     d = json.load(open(p, encoding="utf-8"))
     series, did = d["원본"].split("/")
+    if not os.path.isdir(os.path.join(REPO, "catalog", series, "designs", did)) and d.get("확인"):
+        return True, f"면 {len(d.get('구성') or [])}개 · 원본 카드 {d['원본']} 은 끝난 뒤 지웠다 — 확인받은 구성표 그대로"   # 다시 판정할 원본이 없다(편집기 제작 등록 뒤 PDF 카드 지움)
     rows, sig, _ = judged(series, did)
     if d.get("판정") != sig or d.get("구성") != rows:
         return False, "구성.json 이 지금 구성 판정과 다르다 — 손으로 고치지 말고 판정 기준(design_layouts)을 고친 뒤 layouts.py 를 다시 돌린다"

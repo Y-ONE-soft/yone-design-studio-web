@@ -75,6 +75,7 @@ def canvas():
                       for k, v in _meta().items()]            # 「관리에 등록」 — 어느 폴더(틀)로 보낼지
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
     lib["fonts"] = fonts.families()                   # 시스템 서체 — 서체 칸은 이 목록에서만 고른다
+    lib["font_faces"] = fonts.faces()                 # 글꼴 스타일(굵기 · 기울임꼴) — 인디자인 글꼴 스타일 칸
     return render_template("units_canvas.html", library_json=_lib_json(lib), active_nav="만들기", font_css=fonts.fix_css() + fonts.face_css("url"))
 
 
@@ -113,6 +114,7 @@ def api_put(kind):
     item = request.get_json(silent=True)
     err = store.validate(kind, item)
     if err:
+        print(f"■ 저장 거절 {kind} {str((item or {}).get('id', ''))[:40]} — {err[:200]}", flush=True)   # 화면에서 바꾼 값이 저장 안 되는 원인을 서버 기록에
         return jsonify({"error": err}), 400
     store.put(kind, item, after=request.args.get("after"))      # ?after=<id> 그 뒤로 · ?after= 맨 앞
     return jsonify({"ok": True, "item": item})
@@ -505,7 +507,7 @@ def api_fonts_add():
         ent = fonts.register(f.filename, f.read())
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
-    return jsonify({"ok": True, "font": ent, "families": fonts.families()})
+    return jsonify({"ok": True, "font": ent, "families": fonts.families(), "faces": fonts.faces()})
 
 
 @bp.route("/api/units/fontfile/<path:name>")
@@ -550,6 +552,39 @@ def api_package_put():
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify({"ok": True, "plan": pid, "report": rep})
+
+
+@bp.route("/api/units/merge", methods=["POST"])
+def api_merge():
+    """인디자인 「병합된 문서 만들기」 — JSON {plan}. 템플릿 문서에 넣어 둔 원고(plan.content)로 레코드를 모두 넣은 새 문서를 만든다.
+    새 문서는 데이터 필드가 끊긴 보통 페이지들 — 책에서 손볼 곳(재정의 · 윗주 · 고정 개체)은 여기서 고친다. 템플릿은 그대로. → {plan, url}"""
+    from core.units import package, pdf as _pdf
+    body = request.get_json(silent=True) or {}
+    lib = store.library()
+    plan = store.by_id(lib["plans"]).get(body.get("plan") or "")
+    if not plan:
+        return jsonify({"error": "문서 없음"}), 404
+    content = plan.get("content") or {}
+    if not content:
+        return jsonify({"error": "넣어 둔 원고가 없다 — 데이터 병합 칸에 원고를 넣고 「레코드 미리 보기」로 확인한 뒤 만든다"}), 400
+    ctx = _ctx(lib, plan.get("skin"))
+    svgs, _rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:                            # 크롬이 빈 덧쪽을 지운 뒤 몇 쪽인가 — 펼칠 때 덧쪽을 그만큼만
+        tmp = os.path.join(td, "count.pdf")
+        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), tmp, title="count")
+        import fitz
+        used = len(fitz.open(tmp))
+    pages = merged_pages(lib, plan, content, _ctx(lib, plan.get("skin")), drop_empty=True, used=used)
+    for i, pg in enumerate(pages):
+        pg["id"] = f"merged_{i + 1}"
+        pg.pop("cont", None)
+    pkg = package.export(lib, plan["id"])
+    doc = {k: v for k, v in pkg["plan"].items() if k not in ("content", "catalog")}
+    doc["front"], doc["back"] = [], []
+    doc["sections"] = [{"id": "s1", "name": "본문", "pages": [{"page": pg["id"], "repeat": "once"} for pg in pages]}]
+    pid, _r = package.load(dict(pkg, plan=doc, pages=pages), name=f"{plan.get('name') or plan['id']} · 병합된 문서")
+    return jsonify({"plan": pid, "url": f"/units?plan={pid}"})
 
 
 @bp.route("/api/units/register", methods=["POST"])
