@@ -174,7 +174,34 @@ def design_detail(series, design):
     out["config"] = {k: cfg.get(k) for k in ("page", "palette", "fonts", "typeface", "print", "options")
                      if k in cfg}
     out["slots"] = cat._slots(cfg)
+    if _editor_design(series, design):
+        out["pages"] = _editor_fields(series, design)
     return jsonify(out)
+
+
+def _editor_fields(series, design):
+    """편집기 제작 디자인의 상위 페이지마다 데이터 필드 자리 — 바깥 화면이 그린 지면 위에 고치기 칸을 겹칠 때(contents 분석본 간지).
+    → [{id, name, w, h, fields: [{bind, x, y, w, h, size, align}]}] — mm, 재단선 왼쪽 위가 0(도련 없이 찍은 그림과 같은 좌표)"""
+    from routes.catalog import _ddir
+    try:
+        with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+    except (OSError, ValueError):
+        return []
+    specs = {s.get("id"): s for s in pkg.get("specs") or []}
+    out = []
+    for pg in pkg.get("pages") or []:
+        sp = specs.get(pg.get("spec")) or {}
+        fields = []
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            b = a.get("bind")
+            if not b or str(b).startswith("sys."):
+                continue
+            fields.append({"bind": b, "x": it.get("x", 0), "y": it.get("y", 0), "w": it.get("w") or a.get("w"), "h": it.get("h") or a.get("h"),
+                           "size": a.get("size"), "align": a.get("align") or "left"})
+        out.append({"id": pg.get("id"), "name": pg.get("name"), "w": sp.get("w"), "h": sp.get("h"), "fields": fields})
+    return out
 
 
 @bp.route("/catalog/<series>/<design>/image/<name>")

@@ -58,6 +58,17 @@ def test_catalog_contract(app):
     assert c.get(f"/api/v1/catalog/{t['series']}/{d['id']}/image/../config.json").status_code == 404
 
 
+def test_editor_design_fields(app):
+    # 편집기 제작 디자인은 상위 페이지마다 데이터 필드 자리(mm)를 낸다 — contents 간지 지면 위 고치기
+    c = app.test_client()
+    one = c.get("/api/v1/catalog/analysis/x009d5556").get_json()
+    gan = next(p for p in one["pages"] if p["name"] == "간지")
+    assert (gan["w"], gan["h"]) == (210, 297)
+    assert [f["bind"] for f in gan["fields"]] == ["학교", "권번호", "교재명+강제목"]
+    assert all(f["w"] and f["h"] for f in gan["fields"])
+    assert "pages" not in c.get("/api/v1/catalog/analysis/d1").get_json()      # PDF 등록 · 예전 디자인은 없다
+
+
 def test_health_public(app):
     r = app.test_client().get("/api/v1/health")
     assert r.status_code == 200 and r.get_json()["ok"] is True and r.get_json()["auth"] == "off"
