@@ -207,6 +207,7 @@ def measure_units(new_ids, state, fix=False):
         json.dump(corr, open(fp, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         print("  보정.json 갱신 — 다시 돌리면 반영")
     deco_check(new_ids, state)
+    flow_check(new_ids, state)
 
 
 def deco_check(new_ids, state):
@@ -301,6 +302,81 @@ def deco_check(new_ids, state):
         print(f"  … 외 {len(deco_check.bad) - 20}개")
 
 
+def flow_check(new_ids, state):
+    """원고 흐름 간격 — 위아래로 이웃한 두 줄(글줄 · 원고 상자 · 장식)의 사이가 원본과 0.3mm 안.
+    원고 글의 줄 끝 · 쪽마다 달라지는 자리는 맞대지 않지만, 레코드마다 되풀이되는 간격(행간 · 단락 앞뒤 공백 · 상자 → 답 줄)은
+    템플릿 값이라 원고가 바뀌어도 그대로다(2026-10-15 정본 영작 배열: 보기 상자 → ▶▶ 원본 5.97 · 결과 3.43mm 가 「들어감」만 봐서 통과했다).
+    견본 원고(원본 글 그대로)를 넣은 판에서만. 짝 = 원본에서 바로 아래 이웃(가로로 겹침 · 20mm 안)이고 결과에서도 그 둘이 바로 이웃일 때 —
+    줄 바뀜이 달라 사이에 다른 줄이 끼면 맞대지 않는다. 예외 키 "p쪽:간격:<아래 것>" (상태.json 「원본_손고침」)."""
+    flow_check.bad = []
+    if not state.get("fill") or getattr(measure_units, "last", None) is None:
+        return
+    import pymupdf
+    mm = 25.4 / 72
+    ref = pymupdf.open(os.path.join(REPO, state["ref"]))
+    allow = allowed(state)
+
+    def lines(page, ox, oy):
+        """눈에 보이는 글줄 — 기준선이 같고 잇닿은 조각을 한 줄로. 작은 글(윗주 · 번호, 6.5pt 아래)은 뺀다(deco_check 가 본다)"""
+        sp = []
+        for b in page.get_text("dict")["blocks"]:
+            for ln in b.get("lines", []):
+                for s in ln["spans"]:
+                    if s["text"].strip() and s["size"] >= 6.5:
+                        sp.append(((s["bbox"][0] - ox) * mm, (s["bbox"][2] - ox) * mm, (s["origin"][1] - oy) * mm, s["text"]))
+        sp.sort(key=lambda s: (round(s[2], 1), s[0]))
+        out = []
+        for x0, x1, by, t in sp:
+            o = out[-1] if out else None
+            if o and abs(o["by"] - by) < 0.4 and x0 - o["x1"] < 6:
+                o["x1"], o["t"] = max(o["x1"], x1), o["t"] + t
+            else:
+                out.append({"x0": x0, "x1": x1, "by": by, "t": t})
+        items = {}
+        for o in out:
+            k = "".join(o["t"].split())[:24]
+            if len(k) >= 3:
+                items.setdefault("줄:" + k, []).append({"x0": o["x0"], "x1": o["x1"], "top": o["by"], "bot": o["by"]})
+        return items
+
+    def below(items, a):
+        """a 바로 아래 이웃 — 가로로 겹치고 a 아래 끝보다 아래에 위 끝이 있는 것 중 가장 가까운 것(20mm 안)"""
+        c = [(k, b) for k, b in items.items() if b is not a and b["x0"] < a["x1"] and b["x1"] > a["x0"] and b["top"] > a["bot"] + 0.05]
+        k, b = min(c, key=lambda kb: kb[1]["top"], default=(None, None))
+        return (k, b) if b and b["top"] - a["bot"] < 20 else (None, None)
+
+    for k, rp in enumerate(state["pages"]):
+        pdf = os.path.join(out, f"p{rp}_my.pdf")
+        res = measure_units.last.get(f"p{rp}")
+        if k >= len(new_ids) or not os.path.exists(pdf) or res is None:
+            continue
+        rpg = ref[rp - 1]
+        R, M = lines(rpg, rpg.trimbox.x0, rpg.trimbox.y0), lines(pymupdf.open(pdf)[0], 0, 0)
+        R = {kk: v[0] for kk, v in R.items() if len(v) == 1 and len(M.get(kk, [])) == 1}          # 원본 · 결과에 한 번씩만 나오는 줄만 짝짓는다
+        M = {kk: M[kk][0] for kk in R}
+        for r in res:                                                     # 원고 상자 · 장식(글 단 전체는 뺀다)
+            if r.get("원고") and r.get("ref") and r.get("my") and not r["id"].startswith(("col", "t")):
+                for D, b in ((R, r["ref"]), (M, r["my"])):
+                    D[r["id"]] = {"x0": b[0], "x1": b[0] + b[2], "top": b[1], "bot": b[1] + b[3]}
+        n = 0
+        for ka, a in R.items():
+            kb, b = below(R, a)
+            if not kb or kb not in M:
+                continue
+            km, _ = below(M, M[ka])
+            if km != kb:                                                  # 결과에서 사이에 다른 것이 끼었다 — 줄 바뀜 차이, 맞대지 않는다
+                continue
+            n += 1
+            g_ref, g_my = b["top"] - a["bot"], M[kb]["top"] - M[ka]["bot"]
+            if abs(g_my - g_ref) > 0.3 and f"p{rp}:간격:{kb}" not in allow:
+                flow_check.bad.append(f"p{rp} 간격 「{ka[:14]}」→「{kb[:14]}」 원본 {g_ref:.2f} · 결과 {g_my:.2f}mm")
+        print(f"  원본 p{rp}: 원고 흐름 간격 {n}곳 맞대기")
+    for w in flow_check.bad[:20]:
+        print("  ✗", w)
+    if len(flow_check.bad) > 20:
+        print(f"  … 외 {len(flow_check.bad) - 20}개")
+
+
 def font_problems():
     """문서가 쓴 서체가 시스템 서체(core.units.fonts — 등록된 서체)인가. 컴퓨터에 깔린 서체로 그려지면 서버에선 다르게 나온다."""
     sys.path.insert(0, REPO)
@@ -348,6 +424,7 @@ def verdict(state, new_ids, ok_steps):
       ① 대본 오류  ② 원본 쪽마다 만든 지면이 있어야  ③ 맞댈 요소 목록(elems.json)이 있어야
       ④ 요소 전부 기준 안 — 예외는 상태.json 「허용」 · 「원본_손고침」 {"p쪽:요소": "사용자 확정 이유"} 만
       ⑥ 원고 자리 작은 글(윗주 · 번호)의 높이가 원본과 0.3mm 안 — deco_check
+      ⑦ 원고 흐름 간격(이웃한 글줄 · 상자 · 장식 사이)이 원본과 0.3mm 안 — flow_check
       ⑤ 목록 밖 차이 없음 — 원본과 결과가 다른 화소가 어느 요소 상자에도 안 들면 「목록에 없는 요소」(빠진 장식 등)
     → (통과 여부, 이유 목록)"""
     from PIL import Image, ImageChops, ImageDraw
@@ -356,6 +433,7 @@ def verdict(state, new_ids, ok_steps):
         why.append("대본 오류")
     why += font_problems()
     why += getattr(deco_check, "bad", [])
+    why += getattr(flow_check, "bad", [])
     hand = {k: v for k, v in (state.get("원본_손고침") or {}).items() if any(k.startswith(f"p{rp}:") for rp in state.get("pages") or [])}
     if hand:                                                             # 판정에는 안 들지만 늘 보인다 — 템플릿은 표준 값, 사용자가 편집기에서 고칠 곳
         print(f"  원본 손 고침(사용자 확정) {len(hand)}곳 — 템플릿은 표준 값으로 두었다: " + " · ".join(sorted(hand))[:300])
