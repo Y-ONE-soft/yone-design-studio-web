@@ -308,7 +308,8 @@ def flow_check(new_ids, state):
     템플릿 값이라 원고가 바뀌어도 그대로다(2026-10-15 정본 영작 배열: 보기 상자 → ▶▶ 원본 5.97 · 결과 3.43mm 가 「들어감」만 봐서 통과했다).
     견본 원고(원본 글 그대로)를 넣은 판에서만. 판정은 견본 쪽(state pages 첫 쪽 — 템플릿 값을 잰 쪽)만, 나머지 쪽은 원본이 쪽마다 손으로
     줄인 곳(정본 25쪽 선지 행간 등)이 있어 적기만 한다(원본 쪽별 차이는 따라 하지 않는다 — 2026-10-10 사용자 확정). 짝 =원본에서 바로 아래 이웃(가로로 겹침 · 20mm 안)이고 결과에서도 그 둘이 바로 이웃일 때 —
-    줄 바뀜이 달라 사이에 다른 줄이 끼면 맞대지 않는다. 예외 키 "p쪽:간격:<아래 것>" (상태.json 「원본_손고침」)."""
+    줄 바뀜이 달라 사이에 다른 줄이 끼면 맞대지 않는다. 예외 키 "p쪽:간격:<아래 것>" (상태.json 「원본_손고침」).
+    상태.json 「흐름_참고만」 {구성 번호: 사용자 확정 이유} — 템플릿을 견본 한 쪽이 아니라 여러 쪽 가운데 값으로 만든 구성은 견본 쪽도 적기만."""
     flow_check.bad, flow_check.note = [], []
     if not state.get("fill") or getattr(measure_units, "last", None) is None:
         return
@@ -376,7 +377,7 @@ def flow_check(new_ids, state):
             g_ref, g_my = b["top"] - a["bot"], Mk[kb]["top"] - Mk[ka]["bot"]
             if abs(g_my - g_ref) > 0.3 and f"p{rp}:간격:{kb}" not in allow:
                 w = f"p{rp} 간격 「{ka[:14]}」→「{kb[:14]}」 원본 {g_ref:.2f} · 결과 {g_my:.2f}mm"
-                (flow_check.bad if k == 0 else flow_check.note).append(w)
+                (flow_check.bad if k == 0 and only not in (state.get("흐름_참고만") or {}) else flow_check.note).append(w)
         print(f"  원본 p{rp}: 원고 흐름 간격 {n}곳 맞대기" + ("" if k == 0 else " (견본 쪽이 아니다 — 원본 쪽별 차이일 수 있어 판정에 안 넣고 적기만)"))
     for w in flow_check.note[:12]:
         print("  · 참고", w)
@@ -521,7 +522,7 @@ state = json.load(open(os.path.join(udir, "상태.json"), encoding="utf-8"))
 
 def mine(s):
     """대본이 쓴 상태(원본 쪽 목록 등)에 사용자 확정 예외는 단위 폴더 상태.json 것을 — 판 뒤에 적은 「허용」 · 「원본_손고침」도 판정에 든다"""
-    for k in ("허용", "원본_손고침"):
+    for k in ("허용", "원본_손고침", "흐름_참고만"):
         if state.get(k):
             s[k] = dict(s.get(k) or {}, **state[k])
     return s

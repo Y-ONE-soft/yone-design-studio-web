@@ -1531,7 +1531,20 @@ def c1_style(pno):
     below = lambda base, sz, fam, wt, pt: pt * MM - (base - top_of(base, sz, fam, wt, pt))
     x0 = min(tb["x"], giv["x"], frame["x"])
     mt, mg, mf = para_metrics(top_rows), para_metrics(giv_rows), para_metrics(fr_rows)
-    if not mf["gap"]:                                                    # 견본 지문(삽입 문항)은 문단 하나 — 문단 사이는 같은 구성의 여러 문단 지문(순서 문항 (A)(B)(C))에서,
+    for m_, ix in ((mt, 4), (mg, 6), (mf, 8)):                         # 견본에서 한 줄뿐인 글(주어진 문장 「Crucially, …」)은 행간을 못 잰다 —
+        if m_["lines"] < 2:                                              # 같은 구성 다른 쪽의 여러 줄 글에서 가운데 값(원본 7.0mm · 줄인 쪽 5.6mm 는 소수)
+            import statistics
+            ls = []
+            for p_ in range(84, 104):
+                try:
+                    m2 = para_metrics(order_parts(p_)[ix])
+                except (IndexError, ValueError, KeyError):
+                    continue
+                if m2["lines"] > 1:
+                    ls.append(m2["lead_mm"])
+            if ls:
+                m_["lead_mm"] = statistics.median(ls)
+    if not mf["gap"]:                                                   # 견본 지문(삽입 문항)은 문단 하나 — 문단 사이는 같은 구성의 여러 문단 지문(순서 문항 (A)(B)(C))에서,
         import statistics                                                # 견본과 행간이 같은 쪽만(원본은 몇 쪽만 행간 5.6mm 로 줄였다 — 85 · 98 · 102쪽)
         gs = []
         for p_ in range(84, 104):
@@ -2226,7 +2239,8 @@ def c13_style(pno):
     # 인디자인은 앞 문단 「뒤 간격」 + 이 문단 「앞 간격」을 더한다 — 우리말 앞 간격(k_sb)이 이 사이보다 크면 지문 번호 행간을 줄여 맞춘다(뒤 간격은 음수가 안 된다)
     cut = max(0.0, k_sb - after_p)
     p_lead = round(12 * 1.45 - 2 * cut / MM, 2)
-    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400, p_lead) if starts[0] else k_top(items[0]), 2),   # 첫 줄 = 지문 번호(줄인 행간 p_lead 그대로 — 기본 145% 로 재면 1.46mm 위로 떴다) first=(YD, 400, 12, p_lead) if starts[0] else (NOTO, 400, 8.5, round(kl_mm / MM, 2)), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
+    # 첫 줄 = 지문 번호 — 줄인 행간 p_lead 그대로 잰다(기본 145% 로 재면 1.46mm 위로 떴다)
+    C13.update(x=x0, top=round(top_of(pnb, 12, YD, 400, p_lead) if starts[0] else k_top(items[0]), 2), first=(YD, 400, 12, p_lead) if starts[0] else (NOTO, 400, 8.5, round(kl_mm / MM, 2)), w=round(max(o["x1"] for it in items for o in it["ko"] + it["wd"]) + 1 - x0, 2), kw=round(max(o["x1"] for it in items for o in it["ko"]) - x0, 2),
                kl=round(kl_mm / MM, 2), ktrk=gaps_track([c for c in ko[-1]["ink"]], 8.5) or 1, k_ind=round(cont_x - x0, 2), k_first=round(it0["n"]["x"] - cont_x, 2),
                inline_w=round(ko[0]["x"] - it0["n"]["x"], 2), num_color=it0["n"]["color"], num_size=it0["n"]["size"],
                k_sb=round(k_sb, 2), p_sb=round((statistics.median(sb_p) if sb_p else 3.0) + cut, 2), p_lead=p_lead,
