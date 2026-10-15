@@ -3,6 +3,7 @@
   "광문분석본@1",
   "광문분석본@2",
   "배재포켓북@1",
+  "배재포켓북@2",
   "배재포켓북@3",
   "배재포켓북@4",
   "배재포켓북@5",
@@ -25,11 +26,11 @@
  ],
  "동작": {
   "answer 묻는 창": {
-   "횟수": 82,
+   "횟수": 142,
    "처음": "광문분석본@1"
   },
   "click #cs-new": {
-   "횟수": 29,
+   "횟수": 70,
    "처음": "광문분석본@1"
   },
   "click #pcards .pcard.new": {
@@ -37,27 +38,27 @@
    "처음": "광문분석본@1"
   },
   "click #rail .addpg": {
-   "횟수": 20,
+   "횟수": 22,
    "처음": "광문분석본@2"
   },
   "click #rail .addpg .menu [data-new=\"blank\"]": {
-   "횟수": 20,
+   "횟수": 22,
    "처음": "광문분석본@2"
   },
   "click #rail .pg.on": {
-   "횟수": 3,
-   "처음": "배재포켓북@4"
+   "횟수": 6,
+   "처음": "배재포켓북@2"
   },
   "click #rail .pg[data-i=\"0\"]": {
    "횟수": 1,
    "처음": "정본-최종@14"
   },
   "click #sbody [data-cs=\"*:u\"]": {
-   "횟수": 3,
+   "횟수": 22,
    "처음": "광문분석본@2"
   },
   "click #sheet-x": {
-   "횟수": 48,
+   "횟수": 92,
    "처음": "광문분석본@1"
   },
   "click #side #s-content-put": {
@@ -65,23 +66,23 @@
    "처음": "광문분석본@1"
   },
   "click #side #s-grep-add": {
-   "횟수": 50,
+   "횟수": 55,
    "처음": "광문분석본@1"
   },
   "click #side #s-group": {
-   "횟수": 2,
-   "처음": "정본-최종@11"
+   "횟수": 8,
+   "처음": "정본-최종@10"
   },
   "click #side #s-pushrow": {
    "횟수": 10,
    "처음": "정본-최종@11"
   },
   "click #side #s-skin-edit": {
-   "횟수": 48,
+   "횟수": 92,
    "처음": "광문분석본@1"
   },
   "click #side #s-x": {
-   "횟수": 11,
+   "횟수": 10,
    "처음": "광문분석본@1"
   },
   "click #side details.more > summary": {
@@ -128,8 +129,16 @@
    "횟수": 38,
    "처음": "정본-최종@11"
   },
+  "click #side input[data-p=\"slot_fmt.*.anc.space\"]": {
+   "횟수": 2,
+   "처음": "정본-최종@11"
+  },
+  "click #side input[data-p=\"slot_fmt.*.inline\"]": {
+   "횟수": 16,
+   "처음": "광문분석본@2"
+  },
   "click #st-new": {
-   "횟수": 31,
+   "횟수": 50,
    "처음": "광문분석본@1"
   },
   "click #tg-side": {
@@ -137,20 +146,20 @@
    "처음": "광문분석본@1"
   },
   "click #tg-snap": {
-   "횟수": 4,
-   "처음": "정본-최종@11"
+   "횟수": 16,
+   "처음": "정본-최종@10"
   },
   "click #tg-strip": {
-   "횟수": 20,
+   "횟수": 22,
    "처음": "광문분석본@2"
   },
   "click input[data-st=\"*:keep_next\"]": {
-   "횟수": 2,
-   "처음": "정본-최종@14"
+   "횟수": 8,
+   "처음": "정본-최종@10"
   },
   "click input[data-st=\"*:keep_together\"]": {
-   "횟수": 2,
-   "처음": "정본-최종@14"
+   "횟수": 6,
+   "처음": "정본-최종@11"
   },
   "click 지면": {
    "횟수": 2,
@@ -161,27 +170,27 @@
    "처음": "광문분석본@2"
   },
   "drag 지면 → 지면": {
-   "횟수": 2,
-   "처음": "정본-최종@11"
+   "횟수": 8,
+   "처음": "정본-최종@10"
   },
   "draw ellipse": {
-   "횟수": 57,
+   "횟수": 64,
    "처음": "광문분석본@1"
   },
   "draw image": {
-   "횟수": 23,
+   "횟수": 29,
    "처음": "광문분석본@1"
   },
   "draw path": {
-   "횟수": 77,
+   "횟수": 104,
    "처음": "광문분석본@1"
   },
   "draw rect": {
-   "횟수": 291,
+   "횟수": 277,
    "처음": "광문분석본@1"
   },
   "draw text": {
-   "횟수": 607,
+   "횟수": 460,
    "처음": "광문분석본@1"
   },
   "fill #sbody [data-cs=\"*:bg\"]": {
@@ -205,11 +214,11 @@
    "처음": "광문분석본@2"
   },
   "fill #sbody [data-cs=\"*:bshift\"]": {
-   "횟수": 2,
-   "처음": "배재포켓북@4"
+   "횟수": 5,
+   "처음": "배재포켓북@2"
   },
   "fill #sbody [data-cs=\"*:color\"]": {
-   "횟수": 18,
+   "횟수": 39,
    "처음": "광문분석본@2"
   },
   "fill #sbody [data-cs=\"*:line\"]": {
@@ -225,12 +234,24 @@
    "처음": "광문분석본@2"
   },
   "fill #sbody [data-cs=\"*:size\"]": {
-   "횟수": 8,
+   "횟수": 18,
    "처음": "광문분석본@2"
   },
   "fill #sbody [data-cs=\"*:track\"]": {
-   "횟수": 2,
-   "처음": "배재포켓북@4"
+   "횟수": 8,
+   "처음": "배재포켓북@2"
+  },
+  "fill #sbody [data-cs=\"*:u_color\"]": {
+   "횟수": 21,
+   "처음": "광문분석본@2"
+  },
+  "fill #sbody [data-cs=\"*:u_off\"]": {
+   "횟수": 22,
+   "처음": "광문분석본@2"
+  },
+  "fill #sbody [data-cs=\"*:u_w\"]": {
+   "횟수": 22,
+   "처음": "광문분석본@2"
   },
   "fill #sbody [data-st=\"*:color\"]": {
    "횟수": 16,
@@ -269,11 +290,11 @@
    "처음": "광문분석본@2"
   },
   "fill #side #s-col-g": {
-   "횟수": 3,
+   "횟수": 4,
    "처음": "배재포켓북@3"
   },
   "fill #side #s-col-n": {
-   "횟수": 3,
+   "횟수": 4,
    "처음": "배재포켓북@3"
   },
   "fill #side #s-content": {
@@ -281,7 +302,7 @@
    "처음": "광문분석본@1"
   },
   "fill #side #s-pname": {
-   "횟수": 20,
+   "횟수": 23,
    "처음": "광문분석본@1"
   },
   "fill #side #s-pstart": {
@@ -289,7 +310,7 @@
    "처음": "광문분석본@2"
   },
   "fill #side input[data-a=\"bind\"]": {
-   "횟수": 258,
+   "횟수": 124,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"columns\"]": {
@@ -297,7 +318,7 @@
    "처음": "광문분석본@2"
   },
   "fill #side input[data-a=\"d\"]": {
-   "횟수": 77,
+   "횟수": 104,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"fold\"]": {
@@ -305,8 +326,8 @@
    "처음": "정본-최종@11"
   },
   "fill #side input[data-a=\"frame.radius\"]": {
-   "횟수": 11,
-   "처음": "배재포켓북@5"
+   "횟수": 3,
+   "처음": "배재포켓북@2"
   },
   "fill #side input[data-a=\"frame.stroke.w\"]": {
    "횟수": 4,
@@ -325,7 +346,7 @@
    "처음": "정본-최종@10"
   },
   "fill #side input[data-a=\"grep.0.re\"]": {
-   "횟수": 39,
+   "횟수": 40,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"grep.0.size\"]": {
@@ -345,7 +366,7 @@
    "처음": "정본-최종@14"
   },
   "fill #side input[data-a=\"grep.1.re\"]": {
-   "횟수": 11,
+   "횟수": 15,
    "처음": "배재포켓북@3"
   },
   "fill #side input[data-a=\"gutter\"]": {
@@ -353,7 +374,7 @@
    "처음": "광문분석본@2"
   },
   "fill #side input[data-a=\"h\"]": {
-   "횟수": 1055,
+   "횟수": 937,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"indent_first\"]": {
@@ -361,8 +382,8 @@
    "처음": "정본-최종@11"
   },
   "fill #side input[data-a=\"inset4\"]": {
-   "횟수": 29,
-   "처음": "배재포켓북@5"
+   "횟수": 3,
+   "처음": "배재포켓북@2"
   },
   "fill #side input[data-a=\"jc.letter_max\"]": {
    "횟수": 78,
@@ -385,7 +406,7 @@
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"opacity\"]": {
-   "횟수": 56,
+   "횟수": 59,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"opsz\"]": {
@@ -393,7 +414,7 @@
    "처음": "배재포켓북@1"
   },
   "fill #side input[data-a=\"radius\"]": {
-   "횟수": 292,
+   "횟수": 278,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"radius4\"]": {
@@ -401,7 +422,7 @@
    "처음": "광문분석본@2"
   },
   "fill #side input[data-a=\"rotate\"]": {
-   "횟수": 42,
+   "횟수": 39,
    "처음": "정본-최종@1,2,3"
   },
   "fill #side input[data-a=\"ruby.off_above\"]": {
@@ -429,7 +450,7 @@
    "처음": "광문분석본@2"
   },
   "fill #side input[data-a=\"size\"]": {
-   "횟수": 607,
+   "횟수": 460,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"slotfmt.*.bullet_text\"]": {
@@ -449,15 +470,15 @@
    "처음": "정본-최종@8"
   },
   "fill #side input[data-a=\"stroke.w\"]": {
-   "횟수": 66,
+   "횟수": 72,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"table.cols\"]": {
-   "횟수": 1,
+   "횟수": 3,
    "처음": "배재포켓북@3"
   },
   "fill #side input[data-a=\"table.fills\"]": {
-   "횟수": 1,
+   "횟수": 3,
    "처음": "배재포켓북@3"
   },
   "fill #side input[data-a=\"table.gap_x\"]": {
@@ -469,11 +490,11 @@
    "처음": "배재포켓북@3"
   },
   "fill #side input[data-a=\"table.inset\"]": {
-   "횟수": 1,
+   "횟수": 3,
    "처음": "배재포켓북@3"
   },
   "fill #side input[data-a=\"table.row_h\"]": {
-   "횟수": 1,
+   "횟수": 3,
    "처음": "배재포켓북@3"
   },
   "fill #side input[data-a=\"tabspec\"]": {
@@ -493,32 +514,112 @@
    "처음": "광문분석본@1"
   },
   "fill #side input[data-a=\"w\"]": {
-   "횟수": 448,
+   "횟수": 474,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-it=\"w\"]": {
-   "횟수": 617,
+   "횟수": 460,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-it=\"x\"]": {
-   "횟수": 1056,
+   "횟수": 937,
    "처음": "광문분석본@1"
   },
   "fill #side input[data-it=\"y\"]": {
-   "횟수": 1055,
+   "횟수": 940,
+   "처음": "광문분석본@1"
+  },
+  "fill #side input[data-p=\"columns\"]": {
+   "횟수": 1,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"gutter\"]": {
+   "횟수": 1,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"jc.letter_max\"]": {
+   "횟수": 22,
+   "처음": "정본-최종@10"
+  },
+  "fill #side input[data-p=\"jc.letter_min\"]": {
+   "횟수": 22,
+   "처음": "정본-최종@10"
+  },
+  "fill #side input[data-p=\"jc.word_max\"]": {
+   "횟수": 22,
+   "처음": "정본-최종@10"
+  },
+  "fill #side input[data-p=\"jc.word_min\"]": {
+   "횟수": 22,
+   "처음": "정본-최종@10"
+  },
+  "fill #side input[data-p=\"leading\"]": {
+   "횟수": 460,
+   "처음": "광문분석본@1"
+  },
+  "fill #side input[data-p=\"opsz\"]": {
+   "횟수": 4,
+   "처음": "배재포켓북@1"
+  },
+  "fill #side input[data-p=\"ruby.oy_above\"]": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"ruby.oy_below\"]": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"ruby.size\"]": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"slot_fmt.*.anc.before\"]": {
+   "횟수": 4,
+   "처음": "정본-최종@13"
+  },
+  "fill #side input[data-p=\"slot_fmt.*.anc.x\"]": {
+   "횟수": 16,
+   "처음": "정본-최종@10"
+  },
+  "fill #side input[data-p=\"slot_fmt.*.anc.y\"]": {
+   "횟수": 12,
+   "처음": "정본-최종@10"
+  },
+  "fill #side input[data-p=\"slot_fmt.*.frame.inset\"]": {
+   "횟수": 1,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"slot_fmt.*.frame.r\"]": {
+   "횟수": 1,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"table.stroke.row_w\"]": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
+  },
+  "fill #side input[data-p=\"table.stroke.w\"]": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
+  },
+  "fill #side input[data-p=\"tabs\"]": {
+   "횟수": 1,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[data-p=\"tracking\"]": {
+   "횟수": 239,
    "처음": "광문분석본@1"
   },
   "fill #side input[type=\"text\"][data-a=\"color\"]": {
-   "횟수": 607,
+   "횟수": 460,
    "처음": "광문분석본@1"
   },
   "fill #side input[type=\"text\"][data-a=\"fill\"]": {
-   "횟수": 394,
+   "횟수": 416,
    "처음": "광문분석본@1"
   },
   "fill #side input[type=\"text\"][data-a=\"frame.fill\"]": {
-   "횟수": 25,
-   "처음": "배재포켓북@5"
+   "횟수": 3,
+   "처음": "배재포켓북@2"
   },
   "fill #side input[type=\"text\"][data-a=\"frame.stroke.color\"]": {
    "횟수": 4,
@@ -541,32 +642,80 @@
    "처음": "정본-최종@14"
   },
   "fill #side input[type=\"text\"][data-a=\"stroke.color\"]": {
-   "횟수": 66,
+   "횟수": 72,
    "처음": "광문분석본@1"
   },
-  "fill input[data-st=\"*:border\"]": {
+  "fill #side input[type=\"text\"][data-p=\"ruby.color\"]": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[type=\"text\"][data-p=\"slot_fmt.*.frame.fill\"]": {
    "횟수": 1,
-   "처음": "정본-최종@14"
+   "처음": "광문분석본@2"
+  },
+  "fill #side input[type=\"text\"][data-p=\"table.stroke.color\"]": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
+  },
+  "fill input[data-st=\"*:border\"]": {
+   "횟수": 3,
+   "처음": "정본-최종@10"
   },
   "fill input[data-st=\"*:border_color\"]": {
-   "횟수": 1,
-   "처음": "정본-최종@14"
+   "횟수": 3,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:border_ob\"]": {
+   "횟수": 3,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:border_ol\"]": {
+   "횟수": 3,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:border_or\"]": {
+   "횟수": 3,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:border_ot\"]": {
+   "횟수": 3,
+   "처음": "정본-최종@10"
   },
   "fill input[data-st=\"*:color\"]": {
-   "횟수": 15,
-   "처음": "정본-최종@12"
+   "횟수": 50,
+   "처음": "광문분석본@1"
   },
   "fill input[data-st=\"*:drop\"]": {
    "횟수": 1,
    "처음": "정본-최종@14"
   },
   "fill input[data-st=\"*:indent\"]": {
-   "횟수": 5,
-   "처음": "정본-최종@12"
+   "횟수": 28,
+   "처음": "배재포켓북@3"
   },
   "fill input[data-st=\"*:indent_first\"]": {
-   "횟수": 3,
-   "처음": "정본-최종@12"
+   "횟수": 10,
+   "처음": "광문분석본@2"
+  },
+  "fill input[data-st=\"*:indent_right\"]": {
+   "횟수": 11,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:jc.letter_max\"]": {
+   "횟수": 1,
+   "처음": "배재포켓북@4"
+  },
+  "fill input[data-st=\"*:jc.letter_min\"]": {
+   "횟수": 1,
+   "처음": "배재포켓북@4"
+  },
+  "fill input[data-st=\"*:jc.word_max\"]": {
+   "횟수": 1,
+   "처음": "배재포켓북@4"
+  },
+  "fill input[data-st=\"*:jc.word_min\"]": {
+   "횟수": 1,
+   "처음": "배재포켓북@4"
   },
   "fill input[data-st=\"*:keep_first\"]": {
    "횟수": 1,
@@ -577,43 +726,71 @@
    "처음": "정본-최종@14"
   },
   "fill input[data-st=\"*:leading\"]": {
-   "횟수": 11,
-   "처음": "정본-최종@12"
+   "횟수": 49,
+   "처음": "광문분석본@1"
+  },
+  "fill input[data-st=\"*:list.char\"]": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
   },
   "fill input[data-st=\"*:pad\"]": {
    "횟수": 3,
    "처음": "정본-최종@14"
   },
   "fill input[data-st=\"*:shade\"]": {
-   "횟수": 3,
-   "처음": "정본-최종@14"
+   "횟수": 12,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:shade_ob\"]": {
+   "횟수": 12,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:shade_ol\"]": {
+   "횟수": 6,
+   "처음": "정본-최종@13"
+  },
+  "fill input[data-st=\"*:shade_or\"]": {
+   "횟수": 6,
+   "처음": "정본-최종@13"
+  },
+  "fill input[data-st=\"*:shade_ot\"]": {
+   "횟수": 12,
+   "처음": "정본-최종@10"
+  },
+  "fill input[data-st=\"*:shade_r\"]": {
+   "횟수": 1,
+   "처음": "정본-최종@13"
   },
   "fill input[data-st=\"*:size\"]": {
-   "횟수": 15,
-   "처음": "정본-최종@12"
+   "횟수": 50,
+   "처음": "광문분석본@1"
   },
   "fill input[data-st=\"*:space_after\"]": {
-   "횟수": 2,
-   "처음": "정본-최종@12"
+   "횟수": 20,
+   "처음": "광문분석본@1"
   },
   "fill input[data-st=\"*:space_before\"]": {
-   "횟수": 9,
-   "처음": "정본-최종@12"
+   "횟수": 30,
+   "처음": "배재포켓북@3"
   },
   "fill input[data-st=\"*:space_same\"]": {
-   "횟수": 1,
-   "처음": "정본-최종@14"
+   "횟수": 19,
+   "처음": "배재포켓북@3"
   },
-  "fill input[data-st=\"*:tracking\"]": {
-   "횟수": 10,
-   "처음": "정본-최종@12"
-  },
-  "key Delete": {
-   "횟수": 2,
+  "fill input[data-st=\"*:tabs\"]": {
+   "횟수": 6,
    "처음": "정본-최종@11"
   },
+  "fill input[data-st=\"*:tracking\"]": {
+   "횟수": 38,
+   "처음": "광문분석본@2"
+  },
+  "key Delete": {
+   "횟수": 8,
+   "처음": "정본-최종@10"
+  },
   "key Escape": {
-   "횟수": 282,
+   "횟수": 400,
    "처음": "광문분석본@1"
   },
   "pick #rt-cs": {
@@ -621,11 +798,15 @@
    "처음": "광문분석본@2"
   },
   "pick #sbody [data-cs=\"*:font\"]": {
-   "횟수": 6,
+   "횟수": 14,
    "처음": "광문분석본@2"
   },
+  "pick #sbody [data-cs=\"*:fstyle\"]": {
+   "횟수": 19,
+   "처음": "광문분석본@1"
+  },
   "pick #sbody [data-cs=\"*:u_style\"]": {
-   "횟수": 2,
+   "횟수": 3,
    "처음": "광문분석본@2"
   },
   "pick #sbody [data-cs=\"*:weight\"]": {
@@ -649,11 +830,11 @@
    "처음": "정본-최종@14"
   },
   "pick #side #s-rep": {
-   "횟수": 28,
+   "횟수": 30,
    "처음": "광문분석본@2"
   },
   "pick #side #s-spec": {
-   "횟수": 8,
+   "횟수": 12,
    "처음": "배재포켓북@1"
   },
   "pick #side select[data-a=\"align\"]": {
@@ -665,27 +846,27 @@
    "처음": "광문분석본@2"
   },
   "pick #side select[data-a=\"bindsel\"]": {
-   "횟수": 30,
+   "횟수": 32,
    "처음": "광문분석본@2"
   },
   "pick #side select[data-a=\"bindsel\"] = __other": {
-   "횟수": 257,
+   "횟수": 123,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"color\"] = __raw": {
-   "횟수": 607,
+   "횟수": 460,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"fill\"]": {
-   "횟수": 48,
+   "횟수": 55,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"fill\"] = __raw": {
-   "횟수": 394,
+   "횟수": 416,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"fit\"]": {
-   "횟수": 6,
+   "횟수": 13,
    "처음": "배재포켓북@1"
   },
   "pick #side select[data-a=\"fit_at\"]": {
@@ -697,12 +878,12 @@
    "처음": "배재포켓북@1"
   },
   "pick #side select[data-a=\"font\"]": {
-   "횟수": 596,
+   "횟수": 450,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"frame.fill\"] = __raw": {
-   "횟수": 25,
-   "처음": "배재포켓북@5"
+   "횟수": 3,
+   "처음": "배재포켓북@2"
   },
   "pick #side select[data-a=\"frame.stroke.color\"] = __raw": {
    "횟수": 4,
@@ -713,7 +894,7 @@
    "처음": "배재포켓북@3"
   },
   "pick #side select[data-a=\"grep.0.cs\"]": {
-   "횟수": 6,
+   "횟수": 40,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"grep.0.line_color\"] = __raw": {
@@ -729,8 +910,8 @@
    "처음": "배재포켓북@3"
   },
   "pick #side select[data-a=\"grep.1.cs\"]": {
-   "횟수": 4,
-   "처음": "배재포켓북@4"
+   "횟수": 15,
+   "처음": "배재포켓북@3"
   },
   "pick #side select[data-a=\"grep.1.line_color\"] = __raw": {
    "횟수": 3,
@@ -765,16 +946,16 @@
    "처음": "정본-최종@14"
   },
   "pick #side select[data-a=\"stroke.color\"]": {
-   "횟수": 24,
+   "횟수": 33,
    "처음": "배재포켓북@3"
   },
   "pick #side select[data-a=\"stroke.color\"] = __raw": {
-   "횟수": 66,
+   "횟수": 72,
    "처음": "광문분석본@1"
   },
   "pick #side select[data-a=\"style\"]": {
-   "횟수": 8,
-   "처음": "배재포켓북@3"
+   "횟수": 16,
+   "처음": "배재포켓북@2"
   },
   "pick #side select[data-a=\"tail.part\"]": {
    "횟수": 38,
@@ -784,28 +965,108 @@
    "횟수": 468,
    "처음": "광문분석본@1"
   },
+  "pick #side select[data-p=\"align\"]": {
+   "횟수": 56,
+   "처음": "광문분석본@1"
+  },
+  "pick #side select[data-p=\"auto_size\"]": {
+   "횟수": 448,
+   "처음": "광문분석본@1"
+  },
+  "pick #side select[data-p=\"fstyle\"]": {
+   "횟수": 398,
+   "처음": "광문분석본@1"
+  },
+  "pick #side select[data-p=\"ruby.align\"]": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "pick #side select[data-p=\"ruby.color\"] = __raw": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "pick #side select[data-p=\"ruby.font\"]": {
+   "횟수": 4,
+   "처음": "광문분석본@2"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.anc.at\"]": {
+   "횟수": 16,
+   "처음": "정본-최종@10"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.anc.part\"]": {
+   "횟수": 16,
+   "처음": "정본-최종@10"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.anc.pos\"]": {
+   "횟수": 16,
+   "처음": "정본-최종@10"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.anc.xref\"]": {
+   "횟수": 10,
+   "처음": "정본-최종@10"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.anc.yref\"]": {
+   "횟수": 10,
+   "처음": "정본-최종@10"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.cs\"]": {
+   "횟수": 12,
+   "처음": "광문분석본@2"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.frame.fill\"] = __raw": {
+   "횟수": 1,
+   "처음": "광문분석본@2"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.sep\"]": {
+   "횟수": 16,
+   "처음": "광문분석본@2"
+  },
+  "pick #side select[data-p=\"slot_fmt.*.style\"]": {
+   "횟수": 93,
+   "처음": "광문분석본@1"
+  },
+  "pick #side select[data-p=\"table.stroke.color\"] = __raw": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
+  },
   "pick select[data-st=\"*:align\"]": {
-   "횟수": 9,
-   "처음": "정본-최종@12"
+   "횟수": 34,
+   "처음": "광문분석본@1"
   },
   "pick select[data-st=\"*:font\"]": {
-   "횟수": 15,
-   "처음": "정본-최종@12"
+   "횟수": 50,
+   "처음": "광문분석본@1"
+  },
+  "pick select[data-st=\"*:fstyle\"]": {
+   "횟수": 27,
+   "처음": "광문분석본@1"
+  },
+  "pick select[data-st=\"*:list.after\"]": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
+  },
+  "pick select[data-st=\"*:list.type\"]": {
+   "횟수": 3,
+   "처음": "배재포켓북@3"
+  },
+  "pick select[data-st=\"*:shade_fit\"]": {
+   "횟수": 3,
+   "처음": "정본-최종@13"
   },
   "pick select[data-st=\"*:weight\"]": {
    "횟수": 3,
    "처음": "정본-최종@12"
   },
   "upload #side #font-file": {
-   "횟수": 11,
+   "횟수": 10,
    "처음": "광문분석본@1"
   },
   "upload #side #img-file": {
-   "횟수": 22,
+   "횟수": 28,
    "처음": "광문분석본@1"
   },
   "write 지면 글상자": {
-   "횟수": 607,
+   "횟수": 460,
    "처음": "광문분석본@1"
   }
  }

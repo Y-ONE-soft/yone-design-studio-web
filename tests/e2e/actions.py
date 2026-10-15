@@ -22,7 +22,7 @@ SINCE = "2026-10-10 18:00"                    # 사람 조작 목록 고르기(.
 def kinds(st):
     """단계 하나 → 동작 이름들. 자리가 지면 좌표·화면 픽셀이면 「지면」으로 묶는다."""
     # 칸 자리에 든 이름(단락 스타일 「실전·발문」, 원고 자리 「문항번호」)은 값이다 — 같은 칸이면 같은 동작
-    spot = lambda v: re.sub(r'(data-st="|data-cs="|slotfmt\.)[^:."]+', r"\1*", v) if isinstance(v, str) else "지면"
+    spot = lambda v: re.sub(r'(data-st="|data-cs="|slotfmt\.|slot_fmt\.)[^:."]+', r"\1*", v) if isinstance(v, str) else "지면"   # slot_fmt.<자리> — 인디자인 맞춤 뒤 칸 이름(2026-10-14)
     out = []
     for k in ("click", "dbl", "move"):
         if k in st:
@@ -65,6 +65,10 @@ def build():
             for k in kinds(st):
                 e = seen.setdefault(k, {"횟수": 0, "처음": unit})
                 e["횟수"] += 1
+    old = json.load(open(LIST, encoding="utf-8")) if os.path.exists(LIST) else {"출처": [], "동작": {}}
+    for k, v in old["동작"].items():                                   # 그 판을 바로 넣기로 다시 돌려 출처에서 빠져도 한 번 검증한 동작은 남긴다
+        seen.setdefault(k, v)
+    used = sorted(set(used) | set(old["출처"]))
     json.dump({"출처": used, "동작": dict(sorted(seen.items()))}, open(LIST, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"해 본 동작 {len(seen)}가지 — 통과한 판 {len(used)}개에서 → {os.path.relpath(LIST, REPO)}")
 

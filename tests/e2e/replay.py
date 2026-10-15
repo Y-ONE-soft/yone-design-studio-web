@@ -31,6 +31,7 @@ unit, cmd = sys.argv[1], sys.argv[2]
 base_unit, _, only = unit.partition("@")
 udir = os.path.join(REPO, "tests", "e2e", "replay", base_unit)
 DIRECT = os.environ.get("REC_DIRECT") == "1"                               # 바로 넣기(rec.py) — 결과는 「<단위>~바로」 폴더에 따로.
+AUTO = os.environ.get("REC_DIRECT") is None and cmd == "check"             # 정하지 않으면 도구가 고른다 — 대본 동작이 모두 해 본 동작이면 바로 넣기(절차 「검증한 종류는 빠르게」, 2026-10-15)
 store = unit + ("~바로" if DIRECT else "")                                  # 사람 조작 판의 결과(해 본 동작 목록의 출처)를 덮지 않는다
 data = os.path.expanduser(f"~/.cache/yone-replay/{store}/catalog")
 out = os.path.expanduser(f"~/Downloads/편집기재현/{store}")
@@ -61,6 +62,10 @@ def fresh_data():
 
 
 def server():
+    import socket
+    with socket.socket() as so:                                              # 포트가 이미 쓰이면 멈춘다 — 앞 판에서 남은 옛 서버(옛 코드 · 옛 데이터)에 붙어
+        if so.connect_ex(("127.0.0.1", PORT)) == 0:                          # 검사가 엉뚱한 편집기를 조작했다(2026-10-15 정본 5 네 번 실패)
+            sys.exit(f"포트 {PORT} 를 다른 서버가 쓰고 있다 — 남은 서버를 끄거나(lsof -tiTCP:{PORT} -sTCP:LISTEN) REPLAY_PORT 를 바꾼다")
     env = dict(os.environ, YONE_CATALOG_DIR=data, YONE_AUTH="off")
     envf = os.path.expanduser("~/.config/yone/env")                          # bin/studio 와 같이 — 클로드 키
     if os.path.exists(envf):
@@ -89,6 +94,16 @@ def run_steps(fast, video):
     subprocess.run([PY, os.path.join(udir, "make.py")], check=True,          # → steps.json · elems.json · 상태.json (wdir)
                    env=dict(os.environ, REPLAY_WORK=wdir, GUSEONG=only))
     env = dict(os.environ, REC_FAST="1" if fast else "0")
+    global DIRECT
+    if AUTO:                                                                 # 해 본 동작 목록(actions.py)에 없는 동작이 하나라도 있으면 사람 조작, 아니면 바로 넣기
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        import actions
+        known = json.load(open(actions.LIST, encoding="utf-8"))["동작"]
+        new = sorted({k for st_ in json.load(open(os.path.join(wdir, "steps.json"), encoding="utf-8")) for k in actions.kinds(st_) if k not in known})
+        DIRECT = not new
+        print("검증한 종류 — 바로 넣기로" if DIRECT else "처음 보는 동작 " + str(len(new)) + "가지 — 사람 조작으로: " + " · ".join(new[:6]), flush=True)
+        if DIRECT:
+            env["REC_DIRECT"] = "1"
     env.setdefault("REC_SPEED", "8")                                         # 녹화는 확인용 — 빠르게 (2026-10-08 사용자: 8배)
     r = subprocess.run([PY, "tests/e2e/rec.py", BASE + "/units", os.path.join(wdir, "steps.json"),
                         video, "1600", "1000", "8"], cwd=REPO, env=env, capture_output=True, text=True)

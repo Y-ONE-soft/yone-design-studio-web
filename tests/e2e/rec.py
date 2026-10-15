@@ -157,6 +157,9 @@ try:
                 time.sleep(0.08)
                 frame()
             raise RuntimeError(f"굴려도 안 보임 {spot}")
+        t_end = time.time() + 5                              # 칸이 늦게 그려지면(스타일 창이 값 바꾼 뒤 다시 그림) 나올 때까지 — 사람도 칸이 보이면 누른다
+        while time.time() < t_end and not c.js("!!document.querySelector(" + json.dumps(spot) + ")"):   # (8배속에서 밑줄 켠 뒤 두께 칸을 바로 찾아 「못 찾음」, 2026-10-15)
+            time.sleep(0.2)
         for _ in range(4):                                   # 접힌 칸(details) — 사람처럼 머리(summary)를 눌러 편다
             sm = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; "
                       "const ds = []; let d = e.closest('details'); while (d) { if (!d.open) ds.push(d); d = d.parentElement && d.parentElement.closest('details'); } "
@@ -175,7 +178,17 @@ try:
             if not r:
                 raise RuntimeError(f"못 찾음 {spot}")
             if not r[2]:
-                return float(r[0]), float(r[1])
+                time.sleep(0.12)                         # 굴린 뒤 부드러운 스크롤이 아직 움직이는 중이면 옛 자리를 누른다 — 자리가 멈출 때까지
+                r2 = c.js("(() => { const b = document.querySelector(" + json.dumps(spot) + ").getBoundingClientRect(); return [b.left + b.width/2, b.top + b.height/2]; })()")
+                if abs(r2[0] - r[0]) > 0.5 or abs(r2[1] - r[1]) > 0.5:
+                    continue
+                hit = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); const t = document.elementFromPoint(" + f"{r[0]:.1f}, {r[1]:.1f}" + "); "
+                           "return !!t && (t === e || e.contains(t) || (e.labels && [...e.labels].some(l => l.contains(t)))); })()")
+                if hit:
+                    return float(r[0]), float(r[1])
+                c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (e) e.scrollIntoView({block: 'center'}); })()")   # 화면 안인데 다른 것(아래 해설 띠 · 창 머리)이 덮었다 — 가운데로
+                time.sleep(0.1)                          # (정본 본문 O/X 「부정어 밑줄」 밑줄 칸이 아래 해설 띠에 가려 안 눌렸다, 2026-10-15)
+                continue
             wx, wy = r[3], r[4]
             move(wx, wy, steps=4, shoot=False)
             c.call("Input.dispatchMouseEvent", type="mouseWheel", x=wx, y=wy, deltaX=0, deltaY=r[2] * min(240, max(60, r[5])))
