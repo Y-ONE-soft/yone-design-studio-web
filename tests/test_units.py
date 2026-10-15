@@ -1235,6 +1235,14 @@ def test_font_cff_name_made_ascii():
     assert _cff_ascii_names(ok) == ok                                 # 영문 이름은 그대로
 
 
+def test_bullet_goes_right_after_inline_field_not_after_first_word():
+    """같은 단락에 이어 쓰는 필드(번호) 뒤 글머리 기호 — 필드 뒤 공백 문자까지만 건너뛴다(「01 What| does」 → 「01 | What does」)"""
+    from core.units import render
+    x = '<span data-ps="발문"></span><span data-psi="번호" style="text-indent:0">01</span>\tWhat <span class="w">does</span> it'
+    m = render._PS_LEAD_RE.search(x)
+    assert x[m.end():].startswith("What")
+
+
 def test_table_row_stroke_separate_from_column_stroke():
     """표 옵션 > 행 획 · 열 획 — 행 사이(row_w)와 열 사이(w) 획 두께가 다르면 격자 간격도 따로(포켓북 동반의어 카드 세로 2.16 · 가로 2.66mm)"""
     from core.units import render

@@ -1042,7 +1042,8 @@ def _ov_of(x):
 
 
 _PSI_RE = re.compile(r'<span data-psi="([^"]*)">')
-_PS_LEAD_RE = re.compile(r'<span data-ps="[^"]*"(?: data-ov="[^"]*")?(?: data-v0="1")?></span>(?:<span data-psi="[^"]*"[^>]*>[^<]*</span>[^<]*)*')   # 문단 첫머리 + 같은 단락에 이어 쓰는 필드들
+_PS_LEAD_RE = re.compile(r'<span data-ps="[^"]*"(?: data-ov="[^"]*")?(?: data-v0="1")?></span>'
+                         r'(?:<span data-psi="[^"]*"[^>]*>[^<]*</span>[\t      ]*)*')   # 문단 첫머리 + 같은 단락에 이어 쓰는 필드들(+ 필드 뒤 공백 문자만 — 다음 글까지 먹으면 글머리 기호가 첫 낱말 뒤에 붙었다)
 # 단락 값(인디자인 단락 패널 · 단락 스타일) — 텍스트 프레임에 두면 그 프레임 모든 단락의 값, 단락 스타일이 그 위에, 재정의가 또 그 위에
 PARA_ATTRS = ("indent", "indent_first", "indent_right", "space_before", "space_after", "space_same", "align",
               "shade", "shade_fit", "shade_r", "shade_ot", "shade_ob", "shade_ol", "shade_or",
