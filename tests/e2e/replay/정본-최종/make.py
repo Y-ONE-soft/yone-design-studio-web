@@ -1056,6 +1056,7 @@ def group_part(st, n, X0, Y0, w, h):
            {"drag": {"from": {"mm": [X0 - 2, Y0 - 2]}, "to": {"mm": [X0 + w + 2, Y0 + h + 2]}}, "wait": 900},
            {"js": f"(() => {{ if (sels.size !== {n}) throw new Error('고른 것 ' + sels.size + ' ({n} 이어야)'); return '고른 것 {n}'; }})()"},
            {"click": "#side #s-group", "wait": 1500},
+           {"until": f"LIB.parts.length && LIB.parts[LIB.parts.length - 1].atoms.length === {n}", "wait": 300},   # 부품 저장이 끝날 때까지(바로 넣기는 기다림이 짧아 「부품 안 생김」, 2026-10-15)
            {"js": f"(() => {{ const p = LIB.parts[LIB.parts.length - 1]; if (!p || p.atoms.length !== {n}) throw new Error('부품 안 생김'); return '부품 ' + p.id; }})()"},
            S("지면의 그룹은 지운다", 900), {"key": "Delete", "wait": 900},
            {"clickif": {"at": "#tg-snap", "when": "!view.snap"}, "wait": 600}]

@@ -157,6 +157,8 @@ try:
                 time.sleep(0.08)
                 frame()
             raise RuntimeError(f"굴려도 안 보임 {spot}")
+        if DIRECT and isinstance(spot, str) and spot.startswith("#side"):
+            quiet()                                          # 패널이 다시 그려지는 중이면 멈출 때까지 — 바로 넣기는 기다림이 60ms 라 그리기 전 단추를 눌러 그룹 → 부품이 안 됐다(2026-10-15)
         t_end = time.time() + 5                              # 칸이 늦게 그려지면(스타일 창이 값 바꾼 뒤 다시 그림) 나올 때까지 — 사람도 칸이 보이면 누른다
         while time.time() < t_end and not c.js("!!document.querySelector(" + json.dumps(spot) + ")"):   # (8배속에서 밑줄 켠 뒤 두께 칸을 바로 찾아 「못 찾음」, 2026-10-15)
             time.sleep(0.2)

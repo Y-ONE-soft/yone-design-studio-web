@@ -134,6 +134,8 @@ def judge(reg_pdf):
     reg = pymupdf.open(reg_pdf)
     rw = [words(p.get_text()) for p in reg]
     at, tot, bad = 0, 0, []
+    total = sum(len(json.load(open(os.path.join(CACHE, f"정본-최종@{g}", "work", "상태.json"), encoding="utf-8"))["pages"]) for g in ORDER)
+    in_order = len(reg) == total                                         # 등록 쪽 수 = 견본 쪽 수면 책 차례 그대로(글 닮음으로 고르면 흐르는 글 구성 14 가 한 쪽 건너뛰었다, 2026-10-15)
     for g in ORDER:
         wd = os.path.join(CACHE, f"정본-최종@{g}", "work")
         st = json.load(open(os.path.join(wd, "상태.json"), encoding="utf-8"))
@@ -141,7 +143,7 @@ def judge(reg_pdf):
         for k, rp in enumerate(st["pages"]):
             want = words(ref[rp - 1].get_text())
             cand = range(at, min(at + 8, len(reg)))
-            i = max(cand, key=lambda j: len(want & rw[j]) / (len(want | rw[j]) or 1))
+            i = at if in_order else max(cand, key=lambda j: len(want & rw[j]) / (len(want | rw[j]) or 1))
             at = i + 1
             one = pymupdf.open()
             one.insert_pdf(reg, from_page=i, to_page=i)
