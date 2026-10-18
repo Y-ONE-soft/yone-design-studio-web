@@ -291,11 +291,13 @@ def rich_html(v, ctx=None):
         hs, vs = v.get("hscale"), v.get("vscale")
         if hs or vs:
             st += f"display:inline-block;transform:scale({float(hs or 100) / 100.0:.3f},{float(vs or 100) / 100.0:.3f});transform-origin:0 100%;"
+        direct = st                                                        # 고른 글자에 바로 준 서식(인디자인 로컬 서식) — GREP 스타일보다 앞선다(grep_html 이 data-lo 를 이어 붙인다)
         if v.get("cs"):                                                    # 문자 스타일(하나 또는 여럿 — 글자색 + 형광 띠) — 조각의 칸 값이 그 위에
             names = [v["cs"]] if isinstance(v["cs"], str) else list(v["cs"])
             st = ("".join(ctx.cstyle_css(c) for c in names) if ctx else "") + st
         if st:
-            t = f'<span style="{st}">' + t + "</span>"
+            lo = f' data-lo="{esc(direct)}"' if direct else ""
+            t = f'<span style="{st}"{lo}>' + t + "</span>"
         rb = v.get("ruby")                                                 # 윗주(인디자인) — 글자 하나에 하나
         extra = ""
         if isinstance(rb, list):                                           # 원고 꼴 [위, 아래] — 첫째는 윗주, 나머지는 그 낱말에 붙인 고정 개체(앵커 표시자 기준, 윗주와 같은 모양)
@@ -502,18 +504,22 @@ def grep_html(html, rules, ctx=None):
 
         def wrap(m):
             t = esc(m.group(0))
-            return f'<span style="{st}">{t}</span>' if st else t
-        out, stack = [], []                                                # 윗주·옆 메모(data-ruby · data-side) 안 글은 건너뛴다 — 인디자인도 다른 글(고정 개체·윗주)
+            lo = los[-1] if los else ""                                    # 고른 글자에 바로 준 서식은 GREP 스타일 위에(인디자인 로컬 서식)
+            return f'<span style="{st}{lo}">{t}</span>' if (st or lo) else t
+        out, stack, los = [], [], []                                       # 윗주·옆 메모(data-ruby · data-side) 안 글은 건너뛴다 — 인디자인도 다른 글(고정 개체·윗주)
         head = True                                                        # 문단 첫머리인가 — 「^」 는 문단 처음에서만 맞는다(인디자인). 꾸밈 조각마다 글이
         for p in _TAG.split(html):                                         # 끊겨도 조각 첫머리에서 맞으면 안 된다(문장 가운데 「12 young」 에 번호 배지, 2026-10-11)
             if p.startswith("<"):
                 inside = bool(stack and stack[-1])
                 if p.startswith("</"):
                     stack and stack.pop()
+                    los and los.pop()
                 elif not p.endswith("/>"):
                     inn = "data-ruby=" in p or "data-side=" in p or "data-anc=" in p     # 윗주 · 고정 개체 안 글은 다른 글
                     stack.append(stack[-1] if stack else inn)
                     stack[-1] = stack[-1] or inn
+                    mlo = re.search(r'data-lo="([^"]*)"', p)
+                    los.append(_unescape(mlo.group(1)) if mlo else (los[-1] if los else ""))
                 if not inside and re.match(r"</?(?:p|div)\b|<br\s*/?>", p):
                     head = True
                 out.append(p)

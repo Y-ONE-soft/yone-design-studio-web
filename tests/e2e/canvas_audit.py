@@ -419,6 +419,18 @@ try:
         rest = js(f"(() => {{ const r = page.items[{TXT}].atom.text.find(x => x && x.ruby); return r && r.t === 'directly' && r.ruby.t === '(X)' && r.ruby.pos !== 'below'; }})()")
         return (ok and row and saved and rest, f"편집={ok} 윗주 줄={row} 저장={saved} 글·위치 그대로={rest} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:120]}")
     step("G2c 윗주 하나만 크기 · 오프셋 Y", g2c)
+    def g2d():                                                    # 고른 글자 로컬 서식(인디자인 문자 패널 크기 · 자간) — 낱말 더블클릭으로 골라 막대 칸에 친다
+        js(f"(() => {{ hist(); page.items[{TXT}].atom.text = ['앞 ', 'middle', ' 뒤']; save(); render(); }})()")
+        js(f"select([{TXT}], {TXT})"); key("Enter", code="Enter"); ok = wait("document.querySelector('#tedit').style.display !== 'none'", 3)
+        pos = "(() => { const t = [...document.querySelector('#tedit').childNodes].map(n => n.nodeType === 3 ? n : n.firstChild).find(n => n && n.data && n.data.includes('middle')); const i = t.data.indexOf('middle'); const r = document.createRange(); r.setStart(t, i + 2); r.setEnd(t, i + 3); const b = r.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()"
+        p0 = js(pos); dbl(*p0); time.sleep(0.3)
+        ir = rect("#rt-trk"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="500"); key("Enter", code="Enter")
+        ir = rect("#rt-size"); click(ir[0] + 5, ir[1] + 5); c.call("Input.insertText", text="12"); key("Enter", code="Enter"); shot("G2d_로컬_서식")
+        click(*js(pos)); key("Enter", mods=CTRL, code="Enter")
+        saved = wait(f"(page.items[{TXT}].atom.text || []).some(r => r && r.t === 'middle' && r.tracking === 500 && r.size === 12)", 4)
+        only = js(f"!(page.items[{TXT}].atom.text || []).some(r => r && r.t !== 'middle' && (r.tracking || r.size))")
+        return (ok and saved and only, f"편집={ok} 저장={saved} 고른 낱말만={only} 글={js(f'JSON.stringify(page.items[{TXT}].atom.text)')[:140]}")
+    step("G2d 고른 글자만 크기 · 자간(문자 패널 로컬 서식)", g2d)
     def g3():
         js("select([])"); r = grect(PAS); dbl(r[0] + 10, r[1] + 10)
         ok = wait("!!editing && document.querySelector('#editbar').style.display !== 'none'", 4)

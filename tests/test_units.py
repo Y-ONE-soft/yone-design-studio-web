@@ -1332,6 +1332,19 @@ def test_paragraph_style_override_one_paragraph(lib):
     assert tops == ["2.600", "9.700"]                                   # 둘째 문단만 재정의 2.6 · 셋째는 스타일 9.7 그대로
 
 
+def test_local_char_format_beats_grep_style(lib):
+    """고른 글자 로컬 서식(인디자인 문자 패널) — 크기 · 자간을 바로 준 글자는 GREP 스타일보다 앞선다(정본 167쪽 빈칸만 23mm)"""
+    import re
+    from core.units import render, store
+    sk = dict(store.by_id(lib["skins"])["d2"], cstyles={"빈칸": {"track": 2165, "u": True}})
+    ctx = render.Ctx(sk, lib, {})
+    html = render.grep_html(render.rich_html(["가 ", {"t": "__", "tracking": 3575}, " 나 __"], ctx), [{"re": "__", "cs": "빈칸"}], ctx)
+    spans = re.findall(r'<span style="([^"]*)">__</span>', html)
+    assert len(spans) == 2
+    assert spans[0].rstrip(";").endswith("letter-spacing:3.5750em")      # 로컬 자간이 GREP 문자 스타일 자간 뒤(이긴다)
+    assert "3.5750" not in spans[1]                                       # 로컬 서식 없는 빈칸은 GREP 스타일 그대로
+
+
 def test_paragraph_override_space_same(lib):
     """같은 스타일 문단 사이(동일한 스타일 단락 사이 간격)도 재정의 — 그 값이 있으면 단락 앞 공백 대신 쓰여서, 앞 공백만 재정의하면 안 먹었다(정본 149쪽)"""
     import re as _re
