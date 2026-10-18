@@ -1332,6 +1332,21 @@ def test_paragraph_style_override_one_paragraph(lib):
     assert tops == ["2.600", "9.700"]                                   # 둘째 문단만 재정의 2.6 · 셋째는 스타일 9.7 그대로
 
 
+def test_paragraph_override_space_same(lib):
+    """같은 스타일 문단 사이(동일한 스타일 단락 사이 간격)도 재정의 — 그 값이 있으면 단락 앞 공백 대신 쓰여서, 앞 공백만 재정의하면 안 먹었다(정본 149쪽)"""
+    import re as _re
+    from core.units import content, render, store
+    sk = dict(store.by_id(lib["skins"])["d2"], styles={"번호": {"size": 12, "space_same": 7.4}})
+    ctx = render.Ctx(sk, lib, {})
+    fmt = {"번호": {"style": "번호"}}
+    v = content.story_value("번호", [{"번호": "1"}, {"번호": "2"}, {"번호": "3"}], fmt)
+    v[[i for i, x in enumerate(v) if isinstance(x, dict) and x.get("ps")][1]]["ov"] = {"space_same": 9.7}
+    a = {"t": "text", "w": 80, "h": 40, "size": 9, "bind": "번호", "slot_fmt": fmt}
+    html = render._text_content(ctx, a, {"번호": v}, {})[0]
+    tops = _re.findall(r'margin-top:([\d.]+)px', render._paras_html(a, html, ctx))
+    assert tops == ["9.700", "7.400"]
+
+
 def test_ruby_font_size_offsets_one_ruby(lib):
     """윗주 하나만 크기 · 오프셋 X · Y(인디자인 윗주 대화 상자) — 값이 없는 윗주는 글상자 윗주 설정 그대로"""
     from core.units import render, store

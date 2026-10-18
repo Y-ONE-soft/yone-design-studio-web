@@ -1027,7 +1027,7 @@ DEFAULT_TAB = 12.7                                                # 인디자인
 
 
 _PS_RE = re.compile(r'<span data-ps="([^"]*)"(?: data-ov="([^"]*)")?( data-v0="1")?></span>')
-OV_KEYS = ("space_before", "space_after", "indent", "indent_first", "indent_right", "leading")   # 재정의 칸 — 단락 스타일의 같은 이름 값을 그 문단에서만 바꾼다
+OV_KEYS = ("space_before", "space_after", "space_same", "indent", "indent_first", "indent_right", "leading")   # 재정의 칸 — 단락 스타일의 같은 이름 값을 그 문단에서만 바꾼다
 
 
 def _ov_of(x):
