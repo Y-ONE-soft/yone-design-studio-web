@@ -68,9 +68,10 @@ def canvas():
             json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         return redirect(f"/units?plan={pid}")
     lib = store.library()
-    from routes.catalog import _dirs, series_of_dir
+    from routes.catalog import _designs, _dirs, _meta, series_of_dir
     lib["catalog"] = [{"series": series_of_dir(d["id"]) or d["id"], "name": d["name"], "dir": d["id"], "dir_name": ""}
                       for d in _dirs()]                       # 「템플릿 등록」 — 어느 라인업으로 보낼지(라인업에 템플릿 자리가 없으면 등록할 때 만든다)
+    lib["registered"] = [f"{s}/{d['id']}" for s in _meta() for d in _designs(s)]   # 관리에 있는 템플릿 — 「내 문서」는 이것과 이어진 문서만
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
     lib["fonts"] = fonts.families()                   # 시스템 서체 — 서체 칸은 이 목록에서만 고른다
     lib["font_faces"] = fonts.faces()                 # 글꼴 스타일(굵기 · 기울임꼴) — 인디자인 글꼴 스타일 칸

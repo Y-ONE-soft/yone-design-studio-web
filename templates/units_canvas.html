@@ -589,7 +589,18 @@ async function showStart() {
   box.innerHTML = `<h2>내 문서</h2><div class="sub">문서를 누르면 편집 도구가 나온다. 문서 = 페이지 순서(템플릿) — 같은 페이지를 여러 문서가 쓴다.</div><div class="cards" id="pcards"></div>`;
   const cards = $("#pcards");
   const nw = document.createElement("div"); nw.className = "pcard new"; nw.textContent = "＋ 새 문서"; nw.onclick = newPlan; cards.appendChild(nw);
-  for (const pl of LIB.plans) {
+  // 관리에 있는 템플릿과 이어진 문서만 — 등록 안 했거나 카드가 지워진 문서는 맨 아래 칸을 눌러야 보인다(지우지는 않는다)
+  const reg = new Set(LIB.registered || []), isReg = pl => !!(pl.catalog && reg.has(pl.catalog.series + "/" + pl.catalog.design));
+  const rest = LIB.plans.filter(pl => !isReg(pl));
+  if (rest.length) {
+    const more = document.createElement("div"); more.className = "sub"; more.style.cssText = "margin-top:18px;cursor:pointer;text-decoration:underline";
+    more.textContent = `등록 안 된 문서 ${rest.length}개 — 보기`; box.appendChild(more);
+    more.onclick = () => { more.remove(); const c2 = document.createElement("div"); c2.className = "cards"; box.appendChild(c2); drawCards(rest, c2); };
+  }
+  await drawCards(LIB.plans.filter(isReg), cards);
+}
+async function drawCards(list, cards) {
+  for (const pl of list) {
     const d = document.createElement("div"); d.className = "pcard"; const ids = planIds(pl);
     d.innerHTML = `<div class="th"></div><div class="nm">${esc(pl.name || pl.id)}</div><div class="ds">페이지 ${ids.length} · ${pl.spec || "a4"}</div>`;
     d.onclick = () => openPlan(pl); cards.appendChild(d);
@@ -2675,6 +2686,7 @@ function side() {
       $("#s-reg").disabled = false;
       if (s.status === "failed") { st.textContent = "등록 실패 — " + (s.error || ""); return; }
       plan.catalog = {series: s.result.series, design: s.result.design}; await savePlan();
+      (LIB.registered = LIB.registered || []).push(s.result.series + "/" + s.result.design);   // 「내 문서」에 바로 보이게
       st.innerHTML = `등록됨 — ${s.result.pages}페이지 · <a href="${esc(s.result.url)}" target="_blank">관리에서 보기</a>`;
       say("템플릿 등록 — " + s.result.pages + "페이지");
       return;
