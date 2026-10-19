@@ -109,6 +109,30 @@ def _save_meta(meta):
     os.replace(tmp, p)
 
 
+def series_of_dir(did, create=False):
+    """라인업의 템플릿 자리(틀) — 화면에는 안 보인다(템플릿은 라인업에 바로 등록). 라인업에 틀이 있으면 템플릿이 든 것 먼저,
+    없으면 create 일 때 라인업 id 로 하나 만든다(2026-10-19 — 「하위 폴더」 없앰). 모르는 라인업이면 None"""
+    dirs = {d["id"]: d for d in _dirs()}
+    if did not in dirs:
+        return None
+    with _META_LOCK:
+        meta = _meta()
+        own = [k for k, v in meta.items() if _dir_of(v, set(dirs)) == did]
+        if own:
+            return next((k for k in own if _designs(k)), own[0])
+        if not create:
+            return None
+        meta[did] = {"name": dirs[did]["name"], "dir": did, "ready": "auto"}
+        _save_meta(meta)
+    os.makedirs(os.path.join(CATALOG, did, "designs"), exist_ok=True)
+    return did
+
+
+def resolve_series(x, create=True):
+    """등록 화면이 보낸 값(라인업 id 또는 예전 틀 id) → 틀 id. 라인업이 먼저"""
+    return series_of_dir(x, create=create) or (x if x in _meta() else None)
+
+
 def _ddir(series, design):
     return os.path.join(CATALOG, series, "designs", design)
 
@@ -290,6 +314,21 @@ def series_move(series):
         meta[series]["dir"] = did
         _save_meta(meta)
     return jsonify({"ok": True, "series": series, "dir": did, "dir_name": dirs[did]["name"]})
+
+
+@bp.route("/api/catalog/series/<series>", methods=["DELETE"])
+def series_del(series):
+    """템플릿이 하나도 없는 틀 지우기(예전 조판 엔진 갈래 정리) — 템플릿이 있으면 거절"""
+    with _META_LOCK:
+        meta = _meta()
+        if series not in meta:
+            return jsonify({"error": "모르는 틀"}), 404
+        if _designs(series):
+            return jsonify({"error": "템플릿이 있는 틀은 못 지운다"}), 400
+        meta.pop(series)
+        _save_meta(meta)
+    shutil.rmtree(os.path.join(CATALOG, series), ignore_errors=True)
+    return jsonify({"ok": True})
 
 
 @bp.route("/api/catalog/dirs", methods=["POST"])

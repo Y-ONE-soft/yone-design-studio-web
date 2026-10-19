@@ -103,7 +103,7 @@
       <div class="hint">완성본 PDF 를 이 폴더의 템플릿으로 — 같은 모양의 페이지는 상위 페이지 하나로 묶입니다. 템플릿에는 「PDF 등록」 라벨이 붙습니다.</div>
       <form id="pdf-form">
         <label>PDF *</label><input type="file" name="pdf" accept=".pdf,application/pdf">
-        <label>하위 폴더 *</label><select name="series"></select>
+        <label>라인업 *</label><select name="series"></select>
         <label>이름</label><input type="text" name="name" placeholder="비우면 파일 이름" autocomplete="off">
         <div class="err" id="pdf-err"></div>
         <div class="btns">
@@ -154,7 +154,7 @@
         form.querySelectorAll('[name=color]').forEach(function (r) { r.checked = (r.value === c); hit = hit || r.checked; });
         if (!hit) form.querySelector('[name=color]').checked = true;
         document.getElementById('dir-title').textContent = d ? '폴더 수정' : '새 폴더';
-        document.getElementById('dir-hint').textContent = d ? '이름·설명·아이콘·색·묶음을 바꿉니다. 안의 하위 폴더와 책은 그대로.' : '카탈로그 디렉토리로 만들어집니다 — 프로젝트의 폴더이자 구성요소의 갈래.';
+        document.getElementById('dir-hint').textContent = d ? '이름·설명·아이콘·색·묶음을 바꿉니다. 안의 템플릿은 그대로.' : '카탈로그 디렉토리로 만들어집니다 — 프로젝트의 폴더이자 구성요소의 갈래.';
         document.getElementById('dir-submit').textContent = d ? '저장' : '만들기';
         document.getElementById('dir-err').textContent = '';
         panel.classList.add('on'); form.name.focus();
@@ -172,7 +172,7 @@
           .then(function (j) { if (j.error) document.getElementById('dir-err').textContent = j.error; else location.reload(); });
       });
       function remove(id, name, n) {
-        var msg = '폴더 “' + name + '” 을 지울까요?' + (n ? '\n\n안의 하위 폴더 ' + n + '개는 기타로 옮겨집니다. 책은 그대로 남습니다.' : '');
+        var msg = '폴더 “' + name + '” 을 지울까요?' + (n ? '\n\n안의 템플릿 ' + n + '개는 기타로 옮겨집니다.' : '');
         if (!confirm(msg)) return;
         fetch('/api/catalog/dirs/' + encodeURIComponent(id), { method: 'DELETE' })
           .then(function (r) { return r.json(); })
@@ -193,7 +193,7 @@
       });
       document.addEventListener('click', function (e) { if (!m.contains(e.target)) m.classList.remove('on'); });
       document.getElementById('new-folder').addEventListener('click', function () { m.classList.remove('on'); dirSheet.open(null); });
-      // 폴더 화면의 ＋ 는 그 폴더의 틀을 data-series 로 준다 — 하나면 그 틀로 바로, 여럿이면 등록할 때 고른다
+      // 라인업 화면의 ＋ 는 그 라인업 id 를 data-series 로 준다 — 편집기 제작 · PDF 등록이 그 라인업으로
       var cur = [];
       document.querySelectorAll('[data-new-menu]').forEach(function (b) { b.addEventListener('click', function () { try { cur = JSON.parse(b.dataset.series || '[]'); } catch (e) { cur = []; } }); });
       var one = function () { return cur.length === 1 ? cur[0].series : ''; };
@@ -208,10 +208,10 @@
         m.classList.remove('on'); perr.textContent = ''; pf.reset();
         fetch('/api/catalog/dirs').then(function (r) { return r.json(); }).then(function (ds) {
           var sel = pf.series, want = cur.map(function (c) { return c.series; }); sel.innerHTML = '';
-          ds.forEach(function (d) { d.templates.forEach(function (t) {
-            if (want.length && want.indexOf(t.series) < 0) return;            // 폴더 안에서 열었으면 그 폴더의 틀만
-            var o = document.createElement('option'); o.value = t.series; o.textContent = d.name + ' · ' + t.name; sel.appendChild(o);
-          }); });
+          ds.forEach(function (d) {                                              // 라인업에 바로 — 템플릿 자리는 서버가 고른다(없으면 만든다)
+            if (want.length && want.indexOf(d.id) < 0) return;                   // 라인업 안에서 열었으면 그 라인업만
+            var o = document.createElement('option'); o.value = d.id; o.textContent = d.name; sel.appendChild(o);
+          });
         });
         pp.classList.add('on');
       });

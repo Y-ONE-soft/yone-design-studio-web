@@ -167,15 +167,15 @@ def register_pdf(pdf, series, name=None, log=print):
 
 @bp.route("/api/catalog/register-pdf", methods=["POST"])
 def api_register_pdf():
-    """관리 ＋ 「PDF 등록」 — 폼 pdf(파일) · series(틀) · name(이름, 없으면 파일 이름). 잡으로 돈다 → {job}. 상태는 /api/units/job/<id>"""
+    """관리 ＋ 「PDF 등록」 — 폼 pdf(파일) · series(라인업 id — 예전 틀 id 도 받음) · name(이름, 없으면 파일 이름). 잡으로 돈다 → {job}. 상태는 /api/units/job/<id>"""
     from core import jobs
-    from routes.catalog import _meta
+    from routes.catalog import resolve_series
     f = request.files.get("pdf")
-    series = (request.form.get("series") or "").strip()
     if not f or not f.filename.lower().endswith(".pdf"):
         return jsonify({"error": "PDF 파일을 고르세요"}), 400
-    if series not in _meta():
-        return jsonify({"error": f"틀 {series} 없음"}), 404
+    series = resolve_series((request.form.get("series") or "").strip())
+    if not series:
+        return jsonify({"error": "라인업을 고르세요"}), 404
     tmp = os.path.join(INTAKE, "_upload_" + uuid.uuid4().hex[:8])
     os.makedirs(tmp, exist_ok=True)
     path = os.path.join(tmp, os.path.basename(f.filename.replace("\\", "/")) or "upload.pdf")

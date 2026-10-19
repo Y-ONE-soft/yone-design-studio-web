@@ -68,10 +68,9 @@ def canvas():
             json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         return redirect(f"/units?plan={pid}")
     lib = store.library()
-    from routes.catalog import _dir_of, _dirs, _meta
-    dirs = {d["id"]: d["name"] for d in _dirs()}
-    lib["catalog"] = [{"series": k, "name": v.get("name", k), "dir": _dir_of(v, set(dirs)), "dir_name": dirs.get(_dir_of(v, set(dirs)), "")}
-                      for k, v in _meta().items()]            # 「관리에 등록」 — 어느 폴더(틀)로 보낼지
+    from routes.catalog import _dirs, series_of_dir
+    lib["catalog"] = [{"series": series_of_dir(d["id"]) or d["id"], "name": d["name"], "dir": d["id"], "dir_name": ""}
+                      for d in _dirs()]                       # 「템플릿 등록」 — 어느 라인업으로 보낼지(라인업에 템플릿 자리가 없으면 등록할 때 만든다)
     lib["formats"] = formats.catalog()                # 원고 형식 목록 — 원고를 넣기 전에도 유형·자리를 고를 수 있게(틀 먼저, 원고는 나중)
     lib["fonts"] = fonts.families()                   # 시스템 서체 — 서체 칸은 이 목록에서만 고른다
     lib["font_faces"] = fonts.faces()                 # 글꼴 스타일(굵기 · 기울임꼴) — 인디자인 글꼴 스타일 칸
@@ -575,13 +574,14 @@ def api_register():
     디자인 폴더 catalog/<틀>/designs/x…/ = units.json(문서 묶음) + 참고/reference.pdf(문서를 그린 결과) + preview_N.png + design.json(made: editor)
     + config.json(그 틀의 첫 디자인 것 — 카드·조판 목록이 디자인으로 알아보게). 같은 문서를 다시 등록하면 그 폴더를 새로 그린다."""
     from core import jobs
-    from routes.catalog import _meta
+    from routes.catalog import resolve_series
     body = request.get_json(silent=True) or {}
-    plan_id, series = body.get("plan") or "", body.get("series") or ""
+    plan_id = body.get("plan") or ""
     if plan_id not in store.by_id(store.load("plans")):
         return jsonify({"error": "plan 없음"}), 404
-    if series not in _meta():
-        return jsonify({"error": f"틀 {series} 없음"}), 404
+    series = resolve_series(body.get("series") or "")                         # 라인업 id(또는 예전 틀 id) → 템플릿 자리
+    if not series:
+        return jsonify({"error": "라인업을 고르세요"}), 404
     job = jobs.start("units-register", lambda job, log: register_design(plan_id, series, body.get("name"), log),
                      meta={"plan": plan_id, "series": series})
     return jsonify({"ok": True, "job": job.id})

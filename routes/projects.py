@@ -31,17 +31,15 @@ def page_projects():
         dcounts[t["dir"]] = dcounts.get(t["dir"], 0) + len(t["designs"])
     # 폴더 = 카탈로그 디렉토리(dirs.json 순서). 기타는 틀이 있을 때만.
     folders = [{**d, "n": 0, "t": tcounts.get(d["id"], 0), "dn": dcounts.get(d["id"], 0)}
-               for d in _dirs() if d["id"] != DEFAULT_DIR or tcounts.get(d["id"])]
+               for d in _dirs() if d["id"] != DEFAULT_DIR or dcounts.get(d["id"])]
     did = _nfc(request.args.get("dir", "")).strip()
     folder = next((f for f in folders if f["id"] == did), None) if did else None
-    designs, bare, fseries = [], [], []
+    designs, fseries = [], []
     if folder:
+        fseries = [{"series": did, "name": folder["name"]}]       # ＋ 메뉴(편집기 제작·PDF 등록)가 이 라인업으로 — 템플릿 자리는 서버가 고른다(없으면 만든다)
         for t in templates():
             if t["dir"] != did:
                 continue
-            fseries.append({"series": t["series"], "name": t["name"]})     # ＋ 메뉴(편집기 제작·PDF 등록)가 이 폴더의 틀로
-            if not t["designs"]:                             # 틀은 있는데 디자인이 아직 없는 것 — 카드로 보여야 등록하러 간다
-                bare.append(t)
             for d in t["designs"]:
                 imgs = design_images(t["series"], d)      # 견본 > 페이지 틀 > 기준 PDF 앞 면
                 designs.append({"series": t["series"], "tname": t["name"], "ready": t["ready"], "id": d["id"], "name": d["name"],
@@ -56,7 +54,7 @@ def page_projects():
             if v and v not in filters.setdefault(k, []):
                 filters[k].append(v)
     filters = {k: sorted(v) for k, v in filters.items()}
-    return render_template("projects.html", folders=folders, folder=folder, q="", designs=designs, bare=bare, filters=filters, fseries=fseries,
+    return render_template("projects.html", folders=folders, folder=folder, q="", designs=designs, filters=filters, fseries=fseries,
                            total=sum(dcounts.values()), active_nav="프로젝트")
 
 
