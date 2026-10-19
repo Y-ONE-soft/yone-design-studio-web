@@ -1,8 +1,0 @@
-{
-  "engine": "workbook_supp_v2",
-  "source_job": "0e3108fd",
-  "note": "W21 r11 — 실사용 1호 결함 원고: 2026 성덕고 외부지문 워크북1 (부교재 supp, 학교 키 없이 _default 내지). 무-p형 헤더 'N. no.M' + [N] 지문번호 bracket + C1 발문-주어진문장 사이 빈 단락 + 빈 STEP3 페이지/섹션 마스터. 사용자 지목 결함 8건의 코퍼스. 골든 content.json은 job 0e3108fd 파서 산출(파서 무변경).",
-  "golden_regenerated": {
-    "commit": "ab527fa"
-  }
-}

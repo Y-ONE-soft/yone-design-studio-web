@@ -1,6 +1,0 @@
-{
-  "engine": "textbook_workbook_v2",
-  "source_job": "0e3e6469 (실서비스 2026-07-29 — 영어Ⅱ YBM(박) 1과 전체(C))",
-  "replay": "골든 content.json에서 시작 (parse 생략). steps_to_plan(workbook_type=\"교과서\").",
-  "note": "W49 — 검수 에이전트 지목: 지문번호 하위분할(major-minor) 헤더 본문2-1/2-2/4-1/4-2 미인식. step2_c2 헤더 원문 인쇄(G1) + step1_c1 {본문2}-1(p.18) 잔재/라벨충돌(G24). 뿌리: legacy is_header_line 본문\\\\d+가 -M 뒤를 못 받아 seq로만 잡힘. 수리: 순번 계층화 본문\\\\d+(?:[-.]\\\\d+)*."
-}

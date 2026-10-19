@@ -26,7 +26,7 @@ sys.path.insert(0, REPO)
 from mkpage import *                                                    # noqa
 import pymupdf
 
-REF = os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf")
+REF = os.path.join(REPO, "tests/e2e/replay/_원본/워크북_d1.pdf")
 REFDOC = pymupdf.open(REF)
 PAGES = json.load(open(os.path.join(HERE, "상태.json")))["pages"]
 ELEMS = {k + 1: [] for k in range(len(PAGES))}

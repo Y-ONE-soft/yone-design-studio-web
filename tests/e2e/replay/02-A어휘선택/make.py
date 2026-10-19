@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 from mkpage import *                                                    # noqa
 import pymupdf
 
-REF = os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf")
+REF = os.path.join(REPO, "tests/e2e/replay/_원본/워크북_d1.pdf")
 REFDOC = pymupdf.open(REF)
 FIX = json.load(open(os.path.join(HERE, "보정.json"))) if os.path.exists(os.path.join(HERE, "보정.json")) else {}
 ELEMS = {1: [], 2: []}

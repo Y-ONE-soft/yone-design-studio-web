@@ -1,8 +1,0 @@
-{
-  "engine": "whitebook",
-  "source_job": "e41f1c70",
-  "note": "golden = 선별 당시 현행 파서 출력 (정답 아님 — tests/README.md 참조)",
-  "golden_regenerated": {
-    "commit": "71a90c2"
-  }
-}

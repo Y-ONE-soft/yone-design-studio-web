@@ -10,7 +10,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
 from mkpage import *                                                    # noqa
 import pymupdf
-REF = pymupdf.open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE)))), "catalog/workbook/designs/d1/reference.pdf"))
+REF = pymupdf.open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE)))), "tests/e2e/replay/_원본/워크북_d1.pdf"))
 
 MS = "Montserrat"
 ELEMS = {1: [], 2: []}

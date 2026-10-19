@@ -140,37 +140,6 @@ def test_service_token(env):
     assert c.get("/api/v1/catalog", headers={"Authorization": "Bearer tokC"}).status_code == 401
 
 
-def test_embed_token_flow(env):
-    env.setenv("YOS_LINK_SECRET", SECRET)
-    env.setenv("YONE_SECRET_KEY", "k" * 32)
-    env.setenv("SERVICE_TOKEN", "svc")
-    env.setenv("YOS_ORIGINS", "https://contents.example")
-    env.setenv("YONE_PUBLIC_URL", "https://studio.example")
-    app = _app()
-    svc = app.test_client()
-    r = svc.post("/api/v1/embed-token", json={"next": "/book-studio?b=abc", "ttl": 60,
-                                              "user": {"sub": "u9", "name": "조교", "role": "staff"}},
-                 headers={"Authorization": "Bearer svc"})
-    assert r.status_code == 200
-    url = r.get_json()["url"]
-    assert url.startswith("https://studio.example/auth/embed?t=")
-    # 새 브라우저(iframe)가 그 주소를 연다 → 쿠키 → next
-    browser = app.test_client()
-    r = browser.get(url.replace("https://studio.example", ""))
-    assert r.status_code == 302 and r.headers["Location"].endswith("/book-studio?b=abc")
-    assert browser.get("/auth/me").get_json()["user"]["sub"] == "u9"
-    # 바깥 주소는 거절
-    r = svc.post("/api/v1/embed-token", json={"next": "https://evil.example"},
-                 headers={"Authorization": "Bearer svc"})
-    assert r.status_code == 400
-    # 임베드 경로는 contents 출처의 iframe 을 허용, 다른 경로는 막는다
-    r = browser.get("/api/v1/health")
-    assert "frame-ancestors 'none'" in r.headers["Content-Security-Policy"]
-    r = browser.get("/book-studio")
-    assert "frame-ancestors 'self' https://contents.example" in r.headers["Content-Security-Policy"]
-    assert "X-Frame-Options" not in r.headers
-
-
 def test_cors_for_allowed_origin(env):
     env.setenv("YOS_LINK_SECRET", SECRET)
     env.setenv("YONE_SECRET_KEY", "k" * 32)

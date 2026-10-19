@@ -6,7 +6,6 @@
 import importlib
 import json
 import os
-import time
 
 import pytest
 
@@ -66,165 +65,26 @@ def test_editor_design_fields(app):
     assert (gan["w"], gan["h"]) == (210, 297)
     assert [f["bind"] for f in gan["fields"]] == ["학교", "권번호", "교재명+강제목"]
     assert all(f["w"] and f["h"] for f in gan["fields"])
-    assert "pages" not in c.get("/api/v1/catalog/analysis/d1").get_json()      # PDF 등록 · 예전 디자인은 없다
+    assert "pages" not in c.get("/api/v1/catalog/analysis/x9d242bf3").get_json()      # PDF 등록 디자인은 없다
 
 
 def test_health_public(app):
     r = app.test_client().get("/api/v1/health")
     assert r.status_code == 200 and r.get_json()["ok"] is True and r.get_json()["auth"] == "off"
+    assert "vivliostyle" in r.get_json()                  # 계약 칸 — 나중에 뽑을 때 쓰는 Vivliostyle 이 깔렸나
 
 
 def test_render_validation(app):
+    # 찍기는 편집기 제작 디자인만 — 예전 조판 디자인 · 모르는 틀 · 원고 꼴이 틀리면 400 (2026-10-19 예전 엔진 지움)
     c = app.test_client()
     assert c.post("/api/v1/renders", json={"series": "nope"}).status_code == 400
-    t, d = _first_design(c)
-    r = c.post("/api/v1/renders", json={"series": t["series"], "design": d["id"], "book": {"name": "x"},
+    r = c.post("/api/v1/renders", json={"series": "analysis", "design": "x9d242bf3", "book": {"title": "x"},
                                         "source": {"type": "data", "data": {}}})
-    assert r.status_code == 400 and "period" in r.get_json()["error"]
-    r = c.post("/api/v1/renders", json={"series": t["series"], "design": d["id"],
-                                        "book": {"name": "x", "period": "27-1"}, "source": {"type": "wat"}})
-    assert r.status_code == 400
-    r = c.post("/api/v1/renders", json={"series": t["series"], "design": d["id"],
-                                        "book": {"name": "x", "period": "27-1"}, "source": {"type": "yos"}})
-    assert r.status_code == 400 and "YOS_CONTENTS_API" in r.get_json()["error"]
-    r = c.post("/api/v1/renders", json={"series": t["series"], "design": d["id"],
-                                        "book": {"name": "x", "period": "27-1"},
-                                        "source": {"type": "plan", "plan": {}}})
-    assert r.status_code == 400 and "워크북" in r.get_json()["error"]
-
-
-def _fake_run_cmd(pdf_name, rc=0):
-    def run(job, cmd, cwd=None, timeout=0, env=None, quiet=()):
-        d = cmd[cmd.index("core.render_vivlio.book") + 1]
-        job.add("■ 가짜 조판 " + " ".join(cmd[-3:]))
-        # 진짜 PDF 한 장 — 면 그림(pages/1.png) 까지 확인하려고
-        import fitz
-        doc = fitz.open(); doc.new_page(width=420, height=595); doc.save(os.path.join(d, pdf_name))
-        return rc
-    return run
-
-
-def _wait(c, jid, seconds=10):
-    for _ in range(int(seconds * 10)):
-        s = c.get(f"/api/v1/renders/{jid}").get_json()
-        if s["status"] not in ("queued", "running"):
-            return s
-        time.sleep(0.1)
-    raise AssertionError("잡이 끝나지 않았다")
-
-
-def test_render_data_source_end_to_end(app, monkeypatch, tmp_path):
-    from core import jobs
-    c = app.test_client()
-    t, d = _first_design(c)
-    sent = []
-    monkeypatch.setenv("YOS_WEBHOOK_URL", "https://contents.example/hook")
-    monkeypatch.setenv("YOS_WEBHOOK_SECRET", "whsec")
-    monkeypatch.setenv("YONE_PUBLIC_URL", "https://studio.example")
-
-    class R:
-        status_code = 200
-
-    def fake_post(url, data=None, headers=None, timeout=0):
-        sent.append((url, data, headers))
-        return R()
-    import requests
-    monkeypatch.setattr(requests, "post", fake_post)
-
-    body = {"series": t["series"], "design": d["id"],
-            "book": {"name": "테스트책", "period": "27-1-중간", "school": "이의고"},
-            "knobs": {"page.bleed": 3},
-            "source": {"type": "data", "data": {"hello": "world"}},
-            "callback": {"ref": "book-42"}}
-    stem = "이의고_테스트책_내지"
-    monkeypatch.setattr(jobs, "run_cmd", _fake_run_cmd(stem + ".pdf"))
-    r = c.post("/api/v1/renders", json=body)
-    assert r.status_code == 202, r.get_json()
-    j = r.get_json()
-    assert j["book"]["key"].endswith(os.path.join("테스트책", "27-1-중간"))
-    book_dir = tmp_path / j["book"]["key"]
-    cfg = json.load(open(book_dir / "config.json", encoding="utf-8"))
-    assert cfg["_카탈로그"]["design"] == d["id"] and cfg["_카탈로그"]["design_version"] == d["version"]
-    assert cfg["book"]["school"] == "이의고" and cfg["output"]["stem"] == stem
-    assert json.load(open(book_dir / "data.json", encoding="utf-8")) == {"hello": "world"}
-
-    s = _wait(c, j["job"])
-    assert s["status"] == "done", s["log"]
-    assert s["result"]["main_pdf"] == stem + ".pdf" and s["result"]["pages"] == 1
-    assert s["meta"]["steps"][0] == "build" and s["meta"]["steps"][-1] == "verify"
-    assert s["urls"][stem + ".pdf"].startswith("https://studio.example/api/v1/renders/")
-    assert s["urls"]["studio"].endswith("/book-studio?b=" + j["book"]["bid"])
-    # 파일·면 그림
-    assert c.get(f"/api/v1/renders/{j['job']}/files/{stem}.pdf").status_code == 200
-    assert c.get(f"/api/v1/renders/{j['job']}/files/조판_로그.txt").status_code == 200
-    assert c.get(f"/api/v1/renders/{j['job']}/files/../config.json").status_code == 404
-    png = c.get(f"/api/v1/renders/{j['job']}/pages/1.png")
-    assert png.status_code == 200 and png.data[:4] == b"\x89PNG"
-    assert c.get(f"/api/v1/renders/{j['job']}/pages/2.png").status_code == 404
-    # 목록 · 로그 since
-    assert any(x["id"] == j["job"] for x in c.get("/api/v1/renders").get_json()["renders"])
-    assert c.get(f"/api/v1/renders/{j['job']}?since=999").get_json()["log"] == []
-    # 같은 책 다시 → 409, replace 면 된다
-    assert c.post("/api/v1/renders", json=body).status_code == 409
-    assert c.post("/api/v1/renders", json=dict(body, replace=True)).status_code == 202
-    # 웹훅: 서명이 맞고 callback 이 그대로 돌아온다
-    for _ in range(50):
-        if sent:
-            break
-        time.sleep(0.1)
-    assert sent, "웹훅이 안 갔다"
-    url, data, headers = sent[0]
-    from core import yos_hooks
-    assert url == "https://contents.example/hook" and headers["x-studio-event"] == "render.finished"
-    # core 의 chat/link.ts verifySignature 와 같은 규칙: hex HMAC-SHA256(비밀, 본문)
-    import hashlib, hmac
-    assert headers["x-studio-signature"] == hmac.new(b"whsec", data, hashlib.sha256).hexdigest()
-    assert headers["x-studio-signature"] == yos_hooks.sign(data, "whsec")
-    payload = json.loads(data)
-    assert payload["render"]["callback"] == {"ref": "book-42"} and payload["render"]["status"] == "done"
-    assert payload["render"]["files"][stem + ".pdf"].startswith("https://studio.example/api/v1/renders/")
-    # 디스크 기록 — 재시작 뒤에도 물을 수 있다
-    assert os.path.exists(tmp_path / "_jobs" / (j["job"] + ".json"))
-
-
-def test_render_failed_when_no_pdf(app, monkeypatch):
-    from core import jobs
-    c = app.test_client()
-    t, d = _first_design(c)
-
-    def run(job, cmd, **kw):
-        job.add("[오류] 가짜 실패")
-        return 1
-    monkeypatch.setattr(jobs, "run_cmd", run)
-    r = c.post("/api/v1/renders", json={"series": t["series"], "design": d["id"],
-                                        "book": {"name": "실패책", "period": "27-1"},
-                                        "source": {"type": "data", "data": {}}})
-    assert r.status_code == 202
-    s = _wait(c, r.get_json()["job"])
-    assert s["status"] == "failed" and s["rc"] == 1
-    assert c.get(f"/api/v1/renders/{r.get_json()['job']}/pages/1.png").status_code == 404
-
-
-def test_export_is_a_job(app, monkeypatch):
-    """작업대 내보내기 — 요청은 바로 돌아오고 잡으로 진행된다."""
-    from core import jobs
-    from routes import book_studio
-    c = app.test_client()
-    monkeypatch.setattr(book_studio, "_book_dir", lambda k: ("/tmp/nope", {"key": "k", "bid": "b"}))
-    monkeypatch.setattr(book_studio, "_last_pdf", lambda cfg, d: "/tmp/nope/x.pdf")
-    monkeypatch.setattr(jobs, "run_cmd", lambda job, cmd, **kw: 0)
-    import core.render_vivlio.book as bookmod
-    monkeypatch.setattr(bookmod, "load", lambda d: None)
-    r = c.post("/api/book-studio/export", json={"b": "k", "kind": "pdf"})
-    assert r.status_code == 202 and r.get_json()["job"]
-    jid = r.get_json()["job"]
-    for _ in range(50):
-        s = c.get(f"/api/book-studio/export/{jid}").get_json()
-        if s["status"] not in ("queued", "running"):
-            break
-        time.sleep(0.1)
-    assert s["status"] == "done" and s["result"]["pdf"] == "x.pdf"
-    assert c.get("/api/book-studio/export/zzz").status_code == 404
+    assert r.status_code == 400 and "편집기 제작" in r.get_json()["error"]
+    r = c.post("/api/v1/renders", json={"series": "analysis", "design": "x009d5556", "book": {"title": "x"},
+                                        "source": {"type": "data", "data": {"format": "wat"}}})
+    assert r.status_code == 400 and "yos-analysis-v1" in r.get_json()["error"]
+    assert c.get("/api/v1/books").status_code == 404 and c.post("/api/v1/embed-token", json={}).status_code == 404
 
 
 def test_jobs_lost_on_boot(tmp_path, monkeypatch):
@@ -239,9 +99,8 @@ def test_jobs_lost_on_boot(tmp_path, monkeypatch):
 
 
 def test_blob_upload_of_pdfs_and_catalog_images(app, monkeypatch, tmp_path):
-    """BLOB_READ_WRITE_TOKEN 이 있으면 PDF 는 private, 카탈로그 이미지는 public 으로 같은 스토어에 올린다."""
+    """BLOB_READ_WRITE_TOKEN 이 있으면 카탈로그 이미지는 public 으로 올린다(찍은 PDF 는 편집기 찍기 시험에서)."""
     import shutil
-    from core import jobs
     from routes import catalog as catmod, intake as intakemod
     monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "vercel_blob_rw_STORE123_secretpart")
     # blob.json 캐시가 리포의 catalog/ 에 남지 않게 사본에서 돈다
@@ -250,7 +109,6 @@ def test_blob_upload_of_pdfs_and_catalog_images(app, monkeypatch, tmp_path):
     monkeypatch.setattr(catmod, "CATALOG", str(tmp_cat))
     monkeypatch.setattr(intakemod, "CATALOG", str(tmp_cat))
     c = app.test_client()
-    t, d = _first_design(c)
     calls = []
 
     class R:
@@ -282,15 +140,3 @@ def test_blob_upload_of_pdfs_and_catalog_images(app, monkeypatch, tmp_path):
         n = len(calls)
         c.get("/api/v1/catalog")                          # 두 번째는 캐시(blob.json) — 다시 안 올린다
         assert len(calls) == n
-
-    stem = "블롭책_내지"
-    monkeypatch.setattr(jobs, "run_cmd", _fake_run_cmd(stem + ".pdf"))
-    r = c.post("/api/v1/renders", json={"series": t["series"], "design": d["id"],
-                                        "book": {"name": "블롭책", "period": "27-1"},
-                                        "source": {"type": "data", "data": {}}})
-    s = _wait(c, r.get_json()["job"])
-    assert s["status"] == "done"
-    b = s["result"]["blob"][stem + ".pdf"]
-    assert b["pathname"] == f"studio/renders/{s['id']}/{stem}.pdf" and b["access"] == "private"
-    pdf_call = [x for x in calls if x[0].endswith(stem + ".pdf")][0]
-    assert pdf_call[1]["x-vercel-blob-access"] == "private" and pdf_call[1]["x-content-type"] == "application/pdf"

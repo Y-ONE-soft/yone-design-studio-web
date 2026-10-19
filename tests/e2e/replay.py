@@ -12,7 +12,7 @@
 
 단위 폴더 tests/e2e/replay/<단위>/ 에
   make.py   대본 생성기 — 실행하면 같은 폴더에 steps.json 을 쓴다
-  상태.json  {"ref": "catalog/workbook/designs/d1/reference.pdf", "pages": [1, 2]}
+  상태.json  {"ref": "tests/e2e/replay/_원본/워크북_d1.pdf", "pages": [1, 2]}
              pages = 원본 쪽. 대본이 새로 만든 지면과 차례대로 맞댄다.
 단위마다 데이터 폴더를 따로 써서(YONE_CATALOG_DIR) 지우기·병렬이 그 단위에만 미친다.
 병렬: 서버 · 크롬 포트는 비어 있는 것을 알아서 고른다(정하려면 REPLAY_PORT · REC_PORT).

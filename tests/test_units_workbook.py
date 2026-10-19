@@ -84,14 +84,6 @@ def test_catalog_without_manuscript():
     assert cat["mockexam"]["kinds"] == ["동형 모의고사"] and cat["mockexam"]["fields"]["m_choice"] == "선지"
 
 
-def test_format_detect():
-    """파일 이름으로 원고 형식을 알아본다 — 캔버스·렌더러는 책 종류를 모른다."""
-    from core.units import formats
-    assert formats.detect(["Step1 A1 어휘선택.docx", "Step2 B1 어법OX.docx"]) == "workbook"
-    assert formats.detect(["한영고1 동형 모의고사 1회.hwpx"]) == "mockexam"
-    assert formats.detect(["원고.docx"]) is None
-
-
 def test_mockexam_paragraphs_to_set():
     """모의고사 — 단락 역할을 자리 이름으로, 발문엔 차례 번호, 한 회 = 원고 하나(머리 정보는 optional)."""
     from core.units.formats import mockexam

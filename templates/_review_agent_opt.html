@@ -1,8 +1,0 @@
-<!-- ── 검수 에이전트 opt-in (W41 — 전 템플릿 공용 partial, W41 후속) ──
-     form 안에 include — 제출 시 review_agent=1 → routes/typeset.py가
-     job_dir/review_agent.txt 생성 → 파이프라인 opt-in 훅 발동.
-     마크업/name은 공용 typeset.html 원본과 동일해야 한다 (계약). -->
-<label class="review-agent-opt" style="display:flex;align-items:center;gap:8px;margin:12px 0;font-size:14px;cursor:pointer;">
-  <input type="checkbox" name="review_agent" value="1">
-  🔍 조판 후 AI 검수 에이전트 실행 (표본 페이지를 눈으로 검수 — 약 2~5분 추가)
-</label>

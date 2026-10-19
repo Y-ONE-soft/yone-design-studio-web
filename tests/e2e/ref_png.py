@@ -1,7 +1,7 @@
 """기준 쪽과 우리 면을 나란히 놓고 다른 데를 숫자로 — 녹화 전에 여기서 맞춘다.
 
     python3 tests/e2e/ref_png.py <기준쪽> <우리 지면id> [이름]
-기준은 catalog/workbook/designs/d1/reference.pdf (216×303), 우리는 A4(210×297) 라
+기준은 tests/e2e/replay/_원본/워크북_d1.pdf (216×303), 우리는 A4(210×297) 라
 크기를 맞춰 겹친 뒤 어긋난 화소 비율을 센다.
 """
 import os
@@ -12,7 +12,7 @@ import urllib.request
 import fitz
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-REF = os.path.join(REPO, "catalog", "workbook", "designs", "d1", "reference.pdf")
+REF = os.path.join(REPO, "tests", "e2e", "replay", "_원본", "워크북_d1.pdf")
 BASE = os.environ.get("YONE_BASE", "http://127.0.0.1:5099")
 pno = int(sys.argv[1])
 pid = sys.argv[2]

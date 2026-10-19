@@ -5,9 +5,8 @@
 #   fly ssh sftp put fonts.tgz /data/fonts.tgz
 #   fly ssh console -C "sh -c 'tar xzf /data/fonts.tgz -C /data/fonts && rm /data/fonts.tgz && ls /data/fonts | wc -l'"
 #
-# 서체 목록의 출처 둘: ① 디자인 config 의 `fonts` ② 계열 코드가 직접 적은 `FONTS`
-# (core/render_vivlio/series/<계열>/render.py — 워크북·포켓북). ②를 빼먹어 Fly 에서
-# 워크북 조판이 "[서체 없음] YeongdoOTF.otf …" 로 죽었다(2026-09-18 실측).
+# 서체 목록 = core/units/fonts.pack_files() — 묶음 목록(core/units/pack_fonts.json, 예전 조판 엔진 계열 코드 ·
+# 예전 디자인 config 에서 긁던 이름을 2026-10-19 떠 둔 것) + 디자인 config 의 `fonts`.
 set -e
 cd "$(dirname "$0")/.."
 python3 - <<'PY'

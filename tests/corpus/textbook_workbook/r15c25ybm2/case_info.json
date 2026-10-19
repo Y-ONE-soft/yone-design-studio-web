@@ -1,6 +1,0 @@
-{
-  "engine": "textbook_workbook_v2",
-  "source_job": "376b34d0 (실서비스 2026-07-19 — 공통영어2 YBM(김) 1과 전체(C))",
-  "replay": "manuscript_folder=inputs_folder (GDrive 워크북 폴더 로컬 재현 — 업로드 원본 사본). manifest.json 없음: test_workbook_v2_round15의 커스텀 리플레이 사용",
-  "note": "W30-r15 — 실사용 결함 7건 케이스. 교과서 L-p-코너명형 헤더('1. L1-p. 13 본문 1' / '6. L1-추가본문') 첫 실증 + 꼼꼼변형 실전문제 출처 라인('공통영어2_YBM(김) 1과_03') + 문제단위킵 오버플로우 확장 프레임 결손 + 크레딧 오른쪽 단독. 골든 content는 W30-r15 수리 후 파서 산출 (조건 괄호 부연 Cond 유지 포함 — GH_SUBTITLE 토큰 상한)."
-}

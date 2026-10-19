@@ -6,7 +6,7 @@ import os, sys
 import pymupdf
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-REF = os.path.join(REPO, "catalog", "workbook", "designs", "d1", "reference.pdf")
+REF = os.path.join(REPO, "tests", "e2e", "replay", "_원본", "워크북_d1.pdf")
 PT = 25.4 / 72.0
 K = 297 / 303.0                                    # 기준 303mm → A4 297mm
 

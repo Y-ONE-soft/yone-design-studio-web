@@ -11,7 +11,7 @@
 
 {% block content %}
 {# Canva 의 "모든 프로젝트" — 제목 · 도구줄(새 항목) · 폴더(= 카탈로그 디렉토리). 최근·디자인(전체) 구역은 당분간 뺐다.
-   `?dir=` 이면 그 폴더 안만, `?q=` 면 검색 결과만 (둘 다 서버가 거른다). #}
+   `?dir=` 이면 그 폴더 안만 (서버가 거른다). #}
 <style>
   .hero { padding: 42px 40px 26px; background: linear-gradient(180deg, rgba(214,242,238,.9) 0%, rgba(236,230,255,.75) 45%, #fff 100%); text-align: center; }
   .hero h1 { margin: 0; font-size: 40px; font-weight: 700; letter-spacing: -.02em; }
@@ -96,7 +96,7 @@
 
 <div class="hero">
   {% if folder or q %}<a class="back" href="/projects">← 모든 프로젝트</a>{% endif %}
-  <h1>{{ folder.name if folder else ('“' ~ q ~ '” 검색' if q else '모든 프로젝트') }}</h1>
+  <h1>{{ folder.name if folder else '모든 프로젝트' }}</h1>
   {% if folder %}<div class="sub">{{ folder.desc }}</div>{% endif %}
 </div>
 
@@ -121,20 +121,14 @@
         <div class="tt">{{ d.name }}</div>
         <div class="mt"><i class="dot {{ d.ready }}"></i>{{ d.tname }}{% if d.n %} · {{ d.n }}페이지{% endif %}{% if d.made %}<span class="mk {{ d.made }}">{{ "편집기 제작" if d.made == "editor" else "PDF 등록" }}</span>{% endif %}</div>
         {% if d.tags %}<div class="tags">{% for k, v in d.tags.items() %}<span>{{ v }}</span>{% endfor %}</div>{% endif %}
-        {% if d.made != "editor" %}<div class="acts">{% if d.manuscript %}<a class="go" href="/catalog/{{ d.series }}/{{ d.id }}">데이터 병합</a>{% endif %}<a href="/design/{{ d.series }}/{{ d.id }}">페이지 보기</a></div>{% endif %}
+        {% if d.made != "editor" %}<div class="acts"><a href="/design/{{ d.series }}/{{ d.id }}">페이지 보기</a></div>{% endif %}
       </div>{% endfor %}
     </div>
     {% else %}<div class="empty" style="padding:24px 0"><b>이 라인업에 아직 템플릿이 없어요</b></div>{% endif %}
   </section>
   {% endif %}
 
-  {% if q %}
-  <section id="all">
-    <h2>검색 결과 <span class="n">{{ books|length }}권</span></h2>
-    {% if books %}<div class="cards" id="all-cards">{% for b in books %}{% include "_book_card.html" %}{% endfor %}</div>
-    {% else %}<div class="empty"><div class="big">🔍</div><b>맞는 책이 없어요</b>다른 말로 찾아 보세요.</div>{% endif %}
-  </section>
-  {% elif not folder %}
+  {% if not folder %}
   <section id="folders">
     <h2><span class="tg" data-for="folder-list">▾</span>라인업</h2>
     <div class="folders" id="folder-list">

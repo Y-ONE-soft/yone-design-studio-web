@@ -20,7 +20,7 @@ from mkpage import _color
 from core.units.render import text_h                                    # 서버가 글 높이를 어림하는 식 — 상자가 저절로 자라지 않게(읽기만)
 import pymupdf
 
-REF = os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf")
+REF = os.path.join(REPO, "tests/e2e/replay/_원본/워크북_d1.pdf")
 REFDOC = pymupdf.open(REF)
 ELEMS = {1: [], 2: []}
 PAGES = json.load(open(os.path.join(HERE, "상태.json")))["pages"]

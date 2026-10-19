@@ -1,8 +1,6 @@
-"""원고 형식 · 워크북 — 스텝별 docx·hwpx 여러 개 → 캔버스 원고 세트.
+"""원고 형식 · 워크북 — 스텝 · 지문 묶음 → 캔버스 원고 세트(스텝 × 지문마다 세트 하나), 자리 이름 · 유형 이름.
 
-원고를 읽는 일은 새로 짜지 않는다 — 통합웹 워크북 v2 엔진이 이미 읽는다(`engines/workbook_v2`):
-    원고 파일들 → content.json → render_plan.json(wb-flows-v1) → 스텝·지문 묶음·역할(data_mod.from_plan)
-여기서는 그 결과를 **스텝 × 지문마다 세트 하나**로 옮긴다.
+(스텝별 docx 여러 개를 예전 워크북 엔진으로 읽던 from_files 는 2026-10-19 엔진과 함께 지웠다 — 원고는 contents 레코드로 받는다.)
 
     세트 = {kind: "A2 본문 O/X", id: "20·1A2", group: "20", blocks: [{block: 역할, fields}]}   (format·labels 는 등록부가 붙인다)
 
@@ -10,9 +8,7 @@
 화면에는 labels 의 한글 이름으로 보인다. 글에 섞여 있는 정답(빈칸 1[fun], 발문 끝 ③)은 떼어 answer 자리로 옮긴다
 — 학생 면에 정답이 찍히면 안 된다.
 """
-import os
 import re
-import tempfile
 
 LABELS = {
     "pnum": "지문 번호", "no": "번호", "answer": "정답",
@@ -128,43 +124,15 @@ def steps_to_sets(steps):
     return sets
 
 
-def from_files(paths, log=None):
-    """워크북 원고 파일들 → (세트, log). 워크북 v2 엔진으로 읽는다."""
-    from engines.workbook_v2.engine import WorkbookV2Engine
-    from core.render_vivlio.series.workbook import data as data_mod
-    import json
-    msgs = log if log is not None else []
-    job = tempfile.mkdtemp(prefix="units_wb_")
-    eng = WorkbookV2Engine()
-    cj = eng.parse({"manuscripts": list(paths)}, job, lambda m: msgs.append(str(m)))
-    try:
-        eng.prepare_jsx(cj, job, lambda m: msgs.append(str(m)))           # 플랜을 쓴 뒤 인디자인 원본을 찾다 멈춘다 — 플랜만 쓴다
-    except Exception:
-        pass
-    plan = os.path.join(job, "render_plan.json")
-    if not os.path.exists(plan):
-        raise RuntimeError("워크북 원고를 못 읽었다: " + " / ".join(msgs[-3:]))
-    with open(plan, encoding="utf-8") as fh:
-        data = data_mod.from_plan(json.load(fh), log=lambda m: msgs.append(str(m)))
-    return steps_to_sets(data.get("steps") or []), msgs
-
-
-_RE_STEP_NAME = re.compile(r"(?i)step\s*[12]\s*[A-C]\d")
-
-
-def looks_like_workbook(names):
-    """파일 이름이 `Step1 A2 …` 꼴이 둘 이상이면 워크북 원고 묶음."""
-    return sum(1 for n in names if _RE_STEP_NAME.search(os.path.basename(n))) >= 2
+# 유형 이름(받는 원고) — 세트의 kind 와 같은 이름(steps_to_sets 가 같은 logo·title 로 짓는다). 예전 엔진 스텝 표에서 떠 둔 것(2026-10-19)
+KINDS = ["A1 어휘 선택 1", "A1 어휘 선택 2", "A2 본문 O/X", "B1 본문 정리", "B2 내용 종합", "C1 문장 배열", "C2 빈칸 어휘",
+         "A1 어법 선택", "B1 어법 O/X", "C1 빈칸 어법", "C2 영작 배열"]
 
 
 def kinds():
-    """유형 이름(받는 원고) — 엔진의 스텝 표에서. 세트의 kind 와 같은 이름이다(steps_to_sets 가 같은 logo·title 로 짓는다)."""
-    from core.render_vivlio.series.workbook.data import STEP_META
-    return [f"{m['logo']} {m['title']}" for m in STEP_META.values() if m["step"] in (1, 2) and m.get("layout") != "attach"]
+    return list(KINDS)
 
 
 # ── 원고 형식 등록부(core/units/formats) 에 밝히는 것 ──
-ID, NAME = "workbook", "워크북 (Step1·2 원고 여러 개)"
-detect = looks_like_workbook
-parse = from_files
+ID, NAME = "workbook", "워크북"
 FMT = {"b2_q": {"b": True}, "q_prompt": {"b": True}, "sum_topic": {"b": True}, "sum_title": {"b": True}}   # 흘려 넣을 때 발문·정리 머리는 굵게

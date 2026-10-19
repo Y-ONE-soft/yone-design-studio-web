@@ -26,9 +26,9 @@ WORKDIR /app
 COPY requirements.txt requirements-vivlio.txt requirements-web.txt ./
 RUN pip install -r requirements-web.txt
 
-# ── Vivliostyle CLI (소유 위치: core/render_vivlio) — 크롬은 내려받지 않고 시스템 chromium 을 쓴다 ──
-COPY core/render_vivlio/package.json core/render_vivlio/package-lock.json ./core/render_vivlio/
-RUN cd core/render_vivlio && PUPPETEER_SKIP_DOWNLOAD=1 npm ci --no-audit --no-fund
+# ── Vivliostyle CLI (vivliostyle/ — 나중에 뽑을 때 쓴다) — 크롬은 내려받지 않고 시스템 chromium 을 쓴다 ──
+COPY vivliostyle/package.json vivliostyle/package-lock.json ./vivliostyle/
+RUN cd vivliostyle && PUPPETEER_SKIP_DOWNLOAD=1 npm ci --no-audit --no-fund
 
 # ── 소스 ──
 COPY . .

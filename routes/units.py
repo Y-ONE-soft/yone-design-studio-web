@@ -21,7 +21,6 @@
 import json
 import os
 import re
-import unicodedata
 import uuid
 
 from flask import Blueprint, abort, jsonify, render_template, request, send_file
@@ -135,31 +134,14 @@ def api_check():
 
 @bp.route("/api/units/manuscript", methods=["POST"])
 def api_manuscript():
-    """원고 → 세트. 원고 형식(core/units/formats — 문서가 고른 form.format, 없으면 파일 이름으로 알아봄)이 있으면 그 형식으로,
-    아니면 기본 파서(core/units/manuscript): 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}."""
-    from core.units import formats
+    """원고 → 세트 — 기본 파서(core/units/manuscript): 파일이면 docx·hwpx·txt·json, 아니면 JSON {text} 또는 {contents}.
+    (원고 형식별로 여러 파일을 읽던 길 — 예전 조판 엔진 파서 — 은 2026-10-19 뺐다)"""
     blocks = store.load("blocks")
     fs = [x for x in request.files.getlist("file") if x and x.filename]
     f = fs[0] if fs else None
-    names = [unicodedata.normalize("NFC", os.path.basename(x.filename)) for x in fs]
-    fid = (request.form.get("format") or "").strip() or (formats.detect(names) if fs else None)
-    if fid and fid not in formats.BY_ID:
-        return jsonify({"error": f"모르는 원고 형식 {fid}"}), 400
     try:
-        if fs and fid:
-            # 원고 형식 — 형식이 파일 이름을 읽을 수 있게(스텝·회차) 원래 이름으로 둔다
-            if any(os.path.splitext(n)[1].lower() not in (".docx", ".hwpx", ".hwp") for n in names):
-                return jsonify({"error": "원고 형식은 docx·hwpx 만"}), 400
-            d = os.path.join(_updir(), uuid.uuid4().hex[:12])
-            os.makedirs(d)
-            paths = []
-            for x, n in zip(fs, names):
-                p = os.path.join(d, n)
-                x.save(p)
-                paths.append(p)
-            sets, log = formats.parse(fid, paths)
-        elif len(fs) > 1:
-            return jsonify({"error": "여러 파일은 원고 형식(워크북·모의고사 …)을 알아볼 수 있을 때만 — 문서의 「원고 형식」을 고르거나 파일 이름을 확인"}), 400
+        if len(fs) > 1:
+            return jsonify({"error": "원고 파일은 하나씩 — 여러 원고는 contents 에서 받는다"}), 400
         elif f:
             ext = os.path.splitext(f.filename)[1].lower()
             if ext not in (".docx", ".hwpx", ".txt", ".md", ".json"):

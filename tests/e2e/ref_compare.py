@@ -11,7 +11,7 @@ import sys
 import urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-REF = os.path.join(REPO, "catalog", "workbook", "designs", "d1", "reference.pdf")
+REF = os.path.join(REPO, "tests", "e2e", "replay", "_원본", "워크북_d1.pdf")
 BASE = os.environ.get("YONE_BASE", "http://127.0.0.1:5099")
 TOL = 1.5                                   # mm — 이 안이면 맞은 것으로 본다
 

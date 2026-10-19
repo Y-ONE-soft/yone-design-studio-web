@@ -27,8 +27,8 @@ KEEP = 200               # 메모리에 남길 최근 잡 수
 
 
 def _dir():
-    from core.render_vivlio.config import _studio_root
-    d = os.path.join(_studio_root(), "_jobs")
+    from core.studio import studio_root
+    d = os.path.join(studio_root(), "_jobs")
     os.makedirs(d, exist_ok=True)
     return d
 

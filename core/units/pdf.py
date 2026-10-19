@@ -150,7 +150,7 @@ def to_print_pdf(svgs, trim_w, trim_h, out_path, bleed=3.0, marks=True, skin=Non
     done = False
     if cmyk:
         try:
-            from core.render_vivlio import prepress
+            from core.units import prepress
             prepress.make(rgb, out_path, bleed=m, gray_map=gray_map_of(skin), log=log)
             done = True
         except Exception as e:                                        # gs 없음·ICC 없음·글자층 불량

@@ -20,4 +20,4 @@ st += [{"js": "(() => { const t = page.items.filter(i => (i.atom||{}).t === 'tex
               "return '확인 — ' + JSON.stringify(t); })()"}]
 json.dump(st, open(os.path.join(WORK, "steps.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=0)
 json.dump({"1": []}, open(os.path.join(WORK, "elems.json"), "w", encoding="utf-8"))
-json.dump({"ref": "catalog/workbook/designs/d1/reference.pdf", "pages": [2]}, open(os.path.join(WORK, "상태.json"), "w", encoding="utf-8"))
+json.dump({"ref": "tests/e2e/replay/_원본/워크북_d1.pdf", "pages": [2]}, open(os.path.join(WORK, "상태.json"), "w", encoding="utf-8"))

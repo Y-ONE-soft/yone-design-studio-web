@@ -14,7 +14,7 @@
   한글 물음 (…? · 고르시오)      발문 (번호는 이어서)
   그 밖                         바로 앞 글 자리에 이어 붙인다 (단락 추가)
 
-contents JSON 은 `core/sources/yos_workbook.py` 의 항목 key 를 여기 블록으로 맞춘다 — 지문마다 (항목 key = 세트 kind) 한 세트.
+contents JSON 은 항목 key 를 여기 블록으로 맞춘다 — 지문마다 (항목 key = 세트 kind) 한 세트.
 없는 것은 지어내지 않는다 — 못 맞춘 줄·항목은 log 에 남긴다.
 """
 import re
@@ -30,6 +30,7 @@ _RE_NUM = re.compile(r"^\(?(\d{1,3})[).]\s*(.+)$", re.S)
 _RE_BLANK = re.compile(r"_{3,}|\[\s*\]|\(\s*\)")
 _RE_SQUARE = re.compile(r"(?<![A-Za-z])(\d+)\[([^\[\]]+)\]")
 _RE_ANGLE = re.compile(r"\((\d+)\)\s*❮\s*([^❯]*?)\s*❯")               # (1)❮ ⓐ a / ⓑ b ❯ → (1)[ ⓐ a / ⓑ b ]
+_RE_SENT_SPLIT = re.compile(r"(?:(?<=[.!?])|(?<=[.!?][\"'”’)]))\s+(?=[A-Z\"“‘(])")   # 문장 끝(. ! ? 와 닫는 따옴표) 뒤 빈칸 + 대문자
 
 
 # ── 블록 정의에서 자리 찾기 ─────────────────────────────────────────────
@@ -553,7 +554,6 @@ def from_contents(raw, blocks, log=None):
                                                                            "answer": coerce(st.get("answer") or "", "answer")}})
                 else:
                     # 본문에 n[word] 표시 → 문장마다 한 줄, 표시한 낱말은 밑줄
-                    from core.sources.yos_workbook import _sentences
                     for i, sent in enumerate(_sentences(str(c.get("text") or "")), 1):
                         rich, pos = [], 0
                         for m in _RE_SQUARE.finditer(sent):
@@ -579,3 +579,8 @@ def from_contents(raw, blocks, log=None):
                 mine.append(s)
         sets.extend(mine)
     return sets, log
+
+
+def _sentences(text):
+    """본문 → 문장 목록 (어법 O/X 원고에 문장이 따로 없을 때)"""
+    return [s.strip() for s in _RE_SENT_SPLIT.split((text or "").strip()) if s.strip()]

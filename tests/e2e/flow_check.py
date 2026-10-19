@@ -3,7 +3,7 @@ tests/e2e/flow_check.py <우리 PDF> <원본 첫 쪽> <쪽 수>   (원본 = d1 r
 줄바꿈 한 줄 차이는 뒤로 밀리므로 위치가 아니라 구조(문항 안 간격 · 문항 시작 쪽·단)를 본다."""
 import os, sys, collections
 import fitz
-REF = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "catalog/workbook/designs/d1/reference.pdf")
+REF = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "tests/e2e/replay/_원본/워크북_d1.pdf")
 MM = 25.4 / 72
 LEADS = (14.6 * MM, 14 * MM, 12 * MM)
 

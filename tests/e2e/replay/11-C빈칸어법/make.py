@@ -21,7 +21,7 @@ from mkpage import *                                                    # noqa
 import pagecmp
 import pymupdf
 
-REF = os.path.join(REPO, "catalog/workbook/designs/d1/reference.pdf")
+REF = os.path.join(REPO, "tests/e2e/replay/_원본/워크북_d1.pdf")
 REFDOC = pymupdf.open(REF)
 ELEMS = {1: [], 2: []}
 PAGES = json.load(open(os.path.join(HERE, "상태.json")))["pages"]

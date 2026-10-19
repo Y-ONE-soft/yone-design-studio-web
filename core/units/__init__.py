@@ -7,5 +7,5 @@
     decompose  PDF 한 면·이미지·프롬프트 → 원자 목록 + 부품 후보 (같은 원자 형식)
     sample     필드 타입별 견본 값 — 콘텐츠 없이 디자인만 볼 때
 
-기존 계열 렌더러(core/render_vivlio/series/*)와는 독립이다 — 납품 중인 책은 건드리지 않는다.
+(예전 계열 렌더러 core/render_vivlio 는 2026-10-19 지웠다 — 서체 찾기 · CMYK 인쇄만 이쪽 fonts · prepress 로 옮김.)
 """

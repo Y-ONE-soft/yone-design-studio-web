@@ -105,13 +105,12 @@ def store_dir():
 
 
 def pack_files():
-    """시스템이 함께 싣는 서체 파일 이름 — 디자인 config fonts + 계열 코드 FONTS (deploy/fonts-pack.sh 와 같은 출처)"""
+    """시스템이 함께 싣는 서체 파일 이름 — 묶음 목록(pack_fonts.json) + 디자인 config fonts (deploy/fonts-pack.sh 와 같은 출처).
+    묶음 목록은 2026-10-19 예전 조판 엔진을 지울 때 그 계열 코드 · 예전 디자인 config 에서 긁던 이름을 그대로 떠 둔 것 — 목록이 줄지 않게"""
     import glob
     import json
-    import re
     from routes.catalog import CATALOG
-    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    want = set()
+    want = set(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "pack_fonts.json"), encoding="utf-8")))
     for p in glob.glob(os.path.join(CATALOG, "**", "config.json"), recursive=True):
         try:
             c = json.load(open(p, encoding="utf-8"))
@@ -121,9 +120,29 @@ def pack_files():
             fn = f.get("file") if isinstance(f, dict) else f
             if isinstance(fn, str) and fn.lower().endswith(FONT_EXT):
                 want.add(os.path.basename(fn))
-    for p in glob.glob(os.path.join(repo, "core", "render_vivlio", "series", "*", "*.py")):
-        want.update(re.findall(r'"([^"/]+\.(?:otf|ttf|OTF|TTF))"', open(p, encoding="utf-8").read()))
     return sorted(want)
+
+
+# 서체 파일 찾는 곳 (앞에서부터) — 맥 기본 + `YONE_FONT_DIRS`(콜론으로 여러 개 — 컨테이너는 /data/fonts)
+FONT_DIRS = [d for d in (os.environ.get("YONE_FONT_DIRS") or "").split(":") if d.strip()] + [
+    os.path.expanduser("~/Library/Fonts"),
+    "/Library/Fonts",
+    "/System/Library/Fonts",
+    "/System/Library/Fonts/Supplemental",     # Academy Engraved LET 등 맥 동봉 서체
+    "/usr/share/fonts", "/usr/local/share/fonts", os.path.expanduser("~/.fonts"),
+]
+
+
+def find_font(name):
+    """서체 파일 이름(또는 절대 · ~ 경로) → 실제 경로 또는 None"""
+    if os.sep in name or name.startswith("~"):
+        p = os.path.expanduser(name)
+        return p if os.path.exists(p) else None
+    for d in FONT_DIRS:
+        p = os.path.join(d, name)
+        if os.path.exists(p):
+            return p
+    return None
 
 
 def _meta(path):
@@ -170,7 +189,6 @@ _SYS = {}
 
 def system_fonts():
     """→ [{file, path, family, weight, italic, src: "pack"|"upload"}] — 못 찾은 묶음 서체는 빠진다(missing_pack)"""
-    from core.render_vivlio.stage import find_font
     sd = store_dir()
     up = sorted(n for n in (os.listdir(sd) if os.path.isdir(sd) else []) if n.lower().endswith(FONT_EXT))
     key = (tuple(pack_files()), tuple((n, os.path.getmtime(os.path.join(sd, n))) for n in up))
@@ -192,7 +210,6 @@ def system_fonts():
 
 
 def missing_pack():
-    from core.render_vivlio.stage import find_font
     return [n for n in pack_files() if not find_font(n)]
 
 
