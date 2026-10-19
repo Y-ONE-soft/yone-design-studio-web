@@ -879,12 +879,17 @@ def design_layouts(series, design):
     stamp = f"{int(os.path.getmtime(pdf))}" + (f"_o{int(os.path.getmtime(origin))}" if origin else "")
     cache = os.path.join(tdir, f"layouts15{'e' if editor else ''}_{stamp}.json")
     if os.path.exists(cache):
-        return json.load(open(cache, encoding="utf-8"))
-    out = (editor_layouts(series, design, dj, pdf) if editor else None) or pdf_layouts(pdf, series, dj.get("layout_rules", True))
-    if origin:                                            # 원본 페이지 차례 — PDF 등록 카드와 같은 판정(새 PDF 라 틀 규칙 없이)
-        o = pdf_layouts(origin, series, False)
-        out["origin"] = {"total": o["total"], "layouts": o["layouts"]}
-    json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
+        out = json.load(open(cache, encoding="utf-8"))
+    else:
+        out = (editor_layouts(series, design, dj, pdf) if editor else None) or pdf_layouts(pdf, series, dj.get("layout_rules", True))
+        if origin:                                        # 원본 페이지 차례 — PDF 등록 카드와 같은 판정(새 PDF 라 틀 규칙 없이)
+            o = pdf_layouts(origin, series, False)
+            out["origin"] = {"total": o["total"], "layouts": o["layouts"]}
+        json.dump(out, open(cache, "w", encoding="utf-8"), ensure_ascii=False)
+    # 확인받은 면 목록(절차 2단계 면 나누기를 사용자가 확인한 결과)이 있으면 판정 대신 그것 — 판정을 고칠 때 이 목록이 정답(2026-10-19)
+    fj = os.path.join(_ddir(series, design), "faces.json")
+    if os.path.exists(fj):
+        out = {**out, "faces": json.load(open(fj, encoding="utf-8"))["faces"], "faces_confirmed": True}
     return out
 
 

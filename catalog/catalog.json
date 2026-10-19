@@ -50,5 +50,10 @@
     "root": "분석본/스텝업",
     "ready": "manual",
     "base": "analysis/분석본__스텝업__26-2-중간__배재고1"
+  },
+  "vocab": {
+    "name": "단어장",
+    "dir": "vocab",
+    "ready": "auto"
   }
 }
