@@ -1012,7 +1012,8 @@ _MM = 72 / 25.4
 #   t_same 이름표가 달라도 본문 꼴이 이 값 이상 닮으면 한 구간(광문보카 파트 0.99, 정본 빈칸 어휘 · 어법 0.87)
 #   pair   띠가 이어진 짝이 그 갈래가 올 때의 이 비율 이상이면 펼침면
 #   t_sub  쪽 틀이 모두 같은 구간에서 본문 꼴이 이 값 이상 닮은 쪽끼리 한 갈래
-FACE_PARAMS = {"t_new": 0.6, "t_same": 0.95, "pair": 0.8, "t_sub": 0.75}
+#   t_join 다 나눈 뒤 쪽 틀이 같은 본문 면끼리 왼쪽 · 오른쪽 본문 꼴이 이 값 이상 닮으면 작은 면을 큰 면에
+FACE_PARAMS = {"t_new": 0.6, "t_same": 0.95, "pair": 0.8, "t_sub": 0.75, "t_join": 0.9}
 _FACE_PARAMS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "faces_params.json")
 
 
@@ -1064,6 +1065,16 @@ def _spread_joined(a, b):
     """왼쪽 쪽 가장자리 띠 a 의 오른 끝과 오른쪽 쪽 b 의 왼 끝이 같은 높이들로 만나나."""
     ra = {(y0, y1) for s, y0, y1 in a if s == "R"}
     return bool(ra) and ra == {(y0, y1) for s, y0, y1 in b if s == "L"}
+
+
+def _gutter_joined(a, b):
+    """왼쪽 쪽 a 의 오른 끝과 오른쪽 쪽 b 의 왼 끝에 같은 높이로 닿는 그림(쪽 전체 바탕 · 가는 선 빼고)이 있나 — 가운데를 건너 이어진 그림."""
+    def edge(p, right):
+        W, H = p.rect.width, p.rect.height
+        return {(_q(r.y0, 1), _q(r.y1, 1)) for r in (d["rect"] for d in p.get_drawings())
+                if (r.x1 > W - 1 * _MM if right else r.x0 < 1 * _MM) and r.height > 5 * _MM and r.width > 5 * _MM
+                and not (r.width > W * 0.9 and r.height > H * 0.9)}
+    return bool(edge(a, True) & edge(b, False))
 
 
 def _body_feat(p):
@@ -1135,7 +1146,7 @@ def _faces(doc, tok, P=None, feats=None):
     """면 목록 [{label, kind, size, pages, count, show}] — 서로 다른 면 모양마다 하나(1쪽 면 · 2쪽 펼침면).
     P = 판정 기준값(없으면 face_params()), feats = _face_feats(doc) 미리 잰 것."""
     import collections
-    P = P or face_params()
+    P = {**FACE_PARAMS, **(P or face_params())}
     n = doc.page_count
     F, B = feats or _face_feats(doc)
     kind = [t[0] for t in tok]
@@ -1229,14 +1240,18 @@ def _faces(doc, tok, P=None, feats=None):
     where = collections.defaultdict(list)
     for i in body:
         where[sk(i)].append(i)
-    for a, ia in where.items():
-        if len(ia) < 2 or any(i in paired for i in ia) or not all(cand(i) for i in ia):
+    #  B 앞 왼쪽 갈래가 여럿이어도(첫 왼쪽 · 이어지는 왼쪽 — 파이널 직전보충 왼쪽 「1 문장 배열」 위 띠가 첫 쪽만 다름) 그 왼쪽 갈래들
+    #  모두가 늘 B 앞에만 오면 갈래마다 펼침면(2026-10-20 교재 2). 구간 끝 왼쪽 쪽 뒤에 다음 구간 첫 쪽이 오른쪽으로 오면 그 왼쪽은 혼자 온 반쪽
+    ends = lambda i, b: i + 1 >= n or kind[i + 1] != "본문" or sec[i + 1] not in (sec[i], b[0])
+    for b, ib in where.items():
+        if len(ib) < 2 or any(i in paired or i in paired.values() for i in ib) or not all(cand(i - 1) for i in ib):
             continue
-        b = sk(ia[0] + 1)
-        ib = where[b]
-        if b != a and all(sk(i + 1) == b for i in ia) and sorted(i - 1 for i in ib) == sorted(ia) and not any(i in paired.values() for i in ib):
-            for i in ia:
-                paired[i] = i + 1
+        As = {sk(i - 1) for i in ib}
+        if b in As or any(i in paired for a in As for i in where[a]):
+            continue
+        if all(i % 2 == 1 and (cand(i) and sk(i + 1) == b or ends(i, b)) for a in As for i in where[a]):
+            for i in ib:
+                paired[i - 1] = i
     spreads = list(dict.fromkeys((sec[i], cls[i], cls[j]) for i, j in paired.items()))
     rights = set(paired.values())
     # 4) 면 — 펼침면 갈래 · 혼자 온 반쪽은 그 펼침면(오른쪽에 온 왼쪽 쪽은 옆 탭만 더 붙음) · 나머지 1쪽 면 · MEMO · 간지는 생김새끼리
@@ -1256,12 +1271,38 @@ def _faces(doc, tok, P=None, feats=None):
         elif kind[i] == "MEMO":
             faces.setdefault(("MEMO", cls[i]), []).append(i + 1)
         else:
-            v = (_divider_vec(doc[i]), _divider_boxes(doc[i]), len(doc[i].get_text().strip()))
-            hit = next((k for k, r in reps if same(v, r)), None)
+            # 간지 펼침면 — 왼쪽 간지 오른 끝과 다음 오른쪽 간지 왼 끝에 같은 높이로 닿는 그림(쪽 전체 바탕 말고)이 있으면 그림이
+            # 가운데를 건너 이어진 한 벌이다(중등부 PART 간지 가운데 원). 바탕만 같은 간지 + 차례(상일보카)는 따로
+            two = i % 2 == 1 and i + 1 < n and kind[i + 1] == "간지" and _gutter_joined(doc[i], doc[i + 1])
+            v = (_divider_vec(doc[i]), _divider_boxes(doc[i]), len(doc[i].get_text().strip()), two)
+            hit = next((k for k, r in reps if r[3] == two and same(v, r)), None)
             if hit is None:
-                hit = ("간지", tok[i][1] if tok[i][0] == "간지" else _divider_name(doc[i]), i)
+                hit = ("간지", tok[i][1] if tok[i][0] == "간지" else _divider_name(doc[i]), i) + (("펼침",) if two else ())
                 reps.append((hit, v))
-            faces.setdefault(hit, []).append(i + 1)
+            faces.setdefault(hit, []).extend([i + 1, i + 2] if two else [i + 1])
+            if two:
+                rights.add(i + 1)
+    # 본문 면끼리 — 구간이 달라도 쪽 틀(위 띠 · 옆 탭)이 같고 왼쪽끼리 · 오른쪽끼리 본문 꼴이 t_join 이상 닮으면 작은 면을 큰 면에 넣는다.
+    # 구간은 예전 판정 이름표로 먼저 나뉘는데, 이름표 없는 쪽이 앞 쪽 이름을 물려받거나 지문 머리글이 이름표로 잡히면
+    # (포켓북 「FLOWNOTE」 · 「강 개념정리 C 계속적 용법」 · 「a little more fo…」) 같은 꼴 쪽이 다른 면으로 갈렸다(2026-10-20 교재 2 —
+    # 같은 꼴 0.90~0.99, 다른 꼴 0.72 아래). 작은 면의 쪽마다 같은 쪽(왼 · 오른)이 큰 면에 있어야 하고 쪽 틀이 그 안에 들어야 한다
+    def _side(k, r):
+        ps = [p - 1 for p in faces[k] if p % 2 == r]
+        return ps, {(F[i][0], F[i][1]) for i in ps}
+    for k in sorted((k for k in faces if k[0] in ("펼침", "한쪽")), key=lambda k: (len(faces[k]), -min(faces[k]))):
+        best = None
+        for k0 in faces:
+            if k0 == k or k0[0] not in ("펼침", "한쪽") or (len(faces[k0]), -min(faces[k0])) <= (len(faces[k]), -min(faces[k])):
+                continue
+            cs = []
+            for r in (0, 1):
+                (pa, fa), (pb, fb) = _side(k, r), _side(k0, r)
+                if pa:
+                    cs.append(_feat_cos(agg(pa), agg(pb)) if pb and fa <= fb else 0.0)
+            if min(cs) >= P["t_join"] and (best is None or min(cs) > best[0]):
+                best = (min(cs), k0)
+        if best:
+            faces[best[1]].extend(faces.pop(k))
     # 이름 — 구간 첫 쪽 위의 큰 글씨, 없으면 예전 판정 이름표, 겹치면 번호
     sname, used = {}, collections.Counter()
     for gi, (ps, _) in enumerate(groups):
@@ -1282,7 +1323,9 @@ def _faces(doc, tok, P=None, feats=None):
             pos = "첫 면" if ps[0] - 1 == min(groups[fk[1]][0]) else "왼쪽 면" if ps[0] % 2 == 0 else "오른쪽 면"
             rows.append({"label": f"{sname[fk[1]]} · {pos}", "kind": "본문", "size": 1, "pages": ps, "count": len(ps), "show": ps[:1]})
         else:
-            rows.append({"label": "MEMO" if fk[0] == "MEMO" else fk[1] or "간지", "kind": fk[0], "size": 1, "pages": ps, "count": len(ps), "show": ps[:1]})
+            two = fk[-1] == "펼침"
+            rows.append({"label": "MEMO" if fk[0] == "MEMO" else fk[1] or "간지", "kind": fk[0], "size": 2 if two else 1, "pages": ps,
+                         "count": len(ps) // 2 if two else len(ps), "show": ps[:2] if two else ps[:1]})
     return sorted(rows, key=lambda f: f["pages"][0])
 
 
