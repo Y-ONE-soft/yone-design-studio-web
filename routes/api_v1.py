@@ -560,6 +560,19 @@ def book_render(pid):
     return jsonify({"job": job.id, "status_url": url_for("api_v1.render_status", jid=job.id)}), 202
 
 
+@bp.route("/books/<pid>", methods=["DELETE"])
+def book_delete(pid):
+    """책(병합된 문서) 지우기 — 바깥 시스템이 책을 다시 만들 때 예전 책을 치운다. 템플릿 문서(관리 카드에 이어진 것)는 안 지운다."""
+    from core.units import store
+    plan = store.by_id(store.load("plans")).get(pid) if re.match(r"^[A-Za-z0-9_-]{1,64}$", pid or "") else None
+    if not plan:
+        abort(404)
+    if plan.get("catalog"):
+        return jsonify({"error": "템플릿 문서는 지울 수 없다"}), 400
+    store.delete("plans", pid)
+    return jsonify({"ok": True})
+
+
 def _run_book_render(job, log):
     from core.units import render, store
     from routes.units import _ctx

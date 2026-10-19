@@ -87,6 +87,7 @@ def test_render_validation(app):
     # 책(병합된 문서) 찍기 — 없는 책 · 이상한 id 는 404
     assert c.post("/api/v1/books/plan_nope/renders", json={}).status_code == 404
     assert c.post("/api/v1/books/..%2Fx/renders", json={}).status_code == 404
+    assert c.delete("/api/v1/books/plan_nope").status_code == 404
 
 
 def test_jobs_lost_on_boot(tmp_path, monkeypatch):
