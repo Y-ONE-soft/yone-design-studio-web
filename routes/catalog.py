@@ -1011,7 +1011,8 @@ _MM = 72 / 25.4
 #   t_new  같은 이름표 안에서 본문 꼴이 이 값보다 덜 닮으면 새 구간
 #   t_same 이름표가 달라도 본문 꼴이 이 값 이상 닮으면 한 구간(광문보카 파트 0.99, 정본 빈칸 어휘 · 어법 0.87)
 #   pair   띠가 이어진 짝이 그 갈래가 올 때의 이 비율 이상이면 펼침면
-FACE_PARAMS = {"t_new": 0.6, "t_same": 0.95, "pair": 0.8}
+#   t_sub  쪽 틀이 모두 같은 구간에서 본문 꼴이 이 값 이상 닮은 쪽끼리 한 갈래
+FACE_PARAMS = {"t_new": 0.6, "t_same": 0.95, "pair": 0.8, "t_sub": 0.75}
 _FACE_PARAMS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "faces_params.json")
 
 
@@ -1142,6 +1143,15 @@ def _faces(doc, tok, P=None, feats=None):
         if kind[i] == "본문" and not F[i][0] and any(d["rect"].width > p.rect.width * 0.9 and d["rect"].height > p.rect.height * 0.9
                                                     for d in p.get_drawings()):
             kind[i] = "간지"
+    # 글이 적어 간지로 잡힌 쪽이라도 쪽 틀(위 띠 · 번호표)이 본문 쪽과 같으면 본문의 짧은 쪽이다 — 앞 본문 쪽 이름을 잇는다
+    # (포켓북 지문이 짧은 쪽이 「Exercise 01」 · 「about a time」 같은 간지로 갈리던 것, 2026-10-20 교재 2 포켓북 22권)
+    tok = list(tok)
+    heads = {F[i][0] for i in range(n) if kind[i] == "본문" and F[i][0]}
+    for i in range(n):
+        if kind[i] == "간지" and F[i][0] in heads:
+            prev = next((j for j in range(i - 1, -1, -1) if kind[j] == "본문"), None)
+            kind[i] = "본문"
+            tok[i] = ("본문", tok[prev][1] if prev is not None else "", 0, "")
     body = [i for i in range(n) if kind[i] == "본문"]
     agg = lambda ps: sum((B[j] for j in ps), collections.Counter())
     # 1) 구간 — 예전 판정의 구성 이름표로 먼저 나누고, 같은 이름 안에서 본문 꼴이 바뀌면 또 나눈다(이름표 없는 구간이 앞 이름을
@@ -1172,6 +1182,27 @@ def _faces(doc, tok, P=None, feats=None):
     sec = {i: gi for gi, (ps, _) in enumerate(groups) for i in ps}
     # 2) 쪽 갈래 — 쪽 틀 + 예전 판정의 제목 유무 · 삽화 갈래
     cls = {i: (F[i][0], F[i][1], tok[i][2], tok[i][3]) for i in range(n)}
+    # 쪽 틀이 구간 안 모든 쪽에서 같으면(띠 하나뿐인 책 — 포켓북 지문 · 주제 · 암기 TEST 가 모두 같은 띠) 틀로는 못 가르니
+    # 본문 꼴로 쪽 갈래를 더 가른다: 갈래 무리(모은 꼴)와 t_sub 이상 닮으면 그 갈래, 아니면 새 갈래
+    # (2026-10-20 강동1 포켓북 — 지문끼리 0.90 · 지문과 주제 0.50 · 암기 TEST 와 정답 0.98)
+    for gi, (ps, _) in enumerate(groups):
+        if len({(F[i][0], F[i][1]) for i in ps}) > 1:
+            continue
+        subs = []                                         # [[쪽…], 모은 꼴]
+        for i in sorted(ps):
+            g = next((g for g in subs if _feat_cos(B[i], g[1]) >= P["t_sub"]), None)
+            if g is None:
+                g = [[], collections.Counter()]
+                subs.append(g)
+            g[0].append(i); g[1].update(B[i])
+        for g in [g for g in subs if len(g[0]) == 1 and len(subs) > 1]:   # 한 쪽뿐인 갈래는 가장 닮은 갈래로(배재 포켓북 64쪽 — 삽화 면 하나만 꼴이 조금 다름)
+            hs = [h for h in subs if h is not g and len(h[0]) > 1]
+            if hs:
+                h = max(hs, key=lambda h: _feat_cos(g[1], h[1]))
+                h[0].extend(g[0]); h[1].update(g[1]); g[0].clear()
+        for k, g in enumerate(subs):
+            for i in g[0]:
+                cls[i] = cls[i] + (k,)
     sk = lambda i: (sec[i], cls[i])
     # 3) 펼침면 — 짝수 쪽(왼쪽) i 와 i+1 이 본문이고
     #  ① 띠가 이어짐(같은 높이) — 다른 두 갈래 A · B 는 A 가 왼쪽에만 · B 가 오른쪽에만 오고 A 뒤 본문의 pair(80%)+ 가 B · B 앞 본문의 pair+ 가 A
@@ -1186,11 +1217,14 @@ def _faces(doc, tok, P=None, feats=None):
     for i in body:
         sides[sk(i)].add(i % 2)
     jt = collections.Counter((sk(i), sk(j)) for i, j in joined.items())
+    ja = collections.Counter(sk(i) for i in joined)                     # 왼쪽 갈래 A 가 띠 이어진 짝을 이룬 수(짝 갈래 모두)
     paired = {}
     for i, j in joined.items():
         a, b = sk(i), sk(j)
         c = jt[(a, b)]
-        if c >= after[a] * P["pair"] and (a == b or sides[a] == {1} and sides[b] == {0} and c >= before[b] * P["pair"]):
+        # 다른 갈래 짝: A 뒤 본문의 pair+ 가 띠 이어진 짝(짝 갈래가 여럿이어도 — 지문 + 주제 · 지문 + 노트) · B 는 오른쪽에만, B 앞의 pair+ 가 A
+        if a == b and c >= after[a] * P["pair"] or \
+                a != b and ja[a] >= after[a] * P["pair"] and sides[a] == {1} and sides[b] == {0} and c >= before[b] * P["pair"] and (c >= 2 or c == after[a]):
             paired[i] = j
     where = collections.defaultdict(list)
     for i in body:
