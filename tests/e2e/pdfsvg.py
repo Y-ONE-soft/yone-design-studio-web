@@ -17,7 +17,8 @@ def export(pdf, pno, x, y, w, h, out):
     paths = []
     for d in p.get_drawings():
         r = d["rect"]
-        if not (clip.contains(r) or clip.intersects(r)) or r.width > clip.width * 1.5:
+        rr = r + (-0.5, -0.5, 0.5, 0.5)                               # 폭 0 인 선(세로 · 가로 선)은 빈 상자라 겹침 판정이 늘 거짓 — 반 pt 넓혀 본다(광문보카 모눈 세로선)
+        if not (clip.contains(r) or clip.intersects(rr)) or r.width > clip.width * 1.5:
             continue
         seg, cur = [], None
         for it in d["items"]:

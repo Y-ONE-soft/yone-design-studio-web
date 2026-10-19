@@ -454,12 +454,17 @@ def ref_image(doc, xref, path):
     import pymupdf
     from PIL import Image, ImageCms
     pix = pymupdf.Pixmap(doc, xref)
+    sm = re.search(r"/SMask (\d+) 0 R", doc.xref_object(xref))             # 투명 마스크(따로 든 회색 그림) — 둥근 모서리 탭 등. 없으면 지금과 같다
+    mask = Image.frombytes("L", (pix.width, pix.height), pymupdf.Pixmap(doc, int(sm.group(1))).samples) if sm else None
     oi = re.search(r"/OutputIntents\s*\[\s*(\d+) 0 R", doc.xref_object(doc.pdf_catalog()))
     if pix.n - pix.alpha == 4 and oi:
         prof = re.search(r"/DestOutputProfile (\d+) 0 R", doc.xref_object(int(oi.group(1))))
         im = Image.frombytes("CMYK", (pix.width, pix.height), pix.samples if not pix.alpha else pymupdf.Pixmap(pix, 0).samples)
-        ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(doc.xref_stream(int(prof.group(1))))),
-                                  ImageCms.createProfile("sRGB"), outputMode="RGB").save(path)
+        rgb = ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(doc.xref_stream(int(prof.group(1))))),
+                                        ImageCms.createProfile("sRGB"), outputMode="RGB")
+        if mask is not None and mask.size == rgb.size:                       # 광문보카 MEMO 탭 — 마스크를 버려 모서리가 검게 나왔다(2026-10-19)
+            rgb.putalpha(mask)
+        rgb.save(path)
         return path
     if pix.n - pix.alpha >= 4:
         pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
