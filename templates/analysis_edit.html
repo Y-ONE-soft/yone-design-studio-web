@@ -763,17 +763,17 @@ function hitSentence(target, x, y) {                                     // 문�
   return {i, no: (ROWS[i] || {}).no ?? i + 1, a, at, row, word: at >= 0 ? wordOf(row.en, at, at + 1) : null};
 }
 function slotIndex(el, slot) {                                           // 여러 칸 자리의 몇째(선지 · 지문 단락 · 어휘 줄) — 이어진 문단은 앞 칸
-  const ps = [...$("#pages").querySelectorAll(`[data-slot="${slot}"]`)].flatMap(b => b.tagName === "P" ? [b] : [...b.querySelectorAll("p")]);
+  const ps = [...$("#pages").querySelectorAll(`[data-slot="${slot}"],[data-bind="${slot}"]`)].flatMap(b => b.tagName === "P" ? [b] : [...b.querySelectorAll("p")]);
   const at = ps.indexOf(el.closest("p"));
   let k = -1;
   for (let q = 0; q <= at; q++) if (!ps[q].dataset.storyCont) k++;
   return Math.max(0, k);
 }
 function pickInfo(e, kind) {
-  const box = e.target.closest && e.target.closest("[data-slot]");
+  const box = e.target.closest && (e.target.closest("[data-slot]") || e.target.closest("[data-bind]"));   // data-bind = 크기 고정 원고 자리(어휘)
   if (!box) return null;
   const side = e.target.closest("[data-side]"), sp = e.target.closest("p[data-slot]");
-  const slot = side && sp && sp.dataset.slot === "문장" ? "문법 포인트" : (sp || box).dataset.slot;
+  const slot = side && sp && sp.dataset.slot === "문장" ? "문법 포인트" : (sp || box).dataset.slot || box.dataset.bind;
   const m = {type: "yos-analysis-pick", kind, slot, no: null, start: null, end: null, word: null, index: null, field: null, text: "", x: e.clientX, y: e.clientY};
   if (sp && ["문장", "해석"].includes(sp.dataset.slot)) { const i = rowOf(sp, sp.dataset.slot); m.no = (ROWS[i] || {}).no ?? i + 1; }
   if (slot === "문장") {
@@ -783,7 +783,9 @@ function pickInfo(e, kind) {
     m.text = ((side || e.target.closest("p") || box).textContent || "").replace(/⁠/g, "").trim().slice(0, 40);
   }
   if (["문제지문", "선지", "어휘"].includes(slot)) m.index = slotIndex(e.target, slot);
-  if (slot === "어휘") { const p = e.target.closest("p") || box; const r = p.getBoundingClientRect(); m.field = e.clientX - r.left > r.width * 0.35 ? "meaning" : "word"; }
+  if (slot === "어휘") { const p = e.target.closest("p") || box; const r = p.getBoundingClientRect(); m.field = e.clientX - r.left > r.width * 0.35 ? "meaning" : "word";
+    const v = ((base && base.voca) || []).filter(x => x.word)[m.index];   // 낱말 뒤 품사 칩(core/sources/yos_analysis._voca_field) — 누른 글이 그 줄의 품사면
+    if (m.field === "word" && v && v.pos && (e.target.textContent || "").replace(/[\s ]/g, "") === v.pos) m.field = "pos"; }
   lastPick = {el: side ? (side.firstElementChild || side) : slot === "문장" || slot === "해석" ? rowParts(slot, rowOf(sp, slot))[0] : (["발문", "문제지문", "선지", "답"].includes(slot) ? box.closest("div[data-slot]") || sp || box : sp || box), slot};
   return m;
 }

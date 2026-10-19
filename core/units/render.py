@@ -2049,6 +2049,8 @@ def _atom_svg_raw(ctx, a, dy, h, html):
             st += f' data-grow="1" data-h0="{float(a["h"]):.3f}" data-hcur="{h:.3f}" data-tol="{below_tol(a):.3f}" data-ref="{esc(str(a.get("auto_ref") or "tl"))}" data-mode="{auto_size(a)}"'
             if a.get("bind") and not str(a["bind"]).startswith("sys."):          # 원고 자리 — 글 길이가 바뀌는 상자(틀 검사가 본다)
                 st += f' data-slot="{esc(a["bind"])}"'
+        elif a.get("bind") and not str(a["bind"]).startswith("sys.") and "+" not in str(a["bind"]):
+            st += f' data-bind="{esc(a["bind"])}"'                             # 크기 고정 원고 자리(어휘 등) — 누른 자리를 알리는 지면(analysis_edit)만 본다
         if a.get("tsume"):                                                     # 자간 축소 — 글자 잉크 상자는 크롬 안에서 잰다(units_compose.js 의 tsume)
             st += f' data-tsume="{float(a["tsume"]):g}"'
         return (f'<g transform="translate({a["x"]} {a["y"] + dy:.3f}) scale({1 / z:g})">'
