@@ -5,7 +5,7 @@
 
 배포서버 편집기로 열어 다시 등록하다 그 서버 브랜드가 섞인 카드를 리포 것으로 되돌릴 때(2026-10-12 광문 분석본).
 """
-import json, os, subprocess, sys
+import json, os, subprocess, sys, urllib.request
 
 E2E = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(E2E))
@@ -53,6 +53,16 @@ try:
     print("\n".join(ln for ln in log.splitlines() if ("js →" in ln and ("등록" in ln or "가져옴" in ln)) or "ERR" in ln))
     if any("ERR" in ln or "Traceback" in ln for ln in log.splitlines()):
         sys.exit("되돌리기 실패 — " + os.path.join(OUT, "rec.log"))
+    # 뒷정리 — 여는 데 쓴 빈 문서와, 같은 카드를 가리키던 예전 문서를 지운다(방금 들여온 문서 하나만 남김).
+    # 안 지우면 돌릴 때마다 「내 문서」에 「되돌리기 …」 + 같은 이름 문서가 쌓였다(2026-10-19 상용).
+    plans = json.load(urllib.request.urlopen(join.BASE + "/api/units/library", timeout=60))["plans"]
+    mine = [p["id"] for p in plans if (p.get("catalog") or {}).get("design") == did]
+    for p in plans:
+        if p.get("name") == f"되돌리기 {did}" or (p["id"] in mine[:-1]):
+            req = urllib.request.Request(join.BASE + "/api/units/plans", method="DELETE", data=json.dumps({"id": p["id"]}).encode(),
+                                         headers={"Content-Type": "application/json"})
+            urllib.request.urlopen(req, timeout=60)
+            print("지움:", p["id"], p.get("name"))
 finally:
     if srv:
         srv.kill()
