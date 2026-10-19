@@ -262,7 +262,7 @@ def foot_left(pno, sp):
     bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|")
     book = sp_line(sp, lambda s: s["base"] > 200 and 23 < s["x"] < 60 and s["size"] == 6.0)
     st += T(num, ELICE, 700, label="쪽 번호 — 시스템 자리 「쪽 번호」", w=6, bind="sys.page_no")
-    st += T(bar, ELICE, 500, label="|")
+    st += T(bar, ELICE, 300, label="| — Elice DX Neolli Light(막대 폭 0.082em — 500 은 잉크 1.54 · Pretendard 400 은 0.49)")
     st += T(book, ELICE, 500, label="책 이름 — 원고 자리 「책 이름」", slot_name="책 이름", temp="책 이름", w=30)
     CONTENT.setdefault("책 이름", []).append(book["text"])
     return st
@@ -275,7 +275,7 @@ def foot_right(pno, sp):
     bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|")
     num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] > 126 and s["size"] == 6.0)
     st += T(dd, ELICE, 500, label="꼬리 DAY — 원고 자리 「꼬리 DAY」", slot_name="꼬리 DAY", temp="DAY 00", w=round(dd["x1"] - dd["x"] + 3, 1))
-    st += T(bar, ELICE, 500, label="|")
+    st += T(bar, ELICE, 300, label="| — Elice DX Neolli Light(막대 폭 0.082em — 500 은 잉크 1.54 · Pretendard 400 은 0.49)")
     st += T(num, ELICE, 700, label="쪽 번호 — 시스템 자리 「쪽 번호」 (오른쪽 맞춤)", w=6, align="right", bind="sys.page_no")
     CONTENT.setdefault("꼬리 DAY", []).append(dd["text"])
     return st
@@ -287,8 +287,14 @@ def side_tab(pno, sp, dr):
     st = [S("옆 탭 — 첫 견본 자리(DAY 마다 다른 자리는 책에서 손보기)", 1200)]
     back = next(e for e in dr if e["x"] > 140 and e["rect"] and e["h"] > 15)
     front = next(e for e in dr if e["x"] > 140 and not e["rect"] and e["h"] > 15)
-    st += rbox(back["x"], back["y"], back["w"], back["h"], back["fill"], label="옆 탭 바탕(파랑)")
-    st += ref_shape(front, fill=front["fill"], label="옆 탭(진한 둥근 탭)")
+    # 원본: 진한 탭(위 끝 20.43) 위에 파랑 상자가 위 1.2mm 만 잘려(PDF 자르기 영역) 덮였다 — 보이는 파랑 = 탭 머리 0.93mm(왼쪽 위 귀 둥글게).
+    # 진한 탭을 먼저, 그 위에 파랑 머리를 얹는다. 맞대기는 원본에서 보이는 몫 그대로(진한 탭은 파랑 아래부터)
+    cap_h = 0.93
+    st += ref_shape(front, fill=front["fill"], label="옆 탭(진한 둥근 탭)", measure=False)
+    Ebox(front["x"] + 0.05, back["y"] + cap_h, front["w"], front["y"] + front["h"] - back["y"] - cap_h, front["fill"])
+    st += box(back["x"], back["y"], back["w"], cap_h, back["fill"], label="옆 탭 파랑 머리(위 0.93mm · 왼쪽 위 귀 둥글게 1.2mm)")
+    st += [F('#side input[data-a="radius4"]', "1.2, 0, 0, 0", 700)]
+    Ebox(back["x"], back["y"] + 0.09, back["w"] - 2.96, 1.02, back["fill"])
     p, t = REF[pno - 1], REF[pno - 1].trimbox
     tab = next((sp_["bbox"], sp_["size"], "#%06x" % sp_["color"], "".join(c["c"] for c in sp_["chars"]))
                for b in p.get_text("rawdict")["blocks"] for l in b.get("lines", []) if l["dir"] == (0.0, 1.0) for sp_ in l["spans"])
