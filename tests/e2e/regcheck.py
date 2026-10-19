@@ -99,7 +99,8 @@ def run():
         print("⚠ 커밋 안 한 편집기 코드가 있다 — 결과는 이 상태로 그린 것. 머지 확인에 쓰려면 커밋한 뒤 다시 돌린다")
     git("fetch", "-q", "origin", "main")
     base_code = tempfile.mkdtemp(prefix="regcheck_main_")
-    arc = subprocess.run(["git", "archive", "origin/main", "core", "routes", "templates", "static"], cwd=REPO, capture_output=True)
+    arc = subprocess.run(["git", "archive", "origin/main", "--", ".", ":(exclude)catalog", ":(exclude)tests", ":(exclude)docs"],   # main 코드 통째로 —
+                         cwd=REPO, capture_output=True)                     # core · routes 만 꺼내면 main 의 routes 가 부르는 engines 를 이 브랜치에서 찾다 깨진다(2026-10-19 예전 엔진 정리)
     subprocess.run(["tar", "-x", "-C", base_code], input=arc.stdout, check=True)
     res = {"commit": git("rev-parse", "HEAD"), "main": git("rev-parse", "origin/main"), "dirty": bool(dirty),
            "time": time.strftime("%Y-%m-%d %H:%M"), "cards": {}}
