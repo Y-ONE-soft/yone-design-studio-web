@@ -100,10 +100,7 @@ def run_steps(fast, video):
         import actions
         known = json.load(open(actions.LIST, encoding="utf-8"))["동작"]
         new = sorted({k for st_ in json.load(open(os.path.join(wdir, "steps.json"), encoding="utf-8")) for k in actions.kinds(st_) if k not in known})
-        grp = any("#s-group" in str(st_.get("click", "")) for st_ in json.load(open(os.path.join(wdir, "steps.json"), encoding="utf-8")))
-        DIRECT = not new and not grp                                         # 그룹 → 부품은 바로 넣기에서 아직 안 된다(부품 안 생김, 2026-10-15 미해결) — 사람 조작으로
-        if grp and not new:
-            print("검증한 종류지만 그룹 → 부품이 있어 사람 조작으로(바로 넣기에서 부품이 안 생기는 문제 미해결)", flush=True)
+        DIRECT = not new                                                     # (그룹 → 부품도 — 바로 넣기가 서버 주고받기 끝을 기다린다, rec.py hold · 2026-10-19)
         print("검증한 종류 — 바로 넣기로" if DIRECT else "처음 보는 동작 " + str(len(new)) + "가지 — 사람 조작으로: " + " · ".join(new[:6]), flush=True)
         if DIRECT:
             env["REC_DIRECT"] = "1"

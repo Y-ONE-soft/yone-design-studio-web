@@ -103,6 +103,9 @@ try:
         ms = ms / SPEED
         if DIRECT:
             time.sleep(min(ms, 60) / 1000.0)
+            t_end = time.time() + 15                 # 서버와 주고받는 중이면 끝날 때까지 — 사람은 대본의 기다림(1.5초)이 덮지만 바로 넣기는 60ms 라
+            while time.time() < t_end and c.js("window.__busy || 0"):   # 그룹 → 부품 저장 전에 다음 검사가 돌아 「부품 안 생김」(2026-10-15 · 10-19)
+                time.sleep(0.05)
             return
         if FAST:
             time.sleep(min(ms, 300) / 1000.0)      # 화면이 따라올 최소한만
