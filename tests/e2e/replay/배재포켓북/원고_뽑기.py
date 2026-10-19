@@ -129,11 +129,15 @@ def analysis(page, H):
         for wi, w in enumerate(words):
             mw, ww_ = m["x1"] - m["x0"], w["x1"] - w["x0"]
             # 원본 모양대로 — 낱말보다 넓은 윗주가 왼쪽 끝을 그 낱말 왼쪽 끝에 맞췄으면(가운데끼리보다 가까우면) 왼쪽 맞춤
-            if mw > ww_ * 1.2 and w["x0"] - 1.5 <= m["x0"] <= w["x1"] and abs(m["x0"] - w["x0"]) < abs(cx - (w["x0"] + w["x1"]) / 2):
+            # 왼쪽 끝이 낱말 왼쪽 끝 근처(3pt 안)일 때만 — 「낱말 안 어디든」이면 이웃 윗주를 비키려고 오른쪽으로 민 윗주(70쪽 「is」의
+            # 「V 단수 수동태」 — 원본 작업자가 오프셋 X 로 민 것)가 앞 낱말(「that」)에 붙었다
+            if mw > ww_ * 1.2 and abs(m["x0"] - w["x0"]) <= 3 and abs(m["x0"] - w["x0"]) < abs(cx - (w["x0"] + w["x1"]) / 2):
                 cx_w = m["x0"]
             else:
                 cx_w = None
-            if cx_w is None and not (w["x0"] - 1 <= cx <= w["x1"] + 1):
+            # 가운데 맞춤 — 가운데가 낱말 폭(±1) 안, 또는 낱말보다 넓은 윗주가 낱말 절반 넘게 덮으면(민 윗주는 가운데가 낱말 밖일 수 있다)
+            cover = min(m["x1"], w["x1"]) - max(m["x0"], w["x0"])
+            if cx_w is None and not (w["x0"] - 1 <= cx <= w["x1"] + 1 or (mw > ww_ and cover > ww_ * 0.5)):
                 continue
             pos = "below" if -2 <= m["y0"] - w["y1"] <= 4 else "above" if -2 <= w["y0"] - m["y1"] <= 4 else None   # 낱말 상자와 2pt 까지 겹쳐도(「exciting (X)」)
             if pos:
