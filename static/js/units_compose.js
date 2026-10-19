@@ -459,7 +459,7 @@
     if (getComputedStyle(b).position === "static") b.style.position = "relative";
     const m = document.createElement("span");
     m.className = "story-over";
-    m.title = "글이 넘친다 — 이을 상자가 더 없다";
+    m.title = "넘침 — 텍스트 스레드로 이을 텍스트 프레임이 없다";
     m.setAttribute("style", "position:absolute;right:0;bottom:0;width:2.4px;height:2.4px;background:#e0245e;color:#fff;font:bold 2.2px/2.4px sans-serif;text-align:center;text-indent:0;letter-spacing:0;z-index:2");
     m.textContent = "+";
     b.appendChild(m);
