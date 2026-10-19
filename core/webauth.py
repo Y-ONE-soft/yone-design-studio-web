@@ -49,7 +49,7 @@ bp = Blueprint("webauth", __name__)
 _PUBLIC_PREFIX = ("/auth/", "/static/")
 _PUBLIC_EXACT = ("/api/health", "/api/v1/health", "/healthz", "/favicon.ico")
 # 이 경로들은 contents 화면 안 iframe 으로 들어갈 수 있다(작업대·지면·PDF)
-_EMBEDDABLE = ("/book-studio", "/embed/", "/catalog/out/", "/api/v1/renders/", "/analysis-edit", "/pocketbook-view")
+_EMBEDDABLE = ("/book-studio", "/embed/", "/catalog/out/", "/api/v1/renders/", "/analysis-edit", "/pocketbook-view", "/units")   # /units = 책(병합된 문서) 고치기 — contents 분석본 NEW 권
 
 
 class AuthError(Exception):

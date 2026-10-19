@@ -84,6 +84,9 @@ def test_render_validation(app):
                                         "source": {"type": "data", "data": {"format": "wat"}}})
     assert r.status_code == 400 and "yos-analysis-v1" in r.get_json()["error"]
     assert c.get("/api/v1/books").status_code == 404 and c.post("/api/v1/embed-token", json={}).status_code == 404
+    # 책(병합된 문서) 찍기 — 없는 책 · 이상한 id 는 404
+    assert c.post("/api/v1/books/plan_nope/renders", json={}).status_code == 404
+    assert c.post("/api/v1/books/..%2Fx/renders", json={}).status_code == 404
 
 
 def test_jobs_lost_on_boot(tmp_path, monkeypatch):

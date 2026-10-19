@@ -504,6 +504,14 @@
     }
   }
 
+  function overset(root) {                                             // 잇지 않은 글상자(크기 고정)도 넘치면 빨간 + — 인디자인은 모든 텍스트 프레임에 단다. 글은 그대로(상자 끝에서 잘린 채)
+    root.querySelectorAll("foreignObject > div[lang]:not([data-story]):not([data-grow])").forEach(o => {
+      if (o.dataset.overflow || !holder(o)) return;
+      const ps = paras(holder(o));
+      if (ps.length && inkBottom(ps[ps.length - 1]) > limitOf(o)) markOver(o);
+    });
+  }
+
   // ── 자동 크기 바로잡기 (인디자인 텍스트 프레임 「자동 크기 조정 — 높이만」) ──
   // 서버는 글 높이를 어림해(render.text_h) 상자를 키우고 아래 것을 민다. 원고가 바뀌면 어림이 실제와 어긋나 글이 잘리거나 겹친다
   // (02B 다른 원고: 지문이 6.1mm 잘림). 여기서 크롬이 실제로 그린 높이로 상자를 다시 맞추고 아래 것을 민다 — 서버와 같은 규칙:
@@ -610,6 +618,7 @@
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
     try { dropSpares(root || document); } catch (e) { /* 못 하면 빈 덧쪽이 남는다 */ }
     try { grow(root || document); } catch (e) { /* 못 하면 서버 어림 높이 그대로 */ }
+    try { overset(root || document); } catch (e) { /* 못 하면 넘침 표시 없이 */ }
   }
 
   window.unitsCompose = composeAll;

@@ -3,6 +3,7 @@
 브라우저: `YONE_VIV_BROWSER`(컨테이너 /usr/bin/chromium) → 이 맥의 크롬 → PATH 의 chromium/google-chrome.
 서체는 브라우저가 가진 것으로 그린다 — 없는 서체는 폴백(컨테이너는 fonts-noto-cjk).
 """
+import json
 import os
 import shutil
 import subprocess
@@ -11,6 +12,12 @@ import tempfile
 from core.units import fonts
 
 PT = 72 / 25.4
+OVER_MARK = " ⟦overset⟧"         # 크롬이 그린 넘침(빨간 + 붙은 글상자)을 PDF 제목 끝에 실어 내보낸다 — 인쇄 뒤 읽고 제목은 되돌린다(exact_pages)
+_OVER_JS = ("document.addEventListener('DOMContentLoaded',()=>(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(()=>{"
+            "const o=[...document.querySelectorAll('.p')].map((p,i)=>[i+1,[...p.querySelectorAll('[data-overflow]')]"
+            ".map(e=>{const c=e.cloneNode(true);c.querySelectorAll('[data-ruby],[data-side],[data-anc],.story-over').forEach(x=>x.remove());"
+            "return c.textContent.replace(/[\\s\\u2060]+/g,' ').trim().slice(0,40);})]).filter(x=>x[1].length);"
+            f"if(o.length)document.title+={json.dumps(OVER_MARK)}+JSON.stringify(o);}},50)));")
 _MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 
@@ -39,7 +46,7 @@ def html_of(svgs, w_mm, h_mm, title="지면", keep=None, pad=0):
             f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:visible;page-break-after:always;break-after:page;clip-path:inset(0 -{pad}mm -{pad}mm 0)}} '   # 면 위·왼쪽 밖(재단 여백까지 그린 머리 띠)이 앞 면 아래로 비치지 않게
             f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm;overflow:visible}} .p svg .zone{{display:none}} '
             f'.story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("file")}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
-            f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}</body></html>')
+            f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}<script>{_OVER_JS}</script></body></html>')
 
 
 def _compose_js():
@@ -52,8 +59,9 @@ def _compose_js():
         return ""
 
 
-def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None):
-    """svgs → PDF 파일. 브라우저가 없으면 RuntimeError."""
+def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None, report=None):
+    """svgs → PDF 파일. 브라우저가 없으면 RuntimeError.
+    report — 주면 report["overset"] = [[쪽 번호, [넘친 글상자 글 앞머리, …]], …] (크롬이 실제로 그린 넘침)."""
     b = browser()
     if not b:
         raise RuntimeError("크로미움이 없다 — YONE_VIV_BROWSER 또는 크롬 설치")
@@ -68,15 +76,29 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None):
     if not os.path.exists(out_path) or os.path.getsize(out_path) < 100:
         raise RuntimeError("PDF 가 안 나왔다: " + (r.stderr or r.stdout or "")[-400:])
     shutil.rmtree(d, ignore_errors=True)
-    exact_pages(out_path, w_mm, h_mm)
+    over = exact_pages(out_path, w_mm, h_mm)
+    if report is not None:
+        report["overset"] = over
     return out_path
 
 
 def exact_pages(path, w_mm, h_mm):
     """쪽 크기를 판형 그대로 — 크롬은 @page 크기를 1/300 인치로 내린다(A4 210mm → 594.96pt, 0.11mm 좁다).
-    판형보다 1mm 크게 그려 두고(html_of pad) 쪽마다 MediaBox·CropBox 를 왼쪽 위에서 판형 크기로 자른다."""
+    판형보다 1mm 크게 그려 두고(html_of pad) 쪽마다 MediaBox·CropBox 를 왼쪽 위에서 판형 크기로 자른다.
+    제목 끝에 실려 온 넘침(OVER_MARK)은 떼어 돌려준다 → [[쪽, [글 앞머리…]], …]."""
     import fitz
     doc = fitz.open(path)
+    over = []
+    meta = doc.metadata or {}
+    t = meta.get("title") or ""
+    if OVER_MARK in t:
+        t, js = t.split(OVER_MARK, 1)
+        try:
+            over = json.loads(js)
+        except ValueError:
+            over = []
+        doc.set_metadata({k: v for k, v in dict(meta, title=t).items()
+                          if k in ("author", "producer", "creator", "title", "subject", "keywords", "creationDate", "modDate") and v})
     w, h = float(w_mm) * PT, float(h_mm) * PT
     for pg in doc:
         mb = pg.mediabox                                                  # PDF 좌표(아래가 0) — 글은 위에서부터 놓였다
@@ -87,6 +109,7 @@ def exact_pages(path, w_mm, h_mm):
     doc.save(tmp, garbage=3, deflate=True)
     doc.close()
     os.replace(tmp, path)
+    return over
 
 
 # ── 인쇄용 ──────────────────────────────────────────────────────────────
@@ -136,7 +159,7 @@ def stamp_boxes(path, trim_w, trim_h, bleed, marks, log=None):
     return n
 
 
-def to_print_pdf(svgs, trim_w, trim_h, out_path, bleed=3.0, marks=True, skin=None, cmyk=True, title="인쇄", log=None):
+def to_print_pdf(svgs, trim_w, trim_h, out_path, bleed=3.0, marks=True, skin=None, cmyk=True, title="인쇄", log=None, report=None):
     """인쇄용 PDF — 도련·재단선이 든 SVG(render.Ctx.print) → PDF → (Ghostscript 있으면) CMYK + 무채색은 K 단색 → 상자 박기.
 
     Returns {"pdf", "pages", "cmyk": bool, "note": str}
@@ -145,7 +168,7 @@ def to_print_pdf(svgs, trim_w, trim_h, out_path, bleed=3.0, marks=True, skin=Non
     m = float(bleed) + (5.0 if marks else 0.0)
     mw, mh = float(trim_w) + 2 * m, float(trim_h) + 2 * m
     rgb = out_path + ".rgb.pdf"
-    to_pdf(svgs, mw, mh, rgb, title=title)
+    to_pdf(svgs, mw, mh, rgb, title=title, report=report)
     note = ""
     done = False
     if cmyk:

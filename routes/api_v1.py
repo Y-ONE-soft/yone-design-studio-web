@@ -492,7 +492,6 @@ def _editor_lib(meta, content):
 
 
 def _run_editor_render(job, log):
-    from core.units import pdf as _pdf
     from routes.units import _ctx, fill_svgs
     d, series, design = job.meta["book_dir"], job.meta["series"], job.meta["design"]
     with open(os.path.join(d, "content.json"), encoding="utf-8") as f:
@@ -505,12 +504,22 @@ def _run_editor_render(job, log):
         ctx.print = {"bleed": float(sp.get("bleed") or 3.0), "marks": False}
     svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else ""))
+    res = _print_pdf(job, svgs, spec, ctx, log)
+    res.update(report=job.meta.get("report"), fill={"filled": rep.get("filled"), "unfilled": rep.get("unfilled")})
+    return res
+
+
+def _print_pdf(job, svgs, spec, ctx, log):
+    """면 SVG → 잡 폴더 PDF(+ blob) — 조판(원고 넣기)과 책(병합된 문서) 찍기가 같이 쓴다. 넘침(크롬이 그린 빨간 +)은 경고로."""
+    from core.units import pdf as _pdf
+    d = job.meta["book_dir"]
     main = job.meta["stem"] + ".pdf"
+    seen = {}                                                          # 크롬이 그린 넘침 — pdf.to_pdf 가 채운다
     if job.meta.get("print"):
         _pdf.to_print_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), bleed=ctx.print["bleed"], marks=False,
-                          cmyk=False, title=job.meta["stem"], log=log)
+                          cmyk=False, title=job.meta["stem"], log=log, report=seen)
     else:
-        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"])
+        _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"], report=seen)
     pages = None
     try:
         import fitz
@@ -525,9 +534,48 @@ def _run_editor_render(job, log):
                 uploaded[main] = {"url": r["url"], "pathname": r["pathname"], "access": r["access"]}
         except Exception as e:                                         # noqa: BLE001 — 업로드 실패가 조판 결과를 지우면 안 된다
             log(f"[blob] {main} 업로드 실패: {e}")
-    job.rc = 0
-    return {"pdfs": [main], "main_pdf": main, "pages": pages, "verify_ok": True, "blob": uploaded,
-            "report": job.meta.get("report"), "fill": {"filled": rep.get("filled"), "unfilled": rep.get("unfilled")}}
+    over = [{"page": n, "text": t} for n, ts in seen.get("overset") or [] for t in ts]
+    for o in over:                                                     # 넘침 — 글상자에 다 안 들어가 잘린 글(인디자인 빨간 +). 산출은 내되 경고로
+        log(f"[넘침] {o['page']}쪽 · {o['text']}…")
+    job.rc = 1 if over else 0
+    return {"pdfs": [main], "main_pdf": main, "pages": pages, "verify_ok": not over, "overset": over, "blob": uploaded}
+
+
+@bp.route("/books/<pid>/renders", methods=["POST"])
+def book_render(pid):
+    """책(병합된 문서, /renders/<jid>/merge 가 만든 것)을 편집기에서 손본 그대로 찍는다. {print?: true} 면 판형 + 도련.
+    → {job, status_url} — 상태 · 파일 · 쪽 그림은 조판과 같은 /renders/<job>/…"""
+    from core.units import store
+    if not re.match(r"^[A-Za-z0-9_-]{1,64}$", pid or "") or not store.by_id(store.load("plans")).get(pid):
+        abort(404)
+    body = request.get_json(silent=True) or {}
+    plan = store.by_id(store.load("plans"))[pid]
+    stem = re.sub(r"[^\w가-힣·() -]+", "_", str(plan.get("name") or pid)).strip()[:80] or pid
+    u = current_user() or {}
+    job = jobs.start("render", _run_book_render,
+                     meta={"book_dir": _editor_dir(), "key": f"book/{pid}", "bid": "", "stem": stem, "plan": pid,
+                           "steps": ["book"], "source": "book", "callback": body.get("callback"), "via": "api_v1",
+                           "created_by": u.get("sub"), "print": body.get("print") is True})
+    job.meta["bid"] = job.id
+    return jsonify({"job": job.id, "status_url": url_for("api_v1.render_status", jid=job.id)}), 202
+
+
+def _run_book_render(job, log):
+    from core.units import render, store
+    from routes.units import _ctx
+    lib = store.library()
+    plan = store.by_id(lib["plans"]).get(job.meta["plan"])
+    if not plan:
+        raise RuntimeError("책 문서가 없다 — " + job.meta["plan"])
+    ctx = _ctx(lib, plan.get("skin"))
+    spec = store.by_id(lib["specs"]).get(plan.get("spec")) or render.DEFAULT_SPEC
+    if job.meta.get("print"):
+        ctx.print = {"bleed": float(spec.get("bleed") or 3.0), "marks": False}
+    svgs = render.plan_svgs(ctx, plan, lib["sets"], lib)
+    log(f"[책] {plan.get('name') or plan['id']} · 면 {len(svgs)}")
+    if not svgs:
+        raise RuntimeError("그릴 면이 없다")
+    return _print_pdf(job, svgs, spec, ctx, log)
 
 
 def _job_out(job, since=0):
