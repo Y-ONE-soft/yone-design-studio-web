@@ -15,7 +15,7 @@
   상태.json  {"ref": "catalog/workbook/designs/d1/reference.pdf", "pages": [1, 2]}
              pages = 원본 쪽. 대본이 새로 만든 지면과 차례대로 맞댄다.
 단위마다 데이터 폴더를 따로 써서(YONE_CATALOG_DIR) 지우기·병렬이 그 단위에만 미친다.
-병렬: REPLAY_PORT(서버, 기본 5101) · REC_PORT(크롬, 기본 9466) 를 세션마다 다르게.
+병렬: 서버 · 크롬 포트는 비어 있는 것을 알아서 고른다(정하려면 REPLAY_PORT · REC_PORT).
 구성 하나만: <단위>@<구성 번호>(예: 정본-최종@4) — 그 대본(make.py)이 그 구성만 빈 문서에서 처음부터 만든다(GUSEONG).
   데이터·결과·만든 대본은 그 이름의 폴더에 따로 — 여러 구성을 동시에 돌려도 안 섞인다. 판정은 책 전체와 같다.
 """
@@ -23,7 +23,8 @@ import json, os, shutil, subprocess, sys, time, urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PY = sys.executable
-PORT = int(os.environ.get("REPLAY_PORT") or 5101)
+from cdp import free_port                                                 # noqa: E402
+PORT = int(os.environ.get("REPLAY_PORT") or 0) or free_port()          # 정하지 않으면 빈 포트 — 책 · 구성 여럿을 동시에 돌린다
 BASE = f"http://127.0.0.1:{PORT}"
 DPI = 110
 

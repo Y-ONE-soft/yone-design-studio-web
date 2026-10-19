@@ -1,11 +1,20 @@
 """stdlib 만으로 Chrome DevTools Protocol — 캔버스 상호작용을 헤드리스 크롬에서 진짜 입력으로 시험한다 (websocket 라이브러리 없이).
 
-PORT 는 다른 세션의 크롬(9333)과 겹치지 않게 9444. CHROME 은 이 맥의 크롬; 없으면 YONE_VIV_BROWSER.
+PORT 는 CDP_PORT, 없으면 빈 포트(병렬). CHROME 은 이 맥의 크롬; 없으면 YONE_VIV_BROWSER.
 """
 import base64, json, os, socket, struct, subprocess, sys, time, urllib.parse, urllib.request
 
 CHROME = os.environ.get("YONE_VIV_BROWSER") or "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-PORT = 9444
+
+
+def free_port():
+    """비어 있는 포트 하나 — 여러 세션 · 여러 구성 검사를 동시에 돌려도 서버 · 크롬 포트가 겹치지 않게(2026-10-19 병렬)"""
+    with socket.socket() as so:
+        so.bind(("127.0.0.1", 0))
+        return so.getsockname()[1]
+
+
+PORT = int(os.environ.get("CDP_PORT") or 0) or free_port()
 
 
 def ws_connect(url):

@@ -24,7 +24,7 @@ def wait_server():
             time.sleep(0.5)
 
 wait_server()
-proc = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", f"--remote-debugging-port={PORT}", "--window-size=1600,1000", "--user-data-dir=/tmp/yone-canvas-audit", "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+proc = subprocess.Popen([CHROME, "--headless=new", "--disable-gpu", f"--remote-debugging-port={PORT}", "--window-size=1600,1000", f"--user-data-dir=/tmp/yone-canvas-audit-{PORT}", "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 try:
     for _ in range(50):
         try:

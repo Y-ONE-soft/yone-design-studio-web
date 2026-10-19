@@ -17,7 +17,8 @@ sys.path.insert(0, E2E)
 from mkpage import S, open_doc, put_content                            # noqa: E402
 
 PY = sys.executable
-PORT = int(os.environ.get("REPLAY_PORT") or 5198)
+from cdp import free_port                                                 # noqa: E402
+PORT = int(os.environ.get("REPLAY_PORT") or 0) or free_port()          # 빈 포트 — 병렬
 BASE = f"http://127.0.0.1:{PORT}"
 CACHE = os.path.expanduser("~/.cache/yone-replay")
 UNIT = "광문분석본"

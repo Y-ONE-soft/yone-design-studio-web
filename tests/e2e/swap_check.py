@@ -19,7 +19,8 @@ import json, os, re, subprocess, sys, tempfile, time, urllib.request
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, REPO)
 PY = sys.executable
-PORT = int(os.environ.get("SWAP_PORT") or 5150)
+from cdp import free_port                                                 # noqa: E402
+PORT = int(os.environ.get("SWAP_PORT") or 0) or free_port()            # 빈 포트 — 병렬
 BASE = f"http://127.0.0.1:{PORT}"
 CHROME = os.environ.get("YONE_VIV_BROWSER") or "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 

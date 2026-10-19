@@ -22,12 +22,12 @@
 import base64, json, math, os, shutil, subprocess, sys, time, urllib.parse, urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from cdp import CDP, CHROME                                             # noqa: E402
+from cdp import CDP, CHROME, free_port                                             # noqa: E402
 
 FFMPEG = os.environ.get("FFMPEG") or ("/opt/homebrew/bin/ffmpeg" if os.path.exists("/opt/homebrew/bin/ffmpeg") else "ffmpeg")
 SP = os.environ.get("REC_TMP") or os.path.join(os.path.expanduser("~"), ".cache", "yone-rec")
 os.makedirs(SP, exist_ok=True)
-PORT = int(os.environ.get("REC_PORT") or 9466)
+PORT = int(os.environ.get("REC_PORT") or 0) or free_port()          # 정하지 않으면 빈 포트 — 병렬로 돌려도 남의 크롬을 끄지 않는다
 url, steps_path, out = sys.argv[1], sys.argv[2], sys.argv[3]
 W = int(sys.argv[4]) if len(sys.argv) > 4 else 1600
 H = int(sys.argv[5]) if len(sys.argv) > 5 else 1000
@@ -38,7 +38,7 @@ SPEED = float(os.environ.get("REC_SPEED", "2"))  # 녹화 배율 — 2 면 기�
 # 마우스를 한 번에 옮기고, 글은 한꺼번에 넣고(Input.insertText), 목록은 편집기 목록이 고를 때와 같은 신호(input·change)로 고르고,
 # 패널이 멈추길 0.2초만 본다. 녹화 없이(REC_FAST 와 같이) 쓴다. 판정은 사람 조작 검사와 같다(2026-10-11)
 DIRECT = os.environ.get("REC_DIRECT") == "1"
-frames = os.path.join(SP, "frames_" + os.path.basename(out).split(".")[0])
+frames = os.path.join(SP, "frames_" + os.path.basename(out).split(".")[0] + "_" + str(PORT))   # 검사 판은 이름이 다 「_fast」 — 포트로 갈라 병렬 판끼리 안 섞이게
 subprocess.run(["rm", "-rf", frames], capture_output=True)
 os.makedirs(frames, exist_ok=True)
 
@@ -526,7 +526,7 @@ try:
                 open(os.path.join(SP, st["shot"]), "wb").write(base64.b64decode(d["data"]))
         except Exception as e:
             print("  ERR", json.dumps(st, ensure_ascii=False)[:70], "→", str(e)[:160], flush=True)
-            shot1 = os.path.join(SP, "_첫오류.png")                  # 처음 실패한 순간의 화면 — 원인 찾기용
+            shot1 = os.path.join(os.path.dirname(os.path.abspath(out)), "_첫오류.png")   # 그 판의 결과 폴더에 — 병렬 판끼리 안 덮게                  # 처음 실패한 순간의 화면 — 원인 찾기용
             if not os.path.exists(shot1):
                 try:
                     open(shot1, "wb").write(base64.b64decode(c.call("Page.captureScreenshot", format="png")["data"]))
