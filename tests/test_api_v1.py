@@ -30,7 +30,7 @@ def _first_design(client):
     cat = client.get("/api/v1/catalog").get_json()
     for d in cat["dirs"]:
         for t in d["templates"]:
-            if t["designs"] and t.get("pipeline") != "workbook_v2" and t.get("ready") != "manual":
+            if t["designs"]:
                 return t, t["designs"][0]
     pytest.skip("카탈로그에 디자인이 없다")
 
@@ -65,7 +65,6 @@ def test_editor_design_fields(app):
     assert (gan["w"], gan["h"]) == (210, 297)
     assert [f["bind"] for f in gan["fields"]] == ["학교", "권번호", "교재명+강제목"]
     assert all(f["w"] and f["h"] for f in gan["fields"])
-    assert "pages" not in c.get("/api/v1/catalog/analysis/x9d242bf3").get_json()      # PDF 등록 디자인은 없다
 
 
 def test_health_public(app):
@@ -78,7 +77,7 @@ def test_render_validation(app):
     # 찍기는 편집기 제작 디자인만 — 예전 조판 디자인 · 모르는 틀 · 원고 꼴이 틀리면 400 (2026-10-19 예전 엔진 지움)
     c = app.test_client()
     assert c.post("/api/v1/renders", json={"series": "nope"}).status_code == 400
-    r = c.post("/api/v1/renders", json={"series": "analysis", "design": "x9d242bf3", "book": {"title": "x"},
+    r = c.post("/api/v1/renders", json={"series": "analysis", "design": "x00000000", "book": {"title": "x"},
                                         "source": {"type": "data", "data": {}}})
     assert r.status_code == 400 and "편집기 제작" in r.get_json()["error"]
     r = c.post("/api/v1/renders", json={"series": "analysis", "design": "x009d5556", "book": {"title": "x"},
