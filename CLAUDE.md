@@ -1,5 +1,10 @@
 # CLAUDE.md
 
+> **⚠ 2026-10-19 — 예전 조판 엔진을 지웠다**: `engines/` · `core/render_vivlio/` · `core/indesign/` · 통합웹(`app.py`) · 내지 작업대(`/book-studio`) · 책 목록 · 조립(`/make`) · PDF 판정 화면 · 예전 틀 디자인 카드(d1~d5 등) · `scripts/` · `tools/` · `pilot/`.
+> 남은 것: 편집기(`/units`, `core/units`) · 관리(`/projects` · `/design`, `routes/projects.py`) · PDF 등록(`routes/intake.py`) · `/api/v1`(편집기 제작 디자인 찍기만).
+> 서체 찾기·묶음 목록은 `core/units/fonts.py`(+`pack_fonts.json`), CMYK 인쇄는 `core/units/prepress.py`, 스튜디오 경로는 `core/studio.py`. Vivliostyle 설치는 `vivliostyle/`(나중에 뽑을 때 쓴다).
+> **아래 본문 중 엔진 · InDesign · 통합웹 · 워크북 계열 JSX 설명은 옛 기록이다** — 그 코드는 이제 없다.
+
 > **⚠ 2026-09-15 — 이 리포는 `Y-ONE-soft/yone-design-studio-web`(배포용, 이전 `YONE-DESIGN/YONE-DESIGN-WEB`에서 분리)이다.**
 > 아래 본문은 이전 개발자(nhj) 아이맥 환경 기준이라 이 맥에서는 **다음이 없다**: `조판_자동화/`·`통합웹사이트/` 심볼릭 링크,
 > launchd `com.yonestudio.flask`(:5010), InDesign. 이 맥에서의 실행은 `README_로컬실행.md` 기준 — `bin/studio` → http://127.0.0.1:5099/catalog
