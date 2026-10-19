@@ -431,9 +431,12 @@ def ruby_html(base, rb, a, ctx, plain=None):
     rb = {t, pos: above | below, align: left | center | right, ox, oy(mm), font, size(pt), color} — 없는 값은 텍스트 프레임의 윗주 기본값(a.ruby).
     오프셋 Y = 본문 글자 상자(전각 상자: 기준선 위 0.88em · 아래 0.12em) 바깥 끝에서 윗주까지, 바깥이 +."""
     d = (a or {}).get("ruby") or {}
-    if rb.get("cs") and ctx:                                            # 원고가 문자 스타일 이름을 준 윗주(서술형★) — 그 스타일의 글꼴 · 크기 · 색상을 이 윗주 값으로
+    deco = ""
+    if rb.get("cs") and ctx:                                            # 원고가 문자 스타일 이름을 준 윗주(서술형★ · 기출✓) — 그 스타일의 글꼴 · 크기 · 색상을 이 윗주 값으로
         cs = (ctx.skin.get("cstyles") or {}).get(rb["cs"]) or {}
         rb = dict({k: cs[k] for k in ("font", "size", "color") if cs.get(k) is not None}, **rb)
+        if any(cs.get(k) for k in ("weight", "track", "u")):            # 굵기 · 자간 · 밑줄(굵은 밑줄 = 바탕 띠, 상자 딱지) — 글꼴은 띠 자리(윗높이) 재기에만
+            deco = char_css({k: cs[k] for k in ("font", "weight", "track", "u", "u_w", "u_off", "u_color", "u_style") if cs.get(k) is not None}, ctx)
     g = lambda k, dv=None: rb.get(k) if rb.get(k) is not None else d.get(k, dv)
     pos = "below" if rb.get("pos") == "below" else "above"
     bsz = float((a or {}).get("size") or 9) * PT
@@ -450,8 +453,9 @@ def ruby_html(base, rb, a, ctx, plain=None):
     v = f"top:{off:.3f}px" if pos == "below" else f"bottom:{off:.3f}px"
     plain = plain if plain is not None else re.sub(r"<[^>]+>", "", base)
     js = {"center": "center", "right": "end"}.get(al, "start")
-    inner = (f'<span style="grid-area:1/1;justify-self:center;width:0;display:flex;justify-content:center;{st}"><span style="white-space:nowrap">{esc(rb.get("t", ""))}</span></span>'
-             if js == "center" else f'<span style="grid-area:1/1;justify-self:{js};{st}">{esc(rb.get("t", ""))}</span>')
+    txt = f'<span style="{deco}">{esc(rb.get("t", ""))}</span>' if deco else esc(rb.get("t", ""))   # 꾸밈은 줄 안 글 칸에 — 바탕 띠가 글꼴 높이만큼 그려지게(칸 상자는 줄 높이 1 이라 잘린다)
+    inner = (f'<span style="grid-area:1/1;justify-self:center;width:0;display:flex;justify-content:center;{st}"><span style="white-space:nowrap">{txt}</span></span>'
+             if js == "center" else f'<span style="grid-area:1/1;justify-self:{js};{st}">{txt}</span>')
     return ('\u2060<span data-ruby="1" style="display:inline-block;width:0;height:0;position:relative;vertical-align:baseline">'
             f'<span style="position:absolute;left:{ox:.3f}px;{v};display:grid;width:max-content;white-space:nowrap;line-height:1;text-indent:0;letter-spacing:0;word-spacing:0">'   # 칸 폭 = 본문 폭
             f'<span style="grid-area:1/1;height:0;overflow:hidden;visibility:hidden">{plain}</span>'

@@ -92,8 +92,8 @@ def test_roundtrip_real_docs():
             row.pop("_h")
         assert ya.to_doc(r2, doc) == (doc, [])
         for s, row in zip(doc["sentences"], rec["번호+문장+해석"]):
-            t, m, g, rf = ya.runs_sentence(_strip(row["문장"]))
-            back = ([{"t": "", "side": "\n".join("* " + y for y in g)}] if g else []) + ya.sentence_runs(t, m, rf)
+            t, m, g, rf, bd = ya.runs_sentence(_strip(row["문장"]))
+            back = ([{"t": "", "side": "\n".join("* " + y for y in g)}] if g else []) + ya.sentence_runs(t, m, rf, bd)
             assert _visible(back) == _visible(row["문장"]), (s["no"], s["tagged"])
 
 
@@ -160,3 +160,79 @@ def test_divider_fields():
     rec = ya.to_content({"analyses": [], "divider": {"school": "2026 광문고1"}})[0]["원고"][0]
     assert rec["권번호"] == "" and rec["교재명+강제목"] == [{"교재명": "", "강제목": ""}] and "구분" not in rec
     assert ya.to_content({"analyses": []})[0] == {}
+
+
+FIX19 = os.path.join(os.path.dirname(__file__), "fixtures", "analysis_docs_1019.json")
+
+
+def test_new_fields_roundtrip_real_docs():
+    # 10-12 뒤 contents 에 생긴 칸(낱말 딱지 · 문장 크기 · 묶음 문항 · 품사)이 든 실물 문서 11벌(2026-10-19 contents 에서 읽기만) — 안 고치면 그대로 돌아온다
+    for x in json.load(open(FIX19, encoding="utf-8")):
+        doc = x["doc"]
+        rec = ya.record(doc)
+        assert ya.to_doc(rec, doc) == (doc, []), x["why"]
+        for s in doc["sentences"]:                                          # 딱지 자리를 지면 조각에서 새로 지어도 원래 자리
+            if s.get("badges"):
+                bd = ya.runs_sentence(ya.sentence_runs(s["tagged"], s["marks"], s.get("refs"), s["badges"]))[4]
+                assert bd == sorted(s["badges"], key=lambda b: (b["start"], b["kind"])), x["why"]
+
+
+def test_word_badges():
+    t = "Too many[S] companies advertise[V] new products."
+    badges = [("Too", {"kind": "essay"}), ("advertise", {"kind": "exam"}), ("products", {"kind": "exam", "style": "text", "dx": 1.5})]
+    s = {"no": 1, "tagged": t, "ko": "", "gps": [], "refs": [], "marks": [_span(t, "Too many companies", "descriptive")],
+         "badges": [dict({k: v for k, v in _span(t, w, "x").items() if k != "role"}, **b) for w, b in badges]}
+    doc = _doc([s])
+    runs = ya.record(doc)["번호+문장+해석"][0]["문장"]
+    up = {r["t"]: (r["ruby"] if isinstance(r["ruby"], dict) else r["ruby"][0]) for r in runs if isinstance(r, dict) and r.get("ruby")}
+    assert up["Too"]["cs"] == "서술형" and up["advertise"]["cs"] == "기출✓ 상자" and up["products."]["cs"] == "기출✓ 글자"
+    assert up["products."]["bd"] == [{"kind": "exam", "style": "text", "dx": 1.5}]
+
+    def retype(rec):                                                        # 앞 낱말을 고쳐도 딱지는 제 낱말에 — 자리가 따라 민다
+        rr = rec["번호+문장+해석"][0]["문장"]
+        i = next(i for i, r in enumerate(rr) if isinstance(r, str) and " new " in r)
+        rr[i] = rr[i].replace(" new ", " brand new ")
+    d, _ = _edit(doc, retype)
+    s2 = d["sentences"][0]
+    counted = re.sub(r"\[[^\]]*\]", "", s2["tagged"])
+    assert [(counted[b["start"]:b["end"]], b["kind"]) for b in s2["badges"]] == [("Too", "essay"), ("advertise", "exam"), ("products", "exam")]
+    assert s2["badges"][2]["style"] == "text" and s2["badges"][2]["dx"] == 1.5
+
+
+def test_elision_tail_and_underline_role():
+    t = "I think ⌃(that)|1,-0.5 he[S] is right."
+    m = _span(t, "is right", "underline")
+    runs = ya.sentence_runs(t, [m])
+    assert "|" not in "".join(r if isinstance(r, str) else r.get("t", "") for r in runs)
+    he = next(r for r in runs if isinstance(r, dict) and r.get("t") == "he")
+    assert he["ruby"][0]["t"] == "that"
+    assert any(isinstance(r, dict) and r.get("cs") == "밑줄" and r.get("t") == "is right" for r in runs)
+    tagged, marks, *_ = ya.runs_sentence(runs)
+    assert tagged == t and marks == [m]
+
+
+def test_sizes_and_key_subs_and_voca_pos():
+    t = "He[S] runs[V]."
+    doc = _doc([{"no": 1, "tagged": t, "ko": "그는 달린다.", "gps": [], "refs": [], "marks": [], "enSize": 8.5, "koSize": 6.5}],
+               keyQuestion={"q": "[41~42] 물음에 답하시오.", "passage": ["P"], "choices": [], "answerIndex": 0, "size": 7,
+                            "subs": [{"q": "41. 제목은?", "choices": ["a", "b"], "answerIndex": 1}, {"q": "42. 틀린 것은?", "choices": ["c", "d", "e"], "answerIndex": 3}]},
+               voca=[{"word": "run", "ko": "달리다", "sent": "", "tone": "", "antonym": "", "synonym": "", "pos": "동"},
+                     {"word": "fast", "ko": "빨리", "sent": "", "tone": "", "antonym": "", "synonym": ""}])
+    rec = ya.record(doc)
+    row = rec["번호+문장+해석"][0]
+    assert all(r.get("size") == 8.5 for r in row["문장"] if isinstance(r, dict)) and row["해석"] == [{"t": "그는 달린다.", "size": 6.5}]
+    kq = rec["발문+문제지문+선지"]
+    assert [ya._plain_u(r["발문"]) for r in kq] == ["[41~42] 물음에 답하시오.", "41. 제목은?", "42. 틀린 것은?"]
+    assert ya._plain_u(kq[2]["선지"]) == "① c\n② d\n③ e" and kq[1]["문제지문"] == "" and rec["답"] == "답: ① / ③"
+    assert kq[0]["발문"][0]["size"] == 7
+    assert rec["어휘"][0][1] == {"t": " 동 ", "cs": ya.POS_CS, "vp": 1}
+    assert ya.to_doc(rec, doc) == (doc, [])
+    rec["답"] = "답: ② / ①"                                                 # 묶음 문항 답 · 선지 고치기 → 문항마다
+    rec["발문+문제지문+선지"][1]["선지"] = "① a\n② bb"
+    d, ch = ya.to_doc(rec, doc)
+    assert [x["answerIndex"] for x in d["keyQuestion"]["subs"]] == [2, 1] and d["keyQuestion"]["subs"][0]["choices"] == ["a", "bb"]
+    assert d["keyQuestion"]["choices"] == [] and ch == ["핵심기출", "답"]
+    rec = ya.record(doc)                                                    # 어휘 뜻을 고쳐도 품사는 남는다
+    rec["어휘"][0][2] = rec["어휘"][0][2].replace("달리다", "뛰다")
+    d, ch = ya.to_doc(rec, doc)
+    assert d["voca"][0] == dict(doc["voca"][0], ko="뛰다") and ch == ["어휘"]

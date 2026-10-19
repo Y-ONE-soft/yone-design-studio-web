@@ -175,9 +175,9 @@ const $ = (s) => document.querySelector(s);
 const ROLES = [["grammar", "중요 문법", "파랑 글자", "#5b8ee6"], ["vocab", "중요 어휘", "빨강 글자", "#e25b5f"], ["parallel", "병렬", "빨강 물결", "#e25b5f"],
                ["descriptive", "서술형 구문", "형광 노랑", "#fef3a6"], ["antecedent", "선행사·관계사", "형광 보라", "#dbd4ea"],
                ["connector", "연결사·흐름", "형광 민트", "#c4ead9"], ["blank", "빈칸·중요 내용", "형광 민트", "#9fd8bf"]];
-const ROLE_CS = Object.fromEntries(ROLES.map(r => [r[0], r[2]]));
-const CS_ORDER = ["파랑 글자", "빨강 글자", "빨강 물결", "형광 노랑", "형광 보라", "형광 민트"];
-const BADGE = {t: "서술형★", pos: "above", cs: "서술형"};
+const ROLE_CS = Object.assign(Object.fromEntries(ROLES.map(r => [r[0], r[2]])), {underline: "밑줄"});   // 곧은 밑줄(contents 2026-10-13)은 칠하기 단추 없이 그대로 지킨다
+const CS_ORDER = ["파랑 글자", "빨강 글자", "빨강 물결", "밑줄", "형광 노랑", "형광 보라", "형광 민트"];
+const BADGE = {t: "서술형★", pos: "above", cs: "서술형"}, BADGE_CS = ["서술형", "기출✓ 상자", "기출✓ 글자"];   // 딱지 윗주(core/sources/yos_analysis.BADGE_CS)
 const RIGHT = ["주제", "요약", "답", "어휘"], KEYF = ["발문", "문제지문", "선지"];
 let parentOrigin = null, base = null, rec = null, cur = 0, dirty = false, drawT = null;
 let hist = [], fut = [];
@@ -479,7 +479,7 @@ function toggleRole(box, role) {
 }
 function setRuby(box, pos, v) {
   applyRange(box, (part) => part.map(r => {
-    const o = Object.assign({}, r), rbs = [].concat(o.ruby || []).filter(x => pos === "below" ? x.pos !== "below" : x.pos === "below" || x.cs === "서술형");
+    const o = Object.assign({}, r), rbs = [].concat(o.ruby || []).filter(x => pos === "below" ? x.pos !== "below" : x.pos === "below" || BADGE_CS.includes(x.cs));
     if (v.trim()) rbs.push({t: v.trim(), pos});
     const up = rbs.filter(x => x.pos !== "below"), dn = rbs.filter(x => x.pos === "below"), all = up.slice(-1).concat(dn);
     if (all.length) o.ruby = all.length === 1 ? all[0] : all; else delete o.ruby;
@@ -505,7 +505,7 @@ document.addEventListener("selectionchange", () => {              // 고른 낱�
   const rg = selRange(box); if (!rg) return;
   const runs = runsOf(sentRead(box)); let k = 0;
   for (const r of runs) { if (rg[0] < k + r.t.length) { const rbs = [].concat(r.ruby || []);
-    $("#tb-up").value = (rbs.find(x => x.pos !== "below" && x.cs !== "서술형") || {}).t || ""; $("#tb-dn").value = (rbs.find(x => x.pos === "below") || {}).t || ""; break; } k += r.t.length; }
+    $("#tb-up").value = (rbs.find(x => x.pos !== "below" && !BADGE_CS.includes(x.cs)) || {}).t || ""; $("#tb-dn").value = (rbs.find(x => x.pos === "below") || {}).t || ""; break; } k += r.t.length; }
 });
 
 // ── 오른쪽 칸(스토리 편집기) ──
