@@ -569,8 +569,8 @@ def to_content(data, sample=None):
         report["sent"].append({"passage": i + 1, "label": (d.get("meta") or {}).get("source")})
     content = {"분석 펼침면": recs} if recs else {}
     dv = divider(data)
-    if dv and not recs:                                                  # 간지만 — 레코드 차례로(간지 면 둘 중 분류로 고른다)
-        return {"원고": [dv]}, report
+    if dv:                                                               # 간지 — 레코드 차례로(간지 면 둘 중 분류로 고른다). 분석본도 오면 간지 뒤에 펼침면마다(분석 NEW 한 권 조판)
+        return {"원고": [dv] + recs}, report
     return content, report
 
 

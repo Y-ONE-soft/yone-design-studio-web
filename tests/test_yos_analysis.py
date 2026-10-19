@@ -160,6 +160,11 @@ def test_divider_fields():
     rec = ya.to_content({"analyses": [], "divider": {"school": "2026 광문고1"}})[0]["원고"][0]
     assert rec["권번호"] == "" and rec["교재명+강제목"] == [{"교재명": "", "강제목": ""}] and "구분" not in rec
     assert ya.to_content({"analyses": []})[0] == {}
+    # 간지 + 분석본(분석본 NEW 한 권) — 레코드 차례 [간지, 분석 레코드…]
+    t = "He[S] runs[V]."
+    both = ya.to_content({"analyses": [_doc([{"no": 1, "tagged": t, "ko": "", "gps": [], "refs": [], "marks": []}])],
+                          "divider": {"school": "2026 광문고1"}})[0]
+    assert list(both) == ["원고"] and both["원고"][0]["학교"] == "2026 광문고1" and both["원고"][1]["강"] == "1과"
 
 
 FIX19 = os.path.join(os.path.dirname(__file__), "fixtures", "analysis_docs_1019.json")
