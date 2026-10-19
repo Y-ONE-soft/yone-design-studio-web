@@ -876,7 +876,8 @@ def design_layouts(series, design):
         dj = {}
     editor = dj.get("made") == "editor"
     origin = _origin_pdf(series, design) if editor else None
-    stamp = f"{int(os.path.getmtime(pdf))}" + (f"_o{int(os.path.getmtime(origin))}" if origin else "")
+    stamp = f"{int(os.path.getmtime(pdf))}" + (f"_o{int(os.path.getmtime(origin))}" if origin else "") + \
+        "_p" + "_".join(f"{v:g}" for _, v in sorted(face_params().items()))      # 배운 기준값이 바뀌면 다시 판정
     cache = os.path.join(tdir, f"layouts16{'e' if editor else ''}_{stamp}.json")
     if os.path.exists(cache):
         out = json.load(open(cache, encoding="utf-8"))
@@ -1005,7 +1006,21 @@ def pdf_layouts(pdf, series=None, rules=False):
 # 확인받은 면 목록(상일보카 16면)이 그대로 나오고, 등록 카드(배재1 포켓북 · 광문 분석본)는 전과 같다.
 
 _MM = 72 / 25.4
-_T_NEW, _T_SAME = 0.6, 0.95          # 같은 이름표 안 새 구간 · 이름표가 달라도 한 구간(광문보카 파트 0.99, 정본 빈칸 어휘 · 어법 0.87)
+# 판정 기준값 — 확인받은 면 목록(faces.json · 대본 폴더 구성.json)으로 tests/e2e/faces_learn.py 가 골라 data/faces_params.json 에 적는다.
+# 사람이 면 목록을 확인할 때마다 다시 고르니, 확인한 책이 늘수록 판정이 그 책들에 맞춰진다. 파일이 없으면 아래 처음 값.
+#   t_new  같은 이름표 안에서 본문 꼴이 이 값보다 덜 닮으면 새 구간
+#   t_same 이름표가 달라도 본문 꼴이 이 값 이상 닮으면 한 구간(광문보카 파트 0.99, 정본 빈칸 어휘 · 어법 0.87)
+#   pair   띠가 이어진 짝이 그 갈래가 올 때의 이 비율 이상이면 펼침면
+FACE_PARAMS = {"t_new": 0.6, "t_same": 0.95, "pair": 0.8}
+_FACE_PARAMS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "faces_params.json")
+
+
+def face_params():
+    """판정 기준값 — data/faces_params.json(배운 값)이 있으면 그것, 없으면 처음 값."""
+    try:
+        return {**FACE_PARAMS, **json.load(open(_FACE_PARAMS_FILE, encoding="utf-8"))["params"]}
+    except (OSError, ValueError, KeyError):
+        return dict(FACE_PARAMS)
 
 
 def _q(v, s=2):
@@ -1110,12 +1125,18 @@ def _big_title(page):
     return re.sub(r"\s+", " ", " ".join(s["text"].strip() for s in top if s["size"] >= m - 0.5)).strip()[:24]
 
 
-def _faces(doc, tok):
-    """면 목록 [{label, kind, size, pages, count, show}] — 서로 다른 면 모양마다 하나(1쪽 면 · 2쪽 펼침면)."""
+def _face_feats(doc):
+    """쪽마다 (쪽 틀, 본문 꼴) — 판정 기준값을 바꿔 가며 여러 번 판정할 때(faces_learn.py) 한 번만 잰다."""
+    return [_frame(p) for p in doc], [_body_feat(p) for p in doc]
+
+
+def _faces(doc, tok, P=None, feats=None):
+    """면 목록 [{label, kind, size, pages, count, show}] — 서로 다른 면 모양마다 하나(1쪽 면 · 2쪽 펼침면).
+    P = 판정 기준값(없으면 face_params()), feats = _face_feats(doc) 미리 잰 것."""
     import collections
+    P = P or face_params()
     n = doc.page_count
-    F = [_frame(p) for p in doc]
-    B = [_body_feat(p) for p in doc]
+    F, B = feats or _face_feats(doc)
     kind = [t[0] for t in tok]
     for i, p in enumerate(doc):                           # 쪽 전체 바탕에 위 띠 없는 쪽 = 간지(PART 차례처럼 글이 몇 줄 있어도)
         if kind[i] == "본문" and not F[i][0] and any(d["rect"].width > p.rect.width * 0.9 and d["rect"].height > p.rect.height * 0.9
@@ -1136,14 +1157,14 @@ def _faces(doc, tok):
     for k, u in enumerate(units):                         # 같은 이름표이고 앞 구간(최근 8쪽)과 닮으면 같은 구간 — 이 묶음도,
         cur = [i for v in segs[-1] for i in v][-8:] if segs else []     # 뒤 3묶음을 합친 것도 덜 닮아야 새 구간
         ahead = [i for v in units[k:k + 3] for i in v][:8]
-        if cur and tok[cur[-1]][1] == tok[u[0]][1] and (_feat_cos(agg(u), agg(cur)) >= _T_NEW or _feat_cos(agg(ahead), agg(cur)) >= _T_NEW):
+        if cur and tok[cur[-1]][1] == tok[u[0]][1] and (_feat_cos(agg(u), agg(cur)) >= P["t_new"] or _feat_cos(agg(ahead), agg(cur)) >= P["t_new"]):
             segs[-1].append(u)
         else:
             segs.append([u])
     groups = []                                           # 떨어진 같은 꼴 구간(파트 간지 · MEMO 로 끊김)은 하나로
     for s in segs:
         ps = [i for u in s for i in u]
-        g = next((g for g in groups if _feat_cos(g[1], agg(ps)) >= (_T_NEW if tok[g[0][0]][1] == tok[ps[0]][1] else _T_SAME)), None)
+        g = next((g for g in groups if _feat_cos(g[1], agg(ps)) >= (P["t_new"] if tok[g[0][0]][1] == tok[ps[0]][1] else P["t_same"])), None)
         if g:
             g[0].extend(ps); g[1].update(agg(ps))
         else:
@@ -1153,9 +1174,9 @@ def _faces(doc, tok):
     cls = {i: (F[i][0], F[i][1], tok[i][2], tok[i][3]) for i in range(n)}
     sk = lambda i: (sec[i], cls[i])
     # 3) 펼침면 — 짝수 쪽(왼쪽) i 와 i+1 이 본문이고
-    #  ① 띠가 이어짐(같은 높이) — 다른 두 갈래 A · B 는 A 가 왼쪽에만 · B 가 오른쪽에만 오고 A 뒤 본문의 80%+ 가 B · B 앞 본문의 80%+ 가 A
+    #  ① 띠가 이어짐(같은 높이) — 다른 두 갈래 A · B 는 A 가 왼쪽에만 · B 가 오른쪽에만 오고 A 뒤 본문의 pair(80%)+ 가 B · B 앞 본문의 pair+ 가 A
     #     (배재 포켓북 FLOWNOTE 는 지문 첫 면 · 삽화 면 뒤에 번갈아 오고 지문 첫 면은 오른쪽에도 온다 — 띠가 이어져도 한 벌이 아니다).
-    #     같은 갈래 A · A 는 왼쪽 A 뒤 본문의 80%+ 가 띠 이어진 A(상일보카 정답 면). A 뒤가 다음 묶음 첫 면(다른 틀)이면 세지 않는다
+    #     같은 갈래 A · A 는 왼쪽 A 뒤 본문의 pair+ 가 띠 이어진 A(상일보카 정답 면). A 뒤가 다음 묶음 첫 면(다른 틀)이면 세지 않는다
     #  ② 왼쪽 갈래 A 뒤에 늘 B 가 오고 B 는 늘 A 뒤에만 온다(2번 넘게 — 워크북 유형 2쪽, 띠가 안 이어져도 늘 한 벌)
     cand = lambda i: i % 2 == 1 and i + 1 < n and kind[i] == kind[i + 1] == "본문"
     joined = {i: i + 1 for i in body if cand(i) and _spread_joined(F[i][2], F[i + 1][2])}
@@ -1169,7 +1190,7 @@ def _faces(doc, tok):
     for i, j in joined.items():
         a, b = sk(i), sk(j)
         c = jt[(a, b)]
-        if c >= after[a] * 0.8 and (a == b or sides[a] == {1} and sides[b] == {0} and c >= before[b] * 0.8):
+        if c >= after[a] * P["pair"] and (a == b or sides[a] == {1} and sides[b] == {0} and c >= before[b] * P["pair"]):
             paired[i] = j
     where = collections.defaultdict(list)
     for i in body:
