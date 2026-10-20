@@ -1347,6 +1347,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None, pi=None):
                     x += h_
     if "\t" in x:                                                      # 탭 — 탭 정지(단락 값) · 숨은 정지(첫 줄 내어쓰기) · 기본 탭 정지
         x = _tab_html(st.get("tabs"), x, ind + indf, ind if indf < 0 else None) or x
+    if x and not _TAG.sub("", x).strip() and not re.search(r"<(svg|img)\b", x):   # 빈 단락(원고의 빈 줄) — 인디자인처럼 행간만큼 한 줄(글 없는 표시 span 만 있으면 크롬은 높이 0)
+        x += "&#160;"
     if before_p and ' data-start="' in attrs:                          # 줄 위 고정 개체 줄이 앞에 서면 단락 시작은 그 줄부터
         before_p = before_p.replace("<p ", f'<p data-start="{st["start"]}" ', 1)
     return before_p + f'<p style="{css}"{attrs}>{deco}{soft_breaks(x, just, spec) or "&#160;"}</p>' + after_p
