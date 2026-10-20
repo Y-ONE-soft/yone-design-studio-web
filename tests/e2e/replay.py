@@ -67,7 +67,7 @@ def server():
     with socket.socket() as so:                                              # 포트가 이미 쓰이면 멈춘다 — 앞 판에서 남은 옛 서버(옛 코드 · 옛 데이터)에 붙어
         if so.connect_ex(("127.0.0.1", PORT)) == 0:                          # 검사가 엉뚱한 편집기를 조작했다(2026-10-15 정본 5 네 번 실패)
             sys.exit(f"포트 {PORT} 를 다른 서버가 쓰고 있다 — 남은 서버를 끄거나(lsof -tiTCP:{PORT} -sTCP:LISTEN) REPLAY_PORT 를 바꾼다")
-    env = dict(os.environ, YONE_CATALOG_DIR=data, YONE_AUTH="off")
+    env = dict(os.environ, YONE_CATALOG_DIR=data, YONE_AUTH="off", YONE_WARM="0")
     envf = os.path.expanduser("~/.config/yone/env")                          # bin/studio 와 같이 — 클로드 키
     if os.path.exists(envf):
         for ln in open(envf):
@@ -76,7 +76,7 @@ def server():
                 env.setdefault(k, v.strip("'\""))
     log = open(os.path.join(out, "server.log"), "w")
     p = subprocess.Popen([PY, "-u", "studio_server.py", "--port", str(PORT)], cwd=REPO, env=env, stdout=log, stderr=log)
-    for _ in range(240):                                                      # 2분 — 기동 때 모든 디자인 구성을 미리 계산한다(warm_layouts, 디자인 30개 41초)
+    for _ in range(960):                                                      # 8분 — 기동 때 모든 디자인 구성을 미리 계산한다(warm_layouts — 빈 캐시 카탈로그면 199 · 274쪽 원본까지, 다른 세션 검사와 겹치면 4분 걸림 2026-10-20)
         try:
             urllib.request.urlopen(BASE + "/api/units/library", timeout=1)
             return p

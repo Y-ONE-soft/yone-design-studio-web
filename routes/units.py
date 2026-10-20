@@ -678,6 +678,8 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
     svgs = []
     for pg, rec, _ in seq:
         svgs.extend(render.page_canvas_svgs(ctx, pg, spec_of(pg), pno=len(svgs) + _pstart(plan))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게) · 쪽 번호 = 몇째 면
+        if pg.get("_rk") is not None and svgs and isinstance(svgs[-1], dict):
+            svgs[-1]["rk"] = pg["_rk"]                                                # 레코드 페이지 재정의 열쇠(content.apply_overrides) — 화면이 고친 것을 이 열쇠로 적는다
         if recs is not None:
             recs.append(rec)
     return svgs, report, spec
@@ -791,6 +793,15 @@ def api_pdf():
                 k = next((i for i, p in enumerate(filled) if p.get("id") == page_id), None)
                 if k is not None:
                     pg, before, pno_here = filled[k], filled[:k], k + _pstart(pl)  # 앞 쪽들도 함께 그린다 — 글 잇기가 앞 쪽 이야기를 이 쪽으로 흘린다
+                else:                                                          # 「찍지 않음」 페이지(넘침을 이어 받는 페이지로만) — 원고를 넣으면 처음 생기는 그 모양 덧쪽
+                    sp_ = render.story_spares(ctx, filled, lambda _p: spec)
+                    seq_ = []
+                    for i, p in enumerate(filled):
+                        seq_.append((p, False))
+                        seq_ += [(p2, True) for p2 in sp_.get(i, [])]
+                    j = next((i for i, (p, s_) in enumerate(seq_) if s_ and p.get("id") == page_id), None)
+                    if j is not None:
+                        pg, before, pno_here = seq_[j][0], [p for p, _ in seq_[:j]], j + _pstart(pl)
                 ss = None
         pst = _pstart(pl) if fid and pl else 1
         pre = [s for i, p in enumerate(before) for s in render.page_canvas_svgs(ctx, p, spec, pno=i + pst)] if any(

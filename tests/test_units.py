@@ -1391,3 +1391,20 @@ def test_indesign_values_pass_schema(lib):
     sk = dict(lib["skins"][0])
     sk["styles"] = dict(sk.get("styles") or {}, 시험={"align": "justify_center", "list": {"type": "number", "format": "①"}, "shade_ot": 1})
     assert store.validate("skins", sk) is None, store.validate("skins", sk)
+
+
+def test_overset_title_mark(tmp_path):
+    """크롬이 그린 넘침(빨간 +)을 PDF 제목 끝에 실어 오면 exact_pages 가 떼어 돌려주고 제목은 되돌린다(2026-10-19 분석본 13문장이 소리 없이 잘림)"""
+    import fitz
+    from core.units import pdf
+    for name, title, want in (("a", "시험 권" + pdf.OVER_MARK + json.dumps([[1, ["1 The major consumer"]]]), [[1, ["1 The major consumer"]]]),
+                              ("b", "시험 권", [])):
+        p = str(tmp_path / f"{name}.pdf")
+        doc = fitz.open()
+        doc.new_page(width=600, height=850)
+        doc.set_metadata({"title": title})
+        doc.save(p)
+        doc.close()
+        assert pdf.exact_pages(p, 210, 297) == want
+        assert fitz.open(p).metadata["title"] == "시험 권"
+    assert "data-overflow" in pdf.html_of(["<svg/>"], 210, 297)

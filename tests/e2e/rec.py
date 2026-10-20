@@ -165,7 +165,8 @@ try:
         t_end = time.time() + 5                              # 칸이 늦게 그려지면(스타일 창이 값 바꾼 뒤 다시 그림) 나올 때까지 — 사람도 칸이 보이면 누른다
         while time.time() < t_end and not c.js("!!document.querySelector(" + json.dumps(spot) + ")"):   # (8배속에서 밑줄 켠 뒤 두께 칸을 바로 찾아 「못 찾음」, 2026-10-15)
             time.sleep(0.2)
-        for _ in range(4):                                   # 접힌 칸(details) — 사람처럼 머리(summary)를 눌러 편다
+        def unfold():
+          for _ in range(4):                                 # 접힌 칸(details) — 사람처럼 머리(summary)를 눌러 편다
             sm = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; "
                       "const ds = []; let d = e.closest('details'); while (d) { if (!d.open) ds.push(d); d = d.parentElement && d.parentElement.closest('details'); } "
                       "const top = ds.pop(); if (!top) return null; const s = top.querySelector(':scope > summary'); s.scrollIntoView({block:'nearest'}); "
@@ -173,7 +174,12 @@ try:
             if not sm:
                 break
             move(sm[0], sm[1]); press(sm[0], sm[1]); release(sm[0], sm[1])
+        unfold()
         for _ in range(60):                                  # 화면 밖이면 휠로 굴린다(그 요소를 품은 스크롤 영역 위에서)
+            if c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); return !!e && !!e.closest('details:not([open])'); })()"):
+                quiet()                                      # 편 뒤 패널이 다시 그려져(미뤄 둔 스타일 저장 → 다시 그림) 다시 접혔다 — 그리기가 멎으면 다시 편다
+                unfold()                                     # (광문보카 지문형 스타일 칸 「굴려도 안 보임」, 2026-10-20)
+                continue
             r = c.js("(() => { const e = document.querySelector(" + json.dumps(spot) + "); if (!e) return null; const b = e.getBoundingClientRect(); "
                      "let p = e.parentElement; while (p && !(p.scrollHeight > p.clientHeight + 2 && /(auto|scroll)/.test(getComputedStyle(p).overflowY))) p = p.parentElement; "
                      "const v = p ? p.getBoundingClientRect() : {top: 0, bottom: innerHeight, left: 0, right: innerWidth}; "

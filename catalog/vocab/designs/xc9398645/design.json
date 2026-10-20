@@ -1,0 +1,169 @@
+{
+ "name": "이의1보카01",
+ "desc": "이의1_이의1보카01_내지_인쇄.pdf · 199페이지",
+ "source": "PDF: 이의1_이의1보카01_내지_인쇄.pdf",
+ "date": "2026-10-20",
+ "draft": false,
+ "layout_rules": false,
+ "made": "pdf",
+ "intake": {
+  "measured": {
+   "pages": 199,
+   "trim_mm": [
+    148.0,
+    210.0
+   ],
+   "bleed_mm": 3.0,
+   "media_mm": [
+    154.0,
+    216.0
+   ],
+   "margins_mm": {
+    "left": 19.0,
+    "right": 20.1,
+    "top": 35.0,
+    "bottom": 40.8
+   },
+   "fonts": [
+    {
+     "font": "Type3 (85 0 R)",
+     "share": 0.541
+    },
+    {
+     "font": "Type3 (144 0 R)",
+     "share": 0.045
+    },
+    {
+     "font": "Type3 (87 0 R)",
+     "share": 0.042
+    },
+    {
+     "font": "Type3 (258 0 R)",
+     "share": 0.031
+    },
+    {
+     "font": "Type3 (128 0 R)",
+     "share": 0.028
+    },
+    {
+     "font": "Type3 (166 0 R)",
+     "share": 0.027
+    },
+    {
+     "font": "Type3 (70 0 R)",
+     "share": 0.024
+    },
+    {
+     "font": "Type3 (124 0 R)",
+     "share": 0.022
+    }
+   ],
+   "sizes_pt": [
+    {
+     "pt": 6.0,
+     "share": 0.871
+    },
+    {
+     "pt": 5.5,
+     "share": 0.08
+    },
+    {
+     "pt": 7.0,
+     "share": 0.022
+    },
+    {
+     "pt": 10.0,
+     "share": 0.017
+    },
+    {
+     "pt": 5.0,
+     "share": 0.005
+    },
+    {
+     "pt": 8.5,
+     "share": 0.003
+    }
+   ],
+   "text_colors": [
+    {
+     "hex": "#636363",
+     "share": 0.582
+    },
+    {
+     "hex": "#000000",
+     "share": 0.289
+    },
+    {
+     "hex": "#a1a1a1",
+     "share": 0.079
+    },
+    {
+     "hex": "#3176b8",
+     "share": 0.022
+    },
+    {
+     "hex": "#c33867",
+     "share": 0.014
+    },
+    {
+     "hex": "#5197d1",
+     "share": 0.006
+    },
+    {
+     "hex": "#2eab71",
+     "share": 0.005
+    },
+    {
+     "hex": "#ffffff",
+     "share": 0.001
+    }
+   ],
+   "shape_colors": [
+    {
+     "hex": "#d4e4f2",
+     "area_mm2": 5628
+    },
+    {
+     "hex": "#f9d5df",
+     "area_mm2": 3603
+    },
+    {
+     "hex": "#5197d1",
+     "area_mm2": 2720
+    },
+    {
+     "hex": "#d65b83",
+     "area_mm2": 2142
+    },
+    {
+     "hex": "#3176b8",
+     "area_mm2": 1534
+    },
+    {
+     "hex": "#d6ede2",
+     "area_mm2": 1201
+    },
+    {
+     "hex": "#67c39a",
+     "area_mm2": 872
+    },
+    {
+     "hex": "#c33867",
+     "area_mm2": 439
+    }
+   ],
+   "running_header": true,
+   "running_footer": true,
+   "sampled_pages": [
+    3,
+    31,
+    59,
+    87,
+    114,
+    142,
+    170,
+    198
+   ]
+  }
+ }
+}

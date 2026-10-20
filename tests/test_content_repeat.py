@@ -142,3 +142,30 @@ def test_to_records_multi_field_value_is_not_a_page():
     new = content.to_records(plan, pages, old)
     assert new["원고"] == [{"학교": "광문고", "교재명+강제목": [{"교재명": "올림포스", "강제목": "1강"}], "_머리": "1"}, {"지문": "가"}]
     assert content.from_records(plan, pages, new) == old
+
+
+def test_record_page_overrides():
+    """레코드 페이지 재정의(인디자인 상위 페이지 항목 재정의 · 단락 재정의 · 고정 개체 · 페이지 추가 + 텍스트 스레드, 2026-10-20) —
+    그 레코드 페이지에만 들고, 재정의 없는 레코드 · 원본 쪽은 그대로"""
+    flow = {"x": 20, "y": 30, "atom": {"t": "text", "bind": "번호+문장", "w": 80, "h": 100}}
+    head = {"x": 20, "y": 5, "atom": {"t": "text", "bind": "제목", "w": 80, "h": 5}}
+    pg = {"id": "L", "name": "분석", "items": [head, flow, {"x": 0, "y": 0, "atom": {"t": "rect", "w": 10, "h": 10}}]}
+    plan = {"sections": [{"id": "s", "pages": [{"page": "L", "repeat": "each_set"}]}]}
+    ov = {"pages": {"0": {"items": {"1": {"h": 120, "y": 28}}, "paras": {"1": {"1": {"space_after": 3}}}, "anchors": {"1": {"1": {"dy": 2}}}}},
+          "added": [{"after": 0, "thread": 1}, {"after": 0}]}
+    recs = [{"제목": "가", "번호+문장": [{"번호": "1", "문장": [{"t": "", "side": "메모"}, "첫 문장"]}, {"번호": "2", "문장": "둘째"}], "_overrides": ov},
+            {"제목": "나", "번호+문장": [{"번호": "1", "문장": "딴 레코드"}]}]
+    pages, _ = content.fill(content.plan_pages(plan, {"L": pg}, {"분석": recs}), {"분석": recs})
+    assert [p["id"] for p in pages] == ["L", "L+1", "L+2", "L~2"]
+    a = pages[0]["items"][1]
+    assert a["y"] == 28 and a["atom"]["h"] == 120 and a["atom"]["story_seq"] == 1 and a["atom"]["smart_reflow"] is False
+    runs = a["fields"]["번호+문장"]
+    ps = [r for r in runs if isinstance(r, dict) and "ps" in r and not r.get("inline")]
+    assert ps[1].get("ov") == {"space_after": 3} and not ps[0].get("ov")
+    assert next(r for r in runs if isinstance(r, dict) and "side" in r)["dy"] == 2
+    t = pages[1]["items"]                                                # 더한 페이지 — 같은 프레임이 이어 받고, 데이터 필드는 감춘다
+    assert t[1]["atom"]["story"] == a["atom"]["story"] and t[1]["atom"]["story_seq"] == 2 and "fields" not in t[1]
+    assert t[0].get("hide") and not t[2].get("hide")
+    assert pages[2]["items"][1].get("hide") and pages[2]["_rk"] == "+1"   # 빈 페이지 — 스레드 없음
+    assert pages[3]["items"][1]["atom"]["h"] == 100 and "story" not in pages[3]["items"][1]["atom"]   # 다른 레코드는 그대로
+    assert pg["items"][1]["atom"]["h"] == 100                           # 원본 쪽(상위 페이지)도 그대로
