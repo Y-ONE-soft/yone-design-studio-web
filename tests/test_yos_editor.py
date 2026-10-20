@@ -28,6 +28,21 @@ def test_vocab_choice_marks_and_record():
     assert [s["key"] for s in rep["sent"]] == ["vocab-choice"]
 
 
+def test_vocab_choice_uploaded_manuscript():
+    """워크북 프리셋 「업로드본」 — 원고 그대로(doc 만, text 없음) 1단계 · 2단계도 지문 칸에 들어간다(2026-10-20 빈 면 사고)"""
+    def ms(kind, body):
+        return {"form": "manuscript", "kind": kind, "label": "[21]",
+                "doc": {"problem": [{"type": "p", "style": "Heading_num", "runs": [{"t": "[21]"}]},
+                                    {"type": "p", "style": "Normal_modified_box", "runs": [{"t": "x "}, {"b": True, "t": body}, {"t": " y"}]}],
+                        "answer": [{"type": "p", "style": "Normal_exp", "runs": [{"t": "(1) ⓐ"}]}]}}
+    items = [{"key": "vocab-choice", "label": "어휘선택 1단계", "content": ms("vocab-choice", "(1)❮ ⓐ up  / ⓑ down ❯")},
+             {"key": "vocab-choice-2", "label": "어휘선택 2단계", "content": ms("vocab-choice-2", "(1)❮ ⓐ big / ⓑ large ❯")}]
+    content, rep = yos_editor.to_content(_data(items), SAMPLE, CAPS)
+    assert content["A어휘선택"] == [{"제목": "어휘 선택 1", "지문번호": ["1"], "지문": ["x [ ⓐ up / ⓑ down ] y"]},
+                                   {"제목": "어휘 선택 2", "지문번호": ["1"], "지문": ["x [ ⓐ big / ⓑ large ] y"]}]
+    assert [s["key"] for s in rep["sent"]] == ["vocab-choice", "vocab-choice-2"]
+
+
 def test_passages_per_set_from_template():
     content, _ = yos_editor.to_content(_data([VOCAB], 5), SAMPLE, CAPS)
     assert [r["지문번호"] for r in content["A어휘선택"]] == [["1", "2", "3", "4"], ["5"]]

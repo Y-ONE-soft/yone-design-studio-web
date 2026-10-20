@@ -10,6 +10,7 @@ contents 는 지문마다 항목(item)을 보낸다: {"no", "content", "items": 
 
 contents 재료 → 구성 (2026-10-11 짝 확정 — 원본 책 머리 제목 기준, 실제 생성 결과로 칸 맞춤):
     A어휘선택  ← 어휘선택 1단계(vocab-choice, 제목 「… 1」) + 어휘선택 2단계(공통 문제 형식 → 원문에 고르기를 모아 박음, 제목 「… 2」)
+                 업로드 원고(form: manuscript — doc 만 있고 text 없음)는 doc 의 문제 본문을 text 로(_doc_text), 2단계는 vocab-choice-2
     A본문OX    ← 내용OX 영어(진술 O/X) — 「일치하지 않는 것」 객관식 칸은 비움
     B내용종합  ← 개별 유형 내용종합(발문 · 선지)
     C문장배열  ← 순서배열 1단계(보기 문장 (A)~) + 개별 유형 삽입 · 순서배열(지문마다 번갈아)
@@ -138,7 +139,9 @@ def _a_vocab(ps, sample, cap):
     t1 = _title(sample, "A어휘선택")
     t2 = re.sub(r"1\s*$", "2", t1) if re.search(r"1\s*$", t1) else t1 + " 2"
     one = [(no, _pick((g["vocab-choice"] or {}).get("text"))) for no, _, g in ps if g.get("vocab-choice")]
-    two = [(no, _pick(_merge_picks(text or "", _qs(g["q:어휘선택 2단계"])))) for no, text, g in ps if g.get("q:어휘선택 2단계")]
+    # 2단계 — 업로드 원고(vocab-choice-2)는 이미 원문에 고르기가 박혀 있고, AI 생성은 문제마다 쪼개 와서 원문에 모아 박는다
+    two = [(no, _pick((g.get("vocab-choice-2") or {}).get("text") or _merge_picks(text or "", _qs(g.get("q:어휘선택 2단계")))))
+           for no, text, g in ps if g.get("vocab-choice-2") or g.get("q:어휘선택 2단계")]
     return [{"제목": t, "지문번호": [str(no) for no, _ in ch], "지문": [x for _, x in ch]}
             for t, rows in ((t1, one), (t2, two)) for ch in _chunks(rows, per)]
 
@@ -441,7 +444,7 @@ def _s_exam(ps):
 
 # 구성 → (받는 재료, 바꾸기). 재료 = 원고 꼴(kind), 공통 문제 형식이면 「q:<재료 이름>」
 GROUPS = {
-    "A어휘선택": ({"vocab-choice", "q:어휘선택 2단계"}, _a_vocab),
+    "A어휘선택": ({"vocab-choice", "vocab-choice-2", "q:어휘선택 2단계"}, _a_vocab),
     "A본문OX": ({"q:내용OX 영어"}, _a_ox),
     "B내용종합": ({"q:내용종합"}, _b_summary),
     "C문장배열": ({"sentence-order", "q:순서배열", "q:삽입"}, _c_order),
@@ -459,6 +462,16 @@ def _src(it):
     return f"q:{it.get('label')}" if kind == "mock-exam" else kind
 
 
+def _doc_text(c):
+    """원고 그대로 올린 판본(form: manuscript — 원본 문단을 doc 에 담고 text 가 없다) → 문제 쪽 본문 글.
+    번호 머리 문단(「[21]」)은 뺀다(번호는 지문번호 자리가 단다). text 가 있으면 그것을 쓴다"""
+    if c.get("form") != "manuscript" or c.get("text"):
+        return c
+    paras = [p for p in ((c.get("doc") or {}).get("problem") or []) if p.get("type", "p") == "p" and p.get("style") != "Heading_num"]
+    text = "\n".join(t for t in ("".join(r.get("t") or "" for r in p.get("runs") or []).strip() for p in paras) if t)
+    return dict(c, text=text)
+
+
 def to_content(data, sample=None, caps=None):
     sample, caps = sample or {}, caps or {}
     story = next((k for nm, c in caps.items() if nm.startswith("S") for k in c if "발문" in k and "+" in k), None)   # 실전 문제 한 줄기 자리
@@ -469,7 +482,7 @@ def to_content(data, sample=None, caps=None):
         got, qs = {}, []
         for it in p.get("items") or []:
             s, label = _src(it), it.get("label")
-            c = it.get("content") or {}
+            c = _doc_text(it.get("content") or {})
             if s in used:
                 got[s] = c
             elif story and s.startswith("q:") and (c.get("group") == "question" or label in Q_LABELS):
