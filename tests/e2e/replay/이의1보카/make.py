@@ -333,7 +333,7 @@ def styles():
     st += need_cstyle("낱말 수", {"font": ELICE, "weight": 500, "size": v["cnt"][2], "color": v["cnt"][3]})
     bar = v["bar"]
     st += need_pstyle("꼬리표", {"font": ELICE, "weight": 700, "size": v["tag"][2], "leading": L["tag"], "color": v["tag"][3], "indent": v["tag_x"],
-                               "tabs": [{"at": round(v["cnt_x1"] - v["tag_x"], 2), "align": "right"}],   # 탭 자리는 단락 글 왼쪽(들여쓰기)에서 "shade": bar["fill"], "shade_r": 1.0,
+                               "tabs": [{"at": round(v["cnt_x1"], 2), "align": "right"}],   # 탭 자리는 텍스트 프레임 안쪽 왼쪽에서(인디자인 — 들여쓰기에서 재면 2026-10-21 오른쪽 탭 고침 뒤 4.7mm 모자랐다) "shade": bar["fill"], "shade_r": 1.0,
                                "shade_ot": round(v["tag_b"] - P["tag"][0] - bar["y"], 2), "shade_ob": round(bar["y"] + bar["h"] - (v["tag_b"] + P["tag"][1]), 2),
                                "start": "frame", "keep_next": True,
                                "space_after": clamp(gap(("꼬리표", "번호"), 9.52) - P["tag"][1] - P["no"][0] - no_sb)})
