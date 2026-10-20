@@ -58,6 +58,8 @@ def styles():
         v = {"font": f, "weight": w, "size": s, "leading": round(L * MMPT, 2), "color": c, "space_before": max(sb, 0)}
         if SA.get(n):
             v["space_after"] = SA[n]
+        if n == "다음 뜻 첫":                                            # 번호 묶음 안 낱말 사이 점선(0.1mm 네모 점, #d2d5db) → 같은 색 실선(정답 면과 같은 허용) — 94쪽: 첫 줄 기준선 위 5.33mm, 단 너비
+            v["rule_above"] = {"w": round(0.1 * MMPT, 3), "color": "#d2d5db", "offset": 5.33}
         if n == "뜻":                                                    # 뜻 → 뜻 — 뒤 공백 없이(같은 스타일 사이 간격)
             v["space_same"] = max(sb, 0)
         if n != "번호":
@@ -72,7 +74,7 @@ def styles():
         st += need_pstyle(PF + n, v)
         if n in END:
             st += need_pstyle(PF + "끝 " + n, {k: x for k, x in v.items() if k != "keep_next"})
-    return st
+    return calm(st)
 
 
 def ended(recs):

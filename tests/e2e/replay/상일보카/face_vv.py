@@ -104,30 +104,6 @@ def measure():
     return g
 
 
-_SEC = (("tabs", "list."), ("shade", "border", "rule_"), ("keep_", "start", "jc."))   # 단락 스타일 옵션 접힌 칸 2 · 3 · 4 (나머지 = 1 기본 문자 형식)
-_STKEY = re.compile(r'data-st="[^"]*:([^"]+)"')
-
-
-def calm(steps):
-    """스타일 창 접힌 칸이 바뀌는 자리 앞에서 잠깐 쉰다. 칸 값을 바꾸면 편집기가 0.8초 뒤 스타일을 저장하고 창을 다시 그려(saveSkin → thumbsLoad → panel)
-    펴 둔 칸이 다 접힌다 — 새 칸으로 굴려 내려가는 중에 접히면 칸이 안 보여 「굴려도 안 보임」(2026-10-20 ⑨ VV·해석 테두리 색상).
-    새 칸을 열기 전에 기다려 밀린 저장 · 다시 그리기를 먼저 끝낸다(그 뒤로 밀린 저장이 없으니 굴리는 동안 안 접힌다).
-    기다림 한 단계는 검사 판에서 0.3초(바로 넣기 0.06초 + 서버 주고받기 끝까지)로 줄어 — 여러 단계로 1초 넘게"""
-    out, cur = [], 0
-    for s in steps:
-        at = next((v["at"] if isinstance(v, dict) else v for k, v in s.items() if k in ("fill", "pick", "click")), None)
-        m = _STKEY.search(at) if isinstance(at, str) else None
-        if m:
-            sec = next((k + 1 for k, pre in enumerate(_SEC) if m.group(1).startswith(pre)), 0)
-            if sec != cur:
-                out += [{"wait": 2400} for _ in range(14)]
-                cur = sec
-        out.append(s)
-        if s.get("click") == "#st-new":                                   # 새 스타일 — 접힌 칸만 남은 채 창 맨 아래(첫 칸도 굴려 내려간다)
-            cur = None
-    return out
-
-
 def vv_styles():
     g = measure()
     st = []

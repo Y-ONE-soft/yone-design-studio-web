@@ -1,5 +1,5 @@
 """상일보카 대본 공용 — 원본 읽기 · 그리기 도우미 · 상태(ELEMS · PAGES · CONTENT). 면 대본(make.py · face_*.py)이 함께 쓴다."""
-import json, os, sys
+import json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(HERE))))
 sys.path.insert(0, os.path.dirname(os.path.dirname(HERE)))
@@ -386,7 +386,10 @@ def frame_body_left(pno):
     stroke = next(e for e in dr if e["stroke"] and not e["fill"] and abs(e["x"] - badge["x"]) < 0.3)
     st = [S("본문 펼침면 왼쪽 틀 — 얇은 띠 · 원 번호표", 1200)]
     st += rbox(band["x"], band["y"], band["w"], band["h"], band["fill"], label="얇은 띠")
-    st += rbox(bline["x"], bline["y"], bline["w"], bline["h"], bline["fill"], label="띠 아래 파랑 줄")
+    st += rbox(bline["x"], bline["y"], bline["w"], bline["h"], bline["fill"], label="띠 아래 파랑 줄", measure=False)
+    # 맞대기는 보이는 몫만 — 원 번호표가 줄 위에 얹혀 번호표 남색 선 가장자리 화소가 줄 색 안에 들어 줄 높이로 잡혔다(96쪽 x 18.8 · 0.4mm)
+    x0 = badge["x"] + badge["w"] + 0.5
+    Ebox(x0, bline["y"], bline["x"] + bline["w"] - x0, bline["h"], bline["fill"])
     st += ref_shape(tri, fill=tri["fill"], label="번호표 옆 그림자")
     st += ref_shape(badge, fill="#ffffff", stroke=stroke["stroke"], sw=stroke["sw"], label="원 번호표(흰 칠 · 남색 선)")
     num = sp_line(sp, lambda s: s["size"] == 10.0 and s["base"] < 12)
@@ -422,3 +425,28 @@ def story_pick(key, head):
         return [S("글 잇기 — 새 이야기", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
     return [S("글 잇기 — 같은 이야기를 이어 받는다", 700),
             {"pick": {"at": '#side select[data-a="story"]', "value": f"이야기{STORY_ORDER.index(key) + 1}"}, "wait": 900}]
+
+
+# ── 스타일 창 칸 — 저장 뒤 다시 그리기로 접히는 것 피하기(face_vv 에서 옮김) ──────────────────────
+_SEC = (("tabs", "list."), ("shade", "border", "rule_"), ("keep_", "start", "jc."))   # 단락 스타일 옵션 접힌 칸 2 · 3 · 4 (나머지 = 1 기본 문자 형식)
+_STKEY = re.compile(r'data-st="[^"]*:([^"]+)"')
+
+
+def calm(steps):
+    """스타일 창 접힌 칸이 바뀌는 자리 앞에서 잠깐 쉰다. 칸 값을 바꾸면 편집기가 0.8초 뒤 스타일을 저장하고 창을 다시 그려(saveSkin → thumbsLoad → panel)
+    펴 둔 칸이 다 접힌다 — 새 칸으로 굴려 내려가는 중에 접히면 칸이 안 보여 「굴려도 안 보임」(2026-10-20 ⑨ VV·해석 테두리 색상).
+    새 칸을 열기 전에 기다려 밀린 저장 · 다시 그리기를 먼저 끝낸다(그 뒤로 밀린 저장이 없으니 굴리는 동안 안 접힌다).
+    기다림 한 단계는 검사 판에서 0.3초(바로 넣기 0.06초 + 서버 주고받기 끝까지)로 줄어 — 여러 단계로 1초 넘게"""
+    out, cur = [], 0
+    for s in steps:
+        at = next((v["at"] if isinstance(v, dict) else v for k, v in s.items() if k in ("fill", "pick", "click")), None)
+        m = _STKEY.search(at) if isinstance(at, str) else None
+        if m:
+            sec = next((k + 1 for k, pre in enumerate(_SEC) if m.group(1).startswith(pre)), 0)
+            if sec != cur:
+                out += [{"wait": 2400} for _ in range(14)]
+                cur = sec
+        out.append(s)
+        if s.get("click") == "#st-new":                                   # 새 스타일 — 접힌 칸만 남은 채 창 맨 아래(첫 칸도 굴려 내려간다)
+            cur = None
+    return out
