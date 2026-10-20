@@ -227,7 +227,17 @@ def page_array(pdf, pno, dpi=300, trim=True):
     import numpy as np
     d = pymupdf.open(pdf)
     p = d[pno - 1]
-    pix = p.get_pixmap(dpi=dpi, clip=p.trimbox if trim else None)
+    clip = p.trimbox if trim else None
+    if trim and p.trimbox != p.rect:
+        # 재단선 왼쪽 위를 화소 격자 0 에 — clip 으로 자르면 쪽 전체 격자 그대로라 재단 여백 8.504pt 가 300dpi 에서 0.433화소 밀려
+        # 0.17mm 막대 같은 가는 것의 잉크가 0.88~1.32 로 흔들리고 띠 가장자리 화소가 한 줄 더 잡혔다(2026-10-20 상일보카 꼬리 「|」 · 위 띠).
+        # 결과 PDF(편집기 인쇄)는 재단선이 0 이라 같은 격자가 된다
+        try:
+            p.set_cropbox(p.trimbox)
+            clip = None
+        except Exception:
+            pass
+    pix = p.get_pixmap(dpi=dpi, clip=clip)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, :3]
 
 

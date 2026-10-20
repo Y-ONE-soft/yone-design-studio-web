@@ -899,19 +899,21 @@ def story_h(ctx, a, v):
             paras.append(cur)
         cur[1] += x.get("t", "") if isinstance(x, dict) and "ps" in x else rich_plain(x)
     it, ir, ib, il = insets(a)
-    h, prev, pov = it + ib, None, {}
+    cols = max(int(a.get("columns") or 1), 1)                          # 단 — 단 폭으로 줄을 세고 단 개수로 나눈다(text_h 와 같게)
+    col_w = (float(a["w"]) - il - ir - (float(a.get("gutter") or 0) * (cols - 1) if cols > 1 else 0)) / cols
+    h, prev, pov = 0.0, None, {}
     for slot, t, ov in paras:
         st = dict(slot_style(a, slot, ctx) if slot else {}, **ov)
         aa = {k: v2 for k, v2 in a.items() if k not in ("inset", "space_before", "space_after", "table", "columns")}
         aa.update({k: st[k] for k in ("font", "weight", "size", "leading", "tracking", "indent", "indent_right", "indent_first", "tsume") if st.get(k) not in (None, "")})
-        h += text_h(t, float(a["w"]) - il - ir, float(aa.get("size") or a["size"]), aa.get("leading"), aa)
+        h += text_h(t, col_w, float(aa.get("size") or a["size"]), aa.get("leading"), aa)
         if prev is not None:
             if prev == slot and st.get("space_same") is not None:
                 h += float(st["space_same"])
             else:
                 h += float(st.get("space_before") or 0) + float(dict(slot_style(a, prev, ctx) if prev else {}, **pov).get("space_after") or 0)
         prev, pov = slot, ov
-    return h
+    return h / cols + it + ib
 
 
 def text_end(plain, w_mm, size_pt, a=None):
@@ -1016,6 +1018,12 @@ def _tab_html(stops, para, start=0.0, indent=None):
             out += f'<span style="display:inline-block;text-indent:0;min-width:{max(at - open_[0], 0):.3f}px">{open_[1]}</span>'   # 칸 안은 들여쓰기 없이(단락의 첫 줄 들여쓰기는 칸 자리에 이미 들었다)
             open_ = [at, seg]
             continue
+        if open_ is not None and al != "center":                  # 오른쪽 · 채움 탭 앞 글 — 앞 글과 탭 칸을 한 칸(시작 자리 → 탭 자리)으로. 따로 두면 탭 칸이 앞 글 폭만큼 넘쳐 줄이 꺾였다
+            lead = (f'<span style="flex:1;overflow:hidden;white-space:nowrap">' + (esc(leader) * 80) + "</span>") if leader else '<span style="flex:1"></span>'
+            out += (f'<span style="display:inline-flex;text-indent:0;min-width:{max(at - open_[0], 0.5):.3f}px;align-items:baseline">'
+                    f'<span>{open_[1]}</span>{lead}<span>{seg}</span></span>')
+            open_ = None
+            continue
         if open_ is not None:
             out += f'<span>{open_[1]}</span>'
             open_ = None
@@ -1058,7 +1066,7 @@ _PS_LEAD_RE = re.compile(r'<span data-ps="[^"]*"(?: data-ov="[^"]*")?(?: data-v0
 PARA_ATTRS = ("indent", "indent_first", "indent_right", "space_before", "space_after", "space_same", "align",
               "shade", "shade_fit", "shade_r", "shade_ot", "shade_ob", "shade_ol", "shade_or",
               "border", "border_color", "border_fit", "border_r", "border_ot", "border_ob", "border_ol", "border_or",
-              "rule_above", "rule_below", "list", "tabs", "keep_next", "keep_together", "keep_first", "keep_last", "jc", "tsume")
+              "rule_above", "rule_below", "list", "tabs", "keep_next", "keep_together", "keep_first", "keep_last", "start", "jc", "tsume")
 
 
 def para_attrs(a, slot, ctx=None):
@@ -1274,6 +1282,10 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
         attrs += f' data-keep-first="{int(st["keep_first"])}"'       # 단락의 시작 · 끝 — 시작 N행
     if st.get("keep_last"):
         attrs += f' data-keep-last="{int(st["keep_last"])}"'         # 끝 N행
+    if st.get("start") in ("column", "frame", "page"):                # 단락 시작 — 다음 단 · 다음 프레임 · 다음 페이지(units_compose.js thread · 다단 상자는 단 나누기)
+        attrs += f' data-start="{st["start"]}"'
+        if st["start"] == "column":
+            css += "break-before:column;"
     if st.get("tsume"):
         attrs += f' data-tsume="{float(st["tsume"]):g}"'
     just = str(st.get("align") or a.get("align") or "").startswith("justify")
@@ -1315,6 +1327,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
                     x += h_
     if "\t" in x:                                                      # 탭 — 탭 정지(단락 값) · 숨은 정지(첫 줄 내어쓰기) · 기본 탭 정지
         x = _tab_html(st.get("tabs"), x, ind + indf, ind if indf < 0 else None) or x
+    if before_p and ' data-start="' in attrs:                          # 줄 위 고정 개체 줄이 앞에 서면 단락 시작은 그 줄부터
+        before_p = before_p.replace("<p ", f'<p data-start="{st["start"]}" ', 1)
     return before_p + f'<p style="{css}"{attrs}>{deco}{soft_breaks(x, just, spec) or "&#160;"}</p>' + after_p
 
 
