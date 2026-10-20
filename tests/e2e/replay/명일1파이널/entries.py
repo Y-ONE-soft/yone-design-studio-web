@@ -163,6 +163,12 @@ def passages(pdf, pages, carry=None):
                     cur[-1][1] = _cat(val, txt)
                 else:                                                    # 삽입 지문 본문 첫 줄
                     cur.append(["본문", txt])
+    for r in recs:                                                       # 문장 배열 — (A) … 문장들을 한 값(문단마다 \n)으로: 지문 끝 답 줄(「문장」 끝 고정 개체)이 마지막 문장 뒤에만 붙게
+        ks = [i for i, (k, _) in enumerate(r) if k == "문장"]
+        if len(ks) > 1:
+            r[ks[0]] = ["문장", "\n".join(r[i][1] for i in ks)]
+            for i in reversed(ks[1:]):
+                del r[i]
     return recs
 
 

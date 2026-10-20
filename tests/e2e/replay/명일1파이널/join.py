@@ -37,7 +37,7 @@ Y_BIND = "출처+빈칸지문+빈칸요약+정답지문+정답요약"
 
 
 def unit_dir(g):
-    """그 면의 마지막 판 — 통과 판이 있으면 그것, 없으면 마지막 바로 넣기 판(2026-10-20 사용자 「일단 다 올려두고 쓰면서 고친다」 — 원본 일치는 9 맞대기가 본다)"""
+    """그 면의 판 — 통과 판이 있으면 그것, 없으면 가장 나중 판(사람 조작 · 바로 넣기 중 · 원본 일치는 등록 뒤 맞대기가 본다)"""
     best, any_ = None, None
     for u in (f"명일1파이널@{g}", f"명일1파이널@{g}~바로"):
         try:
@@ -46,10 +46,10 @@ def unit_dir(g):
             continue
         if v.get("통과") and (best is None or v["때"] > best[1]):
             best = (u, v["때"])
-        if u.endswith("~바로") and (any_ is None or v["때"] > any_[1]):
+        if any_ is None or v["때"] > any_[1]:
             any_ = (u, v["때"])
     if not best and any_:
-        print(f"  면 {g} — 통과 판 없음, 마지막 바로 넣기 판으로({any_[0]})", flush=True)
+        print(f"  면 {g} — 통과 판 없음, 가장 나중 판으로({any_[0]})", flush=True)
         best = any_
     if not best:
         sys.exit(f"면 {g} 판 없음 — 먼저 REC_DIRECT=1 replay.py 명일1파이널@{g} check")

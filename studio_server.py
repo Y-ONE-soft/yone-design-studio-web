@@ -52,7 +52,8 @@ def create_app():
     app.register_blueprint(analysis_edit_bp)   # 분석본 지면 위 고치기 — contents 분석본 NEW 가 끼워 쓴다
     app.register_blueprint(pocketbook_view_bp)  # 포켓북 지면 보기 — contents 포켓북이 끼워 쓴다
     api_v1.install(app)                 # /api/v1 — contents·core·앱이 부르는 계약
-    jobs.mark_lost_on_boot()            # 재시작 전에 돌던 잡은 lost 로
+    if os.environ.get("YONE_WARM", "1") != "0":   # 검사 · 잇기 서버(YONE_WARM=0)는 건너뜀 — 잡 폴더가 iCloud(Documents)라 파일마다 내려받느라 기동이 2분 넘게 멈췄다(2026-10-20)
+        jobs.mark_lost_on_boot()        # 재시작 전에 돌던 잡은 lost 로
 
     @app.context_processor
     def _dir_colors():
