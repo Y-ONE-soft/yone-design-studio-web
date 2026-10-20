@@ -323,7 +323,7 @@ def group_part(key, n, X0, Y0, w, h):
     PARTN[0] += 1
     PART[key] = f"p_{PARTN[0]}"
     return [S("자석 끄기 — 켜 두면 묶을 때 0.5mm 격자로 반올림된다", 1000), {"clickif": {"at": "#tg-snap", "when": "view.snap"}, "wait": 600},
-            S(f"범위로 {n}개를 골라 그룹 → 부품", 1200),
+            S(f"범위로 {n}개를 골라 그룹 → 부품", 1200), {"key": "Escape", "wait": 600},   # 먼저 고른 것을 푼다 — 마지막에 그린 면이 골라진 채면 끌기가 그 면의 모퉁이 손잡이를 잡아 크기를 바꿨다(1개만 잡힘, 2026-10-20 1분 시험)
             {"drag": {"from": {"mm": [X0 - 2, Y0 - 1]}, "to": {"mm": [X0 + w + 2, Y0 + h + 1]}}, "wait": 900},
             {"js": f"(() => {{ if (sels.size !== {n}) throw new Error('고른 것 ' + sels.size + ' ({n} 이어야)'); return '고른 것 {n}'; }})()"},
             {"until": "!!document.querySelector('#side #s-group')", "wait": 400}, {"click": "#side #s-group", "wait": 1500},
@@ -502,7 +502,7 @@ def y_part():
     st = [S("「>> 내용요약」 그룹 — 고정 개체로 쓸 부품", 1200)]
     for s_ in (a, b):
         st += text(round(X0 + (s_["x"] - a["x"]), 2), round(top_of(base, 8.5, NOTO, 700), 2), round(s_["x1"] - s_["x"] + 3.0, 2), 4.0, s_["text"], 8.5, BLACK,
-                   font=NOTO, weight=700, track=track_of(s_, NOTO, 700, 8.5) or None, auto="")
+                   font=NOTO, weight=700, track=track_of(s_, NOTO, 700, 8.5) or None, auto="height")   # 자동 높이 — 고정 높이면 글이 상자보다 길다(넘침)
     st += box(X0, Y0, W, H, "#ffffff", alpha=0)
     Y["part_h"], Y["part_base"] = H, base - Y0
     return st + group_part("요약", 3, X0, Y0, W, H)
