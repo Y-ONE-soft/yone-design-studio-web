@@ -388,7 +388,7 @@ def frame_body_left(pno):
     st += rbox(band["x"], band["y"], band["w"], band["h"], band["fill"], label="얇은 띠")
     st += rbox(bline["x"], bline["y"], bline["w"], bline["h"], bline["fill"], label="띠 아래 파랑 줄", measure=False)
     # 맞대기는 보이는 몫만 — 원 번호표가 줄 위에 얹혀 번호표 남색 선 가장자리 화소가 줄 색 안에 들어 줄 높이로 잡혔다(96쪽 x 18.8 · 0.4mm)
-    x0 = badge["x"] + badge["w"] + 0.5
+    x0 = badge["x"] + badge["w"] + 2.0                                 # 재는 창은 상자 둘레 1.5mm 까지 — 번호표 선이 창에 안 들게
     Ebox(x0, bline["y"], bline["x"] + bline["w"] - x0, bline["h"], bline["fill"])
     st += ref_shape(tri, fill=tri["fill"], label="번호표 옆 그림자")
     st += ref_shape(badge, fill="#ffffff", stroke=stroke["stroke"], sw=stroke["sw"], label="원 번호표(흰 칠 · 남색 선)")
