@@ -28,6 +28,45 @@ def test_vocab_choice_marks_and_record():
     assert [s["key"] for s in rep["sent"]] == ["vocab-choice"]
 
 
+def test_vocab_choice_uploaded_manuscript():
+    """워크북 프리셋 「업로드본」 — 원고 그대로(doc 만, text 없음) 1단계 · 2단계도 지문 칸에 들어간다(2026-10-20 빈 면 사고)"""
+    def ms(kind, body):
+        return {"form": "manuscript", "kind": kind, "label": "[21]",
+                "doc": {"problem": [{"type": "p", "style": "Heading_num", "runs": [{"t": "[21]"}]},
+                                    {"type": "p", "style": "Normal_modified_box", "runs": [{"t": "x "}, {"b": True, "t": body}, {"t": " y"}]}],
+                        "answer": [{"type": "p", "style": "Normal_exp", "runs": [{"t": "(1) ⓐ"}]}]}}
+    items = [{"key": "vocab-choice", "label": "어휘선택 1단계", "content": ms("vocab-choice", "(1)❮ ⓐ up  / ⓑ down ❯")},
+             {"key": "vocab-choice-2", "label": "어휘선택 2단계", "content": ms("vocab-choice-2", "(1)❮ ⓐ big / ⓑ large ❯")}]
+    content, rep = yos_editor.to_content(_data(items), SAMPLE, CAPS)
+    assert content["A어휘선택"] == [{"제목": "어휘 선택 1", "지문번호": ["1"], "지문": ["x [ ⓐ up / ⓑ down ] y"]},
+                                   {"제목": "어휘 선택 2", "지문번호": ["1"], "지문": ["x [ ⓐ big / ⓑ large ] y"]}]
+    assert [s["key"] for s in rep["sent"]] == ["vocab-choice", "vocab-choice-2"]
+
+
+def test_component_manuscript_form():
+    """컴포넌트 원고 꼴(wb-manuscript — AI · 업로드 같은 꼴) → 구성: 본문정리+주제 → B본문정리, 어법수정 → A어법선택 객관식 칸,
+    영작배열(낱말 · 서술형) → C영작배열 한 구성"""
+    ms = lambda comp, **kw: {"key": comp, "label": comp, "content": dict(form="wb-manuscript", component=comp, **kw)}
+    items = [ms("cq-b54cc606", passage="P", topics=["t1", "t2"], titles=["h1", "h2"]),
+             ms("q-topic", prompt="다음 글의 주제로 가장 적절한 것은?", passage="P", notes="* a: 가", choices=["x", "y"], answer="1"),
+             ms("grammar-choice", passage="a 1[is / are] b", answers=[{"no": 1, "word": "is"}]),
+             ms("cq-df5aa646", count=1, passage="a ①<u>is</u> b", answer="①", explanation=""),
+             ms("cq-5361e6bd", items=[{"no": 1, "ko": "가", "words": "(a / b)", "answer": "a b"}]),
+             ms("cq-dc819941", items=[{"no": 1, "ko": "나", "words": "( a / b ) ( c )", "answer": "a b c"}])]
+    caps = dict(CAPS, B본문정리=Counter({"제목": 1, "지문번호": 2, "지문+주제+글제목": 2, "발문+문제지문+주석+선지": 2}),
+                A어법선택=Counter({"제목": 1, "지문번호": 2, "지문": 2, "발문+문제지문": 2}),
+                C영작배열=Counter({"제목": 1, "지문번호": 10, "문항번호": 10, "우리말": 10, "보기단어": 10}))
+    content, rep = yos_editor.to_content(_data(items), SAMPLE, caps)
+    assert not rep["skipped"]
+    b = content["B본문정리"][0]
+    assert b["지문+주제+글제목"][0] == [[["지문", "P"], ["주제", "t1\nt2"], ["글제목", "h1\nh2"]]]
+    assert b["발문+문제지문+주석+선지"][0][0][0] == ["발문", "다음 글의 주제로 가장 적절한 것은?"]
+    a = content["A어법선택"][0]
+    assert a["지문"] == ["a [is / are] b"]
+    assert a["발문+문제지문"][0] == [[["발문", "다음 밑줄 친 부분 중 어법상 틀린 것은?"], ["문제지문", ["a ①", {"t": "is", "cs": "밑줄"}, " b"]]]]
+    assert content["C영작배열"][0]["보기단어"] == ["(a / b)", "( a / b ) ( c )"]
+
+
 def test_passages_per_set_from_template():
     content, _ = yos_editor.to_content(_data([VOCAB], 5), SAMPLE, CAPS)
     assert [r["지문번호"] for r in content["A어휘선택"]] == [["1", "2", "3", "4"], ["5"]]

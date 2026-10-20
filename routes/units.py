@@ -678,6 +678,8 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
     svgs = []
     for pg, rec, _ in seq:
         svgs.extend(render.page_canvas_svgs(ctx, pg, spec_of(pg), pno=len(svgs) + _pstart(plan))[:1])      # 쪽 하나 = 면 하나 (캔버스와 같게) · 쪽 번호 = 몇째 면
+        if pg.get("_rk") is not None and svgs and isinstance(svgs[-1], dict):
+            svgs[-1]["rk"] = pg["_rk"]                                                # 레코드 페이지 재정의 열쇠(content.apply_overrides) — 화면이 고친 것을 이 열쇠로 적는다
         if recs is not None:
             recs.append(rec)
     return svgs, report, spec

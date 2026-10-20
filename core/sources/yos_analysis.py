@@ -431,6 +431,8 @@ def record(doc):
     voca = [v for v in doc.get("voca") or [] if v.get("word")]
     if voca:
         rec["어휘"] = _voca_field(voca)
+    if isinstance(doc.get("overrides"), dict) and doc["overrides"]:     # 레코드 페이지 재정의(프레임 크기 · 단락 재정의 · 페이지 추가 …) — content.apply_overrides
+        rec["_overrides"] = doc["overrides"]
     return rec
 
 
@@ -551,6 +553,13 @@ def to_doc(rec, base):
                     voca.append(v)
             doc["voca"] = voca
             changed.append("어휘")
+    ov = rec.get("_overrides") if isinstance(rec.get("_overrides"), dict) else {}
+    if ov != (base.get("overrides") or {}):                             # 레코드 페이지 재정의 — 지면에서 프레임 · 단락 · 페이지를 손본 것
+        if ov:
+            doc["overrides"] = ov
+        else:
+            doc.pop("overrides", None)
+        changed.append("페이지 재정의")
     return doc, changed
 
 
