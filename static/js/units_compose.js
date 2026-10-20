@@ -476,7 +476,7 @@
     if (getComputedStyle(b).position === "static") b.style.position = "relative";
     const m = document.createElement("span");
     m.className = "story-over";
-    m.title = "글이 넘친다 — 이을 상자가 더 없다";
+    m.title = "넘침 — 텍스트 스레드로 이을 텍스트 프레임이 없다";
     m.setAttribute("style", "position:absolute;right:0;bottom:0;width:2.4px;height:2.4px;background:#e0245e;color:#fff;font:bold 2.2px/2.4px sans-serif;text-align:center;text-indent:0;letter-spacing:0;z-index:2");
     m.textContent = "+";
     b.appendChild(m);
@@ -577,6 +577,14 @@
         markOver(ch[i]);
       }
     }
+  }
+
+  function overset(root) {                                             // 잇지 않은 글상자(크기 고정)도 넘치면 빨간 + — 인디자인은 모든 텍스트 프레임에 단다. 글은 그대로(상자 끝에서 잘린 채)
+    root.querySelectorAll("foreignObject > div[lang]:not([data-story]):not([data-grow])").forEach(o => {
+      if (o.dataset.overflow || !holder(o)) return;
+      const ps = paras(holder(o));
+      if (ps.length && inkBottom(ps[ps.length - 1]) > limitOf(o)) markOver(o);
+    });
   }
 
   // ── 자동 크기 바로잡기 (인디자인 텍스트 프레임 「자동 크기 조정 — 높이만」) ──
@@ -696,6 +704,7 @@
     try { thread(root || document); } catch (e) { /* 못 하면 첫 상자 안에서 잘린 채 */ }
     try { dropSpares(root || document); } catch (e) { /* 못 하면 빈 덧쪽이 남는다 */ }
     try { grow(root || document); } catch (e) { /* 못 하면 서버 어림 높이 그대로 */ }
+    try { overset(root || document); } catch (e) { /* 못 하면 넘침 표시 없이 */ }
   }
 
   window.unitsCompose = composeAll;

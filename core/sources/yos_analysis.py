@@ -28,12 +28,15 @@ import re
 ROLE_CS = {                                                              # contents 역할 → 광문 틀 문자 스타일 (글자색 먼저, 형광 다음 — 조각 cs 차례)
     "grammar": "파랑 글자", "vocab": "빨강 글자", "parallel": "빨강 물결",
     "descriptive": "형광 노랑", "antecedent": "형광 보라", "relative": "형광 보라",
-    "connector": "형광 민트", "flow": "형광 민트", "blank": "형광 민트",
+    "connector": "형광 민트", "flow": "형광 민트", "blank": "형광 민트", "underline": "밑줄",
 }
 CS_ROLE = {"파랑 글자": "grammar", "빨강 글자": "vocab", "빨강 물결": "parallel",   # 되돌릴 때 원래 역할을 모르면(새로 칠함) 대표 역할
-           "형광 노랑": "descriptive", "형광 보라": "antecedent", "형광 민트": "connector"}
-_ORDER = ["파랑 글자", "빨강 글자", "빨강 물결", "형광 노랑", "형광 보라", "형광 민트"]
+           "형광 노랑": "descriptive", "형광 보라": "antecedent", "형광 민트": "connector", "밑줄": "underline"}
+_ORDER = ["파랑 글자", "빨강 글자", "빨강 물결", "밑줄", "형광 노랑", "형광 보라", "형광 민트"]
 BADGE = {"t": "서술형★", "pos": "above", "cs": "서술형"}
+EXAM = {"t": "기출✓", "pos": "above", "cs": "기출✓ 상자"}                   # 사람이 낱말에 단 「기출✓」(contents badges kind exam) — 글자만이면 cs 「기출✓ 글자」
+BADGE_CS = ("서술형", "기출✓ 상자", "기출✓ 글자")
+POS_CS = "품사 칩"                                                         # 어휘 낱말 뒤 품사 칩(contents voca[].pos)
 CIRCLED = "①②③④⑤⑥⑦⑧⑨⑩"
 _PUNCT = re.compile(r"^[\W_]+|[\W_]+$")
 
@@ -42,8 +45,12 @@ def _off(raw):
     return raw.split("|")[0].strip()
 
 
+_TAIL = re.compile(r"\|-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?")
+
+
 def _scan(tagged):
-    """태깅본 → (보이는 글자 [(글자, 센 자리)], 윗주 [(보이는 자리, 원래 태그, 글, 위/아래)], 생략 [(보이는 자리, 글)])"""
+    """태깅본 → (보이는 글자 [(글자, 센 자리)], 윗주 [(보이는 자리, 원래 태그, 글, 위/아래)], 생략 [(보이는 자리, 글, 옮김 꼬리)])
+    생략 꼬리 `⌃(that)|dx,dy` 는 그 생략 표기만 옮긴 자리(contents tagged-serialize offOf) — 화면에선 버리고 되돌릴 때 살린다. 센 자리에는 든다."""
     chars, rubies, elided = [], [], []
     i, c, n = 0, 0, len(tagged)
     while i < n:
@@ -61,9 +68,11 @@ def _scan(tagged):
         if tagged.startswith("⌃(", i):
             j = tagged.find(")", i)
             if j > i:
-                elided.append((len(chars), tagged[i + 2:j].strip()))
-                c += j + 1 - i
-                i = j + 1
+                m = _TAIL.match(tagged, j + 1)
+                tail = m.group(0) if m else ""
+                elided.append((len(chars), tagged[i + 2:j].strip(), tail))
+                c += j + 1 - i + len(tail)
+                i = j + 1 + len(tail)
                 if chars and chars[-1][0] == " " and i < n and tagged[i] == " ":   # 낱말 사이 생략 — 빠진 자리 앞뒤 띄어쓰기가 둘이 되지 않게
                     c += 1
                     i += 1
@@ -121,8 +130,18 @@ def _hash(runs):
     return hashlib.sha1(json.dumps(norm_runs(runs), ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
 
 
-def sentence_runs(tagged, marks, refs=None):
-    """태깅본 한 줄 + 역할 마크 (+ 지칭어) → 꾸밈 조각 목록(글 · cs · ruby · 되돌리기 칸)"""
+def _badge_ruby(b):
+    """낱말 딱지(contents badges[]) → 위 윗주. 원래 딱지는 `bd` 에(되돌릴 때 자리만 새로)"""
+    bd = {k: b[k] for k in ("kind", "style", "dx", "dy") if b.get(k) not in (None, "", 0)}
+    if b.get("kind") == "essay":
+        return dict(BADGE, bd=[bd])
+    if b.get("style") == "text":
+        return dict(EXAM, cs="기출✓ 글자", bd=[bd])
+    return dict(EXAM, t="\u2002기출✓\u2002", bd=[bd])                      # 상자 — 바탕 띠(문자 스타일 굵은 밑줄)가 글자 양옆 반각만큼 더 나가게(Y.OS design .exb 안쪽 여백)
+
+
+def sentence_runs(tagged, marks, refs=None, badges=None):
+    """태깅본 한 줄 + 역할 마크 (+ 지칭어 · 낱말 딱지) → 꾸밈 조각 목록(글 · cs · ruby · 되돌리기 칸)"""
     chars, rubies, elided = _scan(tagged or "")
     text = "".join(ch for ch, _ in chars)
     offs = [o for _, o in chars]
@@ -136,6 +155,12 @@ def sentence_runs(tagged, marks, refs=None):
         if m.get("badge") and hit:
             k = next((k for k in hit if not text[k].isspace()), hit[0])
             badge_at.add(_word_after(text, k)[0])
+    word_badges = []                                                     # (낱말 시작, 딱지 윗주) — 낱말 딱지(기출✓ · 서술형★, 자리는 역할 마크와 같은 센 자리)
+    for b in badges or []:
+        hit = [k for k, o in enumerate(offs) if b.get("start", 0) <= o < b.get("end", 0)]
+        if hit:
+            k = next((k for k in hit if not text[k].isspace()), hit[0])
+            word_badges.append((_word_after(text, k)[0], _badge_ruby(b)))
     spans = {}                                                           # 낱말 시작 → [끝, 위 조각들, 아래 조각들]
 
     def put(s, e, part, pos):
@@ -147,9 +172,9 @@ def sentence_runs(tagged, marks, refs=None):
     for p, raw, tag, pos in rubies:
         s, e = _word_before(text, p)
         put(s, e, {"k": "up", "raw": raw, "t": tag} if pos == "above" else {"raw": raw, "t": tag}, pos)
-    for p, t in elided:
+    for p, t, tail in elided:
         s, e = _word_after(text, p)
-        put(s, e, {"k": "elide", "t": t}, "above")
+        put(s, e, dict({"k": "elide", "t": t}, **({"off": tail} if tail else {})), "above")
     refs = _refs(refs)
     if refs:                                                             # 지칭어 — 위 태그([^…])가 없는 낱말에만, 같은 낱말 모두에(Y.OS design 과 같이)
         k = 0
@@ -165,6 +190,8 @@ def sentence_runs(tagged, marks, refs=None):
             k = e
     for s in badge_at:
         put(s, _word_after(text, s)[1], dict(BADGE), "above")
+    for s, rb in word_badges:
+        put(s, _word_after(text, s)[1], rb, "above")
 
     def cs_of(rs):
         cs = [x for x in _ORDER if x in {ROLE_CS[r] for r in rs}]
@@ -178,11 +205,19 @@ def sentence_runs(tagged, marks, refs=None):
     while k < len(text):
         if k in spans:                                                   # 윗주 달린 낱말 — 한 조각(낱말 안에서 색이 갈려도 낱말 첫 글자 기준)
             e, up, down = spans[k]
-            badge = [r for r in up if r.get("cs") == "서술형"]
-            parts = [r for r in up if r.get("cs") != "서술형"]
+            badge = [r for r in up if r.get("cs") in BADGE_CS]
+            parts = [r for r in up if r.get("cs") not in BADGE_CS]
             rb = []
-            if badge:                                                    # 위 자리는 하나 — 서술형★ 이 있으면 그것(다른 위 윗주는 되돌리기 칸에만)
-                rb.append(dict(BADGE, **({"src": parts} if parts else {})))
+            if badge:                                                    # 위 자리는 하나 — 딱지가 있으면 그것(기출✓ 먼저 · 다른 위 윗주와 딱지는 되돌리기 칸에만)
+                badge.sort(key=lambda r: r.get("cs") == "서술형")
+                one = dict(badge[0])
+                bd = [x for r in badge for x in r.get("bd") or []]       # 이 낱말의 낱말 딱지 전부(서술형★ 형광펜 머리 딱지는 bd 없음 — 마크 badge 로 되돌린다)
+                one.pop("bd", None)
+                if bd:
+                    one["bd"] = bd
+                if bd and any(not r.get("bd") for r in badge):          # 형광펜 머리 서술형★ 도 함께 — 되돌릴 때 마크 badge 도 살린다
+                    one["mk"] = 1
+                rb.append(dict(one, **({"src": parts} if parts else {})))
             elif parts:
                 parts.sort(key=lambda r: {"elide": 0, "ref": 1, "up": 2}[r["k"]])
                 rb.append({"t": " ".join(r["t"] for r in parts), "pos": "above", "src": parts})
@@ -202,7 +237,7 @@ def sentence_runs(tagged, marks, refs=None):
 
 
 def runs_sentence(runs, lead_no=False):
-    """꾸밈 조각(지면에서 고친 문장) → (태깅본, 역할 마크, 문법 포인트, 지칭어) — sentence_runs 의 반대.
+    """꾸밈 조각(지면에서 고친 문장) → (태깅본, 역할 마크, 문법 포인트, 지칭어, 낱말 딱지) — sentence_runs 의 반대.
     옆 메모는 문장 밖으로 뗀다. lead_no = 옛 템플릿(번호가 문장 맨 앞 「3 」) — 그 번호도 뗀다. 원래 정체 칸(raw · src · rl)이 글과 맞으면 그대로 살리고, 고친 곳은 새로 짓는다."""
     gps, body = [], []
     for r in runs or []:
@@ -219,7 +254,7 @@ def runs_sentence(runs, lead_no=False):
         lead = lead[m.end():]
     if lead:
         body.insert(0, {"t": lead})
-    tagged, cnt, roles, badges, refs = "", 0, [], [], []
+    tagged, cnt, roles, badges, refs, wbadges = "", 0, [], [], [], []
 
     def emit(s, rs=None):
         nonlocal tagged, cnt
@@ -237,10 +272,11 @@ def runs_sentence(runs, lead_no=False):
         rl = set(r.get("rl") or [])
         if not rl or sorted({ROLE_CS[x] for x in rl if x in ROLE_CS}, key=_ORDER.index) != [c for c in _ORDER if c in cs]:
             rl = {CS_ROLE[c] for c in cs if c in CS_ROLE}                # 원래 역할과 색이 다르면(새로 칠함) 색의 대표 역할
-        parts, up_text, badge = [], None, False
+        parts, up_text, badge, bd = [], None, False, []
         for a in above:
-            if a.get("cs") == "서술형":
-                badge = True
+            if a.get("cs") in BADGE_CS:
+                bd += a.get("bd") or []
+                badge = badge or bool(a.get("mk")) or (a.get("cs") == "서술형" and not a.get("bd"))
                 parts += a.get("src") or []
             elif a.get("src") and a.get("t", "") == " ".join(x["t"] for x in a["src"]):
                 parts += a["src"]                                        # 안 고친 위 윗주 — 원래 정체대로
@@ -248,9 +284,15 @@ def runs_sentence(runs, lead_no=False):
                 up_text = a["t"].strip()                                 # 고쳤거나 새로 단 위 윗주 → 위 태그
         for x in parts:
             if x.get("k") == "elide":
-                emit(f"⌃({x['t']}) ")
+                emit(f"⌃({x['t']}){x.get('off') or ''} ")
         if badge:
             badges.append(cnt)                                           # 딱지 자리 = 낱말 첫 글자(앞의 생략 표기 뒤)
+        w = len(t) - len(t.lstrip())
+        word = re.match(r"\S*", t[w:]).group(0)
+        for b in bd:                                                     # 낱말 딱지 — 자리는 이 낱말(끝 문장부호 빼고)
+            wl = len(_PUNCT.sub("", word)) or len(word)
+            lead = len(word) - len(word.lstrip("\"'“‘(["))
+            wbadges.append(dict(b, start=cnt + w + lead, end=cnt + w + lead + max(1, wl)))
         emit(t, rl)
         for b in below:
             if b.get("raw") and b.get("t", "") == " ".join(_off(x) for x in b["raw"]):
@@ -283,7 +325,8 @@ def runs_sentence(runs, lead_no=False):
         if m:
             m["badge"] = True
     marks.sort(key=lambda m: (m["start"], m["end"], m["role"]))
-    return tagged, marks, gps, refs
+    wbadges.sort(key=lambda b: (b["start"], b["kind"]))
+    return tagged, marks, gps, refs, wbadges
 
 
 _U = re.compile(r"<u>(.*?)</u>", re.S)
@@ -330,12 +373,38 @@ def short_lesson(t):
     return (t.split() or [""])[0][:4]
 
 
+def _choices(cs):
+    return "\n".join(f"{CIRCLED[i] if i < len(CIRCLED) else i + 1} {c}" for i, c in enumerate(cs or []))
+
+
+def _circled(a):
+    a = int(a or 0)
+    return CIRCLED[a - 1] if 0 < a <= len(CIRCLED) else ""
+
+
+def _sized(v, size):
+    """글 · 조각 → 이 칸만의 글자 크기(pt, contents enSize · koSize · keyQuestion.size)를 입힌 조각. 크기 없으면 그대로"""
+    if not size:
+        return v
+    runs = [v] if isinstance(v, str) else list(v or [])
+    return [dict({"t": r} if isinstance(r, str) else r, size=size) if isinstance(r, str) or r.get("side") is None else r
+            for r in runs if r != ""]
+
+
 def _key_fields(kq):
+    """핵심기출 → (발문+문제지문+선지 레코드들, 답). 묶음 문항(subs)이면 공통 발문 · 지문 한 벌 뒤에 문항마다 발문 · 선지 한 벌, 답은 「① / ③」(Y.OS design kqInner 와 같이)"""
+    sz = kq.get("size")
+    f = lambda v: _sized(_underlined(v), sz)
     passage = "\n".join(kq.get("passage") or [])
-    choices = "\n".join(f"{CIRCLED[i] if i < len(CIRCLED) else i + 1} {c}" for i, c in enumerate(kq.get("choices") or []))
-    a = int(kq.get("answerIndex") or 0)
-    ans = f"답: {CIRCLED[a - 1]}" if 0 < a <= len(CIRCLED) else (f"답: {kq['answerText']}" if kq.get("answerText") else "")
-    return [{"발문": _underlined(kq.get("q") or ""), "문제지문": _underlined(passage), "선지": _underlined(choices)}], ans
+    subs = [x for x in kq.get("subs") or [] if isinstance(x, dict)]
+    if subs:
+        rows = [{"발문": f(kq.get("q") or ""), "문제지문": f(passage), "선지": ""}]
+        rows += [{"발문": f(x.get("q") or ""), "문제지문": "", "선지": f(_choices(x.get("choices")))} for x in subs]
+        nos = [_circled(x.get("answerIndex")) for x in subs]
+        return rows, ("답: " + " / ".join(n or "?" for n in nos)) if any(nos) else ""
+    a = _circled(kq.get("answerIndex"))
+    ans = f"답: {a}" if a else (f"답: {kq['answerText']}" if kq.get("answerText") else "")
+    return [{"발문": f(kq.get("q") or ""), "문제지문": f(passage), "선지": f(_choices(kq.get("choices")))}], ans
 
 
 ROWS = "번호+문장+해석"          # 문장 묶음 데이터 필드 — 번호는 따로(템플릿이 같은 단락 앞에 인라인 고정 텍스트 프레임으로)
@@ -346,12 +415,12 @@ def record(doc):
     meta, title = doc.get("meta") or {}, doc.get("title") or {}
     rows = []
     for s in doc.get("sentences") or []:
-        runs = sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs"))
+        runs = _sized(sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs"), s.get("badges")), s.get("enSize"))
         gps = [g.strip() for g in s.get("gps") or [] if str(g).strip()]
         if gps:
             runs = [{"t": "", "side": "\n".join(("* " + g) if not g.startswith("*") else g for g in gps)}] + runs
         runs = norm_runs(runs)
-        rows.append({"번호": str(s.get("no") or ""), "문장": runs, "해석": s.get("ko") or "", "_h": _hash(runs)})
+        rows.append({"번호": str(s.get("no") or ""), "문장": runs, "해석": _sized(s.get("ko") or "", s.get("koSize")), "_h": _hash(runs)})
     src, ko = meta.get("source") or "", title.get("ko") or meta.get("subject") or title.get("en") or ""
     rec = {"강": short_lesson(meta.get("title") or ""), "회차": "분석",
            "지문제목": " · ".join(x for x in (src, ko) if x),
@@ -361,8 +430,31 @@ def record(doc):
         rec["발문+문제지문+선지"], rec["답"] = _key_fields(kq)
     voca = [v for v in doc.get("voca") or [] if v.get("word")]
     if voca:
-        rec["어휘"] = "\n".join(f"{v['word']}\t{v.get('ko') or ''}" for v in voca)
+        rec["어휘"] = _voca_field(voca)
     return rec
+
+
+def _voca_field(voca):
+    """어휘 줄들(낱말 ⇥ 뜻) — 품사가 있으면 낱말 뒤 칩 조각(Y.OS design vposChip: 낱말 끝에서 조금 띄운 작은 상자)"""
+    if not any(v.get("pos") for v in voca):
+        return "\n".join(f"{v['word']}\t{v.get('ko') or ''}" for v in voca)
+    runs = []
+    for i, v in enumerate(voca):
+        runs.append(("\n" if i else "") + v["word"] + (" " if v.get("pos") else ""))
+        if v.get("pos"):
+            runs.append({"t": f"\u2002{v['pos']}\u2002", "cs": POS_CS, "vp": 1})   # 칩 바탕 띠가 글자 양옆 반각씩(실물 9.8pt 폭)
+        runs.append("\t" + (v.get("ko") or ""))
+    return [norm_runs(runs)]                                             # 레코드의 목록 값은 「쪽마다 하나씩」이다 — 꾸밈 조각 한 벌을 값 하나로 감싼다
+
+
+def _voca_text(v):
+    """어휘 칸 → 「낱말 ⇥ 뜻」 줄들(품사 칩은 뺀다 — 칩은 지면에서 안 고친다)"""
+    if isinstance(v, str):
+        return v
+    if v and isinstance(v[0], list):                                     # [꾸밈 조각] 한 벌(_voca_field)
+        v = v[0]
+    t = "".join(r if isinstance(r, str) else ("" if r.get("vp") else r.get("t") or "") for r in v or [] if isinstance(r, str) or r.get("side") is None)
+    return re.sub(r" +\t", "\t", t)
 
 
 def _ref_words(runs):
@@ -394,16 +486,20 @@ def to_doc(rec, base):
         row = rows[i]
         runs = norm_runs(row.get("문장") or [])
         if _hash(runs) != row.get("_h"):                                # 지문이 다르다 — 고쳤거나 편집기가 조각을 달리 나눴다
-            tagged, marks, gps, refs = runs_sentence(runs, lead_no=old)
-            shown = _ref_words(sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs")))
+            tagged, marks, gps, refs, badges = runs_sentence(runs, lead_no=old)
+            shown = _ref_words(sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs"), s.get("badges")))
             now = {(w, v) for w, v in _refs(refs)}
             orig = [r for r in s.get("refs") or [] if _refs([r])]         # 원래 지칭어 글은 그대로 — 지면에 안 걸렸던 것(낱말이 없거나 위 태그가 있음)도
             refs = [r for r in orig if _refs([r])[0] in now or _refs([r])[0][0] not in shown] + \
                 [r for r in refs if _refs([r])[0] not in {_refs([o])[0] for o in orig}]
             same = gps == [g.strip() for g in s.get("gps") or [] if str(g).strip()] and \
-                _hash(sentence_runs(tagged, marks, refs)) == _hash(sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs")))
+                _hash(sentence_runs(tagged, marks, refs, badges)) == _hash(sentence_runs(s.get("tagged") or "", s.get("marks") or [], s.get("refs"), s.get("badges")))
             if not same:                                                 # 보이는 것이 같으면 원래 태깅본·마크를 그대로 둔다
                 s.update(tagged=tagged, marks=marks, gps=gps, refs=refs)
+                if badges:
+                    s["badges"] = badges
+                else:
+                    s.pop("badges", None)
                 changed.append(f"문장 {s.get('no')}")
         ko = _text(row.get("해석"))
         if ko != (s.get("ko") or ""):
@@ -416,25 +512,35 @@ def to_doc(rec, base):
     kq = doc.get("keyQuestion")
     if kq and "발문+문제지문+선지" in rec:
         was, ans = _key_fields(kq)
-        now = (rec.get("발문+문제지문+선지") or [{}])[0]
-        if _plain_u(now.get("발문")) != _plain_u(was[0]["발문"]) or _plain_u(now.get("문제지문")) != _plain_u(was[0]["문제지문"]) \
-                or _plain_u(now.get("선지")) != _plain_u(was[0]["선지"]):
+        nows = rec.get("발문+문제지문+선지") or [{}]
+        plain = lambda r: tuple(_plain_u(r.get(k)) for k in ("발문", "문제지문", "선지"))
+        choices = lambda v: [re.sub(r"^\s*[①-⑩]\s?", "", c) for c in _plain_u(v).split("\n") if c.strip()]
+        subs = kq.get("subs") or []
+        if [plain(r) for r in nows] != [plain(r) for r in was]:
+            now = nows[0]
             kq["q"] = _plain_u(now.get("발문"))
             kq["passage"] = [p for p in _plain_u(now.get("문제지문")).split("\n") if p.strip()]
-            kq["choices"] = [re.sub(r"^\s*[①-⑩]\s?", "", c) for c in _plain_u(now.get("선지")).split("\n") if c.strip()]
+            if subs:                                                     # 묶음 문항 — 둘째 벌부터 문항마다(벌 수는 지면에서 안 바뀐다)
+                for x, r in zip(subs, nows[1:]):
+                    x["q"], x["choices"] = _plain_u(r.get("발문")), choices(r.get("선지"))
+            else:
+                kq["choices"] = choices(now.get("선지"))
             changed.append("핵심기출")
         a = _text(rec.get("답") or "")
         if a != ans:
-            m = re.search(r"[①-⑩]", a)
-            if m:
-                kq["answerIndex"], _ = CIRCLED.index(m.group(0)) + 1, kq.pop("answerText", None)
+            nos = re.findall(r"[①-⑩]", a)
+            if subs:
+                for x, n in zip(subs, nos):
+                    x["answerIndex"] = CIRCLED.index(n) + 1
+            elif nos:
+                kq["answerIndex"], _ = CIRCLED.index(nos[0]) + 1, kq.pop("answerText", None)
             else:
                 kq["answerIndex"], kq["answerText"] = 0, re.sub(r"^\s*답\s*:\s*", "", a).strip()
             changed.append("답")
     if "어휘" in rec:
         old = {v.get("word"): v for v in doc.get("voca") or []}
         was = "\n".join(f"{v['word']}\t{v.get('ko') or ''}" for v in doc.get("voca") or [] if v.get("word"))
-        now = _text(rec["어휘"])
+        now = _voca_text(rec["어휘"])
         if now != was:
             voca = []
             for ln in now.split("\n"):
@@ -463,8 +569,8 @@ def to_content(data, sample=None):
         report["sent"].append({"passage": i + 1, "label": (d.get("meta") or {}).get("source")})
     content = {"분석 펼침면": recs} if recs else {}
     dv = divider(data)
-    if dv and not recs:                                                  # 간지만 — 레코드 차례로(간지 면 둘 중 분류로 고른다)
-        return {"원고": [dv]}, report
+    if dv:                                                               # 간지 — 레코드 차례로(간지 면 둘 중 분류로 고른다). 분석본도 오면 간지 뒤에 펼침면마다(분석 NEW 한 권 조판)
+        return {"원고": [dv] + recs}, report
     return content, report
 
 

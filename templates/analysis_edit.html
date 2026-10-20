@@ -175,9 +175,9 @@ const $ = (s) => document.querySelector(s);
 const ROLES = [["grammar", "중요 문법", "파랑 글자", "#5b8ee6"], ["vocab", "중요 어휘", "빨강 글자", "#e25b5f"], ["parallel", "병렬", "빨강 물결", "#e25b5f"],
                ["descriptive", "서술형 구문", "형광 노랑", "#fef3a6"], ["antecedent", "선행사·관계사", "형광 보라", "#dbd4ea"],
                ["connector", "연결사·흐름", "형광 민트", "#c4ead9"], ["blank", "빈칸·중요 내용", "형광 민트", "#9fd8bf"]];
-const ROLE_CS = Object.fromEntries(ROLES.map(r => [r[0], r[2]]));
-const CS_ORDER = ["파랑 글자", "빨강 글자", "빨강 물결", "형광 노랑", "형광 보라", "형광 민트"];
-const BADGE = {t: "서술형★", pos: "above", cs: "서술형"};
+const ROLE_CS = Object.assign(Object.fromEntries(ROLES.map(r => [r[0], r[2]])), {underline: "밑줄"});   // 곧은 밑줄(contents 2026-10-13)은 칠하기 단추 없이 그대로 지킨다
+const CS_ORDER = ["파랑 글자", "빨강 글자", "빨강 물결", "밑줄", "형광 노랑", "형광 보라", "형광 민트"];
+const BADGE = {t: "서술형★", pos: "above", cs: "서술형"}, BADGE_CS = ["서술형", "기출✓ 상자", "기출✓ 글자"];   // 딱지 윗주(core/sources/yos_analysis.BADGE_CS)
 const RIGHT = ["주제", "요약", "답", "어휘"], KEYF = ["발문", "문제지문", "선지"];
 let parentOrigin = null, base = null, rec = null, cur = 0, dirty = false, drawT = null;
 let hist = [], fut = [];
@@ -479,7 +479,7 @@ function toggleRole(box, role) {
 }
 function setRuby(box, pos, v) {
   applyRange(box, (part) => part.map(r => {
-    const o = Object.assign({}, r), rbs = [].concat(o.ruby || []).filter(x => pos === "below" ? x.pos !== "below" : x.pos === "below" || x.cs === "서술형");
+    const o = Object.assign({}, r), rbs = [].concat(o.ruby || []).filter(x => pos === "below" ? x.pos !== "below" : x.pos === "below" || BADGE_CS.includes(x.cs));
     if (v.trim()) rbs.push({t: v.trim(), pos});
     const up = rbs.filter(x => x.pos !== "below"), dn = rbs.filter(x => x.pos === "below"), all = up.slice(-1).concat(dn);
     if (all.length) o.ruby = all.length === 1 ? all[0] : all; else delete o.ruby;
@@ -505,7 +505,7 @@ document.addEventListener("selectionchange", () => {              // 고른 낱�
   const rg = selRange(box); if (!rg) return;
   const runs = runsOf(sentRead(box)); let k = 0;
   for (const r of runs) { if (rg[0] < k + r.t.length) { const rbs = [].concat(r.ruby || []);
-    $("#tb-up").value = (rbs.find(x => x.pos !== "below" && x.cs !== "서술형") || {}).t || ""; $("#tb-dn").value = (rbs.find(x => x.pos === "below") || {}).t || ""; break; } k += r.t.length; }
+    $("#tb-up").value = (rbs.find(x => x.pos !== "below" && !BADGE_CS.includes(x.cs)) || {}).t || ""; $("#tb-dn").value = (rbs.find(x => x.pos === "below") || {}).t || ""; break; } k += r.t.length; }
 });
 
 // ── 오른쪽 칸(스토리 편집기) ──
@@ -763,17 +763,17 @@ function hitSentence(target, x, y) {                                     // 문�
   return {i, no: (ROWS[i] || {}).no ?? i + 1, a, at, row, word: at >= 0 ? wordOf(row.en, at, at + 1) : null};
 }
 function slotIndex(el, slot) {                                           // 여러 칸 자리의 몇째(선지 · 지문 단락 · 어휘 줄) — 이어진 문단은 앞 칸
-  const ps = [...$("#pages").querySelectorAll(`[data-slot="${slot}"]`)].flatMap(b => b.tagName === "P" ? [b] : [...b.querySelectorAll("p")]);
+  const ps = [...$("#pages").querySelectorAll(`[data-slot="${slot}"],[data-bind="${slot}"]`)].flatMap(b => b.tagName === "P" ? [b] : [...b.querySelectorAll("p")]);
   const at = ps.indexOf(el.closest("p"));
   let k = -1;
   for (let q = 0; q <= at; q++) if (!ps[q].dataset.storyCont) k++;
   return Math.max(0, k);
 }
 function pickInfo(e, kind) {
-  const box = e.target.closest && e.target.closest("[data-slot]");
+  const box = e.target.closest && (e.target.closest("[data-slot]") || e.target.closest("[data-bind]"));   // data-bind = 크기 고정 원고 자리(어휘)
   if (!box) return null;
   const side = e.target.closest("[data-side]"), sp = e.target.closest("p[data-slot]");
-  const slot = side && sp && sp.dataset.slot === "문장" ? "문법 포인트" : (sp || box).dataset.slot;
+  const slot = side && sp && sp.dataset.slot === "문장" ? "문법 포인트" : (sp || box).dataset.slot || box.dataset.bind;
   const m = {type: "yos-analysis-pick", kind, slot, no: null, start: null, end: null, word: null, index: null, field: null, text: "", x: e.clientX, y: e.clientY};
   if (sp && ["문장", "해석"].includes(sp.dataset.slot)) { const i = rowOf(sp, sp.dataset.slot); m.no = (ROWS[i] || {}).no ?? i + 1; }
   if (slot === "문장") {
@@ -783,7 +783,9 @@ function pickInfo(e, kind) {
     m.text = ((side || e.target.closest("p") || box).textContent || "").replace(/⁠/g, "").trim().slice(0, 40);
   }
   if (["문제지문", "선지", "어휘"].includes(slot)) m.index = slotIndex(e.target, slot);
-  if (slot === "어휘") { const p = e.target.closest("p") || box; const r = p.getBoundingClientRect(); m.field = e.clientX - r.left > r.width * 0.35 ? "meaning" : "word"; }
+  if (slot === "어휘") { const p = e.target.closest("p") || box; const r = p.getBoundingClientRect(); m.field = e.clientX - r.left > r.width * 0.35 ? "meaning" : "word";
+    const v = ((base && base.voca) || []).filter(x => x.word)[m.index];   // 낱말 뒤 품사 칩(core/sources/yos_analysis._voca_field) — 누른 글이 그 줄의 품사면
+    if (m.field === "word" && v && v.pos && (e.target.textContent || "").replace(/[\s ]/g, "") === v.pos) m.field = "pos"; }
   lastPick = {el: side ? (side.firstElementChild || side) : slot === "문장" || slot === "해석" ? rowParts(slot, rowOf(sp, slot))[0] : (["발문", "문제지문", "선지", "답"].includes(slot) ? box.closest("div[data-slot]") || sp || box : sp || box), slot};
   return m;
 }

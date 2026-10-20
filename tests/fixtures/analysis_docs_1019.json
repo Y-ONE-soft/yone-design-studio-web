@@ -1,0 +1,5763 @@
+[
+ {
+  "why": "기출✓ 상자",
+  "id": "cmtin3xc401jicwmssn74g4tn",
+  "doc": {
+   "meta": {
+    "title": "고1 26년 3월",
+    "source": "21번",
+    "subject": "좋은 조상이 되기 위한 오늘의 책임",
+    "pageStart": 2
+   },
+   "title": {
+    "en": "Becoming Good Ancestors",
+    "ko": "좋은 조상이 되기 위한 오늘의 책임"
+   },
+   "topic": "our duty to become good ancestors for future generations",
+   "summary": "With unprecedented power and global connection, our decisions today shape the lives of billions to come. Like the Iroquois idea of seven generation stewardship, we must take the long view and not rob our descendants of what we enjoy.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "We[S1] are[V1] now at a point of unprecedented genetic, cultural, and environmental power as[전] a species, and we[S2] are[V2] linked[수동태] to nearly every other person on Earth.",
+     "ko": "우리는 이제 종으로서 전례 없는 유전적, 문화적, 환경적 힘의 지점에 와 있고, 우리는 거의 지구상의 모든 다른 사람과 연결되어 있다.",
+     "gps": [
+      "are linked는 수동태로 '연결되다'라는 뜻이야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 25,
+       "end": 38,
+       "role": "vocab"
+      },
+      {
+       "start": 39,
+       "end": 46,
+       "role": "vocab"
+      },
+      {
+       "start": 62,
+       "end": 75,
+       "role": "vocab"
+      },
+      {
+       "start": 87,
+       "end": 94,
+       "role": "vocab"
+      },
+      {
+       "start": 103,
+       "end": 113,
+       "role": "grammar"
+      },
+      {
+       "start": 82,
+       "end": 87,
+       "role": "grammar"
+      },
+      {
+       "start": 25,
+       "end": 38,
+       "role": "vocab"
+      },
+      {
+       "start": 39,
+       "end": 46,
+       "role": "vocab"
+      },
+      {
+       "start": 87,
+       "end": 94,
+       "role": "vocab"
+      },
+      {
+       "start": 39,
+       "end": 46,
+       "role": "parallel"
+      },
+      {
+       "start": 62,
+       "end": 75,
+       "role": "parallel"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "We[S1] are[V1] embodied[과거분사] individuals[C1] trapped[과거분사] within limited time, but we[S2] are[V2] also networked data streams, memories, and influencers, and[C2] part of a grander humanity.",
+     "ko": "우리는 제한된 시간 안에 갇힌 육체를 가진 개인이지만, 또한 네트워크화된 데이터 흐름이자 기억이고 영향력 행사자이며, 더 거대한 인류의 일부이다.",
+     "gps": [
+      "trapped는 individuals를 꾸미는 과거분사야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 146,
+       "end": 154,
+       "role": "vocab"
+      },
+      {
+       "start": 7,
+       "end": 15,
+       "role": "grammar"
+      },
+      {
+       "start": 28,
+       "end": 42,
+       "role": "grammar"
+      },
+      {
+       "start": 111,
+       "end": 122,
+       "role": "vocab"
+      },
+      {
+       "start": 146,
+       "end": 154,
+       "role": "vocab"
+      },
+      {
+       "start": 97,
+       "end": 105,
+       "role": "parallel"
+      },
+      {
+       "start": 111,
+       "end": 122,
+       "role": "parallel"
+      },
+      {
+       "start": 97,
+       "end": 105,
+       "role": "grammar"
+      }
+     ],
+     "badges": [
+      {
+       "start": 43,
+       "end": 50,
+       "kind": "exam"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "Our decisions[S] today have[V] far-reaching impacts[O 선행사] that[주관대] place[V] a responsibility[O] on us to become[수식] good ancestors, to take[수식] the long view and time travel forward to imagine[수식] the wellbeing of billions of people[선행사] whose[소관대] lives[S] will be[V] lived[수동태] in the world[(that) 선행사] we[S] are[V] currently making[진행].",
+     "ko": "오늘 우리의 결정은, 좋은 조상이 되고 장기적인 관점을 취해 앞으로 시간 여행을 해서 우리가 현재 만들고 있는 세계에서 삶을 살아갈 수십억 명의 행복을 상상하라는 책임을 우리에게 지우는 광범위한 영향을 미친다.",
+     "gps": [
+      "whose는 people이 선행사인 소유격 관계대명사야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 25,
+       "end": 37,
+       "role": "vocab"
+      },
+      {
+       "start": 59,
+       "end": 73,
+       "role": "vocab"
+      },
+      {
+       "start": 167,
+       "end": 176,
+       "role": "vocab"
+      },
+      {
+       "start": 46,
+       "end": 56,
+       "role": "grammar"
+      },
+      {
+       "start": 80,
+       "end": 89,
+       "role": "grammar"
+      },
+      {
+       "start": 199,
+       "end": 204,
+       "role": "grammar"
+      },
+      {
+       "start": 241,
+       "end": 244,
+       "role": "grammar"
+      },
+      {
+       "start": 255,
+       "end": 261,
+       "role": "grammar"
+      },
+      {
+       "start": 59,
+       "end": 73,
+       "role": "vocab"
+      },
+      {
+       "start": 95,
+       "end": 104,
+       "role": "vocab"
+      },
+      {
+       "start": 167,
+       "end": 176,
+       "role": "vocab"
+      },
+      {
+       "start": 25,
+       "end": 45,
+       "role": "antecedent"
+      },
+      {
+       "start": 46,
+       "end": 50,
+       "role": "antecedent"
+      },
+      {
+       "start": 80,
+       "end": 104,
+       "role": "blank"
+      },
+      {
+       "start": 199,
+       "end": 261,
+       "role": "descriptive"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "Centuries ago, leaders[S] of the native North American Iroquois people created[V] \"seven generation stewardship,\"[O] instructing[분사구문] people to consider the impact of every decision on their children, seven generations into the future.",
+     "ko": "수 세기 전, 북미 원주민 Iroquois족의 지도자들은 '일곱 세대 관리'를 만들어, 모든 결정이 그들의 아이들, 즉 미래 일곱 세대에 미칠 영향을 고려하라고 사람들에게 가르쳤다.",
+     "gps": [
+      "instructing은 의미상 주어가 leaders라 현재분사야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 143,
+       "end": 149,
+       "role": "vocab"
+      },
+      {
+       "start": 94,
+       "end": 105,
+       "role": "vocab"
+      },
+      {
+       "start": 83,
+       "end": 93,
+       "role": "vocab"
+      },
+      {
+       "start": 108,
+       "end": 119,
+       "role": "grammar"
+      },
+      {
+       "start": 127,
+       "end": 138,
+       "role": "grammar"
+      },
+      {
+       "start": 94,
+       "end": 105,
+       "role": "vocab"
+      },
+      {
+       "start": 143,
+       "end": 149,
+       "role": "vocab"
+      },
+      {
+       "start": 193,
+       "end": 204,
+       "role": "vocab"
+      }
+     ],
+     "badges": [
+      {
+       "start": 205,
+       "end": 209,
+       "kind": "exam"
+      },
+      {
+       "start": 210,
+       "end": 213,
+       "kind": "exam"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "In the precious few decades[선행사] that[관계부사] Earth[S] is[V] ours[C], while[부접] we[S] enjoy[V] the gardens[O] planted[과거분사] by our ancestors, we[S] must not steal[V] the shade[O] from our descendants.",
+     "ko": "지구가 우리 것인 소중한 몇십 년 동안, 우리가 조상들에 의해 심어진 정원을 누리는 동안에도, 우리는 후손들로부터 그늘을 빼앗아서는 안 된다.",
+     "gps": [
+      "planted는 the gardens를 꾸미는 과거분사야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 7,
+       "end": 15,
+       "role": "vocab"
+      },
+      {
+       "start": 113,
+       "end": 118,
+       "role": "vocab"
+      },
+      {
+       "start": 48,
+       "end": 53,
+       "role": "grammar"
+      },
+      {
+       "start": 75,
+       "end": 82,
+       "role": "grammar"
+      },
+      {
+       "start": 7,
+       "end": 15,
+       "role": "vocab"
+      },
+      {
+       "start": 123,
+       "end": 128,
+       "role": "vocab"
+      },
+      {
+       "start": 138,
+       "end": 149,
+       "role": "vocab"
+      },
+      {
+       "start": 3,
+       "end": 27,
+       "role": "antecedent"
+      },
+      {
+       "start": 28,
+       "end": 32,
+       "role": "antecedent"
+      },
+      {
+       "start": 101,
+       "end": 149,
+       "role": "descriptive"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 빈칸에 들어갈 말로 가장 적절한 것은?",
+    "passage": [
+     "Our decisions today have far-reaching impacts that place a responsibility on us __________, to take the long view and time travel forward to imagine the wellbeing of billions of people whose lives will be lived in the world we are currently making."
+    ],
+    "choices": [
+     "to act as worthy forebears for those yet to come",
+     "to prioritize the urgent needs of the present generation",
+     "to preserve the traditions handed down by earlier societies",
+     "to limit our influence to our immediate community",
+     "to measure progress by short-term economic gains"
+    ],
+    "answerIndex": 1
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "unprecedented",
+     "ko": "전례 없는",
+     "tone": "중립",
+     "antonym": "ordinary",
+     "synonym": "unparalleled",
+     "sent": ""
+    },
+    {
+     "word": "genetic",
+     "ko": "유전의",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "hereditary",
+     "sent": ""
+    },
+    {
+     "word": "environmental",
+     "ko": "환경의",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "ecological",
+     "sent": ""
+    },
+    {
+     "word": "species",
+     "ko": "종",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "kind",
+     "sent": ""
+    },
+    {
+     "word": "link",
+     "ko": "연결하다",
+     "tone": "중립",
+     "antonym": "separate",
+     "synonym": "connect",
+     "sent": ""
+    },
+    {
+     "word": "embody",
+     "ko": "구현하다, 육체를 갖추다",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "incarnate",
+     "sent": ""
+    },
+    {
+     "word": "trap",
+     "ko": "가두다",
+     "tone": "부정",
+     "antonym": "release",
+     "synonym": "confine",
+     "sent": ""
+    },
+    {
+     "word": "influencer",
+     "ko": "영향력 행사자",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "shaper",
+     "sent": ""
+    },
+    {
+     "word": "grand",
+     "ko": "거대한, 웅장한",
+     "tone": "긍정",
+     "antonym": "trivial",
+     "synonym": "magnificent",
+     "sent": ""
+    },
+    {
+     "word": "humanity",
+     "ko": "인류",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "mankind",
+     "sent": ""
+    },
+    {
+     "word": "far-reaching",
+     "ko": "광범위한",
+     "tone": "중립",
+     "antonym": "limited",
+     "synonym": "extensive",
+     "sent": ""
+    },
+    {
+     "word": "impact",
+     "ko": "영향",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "effect",
+     "sent": ""
+    },
+    {
+     "word": "responsibility",
+     "ko": "책임",
+     "tone": "중립",
+     "antonym": "irresponsibility",
+     "synonym": "duty",
+     "sent": ""
+    },
+    {
+     "word": "ancestor",
+     "ko": "조상",
+     "tone": "중립",
+     "antonym": "descendant",
+     "synonym": "forebear",
+     "sent": ""
+    },
+    {
+     "word": "wellbeing",
+     "ko": "행복, 안녕",
+     "tone": "긍정",
+     "antonym": "suffering",
+     "synonym": "welfare",
+     "sent": ""
+    },
+    {
+     "word": "stewardship",
+     "ko": "관리, 책무",
+     "tone": "긍정",
+     "antonym": "neglect",
+     "synonym": "management",
+     "sent": ""
+    },
+    {
+     "word": "instruct",
+     "ko": "지시하다, 가르치다",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "direct",
+     "sent": ""
+    },
+    {
+     "word": "generation",
+     "ko": "세대",
+     "tone": "중립",
+     "antonym": "",
+     "synonym": "age group",
+     "sent": ""
+    },
+    {
+     "word": "precious",
+     "ko": "소중한",
+     "tone": "긍정",
+     "antonym": "worthless",
+     "synonym": "valuable",
+     "sent": ""
+    },
+    {
+     "word": "descendant",
+     "ko": "후손",
+     "tone": "중립",
+     "antonym": "ancestor",
+     "synonym": "offspring",
+     "sent": ""
+    },
+    {
+     "word": "steal",
+     "ko": "훔치다, 빼앗다",
+     "tone": "부정",
+     "antonym": "give",
+     "synonym": "rob",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "기출✓ 상자",
+  "id": "cmv696t9y000006kxss9zubjc",
+  "doc": {
+   "meta": {
+    "title": "기출 응용 모의고사 03",
+    "source": "#130",
+    "subject": "기존 제품과의 비교를 통한 신제품의 효과적인 소개",
+    "pageStart": 2
+   },
+   "title": {
+    "en": "Selling the New Against the Old",
+    "ko": "기존 제품과의 비교를 통한 신제품의 효과적인 소개"
+   },
+   "topic": "advertising new products through contrasts with familiar alternatives",
+   "summary": "Consumers generally notice and understand new products through familiar alternatives, so advertising should highlight contrasts with existing categories, often explaining what the new product is not.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "Too many companies[S] advertise[V] their new products[O] as if[가정법] their competitors[S] did not exist[V].",
+     "ko": "너무 많은 회사들이 마치 경쟁자들이 존재하지 않는 것처럼 신제품을 광고한다.",
+     "gps": [
+      "as if 가정법 과거 구문이 쓰여, 과거형 did not exist가 쓰였어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 19,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 60,
+       "end": 71,
+       "role": "vocab"
+      },
+      {
+       "start": 48,
+       "end": 53,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 85,
+       "role": "descriptive"
+      }
+     ],
+     "badges": [
+      {
+       "start": 0,
+       "end": 3,
+       "kind": "essay"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "They[S] advertise[V1] their products[O1] in a vacuum and are[V2] disappointed[과거분사C] when[부접] their messages[S] fail[V] to[O] get through.",
+     "ko": "그들은 고립된 상태로 제품을 광고하고, 메시지가 전달되지 않으면 실망한다.",
+     "gps": [
+      "실망을 '느끼는' 주체이므로 are disappointed가 쓰였어. are disappointing (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 5,
+       "end": 41,
+       "role": "parallel"
+      },
+      {
+       "start": 46,
+       "end": 102,
+       "role": "parallel"
+      },
+      {
+       "start": 30,
+       "end": 32,
+       "role": "vocab"
+      },
+      {
+       "start": 33,
+       "end": 34,
+       "role": "vocab"
+      },
+      {
+       "start": 35,
+       "end": 41,
+       "role": "vocab"
+      },
+      {
+       "start": 91,
+       "end": 94,
+       "role": "vocab"
+      },
+      {
+       "start": 95,
+       "end": 102,
+       "role": "vocab"
+      },
+      {
+       "start": 46,
+       "end": 62,
+       "role": "grammar"
+      },
+      {
+       "start": 88,
+       "end": 91,
+       "role": "grammar"
+      },
+      {
+       "start": 5,
+       "end": 30,
+       "role": "grammar"
+      },
+      {
+       "start": 32,
+       "end": 33,
+       "role": "grammar"
+      },
+      {
+       "start": 34,
+       "end": 35,
+       "role": "grammar"
+      },
+      {
+       "start": 62,
+       "end": 88,
+       "role": "grammar"
+      },
+      {
+       "start": 94,
+       "end": 95,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "Introducing[동명사 S] a new product category is[V단] difficult[C], especially if[부접] the new category[S] is[V] not contrasted[수동태] against the old one.",
+     "ko": "새로운 제품 범주를 도입하는 것은 어려운데, 특히 새 범주가 이전 것과 대조되지 않으면 그렇다.",
+     "gps": [
+      "the new category가 '대조되는' 대상이므로 is not contrasted라는 수동태가 쓰였어. does not contrast (X)",
+      "the old one의 one은 앞의 단수명사 category를 대신하는 대명사야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 26,
+       "end": 34,
+       "role": "vocab"
+      },
+      {
+       "start": 38,
+       "end": 47,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 11,
+       "role": "grammar"
+      },
+      {
+       "start": 35,
+       "end": 37,
+       "role": "grammar"
+      },
+      {
+       "start": 87,
+       "end": 97,
+       "role": "grammar"
+      },
+      {
+       "start": 110,
+       "end": 113,
+       "role": "vocab"
+      },
+      {
+       "start": 49,
+       "end": 117,
+       "role": "blank"
+      }
+     ],
+     "badges": [
+      {
+       "start": 49,
+       "end": 59,
+       "kind": "exam"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "Consumers[S] do not usually pay[V] attention[O] to what[명접]'s[V] new and[C] different unless[부접] it[S]'s[V] related[수동태] to the old.",
+     "ko": "소비자들은 새롭고 다른 것이 예전 것과 관련되지 않으면 대개 그것에 주의를 기울이지 않는다.",
+     "gps": [
+      "관계대명사 what이 불완전한 명사절을 이끌어 전치사 to의 목적어 역할을 하고 있어. that (X)",
+      "unless는 '만약 ~하지 않으면'이라는 뜻이야. 여기서는 if it isn't related to the old로 풀어 쓸 수 있어.",
+      "the + 형용사는 '~한 사람들[것들]' 뜻으로, the old는 '기존의 것들'이라는 뜻이야."
+     ],
+     "refs": [
+      "it = 새롭고 다른 것"
+     ],
+     "marks": [
+      {
+       "start": 25,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 29,
+       "end": 38,
+       "role": "vocab"
+      },
+      {
+       "start": 49,
+       "end": 52,
+       "role": "vocab"
+      },
+      {
+       "start": 57,
+       "end": 66,
+       "role": "vocab"
+      },
+      {
+       "start": 49,
+       "end": 66,
+       "role": "parallel"
+      },
+      {
+       "start": 42,
+       "end": 46,
+       "role": "grammar"
+      },
+      {
+       "start": 74,
+       "end": 76,
+       "role": "grammar"
+      },
+      {
+       "start": 79,
+       "end": 86,
+       "role": "grammar"
+      },
+      {
+       "start": 94,
+       "end": 97,
+       "role": "vocab"
+      },
+      {
+       "start": 67,
+       "end": 97,
+       "role": "blank"
+      },
+      {
+       "start": 52,
+       "end": 57,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "That[S]'s[V] why[C 명접] if[부접] you[S] have[V] a truly[true (x)] new product[O], it[가S]'s[V] often better[C] to[진S] say what[명접] the product[S] is[V] not, rather than what[명접] it[S] is[V].",
+     "ko": "그래서 정말 새로운 제품이 있다면, 그것이 무엇인지보다 무엇이 아닌지를 말하는 것이 대개 더 낫다.",
+     "gps": [
+      "두 what절은 모두 say의 목적어 역할을 하는 불완전한 명사절이야. that (X)",
+      "A rather than B는 'B라기보다 오히려 A'라는 뜻이야."
+     ],
+     "refs": [
+      "That = 앞 문장"
+     ],
+     "marks": [
+      {
+       "start": 25,
+       "end": 30,
+       "role": "vocab"
+      },
+      {
+       "start": 55,
+       "end": 61,
+       "role": "vocab"
+      },
+      {
+       "start": 7,
+       "end": 10,
+       "role": "grammar"
+      },
+      {
+       "start": 44,
+       "end": 46,
+       "role": "grammar"
+      },
+      {
+       "start": 62,
+       "end": 68,
+       "role": "grammar"
+      },
+      {
+       "start": 69,
+       "end": 73,
+       "role": "grammar"
+      },
+      {
+       "start": 106,
+       "end": 110,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 6,
+       "role": "connector"
+      },
+      {
+       "start": 7,
+       "end": 116,
+       "role": "descriptive"
+      }
+     ],
+     "badges": [
+      {
+       "start": 7,
+       "end": 10,
+       "kind": "essay"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "For example, the first automobile[S] was[V] called[5형식 수동태] a \"horseless\" carriage[OC],[동격] a name[선행사] which[주관대] allowed[V] the public[O] to[OC] understand the concept against the existing[현재분사] mode of transportation.",
+     "ko": "예를 들어 최초의 자동차는 '말 없는' 마차라 불렸고, 그 이름 덕에 대중은 기존 교통수단과 대조해 개념을 이해했다.",
+     "gps": [
+      "which는 a name이 선행사인 주격 관계대명사로 불완전한 절을 이끌어. what (X)",
+      "allow가 5형식 동사로 쓰여 목적격 보어에 to understand가 쓰였어. understand (X)",
+      "call A B가 수동태로 바뀌어 A be called B가 쓰였어.",
+      "existing은 mode of transportation을 수식하는 현재분사야. existed (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 34,
+       "end": 44,
+       "role": "grammar"
+      },
+      {
+       "start": 101,
+       "end": 114,
+       "role": "grammar"
+      },
+      {
+       "start": 23,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 48,
+       "end": 57,
+       "role": "vocab"
+      },
+      {
+       "start": 139,
+       "end": 147,
+       "role": "vocab"
+      },
+      {
+       "start": 156,
+       "end": 170,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 11,
+       "role": "connector"
+      },
+      {
+       "start": 69,
+       "end": 75,
+       "role": "antecedent"
+      },
+      {
+       "start": 76,
+       "end": 81,
+       "role": "antecedent"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글의 빈칸에 들어갈 말로 가장 적절한 것은? [이대부고기출]",
+    "passage": [
+     "Too many companies advertise their new products as if their competitors did not exist. They advertise their products in a vacuum and are disappointed when their messages fail to get through. Introducing a new product category is difficult, especially if the new category is not ____________________. Consumers do not usually pay attention to what’s new and different unless it’s related to the old. That’s why if you have a truly new product, it’s often better to say what the product is not, rather than what it is. For example, the first automobile was called a “horseless” carriage, a name which allowed the public to understand the concept against the existing mode of transportation."
+    ],
+    "choices": [
+     "reliable for use at home",
+     "popular among the young",
+     "produced in large quantity",
+     "differentiated from the old one",
+     "reasonable in price for most consumers"
+    ],
+    "answerIndex": 4
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "advertise",
+     "ko": "광고하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "competitor",
+     "ko": "경쟁자",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "exist",
+     "ko": "존재하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "in a vacuum",
+     "ko": "고립된 상태로",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "disappointed",
+     "ko": "실망한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "get through",
+     "ko": "전달되다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "introduce",
+     "ko": "도입하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "category",
+     "ko": "범주",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "contrast A against B",
+     "ko": "A를 B와 대조하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "consumer",
+     "ko": "소비자",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "pay attention to",
+     "ko": "~에 주의를 기울이다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "be related to",
+     "ko": "~와 관련되다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "truly",
+     "ko": "정말로",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "automobile",
+     "ko": "자동차",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "horseless",
+     "ko": "말이 없는",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "carriage",
+     "ko": "마차",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "concept",
+     "ko": "개념",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "existing",
+     "ko": "기존의",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "mode",
+     "ko": "방식, 수단",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "transportation",
+     "ko": "교통, 운송",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "서술형★ 낱말 딱지",
+  "id": "cmv4vwvyp000006jkcw83z89b",
+  "doc": {
+   "meta": {
+    "title": "기출 응용 모의고사 01",
+    "source": "#116",
+    "subject": "지나치게 엄격한 시간 계획의 문제점과 중요한 일정 중심의 달력 활용",
+    "pageStart": 2
+   },
+   "title": {
+    "en": "Don't Let Calendars Rule Your Life",
+    "ko": "지나치게 엄격한 시간 계획의 문제점과 중요한 일정 중심의 달력 활용"
+   },
+   "topic": "calendars for recording key dates rather than controlling life",
+   "summary": "Calendars should record important events and deadlines, because using them to dictate every activity can make students feel their lives are predetermined and lose interest in studying.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "Some study guides[S] advocate[V] filling[동명사 O] out elaborate calendars so[부접] you[S] will know[V] what[O 명접] you[S] are[V] supposed[5형식 수동태] to[OC] be doing[진행] during[전] every minute, hour, and day throughout the entire semester.",
+     "ko": "몇몇 학습 안내서는 학기 내내 매분, 매시간, 매일 해야 할 일을 알도록 달력을 공들여 채우는 것을 옹호한다.",
+     "gps": [
+      "advocate는 동명사를 목적어로 취하는 동사라 filling out이 쓰였어. to fill out (X)",
+      "관계대명사 what이 불완전한 명사절을 이끌어 know의 목적어 역할을 하고 있어. that (X)",
+      "be supposed to RV는 '~하기로 되어 있다, ~해야 한다'라는 뜻이야.",
+      "every 뒤에는 단수명사를 써야 해. every minutes (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 18,
+       "end": 26,
+       "role": "vocab"
+      },
+      {
+       "start": 27,
+       "end": 34,
+       "role": "grammar"
+      },
+      {
+       "start": 39,
+       "end": 48,
+       "role": "vocab"
+      },
+      {
+       "start": 76,
+       "end": 80,
+       "role": "grammar"
+      },
+      {
+       "start": 85,
+       "end": 97,
+       "role": "grammar"
+      },
+      {
+       "start": 98,
+       "end": 100,
+       "role": "grammar"
+      },
+      {
+       "start": 101,
+       "end": 103,
+       "role": "grammar"
+      },
+      {
+       "start": 104,
+       "end": 109,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "They[S][^Some study guides|-5,0] would have[V] you[O] allocate[OC] the time periods to study[수식1] each subject, to eat[수식2] meals, to engage[수식3] in athletic events, to socialize[수식4] with friends, and so forth.",
+     "ko": "그것들은 당신이 각 과목 공부, 식사, 체육 활동 참여, 친구와의 교제 등을 할 시간을 배정하게 할 것이다.",
+     "gps": [
+      "have가 사역동사로 쓰여 목적격 보어에 원형부정사인 allocate가 쓰였어. to allocate (X)",
+      "each 뒤에는 단수명사 subject가 와야 해. each subjects (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 20,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 49,
+       "end": 54,
+       "role": "parallel"
+      },
+      {
+       "start": 72,
+       "end": 75,
+       "role": "parallel"
+      },
+      {
+       "start": 86,
+       "end": 92,
+       "role": "parallel"
+      },
+      {
+       "start": 116,
+       "end": 125,
+       "role": "parallel"
+      },
+      {
+       "start": 0,
+       "end": 4,
+       "role": "connector"
+      },
+      {
+       "start": 49,
+       "end": 54,
+       "role": "grammar"
+      },
+      {
+       "start": 72,
+       "end": 75,
+       "role": "grammar"
+      },
+      {
+       "start": 86,
+       "end": 92,
+       "role": "grammar"
+      },
+      {
+       "start": 116,
+       "end": 125,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "I[S] feel[V] that[O 명접] this approach[S][^세세한 달력 채우기|-3.5,1] is[V] a serious mistake[C].",
+     "ko": "나는 이런 접근 방법이 심각한 잘못이라고 느낀다.",
+     "gps": [
+      "that은 명사절 접속사로 완전한 문장을 이끌어 feel의 목적어 역할을 하고 있어. what (X)"
+     ],
+     "refs": [
+      "this approach = 세세한 달력 채우기"
+     ],
+     "marks": [
+      {
+       "start": 31,
+       "end": 38,
+       "role": "vocab"
+      },
+      {
+       "start": 39,
+       "end": 46,
+       "role": "vocab"
+      },
+      {
+       "start": 7,
+       "end": 11,
+       "role": "grammar"
+      },
+      {
+       "start": 12,
+       "end": 25,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "Not only[도치] will students[S] be[V] unwilling[C] to[수식] follow such schedules, it[가S] is[V] undesirable[C] for[의미상S] humans to[진S] attempt such strict arrangements.",
+     "ko": "학생들은 그런 일정을 따르려 하지 않을 뿐 아니라, 인간이 그렇게 엄격한 계획을 시도하는 것은 바람직하지 않다.",
+     "gps": [
+      "부정어 Not only가 문두에 나와 주어와 동사가 도치된 구조야. Not only students will (X)",
+      "be unwilling to RV는 '~하기를 꺼리다'라는 뜻이야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 26,
+       "end": 35,
+       "role": "vocab"
+      },
+      {
+       "start": 68,
+       "end": 79,
+       "role": "vocab"
+      },
+      {
+       "start": 107,
+       "end": 113,
+       "role": "vocab"
+      },
+      {
+       "start": 9,
+       "end": 22,
+       "role": "grammar"
+      },
+      {
+       "start": 62,
+       "end": 64,
+       "role": "grammar"
+      },
+      {
+       "start": 91,
+       "end": 101,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 126,
+       "role": "descriptive"
+      }
+     ],
+     "badges": [
+      {
+       "start": 0,
+       "end": 3,
+       "kind": "essay"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "Following[동명사 S1] such a schedule would lead[V1] you[O1] to feel[OC1] that[명접] your whole life[S] is[V] predetermined[수동태] and you[S2] would quickly[quick (x)] become[V2] bored[C2] with your studies.",
+     "ko": "그런 일정을 따르면 삶 전체가 미리 정해졌다고 느끼게 되고, 당신은 공부에 금세 싫증을 낼 것이다.",
+     "gps": [
+      "lead가 5형식 동사로 쓰여 목적격 보어에 to feel이 쓰였어. lead you feel (X)",
+      "that은 명사절 접속사로 완전한 문장을 이끌어 feel의 목적어 역할을 하고 있어. what (X)",
+      "사람이 지루함을 '느끼는' 상태이므로 become의 보어에 bored가 쓰였어. boring (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 9,
+       "role": "grammar"
+      },
+      {
+       "start": 41,
+       "end": 48,
+       "role": "grammar"
+      },
+      {
+       "start": 70,
+       "end": 86,
+       "role": "grammar"
+      },
+      {
+       "start": 59,
+       "end": 64,
+       "role": "vocab"
+      },
+      {
+       "start": 32,
+       "end": 36,
+       "role": "parallel"
+      },
+      {
+       "start": 109,
+       "end": 115,
+       "role": "parallel"
+      },
+      {
+       "start": 49,
+       "end": 53,
+       "role": "grammar"
+      },
+      {
+       "start": 101,
+       "end": 108,
+       "role": "grammar"
+      },
+      {
+       "start": 116,
+       "end": 121,
+       "role": "vocab"
+      },
+      {
+       "start": 32,
+       "end": 36,
+       "role": "grammar"
+      },
+      {
+       "start": 109,
+       "end": 115,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "Use[V명령문] calendars[O] for their intended[과거분사] purpose to[수식] record significant dates.",
+     "ko": "중요한 날짜를 기록한다는 본래 의도된 목적으로 달력을 사용하라.",
+     "gps": [
+      "intended는 purpose를 수식하는 과거분사야. 목적이 '의도된' 것이므로 수동의 의미로 쓰였어. intending (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 24,
+       "end": 32,
+       "role": "grammar"
+      },
+      {
+       "start": 44,
+       "end": 50,
+       "role": "grammar"
+      },
+      {
+       "start": 51,
+       "end": 62,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 3,
+       "role": "grammar"
+      },
+      {
+       "start": 41,
+       "end": 43,
+       "role": "grammar"
+      },
+      {
+       "start": 18,
+       "end": 68,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "Write[V명령문] down the dates[O] of important events, such as exams and deadlines for term papers, so[부접] you[S] will know[V] how[O 간접의문문] much time you[S] have[V] to prepare[수식] for them.",
+     "ko": "시험, 학기 말 보고서 마감처럼 중요한 일의 날짜를 적어 두면, 준비할 시간이 얼마나 있는지 알게 될 것이다.",
+     "gps": [
+      "how much time이 이끄는 간접의문문이 know의 목적어 역할을 하고 있어. 간접의문문은 '의문사구 + S + V'의 어순으로 쓰여. how much time do you have (X)"
+     ],
+     "refs": [
+      "them = 중요한 일|0,1"
+     ],
+     "marks": [
+      {
+       "start": 24,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 104,
+       "end": 117,
+       "role": "grammar"
+      },
+      {
+       "start": 130,
+       "end": 137,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 5,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 8,
+     "tagged": "Don't let[V명령문] calendars[O] regulate[OC] your life.",
+     "ko": "달력이 당신의 삶을 통제하게 두지 마라.",
+     "gps": [
+      "let이 사역동사로 쓰여 목적격 보어에 원형부정사인 regulate가 쓰였어. to regulate (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 20,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 6,
+       "end": 9,
+       "role": "grammar"
+      },
+      {
+       "start": 20,
+       "end": 38,
+       "role": "blank"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글의 요지로 가장 적절한 것은?",
+    "passage": [
+     "Some study guides advocate filling out elaborate calendars so you will know what you are supposed to be doing during every minute, hour, and day throughout the entire semester. They would have you allocate the time periods to study each subject, to eat meals, to engage in athletic events, to socialize with friends, and so forth. I feel that this approach is a serious mistake. Not only will students be unwilling to follow such schedules, it is undesirable for humans to attempt such strict arrangements. Following such a schedule would lead you to feel that your whole life is predetermined and you would quickly become bored with your studies. Use calendars for their intended purpose to record significant dates. Write down the dates of important events, such as exams and deadlines for term papers, so you will know how much time you have to prepare for them. Don't let calendars regulate your life."
+    ],
+    "choices": [
+     "학업 성취를 위해서는 매 순간의 활동을 미리 계획해야 한다.",
+     "달력은 생활 전체를 관리하기보다 중요한 일정 기록에 써야 한다.",
+     "학습 시간과 여가 시간을 균형 있게 배분하는 것이 중요하다.",
+     "시험 준비는 마감일로부터 역산해 충분한 기간을 두고 해야 한다.",
+     "친구와의 교제 시간도 학습 계획에 포함해야 싫증을 줄일 수 있다."
+    ],
+    "answerIndex": 2
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "advocate",
+     "ko": "옹호하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "fill out",
+     "ko": "작성하다, 채우다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "elaborate",
+     "ko": "공들인, 정교한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "semester",
+     "ko": "학기",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "be supposed to",
+     "ko": "~하기로 되어 있다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "allocate",
+     "ko": "배정하다, 할당하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "engage in",
+     "ko": "~에 참여하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "socialize",
+     "ko": "어울리다, 교제하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "approach",
+     "ko": "접근 방법",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "unwilling",
+     "ko": "내키지 않는",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "undesirable",
+     "ko": "바람직하지 않은",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "attempt",
+     "ko": "시도하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "strict",
+     "ko": "엄격한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "arrangement",
+     "ko": "계획, 준비",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "predetermine",
+     "ko": "미리 결정하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "bored",
+     "ko": "싫증 난, 지루한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "intended",
+     "ko": "의도된",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "significant",
+     "ko": "중요한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "deadline",
+     "ko": "마감일",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "term paper",
+     "ko": "학기 말 보고서",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "regulate",
+     "ko": "통제하다, 규제하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "서술형★ 낱말 딱지",
+  "id": "cmv4vza07000006l419txrucw",
+  "doc": {
+   "meta": {
+    "title": "기출 응용 모의고사 01",
+    "source": "#117",
+    "subject": "미국과 아시아 문화의 자기 정보 공개 방식 차이",
+    "pageStart": 2
+   },
+   "title": {
+    "en": "Self-Disclosure Across Cultures",
+    "ko": "미국과 아시아 문화의 자기 정보 공개 방식 차이"
+   },
+   "topic": "cultural differences in willingness to share personal information",
+   "summary": "Americans tend to share personal information even with strangers, whereas Japanese generally reserve disclosure for close relationships, reflecting broader Asian concerns for harmony and keeping unfavorable information from outsiders.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "Ideas[S] about how[간접의문문] much disclosure[S] is[V] appropriate[C] vary[V복] among cultures.",
+     "ko": "얼마만큼의 정보 공개가 적절한지에 관한 생각은 문화마다 다르다.",
+     "gps": [
+      "how much disclosure is appropriate는 간접의문문이며, 어순은 'how + S +V'순이야"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 12,
+       "end": 20,
+       "role": "grammar"
+      },
+      {
+       "start": 21,
+       "end": 31,
+       "role": "vocab"
+      },
+      {
+       "start": 35,
+       "end": 46,
+       "role": "vocab"
+      },
+      {
+       "start": 47,
+       "end": 51,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "Those[S] born[과거분사] in the United States tend[V복] to[O] be high disclosers, even showing[분사구문] a willingness to[수식] disclose information about themselves[재귀대명사] to strangers.",
+     "ko": "미국에서 태어난 사람들은 정보를 많이 공개하는 경향이 있고, 심지어 낯선 이에게 자신에 관한 정보를 기꺼이 공개하려는 의향을 보인다.",
+     "gps": [
+      "born은 Those를 수식하는 과거분사이며, Those who were born으로 풀어 쓸 수 있어.",
+      "분사구문으로 쓰인 showing의 의미상 주어는 Those이고,",
+      "Those가 정보를 공개하려는 의향을 '보이는' 거니까 현재분사로 쓰였어. shown (X)",
+      "정보를 공개하는 주체와 about의 목적어가 동일하므로 재귀대명사인 themselves가 쓰였어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 6,
+       "end": 10,
+       "role": "grammar"
+      },
+      {
+       "start": 37,
+       "end": 42,
+       "role": "grammar"
+      },
+      {
+       "start": 65,
+       "end": 72,
+       "role": "grammar"
+      },
+      {
+       "start": 43,
+       "end": 47,
+       "role": "vocab"
+      },
+      {
+       "start": 75,
+       "end": 86,
+       "role": "vocab"
+      },
+      {
+       "start": 32,
+       "end": 36,
+       "role": "grammar"
+      },
+      {
+       "start": 87,
+       "end": 98,
+       "role": "grammar"
+      },
+      {
+       "start": 117,
+       "end": 127,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "This[S] may explain[V] why[O 간접의문문] Americans[S] seem[V1] particularly[particular (x)] easy[C1] to[수식] meet and are[V2] good[C2] at cocktail-party conversation.",
+     "ko": "이것은 왜 미국인들이 특히 만나기 쉬워 보이고 칵테일파티 대화에 능숙한지를 설명해 줄 수 있다.",
+     "gps": [
+      "why가 이끄는 간접의문문이 explain의 목적어 역할을 하고 있어. '의문사 + S + V'의 어순이야.",
+      "따라서 meet 뒤에 목적어 them을 중복해서 쓸 수 없어. easy to meet them (X)"
+     ],
+     "refs": [
+      "This = 앞 문장"
+     ],
+     "marks": [
+      {
+       "start": 17,
+       "end": 20,
+       "role": "grammar"
+      },
+      {
+       "start": 57,
+       "end": 61,
+       "role": "grammar"
+      },
+      {
+       "start": 31,
+       "end": 35,
+       "role": "parallel"
+      },
+      {
+       "start": 66,
+       "end": 69,
+       "role": "parallel"
+      },
+      {
+       "start": 49,
+       "end": 53,
+       "role": "vocab"
+      },
+      {
+       "start": 70,
+       "end": 74,
+       "role": "vocab"
+      },
+      {
+       "start": 36,
+       "end": 48,
+       "role": "grammar"
+      },
+      {
+       "start": 54,
+       "end": 56,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 4,
+       "role": "connector"
+      },
+      {
+       "start": 31,
+       "end": 35,
+       "role": "grammar"
+      },
+      {
+       "start": 66,
+       "end": 69,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "On the other hand, Japanese[S] tend[V] to[O] do little disclosing[동명사] about themselves[재귀대명사] to others except to the few[a few (x)] people[선행사] with[전치사+관대] whom they[S] are[V] very close[C].",
+     "ko": "반면에, 일본인들은 자신과 매우 친한 소수의 사람들을 제외하고는 타인에게 자신에 관한 정보를 거의 공개하지 않는 경향이 있다.",
+     "gps": [
+      "with whom은 the few people이 선행사인 '전치사 + 관계대명사'로 완전한 절을 이끌어. 또한 be close with에서 with가 관계대명사 앞으로 이동했어. with who, with that (X)"
+     ],
+     "refs": [
+      "they = Japanese"
+     ],
+     "marks": [
+      {
+       "start": 39,
+       "end": 45,
+       "role": "vocab"
+      },
+      {
+       "start": 84,
+       "end": 90,
+       "role": "vocab"
+      },
+      {
+       "start": 133,
+       "end": 138,
+       "role": "vocab"
+      },
+      {
+       "start": 33,
+       "end": 38,
+       "role": "grammar"
+      },
+      {
+       "start": 63,
+       "end": 73,
+       "role": "grammar"
+      },
+      {
+       "start": 46,
+       "end": 56,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 17,
+       "role": "connector"
+      },
+      {
+       "start": 19,
+       "end": 93,
+       "role": "descriptive"
+      },
+      {
+       "start": 94,
+       "end": 108,
+       "role": "antecedent"
+      },
+      {
+       "start": 109,
+       "end": 118,
+       "role": "antecedent"
+      },
+      {
+       "start": 119,
+       "end": 138,
+       "role": "descriptive"
+      }
+     ],
+     "badges": [
+      {
+       "start": 19,
+       "end": 27,
+       "kind": "essay"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "In general, Asians[S] do not reach[V] out to strangers.",
+     "ko": "일반적으로 아시아인들은 낯선 이들에게 다가가지 않는다.",
+     "gps": [
+      "reach out to는 '~에게 관심을 보이다, 다가가다'라는 뜻이야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 26,
+       "end": 31,
+       "role": "vocab"
+      },
+      {
+       "start": 32,
+       "end": 35,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 10,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "They[S] do, however, show[V] great care[O] for each other, since[부접] they[S] view[V] harmony[O] as essential[OC] to relationship improvement.",
+     "ko": "그러나 그들은 조화를 관계 발전에 필수적인 것으로 여기기 때문에 서로를 매우 배려한다.",
+     "gps": [
+      "do는 일반동사 show를 강조하는 조동사야. 강조의 do 뒤에는 동사원형이 와야 해. do shows (X)",
+      "view A as B는 'A를 B로 여기다'라는 뜻이야."
+     ],
+     "refs": [
+      "They = Asians"
+     ],
+     "marks": [
+      {
+       "start": 23,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 29,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 66,
+       "end": 73,
+       "role": "vocab"
+      },
+      {
+       "start": 77,
+       "end": 86,
+       "role": "vocab"
+      },
+      {
+       "start": 103,
+       "end": 114,
+       "role": "vocab"
+      },
+      {
+       "start": 5,
+       "end": 7,
+       "role": "grammar"
+      },
+      {
+       "start": 9,
+       "end": 16,
+       "role": "connector"
+      },
+      {
+       "start": 50,
+       "end": 114,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "They[S][^Asians] work[V] hard[^hardly (x)|4,1.5] to[목적] prevent those[선행사] they[S][^(that)|-7,1] view[V] as outsiders from getting[동명사] information[선행사] they[S][^(that)|-3.5,2] believe[V] to[OC] be unfavorable.",
+     "ko": "그들은 자신들이 외부인으로 여기는 사람들이 자신들이 불리하다고 믿는 정보를 얻지 못하도록 열심히 노력한다.",
+     "gps": [
+      "'A가 ~하지 못하게 하다'라는 뜻의 prevent A from RVing 구문이 쓰였어.",
+      "those를 선행사로 하는 목적격 관계대명사 that이 생략되어 있어. what (X)",
+      "information을 선행사로 하는 목적격 관계대명사 that이 생략되어 있어. what (X)",
+      "work를 수식하는 hard는 '열심히'라는 뜻이고, hardly는 '거의 ~않다'라는 뜻이므로 구분해야 해."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 45,
+       "end": 54,
+       "role": "vocab"
+      },
+      {
+       "start": 99,
+       "end": 110,
+       "role": "vocab"
+      },
+      {
+       "start": 10,
+       "end": 14,
+       "role": "grammar"
+      },
+      {
+       "start": 15,
+       "end": 17,
+       "role": "grammar"
+      },
+      {
+       "start": 18,
+       "end": 25,
+       "role": "grammar"
+      },
+      {
+       "start": 60,
+       "end": 67,
+       "role": "grammar"
+      },
+      {
+       "start": 93,
+       "end": 98,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 25,
+       "role": "descriptive"
+      },
+      {
+       "start": 26,
+       "end": 31,
+       "role": "antecedent"
+      },
+      {
+       "start": 32,
+       "end": 67,
+       "role": "descriptive"
+      },
+      {
+       "start": 68,
+       "end": 79,
+       "role": "antecedent"
+      },
+      {
+       "start": 80,
+       "end": 110,
+       "role": "descriptive"
+      }
+     ],
+     "badges": [
+      {
+       "start": 5,
+       "end": 9,
+       "kind": "essay"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글의 주제로 가장 적절한 것은?",
+    "passage": [
+     "Ideas about how much disclosure is appropriate vary among cultures. Those born in the United States tend to be high disclosers, even showing a willingness to disclose information about themselves to strangers. This may explain why Americans seem particularly easy to meet and are good at cocktail-party conversation. On the other hand, Japanese tend to do little disclosing about themselves to others except to the few people with whom they are very close. In general, Asians do not reach out to strangers. They do, however, show great care for each other, since they view harmony as essential to relationship improvement. They work hard to prevent those they view as outsiders from getting information they believe to be unfavorable."
+    ],
+    "choices": [
+     "cultural differences in the willingness to reveal personal information",
+     "reasons Americans prefer social gatherings to private meetings",
+     "the role of harmony in improving international relations",
+     "effective ways to protect personal data from outsiders",
+     "the universal human tendency to avoid talking to strangers"
+    ],
+    "answerIndex": 1
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "disclosure",
+     "ko": "(정보) 공개",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "appropriate",
+     "ko": "적절한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "vary",
+     "ko": "다르다, 다양하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "tend to",
+     "ko": "~하는 경향이 있다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "willingness",
+     "ko": "기꺼이 하는 마음",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "disclose",
+     "ko": "공개하다, 드러내다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "particularly",
+     "ko": "특히",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "except",
+     "ko": "~을 제외하고",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "reach out to",
+     "ko": "~에게 다가가다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "harmony",
+     "ko": "조화",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "essential",
+     "ko": "필수적인",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "improvement",
+     "ko": "향상, 발전",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "prevent A from -ing",
+     "ko": "A가 ~하지 못하게 막다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "outsider",
+     "ko": "외부인",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "unfavorable",
+     "ko": "불리한, 좋지 않은",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "문장 영문 크기",
+  "id": "cmv8285si0000hs0oxtou0ylv",
+  "doc": {
+   "meta": {
+    "title": "고1 21년 11월",
+    "source": "21번",
+    "subject": "",
+    "pageStart": 2
+   },
+   "title": null,
+   "topic": "Our consumption habits being the primary causes of climate change.",
+   "summary": "Climate change is largely driven by people's behavioral actions, providing financial incentives for industries that contribute to the problem, such as the fossil fuel industry.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "When it comes to climate change, many[S] blame[V] the fossil fuel industry[O1][^blame A for B B에 대해 A를 탓하다|-24.7,0] for pumping[동명사] greenhouse gases, the agricultural sector[O2] for burning[동명사2] rainforests, or the fashion industry[OC] for producing[동명사3] excessive clothes.",
+     "ko": "기후 변화에 관해 많은 사람들은 온실가스를 배출하는 것에 대해 화석 연료 산업을, 열대 우림을 태우는 것에 대해 농업 분야를, 혹은 과다한 의복을 생산하는 것에 대해 패션 산업을 탓한다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 38,
+       "end": 43,
+       "role": "vocab"
+      },
+      {
+       "start": 73,
+       "end": 80,
+       "role": "grammar"
+      },
+      {
+       "start": 127,
+       "end": 134,
+       "role": "grammar"
+      },
+      {
+       "start": 176,
+       "end": 185,
+       "role": "grammar"
+      },
+      {
+       "start": 186,
+       "end": 195,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "But wait, what[S] drives[V] these industrial activities[O|-2.1,0]? Our consumption.",
+     "ko": "하지만 자, 무엇이 이러한 산업 활동들을 가동시키는가? 우리의 소비이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 15,
+       "end": 21,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 3,
+       "role": "connector"
+      },
+      {
+       "start": 51,
+       "end": 66,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": " Climate change[S] is[V] a summed product[C] of each person's behavior.",
+     "ko": "기후 변화는 각 개인 행위의 합쳐진 산물이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 21,
+       "end": 27,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "For example, the fossil fuel industry[S] is[V] a popular scapegoat[C] in the climate crisis.",
+     "ko": "예를 들어 화석 연료 산업은 기후 위기에 있어서 일반적인 희생양이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 51,
+       "end": 60,
+       "role": "vocab"
+      },
+      {
+       "start": 76,
+       "end": 82,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 11,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "But why do[조] they[S] drill[RV1] and burn[V2] fossil fuels[O|-2.1,0]?",
+     "ko": "하지만 왜 그들은 화석 연료를 시추하고 태울까?",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 16,
+       "end": 21,
+       "role": "vocab"
+      },
+      {
+       "start": 16,
+       "end": 21,
+       "role": "parallel"
+      },
+      {
+       "start": 26,
+       "end": 30,
+       "role": "vocab"
+      },
+      {
+       "start": 26,
+       "end": 30,
+       "role": "parallel"
+      },
+      {
+       "start": 0,
+       "end": 3,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "We[S] provide[V] them[IO] strong financial incentives[DO]: some people[S] regularly[regular (X)] travel[V] on airplanes and[선행사] cars that[주관대] burn[V 복수] fossil fuels[O].",
+     "ko": "우리가 그들에게 강력한 금전적인 동기를 제공한다. 예를 들어, 어떤 사람들은 화석 연료를 태우는 비행기와 차로 정기적으로 여행한다.",
+     "gps": [
+      "that은 airplanes and cars을 선행사로 받는 주격 관계대명사로 쓰여 불완전한 절을 이끌어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 16,
+       "end": 22,
+       "role": "vocab"
+      },
+      {
+       "start": 57,
+       "end": 66,
+       "role": "grammar"
+      },
+      {
+       "start": 101,
+       "end": 105,
+       "role": "grammar"
+      },
+      {
+       "start": 77,
+       "end": 95,
+       "role": "antecedent"
+      },
+      {
+       "start": 96,
+       "end": 100,
+       "role": "antecedent"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "Some people[S] waste[V] electricity[O] generated[과거분사] by burning[동명사] fuel in power plants.",
+     "ko": "어떤 사람들은 발전소에서 연료를 태움으로써 생산된 전기를 낭비한다.",
+     "gps": [
+      "generated는 electricity를 수식하는 과거분사로 쓰였어. generating (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 12,
+       "end": 17,
+       "role": "vocab"
+      },
+      {
+       "start": 30,
+       "end": 39,
+       "role": "grammar"
+      },
+      {
+       "start": 43,
+       "end": 50,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 8,
+     "tagged": "Some people[S] use[V1] and throw[V2] away plastic products[O] derived[과거분사] from crude oil every day.",
+     "ko": "어떤 사람들은 원유로부터 얻어진 플라스틱 제품을 매일 사용하고 버린다.",
+     "enSize": 8.68,
+     "gps": [
+      "derived는 plastic products를 수식하는 과거분사로 쓰였어. deriving (x)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 12,
+       "end": 15,
+       "role": "grammar"
+      },
+      {
+       "start": 12,
+       "end": 15,
+       "role": "parallel"
+      },
+      {
+       "start": 20,
+       "end": 25,
+       "role": "grammar"
+      },
+      {
+       "start": 20,
+       "end": 25,
+       "role": "parallel"
+      },
+      {
+       "start": 48,
+       "end": 55,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 9,
+     "tagged": "Blaming[동명사 S] the fossil fuel industry while[접속사] engaging[현재분사] in these behaviors is[V 단수] a slap[C] in our own face.",
+     "ko": "이러한 행위들에 참여하면서 화석 연료 산업을 탓하는 것은 스스로의 얼굴 때리기이다.",
+     "gps": [
+      "문장의 주어가 동명사인 Blaiming고, 본동사는 단수인 is야. are (X)",
+      "while engaging은 접속사를 남겨둔 분사구문으로 일반인 주어인 we가 '참여하는' 거니까 현재분사로 쓰였어. engaged (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 7,
+       "role": "grammar"
+      },
+      {
+       "start": 33,
+       "end": 47,
+       "role": "grammar"
+      },
+      {
+       "start": 67,
+       "end": 69,
+       "role": "grammar"
+      },
+      {
+       "start": 72,
+       "end": 76,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 92,
+       "role": "descriptive",
+       "badge": true
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글에 어울리는 속담은?",
+    "passage": [
+     "When it comes to climate change, many blame the fossil fuel industry for pumping greenhouse gases, the agricultural sector for burning rainforests, or the fashion industry for producing excessive clothes. But wait, what drives these industrial activities? Our consumption. Climate change is a summed product of each person’s behavior. For example, the fossil fuel industry is a popular scapegoat in the climate crisis. But why do they drill and burn fossil fuels? We provide them strong financial incentives: some people regularly travel on airplanes and cars that burn fossil fuels. Some people waste electricity generated by burning fuel in power plants. Some people use and throw away plastic products derived from crude oil every day. Blaming the fossil fuel industry while engaging in these behaviors is a slap in our own face."
+    ],
+    "choices": [
+     "중이 제 머리를 못 깎는다",
+     "누워서 침뱉기",
+     "소 잃고 외양간 고친다",
+     "가랑비에 옷 젖는 줄 모른다",
+     "물에 빠진 사람 구해 주니 보따리 내놓으라 한다"
+    ],
+    "answerIndex": 0
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "when it comes to N",
+     "ko": "~에 관해",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "blame A for B",
+     "ko": "B에 대해 A를 탓하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "fossil fuel",
+     "ko": "화석 연료",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "pump",
+     "ko": "퍼붓다, 주입하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "excessive",
+     "ko": "과도한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "drive",
+     "ko": "추진시키다, 몰아가다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "consumption",
+     "ko": "소비",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "financial",
+     "ko": "재정적인, 금전적인",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "incentive",
+     "ko": "동기",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "generate",
+     "ko": "생산하다, 발생시키다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "power plant",
+     "ko": "발전소",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "throw away",
+     "ko": "버리다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "derive",
+     "ko": "끌어내다, 얻다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "crude oil",
+     "ko": "원유",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "engage in",
+     "ko": "~에 참여[관여]하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "slap (n.)",
+     "ko": "철썩 때리기",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "slap (v.)",
+     "ko": "철썩 때리다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "scapegoat",
+     "ko": "희생양",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "문장 영문 크기",
+  "id": "cmv828ajc0000sz0otr1v3th6",
+  "doc": {
+   "meta": {
+    "title": "고1 21년 11월",
+    "source": "30번",
+    "subject": "",
+    "pageStart": 2
+   },
+   "title": null,
+   "topic": "The role of zoos in preventing species extinction.",
+   "summary": "Zoos, coordinating with field conservationists and wildlife authorities, start captive breeding programs for endangered species, which often result in releasing captive-bred individuals back into the wild to supplement dwindling populations.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "For species approaching[현재분사] extinction, zoos[S] can act[V] as[전] a last chance for survival.",
+     "ko": "멸종에 이르고 있는 종에게 동물원은 생존을 위한 마지막 기회로 작용할 수 있다.",
+     "gps": [
+      "approaching은 species를 수식하는 현재분사로 쓰였어. approached (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 12,
+       "end": 23,
+       "role": "grammar"
+      },
+      {
+       "start": 24,
+       "end": 34,
+       "role": "vocab"
+      },
+      {
+       "start": 54,
+       "end": 58,
+       "role": "vocab"
+      },
+      {
+       "start": 70,
+       "end": 78,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "Recovery programs[S] are[V 수동태|7.9,0] established to[목적] coordinate the efforts of field conservationists and wildlife authorities.",
+     "ko": "회복 프로그램이 현장 환경 보호 활동가와 야생 동물 당국의 노력을 통합하기 위해 수립된다.",
+     "enSize": 8.73,
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 18,
+       "end": 36,
+       "role": "grammar"
+      },
+      {
+       "start": 37,
+       "end": 47,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "As[접] populations[S] of those species diminish[V 복수 자동사] it[가S] is[V] not unusual[C] for[의미상 S] zoos to[진S] start captive breeding programs.",
+     "ko": "그 종의 개체수가 감소하면서 동물원이 포획 사육 프로그램을 시작하는 것은 드물지 않다.",
+     "enSize": 8.87,
+     "gps": [
+      "it은 가주어, to start는 진주어로 쓰였어.",
+      "start (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 32,
+       "end": 40,
+       "role": "vocab"
+      },
+      {
+       "start": 41,
+       "end": 43,
+       "role": "grammar"
+      },
+      {
+       "start": 47,
+       "end": 58,
+       "role": "vocab"
+      },
+      {
+       "start": 68,
+       "end": 76,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "Captive breeding[S] acts[V] to[목적] protect against extinction.",
+     "ko": "포획 사육은 멸종을 막기 위해 작용한다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 22,
+       "end": 24,
+       "role": "grammar"
+      },
+      {
+       "start": 25,
+       "end": 32,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "In some cases captive-bred individuals[S] may be[V 수동태|7.9,0] released back into the wild, supplementing[분사구문] wild populations.",
+     "ko": "어떤 경우에는 포획 사육된 개체가 다시 야생으로 방생되어 야생 개체수를 보충할 수도 있다.",
+     "gps": [
+      "분사구문으로 쓰인 supplementing은 의미상 주어인 captive-bred individuals가 '보충하는' 거니까 현재분사로 쓰였어. supplemented (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 43,
+       "end": 54,
+       "role": "grammar"
+      },
+      {
+       "start": 75,
+       "end": 88,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "This[S] is[V] most successful[C] in situations[선행사] where[관계부사] individuals[S] are[V] at greatest threat during[while (X)] a particular life stage.",
+     "ko": "이는 개체가 특정한 생애 주기 동안에 가장 큰 위협에 놓여 있는 상황에서 가장 성공적이다.",
+     "gps": [
+      "where은 situations를 선행사로 받는 관계부사로 쓰여 완전한 절을 이끌며, in which로 바꿔 쓸 수 있어. which (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 13,
+       "end": 23,
+       "role": "vocab"
+      },
+      {
+       "start": 63,
+       "end": 71,
+       "role": "vocab"
+      },
+      {
+       "start": 79,
+       "end": 85,
+       "role": "grammar"
+      },
+      {
+       "start": 27,
+       "end": 37,
+       "role": "antecedent"
+      },
+      {
+       "start": 38,
+       "end": 43,
+       "role": "antecedent"
+      },
+      {
+       "start": 44,
+       "end": 109,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "For example, turtle eggs[S] may be[V 수동태|7.9,0] removed from high-risk locations until after they[S] hatch[V].",
+     "ko": "예를 들어 거북이 알은 그것이 부화한 이후까지 고위험 위치로부터 제거될 수도 있다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 29,
+       "end": 39,
+       "role": "grammar"
+      },
+      {
+       "start": 45,
+       "end": 54,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 11,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 8,
+     "tagged": "This[S] may increase[V] the number[O] of turtles[선행사] that[주관대] survive[V 복수 자동사|1.9,0] to adulthood.",
+     "ko": "이는 성체까지 생존하는 거북이 수를 증가시킬 수 있다.",
+     "gps": [
+      "that은 turtles을 선행사로 받는 주격 관계대명사로 불완전한 절을 이끌어. what (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 9,
+       "end": 17,
+       "role": "vocab"
+      },
+      {
+       "start": 45,
+       "end": 52,
+       "role": "grammar"
+      },
+      {
+       "start": 32,
+       "end": 39,
+       "role": "antecedent"
+      },
+      {
+       "start": 40,
+       "end": 44,
+       "role": "antecedent"
+      }
+     ]
+    },
+    {
+     "no": 9,
+     "tagged": "Crocodile programs[S] have[V] also been[현재완료] successful[C] in protecting[동명사] eggs and hatchlings, releasing[분사구문] hatchlings once[접] they[S] are[V] better equipped[수동태] to[목적] protect themselves[재귀대명사].",
+     "ko": "악어 프로그램 역시 알과 부화한 유생을 보호하는 데 있어서 성공적이었으며 일단 그것이 스스로를 보호하도록 더 잘 갖추어지면, 부화한 유생을 방생한다.",
+     "enSize": 8.91,
+     "gps": [
+      "분사구문으로 쓰인 releasing은 의미상 주어인 Crocodile programs가 '방생하는' 거니까 현재분사로 쓰였어. released (X)",
+      "to protect의 의미상 주어인 hatchlings와 목적어가 동일하니까 재귀대명사인 themselves가 쓰였어. them (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 34,
+       "end": 44,
+       "role": "vocab"
+      },
+      {
+       "start": 48,
+       "end": 58,
+       "role": "grammar"
+      },
+      {
+       "start": 80,
+       "end": 89,
+       "role": "grammar"
+      },
+      {
+       "start": 111,
+       "end": 114,
+       "role": "grammar"
+      },
+      {
+       "start": 115,
+       "end": 121,
+       "role": "vocab"
+      },
+      {
+       "start": 122,
+       "end": 133,
+       "role": "grammar"
+      },
+      {
+       "start": 134,
+       "end": 141,
+       "role": "vocab"
+      },
+      {
+       "start": 142,
+       "end": 152,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 152,
+       "role": "descriptive",
+       "badge": true
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글의 제목으로 가장 적절한 것은?",
+    "passage": [
+     "For species approaching extinction, zoos can act as a last chance for survival. Recovery programs are established to coordinate the efforts of field conservationists and wildlife authorities. As populations of those species diminish it is not unusual for zoos to start captive breeding programs. Captive breeding acts to protect against extinction. In some cases captive-bred individuals may be released back into the wild, supplementing wild populations. This is most successful in situations where individuals are at greatest threat during a particular life stage. For example, turtle eggs may be removed from high-risk locations until after they hatch. This may increase the number of turtles that survive to adulthood. Crocodile programs have also been successful in protecting eggs and hatchlings, releasing hatchlings once they are better equipped to protect themselves."
+    ],
+    "choices": [
+     "Why Do We Disagree with Artificial Breeding Program?",
+     "Zoo as the Last and Secure Shelter for Endangered Species",
+     "Ceaseless Struggle for Survival: From Egg Breaking to Death",
+     "Zoos Not Safe from Criticism as the Source of Animal Mistreat",
+     "A Favorable Function of Zoo's Policies Centered on Ecosystem"
+    ],
+    "answerIndex": 0
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "captive breeding",
+     "ko": "포획 사육",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "species (pl.)",
+     "ko": "종",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "approach",
+     "ko": "다가가다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "extinction",
+     "ko": "멸종",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "act as",
+     "ko": "~로 작동하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "survival",
+     "ko": "생존",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "recovery",
+     "ko": "회복",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "establish",
+     "ko": "수립하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "coordinate",
+     "ko": "통합하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "conservationist",
+     "ko": "환경 보호 활동가",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "authorities (pl.)",
+     "ko": "당국, 관계자",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "captive",
+     "ko": "사로잡힌, 포획된",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "population",
+     "ko": "개체 수",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "diminish",
+     "ko": "감소하다, 줄어들다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "release",
+     "ko": "(동물)을 놓아주다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "supplement",
+     "ko": "~을 보충하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "threat",
+     "ko": "위협",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "**hatch",
+     "ko": "부화하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "remove",
+     "ko": "제거하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "high-risk",
+     "ko": "위험성이 높은",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "survive",
+     "ko": "생존하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "adulthood",
+     "ko": "성체기, 성년기",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "protect",
+     "ko": "보호하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "hatchling",
+     "ko": "갓 부화한 새[동물]",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "equip",
+     "ko": "갖추다, 마련하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "문장 해석 크기",
+  "id": "cmv82a9eg0000jx0opye69rqh",
+  "doc": {
+   "meta": {
+    "title": "고1 22년 11월",
+    "source": "29번",
+    "subject": "",
+    "pageStart": 2
+   },
+   "title": null,
+   "topic": "How AI allows machines to self-learn and self-improve",
+   "summary": "Artificial Intelligence enables machines to self learn and improve, leading to smart virtual assistance that could know a user more than their close friends and family, impacting lives and our world profoundly.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "You[S] may have[V 과거시제 조동사|-3.1,0] seen headlines[O] in the news about some of the things[선행사 (that)|2.9,0] machines[S] powered[과거분사] by artificial intelligence can do[V].",
+     "ko": "여러분은 인공 지능으로 구동되는 기계가 할 수 있는 몇 가지 일에 대한 헤드라인들을 뉴스에서 본 적이 있을 것이다.",
+     "enSize": 9.05,
+     "koSize": 6.5,
+     "gps": [
+      "the things 뒤에는 목적격 관계대명사 that이 생략되어 있어.",
+      "powered는 machines를 수식하는 과거분사로 쓰였어. powering (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 4,
+       "end": 17,
+       "role": "grammar"
+      },
+      {
+       "start": 74,
+       "end": 81,
+       "role": "grammar"
+      },
+      {
+       "start": 85,
+       "end": 108,
+       "role": "vocab"
+      },
+      {
+       "start": 54,
+       "end": 64,
+       "role": "antecedent"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "However, if[^가정법 미래|-12.1,0] you[S] were[V] to consider all the[선행사] tasks that[목관대] AI-powered machines[S] could actually[actual (X)] perform[V], it[S] would be[V] quite mind-blowing[C|11.8,0]!",
+     "ko": "하지만, AI로 구동되는 기계가 실제로 수행할 수 있는 모든 작업을 고려한다면, 그것은 꽤 놀라울 것이다!",
+     "koSize": 6.5,
+     "gps": [
+      "가능성이 없는 미래를 가정하는 가정법 미래 구문이 쓰여, if절에는 were to consider이 쓰였고 주절에는 would be가 쓰였어.",
+      "that은 alll the tasks를 선행사로 받는 목적격 관계대명사로 쓰여 불완전한 절을 이끌어. what (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 16,
+       "end": 32,
+       "role": "grammar"
+      },
+      {
+       "start": 78,
+       "end": 86,
+       "role": "grammar"
+      },
+      {
+       "start": 99,
+       "end": 107,
+       "role": "grammar"
+      },
+      {
+       "start": 114,
+       "end": 126,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 7,
+       "role": "connector"
+      },
+      {
+       "start": 9,
+       "end": 32,
+       "role": "descriptive",
+       "badge": true
+      },
+      {
+       "start": 33,
+       "end": 46,
+       "role": "antecedent"
+      },
+      {
+       "start": 47,
+       "end": 51,
+       "role": "antecedent"
+      },
+      {
+       "start": 52,
+       "end": 126,
+       "role": "descriptive"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "One[S] of the key features[feature (X)] of artificial intelligence is[V 단수] that[명접] it enables[V][^artificial intelligence|-22.5,0] machines[O] to learn[OC] new things, rather than requiring[동명사] programming specific[후치 수식] to new tasks.",
+     "ko": "인공 지능의 핵심 특징들 중 하나는 그것이 새로운 작업에 특화된 프로그래밍을 필요로 하기보다는 기계들이 새로운 것을 학습할 수 있게 한다는 것이다.",
+     "enSize": 9.05,
+     "gps": [
+      "enable이 5형식 동사로 쓰여 목적격 보어에 to learn이 쓰였어.",
+      "specific 이하는 programming을 후치 수식하고 있어. programming (that is ) specific"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 15,
+       "end": 23,
+       "role": "grammar"
+      },
+      {
+       "start": 27,
+       "end": 50,
+       "role": "vocab"
+      },
+      {
+       "start": 51,
+       "end": 58,
+       "role": "grammar"
+      },
+      {
+       "start": 79,
+       "end": 87,
+       "role": "grammar"
+      },
+      {
+       "start": 100,
+       "end": 121,
+       "role": "grammar"
+      },
+      {
+       "start": 134,
+       "end": 142,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "Therefore, the core difference[S] between computers of the future and those of[= computers|-18.7,0] the past is[V 단수] that[명접] future computers[S] will be[V] able to learn and self-improve.",
+     "ko": "그러므로, 미래의 컴퓨터들과 과거의 그것들 사이의 핵심적인 차이점은 미래의 컴퓨터가 학습하고 스스로 개선할 수 있을 것이라는 점이다.",
+     "enSize": 9.05,
+     "gps": [
+      "those는 앞에 나온 복수 명사인 computers를 대신해서 쓴 대명사야. that (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 39,
+       "end": 48,
+       "role": "grammar"
+      },
+      {
+       "start": 39,
+       "end": 48,
+       "role": "parallel"
+      },
+      {
+       "start": 63,
+       "end": 72,
+       "role": "grammar"
+      },
+      {
+       "start": 63,
+       "end": 72,
+       "role": "parallel"
+      },
+      {
+       "start": 85,
+       "end": 92,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 9,
+       "role": "connector"
+      },
+      {
+       "start": 93,
+       "end": 148,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "In the near future, smart virtual assistants[S] will know[V] more[O] about you than your closest friends and[S] family members do[대동사(= know)|7.6,0].",
+     "ko": "가까운 미래에, 스마트 가상 비서는 여러분에 대해 여러분의 가장 가까운 친구나 가족이 아는 것보다 더 많이 알게 될 것이다.",
+     "enSize": 9.05,
+     "koSize": 6.5,
+     "gps": [
+      "대동사로 쓴 do는 앞에 나온 일반동사인 know를 대신해서 쓴 거야. are (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 55,
+       "end": 59,
+       "role": "vocab"
+      },
+      {
+       "start": 70,
+       "end": 74,
+       "role": "grammar"
+      },
+      {
+       "start": 75,
+       "end": 114,
+       "role": "underline"
+      },
+      {
+       "start": 115,
+       "end": 117,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "Can you imagine how[간접의문문] that[^앞 문장] might change[V] our lives[O|-2.1,0]?",
+     "ko": "그것이 우리의 삶을 어떻게 변화시킬지 상상할 수 있는가?",
+     "enSize": 9.05,
+     "koSize": 6.5,
+     "gps": [
+      "how가 이끄는 간접의문문이 imagine의 목적어 역할을 하고 있어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 16,
+       "end": 19,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "These kinds of[^스마트 가상 비서와 같은 미래의 컴퓨터들이 우리의 삶에 야기하는 변화들|-60.9,0] changes[S] are[V] exactly[exact (X)] why[간접의문문|1.9,0] it[^가S] is[V] so important[C] to[^진S] recognize the implications[선행사] that[목관대] new technologies[S] will have[V] for our world.",
+     "ko": "왜 이러한 종류의 변화는 정확히 새로운 기술들이 우리 세계에 미칠 영향을 인식하는 것이 아주 중요한가에 대한 이유이다.",
+     "enSize": 9.05,
+     "koSize": 6.5,
+     "gps": [
+      "why가 이끄는 간접의문문이 is의 보어 역할을 하고 있고, it은 가주어, to recognize는 진주어로 쓰였어.that은 the implications를 선행사로 받는 목적격 관계대명사로 쓰여 불완전한 절을 이끌어. what (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 27,
+       "end": 35,
+       "role": "grammar"
+      },
+      {
+       "start": 35,
+       "end": 41,
+       "role": "grammar"
+      },
+      {
+       "start": 48,
+       "end": 57,
+       "role": "vocab"
+      },
+      {
+       "start": 58,
+       "end": 70,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 22,
+       "role": "connector"
+      },
+      {
+       "start": 35,
+       "end": 70,
+       "role": "descriptive",
+       "badge": true
+      },
+      {
+       "start": 71,
+       "end": 87,
+       "role": "antecedent"
+      },
+      {
+       "start": 88,
+       "end": 92,
+       "role": "antecedent"
+      },
+      {
+       "start": 93,
+       "end": 133,
+       "role": "descriptive"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?",
+    "passage": [
+     "You may have seen headlines in the news about some of the things machines powered by artificial intelligence can do.",
+     "(A) Can you imagine how that might change our lives? These kinds of changes are exactly why it is so important to recognize the implications that new technologies will have for our world.",
+     "(B) However, if you were to consider all the tasks that AI-powered machines could actually perform, it would be quite mind-blowing! One of the key features of artificial intelligence is that it enables machines to learn new things, rather than requiring programming specific to new tasks.",
+     "(C) Therefore, the core difference between computers of the future and those of the past is that future computers will be able to learn and self-improve. In the near future, smart virtual assistants will know more about you than your closest friends and family members do."
+    ],
+    "choices": [
+     "(A) - (C) - (B)",
+     "(B) - (A) - (C)",
+     "(B) - (C) - (A)",
+     "(C) - (A) - (B)",
+     "(C) - (B) - (A)"
+    ],
+    "answerIndex": 0
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "headline",
+     "ko": "(신문의) 헤드라인, 표제",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "power",
+     "ko": "~을 작동시키다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "artificial intelligence",
+     "ko": "인공지능",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "consider",
+     "ko": "고려하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "task",
+     "ko": "작업, 과제",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "AI-powered",
+     "ko": "AI로 작동되는",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "perform",
+     "ko": "수행하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "quite",
+     "ko": "꽤",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "mind-blowing",
+     "ko": "놀라운, 경이로운",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "key",
+     "ko": "핵심적인, 중요한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "feature",
+     "ko": "특징",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "enable",
+     "ko": "~을 가능하게 하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "rather than",
+     "ko": "~보다는",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "require",
+     "ko": "~을 필요로 하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "specific to",
+     "ko": "~에게 특화된, 고유한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "core",
+     "ko": "핵심의, 가장 중요한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "self-improve",
+     "ko": "스스로 개선하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "virtual",
+     "ko": "가상의",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "assistant",
+     "ko": "비서, 조수",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "closest",
+     "ko": "가장 가까운",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "exactly",
+     "ko": "정확히",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "recognize",
+     "ko": "인식하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "implication",
+     "ko": "영향, 결과",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "have implications for",
+     "ko": "~에 영향을 미치다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "technology",
+     "ko": "기술",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "문장 해석 크기",
+  "id": "cmv82arhz0000an0oo0tb3cdh",
+  "doc": {
+   "meta": {
+    "title": "고1 22년 11월",
+    "source": "39번",
+    "subject": "",
+    "pageStart": 2
+   },
+   "title": null,
+   "topic": "The behavior of differently composed water bodies in the ocean.",
+   "summary": "Two different glasses of water, one with orange juice and heated, the other with lemon juice, would not mix well due to differences in their chemical makeups and temperatures; this is similar to ocean water bodies that can't mix due to differing temperatures and salt content.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "Take[V 명령문|5.9,0] two glasses[O] of water.",
+     "ko": "물 두 잔을 가져와라.",
+     "koSize": 6.5,
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 4,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "Put a[V 명령문|-5.3,0] little bit of orange[O1] juice into one and a little bit of lemon juice[O2] into the other.",
+     "ko": "하나의 잔에는 약간의 오렌지주스를 넣고 다른 잔에는 약간의 레몬주스를 넣어라.",
+     "enSize": 8.82,
+     "koSize": 6.5,
+     "gps": [
+      "2개의 물 잔을 말하고 있으니까 one ~ the ohter이 쓰였어. another (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 3,
+       "role": "grammar"
+      },
+      {
+       "start": 38,
+       "end": 41,
+       "role": "grammar"
+      },
+      {
+       "start": 79,
+       "end": 88,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "What[명접] you[S] have[V] are[V 복수|1.2,0] essentially[essential (X)] two glasses[C] of water but with a completely[complete (X)] different chemical makeup.",
+     "ko": "여러분이 가지고 있는 것은 본질적으로 물 두 잔이지만 완전히 다른 화학적 성질을 지닌 것들이다.",
+     "enSize": 8.82,
+     "koSize": 6.5,
+     "gps": [
+      "관계대명사 what이 불완전한 명사절을 이끌어 문장의 주어 역할을 하고 있어. 여기서는 What이 The things that으로 쓰인 거라 복수인 are로 수일치 했어. is (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 4,
+       "role": "grammar"
+      },
+      {
+       "start": 14,
+       "end": 29,
+       "role": "grammar"
+      },
+      {
+       "start": 62,
+       "end": 72,
+       "role": "grammar"
+      },
+      {
+       "start": 73,
+       "end": 82,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "If we[S] take[V1 현재] the glass[O] containing[현재분사] orange juice and heat[V2 현재] it[^the glass|-2.5,0], we[S] will still have[V] two different glasses[O] of water with different chemical makeups, but now they[S] will also have[V] different temperatures[O].",
+     "ko": "만약 우리가 오렌지주스가 든 잔을 가져와 그것을 가열한다면, 우리는 여전히 다른 화학적 성질을 지닌 두 개의 다른 물잔을 가지고 있을 것이지만, 이제 그것들은 또한 다른 온도를 가질 것이다.",
+     "gps": [
+      "if가 이끄는 조건 부사절에서는 현재시제가 미래시제를 대신하니까 이 쓰였어. will take, will heat (X)",
+      "containing은 the glass를 수식하는 현재분사로 쓰였어. contained (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 6,
+       "end": 10,
+       "role": "grammar"
+      },
+      {
+       "start": 6,
+       "end": 10,
+       "role": "parallel"
+      },
+      {
+       "start": 21,
+       "end": 31,
+       "role": "grammar"
+      },
+      {
+       "start": 45,
+       "end": 53,
+       "role": "grammar"
+      },
+      {
+       "start": 45,
+       "end": 53,
+       "role": "parallel"
+      },
+      {
+       "start": 81,
+       "end": 90,
+       "role": "vocab"
+      },
+      {
+       "start": 113,
+       "end": 122,
+       "role": "vocab"
+      },
+      {
+       "start": 169,
+       "end": 178,
+       "role": "vocab"
+      },
+      {
+       "start": 159,
+       "end": 163,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "If[^가정법 과거|-17,0] we[S] could magically[magical (X)] remove[V] the glasses[O], we[S] would find the[V (that)|-9.1,0] two water bodies[S] would not mix[V] well.",
+     "ko": "만약 우리가 마법처럼 그 유리잔들을 없앨 수 있다면, 우리는 두 액체가 잘 섞이지 않는다는 것을 알게 될 것이다.",
+     "koSize": 6.5,
+     "gps": [
+      "현재 사실의 반대를 가정하는 가정법 과거 구문이 쓰여 if절에는 could remove가, 주절에는 would find가 쓰였어. would have found (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 6,
+       "end": 21,
+       "role": "grammar"
+      },
+      {
+       "start": 22,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 45,
+       "end": 55,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 55,
+       "role": "descriptive",
+       "badge": true
+      },
+      {
+       "start": 56,
+       "end": 95,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "Perhaps they[^two water bodies|2,0] would mix[V] a little where[부접] they[S] met[V]; however, they[S] would remain[V] separate[C] because of[because (X)|-24.4,0] their different chemical makeups and temperatures.",
+     "ko": "어쩌면 그것들은 그것들이 만났던 곳에서 조금 섞일 것이다. 하지만, 그것들의 다른 화학적 성질과 온도 때문에 그것들은 분리된 상태로 남아 있을 것이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 32,
+       "end": 37,
+       "role": "grammar"
+      },
+      {
+       "start": 75,
+       "end": 83,
+       "role": "vocab"
+      },
+      {
+       "start": 84,
+       "end": 94,
+       "role": "grammar"
+      },
+      {
+       "start": 101,
+       "end": 110,
+       "role": "vocab"
+      },
+      {
+       "start": 48,
+       "end": 55,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "The warmer water[S] would float[V] on the surface of the cold water because of[because (X)|-25.3,0] its lighter weight.",
+     "ko": "더 따뜻한 물은 그것의 더 가벼운 무게 때문에 찬물의 표면에 떠 있을 것이다.",
+     "koSize": 6.5,
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 4,
+       "end": 10,
+       "role": "vocab"
+      },
+      {
+       "start": 23,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 51,
+       "end": 55,
+       "role": "vocab"
+      },
+      {
+       "start": 62,
+       "end": 72,
+       "role": "grammar"
+      },
+      {
+       "start": 77,
+       "end": 84,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 8,
+     "tagged": "In the ocean we[S] have[V] bodies[O 선행사] of water that[주관대] differ[V 복수] in temperature and salt content; for this reason, they[S] do not mix[V].",
+     "ko": "바다에서 우리는 온도와 염분에서 다른 액체들을 가지고 있다. 이러한 이유로, 그것들은 섞이지 않는다.",
+     "koSize": 6.5,
+     "gps": [
+      "that은 bodies of water 선행사로 받는 주격 관계대명사로 불완전한 절을 이끌어. what (X)",
+      "이때 water가 아닌 bodies에 맞춰 관계사절의 동사를 복수인 differ로 수일치 했어. differs (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 42,
+       "end": 48,
+       "role": "vocab"
+      },
+      {
+       "start": 21,
+       "end": 36,
+       "role": "antecedent"
+      },
+      {
+       "start": 37,
+       "end": 41,
+       "role": "antecedent"
+      },
+      {
+       "start": 99,
+       "end": 114,
+       "role": "blank"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글에서 전체 흐름과 관계없는 문장은?",
+    "passage": [
+     "Take two glasses of water. Put a little bit of orange juice into one and a little bit of lemon juice into the other. ⓐWhat you have are essentially two glasses of water but with a completely different chemical makeup. ⓑOranges have higher sugar content and contain more calories and carbs, in comparison to lemons. ⓒIf we take the glass containing orange juice and heat it, we will still have two different glasses of water with different chemical makeups, but now they will also have different temperatures. ⓓIf we could magically remove the glasses, we would find the two water bodies would not mix well. ⓔPerhaps they would mix a little where they met; however, they would remain separate because of their different chemical makeups and temperatures. The warmer water would float on the surface of the cold water because of its lighter weight. In the ocean we have bodies of water that differ in temperature and salt content; for this reason, they do not mix."
+    ],
+    "choices": [
+     "ⓐ",
+     "ⓑ",
+     "ⓒ",
+     "ⓓ",
+     "ⓔ"
+    ],
+    "answerIndex": 0
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "essentially",
+     "ko": "본질적으로",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "completely",
+     "ko": "완전히",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "chemical",
+     "ko": "화학적인",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "makeup",
+     "ko": "성질",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "contain",
+     "ko": "들어 있다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "temperature",
+     "ko": "온도",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "remove",
+     "ko": "없애다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "mix",
+     "ko": "섞이다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "separate",
+     "ko": "분리된",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "surface",
+     "ko": "표면",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "salt content",
+     "ko": "염분",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "묶음 문항",
+  "id": "cmv7simlt0000cb0okvapqfnw",
+  "doc": {
+   "meta": {
+    "title": "고2 26년 6월",
+    "source": "41~42번",
+    "subject": "연료전지 기술이 흔들 석유 산업의 미래",
+    "pageStart": 2
+   },
+   "title": {
+    "en": "",
+    "ko": "연료전지 기술이 흔들 석유 산업의 미래"
+   },
+   "topic": "How advances in fuel-cell technology threaten oil demand and reshape producers' strategies",
+   "summary": "Because oil is expensive, car engines have grown far more efficient, and a breakthrough in fuel-cell technology would send oil prices tumbling; facing that real threat, the oil majors have diversified into energy companies and OPEC states are urgently building other industries.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "The major consumer[S] of oil is[V] transport[C].",
+     "ko": "석유의 주요 소비자는 운송이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 4,
+       "end": 9,
+       "role": "vocab"
+      },
+      {
+       "start": 29,
+       "end": 38,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "But consider[V 명령문] what[명접] has[V] happened[현재완료] over the last 30 years or so to the technology involved[과거분사] in producing the internal combustion engine.",
+     "ko": "그러나 지난 30여 년에 걸쳐 내연기관 생산에 관련된 기술에 어떤 일이 일어났는지 생각해 보자.",
+     "gps": [
+      "involved는 technology를 수식하는 과거분사야. involving (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 4,
+       "end": 30,
+       "role": "grammar"
+      },
+      {
+       "start": 78,
+       "end": 86,
+       "role": "grammar"
+      },
+      {
+       "start": 90,
+       "end": 99,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 3,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "Because[부접] oil[S] is[V] expensive[C], car engines[S] today are[V 복] far[비교급강조|4.9,0] more efficient[C 비교급] in their consumption of fuel (and far[비교급강조] less polluting[C 비교급]) than they were in 1972.",
+     "ko": "석유가 비싸기 때문에, 오늘날 자동차 엔진들은 1972년에 그들이 그랬던 것보다 그들의 연료 소모에 있어서 훨씬 더 효율적이다(그리고 오염도 훨씬 더 적다).",
+     "gps": [
+      "they were 뒤에 efficient in their consumption of fuel and polluting이 생략되어 있어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 15,
+       "end": 24,
+       "role": "vocab"
+      },
+      {
+       "start": 48,
+       "end": 51,
+       "role": "grammar"
+      },
+      {
+       "start": 52,
+       "end": 66,
+       "role": "vocab"
+      },
+      {
+       "start": 101,
+       "end": 104,
+       "role": "grammar"
+      },
+      {
+       "start": 105,
+       "end": 119,
+       "role": "vocab"
+      },
+      {
+       "start": 121,
+       "end": 125,
+       "role": "grammar"
+      },
+      {
+       "start": 131,
+       "end": 135,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "The cars[S 선행사] that[목관대] Asia[S] buys[V] tomorrow will certainly not be[V] anything like those Americans use today.",
+     "ko": "아시아가 내일 구매할 자동차는 분명히 미국인들이 오늘 사용하는 자동차와 전혀 다를 것이다.",
+     "gps": [
+      "that은 The cars가 선행사인 목적격 관계대명사야. what (X)",
+      "those와 Americans 사이 관계대명사 that이 생략되어 있어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 55,
+       "end": 63,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 8,
+       "role": "antecedent"
+      },
+      {
+       "start": 9,
+       "end": 13,
+       "role": "antecedent"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "Americans[S] will not buy[V] today's cars[O] tomorrow either.",
+     "ko": "미국인들도 오늘의 자동차를 내일 구매하지는 않을 것이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 15,
+       "end": 18,
+       "role": "grammar"
+      },
+      {
+       "start": 45,
+       "end": 51,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "In fact, if[부접] the price[S] of oil does rise[V] much[바교급강조] further[비교급] then fuel cell technology[S 선행사] (which[주관대] produces[V단] energy[O] from water!) will receive[V] yet another momentum[O].",
+     "ko": "사실, 석유 가격이 훨씬 더 상승한다면 연료전지 기술(물로부터 에너지를 생산하는!)이 또 다른 모멘텀을 받을 것이다.",
+     "gps": [
+      "which는 fuel cell technology가 선행사인 주격 관계대명사야. what (X)",
+      "does rise의 does는 동사를 강조하는 조동사야. is rising (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 29,
+       "end": 33,
+       "role": "grammar"
+      },
+      {
+       "start": 39,
+       "end": 43,
+       "role": "grammar"
+      },
+      {
+       "start": 44,
+       "end": 51,
+       "role": "vocab"
+      },
+      {
+       "start": 139,
+       "end": 147,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 7,
+       "role": "connector"
+      },
+      {
+       "start": 57,
+       "end": 77,
+       "role": "antecedent"
+      },
+      {
+       "start": 78,
+       "end": 79,
+       "role": "blank"
+      },
+      {
+       "start": 79,
+       "end": 84,
+       "role": "antecedent"
+      },
+      {
+       "start": 85,
+       "end": 147,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "The big car multinationals[S] have[V] already produced[현재완료] the prototype motors ― they[S] are[V] currently racing[진행] to try and get prices down and engine performances up.",
+     "ko": "대형 자동차 다국적 기업들은 시제품 모터들을 이미 생산해 오고 있다 ― 그들은 현재 가격들을 낮추고 엔진 성능들을 높이려고 애쓰는 중이다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 27,
+       "end": 31,
+       "role": "grammar"
+      },
+      {
+       "start": 40,
+       "end": 48,
+       "role": "grammar"
+      },
+      {
+       "start": 53,
+       "end": 62,
+       "role": "vocab"
+      },
+      {
+       "start": 77,
+       "end": 80,
+       "role": "grammar"
+      },
+      {
+       "start": 91,
+       "end": 104,
+       "role": "grammar"
+      },
+      {
+       "start": 109,
+       "end": 112,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 8,
+     "tagged": "Their future profits[S] depend[V] upon it[^fuel cell technology|-18.5,0].",
+     "ko": "그들의 미래 이익은 이것에 달려 있다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 21,
+       "end": 32,
+       "role": "vocab"
+      },
+      {
+       "start": 33,
+       "end": 35,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 9,
+     "tagged": "Imagine[V] now if[명접] there is[V 단] a breakthrough[S] in fuel cell technology.",
+     "ko": "이제 연료전지 기술에 획기적인 발전이 있다고 상상해 보자.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 7,
+       "role": "grammar"
+      },
+      {
+       "start": 12,
+       "end": 14,
+       "role": "grammar"
+      },
+      {
+       "start": 26,
+       "end": 38,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 10,
+     "tagged": "What[S] would happen[V] to oil prices?",
+     "ko": "무슨 일이 석유 가격들에 일어날까?",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 4,
+       "role": "grammar"
+      }
+     ]
+    },
+    {
+     "no": 11,
+     "tagged": "They[S] would fall[V] dramatically ― signalling[분사구문] much[비교급강조] less demand[비교급] than supply ― and oil companies and[S] OPEC oil producers would stand[V] to lose much income.",
+     "ko": "그것들은 급락할 것이며 ― 공급보다 훨씬 더 적은 수요를 나타내며 ― 그리고 석유 회사들과 OPEC 산유국들은 막대한 수입을 잃게 될 것이다.",
+     "gps": [
+      "signalling은 앞 절이 '나타내는' 거라 현재분사야. signalled (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 4,
+       "role": "grammar"
+      },
+      {
+       "start": 11,
+       "end": 15,
+       "role": "vocab"
+      },
+      {
+       "start": 31,
+       "end": 46,
+       "role": "grammar"
+      },
+      {
+       "start": 47,
+       "end": 58,
+       "role": "vocab"
+      },
+      {
+       "start": 59,
+       "end": 63,
+       "role": "grammar"
+      },
+      {
+       "start": 77,
+       "end": 113,
+       "role": "underline"
+      },
+      {
+       "start": 129,
+       "end": 145,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 12,
+     "tagged": "The fact[S] that[동격] this[^앞 문장] threat[S] is[V] real[C] is[V] driving[진행] the producers to look[OC] for alternative sources of income.",
+     "ko": "이 위협이 실재한다는 사실은 생산자들이 대체 수입원들을 찾도록 몰아가고 있다.",
+     "gps": [
+      "동격 that은 The fact와 동격을 이루며 완전한 절을 이끌어. which (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 9,
+       "end": 13,
+       "role": "grammar"
+      },
+      {
+       "start": 29,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 34,
+       "end": 44,
+       "role": "grammar"
+      },
+      {
+       "start": 59,
+       "end": 66,
+       "role": "grammar"
+      },
+      {
+       "start": 71,
+       "end": 82,
+       "role": "vocab"
+      },
+      {
+       "start": 14,
+       "end": 25,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 13,
+     "tagged": "The 'oil majors'[S] have[V] diversified[현재완료] and are[V] now more energy companies[C] than oil companies these days and the OPEC countries[S] are[V] urgently attempting[진행] to develop[O] other industries.",
+     "ko": "'석유 메이저들'은 사업을 다각화하여, 오늘날에는 이제 석유 회사라기보다 더욱 에너지 기업들이 되었으며, OPEC 국가들은 다른 산업들을 개발하고자 긴급하게 시도하는 중이다.",
+     "gps": [
+      "attempt는 to Rv를 목적어로 취해 devloping (X)"
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 17,
+       "end": 21,
+       "role": "grammar"
+      },
+      {
+       "start": 22,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 46,
+       "end": 50,
+       "role": "vocab"
+      },
+      {
+       "start": 121,
+       "end": 155,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 173,
+       "role": "descriptive",
+       "badge": true
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "[41~42] 다음 글을 읽고 물음에 답하시오.",
+    "passage": [],
+    "choices": [],
+    "answerIndex": 0,
+    "subs": [
+     {
+      "q": "41. 윗글의 제목으로 가장 적절한 것은?",
+      "choices": [
+       "Fuel Cells: A Quiet Threat to Oil's Future",
+       "Why Oil Prices Are Certain to Keep Rising",
+       "How Asia Became the Largest Car Market",
+       "The Hidden Cost of the Combustion Engine",
+       "OPEC's Grip on the World's Oil Supply"
+      ],
+      "answerIndex": 1
+     },
+     {
+      "q": "42. 윗글의 밑줄 친 부분 중, 문맥상 낱말의 쓰임이 적절하지 <u>않은</u> 것은?",
+      "choices": [
+       "car engines today are far more efficient in their consumption of fuel",
+       "fuel cell technology will receive yet another momentum",
+       "oil prices would rise dramatically after a breakthrough",
+       "the producers look for alternative sources of income",
+       "the 'oil majors' have diversified into energy companies"
+      ],
+      "answerIndex": 3
+     }
+    ]
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "transport",
+     "ko": "운송",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "internal combustion engine",
+     "ko": "내연기관",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "involved in",
+     "ko": "~에 관련된",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "efficient",
+     "ko": "효율적인",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "consumption",
+     "ko": "소모, 소비",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "polluting",
+     "ko": "오염시키는",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "fuel cell",
+     "ko": "연료전지",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "momentum",
+     "ko": "추진력, 모멘텀",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "multinational",
+     "ko": "다국적 기업",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "prototype",
+     "ko": "시제품",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "race to",
+     "ko": "~하려고 애쓰다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "performance",
+     "ko": "성능",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "depend upon",
+     "ko": "~에 달려 있다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "breakthrough",
+     "ko": "획기적인 발전",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "dramatically",
+     "ko": "급격히",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "signal",
+     "ko": "나타내다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "demand",
+     "ko": "수요",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "supply",
+     "ko": "공급",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "stand to",
+     "ko": "~하게 될 것 같다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "income",
+     "ko": "수입",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "threat",
+     "ko": "위협",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "alternative",
+     "ko": "대체의",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "diversify",
+     "ko": "다각화하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "urgently",
+     "ko": "긴급하게",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "품사 칩",
+  "id": "cmv86x0mp0000fk0o7asah9mr",
+  "doc": {
+   "meta": {
+    "title": "3과",
+    "source": "본문1",
+    "subject": "숫자 너머를 본 '컴퓨터' 캐서린 존슨",
+    "pageStart": 2
+   },
+   "title": {
+    "en": "Katherine Johnson, a \"Computer\" Who Looked Beyond Numbers",
+    "ko": "숫자 너머를 본 '컴퓨터' 캐서린 존슨"
+   },
+   "topic": "Katherine Johnson's childhood mathematical talent and enthusiasm for learning",
+   "summary": "Katherine Johnson displayed exceptional mathematical ability from childhood, counting objects in daily life and eagerly anticipating the opportunity to study algebra and geometry in high school.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "Katherine Johnson[S|-19.2,0] was[V1 과거|1.4,0][^had been (X)|-1.5,0] born[수동태] on August 26, 1918, in West Virginia, in the U.S., and was[V2] the youngest[C] of four children in a black family.",
+     "ko": "캐서린 존슨은 1918년 8월 26일 미국 웨스트버지니아주에서 태어났으며 흑인 가정의 사 남매 중 막내였다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 18,
+       "end": 26,
+       "role": "grammar"
+      },
+      {
+       "start": 18,
+       "end": 26,
+       "role": "parallel"
+      },
+      {
+       "start": 82,
+       "end": 85,
+       "role": "grammar"
+      },
+      {
+       "start": 82,
+       "end": 85,
+       "role": "parallel"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "Katherine[S] was[V] a math[C|11.5,0] prodigy from early childhood.",
+     "ko": "캐서린은 어릴 때부터 수학 영재였다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 21,
+       "end": 28,
+       "role": "vocab"
+      },
+      {
+       "start": 40,
+       "end": 49,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "Reflecting[분사구문] on her youth, Katherine[S] once said[V], \"I[S|1.9,0] counted[V] everything-the[O|-7.8,0] steps to the road, the steps up to church, the number of dishes, spoons, and[선행사] forks ⌃(that) I[S] washed[V|-3.1,0].\"",
+     "ko": "캐서린은 어린 시절을 회상하면서 \"저는 도로로 가는 계단, 교회로 올라가는 계단, 내가 씻은 접시, 숟가락, 포크의 수 등 모든 것을 세었습니다.\"라고 말했다.",
+     "enSize": 8.82,
+     "gps": [
+      "분사구문으로 쓰인 Reflecting은 의미상 주어인 Katherine이 '회상하는' 거니까 현재분사로 쓰였어. Reflected (X)",
+      "dishes, spoons, and forks를 선행사로 받는 목적격 관계대명사 that이 생략되어 있어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 0,
+       "end": 10,
+       "role": "grammar"
+      },
+      {
+       "start": 49,
+       "end": 56,
+       "role": "vocab"
+      },
+      {
+       "start": 129,
+       "end": 154,
+       "role": "antecedent"
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "She[S] excitedly[excited (X)] added[V], \"I[S|1.9,0] couldn't wait[V] to[O] get to[전] high school to[목적] take algebra and geometry.\"",
+     "ko": "그녀는 신이 나서 \"저는 대수학과 기하학을 배우기 위해 하루빨리 고등학교에 가고 싶었어요.\"라고 덧붙였다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 4,
+       "end": 13,
+       "role": "grammar"
+      },
+      {
+       "start": 24,
+       "end": 37,
+       "role": "vocab"
+      },
+      {
+       "start": 38,
+       "end": 40,
+       "role": "grammar"
+      },
+      {
+       "start": 41,
+       "end": 44,
+       "role": "vocab"
+      },
+      {
+       "start": 60,
+       "end": 62,
+       "role": "grammar"
+      },
+      {
+       "start": 63,
+       "end": 67,
+       "role": "vocab"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "다음 글에서 Katherine Johnson에 대한 내용과 일치하지 <u>않는</u> 것은?",
+    "passage": [
+     "Katherine Johnson was born on August 26, 1918, in West Virginia, in the U.S., and was the youngest of four children in a black family. Katherine was a math prodigy from early childhood. Reflecting on her youth, Katherine once said, “I counted everything—the steps to the road, the steps up to church, the number of dishes, spoons, and forks I washed.” She excitedly added, “I couldn’t wait to get to high school to take algebra and geometry.”"
+    ],
+    "choices": [
+     "She had a talent for math from an early age.",
+     "Her family was black, and she was the youngest of her siblings.",
+     "She looked forward to learning algebra and geometry in high school.",
+     "Her passion for math began in high school when she started studying algebra.",
+     "Her enthusiasm for math was evident even in her childhood, as she counted many things around her."
+    ],
+    "answerIndex": 4
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "prodigy",
+     "ko": "영재",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "reflect on",
+     "ko": "~을 회상하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "count",
+     "ko": "세다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "church",
+     "ko": "교회",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "can't wait to RV",
+     "ko": "하루빨리 ~ 하고 싶다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "algebra",
+     "ko": "대수학",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "geometry",
+     "ko": "기하학",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ },
+ {
+  "why": "품사 칩",
+  "id": "cmv86x9an0000oi0ot9rdd3z5",
+  "doc": {
+   "meta": {
+    "title": "3과",
+    "source": "본문2",
+    "subject": "",
+    "pageStart": 2
+   },
+   "title": null,
+   "topic": "Katherine Johnson's educational achievement despite racially restricted opportunities",
+   "summary": "Although family support and special instruction helped Katherine Johnson excel in mathematics, racial barriers constrained her education and career opportunities, leaving teaching as her only initial profession.",
+   "sentences": [
+    {
+     "no": 1,
+     "tagged": "But Katherine's hometown[S] had[V] a segregated education system[O], and black students[S] could not enter[V] high[O|10,0] school.",
+     "ko": "그러나 캐서린의 고향은 인종 차별적인 교육 제도를 갖고 있었고 흑인 학생들은 고등학교에 입학할 수 없었다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 31,
+       "end": 41,
+       "role": "vocab"
+      },
+      {
+       "start": 64,
+       "end": 69,
+       "role": "vocab"
+      },
+      {
+       "start": 89,
+       "end": 94,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 3,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 2,
+     "tagged": "So her[^Katherine's|-2.6,0] father[S] moved[V] the family[O] 200 kilometers away so that[부접] she[S] could enter[V] high[O|10,0] school.",
+     "ko": "그래서 그녀의 아버지는 그녀가 고등학교에 입학할 수 있도록 가족과 함께 2백 킬로미터 떨어진 곳으로 이사했다.",
+     "gps": [
+      "so that은 '~하도록'이라는 뜻의 접속사야."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 14,
+       "end": 19,
+       "role": "vocab"
+      },
+      {
+       "start": 51,
+       "end": 58,
+       "role": "grammar"
+      },
+      {
+       "start": 69,
+       "end": 74,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 2,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 3,
+     "tagged": "After[전] graduating[동명사] from high school in 1932, she[S] was[V] admitted[수동태] to[전] a black college at the age of fifteen.",
+     "ko": "그녀는 1932년 고등학교를 졸업한 뒤 15세에 흑인 대학에 입학했다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 6,
+       "end": 16,
+       "role": "grammar"
+      },
+      {
+       "start": 47,
+       "end": 50,
+       "role": "grammar"
+      },
+      {
+       "start": 51,
+       "end": 59,
+       "role": "vocab"
+      },
+      {
+       "start": 0,
+       "end": 100,
+       "role": "descriptive",
+       "badge": true
+      }
+     ]
+    },
+    {
+     "no": 4,
+     "tagged": "By her junior year, she[S] had[V] taken[과거완료] all the math[O|10.9,0] courses[선행사] ⌃(that) the college[S] could offer[V].",
+     "ko": "3학년 때 그녀는 대학에서 제공할 수 있는 모든 수학 과정을 수강했다.",
+     "gps": [
+      "math courses를 선행사로 받는 목적격 관계대명사 that이 생략되어 있어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 24,
+       "end": 27,
+       "role": "grammar"
+      },
+      {
+       "start": 28,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 42,
+       "end": 54,
+       "role": "antecedent"
+      }
+     ]
+    },
+    {
+     "no": 5,
+     "tagged": "Her[^Katherine's|-9,0] mentor[S] gladly[glad (X)] offered[V] special[O|15.3,0] classes just for her[Katherine], but he[S] was[V] not happy[C][^happily (X)|0.9,0] when[부접] he[S] had to tell[V] his[^her mentor's|-4.8,0] outstanding student[O] about her[Katherine's|-2.6,0] career opportunities.",
+     "ko": "그녀의 멘토는 기꺼이 그녀만을 위한 특별 수업을 제공했지만 그는 그의 뛰어난 학생에게 그녀의 직업 기회에 대해 이야기해야만 했을 때 기쁘지 않았다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 11,
+       "end": 17,
+       "role": "grammar"
+      },
+      {
+       "start": 18,
+       "end": 33,
+       "role": "vocab"
+      },
+      {
+       "start": 51,
+       "end": 54,
+       "role": "grammar"
+      },
+      {
+       "start": 71,
+       "end": 76,
+       "role": "vocab"
+      },
+      {
+       "start": 101,
+       "end": 112,
+       "role": "vocab"
+      },
+      {
+       "start": 131,
+       "end": 137,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 6,
+     "tagged": "\"You[S|1.8,0] would make[V] a good research[O|22.3,0] mathematician,\" he[S|0.4,0][^her mentor|-4.6,0] told[V] his[her mentor's|9.1,0] seventeen-year-old[years (X)|13.4,0] student[IO], \"and I'm[S|-0.4,0] going to prepare[V] you[O] for this[research mathematician|-8.6,0] career.\"",
+     "ko": "그는 17세 학생에게 \"너는 훌륭한 연구 수학자가 될 거야. 그리고 나는 네가 이 직업을 준비할 수 있게 해 줄 거야.\"라고 말했다.",
+     "enSize": 8.82,
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 18,
+       "end": 22,
+       "role": "vocab"
+      },
+      {
+       "start": 70,
+       "end": 74,
+       "role": "grammar"
+      },
+      {
+       "start": 103,
+       "end": 105,
+       "role": "grammar"
+      },
+      {
+       "start": 106,
+       "end": 113,
+       "role": "vocab"
+      },
+      {
+       "start": 122,
+       "end": 133,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 7,
+     "tagged": "Katherine[S] asked[V], \"Where will I[S] find[V] a job[O|-4.1,0]?\"",
+     "ko": "캐서린은 \"저는 어디에서 일자리를 찾을 수 있을까요?\"라고 물었다.",
+     "gps": [],
+     "refs": [],
+     "marks": []
+    },
+    {
+     "no": 8,
+     "tagged": "\"That[S|0.5,0][^앞 문장|-0.5,0],\" he[S|0.5,0][^her mentor|-0.6,0] replied[V], \"will be[V] your problem[C|-3.3,0].\"",
+     "ko": "\"그게 너의 문제가 되겠지.\"라고 그는 대답했다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 34,
+       "end": 41,
+       "role": "vocab"
+      },
+      {
+       "start": 1,
+       "end": 5,
+       "role": "connector"
+      }
+     ]
+    },
+    {
+     "no": 9,
+     "tagged": "The path[단 S] ahead was[V 단] unclear[^unclearly (X)|-0.4,0] and[C] full[^fully (X)] of obstacles, but Katherine[S] knew[V|-0.6,0] ⌃(that) she[S|-0.5,0] had[V] the strength[O] to[수식] make her[Katherine's|-2.6,0] own way.",
+     "ko": "앞으로의 길은 불분명하고 장애물로 가득 차 있었지만 캐서린은 자신의 길을 헤쳐 나갈 힘이 있다는 것을 알고 있었다.",
+     "gps": [
+      "knew 뒤에 명사절 접속사 that이 생략되어 있어."
+     ],
+     "refs": [],
+     "marks": [
+      {
+       "start": 15,
+       "end": 19,
+       "role": "grammar"
+      },
+      {
+       "start": 19,
+       "end": 26,
+       "role": "grammar"
+      },
+      {
+       "start": 19,
+       "end": 48,
+       "role": "underline"
+      },
+      {
+       "start": 31,
+       "end": 35,
+       "role": "grammar"
+      },
+      {
+       "start": 39,
+       "end": 48,
+       "role": "vocab"
+      },
+      {
+       "start": 89,
+       "end": 97,
+       "role": "vocab"
+      },
+      {
+       "start": 98,
+       "end": 100,
+       "role": "grammar"
+      },
+      {
+       "start": 101,
+       "end": 105,
+       "role": "vocab"
+      },
+      {
+       "start": 81,
+       "end": 117,
+       "role": "blank"
+      }
+     ]
+    },
+    {
+     "no": 10,
+     "tagged": "In 1935, at the age of eighteen, Katherine[S] graduated[V1 과거|-2.3,0][^had graduated (X)|1,0] from college with highest honors and began[V2 과거][^had begun (X)|-0.9,0] her career[O] as[전] a teacher at a black public school.",
+     "ko": "1935년, 18세에 캐서린은 최고의 성적으로 대학을 졸업하고 흑인 공립 학교에서 교사로 경력을 시작했다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 43,
+       "end": 52,
+       "role": "grammar"
+      },
+      {
+       "start": 43,
+       "end": 52,
+       "role": "parallel"
+      },
+      {
+       "start": 71,
+       "end": 78,
+       "role": "vocab"
+      },
+      {
+       "start": 90,
+       "end": 95,
+       "role": "vocab"
+      },
+      {
+       "start": 90,
+       "end": 95,
+       "role": "parallel"
+      },
+      {
+       "start": 112,
+       "end": 119,
+       "role": "vocab"
+      }
+     ]
+    },
+    {
+     "no": 11,
+     "tagged": "At that time, teaching[S] was[V] the only option[C] available[수식] to[전] her[^Katherine].",
+     "ko": "가르치는 일은 그 당시 그녀가 할 수 있는 유일한 선택이었다.",
+     "gps": [],
+     "refs": [],
+     "marks": [
+      {
+       "start": 14,
+       "end": 22,
+       "role": "vocab"
+      },
+      {
+       "start": 31,
+       "end": 35,
+       "role": "vocab"
+      },
+      {
+       "start": 43,
+       "end": 52,
+       "role": "vocab"
+      },
+      {
+       "start": 56,
+       "end": 59,
+       "role": "grammar"
+      },
+      {
+       "start": 0,
+       "end": 12,
+       "role": "connector"
+      }
+     ]
+    }
+   ],
+   "keyQuestion": {
+    "q": "글의 내용과 일치하는 것은? [이대부고 기출]But Katherine's hometown had a segregated education system, and black students could not enter high school. So her father moved the family 200 kilometers away so that she could enter high school. After graduating from high school in 1932, she was admitted to a black college at the age of fifteen. By her junior year, she had taken all the math courses the college could offer. Her mentor gladly offered special classes just for her, but he was not happy when he had to tell his outstanding student about her career opportunities. \"You would make a good research mathematician,\" he told his seventeen-year-old student, \"and I'm going to prepare you for this career.\" Katherine asked, \"Where will I find a job?\" \"That,\" he replied, \"will be your problem.\" The path ahead was unclear and full of obstacles, but Katherine knew she had the strength to make her own way. In 1935, at the age of eighteen, Katherine graduated from college with highest honors and began her career as a teacher at a black public school. At that time, teaching was the only option available to her.",
+    "passage": [],
+    "choices": [
+     "Katherine's father moved their family to show his resistance against the segregated education system.",
+     "Katherine's mentor was not enthusiastic about giving advice to Kathrine.",
+     "Katherine's mentor was not sure about Kathrine's future career.",
+     "Kathrine's grades of her college was not so good.",
+     "In spite of many career options lying ahead of her, Katherine chose teacher as her first career."
+    ],
+    "answerIndex": 3
+   },
+   "examPoints": [],
+   "examPointItems": [
+    "주제,제목,요지",
+    "서술형",
+    "어휘",
+    "삽입",
+    "요약문",
+    "빈칸/함축의미추론",
+    "어법",
+    "순서",
+    "지칭추론",
+    "내용일치"
+   ],
+   "voca": [
+    {
+     "word": "hometown",
+     "ko": "고향",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "segregated",
+     "ko": "인종 차별적인",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "형"
+    },
+    {
+     "word": "move",
+     "ko": "이사시키다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "graduate",
+     "ko": "졸업하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "admit",
+     "ko": "입학을 허가하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "college",
+     "ko": "대학",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "junior year",
+     "ko": "3학년",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "take",
+     "ko": "수강하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "course",
+     "ko": "과정",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "offer",
+     "ko": "제공하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "gladly",
+     "ko": "기꺼이",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "부"
+    },
+    {
+     "word": "outstanding",
+     "ko": "뛰어난",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "형"
+    },
+    {
+     "word": "career",
+     "ko": "직업, 경력",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "opportunity",
+     "ko": "기회",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "research",
+     "ko": "연구",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "mathematician",
+     "ko": "수학자",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "prepare",
+     "ko": "준비시키다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "reply",
+     "ko": "대답하다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "동"
+    },
+    {
+     "word": "ahead",
+     "ko": "앞으로(의)",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "부"
+    },
+    {
+     "word": "unclear",
+     "ko": "불분명한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "형"
+    },
+    {
+     "word": "obstacle",
+     "ko": "장애물",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "strength",
+     "ko": "힘, 강점, 장점",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "make one's own way",
+     "ko": "자신의 길을 헤쳐 나가다",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": ""
+    },
+    {
+     "word": "honor",
+     "ko": "(우수한) 성적",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "public",
+     "ko": "공립의",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "형"
+    },
+    {
+     "word": "option",
+     "ko": "선택",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "명"
+    },
+    {
+     "word": "available",
+     "ko": "이용 가능한",
+     "tone": "",
+     "antonym": "",
+     "synonym": "",
+     "sent": "",
+     "pos": "형"
+    }
+   ],
+   "images": [],
+   "layoutType": "base"
+  }
+ }
+]
