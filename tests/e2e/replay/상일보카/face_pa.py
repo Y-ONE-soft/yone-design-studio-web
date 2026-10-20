@@ -11,7 +11,10 @@ from common import *                                                    # noqa
 from entries import derived
 from face_pyo import fb, MMPT, X0, W0, BOT, Eslot
 
-ENTRY = "번호+뿌리+낱말+구+품사+뜻 첫+다음 뜻 첫+뜻+칸 이름+예문 첫+예문+해석+유반의어 첫+풀이 첫"
+# 번호 하나(낱말 묶음)는 통째로 다음 쪽으로 — 원본 94쪽: 0008 묶음이 쪽 아래 30mm 에 다 안 들어가 95쪽 맨 위로.
+# 묶음 안 단락은 모두 「다음 행과 함께 유지」 · 「행 분리 금지」, 묶음 끝 단락만 「끝 …」 자리(같은 모양 · 다음 묶음과 묶지 않음 — 정답 「끝 줄」 · VOCA vs. VOCA 「끝 해석」과 같은 짜임)
+END = ("뜻 첫", "다음 뜻 첫", "뜻", "해석", "유반의어 첫")                  # 원본 묶음 끝 단락(94~149쪽 240묶음: 다음 뜻 첫 77 · 해석 71 · 뜻 첫 52 · 유반의어 첫 35 · 뜻 5)
+ENTRY = "번호+뿌리+낱말+구+품사+뜻 첫+다음 뜻 첫+뜻+칸 이름+예문 첫+예문+해석+유반의어 첫+풀이 첫+" + "+".join("끝 " + n for n in END)
 IND = 34.0
 TEAL, NUMC = "#2c5d72", "#4694b6"
 PF = "파생·"                                                            # 스타일 이름 앞붙이 — 한 책에 표제어 면 스타일과 같이 있다
@@ -28,11 +31,11 @@ P = {"번호": (NOTO, 500, 5.0, 3.0, "#999999", False),                    # 번
 GAP = {"뜻 첫": ("번호", 4.57), "다음 뜻 첫": [("뜻", 7.87), ("유반의어 첫", 8.13), ("유반의어 첫", 8.15)], "뜻": ("뜻", 3.4),
        "예문 첫": ("뜻", 4.02), "해석": ("예문", 3.51), "예문": ("해석", 3.6), "유반의어 첫": [("뜻", 4.03), ("해석", 3.84)],
        "풀이 첫": ("해석", 4.2), "번호": [("뜻", 6.15), ("해석", 5.95), ("뜻", 6.18)]}
-# 위 어림(가운데 값)으로 만든 판을 원본 94 · 96쪽과 맞대 보니 앞 스타일마다 0.4mm 남짓 달랐다(편집기는 앞 단락 행간의 아래 몫이 들어가고 인디자인은
-# 다음 줄 행간만) — 다음 뜻 첫: 뜻 뒤 +0.44 · 유반의어 뒤 0 · 해석 뒤 +0.43 / 번호: 뜻 뒤 0 · 유반의어 뒤 −0.44 · 해석 뒤 +0.41 / 유반의어 첫: 뜻 뒤 0 · 해석 뒤 +0.40.
-# 유반의어 단락 뒤 공백 0.44 로 유반의어 뒤를 뜻 뒤와 같게 하고, 단락 앞 공백을 그 가운데로 내린다(남는 차이 ±0.21 — 0.3mm 안)
-SA = {"유반의어 첫": 0.44}
-ADJ = {"다음 뜻 첫": 0.44, "번호": 0.20, "유반의어 첫": 0.20}
+# 위 어림은 앞 스타일을 하나로 본다 — 편집기(줄 상자)는 앞 단락 행간의 아래 몫이 들어가고 인디자인은 다음 줄 행간만이라 앞 스타일마다 0.2~0.4mm
+# 달랐다. 두 판(94 · 96쪽)을 원본과 맞대 잰 차이로 정한다: 앞이 해석이면 뜻 뒤보다 +0.41, 유반의어면 −0.44 →
+# 단락 뒤 공백으로 앞 스타일을 같게(해석 0 · 뜻 0.41 · 유반의어 · 풀이 0.85) 하고 단락 앞 공백은 맞대 본 값(SB)으로. 남는 차이 0.03 안
+SA = {"뜻 첫": 0.41, "다음 뜻 첫": 0.41, "뜻": 0.41, "유반의어 첫": 0.85, "풀이 첫": 0.85}
+SB = {"번호": 2.83, "다음 뜻 첫": 4.09, "유반의어 첫": 0.77, "예문 첫": 0.35}
 CS = {"파생 번호": {"font": NOTO, "weight": 700, "size": 6.0, "color": TEAL},
       "파생 낱말": {"font": NOTO, "weight": 700, "size": 8.4, "color": "#000000", "bshift": round(0.54 * MMPT, 2)},
       "파생 구": {"font": NOTO, "weight": 700, "size": 6.6, "color": "#000000", "bshift": round(1.1 * MMPT, 2)},
@@ -51,10 +54,12 @@ def styles():
     for n, (f, w, s, L, c, hang) in P.items():
         need = sorted(d - (P[prev][3] - fb(*P[prev][:3], P[prev][3] * MMPT)) - fb(f, w, s, L * MMPT)
                       for prev, d in (GAP[n] if isinstance(GAP[n], list) else [GAP[n]]))
-        sb = round(need[len(need) // 2] - ADJ.get(n, 0), 2)
+        sb = SB.get(n, round(need[len(need) // 2], 2))
         v = {"font": f, "weight": w, "size": s, "leading": round(L * MMPT, 2), "color": c, "space_before": max(sb, 0)}
         if SA.get(n):
             v["space_after"] = SA[n]
+        if n == "뜻":                                                    # 뜻 → 뜻 — 뒤 공백 없이(같은 스타일 사이 간격)
+            v["space_same"] = max(sb, 0)
         if n != "번호":
             v["indent"] = IND
             if n != "풀이 첫":
@@ -65,7 +70,17 @@ def styles():
         if n == "번호":                                                  # 뿌리 낱말 = 오른쪽 탭(단 끝 0.3mm 안 — 단 끝 딱 맞추면 줄이 꺾여 번호 줄이 두 줄이 됐다) · 번호 줄 선 = 아래 경계선(기준선 위 0.23mm)
             v.update(tabs=[{"at": round(W0 - 0.3, 2), "align": "right"}], keep_next=True, rule_below={"w": round(0.1 * MMPT, 3), "color": TEAL, "offset": -0.23})
         st += need_pstyle(PF + n, v)
+        if n in END:
+            st += need_pstyle(PF + "끝 " + n, {k: x for k, x in v.items() if k != "keep_next"})
     return st
+
+
+def ended(recs):
+    """묶음 끝 단락 → 「끝 …」 자리(다음 묶음과 묶지 않는다)"""
+    for r in recs:
+        if r[-1][0] in END:
+            r[-1][0] = "끝 " + r[-1][0]
+    return recs
 
 
 def story_frame(pno, head):
@@ -80,7 +95,7 @@ def story_frame(pno, head):
         st += slot(ENTRY, label="자리 — 낱말 항목(원고 차례대로 한 줄기)")
         st.append(slot_style("뿌리", PF + "번호", 450))
         for nm in ENTRY.split("+"):
-            if nm in P and nm != "번호":
+            if (nm in P or nm.startswith("끝 ")) and nm != "번호":
                 st.append(slot_style(nm, PF + nm, 450))
         st += [S("번호 · 낱말 · 구 · 칸 이름 · 품사 — 뒤 단락 첫머리에 붙는다", 900)]
         st += slot_inline("번호", "파생 번호", "\t") + slot_inline("낱말", "파생 낱말", "\t") + slot_inline("구", "파생 구", "\t")
@@ -106,7 +121,7 @@ def pa_first(lp=94):
     st += frame_first_right(lp + 1)
     st += story_frame(lp + 1, False)
     st += done("파생어 · 첫 펼침면 오른쪽", f"p{lp + 1}.png")
-    CONTENT.setdefault(ENTRY, []).extend(derived(REF_PATH, lp) + derived(REF_PATH, lp + 1))
+    CONTENT.setdefault(ENTRY, []).extend(ended(derived(REF_PATH, lp) + derived(REF_PATH, lp + 1)))
     return st
 
 
@@ -120,7 +135,7 @@ def pa_body(lp=96):
     st += frame_body_right(lp + 1)
     st += story_frame(lp + 1, False)
     st += done("파생어 · 본문 펼침면 오른쪽", f"p{lp + 1}.png")
-    CONTENT.setdefault(ENTRY, []).extend(derived(REF_PATH, lp) + derived(REF_PATH, lp + 1))
+    CONTENT.setdefault(ENTRY, []).extend(ended(derived(REF_PATH, lp) + derived(REF_PATH, lp + 1)))
     return st
 
 

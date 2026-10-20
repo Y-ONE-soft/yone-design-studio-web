@@ -255,11 +255,22 @@ def sp_line(sp, pred):
     return line_of(row, row[0]["base"])
 
 
+def bar_seen(pno, bar):
+    """꼬리 「|」 — 원본에 보이는 색(가장 진한 화소). PDF 글 색 값은 CMYK 를 그냥 바꿔 베이지 쪽(워크북)에서 그림보다 진했다(#aca294 · 보이는 #b4a893 — 잉크 1.33)"""
+    p, t = REF[pno - 1], REF[pno - 1].trimbox
+    k = 72 / 25.4
+    y0, y1 = bar["base"] - bar["size"] * MM * 0.7, bar["base"] - bar["size"] * MM * 0.1
+    pix = p.get_pixmap(clip=pymupdf.Rect(t.x0 + bar["x"] * k - 1, t.y0 + y0 * k, t.x0 + bar["x1"] * k + 1, t.y0 + y1 * k), dpi=1200)
+    px = [pix.pixel(i, j)[:3] for i in range(pix.width) for j in range(0, pix.height, 4)]
+    return dict(bar, color="#%02x%02x%02x" % min(px, key=sum))
+
+
 def foot_left(pno, sp):
     """왼쪽 꼬리 — 쪽 번호(책이 채움) · 「|」 · 책 이름(원고 자리 「책 이름」)"""
     st = [S("왼쪽 꼬리 — 쪽 번호 · | · 책 이름", 1000)]
     bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|" and s["x"] < 60)
     num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] < bar["x"] and s["size"] == 6.0)
+    bar = bar_seen(pno, bar)
     book = sp_line(sp, lambda s: s["base"] > 200 and bar["x1"] < s["x"] < 60 and s["size"] == 6.0)
     st += T(num, ELICE, 700, label="쪽 번호 — 시스템 자리 「쪽 번호」", w=6, bind="sys.page_no")
     st += T(bar, ELICE, 300, label="| — Elice DX Neolli Light(막대 폭 0.082em — 500 은 잉크 1.54 · Pretendard 400 은 0.49)")
@@ -274,6 +285,7 @@ def foot_right(pno, sp):
     bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|" and s["x"] > 90)
     dd = sp_line(sp, lambda s: s["base"] > 200 and 90 < s["x"] < bar["x"] and s["size"] == 6.0)
     num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] > bar["x1"] and s["size"] == 6.0)
+    bar = bar_seen(pno, bar)
     st += T(dd, ELICE, 500, label="꼬리 DAY — 원고 자리 「꼬리 DAY」", slot_name="꼬리 DAY", temp="DAY 00", w=round(dd["x1"] - dd["x"] + 3, 1))
     st += T(bar, ELICE, 300, label="| — Elice DX Neolli Light(막대 폭 0.082em — 500 은 잉크 1.54 · Pretendard 400 은 0.49)")
     st += T(num, ELICE, 700, label="쪽 번호 — 시스템 자리 「쪽 번호」 (오른쪽 맞춤)", w=6, align="right", bind="sys.page_no")
