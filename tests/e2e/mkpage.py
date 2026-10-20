@@ -316,9 +316,16 @@ def pstyle_fields(name, v):
                     st.append({"pick": {"at": "select" + q(f"list.{kk}"), "value": {"\t": "\t", "": "none"}.get(vv, vv)}, "wait": 450})
                 else:
                     st.append(F("input" + q(f"list.{kk}"), vv, 450))
+        elif k == "grep":                                               # 단락 스타일 GREP 스타일 — [(대상 텍스트, 문자 스타일), …] 둘까지
+            for j, (rx, cs) in enumerate(val):
+                st += [F("input" + q(f"grep.{j}.re"), rx, 450), {"pick": {"at": "select" + q(f"grep.{j}.cs"), "value": cs}, "wait": 450}]
         elif k in ("rule_above", "rule_below"):
             for kk, vv in val.items():
-                st.append({"pick": {"at": "select" + q(f"{k}.{kk}"), "value": vv}, "wait": 450} if kk == "width" else F("input" + q(f"{k}.{kk}"), vv, 450))
+                if kk == "keep":                                        # 프레임 안에 유지 — 체크 상자
+                    if vv:
+                        st.append({"click": "input" + q(f"{k}.{kk}"), "wait": 450})
+                    continue
+                st.append({"pick": {"at": "select" + q(f"{k}.{kk}"), "value": vv}, "wait": 450} if kk in ("width", "type") else F("input" + q(f"{k}.{kk}"), vv, 450))
         elif val is not None and val != "":
             st.append(F("input" + q(k), val, 450))
     return st
@@ -468,6 +475,11 @@ def ref_image(doc, xref, path):
         return path
     if pix.n - pix.alpha >= 4:
         pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
+    if mask is not None and mask.size == (pix.width, pix.height):           # 출력 색 프로필 없는 PDF 도 마스크는 살린다(광문보카 2026 배지 모서리가 검게 나왔다)
+        im = Image.frombytes("RGB", (pix.width, pix.height), (pix if not pix.alpha else pymupdf.Pixmap(pix, 0)).samples)
+        im.putalpha(mask)
+        im.save(path)
+        return path
     pix.save(path)
     return path
 

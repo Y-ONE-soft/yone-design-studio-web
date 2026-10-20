@@ -1186,6 +1186,9 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
     단락 경계선 · 글머리 기호 및 번호 매기기 · 탭 · 분리 금지 옵션 · 균등 배치 · 고정 개체(데이터 필드 앞 · 뒤)."""
     n = len(slots)
     st = dict(para_attrs(a, slot, ctx), **((ovs or {}).get(k) or {}))
+    if st.get("grep"):                                                 # 단락 스타일의 GREP 스타일(인디자인 단락 스타일 옵션) — 이 스타일 단락에만(뜻의 ① 은 분홍, 파생어 뜻의 ① 은 그대로)
+        g = st["grep"]
+        x = grep_html(x, [g[j] for j in sorted(g, key=lambda j: int(j) if str(j).isdigit() else 0)] if isinstance(g, dict) else g, ctx)
     css = "margin:0;" + _font_css(st, ctx)
     if st.get("align"):
         css += align_css(st["align"])
@@ -1260,8 +1263,14 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
         left = (ind - pl if txt else -pl) + float(r.get("il") or 0)
         right = (ind_r - pr if txt else -pr) + float(r.get("ir") or 0)
         v = f"top:{fb - off - w_:.3f}px;" if up else f"bottom:{lb - off - w_:.3f}px;"
-        deco += f'<span data-shade="1" style="position:absolute;z-index:-1;left:{left:.3f}px;right:{right:.3f}px;{v}height:{w_:.3f}px;background:{col(r.get("color"), "#000000")}"></span>'
+        c_ = col(r.get("color"), "#000000")
+        bg = (f"height:0;border-top:{w_:.3f}px dotted {c_}" if r.get("type") == "dotted"   # 점선(인디자인 경계선 유형) — 둥근 점, 점 사이 = 점 지름(크롬 dotted 테두리 · PDF 에도 점으로)
+              else f"background:{c_}")
+        mark = ' data-rule-above="1"' if up else ""
+        deco += f'<span data-shade="1"{mark} style="position:absolute;z-index:-1;left:{left:.3f}px;right:{right:.3f}px;{v}height:{w_:.3f}px;{bg}"></span>'
     attrs = f' data-slot="{esc(slot)}"' if slot else ""
+    if isinstance(st.get("rule_above"), dict) and st["rule_above"].get("w") and st["rule_above"].get("keep"):
+        attrs += ' data-rule-keep="1"'                                # 위 경계선 프레임 안에 유지 — 상자 맨 위 단락이면 선이 상자 안에 들게 글을 내린다(units_compose.js keepRule)
     if st.get("keep_next"):
         attrs += ' data-keep-next="1"'                                # 다음 행과 함께 유지 — 단 · 페이지 끝에 혼자 남지 않는다(units_compose.js thread)
     if st.get("keep_together"):
@@ -1322,6 +1331,9 @@ def _psi_css(f, ctx):
         ins = [float(v) for v in (fr.get("inset") if isinstance(fr.get("inset"), list) else [fr.get("inset") or 0] * 4)]
         css += (f"display:inline-block;line-height:1;padding:{ins[0]:.3f}px {ins[1]:.3f}px {ins[2]:.3f}px {ins[3]:.3f}px;"
                 f"background:{ctx.color(fr['fill']) if (ctx and fr.get('fill')) else fr.get('fill') or 'transparent'};")
+        sk = fr.get("stroke") if isinstance(fr.get("stroke"), dict) else {}
+        if sk.get("w"):                                                # 획(인디자인 인라인 고정 텍스트 프레임 획) — 둥근 모퉁이와 함께 글자 둘레 테두리(광문보카 품사 둥근 네모)
+            css += f"border:{float(sk['w']) * PT:.3f}px solid {ctx.color(sk.get('color'), '#000000') if ctx else (sk.get('color') or '#000000')};box-sizing:border-box;"
         if fr.get("r"):
             css += f"border-radius:{float(fr['r']):.3f}px;"
         if fr.get("y"):
@@ -1428,19 +1440,31 @@ def _table_html(a, html, ctx=None):
     sw = float(sk.get("w") or 0) * PT
     rw = float(sk["row_w"]) * PT if sk.get("row_w") not in (None, "") else sw    # 행 획(행 사이) — 인디자인 표 옵션 > 행 획 · 열 획
     sc = (ctx.color(sk.get("color"), "#000000") if ctx else (sk.get("color") or "#000000")) if (sw or rw) else ""
+    ci = tb.get("col_inset") or []                                     # 열마다 셀 인세트(인디자인 셀 옵션 — 열을 골라 지정), 비운 열은 표 값
     cells = []
     for k, c in enumerate((html or "").split(CELL)):
         body = _paras_html(a, c, ctx)                                  # 칸 안 단락 — 데이터 필드마다 단락 스타일
         f = fills[(k % cols) % len(fills)] if fills else None
+        j = k % cols
+        t, r, b, l = insets({"inset": ci[j]}) if j < len(ci) and ci[j] not in (None, "") else insets({"inset": tb.get("inset")})
         bg = f"background:{ctx.color(f) if ctx else f};" if f else ""
-        if sw == rw:
+        if rw and not sw:                                              # 행 획만(열 획 없음) — 칸 위 행 사이에 선을 따로 그린다. 그림자로 그리면 칸 세로 가장자리에 흐린 선이 남는다(광문보카 열 경계)
+            shadow = "position:relative;"
+            body = f'<span data-rowrule="1" style="position:absolute;left:0;right:0;top:{-rw:.3f}px;height:{rw:.3f}px;background:{sc}"></span>' + body
+        elif sw == rw:
             shadow = f"box-shadow:0 0 0 {sw / 2:.3f}px {sc};" if sw else ""
         else:                                                          # 행 · 열 획 두께가 다르면 칸 모양 그림자를 반 획씩 여덟 방향으로(번짐 하나로는 같은 두께뿐)
             hx, hy = sw / 2, rw / 2
             shadow = "box-shadow:" + ",".join(f"{dx:.3f}px {dy:.3f}px 0 0 {sc}" for dx in (-hx, 0, hx) for dy in (-hy, 0, hy) if dx or dy) + ";"
         cells.append(f'<div data-cell="{k}" style="{bg}{shadow}padding:{t:.3f}px {r:.3f}px {b:.3f}px {l:.3f}px;box-sizing:border-box;min-width:0;'
                      f'{f"min-height:{rh:.3f}px;" if rh else ""}">{body}</div>')
-    return (f'<div style="display:grid;grid-template-columns:repeat({cols},minmax(0,1fr));gap:{rw:.3f}px {sw:.3f}px{";clip-path:inset(0)" if (sw or rw) else ""}">'   # 셀 사이 획만(표 바깥 테두리는 없다 — 바깥으로 나간 반쪽 획은 자른다)
+    cw = [float(x) for x in (tb.get("col_w") or []) if x not in (None, "")][:cols]     # 열 너비 mm(인디자인 표 옵션) — 모자라는 열은 남는 폭을 똑같이
+    tpl = " ".join([f"{x:.3f}px" for x in cw] + ["minmax(0,1fr)"] * (cols - len(cw))) if cw else f"repeat({cols},minmax(0,1fr))"
+    ed = tb.get("edge") or {}                                          # 표 테두리 위 · 아래(인디자인 표 옵션 > 표 테두리) — 행이 다음 상자로 이어져도 상자마다 위 · 아래에
+    ew = float(ed.get("w") or 0) * PT
+    edge = (f"border-top:{ew:.3f}px solid {ctx.color(ed.get('color'), '#000000') if ctx else (ed.get('color') or '#000000')};"
+            f"border-bottom:{ew:.3f}px solid {ctx.color(ed.get('color'), '#000000') if ctx else (ed.get('color') or '#000000')};") if ew else ""
+    return (f'<div data-table="{cols}" style="display:grid;grid-template-columns:{tpl};gap:{rw:.3f}px {sw:.3f}px;{edge}{"clip-path:inset(0)" if (sw or rw) else ""}">'   # 셀 사이 획(바깥으로 나간 반쪽 획은 자른다) · 바깥은 표 테두리
             + "".join(cells) + "</div>")
 
 
@@ -1786,6 +1810,9 @@ def _text_content(ctx, a, values, types):
         return f'<span style="color:#b0b0b0">‹{esc(hint)}›</span>', "‹" + hint + "›"
     if a.get("markup"):                                                    # 원고 표시 읽기 — {본문|윗주} · [[옆 메모]] → 조각
         v = markup_runs(v)
+    if b == "sys.page_no":                                                 # 쪽 번호 — 빈 덧쪽을 지운 뒤 크롬이 다시 매긴다(units_compose.js dropSpares)
+        h, t = fmt(v, types.get(b, "text"), ctx)
+        return f'<span data-pno="1">{h}</span>', t
     return fmt(v, types.get(b, "text"), ctx)
 
 
@@ -2788,48 +2815,79 @@ def story_spares(ctx, pages, spec_of):
     「넘치면 이어 갈 면」(page.cont, 없으면 그 쪽)을 여유 있게 덧붙인다. 덧붙인 쪽에는 그 이야기 상자(차례 번호를 이어서)와 장식만 남긴다.
     크롬이 글을 흘린 뒤 빈 채로 남은 덧쪽은 지운다(units_compose.js dropSpares). → {쪽 번호: [덧쪽 지면…]}"""
     out = {}
-    heads, boxes = {}, {}
+    chains, cur = [], {}                                               # 이야기마다 [첫 상자, 이어지는 상자 …] — 같은 이야기가 레코드마다 되풀이되면(UNIT 마다 펼침면) 첫 상자마다 따로
     for pi, pg in enumerate(pages):
         for it in pg.get("items") or []:
             a = it.get("atom") or {}
             if a.get("t") != "text" or not a.get("story"):
                 continue
-            boxes.setdefault(a["story"], []).append((pi, it))
-            if story_seq(a) <= 1 and (it.get("fields") or {}).get(a.get("bind")) not in (None, ""):
-                heads[a["story"]] = (pi, it)
-    for name, (hpi, head) in heads.items():
+            if story_seq(a) <= 1:
+                cur[a["story"]] = [(pi, it)]
+                chains.append((a["story"], cur[a["story"]]))
+            elif a["story"] in cur:
+                cur[a["story"]].append((pi, it))
+    for name, chain in chains:
+        hpi, head = chain[0]
         a = head["atom"]
-        chain = boxes[name]
+        if (head.get("fields") or {}).get(a.get("bind")) in (None, ""):
+            continue
         last_pi = max(pi for pi, _ in chain)
         cap = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for _, it in chain)
         w = float(head.get("w") or a.get("w") or 80)
-        plain = rich_plain(head["fields"][a["bind"]])
-        need = text_h(plain, w, float(a.get("size") or 9), a.get("leading"), a) * 2.0         # 넉넉히 — 자리마다 단락 스타일(행간·앞 간격)은 어림에 안 든다(정본 실전 문제 54쪽에서 모자랐다). 남는 덧쪽은 크롬이 지운다
+        if a.get("table"):                                             # 표 — 행마다 그 행에서 가장 긴 칸(열 너비대로)
+            tb = a["table"]
+            cols = max(int(tb.get("cols") or 1), 1)
+            cw = [float(x) for x in (tb.get("col_w") or []) if x not in (None, "")][:cols]
+            ws = cw + [max(w - sum(cw), 1) / max(cols - len(cw), 1)] * (cols - len(cw))
+            cs = table_cells(head["fields"][a["bind"]])
+            rh = float(tb.get("row_h") or 0)
+            need = sum(max([rh] + [text_h(rich_plain(c), ws[j], float(a.get("size") or 9), a.get("leading"), a) for j, c in enumerate(cs[r:r + cols])])
+                       for r in range(0, len(cs), cols)) * 2.0
+        else:
+            plain = rich_plain(head["fields"][a["bind"]])
+            need = text_h(plain, w, float(a.get("size") or 9), a.get("leading"), a) * 2.0     # 넉넉히 — 자리마다 단락 스타일(행간·앞 간격)은 어림에 안 든다(정본 실전 문제 54쪽에서 모자랐다). 남는 덧쪽은 크롬이 지운다
         if need <= cap * 0.9:
             continue
         last = pages[last_pi]
-        has = lambda t: any((it.get("atom") or {}).get("story") == name for it in t.get("items") or [])
+        own = lambda t, at: at.get("story") == name or (bool(at.get("story")) and story_seq(at) > 1 and not any(
+            (x.get("atom") or {}).get("story") == name for x in t.get("items") or []))   # 그 페이지의 기본 글상자 — 이 이야기 상자가 없으면 이어 받는 상자(인디자인 스마트 텍스트 리플로우)
+        has = lambda t: any(own(t, it.get("atom") or {}) for it in t.get("items") or [])
         tpl = ctx.pages.get(last.get("cont")) or last
         if not has(tpl):                                               # 이어 갈 면에 이 이야기 상자가 없다 — 지금 쪽 모양으로
             tpl = last
         per = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for it in tpl.get("items") or []
-                  if (it.get("atom") or {}).get("story") == name) or 1
+                  if own(tpl, it.get("atom") or {})) or 1
         n = min(120, int(math.ceil((need - cap) / per)) + 1)                 # 덧쪽 한도 — 실전 문제 한 구간 75쪽(정본 198~272)
         seq = max(story_seq(it["atom"]) for _, it in chain)
+        vals = {}                                                      # 러닝 헤드 자리의 값 — 이 이야기가 걸친 쪽들에서 가장 늦게 나온 값(인디자인 텍스트 변수 「러닝 헤드」)
+        for pi in range(hpi, last_pi + 1):
+            vals.update({k: v for k, v in (pages[pi].get("_rec") or {}).items() if isinstance(v, str) and v})   # 레코드 값(데이터 병합)
+            for it in pages[pi].get("items") or []:
+                vals.update({k: v for k, v in (it.get("fields") or {}).items() if v not in (None, "")})
         spares = []
         for k in range(n):
-            pg = json.loads(json.dumps(tpl))
+            pg, src = json.loads(json.dumps(tpl)), tpl
             nxt = ctx.pages.get(tpl.get("cont"))                       # 다음 덧쪽은 이 면의 「이어 갈 면」 — 왼쪽·오른쪽 면이 번갈아(인디자인 마스터 A·B)
             tpl = nxt if nxt and has(nxt) else tpl
             items = []
             for it in pg.get("items") or []:
                 at = it.get("atom") or {}
-                if at.get("story") == name:
+                if own(src, at):
                     seq += 1
-                    at = dict(at, story_seq=seq)
+                    at = dict(at, story=name, story_seq=seq)
                     at.pop("bind", None)
                     it = dict(it, atom=at)
                     it.pop("fields", None)
+                elif _atom_slot(it) and at.get("running"):                # 러닝 헤드 — 덧쪽에도 앞 쪽의 값 그대로
+                    b = str(at["bind"])
+                    if b in vals:
+                        f = {b: vals[b]}
+                    elif "+" in b and all(p in vals and not isinstance(vals[p], list) for p in b.split("+")):   # 여러 필드 한 줄(「어휘끝 15」 = 파트 + 단원번호) — 원고 넣기와 같은 꼴로
+                        from core.units.content import story_value
+                        f = {b: story_value(b, [{p: vals[p] for p in b.split("+")}], at.get("slot_fmt"))}
+                    else:
+                        continue
+                    it = dict(it, fields=f)
                 elif _atom_slot(it) or (it.get("block") and (ctx.blocks.get(it["block"]) or {}).get("source") == "content"):
                     continue                                           # 다른 원고 자리는 덧쪽에 안 둔다
                 items.append(it)

@@ -46,7 +46,9 @@
     "rule": {
       "description": "단락 경계선 — 굵기·색·단락에서 떨어진 거리(인디자인 단락 경계선)",
       "type": "object",
-      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "offset": {"$ref": "#/definitions/mm"}}
+      "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}, "offset": {"$ref": "#/definitions/mm"},
+                     "type": {"enum": ["dotted"], "description": "유형 — 없으면 실선, dotted = 점선(둥근 점)"},
+                     "keep": {"type": "boolean", "description": "프레임 안에 유지(위 경계선) — 상자 맨 위 단락이면 선이 상자 안에 들게 글을 내린다"}}
     },
     "fx": {
       "description": "효과 — 인디자인 개체 효과(혼합 모드·그림자·광선·페더). 원자 어디에나 붙는다",
@@ -152,7 +154,12 @@
                     "gap_x": {"$ref": "#/definitions/mm", "description": "칸 사이 가로(인디자인에선 셀 테두리로 띄운다)"},
                     "gap_y": {"$ref": "#/definitions/mm", "description": "칸 사이 세로"},
                     "stroke": {"type": "object", "properties": {"w": {"$ref": "#/definitions/pt"}, "row_w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}}, "description": "셀 획(인디자인) — 두께 pt · 색상, 칸 경계 가운데. row_w = 행 사이 획 두께(표 옵션 > 행 획, 없으면 w)"},
-                    "row_h": {"$ref": "#/definitions/mm", "description": "줄 최소 높이(인디자인 행 높이 「최소」) — 넘으면 그 줄의 가장 긴 칸만큼"}}},
+                    "row_h": {"$ref": "#/definitions/mm", "description": "줄 최소 높이(인디자인 행 높이 「최소」) — 넘으면 그 줄의 가장 긴 칸만큼"},
+                    "col_w": {"type": "array", "maxItems": 12, "items": {"$ref": "#/definitions/mm"}, "description": "열 너비 mm(인디자인 표 옵션) — 첫 열부터, 모자라는 열은 남는 폭을 똑같이"},
+                    "edge": {"type": "object", "properties": {"w": {"$ref": "#/definitions/pt"}, "color": {"$ref": "#/definitions/token"}}, "description": "표 테두리 위 · 아래(인디자인 표 옵션 > 표 테두리) — 두께 pt · 색상"},
+                    "col_inset": {"type": "array", "maxItems": 12, "items": {"oneOf": [{"type": "null"}, {"$ref": "#/definitions/mm"}, {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/definitions/mm"}}]},
+                                  "description": "열마다 셀 인세트(인디자인 셀 옵션을 열마다) — 하나 또는 [위, 오른쪽, 아래, 왼쪽], null 이면 표의 inset"}}},
+        "running": {"type": "boolean", "description": "러닝 헤드(인디자인 텍스트 변수) — 넘치면 더한 페이지에도 이 원고 자리를 남기고 이야기 첫 페이지의 값을 그대로"},
         "rule_above": {"$ref": "#/definitions/rule", "description": "단락 위 경계선"},
         "rule_below": {"$ref": "#/definitions/rule", "description": "단락 아래 경계선"},
         "shade": {"$ref": "#/definitions/token", "description": "단락 음영 색(인디자인 단락 음영)"},
