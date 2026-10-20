@@ -294,7 +294,7 @@ def pstyle_fields(name, v):
     for k, val in v.items():
         if k in ("font", "weight", "b", "i", "__n"):
             continue
-        if k == "align":
+        if k in ("align", "start"):
             st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
         elif k in ("shade_fit", "border_fit"):
             if val:
@@ -312,7 +312,7 @@ def pstyle_fields(name, v):
                 st.append(F("input" + q(f"jc.{kk}"), round(vv / sp / 10, 2) if kk.startswith("letter") else vv, 450))
         elif k == "list":
             for kk, vv in val.items():
-                if kk in ("type", "format", "after"):
+                if kk in ("type", "format", "after", "cs"):
                     st.append({"pick": {"at": "select" + q(f"list.{kk}"), "value": {"\t": "\t", "": "none"}.get(vv, vv)}, "wait": 450})
                 else:
                     st.append(F("input" + q(f"list.{kk}"), vv, 450))

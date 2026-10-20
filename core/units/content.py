@@ -73,7 +73,8 @@ def plan_pages(plan, pages_by_id, content=None):
                 continue
             flush(run)
             run = []
-            put(pid)
+            if not (isinstance(e, dict) and e.get("repeat") == "none"):     # 「찍지 않음」 — 넘친 글을 받는 덧쪽 모양으로만(render.story_spares)
+                put(pid)
         flush(run)
     for pid in plan.get("back") or []:
         put(pid)

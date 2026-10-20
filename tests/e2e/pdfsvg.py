@@ -10,7 +10,8 @@ import pymupdf
 PT = 25.4 / 72
 
 
-def export(pdf, pno, x, y, w, h, out):
+def export(pdf, pno, x, y, w, h, out, skip=None):
+    """skip(도형) 이 참인 도형은 뺀다 — 원본이 잘라 보이게(clip) 한 도형은 잘림 없이 옮기면 다 보인다(이의1보카 오른쪽 탭 위 옅은 면)"""
     p = pymupdf.open(pdf)[pno - 1]
     t = p.trimbox
     clip = pymupdf.Rect(t.x0 + x / PT, t.y0 + y / PT, t.x0 + (x + w) / PT, t.y0 + (y + h) / PT)
@@ -18,7 +19,7 @@ def export(pdf, pno, x, y, w, h, out):
     for d in p.get_drawings():
         r = d["rect"]
         rr = r + (-0.5, -0.5, 0.5, 0.5)                               # 폭 0 인 선(세로 · 가로 선)은 빈 상자라 겹침 판정이 늘 거짓 — 반 pt 넓혀 본다(광문보카 모눈 세로선)
-        if not (clip.contains(r) or clip.intersects(rr)) or r.width > clip.width * 1.5:
+        if not (clip.contains(r) or clip.intersects(rr)) or r.width > clip.width * 1.5 or (skip and skip(d)):
             continue
         seg, cur = [], None
         for it in d["items"]:

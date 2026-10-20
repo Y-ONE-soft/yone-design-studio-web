@@ -1114,8 +1114,10 @@ def _after(v):
 def _list_text(st, ctx, a):
     """글머리 기호 및 번호 매기기(인디자인) — 단락 앞에 붙는 글(기호 · 번호 + 텍스트 뒤). 번호는 같은 목록(단락 스타일)끼리 이어 센다"""
     ls = st.get("list") or {}
+    css = ctx.cstyle_css(ls["cs"]) if (ctx is not None and ls.get("cs")) else ""   # 글머리 기호 · 번호 문자 스타일(인디자인) — 기호 글만
+    wrap = (lambda t: f'<span style="{css}">{t}</span>') if css else (lambda t: t)
     if ls.get("type") == "bullet":
-        return esc(ls.get("char") or "•") + esc(_after(ls.get("after")))
+        return wrap(esc(ls.get("char") or "•")) + esc(_after(ls.get("after")))
     if ls.get("type") == "number":
         key = (id(a), ls.get("name") or "")
         nums = ctx.nums if ctx is not None else {}
@@ -1126,7 +1128,7 @@ def _list_text(st, ctx, a):
         core = num_text(n, f.rstrip(".)") or "1")
         lead_ = "(" if f.startswith("(") else ""
         trail = "." if f.endswith(".") else ")" if f.endswith(")") and not f.startswith("(") else ")" if f.startswith("(") else ""
-        return esc(lead_ + core + trail) + esc(_after(ls.get("after")))
+        return wrap(esc(lead_ + core + trail)) + esc(_after(ls.get("after")))
     return ""
 
 
@@ -1277,6 +1279,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
         attrs += ' data-rule-keep="1"'                                # 위 경계선 프레임 안에 유지 — 상자 맨 위 단락이면 선이 상자 안에 들게 글을 내린다(units_compose.js keepRule)
     if st.get("keep_next"):
         attrs += ' data-keep-next="1"'                                # 다음 행과 함께 유지 — 단 · 페이지 끝에 혼자 남지 않는다(units_compose.js thread)
+    if st.get("start") == "frame":
+        attrs += ' data-start-frame="1"'                              # 단락 시작: 다음 프레임(인디자인 분리 금지 옵션) — units_compose.js cutFrom
     if st.get("keep_together"):
         attrs += ' data-keep="1"'                                     # 행 분리 금지 — 단락의 모든 행
     if st.get("keep_first"):

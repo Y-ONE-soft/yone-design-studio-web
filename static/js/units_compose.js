@@ -368,7 +368,10 @@
 
   function cutFrom(o) {                                                // 이 상자에서 넘는 것 → 다음 상자로 갈 단락들(잘린 뒷부분 포함). 안 넘치면 null
     const h = holder(o), L = limitOf(o), ps = paras(h);
-    const i = ps.findIndex(p => inkBottom(p) > L);
+    const sf = ps.findIndex((p, k) => k > 0 && p.dataset.startFrame);  // 단락 시작: 다음 프레임 — 그 단락부터 다음 상자로(상자 맨 위 단락이면 그대로)
+    const i0 = ps.findIndex(p => inkBottom(p) > L);
+    if (sf > 0 && (i0 < 0 || sf <= i0)) return ps.slice(sf);
+    const i = i0;
     if (i < 0) return null;
     const p = ps[i], rest = ps.slice(i + 1);
     let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
