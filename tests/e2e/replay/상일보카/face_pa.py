@@ -23,8 +23,16 @@ P = {"번호": (NOTO, 500, 5.0, 3.0, "#999999", False),                    # 번
      "해석": (NOTO, 400, 6.0, 3.5, "#4d4d4d", False),
      "유반의어 첫": (NOTO, 400, 6.0, 2.7, "#4d4d4d", True), "풀이 첫": (NOTO, 400, 6.0, 2.7, "#000000", True)}
 # 단락 앞 공백 — 원본 94쪽 기준선 사이(mm)
-GAP = {"뜻 첫": ("번호", 4.57), "다음 뜻 첫": ("뜻", 7.87), "뜻": ("뜻", 3.4), "예문 첫": ("뜻", 4.02), "해석": ("예문", 3.51),
-       "예문": ("해석", 3.6), "유반의어 첫": ("뜻", 4.03), "풀이 첫": ("해석", 4.2), "번호": ("뜻", 6.15)}
+# 앞 단락이 여럿이면 [(앞 스타일, 거리) …] — 단락 앞 공백은 하나라 그 가운데 값(94쪽: 낱말 사이 뜻 뒤 7.87 · 유반의어 뒤 8.13 ·
+# 번호 줄은 뜻 뒤 6.15 · 해석 뒤 5.95)
+GAP = {"뜻 첫": ("번호", 4.57), "다음 뜻 첫": [("뜻", 7.87), ("유반의어 첫", 8.13), ("유반의어 첫", 8.15)], "뜻": ("뜻", 3.4),
+       "예문 첫": ("뜻", 4.02), "해석": ("예문", 3.51), "예문": ("해석", 3.6), "유반의어 첫": [("뜻", 4.03), ("해석", 3.84)],
+       "풀이 첫": ("해석", 4.2), "번호": [("뜻", 6.15), ("해석", 5.95), ("뜻", 6.18)]}
+# 위 어림(가운데 값)으로 만든 판을 원본 94 · 96쪽과 맞대 보니 앞 스타일마다 0.4mm 남짓 달랐다(편집기는 앞 단락 행간의 아래 몫이 들어가고 인디자인은
+# 다음 줄 행간만) — 다음 뜻 첫: 뜻 뒤 +0.44 · 유반의어 뒤 0 · 해석 뒤 +0.43 / 번호: 뜻 뒤 0 · 유반의어 뒤 −0.44 · 해석 뒤 +0.41 / 유반의어 첫: 뜻 뒤 0 · 해석 뒤 +0.40.
+# 유반의어 단락 뒤 공백 0.44 로 유반의어 뒤를 뜻 뒤와 같게 하고, 단락 앞 공백을 그 가운데로 내린다(남는 차이 ±0.21 — 0.3mm 안)
+SA = {"유반의어 첫": 0.44}
+ADJ = {"다음 뜻 첫": 0.44, "번호": 0.20, "유반의어 첫": 0.20}
 CS = {"파생 번호": {"font": NOTO, "weight": 700, "size": 6.0, "color": TEAL},
       "파생 낱말": {"font": NOTO, "weight": 700, "size": 8.4, "color": "#000000", "bshift": round(0.54 * MMPT, 2)},
       "파생 구": {"font": NOTO, "weight": 700, "size": 6.6, "color": "#000000", "bshift": round(1.1 * MMPT, 2)},
@@ -41,18 +49,21 @@ def styles():
     for n, props in CS.items():
         st += need_cstyle(n, props)
     for n, (f, w, s, L, c, hang) in P.items():
-        prev, d = GAP[n]
-        pf, pw, ps, pL = P[prev][:4]
-        sb = round(d - (pL - fb(pf, pw, ps, pL * MMPT)) - fb(f, w, s, L * MMPT), 2)
+        need = sorted(d - (P[prev][3] - fb(*P[prev][:3], P[prev][3] * MMPT)) - fb(f, w, s, L * MMPT)
+                      for prev, d in (GAP[n] if isinstance(GAP[n], list) else [GAP[n]]))
+        sb = round(need[len(need) // 2] - ADJ.get(n, 0), 2)
         v = {"font": f, "weight": w, "size": s, "leading": round(L * MMPT, 2), "color": c, "space_before": max(sb, 0)}
+        if SA.get(n):
+            v["space_after"] = SA[n]
         if n != "번호":
             v["indent"] = IND
             if n != "풀이 첫":
                 v["keep_next"] = True
+        v["keep_together"] = True                                        # 단락 분리 금지(모든 행) — 다음 단락과 함께와 이어 단어 하나가 통째로 다음 쪽으로
         if hang:
             v.update(indent_first=-IND, tabs=[{"at": IND}])
-        if n == "번호":                                                  # 뿌리 낱말 = 오른쪽 탭(단 끝) · 번호 줄 선 = 아래 경계선(기준선 위 0.23mm)
-            v.update(tabs=[{"at": W0, "align": "right"}], keep_next=True, rule_below={"w": round(0.1 * MMPT, 3), "color": TEAL, "offset": -0.23})
+        if n == "번호":                                                  # 뿌리 낱말 = 오른쪽 탭(단 끝 0.3mm 안 — 단 끝 딱 맞추면 줄이 꺾여 번호 줄이 두 줄이 됐다) · 번호 줄 선 = 아래 경계선(기준선 위 0.23mm)
+            v.update(tabs=[{"at": round(W0 - 0.3, 2), "align": "right"}], keep_next=True, rule_below={"w": round(0.1 * MMPT, 3), "color": TEAL, "offset": -0.23})
         st += need_pstyle(PF + n, v)
     return st
 
@@ -74,11 +85,12 @@ def story_frame(pno, head):
         st += [S("번호 · 낱말 · 구 · 칸 이름 · 품사 — 뒤 단락 첫머리에 붙는다", 900)]
         st += slot_inline("번호", "파생 번호", "\t") + slot_inline("낱말", "파생 낱말", "\t") + slot_inline("구", "파생 구", "\t")
         st += slot_inline("품사", "파생 품사 칩", " ") + slot_inline("칸 이름", "칸 이름", "\t")
-        st += grep(0, r"(?<![\d.])\d{1,2}\.(?= )", "파생 뜻 번호", label="GREP 스타일 — 뜻 번호(1. 2.) 파랑")
-        st += grep(1, r" (?=\d{1,2}\. )", "뜻 사이", label="GREP 스타일 — 뜻 번호 앞 공백 넓게(자간)")
-        st += [S("글 잇기 — 새 이야기", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
+        # 뜻 번호 앞 공백을 먼저(GREP 차례) — 번호를 먼저 감싸면 「공백 + 번호」 앞보기가 안 맞는다
+        st += grep(0, r" (?=\d{1,2}\. )", "뜻 사이", label="GREP 스타일 — 뜻 번호 앞 공백 넓게(자간)")
+        st += grep(1, r"(?<![\d.])\d{1,2}\.(?= )", "파생 뜻 번호", label="GREP 스타일 — 뜻 번호(1. 2.) 파랑")
+        st += story_pick(ENTRY, True)
     else:
-        st += [S("글 잇기 — 같은 이야기를 이어 받는다", 700), {"pick": {"at": '#side select[data-a="story"]', "value": "이야기1"}, "wait": 900}]
+        st += story_pick(ENTRY, False)
     body = [s for s in sp if top < s["base"] < BOT and s["x"] < 135]
     Eslot(body, "#000000", label="낱말 항목")
     return st

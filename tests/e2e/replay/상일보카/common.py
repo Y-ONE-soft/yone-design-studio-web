@@ -281,6 +281,14 @@ def foot_right(pno, sp):
     return st
 
 
+def shown_at(pno, x, y):
+    """원본 쪽 (x, y)mm 에서 보이는 색 — 칠 값(get_drawings)은 CMYK 를 그냥 바꿔 그림과 다르다(워크북 옆 탭 머리 #aca294 · 보이는 색 #b4a893)"""
+    p, t = REF[pno - 1], REF[pno - 1].trimbox
+    k = 72 / 25.4
+    pix = p.get_pixmap(clip=pymupdf.Rect(t.x0 + x * k - 0.5, t.y0 + y * k - 0.5, t.x0 + x * k + 0.5, t.y0 + y * k + 0.5), dpi=300)
+    return "#%02x%02x%02x" % tuple(pix.pixel(pix.width // 2, pix.height // 2)[:3])
+
+
 def side_tab(pno, sp, dr):
     """오른쪽 옆 탭 — 파랑 상자 위에 진한 둥근 탭 · 세로 글 「DAY 31」(원고 자리 「옆 탭」, 90° 돌림). 자리는 첫 견본(DAY 31) —
     DAY 마다 내려가는 자리는 책에서 손보기(인디자인: 상위 페이지 항목 재정의 후 옮기기)"""
@@ -292,9 +300,10 @@ def side_tab(pno, sp, dr):
     cap_h = 0.93
     st += ref_shape(front, fill=front["fill"], label="옆 탭(진한 둥근 탭)", measure=False)
     Ebox(front["x"] + 0.05, back["y"] + cap_h, front["w"], front["y"] + front["h"] - back["y"] - cap_h, front["fill"])
-    st += box(back["x"], back["y"], back["w"], cap_h, back["fill"], label="옆 탭 파랑 머리(위 0.93mm · 왼쪽 위 귀 둥글게 1.2mm)")
+    cap = shown_at(pno, back["x"] + back["w"] / 2, back["y"] + cap_h / 2)
+    st += box(back["x"], back["y"], back["w"], cap_h, cap, label="옆 탭 파랑 머리(위 0.93mm · 왼쪽 위 귀 둥글게 1.2mm) — 원본에 보이는 색")
     st += [F('#side input[data-a="radius4"]', "1.2, 0, 0, 0", 700)]
-    Ebox(back["x"], back["y"] + 0.09, back["w"] - 2.96, 1.02, back["fill"])
+    Ebox(back["x"], back["y"] + 0.09, back["w"] - 2.96, 1.02, cap)
     p, t = REF[pno - 1], REF[pno - 1].trimbox
     tab = next((sp_["bbox"], sp_["size"], "#%06x" % sp_["color"], "".join(c["c"] for c in sp_["chars"]))
                for b in p.get_text("rawdict")["blocks"] for l in b.get("lines", []) if l["dir"] == (0.0, 1.0) for sp_ in l["spans"])
@@ -387,3 +396,17 @@ def frame_body_right(pno):
     st += side_tab(pno, sp, dr)
     st += foot_right(pno, sp)
     return st
+
+
+# ── 글 잇기 — 이 문서의 이야기 차례 ─────────────────────────────────────────────────────
+STORY_ORDER = []                                                        # 흐름 자리(이야기마다 하나) — 만든 차례. 편집기 storyNew 는 빈 번호 「이야기N」을 붙인다
+
+
+def story_pick(key, head):
+    """글 잇기 — 첫 상자는 새 이야기, 다음 상자는 그 이야기 끝에(목록 값 = 이야기 이름). 면 여럿을 한 문서에 만들어도 맞게 이 문서의 만든 차례로 센다.
+    (목록 글 「N페이지에서 시작한 스레드 끝에 연결」은 고르고 나면 「… 스레드」로 바뀌어 글로는 고를 수 없다 — 값으로 고른다)"""
+    if head:
+        STORY_ORDER.append(key)
+        return [S("글 잇기 — 새 이야기", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
+    return [S("글 잇기 — 같은 이야기를 이어 받는다", 700),
+            {"pick": {"at": '#side select[data-a="story"]', "value": f"이야기{STORY_ORDER.index(key) + 1}"}, "wait": 900}]

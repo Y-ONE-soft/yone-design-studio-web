@@ -160,17 +160,8 @@ THREAD = {}                                                             # 흐름
 
 
 def thread(bind, head):
-    """글 잇기 — 첫 상자는 새 이야기, 다음 상자는 그 이야기 끝에(목록 값 = 이야기 이름).
-    목록 글 「N페이지에서 시작한 스레드 끝에 연결」 은 고르고 나면 「… 스레드」 로 바뀌어 글로는 고를 수 없다 — 값으로 고른다.
-    새 이야기 이름 = 편집기 storyNew(빈 번호 「이야기N」) — 이 문서 앞 면들이 만든 이야기 수로 센다(face_wb 와 같은 셈)"""
-    if head:
-        from face_pyo import ENTRY as pyo
-        from face_pa import ENTRY as pa
-        started = {k for k in (pyo, pa) if k in CONTENT} | set(THREAD)
-        THREAD[bind] = f"이야기{len(started) + 1}"
-        return [S("글 잇기 — 새 이야기", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
-    return [S("글 잇기 — 같은 이야기를 이어 받는다", 700),
-            {"pick": {"at": '#side select[data-a="story"]', "value": THREAD[bind]}, "wait": 900}]
+    """글 잇기 — common.story_pick(이 문서의 이야기 차례로 센다)"""
+    return story_pick(bind, head)
 
 
 def ebody(pno, sps, label):

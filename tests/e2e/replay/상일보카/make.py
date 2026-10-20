@@ -126,8 +126,11 @@ def cover(pno, name):
 # 면 대본 모듈 — face_*.py 마다 FACES = {구성 번호: (함수, 원본 쪽 …)} (여러 작업자가 면마다 따로 짠다)
 MODS = {}
 for f in sorted(glob.glob(os.path.join(HERE, "face_*.py"))):
-    m = importlib.import_module(os.path.basename(f)[:-3])
-    MODS.update(m.FACES)
+    try:                                                                 # 다른 작업자가 짜는 중인 면 파일이 깨져 있어도 나머지 면은 돈다
+        m = importlib.import_module(os.path.basename(f)[:-3])
+        MODS.update(m.FACES)
+    except Exception as e:
+        print(f"면 파일 건너뜀 {os.path.basename(f)} — {type(e).__name__}: {e}", file=sys.stderr)
 
 st = open_doc(NAME)
 st += expect_pages(1)

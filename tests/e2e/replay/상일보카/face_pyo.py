@@ -61,6 +61,7 @@ def styles():
             v.update(indent_first=-IND, tabs=[{"at": IND}])
         if n != "풀이 첫":                                               # 단어 하나는 한 쪽에 — 다음 단락과 함께 유지(인디자인 분리 금지 옵션), 끝 단락(영영풀이)만 빼고
             v["keep_next"] = True
+        v["keep_together"] = True                                        # 단락 분리 금지(모든 행) — 다음 단락과 함께와 이어 단어 하나가 통째로 다음 쪽으로
         if n == "번호":                                                  # 번호 줄 가로선 — 단락 아래 경계선(기준선 위 0.18mm, 단 너비)
             v["rule_below"] = {"w": round(0.1 * MMPT, 3), "color": "#274f7e", "offset": -0.18}
         st += need_pstyle(n, v)
@@ -83,11 +84,12 @@ def story_frame(pno, head, lead_first):
                 st.append(slot_style(nm, nm, 450))
         st += [S("왼쪽 칸 글 · 품사 — 뒤 단락 첫머리에 붙는다", 900)]
         st += slot_inline("표제어", "표제어", "\t") + slot_inline("품사", "품사 칩", " ") + slot_inline("칸 이름", "칸 이름", "\t")
-        st += grep(0, r"(?<![\d.])\d{1,2}\.(?= )", "뜻 번호", label="GREP 스타일 — 뜻 번호(1. 2.) 파랑")
-        st += grep(1, r" (?=\d{1,2}\. )", "뜻 사이", label="GREP 스타일 — 뜻 번호 앞 공백 넓게(자간)")
-        st += [S("글 잇기 — 새 이야기", 900), {"pick": {"at": '#side select[data-a="story"]', "value": "__new"}, "wait": 900}]
+        # 뜻 번호 앞 공백을 먼저(GREP 차례) — 번호를 먼저 감싸면 「공백 + 번호」 앞보기가 안 맞는다
+        st += grep(0, r" (?=\d{1,2}\. )", "뜻 사이", label="GREP 스타일 — 뜻 번호 앞 공백 넓게(자간)")
+        st += grep(1, r"(?<![\d.])\d{1,2}\.(?= )", "뜻 번호", label="GREP 스타일 — 뜻 번호(1. 2.) 파랑")
+        st += story_pick(ENTRY, True)
     else:
-        st += [S("글 잇기 — 같은 이야기를 이어 받는다", 700), {"pick": {"at": '#side select[data-a="story"]', "value": "이야기1"}, "wait": 900}]
+        st += story_pick(ENTRY, False)
     body = [s for s in sp if top < s["base"] < BOT and s["x"] < 135]
     Eslot(body, "#000000", label="단어 항목")
     return st
