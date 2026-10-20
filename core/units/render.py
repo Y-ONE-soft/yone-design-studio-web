@@ -659,6 +659,9 @@ def locl_html(html, family, lang):
     return "".join(out)
 
 
+_LOCL_SPAN = re.compile(r'<span lang="[^"]*"(?: style="white-space-collapse:preserve")?>([^<]*)</span>')   # locl_html 이 감싼 조각
+
+
 def ko_glyphs(html, a, ctx):
     """글 언어(a.lang, 기본 한국어)의 공백·문장부호 글리프 — locl_html."""
     if not ctx:
@@ -1193,8 +1196,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
     n = len(slots)
     st = dict(para_attrs(a, slot, ctx), **((ovs or {}).get(k) or {}))
     if st.get("grep"):                                                 # 단락 스타일의 GREP 스타일(인디자인 단락 스타일 옵션) — 이 스타일 단락에만(뜻의 ① 은 분홍, 파생어 뜻의 ① 은 그대로)
-        g = st["grep"]
-        x = grep_html(x, [g[j] for j in sorted(g, key=lambda j: int(j) if str(j).isdigit() else 0)] if isinstance(g, dict) else g, ctx)
+        g = st["grep"]                                                 # 글자 언어(locl) 감싸기를 풀고 맞춘 뒤 다시 감싼다 — 감싼 채로는 「(A)」 의 괄호가 따로 끊겨 안 맞았다(명일1 파이널)
+        x = ko_glyphs(grep_html(_LOCL_SPAN.sub(r"\1", x), [g[j] for j in sorted(g, key=lambda j: int(j) if str(j).isdigit() else 0)] if isinstance(g, dict) else g, ctx), a, ctx)
     css = "margin:0;" + _font_css(st, ctx)
     if st.get("align"):
         css += align_css(st["align"])
@@ -1328,6 +1331,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
                     x += h_
     if "\t" in x:                                                      # 탭 — 탭 정지(단락 값) · 숨은 정지(첫 줄 내어쓰기) · 기본 탭 정지
         x = _tab_html(st.get("tabs"), x, ind + indf, ind if indf < 0 else None) or x
+    if x and not _TAG.sub("", x).strip() and not re.search(r"<(svg|img)\b", x):   # 빈 단락(원고의 빈 줄) — 인디자인처럼 행간만큼 한 줄(글 없는 표시 span 만 있으면 크롬은 높이 0)
+        x += "&#160;"
     return before_p + f'<p style="{css}"{attrs}>{deco}{soft_breaks(x, just, spec) or "&#160;"}</p>' + after_p
 
 
