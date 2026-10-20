@@ -258,9 +258,9 @@ def sp_line(sp, pred):
 def foot_left(pno, sp):
     """왼쪽 꼬리 — 쪽 번호(책이 채움) · 「|」 · 책 이름(원고 자리 「책 이름」)"""
     st = [S("왼쪽 꼬리 — 쪽 번호 · | · 책 이름", 1000)]
-    num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] < 21 and s["size"] == 6.0)
-    bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|")
-    book = sp_line(sp, lambda s: s["base"] > 200 and 23 < s["x"] < 60 and s["size"] == 6.0)
+    bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|" and s["x"] < 60)
+    num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] < bar["x"] and s["size"] == 6.0)
+    book = sp_line(sp, lambda s: s["base"] > 200 and bar["x1"] < s["x"] < 60 and s["size"] == 6.0)
     st += T(num, ELICE, 700, label="쪽 번호 — 시스템 자리 「쪽 번호」", w=6, bind="sys.page_no")
     st += T(bar, ELICE, 300, label="| — Elice DX Neolli Light(막대 폭 0.082em — 500 은 잉크 1.54 · Pretendard 400 은 0.49)")
     st += T(book, ELICE, 500, label="책 이름 — 원고 자리 「책 이름」", slot_name="책 이름", temp="책 이름", w=30)
@@ -271,9 +271,9 @@ def foot_left(pno, sp):
 def foot_right(pno, sp):
     """오른쪽 꼬리 — DAY(원고 자리 「꼬리 DAY」) · 「|」 · 쪽 번호(오른쪽 맞춤)"""
     st = [S("오른쪽 꼬리 — DAY · | · 쪽 번호", 1000)]
-    dd = sp_line(sp, lambda s: s["base"] > 200 and 100 < s["x"] < 124 and s["size"] == 6.0)
-    bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|")
-    num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] > 126 and s["size"] == 6.0)
+    bar = sp_line(sp, lambda s: s["base"] > 200 and s["text"] == "|" and s["x"] > 90)
+    dd = sp_line(sp, lambda s: s["base"] > 200 and 90 < s["x"] < bar["x"] and s["size"] == 6.0)
+    num = sp_line(sp, lambda s: s["base"] > 200 and s["x"] > bar["x1"] and s["size"] == 6.0)
     st += T(dd, ELICE, 500, label="꼬리 DAY — 원고 자리 「꼬리 DAY」", slot_name="꼬리 DAY", temp="DAY 00", w=round(dd["x1"] - dd["x"] + 3, 1))
     st += T(bar, ELICE, 300, label="| — Elice DX Neolli Light(막대 폭 0.082em — 500 은 잉크 1.54 · Pretendard 400 은 0.49)")
     st += T(num, ELICE, 700, label="쪽 번호 — 시스템 자리 「쪽 번호」 (오른쪽 맞춤)", w=6, align="right", bind="sys.page_no")
