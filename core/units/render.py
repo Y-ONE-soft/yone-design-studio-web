@@ -207,7 +207,7 @@ def anchor_obj(anc, ctx, a=None):
     return None
 
 
-def anchored_html(anc, ctx, a=None):
+def anchored_html(anc, ctx, a=None, fb=None):
     """인디자인 고정 개체 하나 → 글 안에 끼울 HTML(인라인 · 사용자 정의). 줄 위는 _para 가 제 단락으로 놓는다.
     인라인: X 오프셋(앞 글과 사이) · Y 오프셋(위가 +) — 글자처럼 흘러 자리가 모자라면 마지막 낱말과 함께 다음 줄로(space 면 개체만).
     사용자 정의: X 기준 텍스트 프레임 가장자리(frame) · 앵커 표시자(anchor), Y 기준 라인(기준선)(baseline) · 라인(행간 위쪽)(leading) — 글 흐름에 안 낀다."""
@@ -219,6 +219,8 @@ def anchored_html(anc, ctx, a=None):
     x, y = float(anc.get("x") or 0), float(anc.get("y") or 0)
     if pos == "custom":
         va = "top" if anc.get("yref") == "leading" else "baseline"
+        if va == "baseline" and fb is not None:                        # 기준선이 줄 상자 밖(행간 < 글자) — 0 상자를 기준선에 두면 줄이 늘어난다. 줄 위 끝에 두고 그만큼 내린다
+            va, y = "top", y + fb
         hx = f"left:calc({x:.3f}px - var(--ax, 0px));" if anc.get("xref", "frame") == "frame" else f"margin-left:{x:.3f}px;"
         return (f'<span data-side="1" style="display:inline-block;width:0;height:0;vertical-align:{va}">'
                 f'<span style="position:absolute;{hx}margin-top:{y:.3f}px">{body}</span></span>')
@@ -1319,7 +1321,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
                     else:
                         after_p = line
             else:
-                h_ = anchored_html(anc, ctx, a)
+                fb_, lb_ = _line_metrics(a, st, ctx)[:2]
+                h_ = anchored_html(anc, ctx, a, fb_ if min(fb_, lb_) < 0 else None)   # 기준선이 줄 상자 밖일 때만 줄 위 끝 기준으로
                 if at_start:
                     m = _PS_LEAD_RE.search(x)
                     x = (x[:m.end()] + h_ + x[m.end():]) if m else h_ + x
