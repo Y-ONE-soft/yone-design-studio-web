@@ -418,6 +418,7 @@ def fill(pages, content, width_of=None):
             sf = (a.get("slot_fmt") or {}).get(nm) or {}
             if f and nm and "+" not in nm and (sf.get("style") or sf.get("anc")) and isinstance(f.get(nm), (str, list)) and not blank(f[nm]):
                 it["fields"] = {nm: story_value(nm, [{nm: f[nm]}], a.get("slot_fmt"))}
+    pages = apply_overrides(pages)
     for pg in pages:                                                              # 빈 원고(""·[]) — 그 글상자는 비었다(_empty)
         for it in pg.get("items") or []:
             f = it.get("fields")
@@ -426,6 +427,104 @@ def fill(pages, content, width_of=None):
     extra = {k: len(v) for k, v in queue.items() if v and k in known}
     unknown = sorted(k for k in queue if k not in known)
     return pages, {"filled": filled, "unfilled": unfilled, "extra": extra, "unknown": unknown}
+
+
+OV_GEOM = ("x", "y", "w", "h")
+OV_PARA = ("space_before", "space_after", "space_same", "indent", "indent_first", "indent_right", "leading")   # render.OV_KEYS 와 같다
+
+
+def apply_overrides(pages):
+    """레코드 페이지 재정의(인디자인 「상위 페이지 항목 재정의」 · 단락 스타일 재정의 · 고정 개체 옵션 · 페이지 추가 + 텍스트 스레드).
+    데이터 병합으로 만든 페이지에서 사람이 그 레코드 페이지만 바꾼 것을 레코드에 같이 둔다 — 원고(내용)를 다시 넣어도 남는다.
+
+        레코드["_overrides"] = {
+          "pages": {"<k>": {                       k = 그 레코드의 몇째 페이지(0부터) · 더한 페이지는 "+<n>"
+              "items":   {"<fi>": {x, y, w, h}},   fi = 상위 페이지의 개체 번호 — 텍스트 프레임 자리 · 크기(mm)
+              "paras":   {"<fi>": {"<pi>": {단락 앞 공백 · 행간 …}}},   pi = 그 데이터 필드 단락 차례(render 의 data-pi)
+              "anchors": {"<fi>": {"<pi>": {dx, dy}}}}},                  그 단락 옆 메모(고정 개체)를 옮긴 만큼(mm)
+          "added": [{"after": k, "thread": fi}]}  k 페이지 뒤에 같은 상위 페이지로 페이지를 더하고, 그 페이지의 같은 프레임으로 텍스트 스레드를 잇는다
+                                                   (thread 가 없으면 빈 페이지 — 펼침면을 맞출 때). 더한 페이지에는 상위 페이지 항목만 남는다(데이터 필드는 감춤)
+    재정의가 없는 레코드는 그대로다. 쪽마다 _rk(재정의 열쇠)를 남긴다 — 화면이 이 열쇠로 고친 것을 적는다."""
+    out, seen = [], {}
+    for pg in pages:
+        rec = pg.get("_rec")
+        if not isinstance(rec, dict):
+            out.append(pg)
+            continue
+        ri = seen.setdefault(id(rec), [len(seen), 0])
+        k = ri[1]
+        ri[1] += 1
+        pg["_rk"] = str(k)                                               # 재정의가 아직 없어도 — 화면이 처음 고칠 때 이 열쇠로 적는다
+        out.append(pg)
+        ov = rec.get("_overrides")
+        if not isinstance(ov, dict):
+            continue
+        for n, add in enumerate(ov.get("added") or []):
+            if not isinstance(add, dict) or str(add.get("after")) != str(k):
+                continue
+            items = pg.get("items") or []
+            fi = add.get("thread")
+            fi = int(fi) if str(fi).isdigit() and int(fi) < len(items) and (items[int(fi)].get("atom") or {}).get("t") == "text" else None
+            if fi is not None:                                               # 이을 프레임 — 이 페이지 것이 스레드 첫 프레임이 된다(저절로 더하지는 않는다)
+                src = items[fi]["atom"] = dict(items[fi]["atom"])
+                src.update(story=src.get("story") or f"_rov{ri[0]}_{k}_{fi}", story_seq=src.get("story_seq") or 1, smart_reflow=False)
+            more = copy.deepcopy(pg)
+            more["id"] = f"{pg.get('id')}+{n + 1}"
+            more["_rk"] = f"+{n}"
+            for j, it in enumerate(more.get("items") or []):                # 개체 번호는 그대로 두고 감춘다 — 더한 페이지의 재정의도 같은 번호로
+                b = ((it.get("atom") or {}).get("bind") or "")
+                if j == fi:                                                  # 이어 받을 프레임 — 빈 그릇
+                    it["atom"] = dict(it["atom"], story=src["story"], story_seq=int(src["story_seq"]) + 1, text="")
+                    it.pop("fields", None)
+                    it.pop("_empty", None)
+                elif b and not b.startswith("sys."):                          # 데이터 필드는 레코드 페이지에만(인디자인 — 더한 페이지엔 상위 페이지 항목만)
+                    it["hide"] = True
+            out.append(more)
+    for pg in out:
+        rec = pg.get("_rec")
+        ov = rec.get("_overrides") if isinstance(rec, dict) else None
+        po = ((ov or {}).get("pages") or {}).get(pg.get("_rk") or "") if isinstance(ov, dict) else None
+        if isinstance(po, dict):
+            _override_page(pg, po)
+    return out
+
+
+def _override_page(pg, po):
+    items = pg.get("items") or []
+    at = lambda fi: items[int(fi)] if str(fi).isdigit() and int(fi) < len(items) else None
+    for fi, g in (po.get("items") or {}).items():
+        it = at(fi)
+        if not it or not isinstance(g, dict):
+            continue
+        for key in OV_GEOM:
+            if isinstance(g.get(key), (int, float)):
+                if key in ("x", "y"):
+                    it[key] = float(g[key])
+                    continue
+                v = max(1.0, float(g[key]))
+                if key in it:                                              # 개체 크기(패널에서 고친 값)가 있으면 그것도
+                    it[key] = v
+                if it.get("atom") is not None:
+                    it["atom"] = dict(it["atom"], **{key: v})
+    for kind, keys in (("paras", OV_PARA), ("anchors", ("dx", "dy"))):
+        for fi, per in (po.get(kind) or {}).items():
+            it = at(fi)
+            v = ((it or {}).get("fields") or {}).get(((it or {}).get("atom") or {}).get("bind") or "")
+            if not isinstance(per, dict) or not isinstance(v, list):
+                continue
+            n = -1
+            for j, r in enumerate(v):
+                if not isinstance(r, dict):
+                    continue
+                if "ps" in r and not r.get("inline"):
+                    n += 1
+                    want = per.get(str(n))
+                    if kind == "paras" and isinstance(want, dict):
+                        ov = dict(r.get("ov") or {}, **{x: float(want[x]) for x in keys if isinstance(want.get(x), (int, float))})
+                        v[j] = dict(r, ov=ov) if ov else r
+                elif kind == "anchors" and "side" in r and isinstance(per.get(str(n)), dict):
+                    want = per[str(n)]
+                    v[j] = dict(r, **{x: float(want[x]) for x in keys if isinstance(want.get(x), (int, float))})
 
 
 def per_occurrence(v):

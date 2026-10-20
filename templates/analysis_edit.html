@@ -104,6 +104,28 @@
   #hl i.hov { background: rgba(79,107,216,.16); box-shadow: inset 0 -2px #4f6bd8; }
   #hl i.hov.er { background: rgba(226,91,95,.16); box-shadow: inset 0 -2px #e25b5f; }
   #ov .ihint { font-size: 11.5px; color: #6b7382; margin-top: 4px; background: #fff; border-radius: 4px; padding: 2px 6px; }
+  /* 레이아웃(인디자인 선택 도구) — 레코드 페이지 재정의: 프레임 자리 · 크기, 단락 재정의, 고정 개체, 페이지 추가 + 텍스트 스레드 */
+  body.layout #pages, body.layout #pages * { cursor: default !important; }
+  body.layout #pages g[data-fi]:not([data-lock]) { cursor: pointer; }
+  #lay { position: absolute; z-index: 25; display: none; border: 1px solid #2f6bff; pointer-events: none; touch-action: none; }   /* 안을 누르면 아래 프레임 · 문단이 받는다(고르기 · 끌어 옮기기) — 손잡이만 여기서 */
+  #lay.side { border-style: dashed; border-color: #e25b5f; }
+  #lay .h { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; background: #fff; border: 1px solid #2f6bff; pointer-events: auto; }
+  #lay .h[data-h="nw"] { left: 0; top: 0; cursor: nwse-resize; } #lay .h[data-h="n"] { left: 50%; top: 0; cursor: ns-resize; }
+  #lay .h[data-h="ne"] { left: 100%; top: 0; cursor: nesw-resize; } #lay .h[data-h="e"] { left: 100%; top: 50%; cursor: ew-resize; }
+  #lay .h[data-h="se"] { left: 100%; top: 100%; cursor: nwse-resize; } #lay .h[data-h="s"] { left: 50%; top: 100%; cursor: ns-resize; }
+  #lay .h[data-h="sw"] { left: 0; top: 100%; cursor: nesw-resize; } #lay .h[data-h="w"] { left: 0; top: 50%; cursor: ew-resize; }
+  #lay.side .h { display: none; }
+  #lay .pp { position: absolute; left: 0; right: 0; pointer-events: none; background: rgba(47,107,255,.10); outline: 1px dashed #2f6bff; }
+  #laybar { position: absolute; z-index: 26; display: none; flex-direction: column; gap: 4px; background: #1f2430; color: #fff; padding: 6px 8px; border-radius: 8px;
+            box-shadow: 0 6px 18px rgba(0,0,0,.25); font-size: 11.5px; width: max-content; max-width: 720px; }
+  #laybar .row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+  #laybar b { font-weight: 700; }
+  #laybar label { display: inline-flex; align-items: center; gap: 3px; opacity: .92; }
+  #laybar input { width: 54px; border: 0; border-radius: 4px; padding: 2px 4px; font: inherit; color: #1f2430; }
+  #laybar button { border: 0; border-radius: 5px; padding: 3px 8px; background: #2f3747; color: #fff; font: inherit; cursor: pointer; }
+  #laybar button:hover { background: #48536a; }
+  #laybar .sep { width: 1px; align-self: stretch; background: #48536a; margin: 0 2px; }
+  #laybar .tip { opacity: .65; }
   #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: #1f2430; color: #fff; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; display: none; z-index: 40; }
 </style>
 </head>
@@ -115,6 +137,7 @@
   <button class="btn" id="undo" title="한 단계 되돌리기 (⌘Z)" disabled>↶</button>
   <button class="btn" id="redo" title="다시 하기 (⌘⇧Z)" disabled>↷</button>
   <button class="btn" id="side" title="스토리 편집기(오른쪽 칸) 열고 닫기">스토리 편집기</button>
+  <button class="btn" id="laybtn" title="레이아웃 — 프레임을 눌러 옮기고 크기를 바꾼다 · 단락 재정의 · 고정 개체 · 페이지 추가(인디자인 선택 도구)">레이아웃</button>
   <button class="btn" id="reset" title="받았을 때로" disabled>처음으로</button>
   <button class="btn pri" id="save" disabled>저장</button>
 </header>
@@ -123,6 +146,8 @@
     <div id="pages"><p class="wait">분석본을 받는 중…</p></div>
     <div id="ov"><div id="itb"></div><div id="ovbox"></div></div>
     <div id="hl"></div>
+    <div id="lay"></div>
+    <div id="laybar"></div>
   </section>
   <aside id="panel">
     <div class="tabs"><button class="btn on" data-tab="left">좌면 · 문장</button><button class="btn" data-tab="right">우면 · 주제 · 기출 · 어휘</button></div>
@@ -205,12 +230,14 @@ async function draw(body) {
     const j = await api("/analysis-edit/render", Object.assign({design: DESIGN}, body));
     if (seq !== drawSeq) return;                                // 그새 더 새 요청이 왔다 — 그것이 그린다
     if (!rec) rec = j.rec;
-    $("#pages").innerHTML = j.svgs.map((s, i) => `<div class="p" data-i="${i}">${typeof s === "string" ? s : s.svg}</div>`).join("");
+    $("#pages").innerHTML = j.svgs.map((s, i) => `<div class="p" data-i="${i}" data-rk="${s && s.rk != null ? esc(String(s.rk)) : ""}">${typeof s === "string" ? s : s.svg}</div>`).join("");
     $("#pages").querySelectorAll(".p > svg").forEach((s) => { s.removeAttribute("width"); s.removeAttribute("height"); });
     if (document.fonts) await document.fonts.ready;
     if (window.unitsCompose) window.unitsCompose($("#pages"));
     status();
     postHeight();
+    if (rec && body.rec === undefined) ovLoad(rec._overrides);         // 받은 사본의 레코드 페이지 재정의
+    layShow();
     if (EMBED) embedDrawn();
     else if (typeof scopeBar === "function" && rec) scopeBar();    // 다시 그려도 고른 범위 표시는 남는다
   } catch (e) { $("#st").textContent = e.message; }
@@ -905,6 +932,229 @@ addEventListener("resize", () => { if (EMBED) { rowCache.clear(); paintMarks(); 
 // 끼운 쪽이 iframe 높이를 맞추게 — 다 그린 뒤 · 모드를 바꾼 뒤
 function postHeight() { post({type: "yos-analysis-height", h: Math.ceil(document.documentElement.scrollHeight)}); }
 addEventListener("resize", () => { clearTimeout(postHeight.t); postHeight.t = setTimeout(postHeight, 150); });
+
+// ── 레이아웃 — 인디자인 선택 도구로 이 레코드 페이지만 손본다(레코드 페이지 재정의, core/units/content.apply_overrides) ──
+//   텍스트 프레임 · 개체: 눌러 고르고 끌어 옮기기 · 손잡이로 크기 · X Y W H 칸(「상위 페이지 항목 재정의」)
+//   단락: 고른 프레임 안 문단을 누르면 단락 스타일 재정의(단락 앞 · 뒤 공백 · 동일한 스타일 단락 사이 · 행간)
+//   고정 개체: 옆 메모를 눌러 끌면 X · Y 오프셋 · 페이지 추가 + 텍스트 스레드 · 빈 페이지 추가 · 더한 페이지 삭제
+// 고친 것은 재정의 한 벌(OV)로 모은다 — 끼움 모드는 contents 에(yos-analysis-overrides), 혼자 쓸 때는 레코드에(rec._overrides).
+// contents → {type:"yos-analysis-layout", on}. 레이아웃 중에는 누른 자리 · 끈 구간 · 키를 contents 로 안 보낸다.
+let LAYOUT = false, OV = {}, lsel = null, ldrag = null;
+const r1 = (v) => Math.round(v * 10) / 10;
+const PARA_OV = [["space_before", "단락 앞 공백"], ["space_after", "단락 뒤 공백"], ["space_same", "동일한 스타일 단락 사이"], ["leading", "행간 pt"]];
+function ovLoad(o) { OV = o && typeof o === "object" && !Array.isArray(o) ? clone(o) : {}; }
+function ovPage(rk) { OV.pages = OV.pages || {}; return (OV.pages[rk] = OV.pages[rk] || {}); }
+function ovTidy(o) {                                                      // 빈 칸 · 빈 묶음은 뺀다 — 재정의가 하나도 없으면 {}
+  if (!o || typeof o !== "object" || Array.isArray(o)) return o;
+  for (const k of Object.keys(o)) { o[k] = ovTidy(o[k]); const v = o[k]; if (v == null || v === "" || (typeof v === "object" && !Array.isArray(v) && !Object.keys(v).length) || (Array.isArray(v) && !v.length)) delete o[k]; }
+  return o;
+}
+function ovCommit(label) {
+  ovTidy(OV);
+  if (EMBED) { post({type: "yos-analysis-overrides", overrides: clone(OV), label}); $("#pages").classList.add("busy"); return; }
+  if (!rec) return;
+  change(() => { if (Object.keys(OV).length) rec._overrides = clone(OV); else delete rec._overrides; });
+}
+function setLayout(on) {
+  LAYOUT = !!on; document.body.classList.toggle("layout", LAYOUT); $("#laybtn").classList.toggle("pri", LAYOUT);
+  if (!LAYOUT) { lsel = null; ldrag = null; }
+  if (LAYOUT) closeEd(true);
+  layShow();
+}
+$("#laybtn").onclick = () => setLayout(!LAYOUT);
+const pageEl = (rk) => [...$("#pages").querySelectorAll(".p")].find(p => p.dataset.rk === String(rk));
+const selG = () => lsel && pageEl(lsel.rk) ? pageEl(lsel.rk).querySelector(`svg g[data-fi="${lsel.fi}"]`) : null;
+function geo(g) {                                                         // 개체 g → 화면(px) · mm 자리. 왼쪽 · 오른쪽 페이지가 뒤집혀 그려졌으면 mirror
+  const svg = g.ownerSVGElement, r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal, k = r.width / vb.width;
+  const x = +g.dataset.x, y = +g.dataset.y0 + (+g.dataset.dy || 0), w = +g.dataset.w, h = +g.dataset.hc;
+  return {svg, r, k, W: vb.width, mirror: svg.dataset.mirror === "1", x, y, w, h, y0: +g.dataset.y0, dy: +g.dataset.dy || 0};
+}
+function headOf(g) {                                                      // 텍스트 스레드의 이어지는 프레임이면 첫 프레임(글 · 단락은 첫 프레임 것)
+  const d = g.querySelector("foreignObject > div[data-story]");
+  if (!d || (+d.dataset.seq || 1) <= 1) return {rk: g.closest(".p").dataset.rk, fi: g.dataset.fi};
+  const h = [...$("#pages").querySelectorAll(`foreignObject > div[data-story="${CSS.escape(d.dataset.story)}"]`)].find(x => (+x.dataset.seq || 1) <= 1);
+  const hg = h && h.closest("g[data-fi]");
+  return hg ? {rk: hg.closest(".p").dataset.rk, fi: hg.dataset.fi} : {rk: g.closest(".p").dataset.rk, fi: g.dataset.fi};
+}
+const isText = (g) => !!g.querySelector("foreignObject > div[lang]");
+function curItem() { const it = (((OV.pages || {})[lsel.rk] || {}).items || {})[lsel.fi]; return it || null; }
+function layShow() {
+  const lay = $("#lay"), bar = $("#laybar"), g = LAYOUT ? selG() : null;
+  if (!g) { lay.style.display = "none"; bar.style.display = "none"; return; }
+  const G = geo(g), st = $("#stage").getBoundingClientRect();
+  let bx = G.x, by = G.y, bw = G.w, bh = G.h;
+  if (lsel.side && !(lsel.sideEl && lsel.sideEl.isConnected))            // 다시 그렸다 — 같은 단락의 옆 메모를 다시 찾는다
+    lsel.sideEl = g.querySelector(`p[data-pi="${lsel.pi}"] [data-side] > span`);
+  if (lsel.side && lsel.sideEl) {                                         // 고정 개체(옆 메모) — 그 개체 상자
+    const sr = lsel.sideEl.getBoundingClientRect();
+    bx = (sr.left - G.r.left) / G.k; by = (sr.top - G.r.top) / G.k; bw = sr.width / G.k; bh = sr.height / G.k;
+  }
+  const L = G.r.left - st.left + bx * G.k, T = G.r.top - st.top + by * G.k;
+  Object.assign(lay.style, {display: "block", left: L + "px", top: T + "px", width: bw * G.k + "px", height: bh * G.k + "px"});
+  lay.className = lsel.side ? "side" : "";
+  lay.innerHTML = ["nw", "n", "ne", "e", "se", "s", "sw", "w"].map(h => `<i class="h" data-h="${h}"></i>`).join("");
+  if (lsel.pi != null && !lsel.side) {                                    // 고른 문단 표시
+    const p = [...g.querySelectorAll(`p[data-pi="${lsel.pi}"]`)];
+    for (const e of p) { const pr = e.getBoundingClientRect(); const d = document.createElement("i"); d.className = "pp";
+      Object.assign(d.style, {top: pr.top - G.r.top - by * G.k + "px", height: pr.height + "px"}); lay.appendChild(d); }
+  }
+  bar.innerHTML = barHtml(g, G);
+  bar.style.display = "flex";
+  const bh_ = bar.offsetHeight;
+  Object.assign(bar.style, {left: Math.max(0, L) + "px", top: Math.max(0, T - bh_ - 8) + "px"});
+  bar.querySelectorAll("input").forEach(i => { i.onchange = () => barInput(i); i.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); i.blur(); } e.stopPropagation(); }; });
+  bar.querySelectorAll("button[data-a]").forEach(b => { b.onpointerdown = (e) => e.stopPropagation(); b.onclick = (e) => { e.stopPropagation(); barAction(b.dataset.a); }; });
+  bar.onpointerdown = (e) => e.stopPropagation();
+}
+function barHtml(g, G) {
+  const added = String(lsel.rk).startsWith("+"), it = curItem();
+  const num = (k, v) => `<label>${k}<input data-g="${k.toLowerCase()}" type="number" step="0.1" value="${r1(v)}"></label>`;
+  const itemX = G.mirror ? G.W - G.x - G.w : G.x;
+  let h = `<div class="row"><b>${isText(g) ? "텍스트 프레임" : "개체"}</b>${num("X", itemX)}${num("Y", G.y0)}${num("W", G.w)}${num("H", G.h)}<span class="tip">mm</span>`
+        + (it ? `<button data-a="clear-item" title="이 개체의 재정의를 지우고 상위 페이지 값으로">재정의 지우기</button>` : "") + `</div>`;
+  if (lsel.side) {
+    const hd = headOf(g), a = ((((OV.pages || {})[hd.rk] || {}).anchors || {})[hd.fi] || {})[lsel.pi] || {};
+    h += `<div class="row"><b>고정 개체</b><label>X 오프셋<input data-a2="dx" type="number" step="0.1" value="${a.dx ?? 0}"></label><label>Y 오프셋<input data-a2="dy" type="number" step="0.1" value="${a.dy ?? 0}"></label><span class="tip">mm · 끌어서 옮긴다</span>`
+       + (a.dx != null || a.dy != null ? `<button data-a="clear-anchor">재정의 지우기</button>` : "") + `</div>`;
+  } else if (lsel.pi != null && isText(g)) {
+    const hd = headOf(g), ov = ((((OV.pages || {})[hd.rk] || {}).paras || {})[hd.fi] || {})[lsel.pi] || {};
+    h += `<div class="row"><b>¶ ${+lsel.pi + 1}번째 단락${Object.keys(ov).length ? "+" : ""}</b>` + PARA_OV.map(([k, n]) => `<label>${n}<input data-p="${k}" type="number" step="0.1" value="${ov[k] ?? ""}" placeholder="스타일"></label>`).join("")
+       + (Object.keys(ov).length ? `<button data-a="clear-para" title="이 단락의 재정의를 지우고 단락 스타일 값으로">재정의 지우기</button>` : "") + `</div>`;
+  }
+  if (isText(g) && !added && /^\d+$/.test(String(lsel.rk)))
+    h += `<div class="row"><button data-a="add-thread" title="이 페이지 뒤에 같은 상위 페이지로 페이지를 더하고, 넘친 글을 그 페이지의 같은 텍스트 프레임으로 흘린다(텍스트 스레드)">＋ 페이지 추가 · 텍스트 스레드</button>`
+       + `<button data-a="add-blank" title="이 페이지 뒤에 빈 페이지 — 펼침면을 맞출 때">＋ 빈 페이지 추가</button></div>`;
+  if (added) h += `<div class="row"><span class="tip">더한 페이지</span><button data-a="del-page">페이지 삭제</button></div>`;
+  return h;
+}
+function barInput(i) {
+  const g = selG(); if (!g) return;
+  const v = i.value === "" ? null : +i.value;
+  if (i.dataset.g) {
+    const G = geo(g), cur = Object.assign({x: G.mirror ? G.W - G.x - G.w : G.x, y: G.y0, w: G.w, h: G.h}, curItem() || {});
+    if (v == null) return;
+    cur[i.dataset.g] = r1(v);
+    const pg = ovPage(lsel.rk); pg.items = pg.items || {}; pg.items[lsel.fi] = {x: r1(cur.x), y: r1(cur.y), w: r1(cur.w), h: r1(cur.h)};
+    return ovCommit("프레임 크기 · 위치");
+  }
+  const hd = headOf(g), pg = ovPage(hd.rk);
+  if (i.dataset.p) {
+    pg.paras = pg.paras || {}; const per = (pg.paras[hd.fi] = pg.paras[hd.fi] || {}); const ov = (per[lsel.pi] = per[lsel.pi] || {});
+    if (v == null) delete ov[i.dataset.p]; else ov[i.dataset.p] = v;
+    return ovCommit("단락 재정의");
+  }
+  if (i.dataset.a2) {
+    pg.anchors = pg.anchors || {}; const per = (pg.anchors[hd.fi] = pg.anchors[hd.fi] || {}); const a = (per[lsel.pi] = per[lsel.pi] || {});
+    if (v == null) delete a[i.dataset.a2]; else a[i.dataset.a2] = v;
+    return ovCommit("고정 개체 옮기기");
+  }
+}
+function barAction(a) {
+  const g = selG(); if (!g) return;
+  const hd = headOf(g), pg = ovPage(hd.rk);
+  if (a === "clear-item") { delete (ovPage(lsel.rk).items || {})[lsel.fi]; return ovCommit("재정의 지우기"); }
+  if (a === "clear-para") { delete ((pg.paras || {})[hd.fi] || {})[lsel.pi]; return ovCommit("단락 재정의 지우기"); }
+  if (a === "clear-anchor") { delete ((pg.anchors || {})[hd.fi] || {})[lsel.pi]; return ovCommit("고정 개체 재정의 지우기"); }
+  if (a === "add-thread" || a === "add-blank") {
+    OV.added = OV.added || [];
+    OV.added.push(a === "add-thread" ? {after: +lsel.rk, thread: +lsel.fi} : {after: +lsel.rk});
+    toast(a === "add-thread" ? "페이지를 더하고 텍스트 스레드로 이었습니다" : "빈 페이지를 더했습니다");
+    return ovCommit(a === "add-thread" ? "페이지 추가 · 텍스트 스레드" : "빈 페이지 추가");
+  }
+  if (a === "del-page") {                                                 // 더한 페이지 n 을 빼고, 뒤 페이지들의 재정의 열쇠를 한 칸씩 당긴다
+    const n = +String(lsel.rk).slice(1), pages = OV.pages || {};
+    (OV.added || []).splice(n, 1);
+    const moved = {};
+    for (const [k, v] of Object.entries(pages)) {
+      if (!k.startsWith("+")) { moved[k] = v; continue; }
+      const m = +k.slice(1);
+      if (m < n) moved[k] = v; else if (m > n) moved["+" + (m - 1)] = v;
+    }
+    OV.pages = moved; lsel = null;
+    return ovCommit("페이지 삭제");
+  }
+}
+document.addEventListener("pointerdown", (e) => {
+  if (!LAYOUT) return;
+  const inLay = e.target.closest && e.target.closest("#lay");
+  if (inLay && lsel) {                                                    // 고른 것 끌기 — 손잡이면 크기, 아니면 옮기기
+    const g = selG(); if (!g) return;
+    e.preventDefault(); e.stopPropagation();
+    ldrag = {mode: lsel.side ? "side" : (e.target.dataset.h ? "size" : "move"), h: e.target.dataset.h, x0: e.clientX, y0: e.clientY, G: geo(g), moved: false};
+    $("#lay").setPointerCapture && $("#lay").setPointerCapture(e.pointerId);
+    return;
+  }
+  if (!(e.target.closest && e.target.closest("#pages"))) return;
+  e.preventDefault(); e.stopPropagation();
+  const g = e.target.closest("svg g[data-fi]");
+  if (!g) { lsel = null; return layShow(); }
+  if (g.dataset.lock) { lsel = null; layShow(); return toast("잠긴 개체 — 템플릿에서 잠갔습니다"); }
+  const rk = g.closest(".p").dataset.rk;
+  if (rk === "") { lsel = null; layShow(); return toast("이 페이지는 레코드 페이지가 아닙니다 — 템플릿에서 고칩니다"); }
+  const side = e.target.closest("[data-side]"), p = e.target.closest("p[data-pi]");
+  lsel = {rk, fi: g.dataset.fi, pi: p ? p.dataset.pi : null, side: !!(side && p), sideEl: side ? (side.querySelector(":scope > span") || side) : null};   // 옆 메모 — 자리 잡는 껍데기(크기 0) 안의 글 상자
+  layShow();
+  ldrag = {mode: lsel.side ? "side" : "move", x0: e.clientX, y0: e.clientY, G: geo(g), moved: false};
+}, true);
+document.addEventListener("pointermove", (e) => {
+  if (!LAYOUT || !ldrag) return;
+  const {G} = ldrag, dx = (e.clientX - ldrag.x0) / G.k, dy = (e.clientY - ldrag.y0) / G.k;
+  if (!ldrag.moved && Math.hypot(e.clientX - ldrag.x0, e.clientY - ldrag.y0) < 4) return;
+  ldrag.moved = true; ldrag.dx = dx; ldrag.dy = dy;
+  const lay = $("#lay"), st = $("#stage").getBoundingClientRect();
+  let x = G.x, y = G.y, w = G.w, h = G.h;
+  if (ldrag.mode === "move" || ldrag.mode === "side") { x += dx; y += dy; }
+  else {
+    const hh = ldrag.h || "";
+    if (hh.includes("e")) w = Math.max(2, w + dx);
+    if (hh.includes("s")) h = Math.max(2, h + dy);
+    if (hh.includes("w")) { x += Math.min(dx, w - 2); w = Math.max(2, w - dx); }
+    if (hh.includes("n")) { y += Math.min(dy, h - 2); h = Math.max(2, h - dy); }
+  }
+  if (ldrag.mode !== "side") Object.assign(lay.style, {left: G.r.left - st.left + x * G.k + "px", top: G.r.top - st.top + y * G.k + "px", width: w * G.k + "px", height: h * G.k + "px"});
+  else lay.style.transform = `translate(${dx * G.k}px, ${dy * G.k}px)`;
+  ldrag.box = {x, y, w, h};
+}, true);
+document.addEventListener("pointerup", (e) => {
+  if (!LAYOUT || !ldrag) return;
+  const d = ldrag; ldrag = null; $("#lay").style.transform = "";
+  if (!d.moved) return;
+  e.stopPropagation();
+  const {G} = d;
+  if (d.mode === "side") {                                                // 고정 개체 — 그 단락 옆 메모의 X · Y 오프셋에 끈 만큼 더한다
+    const g = selG(); if (!g) return;
+    const hd = headOf(g), pg = ovPage(hd.rk); pg.anchors = pg.anchors || {};
+    const per = (pg.anchors[hd.fi] = pg.anchors[hd.fi] || {}), a = (per[lsel.pi] = per[lsel.pi] || {});
+    a.dx = r1((a.dx || 0) + d.dx); a.dy = r1((a.dy || 0) + d.dy);         // 옆 메모 자리는 프레임 왼쪽 기준 — 뒤집힌 페이지도 같다
+    return ovCommit("고정 개체 옮기기");
+  }
+  const b = d.box, pg = ovPage(lsel.rk); pg.items = pg.items || {};
+  pg.items[lsel.fi] = {x: r1(G.mirror ? G.W - b.x - b.w : b.x), y: r1(b.y - G.dy), w: r1(b.w), h: r1(b.h)};
+  ovCommit(d.mode === "move" ? "프레임 옮기기" : "프레임 크기");
+}, true);
+["click", "dblclick", "contextmenu"].forEach(t => document.addEventListener(t, (e) => { if (LAYOUT && e.target.closest && e.target.closest("#pages, #lay")) { e.preventDefault(); e.stopPropagation(); } }, true));
+document.addEventListener("keydown", (e) => {                             // 레이아웃 — Esc 고르기 풀기 · 방향키 0.5mm(Shift 5mm) 옮기기. contents 로는 안 보낸다
+  if (!LAYOUT) return;
+  if (e.target.closest && e.target.closest("input, textarea")) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") return;   // 되돌리기는 그대로(끼움 모드는 contents 가 받는다)
+  e.stopImmediatePropagation();
+  if (e.key === "Escape") { lsel = null; return layShow(); }
+  const mv = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]}[e.key];
+  if (!mv || !lsel || lsel.side) return;
+  e.preventDefault();
+  const g = selG(); if (!g) return;
+  const G = geo(g), s = e.shiftKey ? 5 : 0.5, cur = Object.assign({x: G.mirror ? G.W - G.x - G.w : G.x, y: G.y0, w: G.w, h: G.h}, curItem() || {});
+  cur.x += (G.mirror ? -mv[0] : mv[0]) * s; cur.y += mv[1] * s;
+  const pg = ovPage(lsel.rk); pg.items = pg.items || {}; pg.items[lsel.fi] = {x: r1(cur.x), y: r1(cur.y), w: r1(cur.w), h: r1(cur.h)};
+  ovCommit("프레임 옮기기");
+}, true);
+document.addEventListener("keyup", (e) => { if (LAYOUT && !(e.target.closest && e.target.closest("input, textarea"))) e.stopImmediatePropagation(); }, true);
+addEventListener("resize", () => { if (LAYOUT) layShow(); });
+addEventListener("scroll", () => { if (LAYOUT) layShow(); }, true);
+window.addEventListener("message", (e) => {
+  if (e.source !== window.parent || !e.data || typeof e.data !== "object") return;
+  if (e.data.type === "yos-analysis-layout") setLayout(e.data.on);
+});
 post({type: "yos-analysis-ready"});
 </script>
 </body>

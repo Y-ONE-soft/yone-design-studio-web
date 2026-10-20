@@ -260,7 +260,8 @@ def rich_html(v, ctx=None):
             return (anchored_html(v["anc"], ctx, a) if ctx else "") + esc(v.get("t", ""))
         if "side" in v:                                                    # 원고 꼴 옆 메모 [[…]] — 이 텍스트 프레임의 「원고 고정 개체」 설정으로 고정 개체(사용자 정의 위치)
             d = (a or {}).get("side") or {}
-            return anchored_html({"text": v["side"], "pos": "custom", "xref": "frame", "yref": "baseline", "x": d.get("x") or 0, "y": d.get("off") or 0,
+            return anchored_html({"text": v["side"], "pos": "custom", "xref": "frame", "yref": "baseline",   # dx · dy = 이 고정 개체만 옮긴 만큼(고정 개체 옵션 X · Y 오프셋)
+                                  "x": float(d.get("x") or 0) + float(v.get("dx") or 0), "y": float(d.get("off") or 0) + float(v.get("dy") or 0),
                                   "w": d.get("w") or 30, "leading": d.get("lead"), "cs": d.get("cs")}, ctx, a) if ctx else ""
         t = esc(v.get("t", "")).replace("\n", "<br/>")
         if v.get("u"):
@@ -1184,7 +1185,7 @@ def _line_metrics(a, st, ctx):
     return half + m["asc"] * S, half + m["desc"] * S, m, S, L
 
 
-def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
+def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None, pi=None):
     """단락 하나(인디자인 단락) — 텍스트 프레임 단락 값 + 그 데이터 필드의 단락 스타일 + 재정의를 입힌 <p>.
     들여쓰기 · 단락 앞뒤 공백(더한다) · 동일한 스타일 단락 사이 간격 · 정렬 · 단락 음영 · 단락 테두리(잇닿은 같은 값 문단은 한 상자) ·
     단락 경계선 · 글머리 기호 및 번호 매기기 · 탭 · 분리 금지 옵션 · 균등 배치 · 고정 개체(데이터 필드 앞 · 뒤)."""
@@ -1266,6 +1267,8 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None):
         v = f"top:{fb - off - w_:.3f}px;" if up else f"bottom:{lb - off - w_:.3f}px;"
         deco += f'<span data-shade="1" style="position:absolute;z-index:-1;left:{left:.3f}px;right:{right:.3f}px;{v}height:{w_:.3f}px;background:{col(r.get("color"), "#000000")}"></span>'
     attrs = f' data-slot="{esc(slot)}"' if slot else ""
+    if pi is not None:
+        attrs += f' data-pi="{pi}"'                                   # 데이터 필드 단락 차례(문단 표시 ps 의 몇째) — 레코드 페이지 재정의(content.apply_overrides)가 이 번호로 문단을 가리킨다
     if st.get("keep_next"):
         attrs += ' data-keep-next="1"'                                # 다음 행과 함께 유지 — 단 · 페이지 끝에 혼자 남지 않는다(units_compose.js thread)
     if st.get("keep_together"):
@@ -1340,7 +1343,8 @@ def _paras_html(a, html, ctx=None):
     slots = [m.group(1) if m else None for m in ms]
     v0 = [bool(m and m.group(3)) for m in ms]
     ovs = {k: _ov_of(x) for k, x in enumerate(paras)}
-    return "".join(_para(a, x, s_, slots, k, ctx, ovs, v0) for k, (x, s_) in enumerate(zip(paras, slots)))
+    pis = [sum(1 for m in ms[:k + 1] if m) - 1 if ms[k] else None for k in range(len(ms))]
+    return "".join(_para(a, x, s_, slots, k, ctx, ovs, v0, pis[k]) for k, (x, s_) in enumerate(zip(paras, slots)))
 
 
 def _first_baseline(a, html, ctx):
@@ -2595,7 +2599,8 @@ def _page_wrap(ctx, page, zones, frags, W, H, pno, mirror):
         f'<rect class="zone" x="{z["x"]:.3f}" y="{z["y"]:.3f}" width="{z["w"]:.3f}" height="{z["h"]:.3f}" '
         f'fill="none" stroke="#c9b8ff" stroke-width="0.25" stroke-dasharray="1.5 1"/>' for z in zones)
     bg = ctx.color(page.get("background"), "#ffffff") if page.get("background") else "#ffffff"
-    extra = f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "")
+    extra = (f'data-page="{pno}" data-tpl="{esc(page["id"])}"' + (f' data-spare="{esc(page["_spare"])}"' if page.get("_spare") else "")
+             + (' data-mirror="1"' if mirror else ""))                 # 왼쪽 · 오른쪽 페이지가 뒤집혀 그려졌다 — 화면이 끌어 옮긴 자리를 개체 자리로 되돌릴 때
     if ctx.print:
         # 인쇄 모드 — 면 밖에 도련(배경도 늘림) + 재단선. 매체 크기 = 재단 + 2×(도련 + 재단선 자리)
         b = float(ctx.print.get("bleed") or 0)
@@ -2805,6 +2810,8 @@ def story_spares(ctx, pages, spec_of):
                 heads[a["story"]] = (pi, it)
     for name, (hpi, head) in heads.items():
         a = head["atom"]
+        if a.get("smart_reflow") is False:                             # 사람이 페이지를 더해 이은 스레드(레코드 페이지 재정의) — 저절로 더하지 않는다
+            continue
         chain = boxes[name]
         last_pi = max(pi for pi, _ in chain)
         cap = sum(float(it.get("h") or (it.get("atom") or {}).get("h") or 0) for _, it in chain)
