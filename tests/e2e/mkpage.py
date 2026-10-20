@@ -294,7 +294,7 @@ def pstyle_fields(name, v):
     for k, val in v.items():
         if k in ("font", "weight", "b", "i", "__n"):
             continue
-        if k == "align":
+        if k in ("align", "start"):
             st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
         elif k in ("shade_fit", "border_fit"):
             if val:
@@ -312,13 +312,20 @@ def pstyle_fields(name, v):
                 st.append(F("input" + q(f"jc.{kk}"), round(vv / sp / 10, 2) if kk.startswith("letter") else vv, 450))
         elif k == "list":
             for kk, vv in val.items():
-                if kk in ("type", "format", "after"):
+                if kk in ("type", "format", "after", "cs"):
                     st.append({"pick": {"at": "select" + q(f"list.{kk}"), "value": {"\t": "\t", "": "none"}.get(vv, vv)}, "wait": 450})
                 else:
                     st.append(F("input" + q(f"list.{kk}"), vv, 450))
+        elif k == "grep":                                               # 단락 스타일 GREP 스타일 — [(대상 텍스트, 문자 스타일), …] 둘까지
+            for j, (rx, cs) in enumerate(val):
+                st += [F("input" + q(f"grep.{j}.re"), rx, 450), {"pick": {"at": "select" + q(f"grep.{j}.cs"), "value": cs}, "wait": 450}]
         elif k in ("rule_above", "rule_below"):
             for kk, vv in val.items():
-                st.append({"pick": {"at": "select" + q(f"{k}.{kk}"), "value": vv}, "wait": 450} if kk == "width" else F("input" + q(f"{k}.{kk}"), vv, 450))
+                if kk == "keep":                                        # 프레임 안에 유지 — 체크 상자
+                    if vv:
+                        st.append({"click": "input" + q(f"{k}.{kk}"), "wait": 450})
+                    continue
+                st.append({"pick": {"at": "select" + q(f"{k}.{kk}"), "value": vv}, "wait": 450} if kk in ("width", "type") else F("input" + q(f"{k}.{kk}"), vv, 450))
         elif val is not None and val != "":
             st.append(F("input" + q(k), val, 450))
     return st
@@ -454,15 +461,25 @@ def ref_image(doc, xref, path):
     import pymupdf
     from PIL import Image, ImageCms
     pix = pymupdf.Pixmap(doc, xref)
+    sm = re.search(r"/SMask (\d+) 0 R", doc.xref_object(xref))             # 투명 마스크(따로 든 회색 그림) — 둥근 모서리 탭 등. 없으면 지금과 같다
+    mask = Image.frombytes("L", (pix.width, pix.height), pymupdf.Pixmap(doc, int(sm.group(1))).samples) if sm else None
     oi = re.search(r"/OutputIntents\s*\[\s*(\d+) 0 R", doc.xref_object(doc.pdf_catalog()))
     if pix.n - pix.alpha == 4 and oi:
         prof = re.search(r"/DestOutputProfile (\d+) 0 R", doc.xref_object(int(oi.group(1))))
         im = Image.frombytes("CMYK", (pix.width, pix.height), pix.samples if not pix.alpha else pymupdf.Pixmap(pix, 0).samples)
-        ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(doc.xref_stream(int(prof.group(1))))),
-                                  ImageCms.createProfile("sRGB"), outputMode="RGB").save(path)
+        rgb = ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(doc.xref_stream(int(prof.group(1))))),
+                                        ImageCms.createProfile("sRGB"), outputMode="RGB")
+        if mask is not None and mask.size == rgb.size:                       # 광문보카 MEMO 탭 — 마스크를 버려 모서리가 검게 나왔다(2026-10-19)
+            rgb.putalpha(mask)
+        rgb.save(path)
         return path
     if pix.n - pix.alpha >= 4:
         pix = pymupdf.Pixmap(pymupdf.csRGB, pix)
+    if mask is not None and mask.size == (pix.width, pix.height):           # 출력 색 프로필 없는 PDF 도 마스크는 살린다(광문보카 2026 배지 모서리가 검게 나왔다)
+        im = Image.frombytes("RGB", (pix.width, pix.height), (pix if not pix.alpha else pymupdf.Pixmap(pix, 0)).samples)
+        im.putalpha(mask)
+        im.save(path)
+        return path
     pix.save(path)
     return path
 

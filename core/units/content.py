@@ -73,7 +73,8 @@ def plan_pages(plan, pages_by_id, content=None):
                 continue
             flush(run)
             run = []
-            put(pid)
+            if not (isinstance(e, dict) and e.get("repeat") == "none"):     # 「찍지 않음」 — 넘친 글을 받는 덧쪽 모양으로만(render.story_spares)
+                put(pid)
         flush(run)
     for pid in plan.get("back") or []:
         put(pid)
@@ -230,7 +231,7 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
         if not isinstance(rec, dict) or not faces:
             continue
         best = max(faces, key=lambda f: score(f, rec))
-        if score(best, rec)[0] == 0:
+        if score(best, rec)[0] == 0 and score(best, rec)[1] != 1:   # 자리가 안 맞아도 분류가 같으면 그 면(자리 없는 MEMO 면)
             continue
         k = n.get(best["pages"][0], 0)
         n[best["pages"][0]] = k + 1
@@ -349,7 +350,13 @@ def story_value(bind, records, slot_fmt=None):
 def story_cells(atom, name, items):
     """여러 자리 원고 → 그 글상자 값. 표 글상자(atom.table)면 항목 하나가 한 칸(칸마다 한 줄기), 아니면 항목 전부가 한 줄기"""
     if atom.get("table"):
-        return [story_value(name, [r], atom.get("slot_fmt")) for r in items]
+        out = []
+        for r in items:
+            if isinstance(r, dict) and isinstance(r.get("칸"), list):  # 레코드 하나 = 한 행 — 칸마다 그 칸의 필드(인디자인 표 행의 셀). 광문보카 단어 항목(2026-10-19)
+                out += [story_value(name, [c], atom.get("slot_fmt")) for c in r["칸"]]
+            else:
+                out.append(story_value(name, [r], atom.get("slot_fmt")))
+        return out
     return story_value(name, items, atom.get("slot_fmt"))
 
 
