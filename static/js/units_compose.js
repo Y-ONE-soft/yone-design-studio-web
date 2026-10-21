@@ -389,10 +389,10 @@
 
   function cutFrom(o) {                                                // 이 상자에서 넘는 것 → 다음 상자로 갈 단락들(잘린 뒷부분 포함). 안 넘치면 null
     const h = holder(o), over = overOf(o), ps = paras(h);
-    const sf = ps.findIndex((p, k) => k > 0 && p.dataset.startFrame);  // 단락 시작: 다음 프레임 — 그 단락부터 다음 상자로(상자 맨 위 단락이면 그대로)
-    const i0 = ps.findIndex(p => inkPast(p, over));
-    if (sf > 0 && (i0 < 0 || sf <= i0)) return ps.slice(sf);
-    const i = i0;
+    const i = ps.findIndex(p => inkPast(p, over));
+    // 단락 시작(인디자인 분리 금지 옵션) — 다음 단(1단 상자) · 다음 프레임 · 다음 페이지: 그 단락부터 다음 상자로. 상자 맨 위 단락은 그대로
+    const b = ps.findIndex((p, k) => k > 0 && /^(column|frame|page)$/.test(p.dataset.start || "") && !p.dataset.storyCont);
+    if (b > 0 && (i < 0 || b <= i)) { const out = ps.slice(b); out.page = ps[b].dataset.start === "page"; return out; }
     if (i < 0) return null;
     const p = ps[i], rest = ps.slice(i + 1);
     let p2 = null, whole = !!(p.dataset.keep && i > 0);               // 쪼개지 않기 — 문단 전체를 다음 상자로(상자 첫 문단이면 어쩔 수 없이 자른다)
@@ -591,7 +591,9 @@
       for (let i = 0; i < ch.length; i++) {
         const nodes = cutFrom(ch[i]);
         if (!nodes) continue;
-        if (i < ch.length - 1) { put(ch[i + 1], nodes, ch[0], holder(ch[i])); continue; }
+        let j = i + 1;                                                 // 다음 페이지 — 같은 쪽의 이어지는 상자는 건너뛴다(빈 그릇으로)
+        if (nodes.page) for (const pg = ch[i].closest("svg[data-tpl]"); j < ch.length && pg && ch[j].closest("svg[data-tpl]") === pg; j++) put(ch[j], [], ch[0], holder(ch[i]));
+        if (j < ch.length) { put(ch[j], nodes, ch[0], holder(ch[i])); i = j - 1; continue; }
         const rest = document.createElement("div");                    // 끝 상자에서도 넘친 줄 — 반쯤 잘린 줄이 보이지 않게 숨겨 둔다(인디자인의 넘친 글)
         rest.className = "story-rest";
         rest.style.display = "none";

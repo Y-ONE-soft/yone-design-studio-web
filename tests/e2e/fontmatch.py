@@ -141,7 +141,56 @@ def main(pdf, pno, text, nth=0, top=8):
         print(f"  {r[0]:.3f}  겹침 {r[1]:.3f} · 가로세로 차 {r[2]:.2f} · 글자마다 {r[3]:.3f}  {r[4]} {r[5]}  ({r[6]})")
 
 
+def ref_chars(pdf, pno, text):
+    """글자마다 원본 잉크 — 자간이 넓은 글(「P A R T 1」 · 「S A N G I L」)은 낱말 통째로 겹치면 틈 때문에 안 맞아 글자 하나씩 잰다.
+    → [(글자, 잉크 배열)] · 크기"""
+    page = pymupdf.open(pdf)[pno - 1]
+    want = text.replace(" ", "")
+    chars = [(c, sp) for b in page.get_text("rawdict")["blocks"] for ln in b.get("lines", []) for sp in ln["spans"]
+             for c in sp["chars"] if c["c"].strip() and sp["size"] >= 2 and sp.get("alpha", 255) > 0]   # 숨은 글(0.5pt · 투명) 빼고
+    for i in range(len(chars)):
+        run = chars[i:i + len(want)]
+        if "".join(c["c"] for c, _ in run) == want and len({round(sp["bbox"][1]) for _, sp in run}) <= 2:
+            out = []
+            for c, sp in run:
+                pix = page.get_pixmap(clip=pymupdf.Rect(c["bbox"]), dpi=600)
+                L = np.asarray(Image.frombytes("RGB", (pix.width, pix.height), pix.samples).convert("L")).astype(int)
+                col, bg = sp["color"], int(np.median(np.r_[L[0], L[-1], L[:, 0], L[:, -1]]))   # 바탕 = 상자 가장자리
+                a = L > bg + (255 - bg) // 2 if (col >> 16 & 255) + (col >> 8 & 255) + (col & 255) > 600 else L < bg - max(bg - int(L.min()), 1) // 2
+                ys, xs = np.where(a)
+                if len(xs):
+                    out.append((c["c"], a[ys.min():ys.max() + 1, xs.min():xs.max() + 1]))
+            return out, run[0][1]["size"]
+    raise IndexError(text)
+
+
+def main_chars(pdf, pno, text, top=3):
+    """글자마다 겹침 평균 — FONTMATCH_CHARS=1 일 때(자간 넓은 글)"""
+    from core.units.fonts import system_fonts
+    refs, size = ref_chars(pdf, pno, text)
+    rows = []
+    for f in system_fonts():
+        if not has_glyphs(f["path"], text):
+            continue
+        sc = []
+        for ch, r in refs:
+            c = cand_crop(f["path"], ch, 200)
+            if c is None:
+                break
+            s, ar = iou(r, c)
+            sc.append(s - ar * 0.5)
+        if sc and len(sc) == len(refs):
+            rows.append((sum(sc) / len(sc), f["family"], f.get("weight"), f["file"]))
+    rows.sort(reverse=True)
+    print(f"「{text}」 {pdf} {pno}쪽 · 원본 {size:.1f}pt · 글자 {len(refs)}개씩 · 후보 {len(rows)}")
+    for r in rows[:top]:
+        print(f"  {r[0]:.3f}  {r[1]} {r[2]}  ({r[3]})")
+
+
 if __name__ == "__main__":
+    import os
+    if os.environ.get("FONTMATCH_CHARS"):
+        main = lambda pdf, pno, text, nth=0, top=3: main_chars(pdf, pno, text, top)   # noqa: E731
     a = sys.argv[1:]
     if ":" in a[1]:
         for q in a[1:]:

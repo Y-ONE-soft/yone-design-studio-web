@@ -688,6 +688,8 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
 def _bake(ctx, pg, H):
     """원고를 넣은 쪽 하나 → 보통 쪽(인디자인 「병합된 문서」의 한 쪽). 원고가 든 자리는 그 글을 고정 글로 박고 자리 연결을 끊는다. 쪽 번호 등 sys 자리는 그대로."""
     import copy
+    rec = pg.get("_rec") if isinstance(pg.get("_rec"), dict) else {}
+    rid = rec.get("_id")                                                  # 레코드 id(바깥 시스템이 준 것) — 있으면 태그를 남긴다(인디자인 XML 태그): 고친 글을 그 레코드로 내보내고 다시 흘려 넣는다
     items = []
     for it in pg.get("items") or []:
         it = copy.deepcopy(it)
@@ -696,6 +698,8 @@ def _bake(ctx, pg, H):
             f = it.get("fields") or {}
             if a["bind"] in f:
                 a["text"] = f[a["bind"]]
+            if rid is not None:
+                a["tag"] = {"rec": rid, "field": a["bind"]}
             a.pop("bind", None)
             it.setdefault("grow", True)                                   # 원고 자리였던 상자 — 글 길이만큼 자라 아래를 미는 것은 그대로(조판 결과와 같은 배치)
         if a is not None:
@@ -703,6 +707,8 @@ def _bake(ctx, pg, H):
         items.append({k: v for k, v in it.items() if not k.startswith("_")})
     out = {k: v for k, v in pg.items() if not k.startswith("_")}
     out["items"] = items
+    if rid is not None:
+        out["tag"] = {"rec": rid, "rk": pg.get("_rk")}                   # 이 페이지가 어느 레코드의 몇째 페이지인가
     out["mirror"] = False                                                 # 조판 결과는 그린 그대로 찍는다(page_canvas_svgs) — 펼친 쪽도 홀짝으로 뒤집지 않는다
     return out
 

@@ -144,6 +144,16 @@ def test_to_records_multi_field_value_is_not_a_page():
     assert content.from_records(plan, pages, new) == old
 
 
+def test_story_records_roundtrip():
+    """한 줄기 글 → 레코드(인디자인 XML 내보내기) — story_value 의 반대. 병합된 문서에서 고친 글을 데이터로 되돌릴 때(2026-10-21)"""
+    fmt = {"번호": {"inline": True}}
+    recs = [{"번호": "1", "문장": [{"t": "", "side": "메모"}, "Hello ", {"t": "world", "cs": "파랑 글자"}], "해석": "안녕\n둘째 줄"},
+            {"번호": "2", "문장": "Two", "해석": "둘"}]
+    back = content.story_records("번호+문장+해석", content.story_value("번호+문장+해석", recs, fmt))
+    assert back == [{"문장": recs[0]["문장"], "번호": "1", "해석": "안녕\n둘째 줄"}, {"문장": "Two", "번호": "2", "해석": "둘"}]
+    assert content.story_records("어휘", content.story_value("어휘", [{"어휘": "a\tㄱ\nb\tㄴ"}])) == [{"어휘": "a\tㄱ\nb\tㄴ"}]
+
+
 def test_record_page_overrides():
     """레코드 페이지 재정의(인디자인 상위 페이지 항목 재정의 · 단락 재정의 · 고정 개체 · 페이지 추가 + 텍스트 스레드, 2026-10-20) —
     그 레코드 페이지에만 들고, 재정의 없는 레코드 · 원본 쪽은 그대로"""
