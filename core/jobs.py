@@ -143,6 +143,8 @@ def mark_lost_on_boot():
             if not fn.endswith(".json"):
                 continue
             p = os.path.join(_dir(), fn)
+            if getattr(os.stat(p), "st_flags", 0) & 0x40000000:          # SF_DATALESS — iCloud 가 내려 둔 파일(내용 없음). 읽으면 내려받기를 기다려 기동이 멈췄다(디스크가 차면 수백 개)
+                continue                                                 # 내려간 파일은 오래된 잡 — running 으로 남았을 리 없다
             d = json.load(open(p, encoding="utf-8"))
             if d.get("status") in ("queued", "running"):
                 d["status"] = "lost"

@@ -294,7 +294,7 @@ def pstyle_fields(name, v):
     for k, val in v.items():
         if k in ("font", "weight", "b", "i", "__n"):
             continue
-        if k in ("align", "start"):
+        if k in ("align", "start"):                                     # start = 단락 시작(분리 금지 옵션 — column · frame · page)
             st.append({"pick": {"at": "select" + q(k), "value": str(val)}, "wait": 450})
         elif k in ("shade_fit", "border_fit"):
             if val:

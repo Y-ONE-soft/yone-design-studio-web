@@ -55,5 +55,10 @@
     "name": "단어장",
     "dir": "vocab",
     "ready": "auto"
+  },
+  "final": {
+    "name": "직전보충",
+    "dir": "final",
+    "ready": "auto"
   }
 }

@@ -227,7 +227,17 @@ def page_array(pdf, pno, dpi=300, trim=True):
     import numpy as np
     d = pymupdf.open(pdf)
     p = d[pno - 1]
-    pix = p.get_pixmap(dpi=dpi, clip=p.trimbox if trim else None)
+    clip = p.trimbox if trim else None
+    if trim and p.trimbox != p.rect:
+        # 재단선 왼쪽 위를 화소 격자 0 에 — clip 으로 자르면 쪽 전체 격자 그대로라 재단 여백 8.504pt 가 300dpi 에서 0.433화소 밀려
+        # 0.17mm 막대 같은 가는 것의 잉크가 0.88~1.32 로 흔들리고 띠 가장자리 화소가 한 줄 더 잡혔다(2026-10-20 상일보카 꼬리 「|」 · 위 띠).
+        # 결과 PDF(편집기 인쇄)는 재단선이 0 이라 같은 격자가 된다
+        try:
+            p.set_cropbox(p.trimbox)
+            clip = None
+        except Exception:
+            pass
+    pix = p.get_pixmap(dpi=dpi, clip=clip)
     return np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, :3]
 
 
@@ -259,8 +269,10 @@ def shape_match(ra, ma, color, tol, a, b, dpi=300):
 
     def cover(arr, bx):
         """화소마다 바탕색 → 글자색 사이 어디쯤인가(0~1) — 가장자리 흐린 화소도 그만큼만 센다. 바탕 = 상자 둘레의 가장 흔한 색"""
-        x0, y0 = int(bx[0] * k), int(bx[1] * k)
-        x1, y1 = int((bx[0] + bx[2]) * k) + 1, int((bx[1] + bx[3]) * k) + 1
+        # 상자 둘레 1화소까지 — 상자는 진한 화소로 잡혀 흐린 가장자리 화소가 한쪽만 들고 한쪽은 빠졌다. 반 화소 어긋난 0.17mm 막대(2화소)가
+        # 같은 잉크(줄마다 637 대 653)인데 1.28 로 잡혔다(2026-10-20 상일보카 165쪽 꼬리 「|」)
+        x0, y0 = int(bx[0] * k) - 1, int(bx[1] * k) - 1
+        x1, y1 = int((bx[0] + bx[2]) * k) + 2, int((bx[1] + bx[3]) * k) + 2
         H, W = arr.shape[:2]
         win = arr[max(0, y0 - 3):min(H, y1 + 3), max(0, x0 - 3):min(W, x1 + 3)].astype(float)
         rim = np.concatenate([win[0], win[-1], win[:, 0], win[:, -1]])
