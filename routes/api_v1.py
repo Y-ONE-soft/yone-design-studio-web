@@ -19,6 +19,7 @@ POST /renders 본문 (JSON):
       "book":   {"title": "…"},
       "source": {"type": "data", "data": {"format": "yos-workbook-v1" | "yos-analysis-v1", …}},
       "print":  false,                                  ← (선택) 인쇄본
+      "order":  "data",                                 ← (선택, 워크북) 원고 지문 칸 차례 그대로 · 틀 앞뒤 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지) 없이 — contents 책 구성 미리보기
       "callback": {"ref": "…"}                          ← (선택) 웹훅에 그대로 되돌려 줄 값
     }
 (예전 조판 엔진으로 찍던 길 — 원고 파일 · data · plan · 책 목록 · 스키마 · embed-token — 은 2026-10-19 뺐다.)
@@ -243,11 +244,14 @@ def _render_editor(series, design, body, book):
     if isinstance(sample.get("원고"), list):                             # 레코드 차례 샘플 — 어댑터는 옛 꼴 샘플(책 머리 데이터 필드 · 유형 제목)을 읽는다
         from core.units import content as _content
         sample = _content.from_records(pkg.get("plan") or {}, {p["id"]: p for p in pkg.get("pages") or []}, sample)
-    if conv is yos_editor:                                               # 워크북 — 한 벌의 칸 수는 틀의 자리 수로
+    bare = conv is yos_editor and body.get("order") == "data"
+    if bare:                                                             # 바깥이 정한 차례 그대로(contents 책 구성) — 틀의 앞뒤 쪽 없이
+        content, rep = data_records(data, sample, yos_editor.template_caps(pkg))
+    elif conv is yos_editor:                                             # 워크북 — 한 벌의 칸 수는 틀의 자리 수로
         content, rep = conv.to_content(data, sample, yos_editor.template_caps(pkg))
     else:
         content, rep = conv.to_content(data, sample)
-    if content:
+    if content and not bare:
         content = records_for(pkg, content)
     if not content:
         return jsonify({"error": "이 디자인에 넣을 원고가 없다 — " + ", ".join(sorted({str(s.get("label") or s.get("key")) for s in rep["skipped"]})) + " 은(는) 아직 자리가 없다",
@@ -263,10 +267,45 @@ def _render_editor(series, design, body, book):
                      meta={"book_dir": d, "key": f"editor/{series}/{design}", "bid": "", "stem": stem,
                            "series": series, "design": design, "design_version": _version(series, design),
                            "steps": ["editor"], "source": "data", "callback": body.get("callback"), "via": "api_v1",
-                           "created_by": u.get("sub"), "report": rep, "print": body.get("print") is True})
+                           "created_by": u.get("sub"), "report": rep, "print": body.get("print") is True, "bare": bare})
     job.meta["bid"] = job.id
     return jsonify({"job": job.id, "book": {"key": job.meta["key"], "bid": job.id},
                     "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
+
+
+def data_records(data, sample, caps):
+    """워크북 원고를 **원고가 온 차례 그대로** 레코드 차례 원고로(order: data) — 틀의 쪽 차례(STEP 1 전부 → STEP 2 …)를 따르지 않는다.
+
+    원고의 지문 칸(passages[i])이 곧 차례다. 잇닿은 지문 칸이 같은 항목 **하나**씩이면 한 덩어리(한 벌에 지문 여럿이 들어가는 면을 채우게).
+    항목이 여럿인 칸(한 지문에 A → B)은 그 칸 혼자 — 항목 차례대로 한 항목씩 바꿔 그 면의 레코드를 잇는다. 레코드마다 「_면」(구성 이름)을 달아 그 면으로 찍는다.
+    지문 번호는 처음 나온 차례(같은 지문이 다시 오면 같은 번호). 면이 없는 원고(실전 한 줄기 등)는 report.skipped 로."""
+    from core.sources import yos_editor
+    ps = (data or {}).get("passages") or []
+    num = {}
+    for p in ps:
+        num.setdefault((p.get("no"), p.get("content")), len(num) + 1)
+    sig = lambda p: tuple(it.get("key") for it in p.get("items") or [])
+    groups = []
+    for p in ps:
+        if groups and len(sig(p)) == 1 and sig(groups[-1][-1]) == sig(p) and num[(p.get("no"), p.get("content"))] == num[(groups[-1][-1].get("no"), groups[-1][-1].get("content"))] + 1:
+            groups[-1].append(p)
+        else:
+            groups.append([p])
+    recs, rep = [], {"sent": [], "skipped": []}
+    for g in groups:
+        for k in dict.fromkeys(sig(g[0])):
+            sub = dict(data, passages=[dict(p, items=[it for it in p.get("items") or [] if it.get("key") == k]) for p in g])
+            content, r = yos_editor.to_content(sub, sample, caps, start=num[(g[0].get("no"), g[0].get("content"))])
+            rep["sent"] += r["sent"]
+            rep["skipped"] += r["skipped"]
+            for face, v in content.items():
+                if face not in caps:
+                    continue
+                if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+                    recs += [dict(x, _면=face) for x in v]
+                elif v:
+                    rep["skipped"].append({"passage": g[0].get("no"), "key": k, "label": face, "why": "이 틀에서 「원고마다」 면이 아니라 차례대로 못 넣음"})
+    return ({"원고": recs} if recs else {}), rep
 
 
 def records_for(pkg, content):
@@ -497,14 +536,19 @@ def _run_editor_render(job, log):
     d, series, design = job.meta["book_dir"], job.meta["series"], job.meta["design"]
     with open(os.path.join(d, "content.json"), encoding="utf-8") as f:
         content = json.load(f)["content"]
+    t0 = time.time()
     lib, plan, skin = _editor_lib(job.meta, content)
+    log(f"[편집기] 틀 읽기 {time.time() - t0:.1f}초")
+    if job.meta.get("bare"):                                           # order: data — 앞뒤 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지) 없이 원고가 고른 면만
+        plan["bare"] = True
     log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
     ctx = _ctx(lib, skin.get("id"))
     sp = next((s for s in lib["specs"] if s.get("id") == plan.get("spec")), None) or {}
     if job.meta.get("print"):                                          # print: true — 종이 = 판형 + 도련(재단선 없음, RGB). 다른 조판 PDF 와 이어 붙일 때(contents 분석본 간지)
         ctx.print = {"bleed": float(sp.get("bleed") or 3.0), "marks": False}
+    t0 = time.time()
     svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
-    log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else ""))
+    log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else "") + f" · 그리기 {time.time() - t0:.1f}초")
     res = _print_pdf(job, svgs, spec, ctx, log)
     res.update(report=job.meta.get("report"), fill={"filled": rep.get("filled"), "unfilled": rep.get("unfilled")})
     return res
@@ -516,11 +560,13 @@ def _print_pdf(job, svgs, spec, ctx, log):
     d = job.meta["book_dir"]
     main = job.meta["stem"] + ".pdf"
     seen = {}                                                          # 크롬이 그린 넘침 — pdf.to_pdf 가 채운다
+    t0 = time.time()
     if job.meta.get("print"):
         _pdf.to_print_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), bleed=ctx.print["bleed"], marks=False,
                           cmyk=False, title=job.meta["stem"], log=log, report=seen)
     else:
         _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"], report=seen)
+    log(f"[PDF] {time.time() - t0:.1f}초")
     pages = None
     try:
         import fitz
@@ -529,12 +575,14 @@ def _print_pdf(job, svgs, spec, ctx, log):
         pass
     uploaded = {}
     if blob.enabled():
+        t0 = time.time()
         try:
             r = blob.put_file(os.path.join(d, main), f"renders/{job.id}/{main}", "application/pdf", access=blob.pdf_access())
             if r:
                 uploaded[main] = {"url": r["url"], "pathname": r["pathname"], "access": r["access"]}
         except Exception as e:                                         # noqa: BLE001 — 업로드 실패가 조판 결과를 지우면 안 된다
             log(f"[blob] {main} 업로드 실패: {e}")
+        log(f"[blob] {time.time() - t0:.1f}초")
     over = [{"page": n, "text": t} for n, ts in seen.get("overset") or [] for t in ts]
     for o in over:                                                     # 넘침 — 글상자에 다 안 들어가 잘린 글(인디자인 빨간 +). 산출은 내되 경고로
         log(f"[넘침] {o['page']}쪽 · {o['text']}…")

@@ -550,12 +550,13 @@ def _doc_text(c):
     return dict(c, text=text)
 
 
-def to_content(data, sample=None, caps=None):
+def to_content(data, sample=None, caps=None, start=1):
+    """start = 첫 지문의 번호(이 책 안 차례) — 원고를 덩어리로 나눠 바꿀 때(order: data) 덩어리 사이 번호가 이어지게"""
     sample, caps = sample or {}, caps or {}
     story = next((k for nm, c in caps.items() if nm.startswith("S") for k in c if "발문" in k and "+" in k), None)   # 실전 문제 한 줄기 자리
     used = {s for name, (srcs, _) in GROUPS.items() if name in caps for s in srcs}
     groups, exam, report = {}, [], {"sent": [], "skipped": []}
-    for seq, p in enumerate((data or {}).get("passages") or [], 1):
+    for seq, p in enumerate((data or {}).get("passages") or [], start):
         num = str(seq)                                                    # 지문 번호 = 이 책 안 차례(1부터) — 모의고사 원래 번호(36 등)는 쓰지 않는다
         got, qs = {}, []
         for it in p.get("items") or []:

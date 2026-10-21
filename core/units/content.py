@@ -10,6 +10,7 @@
 규약: docs/편집기_재현/원고자리_규약.md
 """
 import copy
+import re
 
 
 def plan_page_ids(plan):
@@ -201,8 +202,25 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
     면(상위 페이지) = 「원고마다」 쪽 하나, 그 쪽에 「두 페이지짜리」(펼침면)를 켰으면 다음 쪽까지 둘(인디자인 펼침면 상위 페이지 — 쪽 이름은 안 본다). 고르기:
     ① 덩어리의 자리 이름이 면 자리와 가장 많이 맞는 면 ② 면 설정 「구분」이 덩어리 「구분」과 같은 면 ③ 덩어리에 없어 비는 면 자리가 적은 면(그림 없는 지문 → 그림 자리 없는 면)
     ④ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
-    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다."""
+    덩어리에 「_면」(면 첫 쪽 이름)이 있으면 그 이름의 면이 먼저다(바깥 원고를 바깥이 정한 차례로 찍을 때 — api_v1 order: data).
+    맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다.
+    문서에 bare 가 켜져 있으면 맨 앞 · 맨 뒤 · 「한 번만」 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지)은 안 찍는다 — 덩어리가 고른 면만."""
     faces, head, tail = _faces(plan, pages_by_id)
+    if plan.get("bare"):
+        head, tail, front, back = [], [], [], []
+        merged = []                                                       # 이름 없는 「원고마다」 쪽(빈 면 N)은 앞 면에 붙인다 — 옛 꼴 묶음처럼 한 벌(둘째 지문 칸이 거기 있다)
+        for f in faces:
+            nm = (pages_by_id.get(f["pages"][0]) or {}).get("name") or ""
+            if merged and (not nm or re.fullmatch(r"빈 면 \d+", nm)):
+                merged[-1]["pages"] += f["pages"]
+                for k, v in f["occ"].items():
+                    merged[-1]["occ"][k] = merged[-1]["occ"].get(k, 0) + v
+            else:
+                merged.append(f)
+        faces = merged
+    else:
+        front, back = list(plan.get("front") or []), list(plan.get("back") or [])
+    first = lambda f: (pages_by_id.get(f["pages"][0]) or {}).get("name") or ""
 
     def score(f, rec):
         keys = [k for k in rec if not k.startswith("_")]
@@ -211,7 +229,8 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
         gub = 0 if not (f["구분"] and g) else (1 if f["구분"] == g else -1)
         empty = -sum(1 for k in f["occ"] if k not in rec)
         cap = -sum(abs(len(rec[k]) - f["occ"][k]) for k in keys if k in f["occ"] and f["occ"][k] > 1 and isinstance(rec[k], list))
-        return hit, gub, empty, cap
+        named = 1 if rec.get("_면") and first(f) == rec["_면"] else 0
+        return named, hit, gub, empty, cap
 
     out, n = [], {}
 
@@ -225,19 +244,20 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
             if k:
                 pg["id"] = f"{pid}~{k + 1}"
         out.append(pg)
-    for pid in list(plan.get("front") or []) + head:
+    for pid in front + head:
         put(pid)
     for rec in chunks:
         if not isinstance(rec, dict) or not faces:
             continue
         best = max(faces, key=lambda f: score(f, rec))
-        if score(best, rec)[0] == 0 and score(best, rec)[1] != 1:   # 자리가 안 맞아도 분류가 같으면 그 면(자리 없는 MEMO 면)
+        sc = score(best, rec)
+        if not sc[0] and sc[1] == 0 and sc[2] != 1:   # 자리가 안 맞아도 분류가 같으면 그 면(자리 없는 MEMO 면)
             continue
         k = n.get(best["pages"][0], 0)
         n[best["pages"][0]] = k + 1
         for pid in best["pages"]:
             put(pid, rec, k)
-    for pid in tail + list(plan.get("back") or []):
+    for pid in tail + back:
         put(pid)
     return out
 
