@@ -590,11 +590,14 @@ def to_content(data, sample=None, caps=None, start=1):
                 report["skipped"].append({"passage": p.get("no"), "key": it.get("key"), "label": label, "why": "이 틀에 아직 자리 없음"})
                 continue
             report["sent"].append({"passage": p.get("no"), "key": it.get("key"), "label": label})
+        # 지문 글 — contents 지문 정본(content)은 문장마다 줄을 바꿔 둔 것(문장 목록을 잇기만 한 저장 꼴)이라 그대로 넣으면
+        # 문장마다 단락이 되어 단락 음영이 문장마다 따로 그려진다(본문 O/X 지문 상자가 들쭉날쭉). 지문 칸에는 한 단락으로.
+        text = " ".join(s.strip() for s in (p.get("content") or "").split("\n") if s.strip())
         for name, (srcs, _) in GROUPS.items():
             if name in caps and srcs & set(got):
-                groups.setdefault(name, []).append((num, p.get("content"), got))
+                groups.setdefault(name, []).append((num, text, got))
         if qs:
-            exam.append((num, p.get("content"), qs))
+            exam.append((num, text, qs))
     if not groups and not exam:
         return {}, report
     # 책 머리글 자리(차례 면의 교재명 · 단원명 — 면마다 하나씩) — 교재명 = contents 책 이름(「26년 6월 고1모의고사」), 그 밖은 비운다(견본 글을 남기지 않는다)
