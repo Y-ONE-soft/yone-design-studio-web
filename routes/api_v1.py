@@ -535,7 +535,9 @@ def _run_editor_render(job, log):
     d, series, design = job.meta["book_dir"], job.meta["series"], job.meta["design"]
     with open(os.path.join(d, "content.json"), encoding="utf-8") as f:
         content = json.load(f)["content"]
+    t0 = time.time()
     lib, plan, skin = _editor_lib(job.meta, content)
+    log(f"[편집기] 틀 읽기 {time.time() - t0:.1f}초")
     if job.meta.get("bare"):                                           # order: data — 앞뒤 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지) 없이 원고가 고른 면만
         plan["bare"] = True
     log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
@@ -543,8 +545,9 @@ def _run_editor_render(job, log):
     sp = next((s for s in lib["specs"] if s.get("id") == plan.get("spec")), None) or {}
     if job.meta.get("print"):                                          # print: true — 종이 = 판형 + 도련(재단선 없음, RGB). 다른 조판 PDF 와 이어 붙일 때(contents 분석본 간지)
         ctx.print = {"bleed": float(sp.get("bleed") or 3.0), "marks": False}
+    t0 = time.time()
     svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
-    log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else ""))
+    log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else "") + f" · 그리기 {time.time() - t0:.1f}초")
     res = _print_pdf(job, svgs, spec, ctx, log)
     res.update(report=job.meta.get("report"), fill={"filled": rep.get("filled"), "unfilled": rep.get("unfilled")})
     return res
@@ -556,11 +559,13 @@ def _print_pdf(job, svgs, spec, ctx, log):
     d = job.meta["book_dir"]
     main = job.meta["stem"] + ".pdf"
     seen = {}                                                          # 크롬이 그린 넘침 — pdf.to_pdf 가 채운다
+    t0 = time.time()
     if job.meta.get("print"):
         _pdf.to_print_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), bleed=ctx.print["bleed"], marks=False,
                           cmyk=False, title=job.meta["stem"], log=log, report=seen)
     else:
         _pdf.to_pdf(svgs, float(spec["w"]), float(spec["h"]), os.path.join(d, main), title=job.meta["stem"], report=seen)
+    log(f"[PDF] {time.time() - t0:.1f}초")
     pages = None
     try:
         import fitz
@@ -569,12 +574,14 @@ def _print_pdf(job, svgs, spec, ctx, log):
         pass
     uploaded = {}
     if blob.enabled():
+        t0 = time.time()
         try:
             r = blob.put_file(os.path.join(d, main), f"renders/{job.id}/{main}", "application/pdf", access=blob.pdf_access())
             if r:
                 uploaded[main] = {"url": r["url"], "pathname": r["pathname"], "access": r["access"]}
         except Exception as e:                                         # noqa: BLE001 — 업로드 실패가 조판 결과를 지우면 안 된다
             log(f"[blob] {main} 업로드 실패: {e}")
+        log(f"[blob] {time.time() - t0:.1f}초")
     over = [{"page": n, "text": t} for n, ts in seen.get("overset") or [] for t in ts]
     for o in over:                                                     # 넘침 — 글상자에 다 안 들어가 잘린 글(인디자인 빨간 +). 산출은 내되 경고로
         log(f"[넘침] {o['page']}쪽 · {o['text']}…")
