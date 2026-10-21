@@ -45,3 +45,21 @@ def test_number_hanging_over_column_edge_is_not_spanning():
     right = {"x": 106, "y": 33, "w": 81.9, "atom": {"t": "text", "bind": "오른쪽", "w": 60, "text": "x"}}
     pg = {"columns": {"n": 2, "gutter": 4}, "items": [num, box("왼쪽", 20, 160), right]}
     assert names([pg]) == ["왼쪽", "번호", "오른쪽"]
+
+
+def test_bare_records_pick_named_face_in_order():
+    # order: data — 덩어리의 「_면」이 고른 면으로, 원고 차례 그대로. 앞뒤 「한 번만」 쪽은 안 찍고, 이름 없는 이어지는 쪽(빈 면 N)은 앞 면의 한 벌
+    pages = {
+        "cov": {"id": "cov", "name": "속표지", "items": [box("교재명", 20, 20)]},
+        "a": {"id": "a", "name": "A", "items": [box("지문", 20, 20)]},
+        "a2": {"id": "a2", "name": "빈 면 2", "items": [box("지문", 20, 20)]},
+        "b": {"id": "b", "name": "B", "items": [box("지문", 20, 20)]},
+        "end": {"id": "end", "name": "뒤표지", "items": []},
+    }
+    sec = {"pages": [{"page": "cov", "repeat": "once"}, {"page": "a", "repeat": "each_set"}, {"page": "a2", "repeat": "each_set"},
+                     {"page": "b", "repeat": "each_set"}, {"page": "end", "repeat": "once"}]}
+    recs = {"원고": [{"지문": ["1"], "_면": "B"}, {"지문": ["1", "2"], "_면": "A"}]}
+    out = content.plan_pages({"sections": [sec], "bare": True}, pages, recs)
+    assert [p["name"] for p in out] == ["B", "A", "빈 면 2"]
+    out = content.plan_pages({"sections": [sec]}, pages, recs)        # bare 가 아니면 예전처럼 앞뒤 쪽까지
+    assert out[0]["name"] == "속표지" and out[-1]["name"] == "뒤표지"
