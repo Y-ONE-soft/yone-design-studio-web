@@ -485,7 +485,7 @@ OUTLINE, ORDER_WRITTEN, GRAMMAR_FIX = "cq-b54cc606", "cq-a793218f", "cq-df5aa646
 WRITING = {"cq-5361e6bd", "cq-dc819941"}                                 # 영작배열(낱말) · 영작배열(서술형)
 
 
-def _from_ms(c, caps):
+def _from_ms(c, caps, label=None):
     """컴포넌트 원고 꼴(AI 로 만들든 업로드든 같은 꼴) → [(받는 재료, 내용)] — 구성 함수들이 읽는 꼴로"""
     comp = c.get("component")
     if comp in ("vocab-choice", "vocab-choice-2", "grammar-choice"):
@@ -516,6 +516,9 @@ def _from_ms(c, caps):
         return [("q:어법OX", {"questions": [{"passage": x.get("text") or ""} for x in c.get("sentences") or []]})]
     if comp in WRITING:
         return [("영작배열", {"items": c.get("items") or []})]
+    if isinstance(c.get("questions"), list):                              # 문제 꼴(유형 전용 꼴이 없는 것 전부, 2026-10-21) — 실전 문제처럼
+        if label in Q_LABELS or c.get("group") == "question":
+            return [(f"q:{label}", {"questions": c["questions"]})]
     return []
 
 
@@ -562,7 +565,7 @@ def to_content(data, sample=None, caps=None, start=1):
         for it in p.get("items") or []:
             label = it.get("label")
             if (it.get("content") or {}).get("form") == MS_FORM:              # 컴포넌트 원고 꼴(2026-10-20) — AI · 업로드 같은 꼴
-                pairs = _from_ms(it["content"], caps)
+                pairs = _from_ms(it["content"], caps, label)
                 took = False
                 for s, c in pairs:
                     if s in used:

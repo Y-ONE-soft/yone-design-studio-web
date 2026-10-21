@@ -67,6 +67,18 @@ def test_component_manuscript_form():
     assert content["C영작배열"][0]["보기단어"] == ["(a / b)", "( a / b ) ( c )"]
 
 
+def test_question_form_goes_to_exam_story():
+    """문제 꼴(유형 전용 꼴이 없는 것 — AI · 업로드 같은 꼴, 2026-10-21) → 실전 문제 자리. 문제 묶음이 아닌 유형은 빠진다"""
+    q = {"no": 1, "prompt": "다음 글의 요지로 가장 적절한 것은?", "passage": "a <u>b</u>", "choices": ["x", "y"], "answer": "2"}
+    items = [{"key": "cq-64489a01", "label": "주장", "content": dict(form="wb-manuscript", component="cq-64489a01", group="question", questions=[q])},
+             {"key": "interpretation-1", "label": "본문해석 1단계", "content": dict(form="wb-manuscript", component="interpretation-1", group="step1", questions=[q])}]
+    content, rep = yos_editor.to_content(_data(items), SAMPLE, CAPS)
+    story = content["지문번호+번호+발문+보기+지문+요약문+선지+조건+주석"]
+    assert story[1] == [["번호", "01"], ["발문", "다음 글의 요지로 가장 적절한 것은?"], ["보기", ["a ", {"t": "b", "cs": "밑줄"}]], ["선지", "① x\n② y"]]
+    assert [s["key"] for s in rep["sent"]] == ["cq-64489a01"]
+    assert [s["key"] for s in rep["skipped"]] == ["interpretation-1"]
+
+
 def test_passages_per_set_from_template():
     content, _ = yos_editor.to_content(_data([VOCAB], 5), SAMPLE, CAPS)
     assert [r["지문번호"] for r in content["A어휘선택"]] == [["1", "2", "3", "4"], ["5"]]
