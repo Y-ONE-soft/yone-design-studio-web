@@ -63,3 +63,17 @@ def test_bare_records_pick_named_face_in_order():
     assert [p["name"] for p in out] == ["B", "A", "빈 면 2"]
     out = content.plan_pages({"sections": [sec]}, pages, recs)        # bare 가 아니면 예전처럼 앞뒤 쪽까지
     assert out[0]["name"] == "속표지" and out[-1]["name"] == "뒤표지"
+
+
+def test_bare_once_story_page_is_a_face():
+    # order: data — 「한 번만」 쪽이라도 글 잇기 첫 상자에 원고 자리(한 줄기 「a+b」)가 있으면 면, 이어 받는 쪽은 그 면에 붙고 덧쪽 표시(_spare)
+    head = {"x": 20, "y": 20, "atom": {"t": "text", "bind": "번호+발문", "story": "s1", "story_seq": 1, "w": 80, "text": "x"}}
+    cont = {"x": 20, "y": 20, "atom": {"t": "text", "story": "s1", "story_seq": 2, "w": 80, "text": ""}}
+    pages = {"a": {"id": "a", "name": "A", "items": [box("지문", 20, 20)]},
+             "s": {"id": "s", "name": "S실전", "items": [head]}, "s2": {"id": "s2", "name": "S실전 오른쪽", "items": [cont]},
+             "m": {"id": "m", "name": "MEMO", "items": []}}
+    sec = {"pages": [{"page": "a", "repeat": "each_set"}, {"page": "s", "repeat": "once"}, {"page": "s2", "repeat": "once"}, {"page": "m", "repeat": "once"}]}
+    recs = {"원고": [{"번호+발문": [[["번호", "01"]]], "_면": "S실전"}, {"지문": ["1"], "_면": "A"}, {"번호+발문": [[["번호", "02"]]], "_면": "S실전"}]}
+    out = content.plan_pages({"sections": [sec], "bare": True}, pages, recs)
+    assert [p["name"] for p in out] == ["S실전", "S실전 오른쪽", "A", "S실전", "S실전 오른쪽"]
+    assert [p.get("_spare") for p in out] == [None, "s1", None, None, "s1"]

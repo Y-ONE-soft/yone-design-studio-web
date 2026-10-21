@@ -309,6 +309,12 @@ def data_records(data, sample, caps):
         for face in sorted(content, key=lambda f: first.get(f, len(first))):
             v = content[face]
             if face not in caps:
+                # 한 줄기 자리(실전 문제 「지문번호+번호+발문+…」) — 그 자리가 있는 쪽을 면으로(content._faces_by_chunk bare 가 「한 번만」 쪽도 면으로 본다)
+                home = next((nm for nm, c in caps.items() if face in c), None) if "+" in face else None
+                if home and isinstance(v, list) and v:
+                    recs.append({face: v, "_면": home})
+                elif "+" in face and v:
+                    rep["skipped"].append({"passage": g[0].get("no"), "label": face, "why": "이 틀에 이 원고를 넣을 쪽이 없음"})
                 continue
             if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
                 # 면 머리 제목 = 지문 칸의 원고 유형 이름(contents 책 구성 — 본문정리(주제)) — 틀 견본 제목(「본문 정리」)을 그대로 두지 않는다
@@ -406,7 +412,7 @@ def render_edit(jid):
 @bp.route("/renders/<jid>/view")
 def render_view(jid):
     """웹 보기 — pdf: false 로 찍은 쪽을 화면에 그린다(PDF 없이). 두 쪽씩(펼침면처럼) 창 폭에 맞추고, 좁으면 한 쪽씩.
-    서체 · 단락 컴포저는 PDF 와 같다. 다 그리면 부모 창에 높이를 알린다(postMessage {yosView: {height}}) — contents 가 iframe 높이를 맞춘다."""
+    서체 · 단락 컴포저는 PDF 와 같다. 다 그리면 부모 창에 높이 · 쪽 수를 알린다(postMessage {yosView: {height, pages}}) — contents 가 iframe 높이를 맞춘다."""
     from core.units import fonts, pdf as _pdf
     job = _find_job(jid)
     if not job:
@@ -417,17 +423,16 @@ def render_view(jid):
     except (OSError, ValueError):
         abort(410)                                                        # pdf: false 로 찍지 않았거나 찍기 폴더가 없다(서버 다시 켜짐)
     w, h = float(data["w"]), float(data["h"])
-    pages = "".join(f'<div class="c"><div class="p">{s}</div></div>' for s in data["svgs"])
-    fit = ("const W=" + f"{w * 96 / 25.4:.3f}" + ",H=" + f"{h * 96 / 25.4:.3f}" + ";"
+    pages = "".join(f'<div class="p">{s}</div>' for s in data["svgs"])          # 쪽 하나 = 칸 하나 — 글이 안 닿은 이어 받는 쪽은 컴포저가 칸째 지운다
+    fit = ("const W=" + f"{w * 96 / 25.4:.3f}" + ";"
            "function fit(){const g=document.querySelector('.g'),two=innerWidth>=700,cw=two?(innerWidth-6)/2:innerWidth,z=cw/W;"
-           "g.style.gridTemplateColumns=two?'1fr 1fr':'1fr';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=z;});"
-           "document.querySelectorAll('.c').forEach(c=>{c.style.height=(H*z)+'px';});"
-           "parent.postMessage({yosView:{height:document.documentElement.scrollHeight}},'*');}"
+           "g.style.gridTemplateColumns=two?'max-content max-content':'max-content';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=z;});"
+           "parent.postMessage({yosView:{height:document.documentElement.scrollHeight,pages:document.querySelectorAll('.p').length}},'*');}"
            "document.addEventListener('DOMContentLoaded',()=>(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(fit,0)));"
            "addEventListener('resize',fit);")
     html = (f'<!doctype html><html><head><meta charset="utf-8"><title>{job.meta.get("stem") or "지면"}</title><style>'
-            f'html,body{{margin:0;padding:0;background:transparent}} .g{{display:grid;column-gap:6px;row-gap:16px}} .c{{overflow:hidden}} '
-            f'.p{{width:{w}mm;height:{h}mm;background:#fff;box-shadow:0 0 0 1px #e3e6eb}} .p > svg{{display:block;width:{w}mm;height:{h}mm;overflow:hidden}} '
+            f'html,body{{margin:0;padding:0;background:transparent}} .g{{display:grid;column-gap:6px;row-gap:16px}} '
+            f'.p{{width:{w}mm;height:{h}mm;overflow:hidden;background:#fff;box-shadow:0 0 0 1px #e3e6eb}} .p > svg{{display:block;width:{w}mm;height:{h}mm;overflow:hidden}} '
             f'.p svg .zone{{display:none}} .story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("url")}'
             f'</style></head><body><div class="g">{pages}</div><script>{_pdf._compose_js()}</script><script>{fit}</script></body></html>')
     return html, 200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, max-age=600"}

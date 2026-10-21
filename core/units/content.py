@@ -217,6 +217,24 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
                     merged[-1]["occ"][k] = merged[-1]["occ"].get(k, 0) + v
             else:
                 merged.append(f)
+        # 「한 번만」 쪽 중 글 잇기 첫 상자에 원고 자리가 있는 쪽(실전 문제 한 줄기)도 면으로 — 덩어리가 「_면」으로 고르면 그 원고로 찍는다.
+        # 그 이야기가 이어지는 「한 번만」 쪽(자리 없이 이어지는 상자만 — 실전문제 오른쪽)은 그 면에 붙인다.
+        story_of = lambda pg: {(it.get("atom") or {}).get("story") for it in pg.get("items") or [] if (it.get("atom") or {}).get("story")}
+        last = None
+        for sc in plan.get("sections") or []:
+            for e in sc.get("pages") or []:
+                if not isinstance(e, dict) or e.get("repeat") != "once":
+                    last = None
+                    continue
+                pg = pages_by_id.get(e["page"]) or {}
+                if any("+" in s for s in _slots_of(pg)):
+                    last = {"pages": [e["page"]], "구분": (e.get("구분") or "").strip(), "occ": {s: 1 for s in _slots_of(pg)}, "stories": story_of(pg)}
+                    merged.append(last)
+                elif last and not _slots_of(pg) and story_of(pg) and story_of(pg) <= last["stories"]:
+                    last["pages"].append(e["page"])
+                    last.setdefault("spare", {})[e["page"]] = sorted(story_of(pg))[0]   # 글이 안 닿으면 지우는 이어 받는 쪽(덧쪽처럼 — units_compose dropSpares)
+                else:
+                    last = None
         faces = merged
     else:
         front, back = list(plan.get("front") or []), list(plan.get("back") or [])
@@ -257,6 +275,8 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
         n[best["pages"][0]] = k + 1
         for pid in best["pages"]:
             put(pid, rec, k)
+            if pid in (best.get("spare") or {}):
+                out[-1]["_spare"] = best["spare"][pid]
     for pid in tail + back:
         put(pid)
     return out
