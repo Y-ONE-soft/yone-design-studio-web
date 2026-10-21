@@ -278,6 +278,7 @@ def data_records(data, sample, caps):
     """워크북 원고를 **원고가 온 차례 그대로** 레코드 차례 원고로(order: data) — 틀의 쪽 차례(STEP 1 전부 → STEP 2 …)를 따르지 않는다.
 
     원고의 지문 칸(passages[i])이 곧 차례다. 지문 칸 하나 = 원고 유형 하나(contents 책 구성의 칸 갈래 — 본문정리(주제) = 본문정리 + 주제).
+    지문 칸에 title(유형 이름)이 있으면 면 머리 제목 자리(「제목」)에 그 이름을 넣는다.
     잇닿은 지문 칸이 같은 항목 꼴이고 지문이 이어지면 한 덩어리(한 벌에 지문 여럿이 들어가는 면을 채우게).
     덩어리는 항목 전부를 한 번에 바꾼다 — 여러 항목이 한 면을 같이 채운다(B본문정리 = 본문정리 + 주제 · 제목 객관식).
     덩어리에서 면이 여럿 나오면 그 면을 채우는 항목이 처음 나온 차례로. 레코드마다 「_면」(구성 이름)을 달아 그 면으로 찍는다.
@@ -287,7 +288,8 @@ def data_records(data, sample, caps):
     num = {}
     for p in ps:
         num.setdefault((p.get("no"), p.get("content")), len(num) + 1)
-    sig = lambda p: tuple(it.get("key") for it in p.get("items") or [])
+    keys_of = lambda p: tuple(it.get("key") for it in p.get("items") or [])
+    sig = lambda p: (p.get("title"), keys_of(p))                         # 같은 유형(이름 · 항목)끼리만 묶는다
     groups = []
     for p in ps:
         if groups and sig(groups[-1][-1]) == sig(p) and num[(p.get("no"), p.get("content"))] == num[(groups[-1][-1].get("no"), groups[-1][-1].get("content"))] + 1:
@@ -300,7 +302,7 @@ def data_records(data, sample, caps):
         rep["sent"] += r["sent"]
         rep["skipped"] += r["skipped"]
         first = {}                                                       # 면 → 그 면을 채우는 항목이 처음 나온 차례
-        for i, k in enumerate(dict.fromkeys(sig(g[0]))):
+        for i, k in enumerate(dict.fromkeys(keys_of(g[0]))):
             one, _ = yos_editor.to_content(dict(data, passages=[dict(g[0], items=[it for it in g[0].get("items") or [] if it.get("key") == k])]), sample, caps)
             for face in one:
                 first.setdefault(face, i)
@@ -309,7 +311,9 @@ def data_records(data, sample, caps):
             if face not in caps:
                 continue
             if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
-                recs += [dict(x, _면=face) for x in v]
+                # 면 머리 제목 = 지문 칸의 원고 유형 이름(contents 책 구성 — 본문정리(주제)) — 틀 견본 제목(「본문 정리」)을 그대로 두지 않는다
+                title = (g[0].get("title") or "").strip()
+                recs += [dict(x, _면=face, **({"제목": title} if title and "제목" in x else {})) for x in v]
             elif v:
                 rep["skipped"].append({"passage": g[0].get("no"), "label": face, "why": "이 틀에서 「원고마다」 면이 아니라 차례대로 못 넣음"})
     return ({"원고": recs} if recs else {}), rep
