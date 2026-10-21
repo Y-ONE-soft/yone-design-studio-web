@@ -277,8 +277,10 @@ def _render_editor(series, design, body, book):
 def data_records(data, sample, caps):
     """워크북 원고를 **원고가 온 차례 그대로** 레코드 차례 원고로(order: data) — 틀의 쪽 차례(STEP 1 전부 → STEP 2 …)를 따르지 않는다.
 
-    원고의 지문 칸(passages[i])이 곧 차례다. 잇닿은 지문 칸이 같은 항목 **하나**씩이면 한 덩어리(한 벌에 지문 여럿이 들어가는 면을 채우게).
-    항목이 여럿인 칸(한 지문에 A → B)은 그 칸 혼자 — 항목 차례대로 한 항목씩 바꿔 그 면의 레코드를 잇는다. 레코드마다 「_면」(구성 이름)을 달아 그 면으로 찍는다.
+    원고의 지문 칸(passages[i])이 곧 차례다. 지문 칸 하나 = 원고 유형 하나(contents 책 구성의 칸 갈래 — 본문정리(주제) = 본문정리 + 주제).
+    잇닿은 지문 칸이 같은 항목 꼴이고 지문이 이어지면 한 덩어리(한 벌에 지문 여럿이 들어가는 면을 채우게).
+    덩어리는 항목 전부를 한 번에 바꾼다 — 여러 항목이 한 면을 같이 채운다(B본문정리 = 본문정리 + 주제 · 제목 객관식).
+    덩어리에서 면이 여럿 나오면 그 면을 채우는 항목이 처음 나온 차례로. 레코드마다 「_면」(구성 이름)을 달아 그 면으로 찍는다.
     지문 번호는 처음 나온 차례(같은 지문이 다시 오면 같은 번호). 면이 없는 원고(실전 한 줄기 등)는 report.skipped 로."""
     from core.sources import yos_editor
     ps = (data or {}).get("passages") or []
@@ -288,24 +290,28 @@ def data_records(data, sample, caps):
     sig = lambda p: tuple(it.get("key") for it in p.get("items") or [])
     groups = []
     for p in ps:
-        if groups and len(sig(p)) == 1 and sig(groups[-1][-1]) == sig(p) and num[(p.get("no"), p.get("content"))] == num[(groups[-1][-1].get("no"), groups[-1][-1].get("content"))] + 1:
+        if groups and sig(groups[-1][-1]) == sig(p) and num[(p.get("no"), p.get("content"))] == num[(groups[-1][-1].get("no"), groups[-1][-1].get("content"))] + 1:
             groups[-1].append(p)
         else:
             groups.append([p])
     recs, rep = [], {"sent": [], "skipped": []}
     for g in groups:
-        for k in dict.fromkeys(sig(g[0])):
-            sub = dict(data, passages=[dict(p, items=[it for it in p.get("items") or [] if it.get("key") == k]) for p in g])
-            content, r = yos_editor.to_content(sub, sample, caps, start=num[(g[0].get("no"), g[0].get("content"))])
-            rep["sent"] += r["sent"]
-            rep["skipped"] += r["skipped"]
-            for face, v in content.items():
-                if face not in caps:
-                    continue
-                if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
-                    recs += [dict(x, _면=face) for x in v]
-                elif v:
-                    rep["skipped"].append({"passage": g[0].get("no"), "key": k, "label": face, "why": "이 틀에서 「원고마다」 면이 아니라 차례대로 못 넣음"})
+        content, r = yos_editor.to_content(dict(data, passages=g), sample, caps, start=num[(g[0].get("no"), g[0].get("content"))])
+        rep["sent"] += r["sent"]
+        rep["skipped"] += r["skipped"]
+        first = {}                                                       # 면 → 그 면을 채우는 항목이 처음 나온 차례
+        for i, k in enumerate(dict.fromkeys(sig(g[0]))):
+            one, _ = yos_editor.to_content(dict(data, passages=[dict(g[0], items=[it for it in g[0].get("items") or [] if it.get("key") == k])]), sample, caps)
+            for face in one:
+                first.setdefault(face, i)
+        for face in sorted(content, key=lambda f: first.get(f, len(first))):
+            v = content[face]
+            if face not in caps:
+                continue
+            if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
+                recs += [dict(x, _면=face) for x in v]
+            elif v:
+                rep["skipped"].append({"passage": g[0].get("no"), "label": face, "why": "이 틀에서 「원고마다」 면이 아니라 차례대로 못 넣음"})
     return ({"원고": recs} if recs else {}), rep
 
 
