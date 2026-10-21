@@ -327,6 +327,15 @@
     const b = boxOf(o), r = b.getBoundingClientRect(), k = r.height / (b.offsetHeight || 1) || 1;
     return r.bottom - parseFloat(getComputedStyle(b).paddingBottom || 0) * k + 0.5 * k;
   }
+  function overOf(o) {                                                 // 이 상자를 넘었나(화면 사각형 → 참) — 한 단: 아래 끝 아래.
+    const h = holder(o);                                               // 여러 단(인디자인 열): 상자 높이를 다 채우면 브라우저가 마지막 단 오른쪽에 단을 더 만든다 — 그 글이 넘친 글
+    if (h && parseInt(getComputedStyle(h).columnCount) > 1) {
+      const hr = h.getBoundingClientRect(), k = hr.width / (h.offsetWidth || 1) || 1, R = hr.right + 0.5 * k;
+      return (r) => r.left > R;
+    }
+    const L = limitOf(o);
+    return (r) => r.bottom > L;
+  }
 
   function charsOf(p) {                                                // 글자 자리 — 컴포저의 tokens 와 같게 펴고, inline-block 개체는 한 글자로
     const out = [];
@@ -336,21 +345,21 @@
     while ((n = w.nextNode())) if (n.nodeType === 3) for (let i = 0; i < n.data.length; i++) out.push([n, i]);
     return out;
   }
-  function bottomOf(c) {                                               // 그 글자의 아래 끝 — 공백·안 그려진 글자는 null
-    if (c[1] < 0) { const r = c[0].getBoundingClientRect(); return r.height ? r.bottom : null; }
+  function rectOf(c) {                                                 // 그 글자의 화면 사각형 — 공백·안 그려진 글자는 null
+    if (c[1] < 0) { const r = c[0].getBoundingClientRect(); return r.height ? r : null; }
     if (/\s/.test(c[0].data[c[1]])) return null;
     const r = document.createRange();
     r.setStart(c[0], c[1]);
     r.setEnd(c[0], c[1] + 1);
     const rs = r.getClientRects();
-    return rs.length ? rs[rs.length - 1].bottom : null;
+    return rs.length ? rs[rs.length - 1] : null;
   }
-  function firstOver(cs, L) {                                          // 아래 끝이 L 을 넘는 첫 (보이는) 글자 — 줄은 위에서 아래로 차례라 이분 탐색
-    const vis = (i) => { for (let j = i; j < cs.length; j++) { const b = bottomOf(cs[j]); if (b != null) return [j, b]; } return [cs.length, null]; };
+  function firstOver(cs, over) {                                       // 상자를 넘는 첫 (보이는) 글자 — 글자는 줄 · 단 차례라 이분 탐색
+    const vis = (i) => { for (let j = i; j < cs.length; j++) { const b = rectOf(cs[j]); if (b != null) return [j, b]; } return [cs.length, null]; };
     let lo = 0, hi = cs.length;
     while (lo < hi) {
       const mid = (lo + hi) >> 1, [j, b] = vis(mid);
-      if (j >= cs.length || b > L) hi = mid; else lo = j + 1;
+      if (j >= cs.length || over(b)) hi = mid; else lo = j + 1;
     }
     return vis(lo)[0];
   }
@@ -365,11 +374,23 @@
     sh.forEach(x => { x.style.display = ""; });
     return b;
   }
+  function inkPast(e, over) {                                          // 실제 글자가 상자를 넘었나 — 한 단은 inkBottom 과 같고, 여러 단은 넘친 단에 걸친 조각이 있나
+    const sh = [...e.querySelectorAll("[data-shade]")];
+    sh.forEach(x => { x.style.display = "none"; });
+    let hit = over(e.getBoundingClientRect());
+    if (!hit) {
+      const r = document.createRange();
+      r.selectNodeContents(e);
+      for (const x of r.getClientRects()) if (x.height > 0.5 && over(x)) { hit = true; break; }
+    }
+    sh.forEach(x => { x.style.display = ""; });
+    return hit;
+  }
 
   function cutFrom(o) {                                                // 이 상자에서 넘는 것 → 다음 상자로 갈 단락들(잘린 뒷부분 포함). 안 넘치면 null
-    const h = holder(o), L = limitOf(o), ps = paras(h);
+    const h = holder(o), over = overOf(o), ps = paras(h);
     const sf = ps.findIndex((p, k) => k > 0 && p.dataset.startFrame);  // 단락 시작: 다음 프레임 — 그 단락부터 다음 상자로(상자 맨 위 단락이면 그대로)
-    const i0 = ps.findIndex(p => inkBottom(p) > L);
+    const i0 = ps.findIndex(p => inkPast(p, over));
     if (sf > 0 && (i0 < 0 || sf <= i0)) return ps.slice(sf);
     const i = i0;
     if (i < 0) return null;
@@ -378,7 +399,7 @@
     if (whole) { /* 자르지 않는다 */ }
     else if (p.dataset.jcDone) {                                       // 컴포저 단락 — 줄마다 span
       const lines = lineEls(p);
-      let k = lines.findIndex(s => inkBottom(s) > L);
+      let k = lines.findIndex(s => inkPast(s, over));
       // 행 유지(인디자인 「처음 N행 · 마지막 N행」) — 상자 끝에 처음 몇 줄만, 다음 상자에 마지막 몇 줄만 남지 않게
       const kf = +p.dataset.keepFirst || 0, kl = +p.dataset.keepLast || 0;
       if (k > 0 && kl && lines.length - k < kl) k = lines.length - kl;   // 넘어갈 줄이 모자라면 더 넘긴다
@@ -386,10 +407,10 @@
       if (k === 0) whole = true;
       else if (k > 0) { p2 = p.cloneNode(false); lines.slice(k).forEach(s => p2.appendChild(s)); }
     } else {                                                           // 브라우저가 꺾은 단락 — 넘는 줄의 첫 글자에서 자른다
-      const cs = charsOf(p), j = firstOver(cs, L);
+      const cs = charsOf(p), j = firstOver(cs, over);
       if (j < cs.length) {
         let before = false;
-        for (let q = 0; q < j && !before; q++) before = bottomOf(cs[q]) != null;
+        for (let q = 0; q < j && !before; q++) before = rectOf(cs[q]) != null;
         if (!before) whole = true;
         else {
           const r = document.createRange();
@@ -561,7 +582,6 @@
     for (const ch of chains(root || document)) {
       if (tableOf(ch[0])) { threadTable(ch); continue; }
       if (!ch.every(o => holder(o))) continue;
-      if (ch.some(o => parseInt(getComputedStyle(holder(o)).columnCount) > 1)) continue;   // 상자 안 다단은 아직 — 브라우저 단 나눔 그대로
       ch.forEach(o => {                                                // 지난번 넘침을 되돌린다 — 그사이 이을 상자가 생겼으면(여러 쪽을 한꺼번에) 그리로 간다
         delete o.dataset.overflow;
         o.querySelectorAll(".story-over").forEach(m => m.remove());

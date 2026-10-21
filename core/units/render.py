@@ -281,8 +281,10 @@ def rich_html(v, ctx=None):
             st += f"color:{ctx.color(v['color']) if ctx else v['color']};"
         if v.get("font"):
             st += f"font-family:{esc(ctx.font(v['font']) if ctx else v['font'])};"
-        if v.get("size"):                                                  # 줄 높이 0 — 크기 바꾼 조각이 고정 행간 줄을 키우지 않게(인디자인 행간)
+        if v.get("size"):                                                  # 줄 높이 0 — 크기 · 서체 바꾼 조각이 고정 행간 줄을 키우지 않게(인디자인 행간)
             st += f"font-size:{float(v['size']) * PT:.3f}px;line-height:0;"
+        elif v.get("font"):
+            st += "line-height:0;"
         if v.get("bshift"):
             st += f"position:relative;top:{-float(v['bshift']) * PT:.3f}px;"
         if v.get("tracking"):
@@ -383,8 +385,10 @@ def char_css(cs, ctx=None):
     st = ""
     if cs.get("font"):
         st += f"font-family:{ctx.font(cs['font']) if ctx else font_family(cs['font'])};"
-    if cs.get("size"):                                                     # 줄 높이 0 — 작은 글자가 고정 행간 줄을 키우지 않게(인디자인 행간)
+    if cs.get("size"):                                                     # 줄 높이 0 — 작은 글자 · 다른 서체가 고정 행간 줄을 키우지 않게(인디자인 행간)
         st += f"font-size:{float(cs['size']) * PT:.3f}px;line-height:0;"
+    elif cs.get("font"):
+        st += "line-height:0;"
     if cs.get("color"):
         st += f"color:{col(cs['color'])};"
     if cs.get("weight"):
@@ -1216,7 +1220,10 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None, pi=None):
     shade, border = st.get("shade"), float(st.get("border") or 0)
     fit = bool((shade and st.get("shade_fit")) or (not shade and border and st.get("border_fit")))
     if fit:                                                            # 음영 · 테두리 너비 「텍스트」 — 문단 상자를 글 폭으로(들여쓰기는 바깥 여백)
-        css += f"margin-left:{ind:.3f}px;margin-right:{ind_r:.3f}px;width:fit-content;max-width:calc(100% - {ind + ind_r:.3f}px);box-sizing:border-box;"
+        al_ = str(st.get("align") or a.get("align") or "")                # 맞춤 상자는 단락 정렬대로 민다(인디자인 — 오른쪽 정렬이면 상자도 오른쪽)
+        ml = "auto" if al_ in ("right", "center") else f"{ind:.3f}px"
+        mr = "auto" if al_ == "center" else f"{ind_r:.3f}px"
+        css += f"margin-left:{ml};margin-right:{mr};width:fit-content;max-width:calc(100% - {ind + ind_r:.3f}px);box-sizing:border-box;"
     else:
         if ind:
             css += f"padding-left:{ind:.3f}px;"

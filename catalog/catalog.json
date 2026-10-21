@@ -60,5 +60,10 @@
     "name": "직전보충",
     "dir": "final",
     "ready": "auto"
+  },
+  "special-lecture": {
+    "name": "특강교재",
+    "dir": "special-lecture",
+    "ready": "auto"
   }
 }

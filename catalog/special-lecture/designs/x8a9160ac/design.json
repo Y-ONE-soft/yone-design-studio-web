@@ -1,0 +1,169 @@
+{
+ "name": "광문1 세서특필02",
+ "desc": "gold_26-1-기말_광문1_세서특필02_내지.pdf · 110페이지",
+ "source": "PDF: gold_26-1-기말_광문1_세서특필02_내지.pdf",
+ "date": "2026-10-21",
+ "draft": false,
+ "layout_rules": false,
+ "made": "pdf",
+ "intake": {
+  "measured": {
+   "pages": 110,
+   "trim_mm": [
+    210.0,
+    297.0
+   ],
+   "bleed_mm": 3.0,
+   "media_mm": [
+    216.0,
+    303.0
+   ],
+   "margins_mm": {
+    "left": 20.0,
+    "right": 22.2,
+    "top": 42.9,
+    "bottom": 39.0
+   },
+   "fonts": [
+    {
+     "font": "NotoSansCJKkr-Regular",
+     "share": 0.833
+    },
+    {
+     "font": "MyriadPro-Regular",
+     "share": 0.057
+    },
+    {
+     "font": "EliceDXNeolliOTF-Md",
+     "share": 0.037
+    },
+    {
+     "font": "PretendardVariable-Regul",
+     "share": 0.036
+    },
+    {
+     "font": "NotoSansCJKkr-Medium",
+     "share": 0.028
+    },
+    {
+     "font": "ghanachoco",
+     "share": 0.003
+    },
+    {
+     "font": "EliceDXNeolliOTF-Bd",
+     "share": 0.002
+    },
+    {
+     "font": "designhouseOTFLight",
+     "share": 0.002
+    }
+   ],
+   "sizes_pt": [
+    {
+     "pt": 9.0,
+     "share": 0.583
+    },
+    {
+     "pt": 8.0,
+     "share": 0.298
+    },
+    {
+     "pt": 10.0,
+     "share": 0.095
+    },
+    {
+     "pt": 6.0,
+     "share": 0.007
+    },
+    {
+     "pt": 7.0,
+     "share": 0.006
+    },
+    {
+     "pt": 15.0,
+     "share": 0.004
+    }
+   ],
+   "text_colors": [
+    {
+     "hex": "#231f20",
+     "share": 0.649
+    },
+    {
+     "hex": "#58595b",
+     "share": 0.296
+    },
+    {
+     "hex": "#005ead",
+     "share": 0.025
+    },
+    {
+     "hex": "#6d6e71",
+     "share": 0.01
+    },
+    {
+     "hex": "#3c75ba",
+     "share": 0.009
+    },
+    {
+     "hex": "#404041",
+     "share": 0.006
+    },
+    {
+     "hex": "#1787c8",
+     "share": 0.002
+    },
+    {
+     "hex": "#4791ce",
+     "share": 0.001
+    }
+   ],
+   "shape_colors": [
+    {
+     "hex": "#ffe4ae",
+     "area_mm2": 65448
+    },
+    {
+     "hex": "#b2ddf6",
+     "area_mm2": 28190
+    },
+    {
+     "hex": "#61c1ed",
+     "area_mm2": 15815
+    },
+    {
+     "hex": "#ffd67d",
+     "area_mm2": 9562
+    },
+    {
+     "hex": "#c4cdd7",
+     "area_mm2": 6709
+    },
+    {
+     "hex": "#005ead",
+     "area_mm2": 4893
+    },
+    {
+     "hex": "#569cd4",
+     "area_mm2": 4772
+    },
+    {
+     "hex": "#a5b3c0",
+     "area_mm2": 1940
+    }
+   ],
+   "running_header": true,
+   "running_footer": true,
+   "sampled_pages": [
+    3,
+    18,
+    33,
+    48,
+    64,
+    79,
+    94,
+    109
+   ]
+  }
+ }
+}
