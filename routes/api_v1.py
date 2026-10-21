@@ -267,7 +267,8 @@ def _render_editor(series, design, body, book):
                      meta={"book_dir": d, "key": f"editor/{series}/{design}", "bid": "", "stem": stem,
                            "series": series, "design": design, "design_version": _version(series, design),
                            "steps": ["editor"], "source": "data", "callback": body.get("callback"), "via": "api_v1",
-                           "created_by": u.get("sub"), "report": rep, "print": body.get("print") is True, "bare": bare})
+                           "created_by": u.get("sub"), "report": rep, "print": body.get("print") is True, "bare": bare,
+                           "web": body.get("pdf") is False})
     job.meta["bid"] = job.id
     return jsonify({"job": job.id, "book": {"key": job.meta["key"], "bid": job.id},
                     "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
@@ -390,6 +391,36 @@ def render_edit(jid):
     from core.units import fonts
     return render_template("render_edit.html", jid=jid, title=job.meta.get("stem") or "조판 결과",
                            font_css=fonts.fix_css() + fonts.face_css("url"))
+
+
+@bp.route("/renders/<jid>/view")
+def render_view(jid):
+    """웹 보기 — pdf: false 로 찍은 쪽을 화면에 그린다(PDF 없이). 두 쪽씩(펼침면처럼) 창 폭에 맞추고, 좁으면 한 쪽씩.
+    서체 · 단락 컴포저는 PDF 와 같다. 다 그리면 부모 창에 높이를 알린다(postMessage {yosView: {height}}) — contents 가 iframe 높이를 맞춘다."""
+    from core.units import fonts, pdf as _pdf
+    job = _find_job(jid)
+    if not job:
+        abort(404)
+    try:
+        with open(os.path.join(job.meta.get("book_dir") or "", "svgs.json"), encoding="utf-8") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        abort(410)                                                        # pdf: false 로 찍지 않았거나 찍기 폴더가 없다(서버 다시 켜짐)
+    w, h = float(data["w"]), float(data["h"])
+    pages = "".join(f'<div class="c"><div class="p">{s}</div></div>' for s in data["svgs"])
+    fit = ("const W=" + f"{w * 96 / 25.4:.3f}" + ",H=" + f"{h * 96 / 25.4:.3f}" + ";"
+           "function fit(){const g=document.querySelector('.g'),two=innerWidth>=700,cw=two?(innerWidth-6)/2:innerWidth,z=cw/W;"
+           "g.style.gridTemplateColumns=two?'1fr 1fr':'1fr';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=z;});"
+           "document.querySelectorAll('.c').forEach(c=>{c.style.height=(H*z)+'px';});"
+           "parent.postMessage({yosView:{height:document.documentElement.scrollHeight}},'*');}"
+           "document.addEventListener('DOMContentLoaded',()=>(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(fit,0)));"
+           "addEventListener('resize',fit);")
+    html = (f'<!doctype html><html><head><meta charset="utf-8"><title>{job.meta.get("stem") or "지면"}</title><style>'
+            f'html,body{{margin:0;padding:0;background:transparent}} .g{{display:grid;column-gap:6px;row-gap:16px}} .c{{overflow:hidden}} '
+            f'.p{{width:{w}mm;height:{h}mm;background:#fff;box-shadow:0 0 0 1px #e3e6eb}} .p > svg{{display:block;width:{w}mm;height:{h}mm;overflow:hidden}} '
+            f'.p svg .zone{{display:none}} .story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("url")}'
+            f'</style></head><body><div class="g">{pages}</div><script>{_pdf._compose_js()}</script><script>{fit}</script></body></html>')
+    return html, 200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, max-age=600"}
 
 
 @bp.route("/renders/<jid>/source")
@@ -549,6 +580,12 @@ def _run_editor_render(job, log):
     t0 = time.time()
     svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else "") + f" · 그리기 {time.time() - t0:.1f}초")
+    if job.meta.get("web"):                                            # pdf: false — 웹에서만 본다(/renders/<id>/view). PDF(크롬) 없이 쪽 그림만 남긴다
+        with open(os.path.join(d, "svgs.json"), "w", encoding="utf-8") as f:
+            json.dump({"svgs": [s["svg"] if isinstance(s, dict) else s for s in svgs], "w": spec["w"], "h": spec["h"]}, f, ensure_ascii=False)
+        job.rc = 0
+        return {"pdfs": [], "main_pdf": None, "pages": len(svgs), "view": True, "report": job.meta.get("report"),
+                "fill": {"filled": rep.get("filled"), "unfilled": rep.get("unfilled")}}
     res = _print_pdf(job, svgs, spec, ctx, log)
     res.update(report=job.meta.get("report"), fill={"filled": rep.get("filled"), "unfilled": rep.get("unfilled")})
     return res
