@@ -399,6 +399,7 @@ def render_merge(jid):
         p.pop("cont", None)
     doc = {k: v for k, v in plan.items() if k not in ("content", "catalog")}
     doc["front"], doc["back"] = [], []
+    doc["from"] = {"series": job.meta["series"], "design": job.meta["design"]}   # 만든 템플릿 — 바뀐 레코드를 다시 흘려 넣을 때(books/<plan>/records)
     doc["sections"] = [{"id": "s1", "name": "본문", "pages": [{"page": p["id"], "repeat": "once"} for p in pages]}]
     try:
         with open(os.path.join(_ddir(job.meta["series"], job.meta["design"]), "design.json"), encoding="utf-8") as f:
@@ -571,6 +572,143 @@ def book_delete(pid):
         return jsonify({"error": "템플릿 문서는 지울 수 없다"}), 400
     store.delete("plans", pid)
     return jsonify({"ok": True})
+
+
+def _book_plan(pid):
+    from core.units import store
+    plan = store.by_id(store.load("plans")).get(pid) if re.match(r"^[A-Za-z0-9_-]{1,64}$", pid or "") else None
+    if not plan or plan.get("catalog"):
+        abort(404)
+    return plan
+
+
+def _book_records(plan):
+    """병합된 문서의 태그(데이터 필드였던 프레임의 레코드 id · 데이터 필드) → 레코드들(인디자인 XML 내보내기).
+    한 줄기 글(문단 첫머리 자리 표시)은 content.story_records 로 [{자리: 값}, …] 에 되돌린다. 같은 데이터 필드가 여러 프레임이면 먼저 나온 것.
+    → (레코드 id 차례, {id: {데이터 필드: 값}}, {id: [페이지 id …]})"""
+    from core.units import content, store
+    pages = store.by_id(store.load("pages"))
+    order, recs, where = [], {}, {}
+    for pid in content.plan_page_ids(plan):
+        pg = pages.get(pid) or {}
+        t = pg.get("tag") or {}
+        if t.get("rec") is not None:
+            rid = str(t["rec"])
+            if rid not in recs:
+                order.append(rid)
+                recs[rid] = {}
+            where.setdefault(rid, []).append(pid)
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            tg = a.get("tag") or {}
+            if tg.get("rec") is None or not tg.get("field"):
+                continue
+            rid, f = str(tg["rec"]), tg["field"]
+            if rid not in recs:
+                order.append(rid)
+                recs[rid] = {}
+            if f in recs[rid]:
+                continue
+            v = a.get("text")
+            if "+" in f:
+                recs[rid][f] = content.story_records(f, v)
+            elif isinstance(v, list) and any(isinstance(x, dict) and "ps" in x for x in v):
+                rs = content.story_records(f, v)
+                recs[rid][f] = rs[0].get(f, "") if rs else ""
+            else:
+                recs[rid][f] = v
+    return order, recs, where
+
+
+@bp.route("/books/<pid>/records")
+def book_records(pid):
+    """병합된 문서에서 고친 글 → 레코드(XML 내보내기). → {order, records: {id: {데이터 필드: 값}}, pages: {id: [페이지 id]}}"""
+    order, recs, where = _book_records(_book_plan(pid))
+    return jsonify({"order": order, "records": recs, "pages": where})
+
+
+@bp.route("/books/<pid>/docs", methods=["POST"])
+def book_docs(pid):
+    """분석본 병합된 문서 → contents 조판 문서(사본) — {bases: {레코드 id: 보냈던 사본}} → {docs: {id: {doc, changed}}, missing: [id]}
+    문서에서 고친 글 · 문자 스타일 · 윗주를 사본의 문장(태깅본 · 역할) · 해석 · 주제 · 문제 · 어휘로 되돌린다(core/sources/yos_analysis.to_doc —
+    문자 스타일이 곧 역할). 레코드 페이지 재정의(사본 overrides)는 그대로 둔다 — 배치는 문서 몫."""
+    from core.sources import yos_analysis
+    plan = _book_plan(pid)
+    if (plan.get("from") or {}).get("series") != "analysis":
+        return jsonify({"error": "분석본으로 만든 병합된 문서가 아니다"}), 400
+    bases = (request.get_json(silent=True) or {}).get("bases") or {}
+    if not isinstance(bases, dict):
+        return jsonify({"error": "bases 는 {레코드 id: 사본}"}), 400
+    _, recs, _ = _book_records(plan)
+    out, missing = {}, []
+    for rid, base in bases.items():
+        rec = recs.get(str(rid))
+        if not isinstance(base, dict) or rec is None:
+            missing.append(rid)
+            continue
+        rec = dict(rec)
+        rows = rec.get(yos_analysis.ROWS)
+        if isinstance(rows, list):
+            rec[yos_analysis.ROWS] = [dict(r, 문장=r.get("문장") if isinstance(r.get("문장"), list) else [r.get("문장") or ""]) for r in rows]
+        if isinstance(base.get("overrides"), dict):
+            rec["_overrides"] = base["overrides"]
+        doc, changed = yos_analysis.to_doc(rec, base)
+        out[str(rid)] = {"doc": doc, "changed": changed}
+    return jsonify({"docs": out, "missing": missing})
+
+
+@bp.route("/books/<pid>/records/<rid>", methods=["POST"])
+def book_record_put(pid, rid):
+    """바뀐 레코드를 병합된 문서의 그 태그 프레임에 다시 흘려 넣는다(인디자인 XML 가져오기 · 내용 병합) — 프레임 자리 · 크기 · 페이지는 그대로.
+    {doc}(분석본 사본) 또는 {record}. 만든 템플릿(plan.from)에 그 레코드만 넣어 데이터 필드 값을 짓고, 같은 레코드 · 같은 페이지 차례 · 같은 데이터 필드 프레임의 글을 바꾼다.
+    → {ok, frames: 바꾼 프레임 수}"""
+    import tempfile
+    from core.sources import yos_analysis
+    from core.units import store
+    from routes.units import _ctx, _filled
+    plan = _book_plan(pid)
+    src = plan.get("from") or {}
+    body = request.get_json(silent=True) or {}
+    if isinstance(body.get("record"), dict):
+        rec = dict(body["record"])
+    elif isinstance(body.get("doc"), dict) and src.get("series") == "analysis":
+        rec = yos_analysis.record(body["doc"])
+    else:
+        return jsonify({"error": "doc(분석본 사본) 또는 record 가 필요하다"}), 400
+    rec["_id"] = str(rid)
+    try:
+        with open(os.path.join(_cat()._ddir(src.get("series") or "", src.get("design") or ""), "units.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+    except (OSError, ValueError, TypeError):
+        return jsonify({"error": "만든 템플릿을 찾을 수 없다(예전 병합된 문서는 다시 만든다)"}), 400
+    content = {"원고": [rec]}                                              # 레코드 차례 — 자동 상위 페이지 적용이 데이터 필드가 맞는 상위 페이지를 고른다
+    with tempfile.TemporaryDirectory() as td:
+        lib, tplan, skin = _editor_lib({"book_dir": td, "series": src["series"], "design": src["design"]}, content)
+        seq, _rep, _so, _sp = _filled(lib, tplan, content, _ctx(lib, skin.get("id")), drop_empty=True)
+    vals = {}
+    for pg, r, _ in seq:
+        if not isinstance(r, dict) or str(r.get("_id")) != str(rid):
+            continue
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            if a.get("bind") and not str(a["bind"]).startswith("sys.") and a["bind"] in (it.get("fields") or {}):
+                vals.setdefault((str(pg.get("_rk")), a["bind"]), it["fields"][a["bind"]])
+    pages = store.by_id(store.load("pages"))
+    n = 0
+    for pgid in _book_records(plan)[2].get(str(rid), []):
+        pg = pages.get(pgid)
+        rk = str((pg.get("tag") or {}).get("rk"))
+        hit = False
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            tg = a.get("tag") or {}
+            if str(tg.get("rec")) == str(rid) and (rk, tg.get("field")) in vals:
+                a["text"] = vals[(rk, tg["field"])]
+                n += 1
+                hit = True
+        if hit:
+            store.put("pages", pg)
+    return jsonify({"ok": True, "frames": n})
 
 
 def _run_book_render(job, log):

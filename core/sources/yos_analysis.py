@@ -433,6 +433,8 @@ def record(doc):
         rec["어휘"] = _voca_field(voca)
     if isinstance(doc.get("overrides"), dict) and doc["overrides"]:     # 레코드 페이지 재정의(프레임 크기 · 단락 재정의 · 페이지 추가 …) — content.apply_overrides
         rec["_overrides"] = doc["overrides"]
+    if doc.get("_id"):                                                   # 바깥 시스템의 레코드 id — 병합된 문서가 태그로 남긴다(고친 글을 이 레코드로 내보내기)
+        rec["_id"] = str(doc["_id"])
     return rec
 
 

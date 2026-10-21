@@ -347,6 +347,60 @@ def story_value(bind, records, slot_fmt=None):
     return out
 
 
+def story_records(bind, runs):
+    """story_value 의 반대 — 한 줄기 글(문단 첫머리 자리 표시 ps) → [{자리: 값}, …](인디자인 XML 내보내기처럼, 태그 = 자리 표시).
+    문단 표시의 v0 = 그 자리 값의 첫 문단: 이미 그 자리가 든 레코드에 v0 이 또 오면 새 레코드다. v0 없는 같은 자리 문단은 앞 값에 줄을 바꿔 잇는다.
+    같은 단락에 이어 쓰는 자리(inline — 문항 번호)는 그 문단 표시 바로 뒤에 온다(story_value). 값은 꾸밈 조각이 있으면 조각 목록, 글뿐이면 글."""
+    if not isinstance(runs, list):
+        return [{bind: runs}] if runs not in (None, "") else []
+    out, cur, slot = [], None, None
+
+    def cut():                                                           # 문단 끝 줄바꿈 — 편집기는 문단 사이를 앞 조각 끝 「\n」으로 저장한다(rtNorm). 값에는 안 든다
+        v = (cur or {}).get(slot)
+        while v and isinstance(v[-1], (str, dict)):
+            x = v[-1]
+            t = x if isinstance(x, str) else x.get("t")
+            if not isinstance(t, str) or not t.endswith("\n") or (isinstance(x, dict) and set(x) - {"t"} and t.strip("\n") == ""):
+                break
+            t = t.rstrip("\n")
+            if isinstance(x, str):
+                v[-1] = t
+            else:
+                v[-1] = dict(x, t=t)
+            if v[-1] in ("", {"t": ""}):
+                v.pop()
+            break
+    for r in runs:
+        if isinstance(r, dict) and "ps" in r:
+            cut()
+            s = r["ps"]
+            if r.get("inline"):
+                if cur is None or s in cur:
+                    cur = {}
+                    out.append(cur)
+                cur[s] = [r.get("t", "")]
+                continue
+            if cur is not None and s in cur and not r.get("v0") and slot == s:
+                cur[s].append("\n")                                      # 같은 값의 다음 문단
+            else:
+                if cur is None or s in cur:
+                    cur = {}
+                    out.append(cur)
+                cur[s] = []
+            slot = s
+            continue
+        if r == "\n":
+            continue
+        if cur is None:
+            cur, slot = {}, bind.split("+")[0]
+            cur[slot] = []
+            out.append(cur)
+        if r not in ("", None):
+            cur.setdefault(slot, []).append(r)
+    cut()
+    return [{k: ("".join(v) if all(isinstance(x, str) for x in v) else v) for k, v in rec.items()} for rec in out]
+
+
 def story_cells(atom, name, items):
     """여러 자리 원고 → 그 글상자 값. 표 글상자(atom.table)면 항목 하나가 한 칸(칸마다 한 줄기), 아니면 항목 전부가 한 줄기"""
     if atom.get("table"):
