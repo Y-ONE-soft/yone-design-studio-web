@@ -1445,6 +1445,35 @@ def design_origin(series, design):
     return jsonify({"ok": True, "pages": n, "layouts": len(design_layouts(series, design).get("origin", {}).get("layouts") or [])})
 
 
+@bp.route("/api/catalog/design/<series>/<design>", methods=["PUT"])
+def design_rename(series, design):
+    """템플릿 이름만 바꾼다 — 카드(design.json) · 문서 묶음(units.json 문서 이름) · config 책 제목. 모양은 그대로(다시 그리지 않는다)."""
+    if not _ID.match(design):
+        abort(404)
+    d = _ddir(series, design)
+    p = os.path.join(d, "design.json")
+    if not os.path.isfile(p):
+        abort(404)
+    name = _nfc((request.get_json(silent=True) or request.form).get("name", "")).strip()
+    if not name:
+        return jsonify({"error": "이름을 적어야 한다"}), 400
+    info = json.load(open(p, encoding="utf-8"))
+    info["name"] = name
+    if str(info.get("source", "")).startswith("편집기: "):
+        info["source"] = "편집기: " + name
+    json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    for f, key in (("units.json", ("plan", "name")), ("config.json", ("book", "title"))):
+        fp = os.path.join(d, f)
+        if os.path.isfile(fp):
+            j = json.load(open(fp, encoding="utf-8"))
+            if isinstance(j.get(key[0]), dict) and key[1] in j[key[0]]:
+                j[key[0]][key[1]] = name
+                json.dump(j, open(fp, "w", encoding="utf-8"), ensure_ascii=False, **({} if f == "units.json" else {"indent": 2}))
+    from core import yos_hooks
+    yos_hooks.design_changed(series, design, "updated")
+    return jsonify({"ok": True, "name": name})
+
+
 @bp.route("/api/catalog/design/<series>/<design>", methods=["DELETE"])
 def design_del(series, design):
     if not _ID.match(design):
