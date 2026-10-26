@@ -43,6 +43,35 @@ def _lib_json(lib):
     return json.dumps(lib, ensure_ascii=False).replace("</", "<\\/")
 
 
+def _sync_registered():
+    """관리의 편집기 제작 템플릿 = 「내 문서」 — 이 편집기에 문서가 없는 템플릿(다른 곳에서 등록 · 배포)은 문서 묶음(units.json)을 들여오고,
+    이름은 관리 카드 이름을 따른다(관리에서 이름을 바꾸면 문서 이름도)."""
+    from core.units import package
+    from routes.catalog import _ddir, _designs, _meta
+    plans = store.load("plans")
+    linked = {}
+    for p in plans:
+        c = p.get("catalog") or {}
+        linked.setdefault((c.get("series"), c.get("design")), []).append(p)
+    for s in _meta():
+        for info in _designs(s):
+            if info.get("made") != "editor":
+                continue
+            did, name = info["id"], info.get("name") or ""
+            mine = linked.get((s, did))
+            if not mine:
+                up = os.path.join(_ddir(s, did), info.get("units") or "units.json")
+                if os.path.exists(up):
+                    try:
+                        package.load(json.load(open(up, encoding="utf-8")))
+                    except Exception:
+                        pass                                      # 묶음이 깨졌으면 건너뛴다 — 관리 카드에서 열면 오류가 보인다
+                continue
+            for p in mine:
+                if name and p.get("name") != name:
+                    store.put("plans", dict(p, name=name))
+
+
 @bp.route("/units")
 def canvas():
     """캔버스 — 지면을 고르고, 칸을 그리고, 블록·부품을 끌어다 놓는다. 사용자가 쓰는 화면."""
@@ -67,6 +96,7 @@ def canvas():
             info["plan"] = pid
             json.dump(info, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         return redirect(f"/units?plan={pid}")
+    _sync_registered()
     lib = store.library()
     from routes.catalog import _designs, _dirs, _meta, series_of_dir
     lib["catalog"] = [{"series": series_of_dir(d["id"]) or d["id"], "name": d["name"], "dir": d["id"], "dir_name": ""}
