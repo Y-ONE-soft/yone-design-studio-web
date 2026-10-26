@@ -72,9 +72,6 @@
   .dsg .d .th .ph { font-size: 30px; color: #8b8fa3; }
   .dsg .d .tt { margin: 10px 2px 3px; font-size: 14px; font-weight: 600; line-height: 1.35; min-height: 2.7em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .dsg .d .mt { font-size: 12px; color: #5f6368; display: flex; align-items: center; gap: 6px; }
-  .dsg .d .mt .mk { margin-left: auto; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }   /* 임시 라벨 — 어디서 왔나 */
-  .dsg .d .mt .mk.pdf { color: #6b5d00; background: #fff4c2; }
-  .dsg .d .mt .mk.editor { color: #5b21b6; background: #ede9fe; }
   .dsg .d .acts { display: flex; gap: 6px; margin-top: 8px; }
   .dsg .d .acts a { flex: 1; text-align: center; text-decoration: none; font-size: 12.5px; padding: 7px 0; border-radius: 8px; background: #ecebf3; color: #1f2330; }
   .dsg .d .acts a.go { background: var(--pp); color: #fff; font-weight: 600; }
@@ -119,7 +116,7 @@
         <div class="th">{% if d.img %}<img src="{{ d.img }}" alt="" loading="lazy">{% else %}<span class="ph">▦</span>{% endif %}
           <button class="x" title="템플릿 삭제">×</button></div>
         <div class="tt">{{ d.name }}</div>
-        <div class="mt">{% if d.n %}{{ d.n }}페이지{% endif %}{% if d.made %}<span class="mk {{ d.made }}">{{ "편집기 제작" if d.made == "editor" else "PDF 등록" }}</span>{% endif %}</div>
+        <div class="mt">{% if d.n %}{{ d.n }}페이지{% endif %}</div>
         {% if d.tags %}<div class="tags">{% for k, v in d.tags.items() %}<span>{{ v }}</span>{% endfor %}</div>{% endif %}
         {% if d.made != "editor" %}<div class="acts"><a href="/design/{{ d.series }}/{{ d.id }}">페이지 보기</a></div>{% endif %}
       </div>{% endfor %}
