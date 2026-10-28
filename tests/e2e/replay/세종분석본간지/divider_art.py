@@ -2,11 +2,14 @@
 guide=0 이면 학습 가이드 카드(그림 · 머리 선)도 지운다.
 학교 「세종고」는 남긴다 — 원본 서체(TT 옴니고딕 L)가 시스템 서체에 없어 글상자로는 모양이 달라진다(2026-10-28).
 
-    divider_art.py <원본 내지 PDF> <교재명 글> <강제목 글> <내보낼 폴더> <이름 앞말>
+    divider_art.py <원본 내지 PDF> <교재명 글> <강제목 글> <내보낼 폴더> <이름 앞말> [간지 아트 PDF]
+간지 아트 PDF(원고 글 없는 간지 원본)를 주면 바탕은 그 1쪽 그대로, 학습 가이드 카드만 내지 1쪽에서 같은 자리로 옮겨 온다
+(기말: 내지 1쪽의 「기말 고사」는 47.76pt, 아트는 48pt — 아트가 정본, 2026-10-28).
     예) 중간(남색): … 세종1_분석본01(비상홍1과)_내지.pdf "공통영어2 비상(홍) Unit 1" "A Road Ahead" out sejong_divider
-        기말(버건디): … 세종1_분석본01(비상홍3과)_내지.pdf "공통영어2 비상(홍) Unit 3" "The Gift of Art" out sejong_final_divider"""
+        기말(버건디): … 세종1_분석본01(비상홍3과)_내지.pdf "공통영어2 비상(홍) Unit 3" "The Gift of Art" out sejong_final_divider 세종간지_아트_기말_버건디.pdf"""
 import sys, pymupdf
 SRC, BOOK, LESSON, S, STEM = sys.argv[1:6]
+ART = sys.argv[6] if len(sys.argv) > 6 else None
 src = pymupdf.open(SRC)
 for guide in (1, 0):
     doc = pymupdf.open()
@@ -22,6 +25,13 @@ for guide in (1, 0):
     if not guide:   # 가이드 카드(재단 기준 y 575~760 안에 다 든 그림)를 지운다
         p.add_redact_annot(pymupdf.Rect(T.x0 + 195, T.y0 + 575, T.x0 + 400, T.y0 + 760), fill=False)
         p.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE, graphics=1)
+    if ART:
+        card = pymupdf.Rect(T.x0 + 195, T.y0 + 575, T.x0 + 400, T.y0 + 760)
+        base = pymupdf.open()
+        base.insert_pdf(pymupdf.open(ART), from_page=0, to_page=0)
+        if guide:
+            base[0].show_pdf_page(card, doc, 0, clip=card)
+        doc, p = base, base[0]
     svg = p.get_svg_image(text_as_path=True)
     out = f"{S}/{STEM}{'_guide' if guide else ''}.svg"
     open(out, "w").write(svg)
