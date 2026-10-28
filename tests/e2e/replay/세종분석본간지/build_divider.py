@@ -38,6 +38,8 @@ vol = text(93, top_of(448.0 * PT, 27.6, "Myriad Pro", 700) + 7.3 * PT, 24, 27.6,
 # 글상자 가운데는 재단 가운데보다 1mm 오른쪽(원본 두 권 다 글 가운데 308.98pt · 재단 가운데 306.14pt)
 # 자간은 원본 글자 간격에서: 글자마다 원본 x 와 맞대어 밀림이 0 이 되는 값 — 교재명 -40, 강제목 +50
 TR1, TR2 = -40, 50
+# 편집기는 줄 끝 글자 뒤 자간까지 넣어 가운데를 잡는다 — 원본(두 줄 다 글 가운데 308.98pt)에 맞추려 그 반만큼 단락 들여쓰기로 민다:
+# 교재명 오른쪽 들여쓰기 0.64pt(=40×16/1000) · 강제목 왼쪽 들여쓰기 0.7pt(=50×14/1000). 편집기 정렬을 바꾸면 다른 템플릿이 원본에서 멀어졌다(2026-10-28 regcheck)
 b1, k1, b2 = 509.1 * PT, 539.9 * PT, 592.5 * PT
 asc, desc, _ = face("Gmarket Sans", 700)
 r = asc - desc
@@ -55,8 +57,8 @@ pages = [{"id": P1, "name": "간지", "spec": "a4", "mirror": True, "zones": [],
          {"id": P2, "name": "간지 학습 가이드", "spec": "a4", "mirror": True, "zones": [], "idv": 2, "items": [art(STEM + "_guide"), vol, lines]}]
 skin = {"id": "doc_plan_" + STEM, "name": NAME + " 스타일",
         "tokens": {"color": {"ink": "#231f20", "white": "#ffffff", "rule": "#b8b8b8", "gray": "#e6e6e6"}, "font": {"body": "Noto Sans CJK KR"}},
-        "styles": {"교재명": {"font": "Gmarket Sans", "size": 16, "color": NAVY, "weight": 700, "leading": LP, "align": "center", "tracking": TR1},
-                   "강제목": {"font": "Gmarket Sans", "size": 14, "color": GRAY, "weight": 500, "leading": LP, "align": "center", "space_after": after, "tracking": TR2}},
+        "styles": {"교재명": {"font": "Gmarket Sans", "size": 16, "color": NAVY, "weight": 700, "leading": LP, "align": "center", "tracking": TR1, "indent_right": 0.226},
+                   "강제목": {"font": "Gmarket Sans", "size": 14, "color": GRAY, "weight": 500, "leading": LP, "align": "center", "space_after": after, "tracking": TR2, "indent": 0.247}},
         "idv": 2, "cstyles": {}, "images": {STEM: f"_img/{STEM}.svg", STEM + "_guide": f"_img/{STEM}_guide.svg"}}
 plan = {"id": "plan_" + STEM, "name": NAME, "spec": "a4", "front": [], "back": [], "skin": skin["id"],
         "sections": [{"id": "s1", "name": "본문", "pages": [{"page": P1, "repeat": "each_set"}, {"page": P2, "repeat": "each_set", "구분": "학습 가이드"}]}],

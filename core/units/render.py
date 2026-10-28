@@ -1216,11 +1216,6 @@ def _para(a, x, slot, slots, k, ctx, ovs=None, v0=None, pi=None):
     css = "margin:0;" + _font_css(st, ctx)
     if st.get("align"):
         css += align_css(st["align"])
-    trk = float(st.get("tracking") or a.get("tracking") or 0)
-    if trk and str(st.get("align") or a.get("align") or "") in ("center", "right"):
-        # 인디자인은 줄 끝 글자의 자간을 정렬에 넣지 않는다 — 브라우저는 마지막 글자 뒤에도 자간을 둬서 가운데 · 오른쪽 정렬이 그만큼 밀렸다
-        # (세종 간지 교재명 -40 · 강제목 +50 이 원본보다 ±0.1mm). 단락 상자를 오른쪽으로 자간만큼 늘려 지운다
-        css += f"margin-right:{-trk / 1000.0:.4f}em;"
     look = lambda j: dict(para_attrs(a, slots[j], ctx), **((ovs or {}).get(j) or {})) if 0 <= j < n else None
 
     def grp(j):
