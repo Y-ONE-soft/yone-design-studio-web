@@ -1,5 +1,6 @@
-"""세종 간지 바탕 그림 — 원본 1쪽(도련 포함)에서 원고 자리 글(학교 · 권 번호 · 교재명 · 강제목)을 지우고 SVG(글자는 윤곽)로.
+"""세종 간지 바탕 그림 — 원본 1쪽(도련 포함)에서 원고 자리 글(권 번호 · 교재명 · 강제목)을 지우고 SVG(글자는 윤곽)로.
 guide=0 이면 학습 가이드 카드(그림 · 머리 선)도 지운다.
+학교 「세종고」는 남긴다 — 원본 서체(TT 옴니고딕 L)가 시스템 서체에 없어 글상자로는 모양이 달라진다(2026-10-28).
 
     divider_art.py <원본 내지 PDF> <교재명 글> <강제목 글> <내보낼 폴더> <이름 앞말>
     예) 중간(남색): … 세종1_분석본01(비상홍1과)_내지.pdf "공통영어2 비상(홍) Unit 1" "A Road Ahead" out sejong_divider
@@ -12,7 +13,7 @@ for guide in (1, 0):
     doc.insert_pdf(src, from_page=0, to_page=0)
     p = doc[0]
     T = p.trimbox
-    for t in ("세종고", BOOK, LESSON, "1"):
+    for t in (BOOK, LESSON, "1"):
         for r in p.search_for(t):
             if t == "1" and not (r.x0 > 290 and r.y0 > 420 and r.y1 < 470):
                 continue
