@@ -2,8 +2,10 @@
 값은 원본 세종1_분석본01 1쪽(재단 기준 pt → mm). 고정 그림(테두리 점선 · 중간 고사 · 1학년 2학기 · 2026 · 월계수 · 권 번호 원 · 학습 가이드 카드)은
 원본에서 원고 자리 글만 지운 SVG(divider_art.py), 원고 자리 셋(학교 · 권번호 · 교재명+강제목)은 글상자."""
 import base64, json, os, shutil, sys
-S = os.path.dirname(os.path.abspath(__file__))
-WT = sys.argv[1]
+# build_divider.py <스튜디오 리포> <그림 폴더(divider_art.py 가 낸 SVG)> <앞말> <이름> <글 색> <교재명> <강제목>
+#   중간(남색): … out sejong_divider "세종고 분석본 간지 (편집기 제작)" "#183d61" "공통영어2 비상(홍) Unit 1" "A Road Ahead"
+#   기말(버건디): … out sejong_final_divider "세종고 분석본 간지 기말 (편집기 제작)" "#582a31" "공통영어2 비상(홍) Unit 3" "The Gift of Art"
+WT, S, STEM, NAME, NAVY, BOOK, LESSON = sys.argv[1:8]
 TMP = os.path.join(S, "cat_tmp")
 if os.path.exists(TMP):
     shutil.rmtree(TMP)
@@ -15,7 +17,7 @@ sys.path.insert(0, os.path.join(WT, "tests", "e2e"))
 from mkpage import face, top_of, MM                                      # noqa: E402
 
 PT = 0.352778
-NAVY, GRAY = "#183d61", "#373d41"
+GRAY = "#373d41"
 b64 = lambda p: base64.b64encode(open(p, "rb").read()).decode()
 
 
@@ -48,22 +50,21 @@ lines = text(10, top, 190, 16, NAVY, "«교재명+강제목»", "Gmarket Sans", 
 
 art = lambda src: {"x": -3, "y": -3, "atom": {"t": "image", "x": 0, "y": 0, "w": 216, "h": 303, "src": src}}
 P1, P2 = "page_sjdiv1", "page_sjdiv2"
-pages = [{"id": P1, "name": "간지", "spec": "a4", "mirror": True, "zones": [], "idv": 2, "items": [art("sejong_divider"), school, vol, lines]},
-         {"id": P2, "name": "간지 학습 가이드", "spec": "a4", "mirror": True, "zones": [], "idv": 2, "items": [art("sejong_divider_guide"), school, vol, lines]}]
-NAME = "세종고 분석본 간지 (편집기 제작)"
-skin = {"id": "doc_plan_sjdiv", "name": NAME + " 스타일",
+pages = [{"id": P1, "name": "간지", "spec": "a4", "mirror": True, "zones": [], "idv": 2, "items": [art(STEM), school, vol, lines]},
+         {"id": P2, "name": "간지 학습 가이드", "spec": "a4", "mirror": True, "zones": [], "idv": 2, "items": [art(STEM + "_guide"), school, vol, lines]}]
+skin = {"id": "doc_plan_" + STEM, "name": NAME + " 스타일",
         "tokens": {"color": {"ink": "#231f20", "white": "#ffffff", "rule": "#b8b8b8", "gray": "#e6e6e6"}, "font": {"body": "Noto Sans CJK KR"}},
         "styles": {"교재명": {"font": "Gmarket Sans", "size": 16, "color": NAVY, "weight": 700, "leading": LP, "align": "center"},
                    "강제목": {"font": "Gmarket Sans", "size": 14, "color": GRAY, "weight": 500, "leading": LP, "align": "center", "space_after": after}},
-        "idv": 2, "cstyles": {}, "images": {"sejong_divider": "_img/sejong_divider.svg", "sejong_divider_guide": "_img/sejong_divider_guide.svg"}}
-plan = {"id": "plan_sjdiv", "name": NAME, "spec": "a4", "front": [], "back": [], "skin": skin["id"],
+        "idv": 2, "cstyles": {}, "images": {STEM: f"_img/{STEM}.svg", STEM + "_guide": f"_img/{STEM}_guide.svg"}}
+plan = {"id": "plan_" + STEM, "name": NAME, "spec": "a4", "front": [], "back": [], "skin": skin["id"],
         "sections": [{"id": "s1", "name": "본문", "pages": [{"page": P1, "repeat": "each_set"}, {"page": P2, "repeat": "each_set", "구분": "학습 가이드"}]}],
-        "content": {"학교": ["세종고"], "권번호": ["1"], "교재명+강제목": [{"교재명": "공통영어2 비상(홍) Unit 1", "강제목": "A Road Ahead"}]}}
+        "content": {"학교": ["세종고"], "권번호": ["1"], "교재명+강제목": [{"교재명": BOOK, "강제목": LESSON}]}}
 src = json.load(open(os.path.join(WT, "catalog/analysis/designs/x009d5556/units.json"), encoding="utf-8"))
 pkg = {"kind": src["kind"], "v": src["v"], "plan": plan, "pages": pages, "parts": [], "blocks": [], "skin": skin, "specs": src["specs"],
-       "images": {k: {"name": f"{k}.svg", "b64": b64(os.path.join(S, f"{k}.svg"))} for k in ("sejong_divider", "sejong_divider_guide")},
+       "images": {k: {"name": f"{k}.svg", "b64": b64(os.path.join(S, f"{k}.svg"))} for k in (STEM, STEM + "_guide")},
        "fonts": {"MyriadPro-Bold.otf": b64(os.path.expanduser("~/Library/Fonts/MyriadPro-Bold.otf"))}}
-json.dump(pkg, open(os.path.join(S, "sejong_divider_pkg.json"), "w", encoding="utf-8"), ensure_ascii=False)
+json.dump(pkg, open(os.path.join(S, f"{STEM}_pkg.json"), "w", encoding="utf-8"), ensure_ascii=False)
 print("LP", LP, "after", after, "school top", round(school["y"], 2), "lines top", round(top, 2))
 
 from core.units import package                                           # noqa: E402
