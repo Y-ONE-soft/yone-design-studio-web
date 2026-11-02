@@ -522,6 +522,7 @@ def fill(pages, content, width_of=None):
     runs = {pg.get("name") for pg in pages if pg.get("_rec") is not None}           # 「원고마다」 묶음 원고(plan_pages 가 레코드로 나눠 줬다)
     chunked = isinstance((content or {}).get("원고"), list)                      # 덩어리 차례 원고 — plan_pages 가 덩어리마다 면을 골라 레코드로 줬다
     queue = {k: (list(v) if isinstance(v, list) else [v]) for k, v in (content or {}).items() if k not in runs and not (chunked and k == "원고")}
+    single = {k for k, v in (content or {}).items() if not isinstance(v, (list, dict))}   # 글 하나 = 그 자리 모두에(인디자인 데이터 병합 — 표지 앞 · 책등 · 뒤의 같은 학교 · 권 번호)
     recq = {}                                                                     # 레코드마다 꺼낼 값 — 목록은 그 레코드의 쪽들(펼침면)을 이어 차례로, 글 하나는 그 레코드의 같은 자리 모두에
     known, filled, unfilled = set(runs), 0, {}
     for pi, i, name, _ in slots(pages, width_of):
@@ -569,7 +570,7 @@ def fill(pages, content, width_of=None):
             filled += len(q)
             q.clear()
         elif q:
-            pages[pi]["items"][i]["fields"] = {name: q.pop(0)}     # 그리기는 글상자의 fields 를 자리 값으로 쓴다
+            pages[pi]["items"][i]["fields"] = {name: q[0] if name in single else q.pop(0)}     # 그리기는 글상자의 fields 를 자리 값으로 쓴다
             filled += 1
         else:
             unfilled[name] = unfilled.get(name, 0) + 1
@@ -586,7 +587,7 @@ def fill(pages, content, width_of=None):
             f = it.get("fields")
             if f and all(blank(v) for v in f.values()):
                 it["_empty"] = True
-    extra = {k: len(v) for k, v in queue.items() if v and k in known}
+    extra = {k: len(v) for k, v in queue.items() if v and k in known and k not in single}
     unknown = sorted(k for k in queue if k not in known)
     return pages, {"filled": filled, "unfilled": unfilled, "extra": extra, "unknown": unknown}
 

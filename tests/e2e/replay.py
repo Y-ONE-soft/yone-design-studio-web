@@ -564,7 +564,8 @@ try:
         open(os.path.join(out, "audit.log"), "w").write(r.stdout + r.stderr)
         print("\n".join((r.stdout + r.stderr).strip().splitlines()[-6:]))
         sys.exit(r.returncode)
-    before = set(page_ids())
+    urllib.request.urlopen(BASE + "/units", timeout=600).read()            # 편집기를 한 번 열어 관리의 편집기 템플릿(문서 묶음)을 먼저 들여온다 — 그 쪽들이
+    before = set(page_ids())                                                 # 대본 도중에 들어와 「새 지면」으로 잡혀 남의 표지를 맞댔다(2026-11-02)
     t0 = time.time()
     ok = run_steps(cmd != "rec", os.path.join(out, unit + ".mp4") if cmd == "rec" else os.path.join(out, "_fast.mp4"))
     state = mine(json.load(open(os.path.join(wdir, "상태.json"), encoding="utf-8")))  # 대본이 방금 쓴 상태(원본 쪽 목록) — 미리 읽은 것은 지난 판 것

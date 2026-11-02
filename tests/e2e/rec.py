@@ -85,6 +85,14 @@ try:
     except Exception:
         pass
     time.sleep(3.0)
+    t_end = time.time() + 180                                # 첫 화면(문서 목록)이 뜰 때까지 — 카탈로그 템플릿이 많으면 3초 안에 안 떠서
+    while time.time() < t_end:                               # 덧씌우기(커서 등)가 뜨기 전 쪽에 들어가 사라지고 「새 문서」를 못 찾았다(2026-11-02)
+        try:
+            if c.js("document.readyState === 'complete' && !!document.querySelector('#pcards .pcard.new, #side')"):
+                break
+        except Exception:
+            pass
+        time.sleep(0.5)
     c.js(CHROME_SETUP)
 
     fc = [0]
@@ -455,7 +463,7 @@ try:
                 else:
                     print(f"  ! {d['tool']} 두 번 끌어도 안 그려짐", flush=True)
             if "answer" in st:                                 # 다음 누르기가 여는 묻는 창에 칠 글(새 단락 스타일 이름 등)
-                c.answer = str(st["answer"])
+                c.answer = [str(a) for a in st["answer"]] if isinstance(st["answer"], list) else str(st["answer"])
             if "type" in st:
                 typetext(st["type"])
             if "fill" in st:

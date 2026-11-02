@@ -65,5 +65,10 @@
     "name": "특강교재",
     "dir": "special-lecture",
     "ready": "auto"
+  },
+  "cover": {
+    "name": "표지",
+    "dir": "cover",
+    "ready": "auto"
   }
 }

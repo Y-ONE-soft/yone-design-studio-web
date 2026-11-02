@@ -56,7 +56,7 @@ class CDP:
     def __init__(self, url):
         self.s = ws_connect(url); self.i = 0
 
-    answer = None                                    # 다음에 뜨는 묻는 창(prompt)에 칠 글 — 녹화 단계 {"answer": "…"}
+    answer = None                                    # 다음에 뜨는 묻는 창(prompt)에 칠 글 — 녹화 단계 {"answer": "…"} · 창이 잇달아 뜨면 목록(차례대로)
     events = None                                    # 받아 둘 알림(파일 고르기 창이 떴다 등) — call 도중에 온 것
 
     def call(self, method, **params):
@@ -66,8 +66,8 @@ class CDP:
             if m.get("method") == "Page.javascriptDialogOpening":       # 묻는 창·확인 창 — 답을 치고 확인(Page.enable 뒤에만 온다)
                 self.i += 1
                 ws_send(self.s, json.dumps({"id": self.i, "method": "Page.handleJavaScriptDialog",
-                                            "params": {"accept": True, "promptText": self.answer or ""}}))
-                self.answer = None
+                                            "params": {"accept": True, "promptText": (self.answer[0] if isinstance(self.answer, list) else self.answer) or ""}}))
+                self.answer = self.answer[1:] or None if isinstance(self.answer, list) else None
                 continue
             if m.get("method") == "Page.fileChooserOpened":             # 파일 고르기 창이 떴다 — 사람이 그 창에서 파일을 고르듯 upload 가 받는다
                 if self.events is None:
