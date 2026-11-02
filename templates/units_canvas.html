@@ -116,6 +116,7 @@
   .cv.nostrip .strip { border-top: 1px solid var(--line); }
   body.zen nav.rail, body.editing-doc nav.rail { display: none; }        /* 문서를 열면 창 전체가 편집기 */
   body.zen main.page, body.editing-doc main.page { margin-left: 0; }
+  body.embed .ptool, body.embed .trail, body.embed .strip, body.embed .unfold, body.embed .thint { display: none !important; }   /* ?embed=1 바로 고치기 — 페이지만 */
   .utabs .fold { margin-top: auto; margin-bottom: 6px; color: #a0a4b5; }
   .utabs .fold .ic { font-size: 14px; }
   .strip .foot .vw { display: flex; gap: 3px; }
@@ -685,12 +686,12 @@ window.addEventListener("resize", () => { if (page) { layout(); selbox(); slotTa
 function setZoom(z) {
   zoom = Math.max(0.3, Math.min(3, z));
   $("#zoom").value = Math.round(zoom * 100); $("#zoomv").textContent = Math.round(zoom * 100) + "%";
-  view.zoom = zoom; localStorage.setItem("units.view3", JSON.stringify(view));            // 다음에 열 때 그대로
+  view.zoom = zoom; localStorage.setItem(VIEW_KEY, JSON.stringify(view));            // 다음에 열 때 그대로
   layout(); selbox(); slotTags();
 }
 $("#zoom").oninput = () => setZoom($("#zoom").value / 100);
 $("#zoomv").onclick = () => setZoom(1);
-function setFit(mode) { view.fit = mode; $("#fitsel").value = mode; localStorage.setItem("units.view3", JSON.stringify(view)); setZoom(1); }
+function setFit(mode) { view.fit = mode; $("#fitsel").value = mode; localStorage.setItem(VIEW_KEY, JSON.stringify(view)); setZoom(1); }
 $("#fitsel").onchange = () => setFit($("#fitsel").value);
 $("#area").addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9)); } }, {passive: false});
 let rt = null;
@@ -1410,13 +1411,20 @@ function editTextInline(i) {
 }
 
 // ── 자 · 안내선 · 격자 · 여백선 · 손 도구 · 확대 단축키 ──
+// ?embed=1 — 바깥 화면(contents 워크북 권 「지면」)이 끼워 쓰는 바로 고치기: 페이지만 세로로 잇고 패널 · 도구 · 띠는 숨긴다.
+// 글은 두 번 눌러 그 자리에서 고친다(문자 도구와 같다). 보기 기억은 따로 — 편집기 보기를 건드리지 않는다.
+const EMBED = new URLSearchParams(location.search).has("embed");
+const VIEW_KEY = EMBED ? "units.view3.embed" : "units.view3";
+if (EMBED) document.body.classList.add("embed");
 const view = Object.assign({rulers: true, grid: false, margins: true, snap: true, slots: true, adv: false, left: true, side: true, strip: false, flow: true, spread: true, zen: false, zoom: 1, fit: "page", lw: 232, rw: 240},
-                           JSON.parse(localStorage.getItem("units.view3") || "{}"));
+                           EMBED ? {rulers: false, margins: false, slots: false, spread: false, fit: "width"} : {},
+                           JSON.parse(localStorage.getItem(VIEW_KEY) || "{}"),
+                           EMBED ? {zen: true, flow: true} : {});
 function applyView() {
   const pp = $("#paper"); pp.classList.toggle("rulers", view.rulers); $("#area").classList.toggle("rul", view.rulers); pp.classList.toggle("grid", view.grid); pp.classList.toggle("mg", view.margins);
   $("#tg-rul").classList.toggle("on", view.rulers); $("#tg-grid").classList.toggle("on", view.grid); $("#tg-mg").classList.toggle("on", view.margins); $("#tg-snap").classList.toggle("on", view.snap); $("#tg-slots").classList.toggle("on", view.slots);
   applyPanels();
-  localStorage.setItem("units.view3", JSON.stringify(view)); drawRulers();
+  localStorage.setItem(VIEW_KEY, JSON.stringify(view)); drawRulers();
 }
 // 접기 — 넓게(zen)면 셋 다 접고 왼쪽 레일까지 숨긴다. 편 상태는 기억한다.
 function applyPanels() {
@@ -1449,7 +1457,7 @@ document.querySelectorAll("[data-rsz]").forEach(bar => {
       if (side) view.lw = w; else view.rw = w;
       applyWidths(); if (page) { layout(); selbox(); }
     };
-    const up = () => { bar.classList.remove("on"); document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up); localStorage.setItem("units.view3", JSON.stringify(view)); };
+    const up = () => { bar.classList.remove("on"); document.removeEventListener("pointermove", move); document.removeEventListener("pointerup", up); localStorage.setItem(VIEW_KEY, JSON.stringify(view)); };
     document.addEventListener("pointermove", move); document.addEventListener("pointerup", up);
   };
   bar.ondblclick = () => { if (bar.dataset.rsz === "l") view.lw = 232; else view.rw = 240; applyWidths(); applyView(); };
@@ -1469,6 +1477,7 @@ function fillSheet() {
 }
 
 function togglePanel(k) {
+  if (EMBED) return;                                                     // 바로 고치기 — 패널을 펴지 않는다
   if (k === "zen") view.zen = !view.zen;
   else { if (view.zen) view.zen = false; view[k] = !view[k]; }
   applyView();
@@ -2652,7 +2661,7 @@ function side() {
     a.grep.splice(+b.dataset.k, 1); if (!a.grep.length) delete a.grep; save(); pageSvg = {}; render(); side(); }));
   on("#s-dup", "click", dupSel); on("#s-x", "click", removeSel); on("#s-lock", "click", lockSel); wireLayers(box);
   box.querySelectorAll("details.more").forEach(d => d.addEventListener("toggle", () => {      // 펴 둔 채로 기억한다
-    view.adv = d.open; localStorage.setItem("units.view3", JSON.stringify(view));
+    view.adv = d.open; localStorage.setItem(VIEW_KEY, JSON.stringify(view));
     box.querySelectorAll("details.more").forEach(o => { o.open = d.open; });
   }));
   wireLayers(box);
