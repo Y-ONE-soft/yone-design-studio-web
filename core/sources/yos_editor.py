@@ -622,8 +622,8 @@ def to_content(data, sample=None, caps=None, start=1, merge=False):
         for name, (srcs, _) in GROUPS.items():
             if name in caps and srcs & set(got):
                 groups.setdefault(name, []).append((num, text, got))
-        if qs and merge:                                                  # 문제마다 다시 실은 지문 원문은 뺀다(지문은 머리에 한 번)
-            flat = lambda t: re.sub(r"\s+", "", str(t or ""))
+        if qs:                                                            # 문제마다 다시 실은 지문 원문은 뺀다(지문은 머리에 한 번 — 두 번 실으면 머리 지문이 보기 상자 밑에 깔린다)
+            flat = lambda t: re.sub(r"[\W_]+", "", str(t or "").lower())          # 글자 · 숫자만(줄표 ─/— · 따옴표 꼴 차이는 같은 글로)
             qs = [dict(q, passage=None) if q.get("passage") and flat(q["passage"]) == flat(text) else q for q in qs]
         if qs:
             exam.append((num, text, qs))
