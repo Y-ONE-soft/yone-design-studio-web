@@ -204,8 +204,19 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
     ④ 같은 자리가 여럿인 면은 그 개수가 원고 목록 길이와 맞는 면.
     덩어리에 「_면」(면 첫 쪽 이름)이 있으면 그 이름의 면이 먼저다(바깥 원고를 바깥이 정한 차례로 찍을 때 — api_v1 order: data).
     맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다.
-    문서에 bare 가 켜져 있으면 맨 앞 · 맨 뒤 · 「한 번만」 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지)은 안 찍는다 — 덩어리가 고른 면만."""
+    문서에 bare 가 켜져 있으면 맨 앞 · 맨 뒤 · 「한 번만」 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지)은 안 찍는다 — 덩어리가 고른 면만.
+    덩어리가 {「_꾸밈」: 쪽 이름, 「_nth」: 몇 번째}면 그 이름의 「한 번만」 쪽(꾸밈 면 — 같은 이름이 여럿이면 문서 차례로 nth 번째)을 그 자리에 찍는다
+    (contents 책 구성의 꾸밈 칸 — 속표지 · STEP 간지 · 차례 · MEMO, 2026-11-02)."""
     faces, head, tail = _faces(plan, pages_by_id)
+    decor, seen_nm = {}, {}                                               # (쪽 이름, 몇 번째) → 쪽 id — 「한 번만」 쪽만
+    for sc in plan.get("sections") or []:
+        for e in sc.get("pages") or []:
+            if isinstance(e, dict) and e.get("repeat") == "each_set":
+                continue
+            pid = e["page"] if isinstance(e, dict) else e
+            nm = (pages_by_id.get(pid) or {}).get("name") or ""
+            seen_nm[nm] = seen_nm.get(nm, 0) + 1
+            decor[(nm, seen_nm[nm])] = pid
     if plan.get("bare"):
         head, tail, front, back = [], [], [], []
         merged = []                                                       # 이름 없는 「원고마다」 쪽(빈 면 N)은 앞 면에 붙인다 — 옛 꼴 묶음처럼 한 벌(둘째 지문 칸이 거기 있다)
@@ -265,6 +276,9 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
     for pid in front + head:
         put(pid)
     for rec in chunks:
+        if isinstance(rec, dict) and rec.get("_꾸밈"):
+            put(decor.get((rec["_꾸밈"], int(rec.get("_nth") or 1))))
+            continue
         if not isinstance(rec, dict) or not faces:
             continue
         best = max(faces, key=lambda f: score(f, rec))

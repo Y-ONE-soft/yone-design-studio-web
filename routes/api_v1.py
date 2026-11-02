@@ -164,7 +164,36 @@ def design_detail(series, design):
     out["slots"] = cat._slots(cfg)
     if _editor_design(series, design):
         out["pages"] = _editor_fields(series, design)
+        out["decor"] = _editor_decor(series, design)
     return jsonify(out)
+
+
+def _editor_decor(series, design):
+    """편집기 제작 디자인의 꾸밈 면 — 문서 차례의 「한 번만」 쪽 중 원고 면이 아닌 쪽(속표지 · STEP 간지 · 차례 · MEMO · 뒤표지 …).
+    → [{name, nth, label}] — 같은 이름이 여럿이면 nth 로 가른다(label 「STEP 간지 2」). contents 책 구성이 칸으로 놓는다(order: data 의 지문 칸 decor)."""
+    from core.units import content as _content
+    from routes.catalog import _ddir
+    try:
+        with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
+            pkg = json.load(f)
+    except (OSError, ValueError):
+        return []
+    pages_by = {p["id"]: p for p in pkg.get("pages") or []}
+    out, n = [], {}
+    for sc in (pkg.get("plan") or {}).get("sections") or []:
+        for e in sc.get("pages") or []:
+            if isinstance(e, dict) and e.get("repeat") in ("each_set", "none"):
+                continue
+            pg = pages_by.get(e["page"] if isinstance(e, dict) else e) or {}
+            nm = pg.get("name") or ""
+            n[nm] = n.get(nm, 0) + 1
+            # 한 줄기 원고 자리(실전 문제 「a+b+…」) · 글 잇기 쪽은 원고 면이라 뺀다 — 차례(교재명 · 단원명 자리)는 꾸밈 면
+            if nm and not any("+" in b for b in _content._slots_of(pg)) and not any((it.get("atom") or {}).get("story") for it in pg.get("items") or []):
+                out.append({"name": nm, "nth": n[nm]})
+    total = {}
+    for d in out:
+        total[d["name"]] = total.get(d["name"], 0) + 1
+    return [dict(d, label=d["name"] + (f" {d['nth']}" if total[d["name"]] > 1 else "")) for d in out]
 
 
 def _editor_fields(series, design):
@@ -282,22 +311,32 @@ def data_records(data, sample, caps):
     잇닿은 지문 칸이 같은 항목 꼴이고 지문이 이어지면 한 덩어리(한 벌에 지문 여럿이 들어가는 면을 채우게).
     덩어리는 항목 전부를 한 번에 바꾼다 — 여러 항목이 한 면을 같이 채운다(B본문정리 = 본문정리 + 주제 · 제목 객관식).
     덩어리에서 면이 여럿 나오면 그 면을 채우는 항목이 처음 나온 차례로. 레코드마다 「_면」(구성 이름)을 달아 그 면으로 찍는다.
-    지문 번호는 처음 나온 차례(같은 지문이 다시 오면 같은 번호). 면이 없는 원고(실전 한 줄기 등)는 report.skipped 로."""
+    지문 번호는 처음 나온 차례(같은 지문이 다시 오면 같은 번호). 면이 없는 원고(실전 한 줄기 등)는 report.skipped 로.
+    지문 칸이 {decor: {name, nth}}(contents 책 구성의 꾸밈 칸)면 그 자리에 틀의 꾸밈 면(그 이름의 「한 번만」 쪽 nth 번째)을 — 「_꾸밈」 덩어리."""
     from core.sources import yos_editor
     ps = (data or {}).get("passages") or []
     num = {}
     for p in ps:
-        num.setdefault((p.get("no"), p.get("content")), len(num) + 1)
+        if not p.get("decor"):
+            num.setdefault((p.get("no"), p.get("content")), len(num) + 1)
     keys_of = lambda p: tuple(it.get("key") for it in p.get("items") or [])
     sig = lambda p: (p.get("title"), keys_of(p))                         # 같은 유형(이름 · 항목)끼리만 묶는다
     groups = []
     for p in ps:
-        if groups and sig(groups[-1][-1]) == sig(p) and num[(p.get("no"), p.get("content"))] == num[(groups[-1][-1].get("no"), groups[-1][-1].get("content"))] + 1:
+        if p.get("decor"):
+            groups.append([p])
+            continue
+        if groups and not groups[-1][-1].get("decor") and sig(groups[-1][-1]) == sig(p) and num[(p.get("no"), p.get("content"))] == num[(groups[-1][-1].get("no"), groups[-1][-1].get("content"))] + 1:
             groups[-1].append(p)
         else:
             groups.append([p])
     recs, rep = [], {"sent": [], "skipped": []}
     for g in groups:
+        dc = g[0].get("decor")
+        if dc:
+            if isinstance(dc, dict) and dc.get("name"):
+                recs.append({"_꾸밈": str(dc["name"]), "_nth": int(dc.get("nth") or 1)})
+            continue
         content, r = yos_editor.to_content(dict(data, passages=g), sample, caps, start=num[(g[0].get("no"), g[0].get("content"))])
         rep["sent"] += r["sent"]
         rep["skipped"] += r["skipped"]
