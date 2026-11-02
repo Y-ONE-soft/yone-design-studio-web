@@ -169,8 +169,9 @@ def design_detail(series, design):
 
 
 def _editor_decor(series, design):
-    """편집기 제작 디자인의 꾸밈 면 — 문서 차례의 「한 번만」 쪽 중 원고 면이 아닌 쪽(속표지 · STEP 간지 · 차례 · MEMO · 뒤표지 …).
-    → [{name, nth, label}] — 같은 이름이 여럿이면 nth 로 가른다(label 「STEP 간지 2」). contents 책 구성이 칸으로 놓는다(order: data 의 지문 칸 decor)."""
+    """편집기 제작 디자인의 꾸밈 칸 — contents 책 구성이 칸으로 놓는다(order: data 지문 칸 decor). 어느 쪽인지는 틀이 맞춘다(content.decor_groups):
+    「표지」(첫 장 앞 꾸밈 쪽 — 속표지) · 「STEP 1~n」(장 여는 쪽 + 뒤 꾸밈 쪽 — STEP 간지 + 차례) · 「뒤표지」(맨 끝 꾸밈 쪽 — MEMO · 뒤표지).
+    → [{name, nth, label, pages: [쪽 이름]}]"""
     from core.units import content as _content
     from routes.catalog import _ddir
     try:
@@ -179,21 +180,13 @@ def _editor_decor(series, design):
     except (OSError, ValueError):
         return []
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
-    out, n = [], {}
-    for sc in (pkg.get("plan") or {}).get("sections") or []:
-        for e in sc.get("pages") or []:
-            if isinstance(e, dict) and e.get("repeat") in ("each_set", "none"):
-                continue
-            pg = pages_by.get(e["page"] if isinstance(e, dict) else e) or {}
-            nm = pg.get("name") or ""
-            n[nm] = n.get(nm, 0) + 1
-            # 한 줄기 원고 자리(실전 문제 「a+b+…」) · 글 잇기 쪽은 원고 면이라 뺀다 — 차례(교재명 · 단원명 자리)는 꾸밈 면
-            if nm and not any("+" in b for b in _content._slots_of(pg)) and not any((it.get("atom") or {}).get("story") for it in pg.get("items") or []):
-                out.append({"name": nm, "nth": n[nm]})
-    total = {}
-    for d in out:
-        total[d["name"]] = total.get(d["name"], 0) + 1
-    return [dict(d, label=d["name"] + (f" {d['nth']}" if total[d["name"]] > 1 else "")) for d in out]
+    dg = _content.decor_groups(pkg.get("plan") or {}, pages_by)
+    nm = lambda pids: [(pages_by.get(p) or {}).get("name") or "" for p in pids]
+    out = [{"name": "표지", "nth": 1, "label": "표지", "pages": nm(dg["표지"])}] if dg["표지"] else []
+    out += [{"name": "STEP", "nth": k + 1, "label": f"STEP {k + 1}", "pages": nm(g)} for k, g in enumerate(dg["STEP"])]
+    if dg["뒤"]:
+        out.append({"name": "뒤", "nth": 1, "label": "뒤표지", "pages": nm(dg["뒤"])})
+    return out
 
 
 def _editor_fields(series, design):

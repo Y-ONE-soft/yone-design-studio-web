@@ -197,6 +197,41 @@ def _slots_of(pg):
     return {_slot(it) for it in pg.get("items") or [] if _slot(it)}
 
 
+def decor_groups(plan, pages_by_id):
+    """틀의 꾸밈 면 묶음 — 바깥(contents 책 구성)이 「표지」 · 「STEP n」 으로 고르면 틀이 맞춘다(2026-11-02 사용자 「디자인 스튜디오가 매칭」).
+    꾸밈 면 = 문서 차례의 「한 번만」 쪽 중 원고 면이 아닌 쪽(한 줄기 원고 자리 「a+b」 · 글 잇기가 없다 — 속표지 · STEP 간지 · 차례 · MEMO · 뒤표지).
+    장 여는 쪽 = 꾸밈 면 중 이름이 여러 번 나오는 첫 이름(STEP 간지). → {"표지": [첫 장 앞 꾸밈 쪽들], "STEP": [[장 n 여는 쪽 + 바로 뒤 꾸밈 쪽들(차례)], …],
+    "뒤": [맨 끝 꾸밈 쪽들(MEMO · 뒤표지)]}. 장 여는 쪽이 없으면 STEP 은 비고, 첫 「원고마다」 쪽 앞 꾸밈 쪽이 표지."""
+    flat = []                                                             # (쪽 id, 이름, 꾸밈인가)
+    for sc in plan.get("sections") or []:
+        for e in sc.get("pages") or []:
+            each = isinstance(e, dict) and e.get("repeat") == "each_set"
+            if isinstance(e, dict) and e.get("repeat") == "none":
+                continue
+            pid = e["page"] if isinstance(e, dict) else e
+            pg = pages_by_id.get(pid) or {}
+            deco = not each and not any("+" in b for b in _slots_of(pg)) and not any((it.get("atom") or {}).get("story") for it in pg.get("items") or [])
+            flat.append((pid, pg.get("name") or "", deco))
+    names = [nm for _, nm, d in flat if d]
+    opener = next((n for n in names if names.count(n) > 1), None)
+    starts = [i for i, (_, nm, d) in enumerate(flat) if d and nm == opener]
+    first_body = next((i for i, (_, _, d) in enumerate(flat) if not d), len(flat))
+    cover_end = starts[0] if starts else first_body
+    steps = []
+    for i in starts:
+        grp, j = [flat[i][0]], i + 1
+        while j < len(flat) and flat[j][2] and flat[j][1] != opener:
+            grp.append(flat[j][0])
+            j += 1
+        steps.append(grp)
+    tail = len(flat)
+    while tail > 0 and flat[tail - 1][2] and flat[tail - 1][1] != opener and tail - 1 >= cover_end:
+        tail -= 1
+    if steps and tail <= starts[-1] + len(steps[-1]):
+        tail = starts[-1] + len(steps[-1])
+    return {"표지": [p for p, _, d in flat[:cover_end] if d], "STEP": steps, "뒤": [p for p, _, _ in flat[tail:]]}
+
+
 def _faces_by_chunk(plan, pages_by_id, chunks):
     """원고 덩어리 차례로 면 고르기 — 원고 = [덩어리 …](원본 차례). 덩어리마다 그 자리를 가장 많이 담는 「원고마다」 면을 골라 그 덩어리로 찍는다.
     면(상위 페이지) = 「원고마다」 쪽 하나, 그 쪽에 「두 페이지짜리」(펼침면)를 켰으면 다음 쪽까지 둘(인디자인 펼침면 상위 페이지 — 쪽 이름은 안 본다). 고르기:
@@ -205,8 +240,9 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
     덩어리에 「_면」(면 첫 쪽 이름)이 있으면 그 이름의 면이 먼저다(바깥 원고를 바깥이 정한 차례로 찍을 때 — api_v1 order: data).
     맨 앞 · 맨 뒤 · 「한 번만」 쪽은 그 자리에(구간의 「한 번만」 쪽은 첫 「원고마다」 면보다 앞이면 앞, 뒤면 뒤). 맞는 자리가 없는 덩어리는 건너뛴다.
     문서에 bare 가 켜져 있으면 맨 앞 · 맨 뒤 · 「한 번만」 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지)은 안 찍는다 — 덩어리가 고른 면만.
-    덩어리가 {「_꾸밈」: 쪽 이름, 「_nth」: 몇 번째}면 그 이름의 「한 번만」 쪽(꾸밈 면 — 같은 이름이 여럿이면 문서 차례로 nth 번째)을 그 자리에 찍는다
-    (contents 책 구성의 꾸밈 칸 — 속표지 · STEP 간지 · 차례 · MEMO, 2026-11-02)."""
+    덩어리가 {「_꾸밈」: …, 「_nth」: n}면 그 자리에 틀의 꾸밈 면(contents 책 구성의 꾸밈 칸, 2026-11-02 — decor_groups):
+    「표지」 = 첫 장 앞 꾸밈 쪽들(속표지) · 「STEP」 = n 번째 장을 여는 쪽 + 뒤 꾸밈 쪽(STEP 간지 + 차례) · 「뒤」 = 맨 끝 꾸밈 쪽(MEMO · 뒤표지),
+    그 밖의 이름은 그 이름의 「한 번만」 쪽 n 번째. 틀에 없으면 건너뛴다."""
     faces, head, tail = _faces(plan, pages_by_id)
     decor, seen_nm = {}, {}                                               # (쪽 이름, 몇 번째) → 쪽 id — 「한 번만」 쪽만
     for sc in plan.get("sections") or []:
@@ -277,7 +313,14 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
         put(pid)
     for rec in chunks:
         if isinstance(rec, dict) and rec.get("_꾸밈"):
-            put(decor.get((rec["_꾸밈"], int(rec.get("_nth") or 1))))
+            kind, k = rec["_꾸밈"], int(rec.get("_nth") or 1)
+            if kind in ("표지", "STEP", "뒤"):
+                dg = decor_groups(plan, pages_by_id)
+                pids = dg["STEP"][k - 1] if kind == "STEP" and 0 < k <= len(dg["STEP"]) else ([] if kind == "STEP" else dg[kind])
+            else:
+                pids = [decor.get((kind, k))]
+            for pid in pids:
+                put(pid)
             continue
         if not isinstance(rec, dict) or not faces:
             continue
