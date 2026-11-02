@@ -624,6 +624,8 @@ def _editor_lib(meta, content):
     specs = {s.get("id"): s for s in store.load("specs")}
     specs.update({s.get("id"): s for s in pkg.get("specs") or []})
     plan = _content_plan(pkg, content)
+    if meta.get("bare"):                                                 # order: data — 앞뒤 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지) 없이 원고가 고른 면만(찍기 · 다시 짜기 · 병합된 문서 모두)
+        plan["bare"] = True
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
     lib = {"pages": list(pages_by.values()), "parts": pkg.get("parts") or [], "blocks": pkg.get("blocks") or [],
            "skins": [skin], "specs": list(specs.values()), "plans": [plan], "sets": []}
@@ -638,8 +640,6 @@ def _run_editor_render(job, log):
     t0 = time.time()
     lib, plan, skin = _editor_lib(job.meta, content)
     log(f"[편집기] 틀 읽기 {time.time() - t0:.1f}초")
-    if job.meta.get("bare"):                                           # order: data — 앞뒤 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지) 없이 원고가 고른 면만
-        plan["bare"] = True
     log(f"[편집기] {series}/{design} · 구성 {', '.join(content)} · 쪽 {sum(len(s['pages']) for s in plan.get('sections') or [])}")
     ctx = _ctx(lib, skin.get("id"))
     sp = next((s for s in lib["specs"] if s.get("id") == plan.get("spec")), None) or {}
