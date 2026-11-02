@@ -553,10 +553,20 @@ def _doc_text(c):
     return dict(c, text=text)
 
 
-def to_content(data, sample=None, caps=None, start=1):
-    """start = 첫 지문의 번호(이 책 안 차례) — 원고를 덩어리로 나눠 바꿀 때(order: data) 덩어리 사이 번호가 이어지게"""
+def _one_q(qs):
+    """발문이 같고 선지 없는 문제 여럿(O/X 진술) → 한 문제(발문 한 번 + 진술 목록) — 여러 항목을 한 줄기에 이을 때"""
+    if len(qs) > 1 and not any(q.get("choices") for q in qs) and len({str(q.get("prompt") or "") for q in qs}) == 1:
+        body = "\n".join(f"({i}) {str(q.get('passage') or '').strip()}  ( O / X )" for i, q in enumerate(qs, 1))
+        return [{"prompt": qs[0].get("prompt") or "", "passage": body}]
+    return qs
+
+
+def to_content(data, sample=None, caps=None, start=1, merge=False):
+    """start = 첫 지문의 번호(이 책 안 차례) — 원고를 덩어리로 나눠 바꿀 때(order: data) 덩어리 사이 번호가 이어지게.
+    merge = 지문의 항목들을 실전 문제 한 줄기에 모은다(문제 꼴로 바꿀 수 있는 것만 — 지문 한 번 + 항목 차례대로 문제, 2026-11-02)"""
     sample, caps = sample or {}, caps or {}
     story = next((k for nm, c in caps.items() if nm.startswith("S") for k in c if "발문" in k and "+" in k), None)   # 실전 문제 한 줄기 자리
+    merge = merge and bool(story)
     used = {s for name, (srcs, _) in GROUPS.items() if name in caps for s in srcs}
     groups, exam, report = {}, [], {"sent": [], "skipped": []}
     for seq, p in enumerate((data or {}).get("passages") or [], start):
@@ -565,10 +575,13 @@ def to_content(data, sample=None, caps=None, start=1):
         for it in p.get("items") or []:
             label = it.get("label")
             if (it.get("content") or {}).get("form") == MS_FORM:              # 컴포넌트 원고 꼴(2026-10-20) — AI · 업로드 같은 꼴
-                pairs = _from_ms(it["content"], caps, label)
+                pairs = _from_ms(it["content"], {k: v for k, v in caps.items() if k != "B본문정리"} if merge else caps, label)
                 took = False
                 for s, c in pairs:
-                    if s in used:
+                    if merge and s.startswith("q:"):
+                        qs += _one_q(_qs(c))
+                        took = True
+                    elif s in used:
                         if s == "영작배열" and s in got:                         # 영작배열(낱말) · (서술형)을 한 구성에 이어서
                             c = {"items": got[s]["items"] + c["items"]}
                         got[s], took = c, True
@@ -582,7 +595,9 @@ def to_content(data, sample=None, caps=None, start=1):
                 continue
             s = _src(it)
             c = _doc_text(it.get("content") or {})
-            if s in used:
+            if merge and s.startswith("q:") and (c.get("group") == "question" or label in Q_LABELS):
+                qs += _one_q(_qs(c))
+            elif s in used:
                 got[s] = c
             elif story and s.startswith("q:") and (c.get("group") == "question" or label in Q_LABELS):
                 qs += _qs(c)
@@ -596,6 +611,9 @@ def to_content(data, sample=None, caps=None, start=1):
         for name, (srcs, _) in GROUPS.items():
             if name in caps and srcs & set(got):
                 groups.setdefault(name, []).append((num, text, got))
+        if qs and merge:                                                  # 문제마다 다시 실은 지문 원문은 뺀다(지문은 머리에 한 번)
+            flat = lambda t: re.sub(r"\s+", "", str(t or ""))
+            qs = [dict(q, passage=None) if q.get("passage") and flat(q["passage"]) == flat(text) else q for q in qs]
         if qs:
             exam.append((num, text, qs))
     if not groups and not exam:
