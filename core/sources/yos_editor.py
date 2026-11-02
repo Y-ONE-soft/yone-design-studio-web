@@ -442,15 +442,31 @@ def _carries_passage(q, text):
     return bool(words) and len(words & mine) * 2 > len(words)
 
 
-def _s_exam(ps):
+def story_gap(pkg):
+    """실전 문제 한 줄기 상자의 발문 단락 스타일 「단락 앞 공백」 — 둘째 지문부터 지문 사이를 문제 사이와 같은 간격으로(없으면 None)"""
+    styles = ((pkg.get("skin") or {}).get("styles") or {}) if isinstance(pkg.get("skin"), dict) else {}
+    for pg in pkg.get("pages") or []:
+        if not (pg.get("name") or "").startswith("S"):
+            continue
+        for it in pg.get("items") or []:
+            a = it.get("atom") or {}
+            if "+" in (a.get("bind") or "") and "발문" in a["bind"]:
+                st = styles.get(((a.get("slot_fmt") or {}).get("발문") or {}).get("style") or "") or {}
+                return float(st["space_before"]) if st.get("space_before") else None
+    return None
+
+
+def _s_exam(ps, gap=None):
     """실전 문제 한 줄기 — 지문마다 머리(지문번호 · 지문) + 그 지문의 문제들(번호 · 발문 · 보기 · 선지).
-    문제마다 지문을 통째로 싣고 있으면(변형 지문) 머리 지문은 뺀다 — 문제와 관계없는 원문이 한 번 더 나왔다(2026-11-02)"""
+    문제마다 지문을 통째로 싣고 있으면(변형 지문) 머리 지문은 뺀다 — 문제와 관계없는 원문이 한 번 더 나왔다(2026-11-02).
+    gap = 둘째 지문부터 지문번호 문단의 단락 앞 공백(재정의) — 지문 사이도 문제 사이와 같은 간격(story_gap)"""
     out = []
-    for no, text, qs in ps:
+    for k, (no, text, qs) in enumerate(ps):
+        head = {"t": str(no), "ov": {"space_before": gap}} if k and gap else str(no)
         if qs and all(_carries_passage(q, text) for q in qs):
-            out.append([["지문번호", str(no)]])
+            out.append([["지문번호", head]])
         else:
-            out.append([["지문번호", str(no)], ["지문", "다음 글을 읽고 물음에 답하시오.\n" + (text or "")]])
+            out.append([["지문번호", head], ["지문", "다음 글을 읽고 물음에 답하시오.\n" + (text or "")]])
         for i, q in enumerate(qs, 1):
             rec = [["번호", f"{i:02d}"], ["발문", _frags(_u(str(q.get("prompt") or "").strip()))]]
             if q.get("passage"):
@@ -572,7 +588,7 @@ def _one_q(qs):
     return qs
 
 
-def to_content(data, sample=None, caps=None, start=1, merge=False):
+def to_content(data, sample=None, caps=None, start=1, merge=False, gap=None):
     """start = 첫 지문의 번호(이 책 안 차례) — 원고를 덩어리로 나눠 바꿀 때(order: data) 덩어리 사이 번호가 이어지게.
     merge = 지문의 항목들을 실전 문제 한 줄기에 모은다(문제 꼴로 바꿀 수 있는 것만 — 지문 한 번 + 항목 차례대로 문제, 2026-11-02)"""
     sample, caps = sample or {}, caps or {}
@@ -641,5 +657,5 @@ def to_content(data, sample=None, caps=None, start=1, merge=False):
     for name, ps in groups.items():
         content[name] = GROUPS[name][1](ps, sample, caps.get(name) or Counter())
     if exam:
-        content[story] = _s_exam(exam)
+        content[story] = _s_exam(exam, gap)
     return content, report

@@ -280,7 +280,7 @@ def _render_editor(series, design, body, book):
         sample = _content.from_records(pkg.get("plan") or {}, {p["id"]: p for p in pkg.get("pages") or []}, sample)
     bare = conv is yos_editor and body.get("order") == "data"
     if bare:                                                             # 바깥이 정한 차례 그대로(contents 책 구성) — 틀의 앞뒤 쪽 없이
-        content, rep = data_records(data, sample, yos_editor.template_caps(pkg))
+        content, rep = data_records(data, sample, yos_editor.template_caps(pkg), yos_editor.story_gap(pkg))
     elif conv is yos_editor:                                             # 워크북 — 한 벌의 칸 수는 틀의 자리 수로
         content, rep = conv.to_content(data, sample, yos_editor.template_caps(pkg))
     else:
@@ -308,7 +308,7 @@ def _render_editor(series, design, body, book):
                     "status_url": url_for("api_v1.render_status", jid=job.id), "report": rep}), 202
 
 
-def data_records(data, sample, caps):
+def data_records(data, sample, caps, gap=None):
     """워크북 원고를 **원고가 온 차례 그대로** 레코드 차례 원고로(order: data) — 틀의 쪽 차례(STEP 1 전부 → STEP 2 …)를 따르지 않는다.
 
     원고의 지문 칸(passages[i])이 곧 차례다. 지문 칸 하나 = 원고 유형 하나(contents 책 구성의 칸 갈래 — 본문정리(주제) = 본문정리 + 주제).
@@ -344,12 +344,12 @@ def data_records(data, sample, caps):
                 recs.append({"_꾸밈": str(dc["name"]), "_nth": int(dc.get("nth") or 1)})
             continue
         start = num[(g[0].get("no"), g[0].get("content"))]
-        content, r = yos_editor.to_content(dict(data, passages=g), sample, caps, start=start)
+        content, r = yos_editor.to_content(dict(data, passages=g), sample, caps, start=start, gap=gap)
         faces = lambda c: [f for f, v in c.items() if v and (f in caps or "+" in f)]
         if len(set(keys_of(g[0]))) > 1 and len(faces(content)) > 1:
             # 한 유형의 항목들이 면 여럿으로 갈라진다(내용일치 OX 영어 + 주제 → 본문OX 면 · 본문정리 면, 지문 두 번) —
             # 문제 꼴로 바꿀 수 있는 항목은 실전 문제 한 줄기에 모아 지문 한 번 + 문제를 잇는다(2026-11-02 사용자)
-            merged, mr = yos_editor.to_content(dict(data, passages=g), sample, caps, start=start, merge=True)
+            merged, mr = yos_editor.to_content(dict(data, passages=g), sample, caps, start=start, merge=True, gap=gap)
             if len(faces(merged)) < len(faces(content)):
                 content, r = merged, mr
         rep["sent"] += r["sent"]

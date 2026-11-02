@@ -398,18 +398,19 @@ def schema(pages, width_of=None):
 
 def story_value(bind, records, slot_fmt=None):
     """여러 자리를 한 줄기 글로(인디자인 한 스토리 여러 단락 스타일) — bind = "번호+발문+지문+선지",
-    records = [{자리: 글, …} 또는 [[자리, 글], …], …] 문항 순서(목록이면 그 문항 안 차례 그대로). 자리마다 문단(글 안 줄바꿈 = 문단 여럿)이 되고 문단 첫머리에 그 자리 표시(ps)가 붙어
+    records = [{자리: 글, …} 또는 [[자리, 글], …], …] 문항 순서(목록이면 그 문항 안 차례 그대로). 글 대신 {t: 글, ov: {단락 앞 공백 …}} 이면 그 첫 문단에 단락 재정의.
+    자리마다 문단(글 안 줄바꿈 = 문단 여럿)이 되고 문단 첫머리에 그 자리 표시(ps)가 붙어
     그리기(render._text_html)가 그 자리의 단락 스타일을 입힌다. slot_fmt[자리].inline 이면 따로 문단을 만들지 않고
     다음 문단 첫머리에 붙는다(문항 번호 — 발문 첫 줄 앞)."""
     fmt = slot_fmt or {}
     parts = [p for p in bind.split("+") if p]
     out, carry = [], []
 
-    def para(slot, line, v0=False):
+    def para(slot, line, v0=False, ov=None):
         nonlocal carry
         if out:
             out.append("\n")
-        out.append(dict({"ps": slot, "t": ""}, **({"v0": True} if v0 else {})))   # v0 = 레코드 값 하나의 첫 단락(고정 개체 「필드 앞 · 뒤」가 본다)
+        out.append(dict({"ps": slot, "t": ""}, **({"v0": True} if v0 else {}), **({"ov": ov} if ov else {})))   # v0 = 레코드 값 하나의 첫 단락(고정 개체 「필드 앞 · 뒤」가 본다) · ov = 단락 재정의
         out.extend(carry)
         carry = []
         if line:
@@ -420,6 +421,9 @@ def story_value(bind, records, slot_fmt=None):
         else:                                                           # [[자리, 글], …] — 문항마다 차례가 다를 때(보기가 지문 앞·뒤)
             pairs = [(x[0], x[1]) for x in rec if isinstance(x, (list, tuple)) and len(x) == 2]
         for s, v in pairs:
+            ov = None
+            if isinstance(v, dict) and isinstance(v.get("ov"), dict) and isinstance(v.get("t"), str):   # {t, ov} — 그 문단에 단락 재정의(인디자인 로컬 서식)
+                ov, v = v["ov"], v["t"]
             if v in (None, ""):
                 continue
             if (fmt.get(s) or {}).get("inline"):
@@ -438,7 +442,7 @@ def story_value(bind, records, slot_fmt=None):
                         out.append(r)
                 continue
             for j, line in enumerate(str(v).split("\n")):
-                para(s, line, j == 0)
+                para(s, line, j == 0, ov if j == 0 else None)
     if carry:                                                           # 붙을 문단이 없으면 제 문단으로
         para(carry[0]["ps"], "")
     return out
