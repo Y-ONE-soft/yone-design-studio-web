@@ -408,6 +408,37 @@ def _key_fields(kq):
 
 
 ROWS = "번호+문장+해석"          # 문장 묶음 데이터 필드 — 번호는 따로(템플릿이 같은 단락 앞에 인라인 고정 텍스트 프레임으로)
+ROW_SLOTS = ("번호", "문장", "해석")
+HEAD_KO_CS, LIST_KO_CS = "중간제목 해석", "목록 해석"                        # 같은 줄 옆 한글 — 틀 브랜드의 문자 스타일
+
+
+def _around(s):
+    """문장 위 중간 제목(contents sentences[].heading) · 아래 번호 없는 목록 줄(sentences[].list) → 앞 · 뒤 [자리, 값] 쌍.
+    중간 제목은 굵은 영문 + 옆 한글(below 면 한글은 아래 문단 「중간제목 해석」), 목록 줄은 한 줄에 한 항목 「영문 + 옆 한글」."""
+    head, tail = [], []
+    h = s.get("heading") if isinstance(s.get("heading"), dict) else {}
+    en, ko = str(h.get("en") or "").strip(), str(h.get("ko") or "").strip()
+    if en:
+        if h.get("below") is True:
+            head = [["중간제목", en]] + ([["중간제목 해석", ko]] if ko else [])
+        else:
+            head = [["중간제목", [en] + ([{"t": " " + ko, "cs": HEAD_KO_CS}] if ko else [])]]
+    runs = []
+    for x in s.get("list") or []:
+        if isinstance(x, dict) and str(x.get("en") or "").strip():
+            runs.append(("\n" if runs else "") + str(x["en"]))
+            if str(x.get("ko") or "").strip():
+                runs.append({"t": " " + str(x["ko"]), "cs": LIST_KO_CS})
+    if runs:
+        tail = [["목록", runs]]
+    return head, tail
+
+
+def _row(r):
+    """문장 한 벌 → {번호, 문장, 해석[, _h]} — 중간 제목 · 목록 줄이 붙은 벌은 [자리, 값] 쌍 목록이다(_around)"""
+    if isinstance(r, list):
+        return {x[0]: x[1] for x in r if isinstance(x, (list, tuple)) and len(x) == 2 and x[0] in ROW_SLOTS}
+    return r if isinstance(r, dict) else {}
 
 
 def record(doc):
@@ -420,7 +451,11 @@ def record(doc):
         if gps:
             runs = [{"t": "", "side": "\n".join(("* " + g) if not g.startswith("*") else g for g in gps)}] + runs
         runs = norm_runs(runs)
-        rows.append({"번호": str(s.get("no") or ""), "문장": runs, "해석": _sized(s.get("ko") or "", s.get("koSize")), "_h": _hash(runs)})
+        row = {"번호": str(s.get("no") or ""), "문장": runs, "해석": _sized(s.get("ko") or "", s.get("koSize")), "_h": _hash(runs)}
+        head, tail = _around(s)
+        if head or tail:                                                 # 앞 · 뒤 자리가 붙으면 [자리, 값] 쌍으로(한 줄기 글의 자리 차례 그대로)
+            row = head + [[k, row[k]] for k in ROW_SLOTS] + tail
+        rows.append(row)
     src, ko = meta.get("source") or "", title.get("ko") or meta.get("subject") or title.get("en") or ""
     rec = {"강": short_lesson(meta.get("title") or ""), "회차": "분석",
            "지문제목": " · ".join(x for x in (src, ko) if x),
@@ -482,7 +517,7 @@ def to_doc(rec, base):
     → (문서, 고친 칸 이름 목록)"""
     doc, changed = copy.deepcopy(base), []
     old = ROWS not in rec and "문장+해석" in rec                       # 옛 템플릿(번호가 문장 안)
-    rows = rec.get(ROWS) or rec.get("문장+해석") or []
+    rows = [_row(r) for r in rec.get(ROWS) or rec.get("문장+해석") or []]
     sents = doc.get("sentences") or []
     for i, s in enumerate(sents):
         if i >= len(rows):

@@ -241,3 +241,29 @@ def test_sizes_and_key_subs_and_voca_pos():
     rec["어휘"][0][2] = rec["어휘"][0][2].replace("달리다", "뛰다")
     d, ch = ya.to_doc(rec, doc)
     assert d["voca"][0] == dict(doc["voca"][0], ko="뛰다") and ch == ["어휘"]
+
+
+def test_heading_and_list_rows():
+    """중간 제목(sentences[].heading) · 번호 없는 목록 줄(sentences[].list) → 그 문장 앞 · 뒤 자리(한 줄기 글), 되돌릴 때는 문장 · 해석만"""
+    from core.units import content
+    doc = _doc([{"no": 1, "tagged": "Hi[S].", "ko": "안녕.", "gps": [], "refs": [], "marks": [],
+                 "heading": {"en": "Eat Locally", "ko": "지역별로 먹어라"}},
+                {"no": 2, "tagged": "Check[V] this.", "ko": "확인하라.", "gps": [], "refs": [], "marks": [],
+                 "heading": {"en": "Tips", "ko": "도움말", "below": True},
+                 "list": [{"en": "□ Creating accounts", "ko": "계정 만들기"}, {"en": "□ Logging in", "ko": ""}]},
+                {"no": 3, "tagged": "Bye.", "ko": "잘 가.", "gps": [], "refs": [], "marks": []}])
+    rows = ya.record(doc)[ya.ROWS]
+    assert rows[0][0] == ["중간제목", ["Eat Locally", {"t": " 지역별로 먹어라", "cs": ya.HEAD_KO_CS}]]
+    assert [x[0] for x in rows[1]] == ["중간제목", "중간제목 해석", "번호", "문장", "해석", "목록"]
+    assert rows[1][-1] == ["목록", ["□ Creating accounts", {"t": " 계정 만들기", "cs": ya.LIST_KO_CS}, "\n□ Logging in"]]
+    assert isinstance(rows[2], dict)                                       # 앞 · 뒤 자리 없는 문장은 전과 같다
+    story = content.story_value(ya.ROWS, rows, {"번호": {"inline": True}})
+    paras = [r["ps"] for r in story if isinstance(r, dict) and "ps" in r and not r.get("inline")]
+    assert paras == ["중간제목", "문장", "해석", "중간제목", "중간제목 해석", "문장", "해석", "목록", "목록", "문장", "해석"]
+    assert ya.to_doc(ya.record(doc), doc) == (doc, [])                     # 안 고치면 그대로 — 중간 제목 · 목록은 데이터에 남는다
+    rec = ya.record(doc)
+    rec[ya.ROWS][1][4][1] = "확인해라."                                     # 목록이 붙은 문장의 해석 고치기
+    d, ch = ya.to_doc(rec, doc)
+    assert d["sentences"][1]["ko"] == "확인해라." and d["sentences"][1]["list"] == doc["sentences"][1]["list"] and ch == ["해석 2"]
+    back = content.story_records(ya.ROWS, story)                            # 병합된 문서 → 레코드(XML 내보내기) — 문장 수 그대로
+    assert [r.get("해석") for r in back] == ["안녕.", "확인하라.", "잘 가."]
