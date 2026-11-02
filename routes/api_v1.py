@@ -170,7 +170,7 @@ def design_detail(series, design):
 
 def _editor_decor(series, design):
     """편집기 제작 디자인의 꾸밈 칸 — contents 책 구성이 칸으로 놓는다(order: data 지문 칸 decor). 어느 쪽인지는 틀이 맞춘다(content.decor_groups):
-    「표지」(첫 장 앞 꾸밈 쪽 — 속표지) · 「STEP 1~n」(장 여는 쪽 + 뒤 꾸밈 쪽 — STEP 간지 + 차례) · 「뒤표지」(맨 끝 꾸밈 쪽 — MEMO · 뒤표지).
+    「표지」(첫 장 앞 꾸밈 쪽 — 속표지) · 「STEP 1~n」(장 여는 쪽 + 뒤 꾸밈 쪽 — STEP 간지 + 차례) · 맨 끝 꾸밈 쪽은 쪽마다(MEMO · 뒤표지).
     → [{name, nth, label, pages: [쪽 이름]}]"""
     from core.units import content as _content
     from routes.catalog import _ddir
@@ -184,8 +184,20 @@ def _editor_decor(series, design):
     nm = lambda pids: [(pages_by.get(p) or {}).get("name") or "" for p in pids]
     out = [{"name": "표지", "nth": 1, "label": "표지", "pages": nm(dg["표지"])}] if dg["표지"] else []
     out += [{"name": "STEP", "nth": k + 1, "label": f"STEP {k + 1}", "pages": nm(g)} for k, g in enumerate(dg["STEP"])]
-    if dg["뒤"]:
-        out.append({"name": "뒤", "nth": 1, "label": "뒤표지", "pages": nm(dg["뒤"])})
+    # 맨 끝 꾸밈 쪽은 쪽마다 따로(MEMO · 뒤표지 — 2026-11-02 사용자) — 이름 = 쪽 이름, nth = 그 이름의 「한 번만」 쪽 몇 번째(content._faces_by_chunk decor 와 같은 셈)
+    nth, seen = {}, {}
+    for sc in (pkg.get("plan") or {}).get("sections") or []:
+        for e in sc.get("pages") or []:
+            if isinstance(e, dict) and e.get("repeat") == "each_set":
+                continue
+            pid = e["page"] if isinstance(e, dict) else e
+            n = (pages_by.get(pid) or {}).get("name") or ""
+            seen[n] = seen.get(n, 0) + 1
+            nth.setdefault(pid, seen[n])
+    for p in dg["뒤"]:
+        n = (pages_by.get(p) or {}).get("name") or ""
+        if n:
+            out.append({"name": n, "nth": nth.get(p, 1), "label": n, "pages": [n]})
     return out
 
 
