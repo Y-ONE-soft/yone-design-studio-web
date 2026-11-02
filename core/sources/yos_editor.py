@@ -435,11 +435,22 @@ def _c_writing(ps, sample, cap):
             for ch in _chunks(rows, per)]
 
 
+def _carries_passage(q, text):
+    """문제가 지문을 통째로 싣고 있나(변형 지문 등) — 지문 낱말의 절반 넘게가 문제 보기 칸에 있으면"""
+    words = set(re.findall(r"[A-Za-z']+", (text or "").lower()))
+    mine = set(re.findall(r"[A-Za-z']+", str(q.get("passage") or "").lower()))
+    return bool(words) and len(words & mine) * 2 > len(words)
+
+
 def _s_exam(ps):
-    """실전 문제 한 줄기 — 지문마다 머리(지문번호 · 지문) + 그 지문의 문제들(번호 · 발문 · 보기 · 선지)"""
+    """실전 문제 한 줄기 — 지문마다 머리(지문번호 · 지문) + 그 지문의 문제들(번호 · 발문 · 보기 · 선지).
+    문제마다 지문을 통째로 싣고 있으면(변형 지문) 머리 지문은 뺀다 — 문제와 관계없는 원문이 한 번 더 나왔다(2026-11-02)"""
     out = []
     for no, text, qs in ps:
-        out.append([["지문번호", str(no)], ["지문", "다음 글을 읽고 물음에 답하시오.\n" + (text or "")]])
+        if qs and all(_carries_passage(q, text) for q in qs):
+            out.append([["지문번호", str(no)]])
+        else:
+            out.append([["지문번호", str(no)], ["지문", "다음 글을 읽고 물음에 답하시오.\n" + (text or "")]])
         for i, q in enumerate(qs, 1):
             rec = [["번호", f"{i:02d}"], ["발문", _frags(_u(str(q.get("prompt") or "").strip()))]]
             if q.get("passage"):

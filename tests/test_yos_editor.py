@@ -100,6 +100,16 @@ def test_blanks_hint_and_plain():
     assert content["C빈칸어법"][0][k][0][0]["빈칸문장"] == "much __, but __ it"
 
 
+def test_exam_drops_head_passage_when_questions_carry_it():
+    """문제가 변형 지문을 통째로 실으면 머리 지문(「다음 글을 읽고 …」+ 원문)은 뺀다, <보기> 같은 짧은 보기만 있으면 둔다"""
+    text = "Sound is produced through vibrations that occur from a sound source when strings are played"
+    full = {"prompt": "윗글의 목적은?", "passage": text.replace("produced", "made"), "choices": ["x"]}
+    short = {"prompt": "<보기>에서 고르면?", "passage": "<보기>\n(a) x", "choices": ["x"]}
+    assert yos_editor._s_exam([("1", text, [full])])[0] == [["지문번호", "1"]]
+    head = yos_editor._s_exam([("1", text, [short])])[0]
+    assert head[1][0] == "지문" and text in head[1][1]
+
+
 def test_summary_pads_questions_per_passage():
     q = {"prompt": "[1~2] 다음 글을 읽고, 물음에 답하시오.\n1. Which is true?", "choices": ["a", "b"], "answer": "1"}
     item = {"key": "mock-exam", "label": "내용종합", "content": {"kind": "mock-exam", "questions": [q, dict(q, prompt="2. Pick all.", passage="<보기>\n(a) x")]}}
