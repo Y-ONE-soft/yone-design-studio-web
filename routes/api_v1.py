@@ -385,7 +385,19 @@ def data_records(data, sample, caps, gap=None):
                 recs += [dict(x, _면=face, _ref=refs_of(x), **({"제목": title} if title and "제목" in x else {})) for x in v]
             elif v:
                 rep["skipped"].append({"passage": g[0].get("no"), "label": face, "why": "이 틀에서 「원고마다」 면이 아니라 차례대로 못 넣음"})
-    return ({"원고": recs} if recs else {}), rep
+    if not recs:
+        return {}, rep
+    # 꾸밈 쪽(간지 · 표지 · 차례)의 글 자리 — 틀 견본 글(«교재명» 등)이 그대로 찍혔다. 레코드 차례가 아닌 찍기(yos_editor.to_content)와 같게
+    # 교재명 = 책 이름 줄, 나머지는 비우고, 바깥이 준 data.fields({자리 이름: 글} — contents 권의 간지 글)가 있으면 그것으로(2026-11-03 사용자 「분석본 간지처럼 수정」)
+    bk = (data or {}).get("book") or {}
+    book = " ".join(x for x in (bk.get("line2"), bk.get("line1")) if x) or bk.get("title") or ""
+    head = {k: ((book if k == "교재명" else "") if isinstance(v, str) else [book if k == "교재명" else ""] * len(v))
+            for k, v in (sample or {}).items()
+            if k not in yos_editor.GROUPS and not k.startswith("_") and (isinstance(v, str) or (isinstance(v, list) and v and all(isinstance(x, str) for x in v)))}
+    for k, v in ((data or {}).get("fields") or {}).items():
+        if isinstance(k, str) and isinstance(v, str):
+            head[k] = [v] * len(head[k]) if isinstance(head.get(k), list) else v
+    return dict(head, 원고=recs), rep
 
 
 def records_for(pkg, content):
@@ -496,7 +508,10 @@ def render_view(jid):
         pick = ("const P=" + json.dumps(data.get("picks") or [], ensure_ascii=False) + ";"
                 "document.body.classList.add('pick');"
                 "const N='[data-bind=\"지문번호\"],[data-slot=\"지문번호\"]';"
-                "addEventListener('click',e=>{const p=e.target.closest('.p');if(!p)return;const me=P[+p.dataset.i]||{refs:[]},refs=me.refs;if(!refs.length)return;"
+                "addEventListener('click',e=>{const p=e.target.closest('.p');if(!p)return;const me=P[+p.dataset.i]||{refs:[]},refs=me.refs;"
+                "if(me.decor!==undefined){const bs=[...new Set([...p.querySelectorAll('[data-bind],[data-slot]')].map(x=>x.dataset.bind||x.dataset.slot))],"   # 꾸밈 쪽 — 그 쪽 글 자리 이름들 · 누른 자리
+                "at=e.target.closest&&e.target.closest('[data-bind],[data-slot]');parent.postMessage({yosPick:{decor:me.decor,binds:bs,bind:at?(at.dataset.bind||at.dataset.slot):null,page:+p.dataset.i}},'*');return;}"
+                "if(!refs.length)return;"
                 "let k=0;if(refs.length>1){let off=0;document.querySelectorAll('.p').forEach(q=>{if(+q.dataset.i<+p.dataset.i&&(P[+q.dataset.i]||{}).r===me.r)off+=q.querySelectorAll(N).length;});"   # 한 레코드가 펼침면이면 앞 쪽의 지문번호 자리부터 센다
                 "let bd=1e9;p.querySelectorAll(N).forEach((el,j)=>{const r=el.getBoundingClientRect();"
                 "if(r.top>e.clientY+2||off+j>=refs.length)return;const d=(e.clientY-r.top)+Math.max(0,r.left-e.clientX)*4;if(d<bd){bd=d;k=off+j;}});if(bd===1e9&&off<refs.length)k=off;}"
@@ -733,17 +748,19 @@ def _run_editor_render(job, log):
     if job.meta.get("print"):                                          # print: true — 종이 = 판형 + 도련(재단선 없음, RGB). 다른 조판 PDF 와 이어 붙일 때(contents 분석본 간지)
         ctx.print = {"bleed": float(sp.get("bleed") or 3.0), "marks": False}
     t0 = time.time()
-    recs = []
-    svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True, recs=recs)
+    recs, pgs = [], []
+    svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True, recs=recs, pages=pgs)
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else "") + f" · 그리기 {time.time() - t0:.1f}초")
     if job.meta.get("web"):                                            # pdf: false — 웹에서만 본다(/renders/<id>/view). PDF(크롬) 없이 쪽 그림만 남긴다
         picks, last = [], {"r": -1, "refs": []}
-        for rec in recs:                                               # 쪽마다 그 쪽 원고(r = 몇째 레코드)의 ref(지문번호 차례) — 덧쪽은 앞 쪽 것, 꾸밈 면은 없음
+        for rec, (name, spare) in zip(recs, pgs):                      # 쪽마다 그 쪽 원고(r = 몇째 레코드)의 ref(지문번호 차례) — 덧쪽은 앞 쪽 것
             if isinstance(rec, dict):
                 last = {"r": last["r"] + 1, "refs": rec.get("_ref") or []} if rec is not last.get("_rec") else last
                 last["_rec"] = rec
+            elif not spare:                                            # 레코드 없는 쪽(꾸밈 · 앞뒤 쪽) — 쪽 이름만(누르면 그 쪽 글 자리를 고친다)
+                last = {"r": last["r"] + 1, "refs": [], "decor": name}
             picks.append(last)
-        picks = [{"r": x["r"], "refs": x["refs"]} for x in picks]
+        picks = [{"r": x["r"], "refs": x["refs"], **({"decor": x["decor"]} if "decor" in x else {})} for x in picks]
         with open(os.path.join(d, "svgs.json"), "w", encoding="utf-8") as f:
             json.dump({"svgs": [({"svg": s["svg"], "w": s["w"], "h": s["h"]} if s.get("w") else s["svg"]) if isinstance(s, dict) else s for s in svgs],
                        "w": spec["w"], "h": spec["h"], "picks": picks}, f, ensure_ascii=False)   # 판형이 다른 면(들여온 표지 펼침)은 {svg, w, h}

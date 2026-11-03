@@ -701,7 +701,7 @@ def _filled(lib, plan, data, ctx, drop_empty=False):
     return out, report, spec_of, spec
 
 
-def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
+def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None, pages=None):
     """문서에 원고를 넣어 면 SVG 목록 — 「원고마다」 되풀이 · 넘치면 덧쪽까지. → (svgs, 넣은 보고, 문서 판형)
     recs = 목록을 주면 면마다 그 면이 받은 레코드(없으면 None, 덧쪽도 None)를 채운다 — 조판 결과 화면에서 고친 글을 원고 자리로 되돌릴 때"""
     seq, report, spec_of, spec = _filled(lib, plan, data, ctx, drop_empty)
@@ -716,6 +716,8 @@ def fill_svgs(lib, plan, data, ctx, drop_empty=False, recs=None):
             svgs[-1] = dict(s, w=float(sp["w"]), h=float(sp["h"]))
         if recs is not None:
             recs.append(rec)
+        if pages is not None:
+            pages.append((pg.get("name") or "", bool(_)))                         # 쪽 이름 · 덧쪽인가 — 레코드 없는 꾸밈 쪽을 덧쪽과 가린다(워크북 웹 보기)
     return svgs, report, spec
 
 
