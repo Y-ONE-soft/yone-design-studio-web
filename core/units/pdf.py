@@ -37,16 +37,26 @@ def browser():
 def html_of(svgs, w_mm, h_mm, title="지면", keep=None, pad=0):
     """면마다 한 장. @page 크기 = 판형(+ pad mm), 여백 0. SVG 는 width/height 가 mm 로 박혀 있다.
     keep — 낼 면 번호들(없으면 전부). 나머지 면은 함께 그려 글 잇기를 흘린 뒤 인쇄 전에 뺀다(쪽 하나 PDF 에 앞 쪽 이야기가 흘러오게)."""
-    pages = "".join(f'<div class="p{"" if keep is None or i in keep else " drop"}">{s["svg"] if isinstance(s, dict) else s}</div>'
+    pages = "".join(f'<div class="p{"" if keep is None or i in keep else " drop"}{" " + _sz(s) if _sz(s) else ""}">{s["svg"] if isinstance(s, dict) else s}</div>'
                     for i, s in enumerate(svgs))
+    # 판형이 다른 면(책에 들여온 표지 펼침 등 — svgs 항목 {svg, w, h}) — 크롬 이름 붙은 쪽(@page 이름)으로 그 크기
+    sized = "".join(f'@page {n}{{size:{w + pad}mm {h + pad}mm;margin:0}} .p.{n}{{page:{n};width:{w}mm;height:{h}mm}} .p.{n} > svg{{width:{w}mm;height:{h}mm}} '
+                    for n, (w, h) in sorted({_sz(s): (float(s["w"]), float(s["h"])) for s in svgs if _sz(s)}.items()))
     drop = ("<script>(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => setTimeout(() => "
             "document.querySelectorAll('.p.drop').forEach(e => e.remove()), 0));</script>") if keep is not None else ""
     return (f'<!doctype html><html><head><meta charset="utf-8"><title>{title}</title><style>'
             f'@page{{size:{w_mm + pad}mm {h_mm + pad}mm;margin:0}} html,body{{margin:0;padding:0}} '
             f'.p{{width:{w_mm}mm;height:{h_mm}mm;overflow:visible;page-break-after:always;break-after:page;clip-path:inset(0 -{pad}mm -{pad}mm 0)}} '   # 면 위·왼쪽 밖(재단 여백까지 그린 머리 띠)이 앞 면 아래로 비치지 않게
             f'.p > svg{{display:block;width:{w_mm}mm;height:{h_mm}mm;overflow:visible}} .p svg .zone{{display:none}} '
-            f'.story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("file")}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
+            f'{sized}.story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("file")}'                     # 글 잇기 — 「앞 상자에서 이어짐」·넘침 표시는 화면에만
             f'</style></head><body>{pages}<script>{_compose_js()}</script>{drop}<script>{_OVER_JS}</script></body></html>')
+
+
+def _sz(s):
+    """면 항목에 제 판형(w · h mm)이 있으면 그 크기 이름 「szWxH」(소수점은 _) — 없으면 빈 글"""
+    if not (isinstance(s, dict) and s.get("w") and s.get("h")):
+        return ""
+    return f'sz{float(s["w"]):g}x{float(s["h"]):g}'.replace(".", "_")
 
 
 def _compose_js():
@@ -76,16 +86,17 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None, r
     if not os.path.exists(out_path) or os.path.getsize(out_path) < 100:
         raise RuntimeError("PDF 가 안 나왔다: " + (r.stderr or r.stdout or "")[-400:])
     shutil.rmtree(d, ignore_errors=True)
-    over = exact_pages(out_path, w_mm, h_mm)
+    over = exact_pages(out_path, w_mm, h_mm, sizes={(float(s["w"]), float(s["h"])) for s in svgs if _sz(s)})
     if report is not None:
         report["overset"] = over
     return out_path
 
 
-def exact_pages(path, w_mm, h_mm):
+def exact_pages(path, w_mm, h_mm, sizes=()):
     """쪽 크기를 판형 그대로 — 크롬은 @page 크기를 1/300 인치로 내린다(A4 210mm → 594.96pt, 0.11mm 좁다).
     판형보다 1mm 크게 그려 두고(html_of pad) 쪽마다 MediaBox·CropBox 를 왼쪽 위에서 판형 크기로 자른다.
-    제목 끝에 실려 온 넘침(OVER_MARK)은 떼어 돌려준다 → [[쪽, [글 앞머리…]], …]."""
+    제목 끝에 실려 온 넘침(OVER_MARK)은 떼어 돌려준다 → [[쪽, [글 앞머리…]], …].
+    sizes = 판형이 다른 면의 크기들(mm) — 쪽마다 매체 크기가 가장 가까운 판형으로 자른다(크롬이 빈 덧쪽을 지워 차례로는 못 맞춘다)."""
     import fitz
     doc = fitz.open(path)
     over = []
@@ -99,9 +110,10 @@ def exact_pages(path, w_mm, h_mm):
             over = []
         doc.set_metadata({k: v for k, v in dict(meta, title=t).items()
                           if k in ("author", "producer", "creator", "title", "subject", "keywords", "creationDate", "modDate") and v})
-    w, h = float(w_mm) * PT, float(h_mm) * PT
+    all_sz = [(float(w_mm) * PT, float(h_mm) * PT)] + [(a * PT, b * PT) for a, b in sizes]
     for pg in doc:
-        mb = pg.mediabox                                                  # PDF 좌표(아래가 0) — 글은 위에서부터 놓였다
+        mb = pg.mediabox
+        w, h = min(all_sz, key=lambda z: abs(z[0] - mb.width) + abs(z[1] - mb.height))                                                  # PDF 좌표(아래가 0) — 글은 위에서부터 놓였다
         r = fitz.Rect(mb.x0, mb.y1 - h, mb.x0 + w, mb.y1)
         pg.set_cropbox(r)                                                 # 자른 상자가 매체 안이어야 해서 매체를 먼저 줄이지 않는다
         pg.set_mediabox(r)

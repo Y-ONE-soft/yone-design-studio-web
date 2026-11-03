@@ -242,7 +242,7 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
     문서에 bare 가 켜져 있으면 맨 앞 · 맨 뒤 · 「한 번만」 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지)은 안 찍는다 — 덩어리가 고른 면만.
     덩어리가 {「_꾸밈」: …, 「_nth」: n}면 그 자리에 틀의 꾸밈 면(contents 책 구성의 꾸밈 칸, 2026-11-02 — decor_groups):
     「표지」 = 첫 장 앞 꾸밈 쪽들(속표지) · 「STEP」 = n 번째 장을 여는 쪽 + 뒤 꾸밈 쪽(STEP 간지 + 차례) · 「뒤」 = 맨 끝 꾸밈 쪽(MEMO · 뒤표지),
-    그 밖의 이름은 그 이름의 「한 번만」 쪽 n 번째. 틀에 없으면 건너뛴다."""
+    그 밖의 이름은 그 이름의 「한 번만」 쪽 n 번째. 틀에 없으면 건너뛴다. 「_design」(표지 폴더 템플릿)이면 들여온 그 템플릿 쪽들."""
     faces, head, tail = _faces(plan, pages_by_id)
     decor, seen_nm = {}, {}                                               # (쪽 이름, 몇 번째) → 쪽 id — 「한 번만」 쪽만
     for sc in plan.get("sections") or []:
@@ -314,7 +314,9 @@ def _faces_by_chunk(plan, pages_by_id, chunks):
     for rec in chunks:
         if isinstance(rec, dict) and rec.get("_꾸밈"):
             kind, k = rec["_꾸밈"], int(rec.get("_nth") or 1)
-            if kind in ("표지", "STEP", "뒤"):
+            if rec.get("_design"):                                       # 표지 폴더 템플릿 — 찍기가 들여온 그 쪽들(api_v1._add_design)
+                pids = [pid for pid, pg in pages_by_id.items() if pg.get("_ext") == rec["_design"]]
+            elif kind in ("표지", "STEP", "뒤"):
                 dg = decor_groups(plan, pages_by_id)
                 pids = dg["STEP"][k - 1] if kind == "STEP" and 0 < k <= len(dg["STEP"]) else ([] if kind == "STEP" else dg[kind])
             else:

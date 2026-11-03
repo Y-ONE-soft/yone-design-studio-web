@@ -170,8 +170,9 @@ def design_detail(series, design):
 
 def _editor_decor(series, design):
     """편집기 제작 디자인의 꾸밈 칸 — contents 책 구성이 칸으로 놓는다(order: data 지문 칸 decor). 어느 쪽인지는 틀이 맞춘다(content.decor_groups):
-    「표지」(첫 장 앞 꾸밈 쪽 — 속표지) · 「STEP 1~n」(장 여는 쪽 + 뒤 꾸밈 쪽 — STEP 간지 + 차례) · 맨 끝 꾸밈 쪽은 쪽마다(MEMO · 뒤표지).
-    → [{name, nth, label, pages: [쪽 이름]}]"""
+    「표지」(첫 장 앞 꾸밈 쪽 — 속표지, 이름표는 「간지」 2026-11-03 사용자) · 「STEP 1~n」(장 여는 쪽 + 뒤 꾸밈 쪽 — STEP 간지 + 차례) · 맨 끝 꾸밈 쪽은 쪽마다(MEMO · 뒤표지).
+    표지 폴더의 편집기 템플릿도 꾸밈 칸으로 — {name: "표지", design: "cover/<id>"}(찾아서 올리는 표지, 2026-11-03 사용자). 찍을 때 그 템플릿 쪽을 들여온다(_editor_lib).
+    → [{name, nth, label, pages: [쪽 이름], design?}]"""
     from core.units import content as _content
     from routes.catalog import _ddir
     try:
@@ -182,7 +183,7 @@ def _editor_decor(series, design):
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
     dg = _content.decor_groups(pkg.get("plan") or {}, pages_by)
     nm = lambda pids: [(pages_by.get(p) or {}).get("name") or "" for p in pids]
-    out = [{"name": "표지", "nth": 1, "label": "표지", "pages": nm(dg["표지"])}] if dg["표지"] else []
+    out = [{"name": "표지", "nth": 1, "label": "간지", "pages": nm(dg["표지"])}] if dg["표지"] else []
     out += [{"name": "STEP", "nth": k + 1, "label": f"STEP {k + 1}", "pages": nm(g)} for k, g in enumerate(dg["STEP"])]
     # 맨 끝 꾸밈 쪽은 쪽마다 따로(MEMO · 뒤표지 — 2026-11-02 사용자) — 이름 = 쪽 이름, nth = 그 이름의 「한 번만」 쪽 몇 번째(content._faces_by_chunk decor 와 같은 셈)
     nth, seen = {}, {}
@@ -198,6 +199,10 @@ def _editor_decor(series, design):
         n = (pages_by.get(p) or {}).get("name") or ""
         if n:
             out.append({"name": n, "nth": nth.get(p, 1), "label": n, "pages": [n]})
+    t = _cat().template_info("cover")
+    for d in (t or {}).get("designs") or []:
+        if _editor_design("cover", d["id"]):
+            out.append({"name": "표지", "nth": 1, "label": d.get("name") or d["id"], "design": f"cover/{d['id']}", "pages": []})
     return out
 
 
@@ -340,7 +345,9 @@ def data_records(data, sample, caps, gap=None):
     for g in groups:
         dc = g[0].get("decor")
         if dc:
-            if isinstance(dc, dict) and dc.get("name"):
+            if isinstance(dc, dict) and re.fullmatch(r"cover/x[0-9a-f]+", str(dc.get("design") or "")):
+                recs.append({"_꾸밈": "표지", "_design": dc["design"]})    # 표지 폴더 템플릿(_editor_lib 이 그 쪽을 들여온다)
+            elif isinstance(dc, dict) and dc.get("name"):
                 recs.append({"_꾸밈": str(dc["name"]), "_nth": int(dc.get("nth") or 1)})
             continue
         start = num[(g[0].get("no"), g[0].get("content"))]
@@ -476,16 +483,18 @@ def render_view(jid):
     except (OSError, ValueError):
         abort(410)                                                        # pdf: false 로 찍지 않았거나 찍기 폴더가 없다(서버 다시 켜짐)
     w, h = float(data["w"]), float(data["h"])
-    pages = "".join(f'<div class="p">{s}</div>' for s in data["svgs"])          # 쪽 하나 = 칸 하나 — 글이 안 닿은 이어 받는 쪽은 컴포저가 칸째 지운다
+    # 쪽 하나 = 칸 하나 — 글이 안 닿은 이어 받는 쪽은 컴포저가 칸째 지운다. 판형이 다른 면({svg, w, h} — 들여온 표지 펼침)은 제 크기로, 두 칸 폭을 다 쓴다
+    wide = lambda s: f' style="width:{s["w"]}mm;height:{s["h"]}mm;grid-column:1/-1" data-w="{float(s["w"]) * 96 / 25.4:.3f}"'
+    pages = "".join(f'<div class="p"{wide(s)}>{s["svg"]}</div>' if isinstance(s, dict) else f'<div class="p">{s}</div>' for s in data["svgs"])
     fit = ("const W=" + f"{w * 96 / 25.4:.3f}" + ";"
            "function fit(){const g=document.querySelector('.g'),two=innerWidth>=700,cw=two?(innerWidth-6)/2:innerWidth,z=cw/W;"
-           "g.style.gridTemplateColumns=two?'max-content max-content':'max-content';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=z;});"
+           "g.style.gridTemplateColumns=two?'max-content max-content':'max-content';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=p.dataset.w?Math.min(z,innerWidth/p.dataset.w):z;});"
            "parent.postMessage({yosView:{height:document.documentElement.scrollHeight,pages:document.querySelectorAll('.p').length}},'*');}"
            "document.addEventListener('DOMContentLoaded',()=>(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(fit,0)));"
            "addEventListener('resize',fit);")
     html = (f'<!doctype html><html><head><meta charset="utf-8"><title>{job.meta.get("stem") or "지면"}</title><style>'
             f'html,body{{margin:0;padding:0;background:transparent}} .g{{display:grid;column-gap:6px;row-gap:16px}} '
-            f'.p{{width:{w}mm;height:{h}mm;overflow:hidden;background:#fff;box-shadow:0 0 0 1px #e3e6eb}} .p > svg{{display:block;width:{w}mm;height:{h}mm;overflow:hidden}} '
+            f'.p{{width:{w}mm;height:{h}mm;overflow:hidden;background:#fff;box-shadow:0 0 0 1px #e3e6eb}} .p > svg{{display:block;width:100%;height:100%;overflow:hidden}} '
             f'.p svg .zone{{display:none}} .story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("url")}'
             f'</style></head><body><div class="g">{pages}</div><script>{_pdf._compose_js()}</script><script>{fit}</script></body></html>')
     return html, 200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, max-age=600"}
@@ -627,9 +636,67 @@ def _editor_lib(meta, content):
     if meta.get("bare"):                                                 # order: data — 앞뒤 쪽(속표지 · 간지 · 차례 · MEMO · 뒤표지) 없이 원고가 고른 면만(찍기 · 다시 짜기 · 병합된 문서 모두)
         plan["bare"] = True
     pages_by = {p["id"]: p for p in pkg.get("pages") or []}
-    lib = {"pages": list(pages_by.values()), "parts": pkg.get("parts") or [], "blocks": pkg.get("blocks") or [],
+    parts = list(pkg.get("parts") or [])
+    for ext in dict.fromkeys(r["_design"] for r in (content or {}).get("원고") or [] if isinstance(r, dict) and r.get("_design")):
+        _add_design(ext, img_dir, have, skin, specs, pages_by, parts)
+    lib = {"pages": list(pages_by.values()), "parts": parts, "blocks": pkg.get("blocks") or [],
            "skins": [skin], "specs": list(specs.values()), "plans": [plan], "sets": []}
     return lib, plan, skin
+
+
+def _add_design(ref, img_dir, have, skin, specs, pages_by, parts):
+    """다른 편집기 템플릿(표지 폴더 「cover/<id>」)의 쪽을 이 찍기에 들여온다 — 책 구성의 「표지」 칸(2026-11-03 사용자 「표지는 찾아서 올릴 수 있게」).
+    쪽 · 부품 id 는 앞에 「<id>:」를 붙여 겹치지 않게, 쪽마다 _ext = ref(content._faces_by_chunk 가 그 칸에 놓는다).
+    판형 · 그림 · 스타일 · 서체는 없는 것만 보탠다 — 같은 이름이 다르면 찍는 틀 것이 이긴다. 쪽 판형은 그 템플릿 것 그대로(표지 펼침 424mm 등)."""
+    import base64
+    import copy
+    from core.units import fonts as _fonts
+    from routes.catalog import _ddir
+    series, _, design = ref.partition("/")
+    if not _editor_design(series, design):
+        return
+    try:
+        with open(os.path.join(_ddir(series, design), "units.json"), encoding="utf-8") as f:
+            ext = json.load(f)
+    except (OSError, ValueError):
+        return
+    for s in ext.get("specs") or []:
+        specs.setdefault(s.get("id"), s)
+    es = ext.get("skin") or {}
+    for k in ("tokens", "styles", "cstyles"):
+        for name, v in (es.get(k) or {}).items():
+            skin.setdefault(k, {}).setdefault(name, v)
+    for key, im in (ext.get("images") or {}).items():
+        if key not in skin.setdefault("images", {}):
+            p = os.path.join(img_dir, f"{design}_" + os.path.basename(im.get("name") or key))
+            with open(p, "wb") as fh:
+                fh.write(base64.b64decode(im.get("b64") or ""))
+            skin["images"][key] = p
+    for fn, b64 in (ext.get("fonts") or {}).items():
+        if fn not in have:
+            _fonts.register(fn, base64.b64decode(b64))
+            have.add(fn)
+    pre = f"{design}:"
+    for pt in ext.get("parts") or []:
+        parts.append(dict(pt, id=pre + pt["id"]))
+    eplan = ext.get("plan") or {}
+    order = [e["page"] if isinstance(e, dict) else e for sc in eplan.get("sections") or [] for e in sc.get("pages") or []]
+    by = {p["id"]: p for p in ext.get("pages") or []}
+    sample = eplan.get("content") or {}
+    for pid in order or list(by):
+        pg = copy.deepcopy(by.get(pid))
+        if not pg:
+            continue
+        for it in pg.get("items") or []:
+            if it.get("part"):
+                it["part"] = pre + it["part"]
+            a = it.get("atom") or {}
+            b = a.get("bind")
+            if b and not str(b).startswith("sys.") and isinstance(sample.get(b), str):
+                a["text"] = sample[b]                                    # 그 템플릿에 넣어 둔 원고(표지 제목 · 권 번호) — 찍는 원고에는 없는 자리
+                a.pop("bind", None)
+        pg.update(id=pre + pid, _ext=ref, spec=pg.get("spec") or eplan.get("spec") or "a4")
+        pages_by[pg["id"]] = pg
 
 
 def _run_editor_render(job, log):
@@ -650,7 +717,8 @@ def _run_editor_render(job, log):
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else "") + f" · 그리기 {time.time() - t0:.1f}초")
     if job.meta.get("web"):                                            # pdf: false — 웹에서만 본다(/renders/<id>/view). PDF(크롬) 없이 쪽 그림만 남긴다
         with open(os.path.join(d, "svgs.json"), "w", encoding="utf-8") as f:
-            json.dump({"svgs": [s["svg"] if isinstance(s, dict) else s for s in svgs], "w": spec["w"], "h": spec["h"]}, f, ensure_ascii=False)
+            json.dump({"svgs": [({"svg": s["svg"], "w": s["w"], "h": s["h"]} if s.get("w") else s["svg"]) if isinstance(s, dict) else s for s in svgs],
+                       "w": spec["w"], "h": spec["h"]}, f, ensure_ascii=False)   # 판형이 다른 면(들여온 표지 펼침)은 {svg, w, h}
         job.rc = 0
         return {"pdfs": [], "main_pdf": None, "pages": len(svgs), "view": True, "report": job.meta.get("report"),
                 "fill": {"filled": rep.get("filled"), "unfilled": rep.get("unfilled")}}
