@@ -202,7 +202,7 @@ def _editor_decor(series, design):
     t = _cat().template_info("cover")
     for d in (t or {}).get("designs") or []:
         if _editor_design("cover", d["id"]):
-            out.append({"name": "표지", "nth": 1, "label": d.get("name") or d["id"], "design": f"cover/{d['id']}", "pages": []})
+            out.append({"name": "표지", "nth": 1, "label": re.sub(r"\s*\(편집기 제작\)$", "", d.get("name") or "") or d["id"], "design": f"cover/{d['id']}", "pages": []})
     return out
 
 
