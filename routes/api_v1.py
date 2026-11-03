@@ -500,7 +500,12 @@ def render_view(jid):
                 "let k=0;if(refs.length>1){let off=0;document.querySelectorAll('.p').forEach(q=>{if(+q.dataset.i<+p.dataset.i&&(P[+q.dataset.i]||{}).r===me.r)off+=q.querySelectorAll(N).length;});"   # 한 레코드가 펼침면이면 앞 쪽의 지문번호 자리부터 센다
                 "let bd=1e9;p.querySelectorAll(N).forEach((el,j)=>{const r=el.getBoundingClientRect();"
                 "if(r.top>e.clientY+2||off+j>=refs.length)return;const d=(e.clientY-r.top)+Math.max(0,r.left-e.clientX)*4;if(d<bd){bd=d;k=off+j;}});if(bd===1e9&&off<refs.length)k=off;}"
-                "parent.postMessage({yosPick:{ref:refs[k],page:+p.dataset.i}},'*');});")
+                # 누른 낱말과 앞뒤 글(그 글상자 안) — contents 가 카드의 같은 낱말을 눌러 준다(지면에서 낱말을 고르고 · 한 번 더 누르면 카드 클릭과 같게)
+                "let hit=null;const cr=document.caretRangeFromPoint&&document.caretRangeFromPoint(e.clientX,e.clientY),W=/[A-Za-z'’-]/;"
+                "if(cr&&cr.startContainer.nodeType===3){const n=cr.startContainer,t=n.textContent;let a=cr.startOffset,b=a;while(a>0&&W.test(t[a-1]))a--;while(b<t.length&&W.test(t[b]))b++;"
+                "if(b>a){const box=n.parentElement.closest('foreignObject>div')||n.parentElement,r=document.createRange();r.selectNodeContents(box);r.setEnd(n,a);"
+                "const s=r.toString().length,all=box.textContent;hit={word:t.slice(a,b),before:all.slice(Math.max(0,s-80),s),after:all.slice(s+b-a,s+b-a+80)};}}"
+                "parent.postMessage({yosPick:{ref:refs[k],page:+p.dataset.i,hit}},'*');});")
     fit = ("const W=" + f"{w * 96 / 25.4:.3f}" + ";"
            "function fit(){const g=document.querySelector('.g'),two=innerWidth>=700,cw=two?(innerWidth-6)/2:innerWidth,z=cw/W;"
            "g.style.gridTemplateColumns=two?'max-content max-content':'max-content';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=p.dataset.w?Math.min(z,innerWidth/p.dataset.w):z;});"
