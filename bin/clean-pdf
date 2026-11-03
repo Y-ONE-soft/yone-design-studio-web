@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""이미 내보낸 PDF 에서 만든 도구 이름을 지운 사본을 만든다 — 지금 내보내기(core/units/pdf.scrub)와 같은 규칙.
+
+사용: bin/clean-pdf <PDF 또는 폴더>...
+  폴더면 그 안의 PDF 전부(하위 폴더 포함). 사본은 원본 옆 「정리본」 폴더에 같은 이름으로 — 원본은 그대로 둔다.
+  사본마다 전 면을 그려 원본과 화소가 같은지 보고, 다르거나 이름이 남으면 사본을 지우고 실패로 적는다.
+"""
+import os
+import shutil
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
+import fitz  # noqa: E402
+
+from core.units.pdf import scrub  # noqa: E402
+
+OUT = "정리본"
+
+
+def pdfs(args):
+    for a in args:
+        if os.path.isdir(a):
+            for d, subs, files in os.walk(a):
+                subs[:] = [s for s in subs if s != OUT]
+                yield from (os.path.join(d, f) for f in sorted(files) if f.lower().endswith(".pdf"))
+        else:
+            yield a
+
+
+def same_pixels(a_path, b_path):
+    a, b = fitz.open(a_path), fitz.open(b_path)
+    return a.page_count == b.page_count and all(
+        a[i].get_pixmap(dpi=72).samples == b[i].get_pixmap(dpi=72).samples for i in range(a.page_count))
+
+
+def main(args):
+    if not args:
+        sys.exit(__doc__)
+    bad = 0
+    for src in pdfs(args):
+        dst = os.path.join(os.path.dirname(src), OUT, os.path.basename(src))
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copyfile(src, dst)
+        try:
+            scrub(dst)
+            if not same_pixels(src, dst):
+                raise RuntimeError("지운 뒤 화소가 달라졌다")
+            print("ok  ", dst)
+        except Exception as e:  # 한 파일이 막혀도 나머지는 한다
+            os.remove(dst)
+            bad += 1
+            print("실패", src, "—", e)
+    sys.exit(1 if bad else 0)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

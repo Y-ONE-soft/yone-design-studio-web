@@ -106,7 +106,9 @@ def scrub(path):
     지운 뒤에도 스트림 밖에 이름이 남으면 RuntimeError(내보내지 않는다)."""
     import fitz
     doc = fitz.open(path)
-    doc.set_metadata({})
+    # 칸마다 빈 값으로 — set_metadata({}) 는 아무것도 안 지우고, pdf-lib 파일(xref 스트림)은 트레일러 /Info 를 못 뗀다
+    doc.set_metadata(dict.fromkeys(("title", "author", "subject", "keywords", "creator", "producer",
+                                    "creationDate", "modDate", "trapped"), ""))
     doc.del_xml_metadata()
     if doc.xref_get_key(doc.pdf_catalog(), "Info")[0] != "null":      # MuPDF 가 카탈로그 안에도 적는 /Info(규격 밖)
         doc.xref_set_key(doc.pdf_catalog(), "Info", "null")
@@ -118,7 +120,11 @@ def scrub(path):
     os.remove(tmp)
     # MuPDF 는 저장할 때마다 「% Written by MuPDF x」 를 적는다 — 같은 길이 공백으로 바꿔 xref 자리를 그대로 둔다
     b = re.sub(rb"%[^\r\n]*MuPDF[^\r\n]*", lambda m: b"%" + b" " * (len(m.group()) - 1), b, count=1)
-    left = sorted({m.decode("latin1") for m in TOOL_NAMES.findall(re.sub(rb"stream\r?\n.*?endstream", b"", b, flags=re.S))})
+    left = {m.decode("latin1") for m in TOOL_NAMES.findall(re.sub(rb"stream\r?\n.*?endstream", b"", b, flags=re.S))}
+    with fitz.open(stream=b, filetype="pdf") as check:   # 16진 · UTF-16 으로 적힌 칸은 바이트로 안 보인다 — 풀어서 한 번 더
+        shown = " ".join(v for v in check.metadata.values() if isinstance(v, str)) + check.get_xml_metadata()
+        left |= {m.decode("latin1") for m in TOOL_NAMES.findall(shown.encode("utf-8"))}
+    left = sorted(left)
     if left:
         raise RuntimeError("PDF 에 도구 이름이 남았다: " + ", ".join(left))
     with open(path, "wb") as f:
