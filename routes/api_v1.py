@@ -351,6 +351,9 @@ def data_records(data, sample, caps, gap=None):
                 recs.append({"_꾸밈": str(dc["name"]), "_nth": int(dc.get("nth") or 1)})
             continue
         start = num[(g[0].get("no"), g[0].get("content"))]
+        # 지문 칸의 ref(바깥이 준 그대로 — contents 권의 지문 · 유형) — 레코드에 「_ref」로 지문번호 차례대로 단다. 웹 보기가 누른 자리의 ref 를 바깥에 알린다
+        ref_of = {str(start + i): p.get("ref") for i, p in enumerate(g)}
+        refs_of = lambda x: [ref_of[n] for n in x.get("지문번호") or [] if ref_of.get(n) is not None] or [p.get("ref") for p in g if p.get("ref") is not None]
         content, r = yos_editor.to_content(dict(data, passages=g), sample, caps, start=start, gap=gap)
         faces = lambda c: [f for f, v in c.items() if v and (f in caps or "+" in f)]
         if len(set(keys_of(g[0]))) > 1 and len(faces(content)) > 1:
@@ -372,14 +375,14 @@ def data_records(data, sample, caps, gap=None):
                 # 한 줄기 자리(실전 문제 「지문번호+번호+발문+…」) — 그 자리가 있는 쪽을 면으로(content._faces_by_chunk bare 가 「한 번만」 쪽도 면으로 본다)
                 home = next((nm for nm, c in caps.items() if face in c), None) if "+" in face else None
                 if home and isinstance(v, list) and v:
-                    recs.append({face: v, "_면": home})
+                    recs.append({face: v, "_면": home, "_ref": refs_of({})})
                 elif "+" in face and v:
                     rep["skipped"].append({"passage": g[0].get("no"), "label": face, "why": "이 틀에 이 원고를 넣을 쪽이 없음"})
                 continue
             if isinstance(v, list) and v and all(isinstance(x, dict) for x in v):
                 # 면 머리 제목 = 지문 칸의 원고 유형 이름(contents 책 구성 — 본문정리(주제)) — 틀 견본 제목(「본문 정리」)을 그대로 두지 않는다
                 title = (g[0].get("title") or "").strip()
-                recs += [dict(x, _면=face, **({"제목": title} if title and "제목" in x else {})) for x in v]
+                recs += [dict(x, _면=face, _ref=refs_of(x), **({"제목": title} if title and "제목" in x else {})) for x in v]
             elif v:
                 rep["skipped"].append({"passage": g[0].get("no"), "label": face, "why": "이 틀에서 「원고마다」 면이 아니라 차례대로 못 넣음"})
     return ({"원고": recs} if recs else {}), rep
@@ -485,17 +488,29 @@ def render_view(jid):
     w, h = float(data["w"]), float(data["h"])
     # 쪽 하나 = 칸 하나 — 글이 안 닿은 이어 받는 쪽은 컴포저가 칸째 지운다. 판형이 다른 면({svg, w, h} — 들여온 표지 펼침)은 제 크기로, 두 칸 폭을 다 쓴다
     wide = lambda s: f' style="width:{s["w"]}mm;height:{s["h"]}mm;grid-column:1/-1" data-w="{float(s["w"]) * 96 / 25.4:.3f}"'
-    pages = "".join(f'<div class="p"{wide(s)}>{s["svg"]}</div>' if isinstance(s, dict) else f'<div class="p">{s}</div>' for s in data["svgs"])
+    pages = "".join(f'<div class="p" data-i="{i}"{wide(s)}>{s["svg"]}</div>' if isinstance(s, dict) else f'<div class="p" data-i="{i}">{s}</div>' for i, s in enumerate(data["svgs"]))
+    pick = ""
+    if request.args.get("pick") == "1":
+        # ?pick=1 — 누른 쪽 원고의 ref 를 부모 창에 알린다(postMessage {yosPick: {ref, page}}) — contents 워크북 권 「지면 · 고치기」가 그 지문 · 유형을 작업 마법사로 연다.
+        # 한 쪽에 지문이 여럿이면 누른 자리 위쪽에서 가장 가까운 지문번호 자리의 지문(같은 단 — 오른쪽 단 번호는 멀리 친다)
+        pick = ("const P=" + json.dumps(data.get("picks") or [], ensure_ascii=False) + ";"
+                "document.body.classList.add('pick');"
+                "const N='[data-bind=\"지문번호\"],[data-slot=\"지문번호\"]';"
+                "addEventListener('click',e=>{const p=e.target.closest('.p');if(!p)return;const me=P[+p.dataset.i]||{refs:[]},refs=me.refs;if(!refs.length)return;"
+                "let k=0;if(refs.length>1){let off=0;document.querySelectorAll('.p').forEach(q=>{if(+q.dataset.i<+p.dataset.i&&(P[+q.dataset.i]||{}).r===me.r)off+=q.querySelectorAll(N).length;});"   # 한 레코드가 펼침면이면 앞 쪽의 지문번호 자리부터 센다
+                "let bd=1e9;p.querySelectorAll(N).forEach((el,j)=>{const r=el.getBoundingClientRect();"
+                "if(r.top>e.clientY+2||off+j>=refs.length)return;const d=(e.clientY-r.top)+Math.max(0,r.left-e.clientX)*4;if(d<bd){bd=d;k=off+j;}});if(bd===1e9&&off<refs.length)k=off;}"
+                "parent.postMessage({yosPick:{ref:refs[k],page:+p.dataset.i}},'*');});")
     fit = ("const W=" + f"{w * 96 / 25.4:.3f}" + ";"
            "function fit(){const g=document.querySelector('.g'),two=innerWidth>=700,cw=two?(innerWidth-6)/2:innerWidth,z=cw/W;"
            "g.style.gridTemplateColumns=two?'max-content max-content':'max-content';document.querySelectorAll('.p').forEach(p=>{p.style.zoom=p.dataset.w?Math.min(z,innerWidth/p.dataset.w):z;});"
            "parent.postMessage({yosView:{height:document.documentElement.scrollHeight,pages:document.querySelectorAll('.p').length}},'*');}"
            "document.addEventListener('DOMContentLoaded',()=>(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>setTimeout(fit,0)));"
-           "addEventListener('resize',fit);")
+           "addEventListener('resize',fit);") + pick
     html = (f'<!doctype html><html><head><meta charset="utf-8"><title>{job.meta.get("stem") or "지면"}</title><style>'
             f'html,body{{margin:0;padding:0;background:transparent}} .g{{display:grid;column-gap:6px;row-gap:16px}} '
             f'.p{{width:{w}mm;height:{h}mm;overflow:hidden;background:#fff;box-shadow:0 0 0 1px #e3e6eb}} .p > svg{{display:block;width:100%;height:100%;overflow:hidden}} '
-            f'.p svg .zone{{display:none}} .story-hint,.story-over{{display:none}}{fonts.fix_css()}{fonts.face_css("url")}'
+            f'.p svg .zone{{display:none}} .story-hint,.story-over{{display:none}} .pick .p{{cursor:pointer}} .pick .p:hover{{box-shadow:0 0 0 2px #2f6df6}}{fonts.fix_css()}{fonts.face_css("url")}'
             f'</style></head><body><div class="g">{pages}</div><script>{_pdf._compose_js()}</script><script>{fit}</script></body></html>')
     return html, 200, {"Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, max-age=600"}
 
@@ -713,12 +728,20 @@ def _run_editor_render(job, log):
     if job.meta.get("print"):                                          # print: true — 종이 = 판형 + 도련(재단선 없음, RGB). 다른 조판 PDF 와 이어 붙일 때(contents 분석본 간지)
         ctx.print = {"bleed": float(sp.get("bleed") or 3.0), "marks": False}
     t0 = time.time()
-    svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True)
+    recs = []
+    svgs, rep, spec = fill_svgs(lib, plan, content, ctx, drop_empty=True, recs=recs)
     log(f"[편집기] 면 {len(svgs)} · 원고 {rep.get('filled')}자리" + (f" · 빈 자리 {rep['unfilled']}" if rep.get("unfilled") else "") + f" · 그리기 {time.time() - t0:.1f}초")
     if job.meta.get("web"):                                            # pdf: false — 웹에서만 본다(/renders/<id>/view). PDF(크롬) 없이 쪽 그림만 남긴다
+        picks, last = [], {"r": -1, "refs": []}
+        for rec in recs:                                               # 쪽마다 그 쪽 원고(r = 몇째 레코드)의 ref(지문번호 차례) — 덧쪽은 앞 쪽 것, 꾸밈 면은 없음
+            if isinstance(rec, dict):
+                last = {"r": last["r"] + 1, "refs": rec.get("_ref") or []} if rec is not last.get("_rec") else last
+                last["_rec"] = rec
+            picks.append(last)
+        picks = [{"r": x["r"], "refs": x["refs"]} for x in picks]
         with open(os.path.join(d, "svgs.json"), "w", encoding="utf-8") as f:
             json.dump({"svgs": [({"svg": s["svg"], "w": s["w"], "h": s["h"]} if s.get("w") else s["svg"]) if isinstance(s, dict) else s for s in svgs],
-                       "w": spec["w"], "h": spec["h"]}, f, ensure_ascii=False)   # 판형이 다른 면(들여온 표지 펼침)은 {svg, w, h}
+                       "w": spec["w"], "h": spec["h"], "picks": picks}, f, ensure_ascii=False)   # 판형이 다른 면(들여온 표지 펼침)은 {svg, w, h}
         job.rc = 0
         return {"pdfs": [], "main_pdf": None, "pages": len(svgs), "view": True, "report": job.meta.get("report"),
                 "fill": {"filled": rep.get("filled"), "unfilled": rep.get("unfilled")}}
