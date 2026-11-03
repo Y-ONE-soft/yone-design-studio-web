@@ -5,6 +5,7 @@
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -89,7 +90,39 @@ def to_pdf(svgs, w_mm, h_mm, out_path, title="지면", timeout=180, keep=None, r
     over = exact_pages(out_path, w_mm, h_mm, sizes={(float(s["w"]), float(s["h"])) for s in svgs if _sz(s)})
     if report is not None:
         report["overset"] = over
+    scrub(out_path)
     return out_path
+
+
+# 밖으로 나가는 PDF 에 남으면 안 되는 이름 — AI · 만든 도구(2026-11-03 산출물 흔적 지우기 기준). 대소문자 무시, 낱말 단위.
+TOOL_NAMES = re.compile(rb"(?i)\b(claude|anthropic|codex|openai|gpt|gemini|copilot|recraft|ai generated|headlesschrome|chrome|chromium|"
+                        rb"mozilla|skia|puppeteer|playwright|mupdf|pymupdf|pypdf|pdf-lib|hopding|jspdf|pdfkit|reportlab|python-docx|"
+                        rb"openpyxl|vivliostyle|ghostscript)\b")
+
+
+def scrub(path):
+    """PDF 에서 만든 도구 이름을 지운다 — 문서 정보(Producer·Creator·Title…) · XMP · 맨 위 % 주석 줄. 그림은 안 건드린다.
+    조립(크기 자르기 · CMYK · 상자)이 다 끝난 뒤에 부른다 — 먼저 지우면 뒤 단계가 이름을 다시 적는다.
+    지운 뒤에도 스트림 밖에 이름이 남으면 RuntimeError(내보내지 않는다)."""
+    import fitz
+    doc = fitz.open(path)
+    doc.set_metadata({})
+    doc.del_xml_metadata()
+    if doc.xref_get_key(doc.pdf_catalog(), "Info")[0] != "null":      # MuPDF 가 카탈로그 안에도 적는 /Info(규격 밖)
+        doc.xref_set_key(doc.pdf_catalog(), "Info", "null")
+    tmp = path + ".clean"
+    doc.save(tmp, garbage=3, deflate=True)
+    doc.close()
+    with open(tmp, "rb") as f:
+        b = f.read()
+    os.remove(tmp)
+    # MuPDF 는 저장할 때마다 「% Written by MuPDF x」 를 적는다 — 같은 길이 공백으로 바꿔 xref 자리를 그대로 둔다
+    b = re.sub(rb"%[^\r\n]*MuPDF[^\r\n]*", lambda m: b"%" + b" " * (len(m.group()) - 1), b, count=1)
+    left = sorted({m.decode("latin1") for m in TOOL_NAMES.findall(re.sub(rb"stream\r?\n.*?endstream", b"", b, flags=re.S))})
+    if left:
+        raise RuntimeError("PDF 에 도구 이름이 남았다: " + ", ".join(left))
+    with open(path, "wb") as f:
+        f.write(b)
 
 
 def exact_pages(path, w_mm, h_mm, sizes=()):
@@ -196,4 +229,5 @@ def to_print_pdf(svgs, trim_w, trim_h, out_path, bleed=3.0, marks=True, skin=Non
     elif os.path.exists(rgb):
         os.remove(rgb)
     pages = stamp_boxes(out_path, trim_w, trim_h, bleed, marks, log=log)
+    scrub(out_path)                                                   # Ghostscript · 상자 박기가 적은 이름까지
     return {"pdf": out_path, "pages": pages, "cmyk": done, "note": note}
